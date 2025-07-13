@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/user_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
@@ -15,7 +16,6 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     const methodName = 'GetUser';
-    const soapAction = 'http://www.sample-package.org#MobileAgents:GetUser';
     
     final soapEnvelope = XmlBuilder();
     soapEnvelope.processing('xml', 'version="1.0" encoding="utf-8"');
@@ -37,32 +37,41 @@ class AuthRepositoryImpl implements AuthRepository {
         });
 
     final soapRequest = soapEnvelope.buildDocument().toXmlString();
-    print("SOAP Request: $soapRequest");
 
     try {
       final soapResponseString = await apiService.performSoapRequest(soapRequest);
-      print("SOAP Response: $soapResponseString");
-
+      if (kDebugMode) {
+        print("SOAP Response: $soapResponseString");
+      }
       final document = XmlDocument.parse(soapResponseString);
-      final returnElement = document.findAllElements('m:return').first;
 
-      final codeError = returnElement.findElements('m:CodeError').first.innerText;
+      final returnElement = document.findAllElements('m:return').firstOrNull;
 
+      if (returnElement == null) {
+        throw Exception("Server response is missing the <m:return> element.");
+      }
+
+      final codeError = returnElement.findElements('m:CodeError').firstOrNull?.innerText;
+      
       if (codeError == '1') {
-        final soapResponseMap = {
+        // Successful login
+        return UserModel.fromSoap({
           'Code': returnElement.findElements('m:Code').first.innerText,
           'Name': returnElement.findElements('m:Name').first.innerText,
           'Type': returnElement.findElements('m:Type').first.innerText,
           'CodeProject': returnElement.findElements('m:CodeProject').first.innerText,
           'CodeSklad': returnElement.findElements('m:CodeSklad').first.innerText,
-        };
-        return UserModel.fromSoap(soapResponseMap);
+        });
       } else {
-        final message = returnElement.findElements('m:Message').first.innerText;
-        throw Exception(message);
+        // Failed login
+        final message = returnElement.findElements('m:Message').firstOrNull?.innerText;
+        throw Exception(message ?? 'Unknown login error');
       }
     } catch (e) {
-      print("Error in AuthRepositoryImpl: $e");
+      if (kDebugMode) {
+        print("Error in AuthRepositoryImpl: $e");
+      }
+      // Re-throw the original exception to be caught by the BLoC
       rethrow;
     }
   }

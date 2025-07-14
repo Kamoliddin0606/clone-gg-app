@@ -6,6 +6,9 @@ class UserModel extends UserEntity {
     required super.username,
     required super.fullName,
     required super.role,
+    required super.code,
+    required super.name,
+    required super.warehouseCode,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -14,15 +17,21 @@ class UserModel extends UserEntity {
       username: json['username'],
       fullName: json['fullName'],
       role: json['role'],
+      code: json['code'],
+      name: json['name'],
+      warehouseCode: json['warehouseCode'],
     );
   }
 
-  factory UserModel.fromSoap(Map<String, dynamic> soapResponse) {
+  factory UserModel.fromSoap(Map<String, dynamic> soapResponse, {String? username}) {
     return UserModel(
       id: soapResponse['Code'],
-      username: '', // Username is not in the response, should be passed from request
+      username: username ?? '', // Username is passed from request
       fullName: soapResponse['Name'],
       role: _mapUserType(soapResponse['Type']),
+      code: soapResponse['Code'],
+      name: soapResponse['Name'],
+      warehouseCode: soapResponse['WarehouseCode'] ?? '',
     );
   }
 
@@ -54,6 +63,9 @@ class UserModel extends UserEntity {
       'username': username,
       'fullName': fullName,
       'role': role,
+      'code': code,
+      'name': name,
+      'warehouseCode': warehouseCode,
     };
   }
 }

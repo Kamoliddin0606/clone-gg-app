@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 
 class ForwarderHomePage extends StatelessWidget {
   const ForwarderHomePage({super.key});
@@ -14,6 +17,10 @@ class ForwarderHomePage extends StatelessWidget {
             onPressed: () {
               // TODO: Show filter dialog
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: () => _showExitDialog(context),
           ),
         ],
       ),
@@ -93,6 +100,47 @@ class ForwarderHomePage extends StatelessWidget {
         textAlign: TextAlign.center,
       ),
     );
+  }
+
+  void _showExitDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Chiqish'),
+          content: const Text('Haqiqatan ham ilovadan chiqmoqchimisiz?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Bekor qilish'),
+            ),
+            FilledButton(
+              onPressed: () => _logout(context),
+              child: const Text('Chiqish'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    try {
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      await prefs.clearCredentials();
+    } catch (e) {
+      // SharedPreferences not ready, continue with logout
+    }
+    
+    if (context.mounted) {
+      Navigator.of(context).pop(); // Close dialog
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRouter.loginRoute,
+        (route) => false,
+      );
+    }
   }
 }
 

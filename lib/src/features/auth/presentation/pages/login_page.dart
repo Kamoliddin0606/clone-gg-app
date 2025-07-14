@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 
 class LoginPage extends StatefulWidget {
@@ -13,6 +15,14 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
 
   @override
   void dispose() {
@@ -21,7 +31,63 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _onLoginButtonPressed() {
+  Future<void> _loadSavedCredentials() async {
+    try {
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      if (prefs.isRememberMeEnabled()) {
+        final username = prefs.getSavedUsername();
+        final password = prefs.getSavedPassword();
+        if (username != null && password != null) {
+          setState(() {
+            _usernameController.text = username;
+            _passwordController.text = password;
+            _rememberMe = true;
+          });
+        }
+      }
+    } catch (e) {
+      // SharedPreferences not ready yet, skip loading
+      if (mounted) {
+        setState(() {
+          _rememberMe = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveUserData(AuthSuccess state) async {
+    try {
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      
+      await prefs.saveUserData(
+        userCode: state.user.code,
+        userName: state.user.name,
+        warehouseCode: state.user.warehouseCode,
+      );
+    } catch (e) {
+      print('Error saving user data: $e');
+    }
+  }
+
+  void _onLoginButtonPressed() async {
+    try {
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      
+      if (_rememberMe) {
+        await prefs.saveCredentials(
+          _usernameController.text,
+          _passwordController.text,
+        );
+      } else {
+        await prefs.clearCredentials();
+      }
+    } catch (e) {
+      // SharedPreferences not ready, continue without saving
+    }
+
     context.read<AuthBloc>().add(
           LoginButtonPressed(
             username: _usernameController.text,
@@ -46,6 +112,9 @@ class _LoginPageState extends State<LoginPage> {
               );
           }
           if (state is AuthSuccess) {
+            // Save user data to SharedPreferences
+            _saveUserData(state);
+            
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
               ..showSnackBar(
@@ -60,20 +129,17 @@ class _LoginPageState extends State<LoginPage> {
               case 'Boss':
                 Navigator.pushReplacementNamed(context, AppRouter.bossHomeRoute);
                 break;
+              case 'Collector':
+                Navigator.pushReplacementNamed(context, AppRouter.collectorHomeRoute);
+                break;
               case 'Forwarder':
                 Navigator.pushReplacementNamed(context, AppRouter.forwarderHomeRoute);
                 break;
-              case 'Collector':
-                // TODO: Create Collector Home Page
-                // Navigator.pushReplacementNamed(context, AppRouter.collectorHomeRoute);
-                break;
               case 'Packer':
-                // TODO: Create Packer Home Page
-                // Navigator.pushReplacementNamed(context, AppRouter.packerHomeRoute);
+                Navigator.pushReplacementNamed(context, AppRouter.packerHomeRoute);
                 break;
               case 'WarehouseManager':
-                // TODO: Create WarehouseManager Home Page
-                // Navigator.pushReplacementNamed(context, AppRouter.warehouseManagerHomeRoute);
+                Navigator.pushReplacementNamed(context, AppRouter.warehouseManagerHomeRoute);
                 break;
               default:
                 ScaffoldMessenger.of(context)
@@ -116,12 +182,38 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock_outline),
-                    border: OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                    border: const OutlineInputBorder(),
                   ),
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _rememberMe,
+                      onChanged: (value) {
+                        setState(() {
+                          _rememberMe = value ?? false;
+                        });
+                      },
+                    ),
+                    const Text('Remember me'),
+                  ],
                 ),
                 const SizedBox(height: 32),
                 BlocBuilder<AuthBloc, AuthState>(

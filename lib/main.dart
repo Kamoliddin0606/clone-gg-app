@@ -10,7 +10,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Set up service locator
-  setupServiceLocator();
+  await setupServiceLocator();
+
+  // Wait for async services to be ready
+  await sl.allReady();
 
   // TODO: Initialize Firebase
   // await Firebase.initializeApp();

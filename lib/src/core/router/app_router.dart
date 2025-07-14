@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/agent_home_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/trading_points_page.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/pages/login_page.dart';
+import 'package:gloria_marketing_flutter/src/features/boss/presentation/pages/boss_home_page.dart';
+import 'package:gloria_marketing_flutter/src/features/collector/presentation/pages/collector_home_page.dart';
 import 'package:gloria_marketing_flutter/src/features/forwarder/presentation/pages/forwarder_home_page.dart';
+import 'package:gloria_marketing_flutter/src/features/packer/presentation/pages/packer_home_page.dart';
+import 'package:gloria_marketing_flutter/src/features/warehouse_manager/presentation/pages/warehouse_manager_home_page.dart';
 
 class AppRouter {
   static const String loginRoute = '/';
   static const String agentHomeRoute = '/agent-home';
   static const String bossHomeRoute = '/boss-home';
+  static const String collectorHomeRoute = '/collector-home';
   static const String forwarderHomeRoute = '/forwarder-home';
-  // Add other routes here
+  static const String packerHomeRoute = '/packer-home';
+  static const String warehouseManagerHomeRoute = '/warehouse-manager-home';
+  static const String tradingPointsRoute = '/trading-points';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -17,11 +25,17 @@ class AppRouter {
       case agentHomeRoute:
         return MaterialPageRoute(builder: (_) => const AgentHomePage());
       case bossHomeRoute:
-        // Replace with actual Boss Home Page
-        return MaterialPageRoute(builder: (_) => const Scaffold(body: Center(child: Text('Boss Home'))));
+        return MaterialPageRoute(builder: (_) => const BossHomePage());
+      case collectorHomeRoute:
+        return MaterialPageRoute(builder: (_) => const CollectorHomePage());
       case forwarderHomeRoute:
         return MaterialPageRoute(builder: (_) => const ForwarderHomePage());
-      // Add other cases here
+      case packerHomeRoute:
+        return MaterialPageRoute(builder: (_) => const PackerHomePage());
+      case warehouseManagerHomeRoute:
+        return MaterialPageRoute(builder: (_) => const WarehouseManagerHomePage());
+      case tradingPointsRoute:
+        return MaterialPageRoute(builder: (_) => const TradingPointsPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

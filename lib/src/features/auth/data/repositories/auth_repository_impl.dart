@@ -60,8 +60,8 @@ class AuthRepositoryImpl implements AuthRepository {
           'Name': returnElement.findElements('m:Name').first.innerText,
           'Type': returnElement.findElements('m:Type').first.innerText,
           'CodeProject': returnElement.findElements('m:CodeProject').first.innerText,
-          'CodeSklad': returnElement.findElements('m:CodeSklad').first.innerText,
-        });
+          'WarehouseCode': returnElement.findElements('m:CodeSklad').first.innerText,
+        }, username: username);
       } else {
         // Failed login
         final message = returnElement.findElements('m:Message').firstOrNull?.innerText;

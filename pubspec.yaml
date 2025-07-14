@@ -63,6 +63,12 @@ dependencies:
   # Service Locator
   get_it: ^8.0.3
 
+  # Local Storage
+  shared_preferences: ^2.2.2
+
+  # URL Launcher
+  url_launcher: ^6.2.4
+
   # Utilities
   archive: ^4.0.7
 

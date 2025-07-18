@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';

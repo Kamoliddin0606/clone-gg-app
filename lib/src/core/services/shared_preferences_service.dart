@@ -24,9 +24,9 @@ class SharedPreferencesService {
 
   // Save login credentials
   Future<void> saveCredentials(String username, String password) async {
-    await _preferences!.setString(_usernameKey, username);
-    await _preferences!.setString(_passwordKey, password);
-    await _preferences!.setBool(_rememberMeKey, true);
+    await _preferences.setString(_usernameKey, username);
+    await _preferences.setString(_passwordKey, password);
+    await _preferences.setBool(_rememberMeKey, true);
   }
 
   // Save user data after successful login
@@ -35,62 +35,62 @@ class SharedPreferencesService {
     required String userName,
     required String warehouseCode,
   }) async {
-    await _preferences!.setString(_userCodeKey, userCode);
-    await _preferences!.setString(_userNameKey, userName);
-    await _preferences!.setString(_warehouseCodeKey, warehouseCode);
+    await _preferences.setString(_userCodeKey, userCode);
+    await _preferences.setString(_userNameKey, userName);
+    await _preferences.setString(_warehouseCodeKey, warehouseCode);
   }
 
   // Get saved username
   String? getSavedUsername() {
-    return _preferences!.getString(_usernameKey);
+    return _preferences.getString(_usernameKey);
   }
 
   // Get saved password
   String? getSavedPassword() {
-    return _preferences!.getString(_passwordKey);
+    return _preferences.getString(_passwordKey);
   }
 
   // Check if remember me is enabled
   bool isRememberMeEnabled() {
-    return _preferences!.getBool(_rememberMeKey) ?? false;
+    return _preferences.getBool(_rememberMeKey) ?? false;
   }
 
   // Clear saved credentials
   Future<void> clearCredentials() async {
-    await _preferences!.remove(_usernameKey);
-    await _preferences!.remove(_passwordKey);
-    await _preferences!.setBool(_rememberMeKey, false);
+    await _preferences.remove(_usernameKey);
+    await _preferences.remove(_passwordKey);
+    await _preferences.setBool(_rememberMeKey, false);
   }
 
   // Set remember me preference
   Future<void> setRememberMe(bool value) async {
-    await _preferences!.setBool(_rememberMeKey, value);
+    await _preferences.setBool(_rememberMeKey, value);
   }
 
   // Get user code
   String? getUserCode() {
-    return _preferences!.getString(_userCodeKey);
+    return _preferences.getString(_userCodeKey);
   }
 
   // Get user name
   String? getUserName() {
-    return _preferences!.getString(_userNameKey);
+    return _preferences.getString(_userNameKey);
   }
 
   // Get warehouse code
   String? getWarehouseCode() {
-    return _preferences!.getString(_warehouseCodeKey);
+    return _preferences.getString(_warehouseCodeKey);
   }
 
   // Get password (for API calls)
   String? getPassword() {
-    return _preferences!.getString(_passwordKey);
+    return _preferences.getString(_passwordKey);
   }
 
   // Clear all user data
   Future<void> clearUserData() async {
-    await _preferences!.remove(_userCodeKey);
-    await _preferences!.remove(_userNameKey);
-    await _preferences!.remove(_warehouseCodeKey);
+    await _preferences.remove(_userCodeKey);
+    await _preferences.remove(_userNameKey);
+    await _preferences.remove(_warehouseCodeKey);
   }
 }

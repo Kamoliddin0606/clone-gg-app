@@ -8,7 +8,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 
 class SoapApiService {
   final Dio _dio;
-  static const String _baseUrl = 'http://185.196.214.206:8080/ws/';
+  static const String _baseUrl = 'http://109.94.175.104:5443/EVYAP_UT/EVYAP_UT.1cws';
 
   SoapApiService(this._dio);
 
@@ -29,6 +29,7 @@ class SoapApiService {
 ''';
 
     try {
+      print("user: $userCode");
       final response = await _dio.post(
         _baseUrl,
         data: soapEnvelope,
@@ -39,10 +40,11 @@ class SoapApiService {
           },
         ),
       );
-
+      print('KPI data response: ${response.data}');
       final document = XmlDocument.parse(response.data);
-      final returnElement = document.findAllElements('m:return').first;
 
+      final returnElement = document.findAllElements('m:return').first;
+      print('KPI data response: $returnElement');
       return KpiData(
         plan: returnElement.findElements('m:TotalPlan').first.innerText,
         fact: returnElement.findElements('m:TotalFact').first.innerText,

@@ -59,7 +59,10 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _saveUserData(AuthSuccess state) async {
     try {
       await sl.isReady<SharedPreferencesService>();
+      print('Saving user data: ${state.user.code}, ${state.user.name}, ${state.user.warehouseCode}');
       final prefs = sl<SharedPreferencesService>();
+      print('SharedPreferencesService is ready, saving user data...');
+      // Save user data to SharedPreferences
       
       await prefs.saveUserData(
         userCode: state.user.code,

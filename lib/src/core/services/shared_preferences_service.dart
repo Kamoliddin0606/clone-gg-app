@@ -11,14 +11,24 @@ class SharedPreferencesService {
 
   static SharedPreferencesService? _instance;
   // static SharedPreferences? _preferences;
-  Future<void> init() async {
+  bool _isInitialized = false;
+  // Singleton pattern to ensure only one instance of SharedPreferencesService
+Future<void> init() async {
+  if (!_isInitialized) {
     _preferences = await SharedPreferences.getInstance();
+    _isInitialized = true;
   }
+}
+  // Future<void> init() async {
+  //   _preferences = await SharedPreferences.getInstance();
+  // }
   SharedPreferencesService._();
 
   static Future<SharedPreferencesService> getInstance() async {
     _instance ??= SharedPreferencesService._();
     // _preferences ??= await SharedPreferences.getInstance();
+    await _instance!.init();
+    // Ensure the instance is initialized
     return _instance!;
   }
 
@@ -69,6 +79,8 @@ class SharedPreferencesService {
 
   // Get user code
   String? getUserCode() {
+    print('Getting user code from SharedPreferences');
+    print('User code key: $_userCodeKey');
     return _preferences.getString(_userCodeKey);
   }
 

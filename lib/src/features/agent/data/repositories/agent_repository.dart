@@ -26,6 +26,7 @@ class AgentRepository {
       if (!forceRefresh) {
         // Try to get cached data first
         final cachedData = await _databaseService.getKpiData(userCode);
+        print( 'Cached KPI data: $cachedData');
         if (cachedData != null) {
           // Check if data is not too old (less than 1 hour)
           final updateTime = DateTime.parse(cachedData.updateDate);
@@ -41,15 +42,17 @@ class AgentRepository {
         userCode: userCode,
         password: password,
       );
-      
+      print('Fetched KPI data: $kpiData');
       // Cache the data
       await _databaseService.saveKpiData(userCode, kpiData);
       
       return kpiData;
     } catch (e) {
       // If API fails, try to return cached data
+      print('Error fetching KPI data: $e');
       final cachedData = await _databaseService.getKpiData(userCode);
       if (cachedData != null) {
+        print('Returning cached KPI data: $cachedData');
         return cachedData;
       }
       

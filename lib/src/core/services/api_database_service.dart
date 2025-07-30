@@ -162,9 +162,9 @@ class ApiDatabaseService {
   Future<void> saveKpiData(String userCode, KpiData kpiData) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
-    
+
     await db.delete('kpi_data', where: 'user_code = ?', whereArgs: [userCode]);
-    
+
     await db.insert('kpi_data', {
       'user_code': userCode,
       'plan': kpiData.plan,
@@ -190,10 +190,11 @@ class ApiDatabaseService {
       orderBy: 'created_at DESC',
       limit: 1,
     );
-
+    print(result.isEmpty);
     if (result.isEmpty) return null;
 
     final row = result.first;
+    print('KPI data row: $row');
     return KpiData(
       plan: row['plan'] as String,
       fact: row['fact'] as String,
@@ -212,9 +213,9 @@ class ApiDatabaseService {
   Future<void> saveClients(List<TradingPoint> clients) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
-    
+
     await db.delete('clients');
-    
+
     for (final client in clients) {
       await db.insert('clients', {
         'code': client.id,
@@ -252,42 +253,48 @@ class ApiDatabaseService {
     final db = await database;
     final result = await db.query('clients', orderBy: 'name ASC');
 
-    return result.map((row) => TradingPoint(
-      id: row['code'] as String,
-      name: row['name'] as String,
-      address: row['address'] as String,
-      phone: row['phone'] as String? ?? '',
-      ownerName: row['owner_name'] as String? ?? '',
-      contactPerson: row['contact_person'] as String? ?? '',
-      inn: row['inn'] as String? ?? '',
-      status: row['status'] as String? ?? 'active',
-      lastVisitDate: row['last_visit_date'] as String? ?? '',
-      hasOrders: (row['has_orders'] as int?) == 1,
-      hasContracts: (row['has_contracts'] as int?) == 1,
-      isVisited: (row['is_visited'] as int?) == 1,
-      hasContract: (row['has_contract'] as int?) == 1,
-      latitude: (row['latitude'] as num?)?.toDouble() ?? 0.0,
-      longitude: (row['longitude'] as num?)?.toDouble() ?? 0.0,
-      region: row['region'] as String? ?? '',
-      district: row['district'] as String? ?? '',
-      signboard: row['signboard'] as String? ?? '',
-      referencePoint: row['reference_point'] as String? ?? '',
-      responsiblePerson: row['responsible_person'] as String? ?? '',
-      responsiblePersonPhone: row['responsible_person_phone'] as String? ?? '',
-      tradePointType: row['trade_point_type'] as String? ?? '',
-      creditLimit: (row['credit_limit'] as num?)?.toDouble() ?? 0.0,
-      accumulatedCredit: (row['accumulated_credit'] as num?)?.toDouble() ?? 0.0,
-      codeRegion: row['code_region'] as String? ?? '',
-    )).toList();
+    return result
+        .map(
+          (row) => TradingPoint(
+            id: row['code'] as String,
+            name: row['name'] as String,
+            address: row['address'] as String,
+            phone: row['phone'] as String? ?? '',
+            ownerName: row['owner_name'] as String? ?? '',
+            contactPerson: row['contact_person'] as String? ?? '',
+            inn: row['inn'] as String? ?? '',
+            status: row['status'] as String? ?? 'active',
+            lastVisitDate: row['last_visit_date'] as String? ?? '',
+            hasOrders: (row['has_orders'] as int?) == 1,
+            hasContracts: (row['has_contracts'] as int?) == 1,
+            isVisited: (row['is_visited'] as int?) == 1,
+            hasContract: (row['has_contract'] as int?) == 1,
+            latitude: (row['latitude'] as num?)?.toDouble() ?? 0.0,
+            longitude: (row['longitude'] as num?)?.toDouble() ?? 0.0,
+            region: row['region'] as String? ?? '',
+            district: row['district'] as String? ?? '',
+            signboard: row['signboard'] as String? ?? '',
+            referencePoint: row['reference_point'] as String? ?? '',
+            responsiblePerson: row['responsible_person'] as String? ?? '',
+            responsiblePersonPhone:
+                row['responsible_person_phone'] as String? ?? '',
+            tradePointType: row['trade_point_type'] as String? ?? '',
+            creditLimit: (row['credit_limit'] as num?)?.toDouble() ?? 0.0,
+            accumulatedCredit:
+                (row['accumulated_credit'] as num?)?.toDouble() ?? 0.0,
+            codeRegion: row['code_region'] as String? ?? '',
+          ),
+        )
+        .toList();
   }
 
   // Products methods
   Future<void> saveProducts(List<ProductData> products) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
-    
+
     await db.delete('products');
-    
+
     for (final product in products) {
       await db.insert('products', {
         'code': product.code,
@@ -316,33 +323,37 @@ class ApiDatabaseService {
     final db = await database;
     final result = await db.query('products', orderBy: 'name ASC');
 
-    return result.map((row) => ProductData(
-      code: row['code'] as String,
-      name: row['name'] as String,
-      unit: row['unit'] as String,
-      quantity: (row['quantity'] as num?)?.toDouble() ?? 0.0,
-      reserved: (row['reserved'] as num?)?.toDouble() ?? 0.0,
-      available: (row['available'] as num?)?.toDouble() ?? 0.0,
-      category: row['category'] as String? ?? '',
-      barcode: row['barcode'] as String? ?? '',
-      have: (row['have'] as int?) ?? 0,
-      warehouseCode: row['warehouse_code'] as String? ?? '',
-      weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
-      capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
-      vendorCode: row['vendor_code'] as String? ?? '',
-      productBrand: row['product_brand'] as String? ?? '',
-      productSeries: row['product_series'] as String? ?? '',
-      codeProject: row['code_project'] as String? ?? '',
-    )).toList();
+    return result
+        .map(
+          (row) => ProductData(
+            code: row['code'] as String,
+            name: row['name'] as String,
+            unit: row['unit'] as String,
+            quantity: (row['quantity'] as num?)?.toDouble() ?? 0.0,
+            reserved: (row['reserved'] as num?)?.toDouble() ?? 0.0,
+            available: (row['available'] as num?)?.toDouble() ?? 0.0,
+            category: row['category'] as String? ?? '',
+            barcode: row['barcode'] as String? ?? '',
+            have: (row['have'] as int?) ?? 0,
+            warehouseCode: row['warehouse_code'] as String? ?? '',
+            weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
+            capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
+            vendorCode: row['vendor_code'] as String? ?? '',
+            productBrand: row['product_brand'] as String? ?? '',
+            productSeries: row['product_series'] as String? ?? '',
+            codeProject: row['code_project'] as String? ?? '',
+          ),
+        )
+        .toList();
   }
 
   // Price types methods
   Future<void> savePriceTypes(List<PriceType> priceTypes) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
-    
+
     await db.delete('price_types');
-    
+
     for (final priceType in priceTypes) {
       await db.insert('price_types', {
         'code': priceType.code,
@@ -359,21 +370,25 @@ class ApiDatabaseService {
     final db = await database;
     final result = await db.query('price_types', orderBy: 'name ASC');
 
-    return result.map((row) => PriceType(
-      code: row['code'] as String,
-      name: row['name'] as String,
-      description: row['description'] as String? ?? '',
-      isDefault: (row['is_default'] as int?) == 1,
-    )).toList();
+    return result
+        .map(
+          (row) => PriceType(
+            code: row['code'] as String,
+            name: row['name'] as String,
+            description: row['description'] as String? ?? '',
+            isDefault: (row['is_default'] as int?) == 1,
+          ),
+        )
+        .toList();
   }
 
   // Product prices methods
   Future<void> saveProductPrices(List<ProductPrice> productPrices) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
-    
+
     await db.delete('product_prices');
-    
+
     for (final productPrice in productPrices) {
       await db.insert('product_prices', {
         'product_code': productPrice.productCode,
@@ -392,26 +407,30 @@ class ApiDatabaseService {
     final db = await database;
     String whereClause = '';
     List<dynamic> whereArgs = [];
-    
+
     if (priceTypeCode != null) {
       whereClause = 'WHERE price_type_code = ?';
       whereArgs = [priceTypeCode];
     }
-    
+
     final result = await db.rawQuery('''
       SELECT * FROM product_prices 
       $whereClause
       ORDER BY product_code ASC
     ''', whereArgs);
 
-    return result.map((row) => ProductPrice(
-      productCode: row['product_code'] as String,
-      priceTypeCode: row['price_type_code'] as String,
-      price: (row['price'] as num?)?.toDouble() ?? 0.0,
-      currency: row['currency'] as String? ?? 'UZS',
-      validFrom: row['valid_from'] as String? ?? '',
-      validTo: row['valid_to'] as String? ?? '',
-    )).toList();
+    return result
+        .map(
+          (row) => ProductPrice(
+            productCode: row['product_code'] as String,
+            priceTypeCode: row['price_type_code'] as String,
+            price: (row['price'] as num?)?.toDouble() ?? 0.0,
+            currency: row['currency'] as String? ?? 'UZS',
+            validFrom: row['valid_from'] as String? ?? '',
+            validTo: row['valid_to'] as String? ?? '',
+          ),
+        )
+        .toList();
   }
 
   // Clear all data

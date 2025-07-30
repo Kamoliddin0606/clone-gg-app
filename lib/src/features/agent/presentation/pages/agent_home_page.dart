@@ -28,9 +28,9 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
   late Animation<double> _expandAnimation;
 
   // Rang sxemasi
-  static const Color primaryColor = Color(0xFF7CC4F8); // Asosiy ko'k
-  static const Color primaryColorText = Color(0xFF197FAA); // Asosiy ko'k
-  static const Color successColor = Color(0xFF52C591); // Yashil
+  static const Color primaryColor = Color(0xFF50AAEA); // Asosiy ko'k
+  static const Color primaryColorText = Color(0xFF0D7DD8); // Asosiy ko'k
+  static const Color successColor = Color(0xFF3EBD84); // Yashil
   static const Color successColorText = Color(0xFF438E71); // Yashil
   static const Color accentColor = Color(0xFFFFE8A3); // To'q sariq
   // static const Color primaryColor = Color(0xFF1E1E2E); // Asosiy ko'k

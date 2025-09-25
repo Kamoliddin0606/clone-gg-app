@@ -6,8 +6,7 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
-import '../../../navbars/fluid_nav_bar.dart';
-import 'agent_home_modern.dart';
+
 class AgentHomePage extends StatefulWidget {
   const AgentHomePage({super.key});
 
@@ -230,51 +229,58 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
           ),
         ],
       ),
-      body: AgentHomeModern(
-        userName: userName,          // sizdagi o‘zgaruvchi nomi bo‘lishi mumkin
-        userCode: userCode,                 // sizdagi o‘zgaruvchi
-        kpi: KpiView(
-          salesSum: _kpiData?.totalForecast,   // yoki haqiqiy "savdo summasi" maydoningiz
-          itemsSold: null,      // bo‘lmasa null qoldiring
-          customersServed: null, // bo‘lmasa null
-          totalPercent: _kpiData?.totalPercent,
-          akbPlan: _kpiData?.akbPlan,
-          akbFact: _kpiData?.akbFact,
-          akbPercent: _kpiData?.akbPercent,
-          okb: _kpiData?.okb,
-        ),
-        onRefresh: _refreshKpi,                       // sizdagi mavjud funksiya
-        // onCreateOrder: () => context.pushNamed(AppRouter.tradingPointsRoute),
-        //onOpenCustomers: _openCustomers,              // agar sizda bor bo‘lsa
-        // onOpenProducts: _openProducts,                // agar sizda bor bo‘lsa
-        // onLogout: _logout,                            // mavjud logout dialog/handler
-      ),
-      bottomNavigationBar: FluidNavBar(
-        initialIndex: 0, // masalan, buyurtma default
-        items: [
-          FluidNavItem(
-            icon: Icons.add_shopping_cart,
-            label: 'Buyurtma',
-            // onTap: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
-          ),
-          FluidNavItem(
-            icon: Icons.people,
-            label: 'Mijozlar',
-            onTap: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
-          ),
-          FluidNavItem(
-            icon: Icons.storefront,
-            label: 'Tovarlar',
-            // onTap: _openProducts,
-          ),
-          // Keyinchalik:
-          const FluidNavItem(
-            icon: Icons.insert_chart_outlined, // placeholder
-            label: 'Hisobot',
-          ),
-          const FluidNavItem(
-            icon: Icons.settings_outlined,     // placeholder
-            label: 'Sozlamalar',
+      body: Stack(
+        children: [
+          // Gradient background - faqat asosiy rang
+          // Container(
+          //   decoration: const BoxDecoration(
+          //     gradient: LinearGradient(
+          //       colors: [primaryColor, Color(0xFF1E40AF)],
+          //       begin: Alignment.topLeft,
+          //       end: Alignment.bottomRight,
+          //     ),
+          //   ),
+          // ),
+          Column(
+            children: [
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _refreshKpi,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 60),
+                        _buildUserProfileSection(theme),
+                        const SizedBox(height: 16),
+                        _buildPlanFactProgress(theme),
+                        const SizedBox(height: 16),
+                        AnimatedBuilder(
+                          animation: _expandAnimation,
+                          builder: (context, child) {
+                            return SizeTransition(
+                              sizeFactor: _expandAnimation,
+                              child: _isKpiCardsExpanded
+                                  ? Column(
+                                children: [
+                                  _buildKpiCards(theme),
+                                  // const SizedBox(height: 16),
+                                  _buildAkbOkbSection(theme),
+                                  // const SizedBox(height: 16),
+                                ],
+                              )
+                                  : const SizedBox.shrink(),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              _buildBottomSection(theme),
+            ],
           ),
         ],
       ),
@@ -291,8 +297,8 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
             Colors.white.withOpacity(0.7),
             primaryColor,
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
           color: Colors.white,
           boxShadow: [
@@ -585,14 +591,14 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
         ),
       ),
 
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // _buildRefreshButton(theme),
-              // const SizedBox(height: 12),
-              _buildActionButtons(context),
-            ],
-          ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // _buildRefreshButton(theme),
+          // const SizedBox(height: 12),
+          _buildActionButtons(context),
+        ],
+      ),
 
     );
   }

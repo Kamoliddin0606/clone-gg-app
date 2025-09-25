@@ -4,7 +4,7 @@ class ApiService {
   final Dio _dio;
 
   // TODO: Get base URL from a config file
-  static const String _baseUrl = "http://109.94.175.104:5443/EVYAP_UT/EVYAP_UT.1cws";
+  static const String _baseUrl = "http://kit.gloriya.uz:5443/EVYAP_UT/EVYAP_UT.1cws";
 
   ApiService()
       : _dio = Dio(

@@ -597,6 +597,7 @@ class TradingPointCard extends StatelessWidget {
   final VoidCallback onCreateOrder;
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
+  final VoidCallback onOpenDetails;
 
   const TradingPointCard({
     super.key,
@@ -606,6 +607,7 @@ class TradingPointCard extends StatelessWidget {
     required this.onCreateOrder,
     required this.onViewContracts,
     required this.onRefusal,
+    required this.onOpenDetails,
   });
 
   @override
@@ -1153,19 +1155,19 @@ class _TradingPointGridTile extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          // ACTIONS
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: Wrap(
-              spacing: 8, runSpacing: 8,
-              children: [
-                if (!tp.isVisited) FilledButton.icon(onPressed: onInformVisit, icon: const Icon(Icons.location_on, size: 18), label: const Text('Tashrif')),
-                FilledButton.tonalIcon(onPressed: onCreateOrder, icon: const Icon(Icons.shopping_cart, size: 18), label: const Text('Buyurtma')),
-                if (tp.hasContract) OutlinedButton.icon(onPressed: onViewContracts, icon: const Icon(Icons.description, size: 18), label: const Text('Shartnoma')),
-                OutlinedButton.icon(onPressed: onRefusal, icon: const Icon(Icons.cancel, size: 18), label: const Text('Rad etish')),
-              ],
-            ),
-          ),
+          // // ACTIONS
+          // Padding(
+          //   padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          //   child: Wrap(
+          //     spacing: 8, runSpacing: 8,
+          //     children: [
+          //       if (!tp.isVisited) FilledButton.icon(onPressed: onInformVisit, icon: const Icon(Icons.location_on, size: 18), label: const Text('Tashrif')),
+          //       FilledButton.tonalIcon(onPressed: onCreateOrder, icon: const Icon(Icons.shopping_cart, size: 18), label: const Text('Buyurtma')),
+          //       if (tp.hasContract) OutlinedButton.icon(onPressed: onViewContracts, icon: const Icon(Icons.description, size: 18), label: const Text('Shartnoma')),
+          //       OutlinedButton.icon(onPressed: onRefusal, icon: const Icon(Icons.cancel, size: 18), label: const Text('Rad etish')),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     ));

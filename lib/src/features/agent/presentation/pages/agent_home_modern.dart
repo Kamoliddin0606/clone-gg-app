@@ -1,6 +1,10 @@
+
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
 
 import '../../../../core/router/app_router.dart';
+import '../../../../theme/theme_controller.dart';
+import '../../../../theme/theme_toggle.dart';
 import '../../../navbars/fluid_nav_bar.dart';
 /// Drop-in, logic-safe visual redesign for the agent home page.
 ///
@@ -86,12 +90,19 @@ class AgentHomeModern extends StatefulWidget {
     return '${d.toStringAsFixed(1)}%';
   }
 
-  static String _pctNum(String? v) {
-    if (v == null || v.trim().isEmpty) return '-';
-    final cleaned = v.replaceAll('%', '').replaceAll(',', '.').trim();
-    final d = double.tryParse(cleaned);
-    if (d == null) return '-';
-    return d.toStringAsFixed(1);
+  static String _sumFmt(String? v) {
+    final s = v?.trim();
+    if (s == null || s.isEmpty) return '-';
+    final n = double.tryParse(s.replaceAll(' ', '').replaceAll(',', '.'));
+    if (n == null) return s; // kelgan formatni qoldiramiz
+    final t = n.toStringAsFixed(0);
+    final b = StringBuffer();
+    for (int i = 0; i < t.length; i++) {
+      final idx = t.length - i;
+      b.write(t[i]);
+      if (idx > 1 && idx % 3 == 1) b.write(' ');
+    }
+    return b.toString();
   }
   @override
   State<AgentHomeModern> createState() => _AgentHomeModernState();
@@ -118,6 +129,13 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
             surfaceTintColor: Colors.transparent,
             flexibleSpace: _Header(userName: widget.userName, userCode: widget.userCode),
             actions: [
+            //   Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 8),
+            //   child: ThemeToggle(
+            //     mode: ThemeController.I.mode.value,
+            //     onChanged: ThemeController.I.set,
+            //   ),
+            // ),
               IconButton(
                 tooltip: 'Yangilash',
                 onPressed: () => widget.onRefresh?.call(),
@@ -128,6 +146,8 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
                 onPressed: widget.onLogout,
                 icon: const Icon(Icons.logout),
               ),
+
+
             ],
           ),
 
@@ -161,7 +181,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
                     children: [
                       _StatCard(
                         title: 'Savdo summasi',
-                        value: AgentHomeModern._pctNum(widget.kpi?.salesSum),
+                        value: AgentHomeModern._sumFmt(widget.kpi?.salesSum),
                         icon: Icons.trending_up,
                       ),
                       _StatCard(

@@ -44,7 +44,7 @@ class _FluidNavBarState extends State<FluidNavBar> {
 
         return SafeArea(
           top: false,
-          minimum: const EdgeInsets.only(bottom: 8), // CHANGED: faqat pastdan xavfsiz zona
+          // minimum: const EdgeInsets.only(bottom: 8), // CHANGED: faqat pastdan xavfsiz zona
           child: Container(
             width: double.infinity,                   // CHANGED: to‘liq kenglik
             color: theme.colorScheme.surfaceContainerHighest, // CHANGED: chetlar to‘liq yopiladi

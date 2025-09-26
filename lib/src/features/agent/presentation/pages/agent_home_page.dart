@@ -190,46 +190,46 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('Agent'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'settings':
-                  break;
-                case 'logout':
-                  _showLogoutDialog();
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings),
-                    SizedBox(width: 8),
-                    Text('Sozlamalar'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout),
-                    SizedBox(width: 8),
-                    Text('Chiqish'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Agent'),
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      //   actions: [
+      //     PopupMenuButton<String>(
+      //       onSelected: (value) {
+      //         switch (value) {
+      //           case 'settings':
+      //             break;
+      //           case 'logout':
+      //             _showLogoutDialog();
+      //             break;
+      //         }
+      //       },
+      //       itemBuilder: (context) => [
+      //         const PopupMenuItem(
+      //           value: 'settings',
+      //           child: Row(
+      //             children: [
+      //               Icon(Icons.settings),
+      //               SizedBox(width: 8),
+      //               Text('Sozlamalar'),
+      //             ],
+      //           ),
+      //         ),
+      //         const PopupMenuItem(
+      //           value: 'logout',
+      //           child: Row(
+      //             children: [
+      //               Icon(Icons.logout),
+      //               SizedBox(width: 8),
+      //               Text('Chiqish'),
+      //             ],
+      //           ),
+      //         ),
+      //       ],
+      //     ),
+      //   ],
+      // ),
       body: AgentHomeModern(
         userName: userName,          // sizdagi o‘zgaruvchi nomi bo‘lishi mumkin
         userCode: userCode,                 // sizdagi o‘zgaruvchi
@@ -247,11 +247,16 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
         // onCreateOrder: () => context.pushNamed(AppRouter.tradingPointsRoute),
         //onOpenCustomers: _openCustomers,              // agar sizda bor bo‘lsa
         // onOpenProducts: _openProducts,                // agar sizda bor bo‘lsa
-        // onLogout: _logout,                            // mavjud logout dialog/handler
+        onLogout: () => _showLogoutDialog(),                            // mavjud logout dialog/handler
       ),
       bottomNavigationBar: FluidNavBar(
         initialIndex: 0, // masalan, buyurtma default
         items: [
+          FluidNavItem(
+            icon: Icons.home,     // placeholder
+            label: 'Home',
+            onTap: () => Navigator.pushNamed(context, AppRouter.agentHomeRoute),
+          ),
           FluidNavItem(
             icon: Icons.add_shopping_cart,
             label: 'Buyurtma',
@@ -272,10 +277,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
             icon: Icons.insert_chart_outlined, // placeholder
             label: 'Hisobot',
           ),
-          const FluidNavItem(
-            icon: Icons.settings_outlined,     // placeholder
-            label: 'Sozlamalar',
-          ),
+
         ],
       ),
     );

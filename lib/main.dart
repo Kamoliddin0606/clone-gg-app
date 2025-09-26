@@ -4,11 +4,13 @@ import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
+import 'package:gloria_marketing_flutter/src/theme/theme_schemes.dart';
 
 void main() async {
   // Ensure that Flutter bindings are initialized.
   WidgetsFlutterBinding.ensureInitialized();
-  
+  await ThemeController.I.restore();
   // Set up service locator
   await setupServiceLocator();
 
@@ -26,12 +28,35 @@ void main() async {
   runApp(const App());
 }
 
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+//     return ValueListenableBuilder<ThemeMode>(
+//       valueListenable: ThemeController.I.mode,
+//       builder: (_, mode, __) => MaterialApp(
+//         debugShowCheckedModeBanner: false,
+//         theme: appLight,
+//         darkTheme: appDark,
+//         themeMode: mode,
+//         home: Text(AppRouter.loginRoute),
+//         // router...
+//         onGenerateRoute: AppRouter.generateRoute,
+//         initialRoute: AppRouter.loginRoute,
+//
+//       ),
+//     );
+//   }
+// }
+
 class App extends StatelessWidget {
   const App({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
+
+
       create: (context) => sl<AuthBloc>(),
       child: MaterialApp(
         title: 'Gloria Marketing',

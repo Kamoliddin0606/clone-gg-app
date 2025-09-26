@@ -5,6 +5,8 @@ import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart'
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 
+
+import '../../../../core/network/server_service.dart';
 import '../../../../theme/theme_controller.dart';
 import '../../../../theme/theme_toggle.dart';
 
@@ -27,6 +29,41 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   static const Color successColor = Color(0xFF3EBD84);
   static const Color accentColor = Color(0xFFFFE8A3);
 
+  Future<void> _pickServer(BuildContext context) async {
+    final service = sl<ServerService>();
+    final selected = await showModalBottomSheet<ServerEnv>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        return ListView(
+          children: ServerEnv.values.map((e) {
+            final isSel = e == service.current.value;
+            return ListTile(
+              leading: Icon(Icons.cloud_outlined,
+                  color: isSel ? Theme.of(ctx).colorScheme.primary : null),
+              title: Text(e.label),
+              subtitle: Text(e.url, maxLines: 1, overflow: TextOverflow.ellipsis),
+              trailing: isSel ? const Icon(Icons.check) : null,
+              onTap: () => Navigator.pop(ctx, e),
+            );
+          }).toList(),
+        );
+      },
+    );
+
+    if (selected != null) {
+      // Tanlovni saqlaymiz — ApiService baseUrl avtomatik yangilanadi
+      await service.set(selected);
+
+      // (ixtiyoriy) eski login/credentiallarni tozalash:
+      // await sl<SharedPreferencesService>().clearCredentials();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${selected.label} server tanlandi')),
+      );
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -199,7 +236,25 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       ),
     );
   }
-
+  Widget _serverChip() {
+    final server = sl<ServerService>();
+    return ValueListenableBuilder<ServerEnv>(
+      valueListenable: server.current,
+      builder: (context, env, _) {
+        final color = switch (env) {
+          ServerEnv.Evyap    => Color.fromRGBO(0, 54, 152, 1.0),
+          ServerEnv.Garnier => Color.fromRGBO(34, 50, 46, 1.0),
+          ServerEnv.PPD    => Color.fromRGBO(0, 0, 0, 1.0),
+          ServerEnv.Avon     => Color.fromRGBO(218, 0, 73, 1.0),
+        };
+        return ActionChip(
+          label: Text(env.label),
+          avatar: CircleAvatar(radius: 6, backgroundColor: color),
+          onPressed: () => _pickServer(context),
+        );
+      },
+    );
+  }
   Widget _buildForm(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -207,6 +262,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // CHANGED: logo + subtile
+        _serverChip(),
         Row(
           children: [
             CircleAvatar(

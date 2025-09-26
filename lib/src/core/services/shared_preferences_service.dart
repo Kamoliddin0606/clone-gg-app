@@ -9,6 +9,9 @@ class SharedPreferencesService {
   static const String _userNameKey = 'user_name';
   static const String _warehouseCodeKey = 'warehouse_code';
 
+  static const String _serverNameKey = 'selected_server_env';
+  // static const String _serverName = 'selected_server_name';
+
   static SharedPreferencesService? _instance;
   // static SharedPreferences? _preferences;
   bool _isInitialized = false;
@@ -105,4 +108,13 @@ Future<void> init() async {
     await _preferences.remove(_userNameKey);
     await _preferences.remove(_warehouseCodeKey);
   }
+
+  Future<bool> setServerName(String name) async =>
+      _preferences.setString(_serverNameKey, name);
+
+  String? getServerName() =>
+      _preferences.getString(_serverNameKey);
+
+  Future<bool> clearServerName() async =>
+      _preferences.remove(_serverNameKey);
 }

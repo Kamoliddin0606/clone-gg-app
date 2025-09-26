@@ -14,6 +14,7 @@ void main() async {
   // Set up service locator
   await setupServiceLocator();
 
+
   // Wait for async services to be ready
   await sl.allReady();
 
@@ -28,26 +29,7 @@ void main() async {
   runApp(const App());
 }
 
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-//   @override
-//   Widget build(BuildContext context) {
-//     return ValueListenableBuilder<ThemeMode>(
-//       valueListenable: ThemeController.I.mode,
-//       builder: (_, mode, __) => MaterialApp(
-//         debugShowCheckedModeBanner: false,
-//         theme: appLight,
-//         darkTheme: appDark,
-//         themeMode: mode,
-//         home: Text(AppRouter.loginRoute),
-//         // router...
-//         onGenerateRoute: AppRouter.generateRoute,
-//         initialRoute: AppRouter.loginRoute,
-//
-//       ),
-//     );
-//   }
-// }
+
 
 class App extends StatelessWidget {
   const App({super.key});

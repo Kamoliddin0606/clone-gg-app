@@ -49,7 +49,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   bool _isLoading = true;
   String userCode = "";
   String password = "";
-
+  int? _expandedIndex;
   bool _showViewBar = false;               // ADD: panel ko'rinish holati
   _ViewMode _viewMode = _ViewMode.list;    // ADD: hozirgi ko'rinish
 
@@ -388,6 +388,13 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                       onViewContracts: () => _viewContracts(tp),
                       onRefusal: () => _showRefusalDialog(tp),
                       onOpenDetails: () => _openTpDetails(tp),
+
+                      expanded: _expandedIndex == index,
+                      onExpand: (open) {
+                        setState(() {
+                          _expandedIndex = open ? index : null; // faqat bittasi ochiq bo‘ladi
+                        });
+                      },
                     );
                   },
                 ),
@@ -400,8 +407,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
-                    // childAspectRatio: 0.82,
-                    mainAxisExtent: 300,
+                    childAspectRatio: 0.70,
+                    // mainAxisExtent: 300,
                   ),
                   itemCount: _filteredTradingPoints.length,
                   itemBuilder: (context, index) {
@@ -598,7 +605,8 @@ class TradingPointCard extends StatelessWidget {
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
   final VoidCallback onOpenDetails;
-
+  final bool? expanded;
+  final ValueChanged<bool>? onExpand;
   const TradingPointCard({
     super.key,
     required this.tradingPoint,
@@ -608,6 +616,10 @@ class TradingPointCard extends StatelessWidget {
     required this.onViewContracts,
     required this.onRefusal,
     required this.onOpenDetails,
+    this.expanded,
+    this.onExpand,
+
+
   });
 
   @override
@@ -623,6 +635,9 @@ class TradingPointCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: cs.surface,
       child: ExpansionTile(
+        key: ValueKey('tp_${tradingPoint.id}_${expanded == true}'), // NEW: qayta qurishni majburlaydi
+        initiallyExpanded: expanded ?? false,                       // NEW: tashqaridan boshqariladi
+        onExpansionChanged: onExpand,
         tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -632,7 +647,7 @@ class TradingPointCard extends StatelessWidget {
       title: Text(
           tradingPoint.name,
           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-          maxLines: 1,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Padding(
@@ -717,7 +732,7 @@ class TradingPointCard extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -951,7 +966,7 @@ class TradingPointGridCard extends StatelessWidget {
               children: [
                 Text(
                   tradingPoint.name,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                 ),
@@ -960,7 +975,7 @@ class TradingPointGridCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.place_outlined, size: 16),
                     const SizedBox(width: 6),
-                    Expanded(child: Text(tradingPoint.address, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    Expanded(child: Text(tradingPoint.address, maxLines: 2, overflow: TextOverflow.ellipsis)),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -1110,14 +1125,24 @@ class _TradingPointGridTile extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final url = _safePhotoUrl(tp);
-    return InkWell(
-      onTap: onOpenDetails,
-      borderRadius: BorderRadius.circular(16),
+    return Card(
+      // onTap: onOpenDetails,
+      // borderRadius: BorderRadius.circular(16),
+      elevation: 6,                                // CHANGED: chiroyli soya
+      shadowColor: Colors.black.withOpacity(.15),  // CHANGED: yumshoq soya
+      surfaceTintColor: Colors.transparent,        // CHANGED: M3 tintni o'chirish
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      clipBehavior: Clip.antiAlias,
 
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        clipBehavior: Clip.antiAlias,
+
+        child: InkWell(
+          onTap: onOpenDetails,
+          borderRadius: BorderRadius.circular(16),
+          splashColor: cs.primary.withOpacity(.10),
+          highlightColor: cs.primary.withOpacity(.10),
+
         child: Column(
 
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1145,16 +1170,22 @@ class _TradingPointGridTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tp.name, maxLines: 1, overflow: TextOverflow.ellipsis,
+                Text(tp.name, maxLines: 2, softWrap: true,overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
-                _line(Icons.place_outlined, tp.address),
+                // _line(Icons.place_outlined, tp.address),
+                // const SizedBox(height: 2),
+                // _line(Icons.badge_outlined, 'INN: ${tp.inn}'),
+
+                // NEW:
+                _lineMultiline(Icons.place_outlined, tp.address, maxLines: 3),     // CHANGED
                 const SizedBox(height: 2),
-                _line(Icons.badge_outlined, 'INN: ${tp.inn}'),
+                _lineMultiline(Icons.badge_outlined, 'INN: ${tp.inn}', maxLines: 2), // CHANGED
               ],
             ),
           ),
-          const Spacer(),
+          // const Spacer(),
+          const SizedBox(height: 6),
           // // ACTIONS
           // Padding(
           //   padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -1180,6 +1211,26 @@ class _TradingPointGridTile extends StatelessWidget {
       Expanded(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis)),
     ],
   );
+
+  // ADD: ko‘p qatorli helper
+  Widget _lineMultiline(IconData icon, String text, {int maxLines = 3}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,         // CHANGED: alta tekislash
+      children: [
+        Icon(icon, size: 16),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            softWrap: true,                                  // CHANGED
+            maxLines: maxLines,                              // CHANGED: 2-3 qatorgacha
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
 }
 // ADD: Grid detail oynasi (modal bottom-sheet)
 class _TradingPointDetailsSheet extends StatelessWidget {
@@ -1238,7 +1289,7 @@ class _TradingPointDetailsSheet extends StatelessWidget {
                         children: [
                           const Icon(Icons.place_outlined, size: 18),
                           const SizedBox(width: 8),
-                          Expanded(child: Text(tradingPoint.address)),
+                          Expanded(child: Text(tradingPoint.address, style: theme.textTheme.bodyMedium, maxLines: 2,overflow: TextOverflow.ellipsis,)),
                         ],
                       ),
                       const SizedBox(height: 6),

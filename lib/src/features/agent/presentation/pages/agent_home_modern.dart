@@ -451,7 +451,7 @@ class _AppDrawer extends StatelessWidget {
                 onChanged: ThemeController.I.set,
               ),
             ),
-            onTap: () {}, // No action, toggle handles it
+            onTap: () => ThemeController.I.set(ThemeController.I.mode.value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark),
           ),
           _MenuItem(
             icon: Icons.settings,

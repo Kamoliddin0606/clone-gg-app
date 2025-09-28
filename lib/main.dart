@@ -40,14 +40,18 @@ class App extends StatelessWidget {
 
 
       create: (context) => sl<AuthBloc>(),
-      child: MaterialApp(
-        title: 'Gloria Marketing',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
-        onGenerateRoute: AppRouter.generateRoute,
-        initialRoute: AppRouter.loginRoute,
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: ThemeController.I.mode,
+        builder: (context, themeMode, _) {
+          return MaterialApp(
+            title: 'Gloria Marketing',
+            theme: appLight,
+            darkTheme: appDark,
+            themeMode: themeMode,
+            onGenerateRoute: AppRouter.generateRoute,
+            initialRoute: AppRouter.loginRoute,
+          );
+        },
       ),
     );
   }

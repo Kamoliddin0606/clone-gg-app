@@ -407,7 +407,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
-                    childAspectRatio: 0.70,
+                    childAspectRatio: 0.60,
                     // mainAxisExtent: 300,
                   ),
                   itemCount: _filteredTradingPoints.length,
@@ -618,8 +618,6 @@ class TradingPointCard extends StatelessWidget {
     required this.onOpenDetails,
     this.expanded,
     this.onExpand,
-
-
   });
 
   @override
@@ -634,15 +632,21 @@ class TradingPointCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: cs.surface,
-      child: ExpansionTile(
-        key: ValueKey('tp_${tradingPoint.id}_${expanded == true}'), // NEW: qayta qurishni majburlaydi
-        initiallyExpanded: expanded ?? false,                       // NEW: tashqaridan boshqariladi
-        onExpansionChanged: onExpand,
-        tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading:  _AvatarLeading(tp: tradingPoint, visited: tradingPoint.isVisited),
+      child: GestureDetector(
+        onTap: () {
+          final newExpanded = !(expanded ?? false);
+          onExpand?.call(newExpanded);
+        },
+        onDoubleTap: onOpenDetails,
+        child: ExpansionTile(
+          key: ValueKey('tp_${tradingPoint.id}_${expanded == true}'), // NEW: qayta qurishni majburlaydi
+          initiallyExpanded: expanded ?? false,                       // NEW: tashqaridan boshqariladi
+          onExpansionChanged: null,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          leading:  _AvatarLeading(tp: tradingPoint, visited: tradingPoint.isVisited),
 
       title: Text(
           tradingPoint.name,
@@ -655,9 +659,9 @@ class TradingPointCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _line(Icons.place_outlined, tradingPoint.address, soft: true),
+              _line(context, Icons.place_outlined, tradingPoint.address, soft: true, maxLines: 3, scrollable: true),
               const SizedBox(height: 2),
-              _line(Icons.badge_outlined, 'INN: ${tradingPoint.inn}'),
+              _line(context, Icons.badge_outlined, 'INN: ${tradingPoint.inn}'),
             ],
           ),
         ),
@@ -721,20 +725,38 @@ class TradingPointCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 
-  Widget _line(IconData icon, String text, {bool soft = false}) {
+  Widget _line(BuildContext context, IconData icon, String text, {bool soft = false, int maxLines = 2, bool scrollable = false}) {
+    Widget textWidget;
+    if (scrollable) {
+      textWidget = SizedBox(
+        height: maxLines * 20.0, // Approximate height for maxLines
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          child: SingleChildScrollView(
+            child: Text(
+              text,
+              softWrap: true,
+            ),
+          ),
+        ),
+      );
+    } else {
+      textWidget = Text(
+        text,
+        maxLines: maxLines,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
     return Row(
+      crossAxisAlignment: scrollable ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       children: [
         Icon(icon, size: 16, color: soft ? null : Colors.grey),
         const SizedBox(width: 6),
         Expanded(
-          child: Text(
-            text,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          child: textWidget,
         ),
       ],
     );
@@ -1178,9 +1200,9 @@ class _TradingPointGridTile extends StatelessWidget {
                 // _line(Icons.badge_outlined, 'INN: ${tp.inn}'),
 
                 // NEW:
-                _lineMultiline(Icons.place_outlined, tp.address, maxLines: 3),     // CHANGED
+                _lineMultiline(context, Icons.place_outlined, tp.address, maxLines: 3, scrollable: true),     // CHANGED
                 const SizedBox(height: 2),
-                _lineMultiline(Icons.badge_outlined, 'INN: ${tp.inn}', maxLines: 2), // CHANGED
+                _lineMultiline(context, Icons.badge_outlined, 'INN: ${tp.inn}', maxLines: 2), // CHANGED
               ],
             ),
           ),
@@ -1213,19 +1235,36 @@ class _TradingPointGridTile extends StatelessWidget {
   );
 
   // ADD: ko‘p qatorli helper
-  Widget _lineMultiline(IconData icon, String text, {int maxLines = 3}) {
+  Widget _lineMultiline(BuildContext context, IconData icon, String text, {int maxLines = 3, bool scrollable = false}) {
+    Widget textWidget;
+    if (scrollable) {
+      textWidget = SizedBox(
+        height: maxLines * 20.0, // Approximate height
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          child: SingleChildScrollView(
+            child: Text(
+              text,
+              softWrap: true,
+            ),
+          ),
+        ),
+      );
+    } else {
+      textWidget = Text(
+        text,
+        softWrap: true,
+        maxLines: maxLines,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,         // CHANGED: alta tekislash
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 16),
         const SizedBox(width: 6),
         Expanded(
-          child: Text(
-            text,
-            softWrap: true,                                  // CHANGED
-            maxLines: maxLines,                              // CHANGED: 2-3 qatorgacha
-            overflow: TextOverflow.ellipsis,
-          ),
+          child: textWidget,
         ),
       ],
     );

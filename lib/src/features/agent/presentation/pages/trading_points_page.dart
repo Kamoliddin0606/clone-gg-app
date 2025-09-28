@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
@@ -1272,7 +1274,7 @@ class _TradingPointGridTile extends StatelessWidget {
 
 }
 // ADD: Grid detail oynasi (modal bottom-sheet)
-class _TradingPointDetailsSheet extends StatelessWidget {
+class _TradingPointDetailsSheet extends StatefulWidget {
   final TradingPoint tradingPoint;
   final ScrollController scrollController;
   final VoidCallback onCall;
@@ -1293,123 +1295,383 @@ class _TradingPointDetailsSheet extends StatelessWidget {
   });
 
   @override
+  State<_TradingPointDetailsSheet> createState() => _TradingPointDetailsSheetState();
+}
+
+class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController.addListener(() {
+      setState(() {
+        _currentPage = _pageController.page?.round() ?? 0;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final url = _safePhotoUrl(tradingPoint);
+    final url = _safePhotoUrl(widget.tradingPoint);
 
     return Material(
       color: cs.surface,
-      child: CustomScrollView(
-        controller: scrollController,
-        slivers: [
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header image + title (uslub AgentHome bilan uyg‘un)
+          _HeaderImage(url: url, visited: widget.tradingPoint.isVisited),
+
+          // Page Indicator Line
+          SizedBox(
+            height: 2,
+            child: Stack(
               children: [
-                // Header image + title (uslub AgentHome bilan uyg‘un)
-                _HeaderImage(url: url, visited: tradingPoint.isVisited),
-
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tradingPoint.name,
-                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-
-                      // Manzil
-                      Row(
-                        children: [
-                          const Icon(Icons.place_outlined, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(tradingPoint.address, style: theme.textTheme.bodyMedium, maxLines: 2,overflow: TextOverflow.ellipsis,)),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-
-                      // INN
-                      Row(
-                        children: [
-                          const Icon(Icons.badge_outlined, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text('INN: ${tradingPoint.inn}')),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Aloqa shaxs va telefon
-                      Row(
-                        children: [
-                          const Icon(Icons.person_outline, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text('Aloqa: ${tradingPoint.contactPerson}')),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.phone_outlined, size: 18),
-                          const SizedBox(width: 8),
-                          InkWell(
-                            onTap: onCall,
-                            borderRadius: BorderRadius.circular(6),
-                            child: Text(
-                              tradingPoint.phone,
-                              style: TextStyle(
-                                color: cs.primary,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Actions (Material 3 ko‘rinishida)
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (!tradingPoint.isVisited)
-                            FilledButton.icon(
-                              onPressed: onInformVisit,
-                              icon: const Icon(Icons.location_on, size: 18),
-                              label: const Text('Tashrif'),
-                            ),
-                          FilledButton.tonalIcon(
-                            onPressed: onCreateOrder,
-                            icon: const Icon(Icons.shopping_cart, size: 18),
-                            label: const Text('Buyurtma'),
-                          ),
-                          if (tradingPoint.hasContract)
-                            OutlinedButton.icon(
-                              onPressed: onViewContracts,
-                              icon: const Icon(Icons.description, size: 18),
-                              label: const Text('Shartnoma'),
-                            ),
-                          OutlinedButton.icon(
-                            onPressed: onRefusal,
-                            icon: const Icon(Icons.cancel, size: 18),
-                            label: const Text('Rad etish'),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 24),
-                    ],
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 300),
+                  left: _currentPage == 0 ? 0 : MediaQuery.of(context).size.width / 2,
+                  top: 0,
+                  bottom: 0,
+                  width: MediaQuery.of(context).size.width / 2,
+                  child: Container(
+                    color: cs.primary,
                   ),
+                ),
+              ],
+            ),
+          ),
+
+          // PageView with two pages
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              children: [
+                // First page: Client Details
+                _ClientDetailsPage(
+                  tradingPoint: widget.tradingPoint,
+                  onCall: widget.onCall,
+                ),
+                // Second page: Actions and Map
+                _ActionsMapPage(
+                  tradingPoint: widget.tradingPoint,
+                  onInformVisit: widget.onInformVisit,
+                  onCreateOrder: widget.onCreateOrder,
+                  onViewContracts: widget.onViewContracts,
+                  onRefusal: widget.onRefusal,
                 ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// Client Details Page
+class _ClientDetailsPage extends StatelessWidget {
+  final TradingPoint tradingPoint;
+  final VoidCallback onCall;
+
+  const _ClientDetailsPage({
+    required this.tradingPoint,
+    required this.onCall,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            tradingPoint.name,
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+
+          // Address
+          Row(
+            children: [
+              const Icon(Icons.place_outlined, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text(tradingPoint.address, style: theme.textTheme.bodyMedium, maxLines: 3, overflow: TextOverflow.ellipsis)),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // INN
+          Row(
+            children: [
+              const Icon(Icons.badge_outlined, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text('INN: ${tradingPoint.inn}')),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Owner Name
+          if (tradingPoint.ownerName.isNotEmpty)
+            Row(
+              children: [
+                const Icon(Icons.person, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Egasi: ${tradingPoint.ownerName}')),
+              ],
+            ),
+          const SizedBox(height: 6),
+
+          // Contact Person
+          Row(
+            children: [
+              const Icon(Icons.person_outline, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Aloqa: ${tradingPoint.contactPerson}')),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Phone
+          Row(
+            children: [
+              const Icon(Icons.phone_outlined, size: 18),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: onCall,
+                borderRadius: BorderRadius.circular(6),
+                child: Text(
+                  tradingPoint.phone,
+                  style: TextStyle(
+                    color: cs.primary,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Responsible Person
+          if (tradingPoint.responsiblePerson.isNotEmpty)
+            Row(
+              children: [
+                const Icon(Icons.account_circle_outlined, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Mas\'ul: ${tradingPoint.responsiblePerson}')),
+              ],
+            ),
+          const SizedBox(height: 6),
+
+          // Responsible Person Phone
+          if (tradingPoint.responsiblePersonPhone.isNotEmpty)
+            Row(
+              children: [
+                const Icon(Icons.phone_android_outlined, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Mas\'ul tel: ${tradingPoint.responsiblePersonPhone}')),
+              ],
+            ),
+          const SizedBox(height: 6),
+
+          // Trade Point Type
+          if (tradingPoint.tradePointType.isNotEmpty)
+            Row(
+              children: [
+                const Icon(Icons.storefront_outlined, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Turi: ${tradingPoint.tradePointType}')),
+              ],
+            ),
+          const SizedBox(height: 6),
+
+          // Region and District
+          Row(
+            children: [
+              const Icon(Icons.location_city_outlined, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text('${tradingPoint.region}, ${tradingPoint.district}')),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Signboard
+          if (tradingPoint.signboard.isNotEmpty)
+            Row(
+              children: [
+                const Icon(Icons.signpost_outlined, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Belgi: ${tradingPoint.signboard}')),
+              ],
+            ),
+          const SizedBox(height: 6),
+
+          // Reference Point
+          if (tradingPoint.referencePoint.isNotEmpty)
+            Row(
+              children: [
+                const Icon(Icons.gps_fixed_outlined, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Mo\'ljal: ${tradingPoint.referencePoint}')),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// Actions and Map Page
+class _ActionsMapPage extends StatefulWidget {
+  final TradingPoint tradingPoint;
+  final VoidCallback onInformVisit;
+  final VoidCallback onCreateOrder;
+  final VoidCallback onViewContracts;
+  final VoidCallback onRefusal;
+
+  const _ActionsMapPage({
+    required this.tradingPoint,
+    required this.onInformVisit,
+    required this.onCreateOrder,
+    required this.onViewContracts,
+    required this.onRefusal,
+  });
+
+  @override
+  State<_ActionsMapPage> createState() => _ActionsMapPageState();
+}
+
+class _ActionsMapPageState extends State<_ActionsMapPage> {
+  GoogleMapController? _mapController;
+  bool _locationPermissionGranted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationPermission();
+  }
+
+  Future<void> _checkLocationPermission() async {
+    final status = await Permission.location.status;
+    if (status.isGranted) {
+      setState(() {
+        _locationPermissionGranted = true;
+      });
+    } else {
+      final result = await Permission.location.request();
+      setState(() {
+        _locationPermissionGranted = result.isGranted;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Column(
+      children: [
+        // Map at top
+        Expanded(
+          flex: 2, // Give more space to map
+          child: _locationPermissionGranted
+              ? GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude),
+                    zoom: 15,
+                  ),
+                  markers: {
+                    Marker(
+                      markerId: MarkerId(widget.tradingPoint.id),
+                      position: LatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude),
+                      infoWindow: InfoWindow(title: widget.tradingPoint.name),
+                    ),
+                  },
+                  onMapCreated: (controller) {
+                    _mapController = controller;
+                  },
+                )
+              : Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.location_off, size: 48, color: Colors.grey),
+                      const SizedBox(height: 8),
+                      Text('Joylashuv ruxsati berilmagan', style: theme.textTheme.bodyMedium),
+                      TextButton(
+                        onPressed: _checkLocationPermission,
+                        child: const Text('Ruxsat so\'rash'),
+                      ),
+                    ],
+                  ),
+                ),
+        ),
+
+        // Actions below
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (!widget.tradingPoint.isVisited)
+                FilledButton.icon(
+                  onPressed: widget.onInformVisit,
+                  icon: const Icon(Icons.location_on, size: 18),
+                  label: const Text('Tashrif'),
+                ),
+              FilledButton.tonalIcon(
+                onPressed: widget.onCreateOrder,
+                icon: const Icon(Icons.shopping_cart, size: 18),
+                label: const Text('Buyurtma'),
+              ),
+              if (widget.tradingPoint.hasContract)
+                OutlinedButton.icon(
+                  onPressed: widget.onViewContracts,
+                  icon: const Icon(Icons.description, size: 18),
+                  label: const Text('Shartnoma'),
+                ),
+              OutlinedButton.icon(
+                onPressed: widget.onRefusal,
+                icon: const Icon(Icons.cancel, size: 18),
+                label: const Text('Rad etish'),
+              ),
+              // TODO: Add reports, debit-credit, graph buttons
+              OutlinedButton.icon(
+                onPressed: () {}, // TODO: Navigate to reports
+                icon: const Icon(Icons.bar_chart, size: 18),
+                label: const Text('Hisobotlar'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () {}, // TODO: Debit-credit
+                icon: const Icon(Icons.account_balance, size: 18),
+                label: const Text('Debit-Kredit'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () {}, // TODO: Graph
+                icon: const Icon(Icons.show_chart, size: 18),
+                label: const Text('Grafik'),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

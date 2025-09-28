@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Neumorphic pill toggle (Light <-> Dark) similar to the screenshot.
-/// Use inside AppBars (actions) or anywhere.
+/// 3D Toggle Switch for Light/Dark mode with smooth animation
 class ThemeToggle extends StatelessWidget {
   final ThemeMode mode;
   final ValueChanged<ThemeMode> onChanged;
@@ -12,85 +11,97 @@ class ThemeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final bg = cs.surface;
-    final shadow = Colors.black.withOpacity(0.12);
 
-    return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: shadow, blurRadius: 8, offset: const Offset(0, 2)),
-          BoxShadow(color: cs.onSurface.withOpacity(.08), blurRadius: 1, offset: const Offset(0, 1)),
-        ],
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Stack(
-        children: [
-          // moving thumb
-          AnimatedAlign(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            alignment: isDark ? Alignment.centerRight : Alignment.centerLeft,
-            child: Container(
-              width: 80,
-              height: 28,
-              decoration: BoxDecoration(
-                color: isDark ? cs.surfaceContainerHighest : cs.surface,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  if (!isDark) BoxShadow(color: Colors.white.withOpacity(.9), blurRadius: 6, offset: const Offset(-1, -1)),
-                  BoxShadow(color: Colors.black.withOpacity(.12), blurRadius: 8, offset: const Offset(1, 2)),
-                ],
-              ),
+    // Track gradient based on mode
+    final trackGradient = isDark
+        ? const LinearGradient(
+            colors: [Color(0xFF1E3A8A), Color(0xFF7C3AED)], // Blue to purple
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          )
+        : const LinearGradient(
+            colors: [Color(0xFFFFD700), Color(0xFFFF8C00)], // Yellow to orange
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          );
+
+    return GestureDetector(
+      onTap: () => onChanged(isDark ? ThemeMode.light : ThemeMode.dark),
+      child: Container(
+        width: 120,
+        height: 32,
+        decoration: BoxDecoration(
+          gradient: trackGradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
-          ),
-
-          // content
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _side(
-                context,
-                active: !isDark,
-                icon: Icons.wb_sunny_rounded,
-                label: 'LIGHT',
-                onTap: () => onChanged(ThemeMode.light),
-              ),
-              _side(
-                context,
-                active: isDark,
-                icon: Icons.nightlight_round,
-                label: 'DARK',
-                onTap: () => onChanged(ThemeMode.dark),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _side(BuildContext context, {required bool active, required IconData icon, required String label, required VoidCallback onTap}) {
-    final cs = Theme.of(context).colorScheme;
-    final color = active ? cs.onSurface : cs.onSurface.withOpacity(.6);
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
-      child: SizedBox(
-        width: 86,
-        height: 28,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+            BoxShadow(
+              color: Colors.white.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Stack(
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 180),
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
-              child: Text(label),
+            // Icons on sides
+            Row(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Icon(
+                      Icons.wb_sunny_rounded,
+                      size: 16,
+                      color: isDark ? Colors.white.withOpacity(0.5) : Colors.white,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Icon(
+                      Icons.nightlight_round,
+                      size: 16,
+                      color: isDark ? Colors.white : Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Moving thumb
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              alignment: isDark ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                width: 44,
+                height: 28,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                    BoxShadow(
+                      color: Colors.white.withOpacity(0.8),
+                      blurRadius: 4,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  isDark ? Icons.nightlight_round : Icons.wb_sunny_rounded,
+                  size: 18,
+                  color: isDark ? const Color(0xFF7C3AED) : const Color(0xFFFF8C00),
+                ),
+              ),
             ),
           ],
         ),

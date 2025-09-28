@@ -63,23 +63,43 @@ class KpiView {
 class AgentHomeModern extends StatefulWidget {
   final String userName;
   final String userCode;
+  final String? position;
+  final String? project;
+  final String? avatarUrl;
   final KpiView? kpi;
 
   final Future<void> Function()? onRefresh;
   final VoidCallback? onCreateOrder;
   final VoidCallback? onOpenCustomers;
   final VoidCallback? onOpenProducts;
+  final VoidCallback? onReports;
+  final VoidCallback? onCash;
+  final VoidCallback? onDebitCredit;
+  final VoidCallback? onWarehouses;
+  final VoidCallback? onPrices;
+  final VoidCallback? onContracts;
+  final VoidCallback? onSettings;
   final VoidCallback? onLogout;
 
   const AgentHomeModern({
     super.key,
     required this.userName,
     required this.userCode,
+    this.position,
+    this.project,
+    this.avatarUrl,
     this.kpi,
     this.onRefresh,
     this.onCreateOrder,
     this.onOpenCustomers,
     this.onOpenProducts,
+    this.onReports,
+    this.onCash,
+    this.onDebitCredit,
+    this.onWarehouses,
+    this.onPrices,
+    this.onContracts,
+    this.onSettings,
     this.onLogout,
   });
   static String _pct(String? v) {
@@ -109,6 +129,7 @@ class AgentHomeModern extends StatefulWidget {
 }
 
 class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderStateMixin {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _expanded = true;
 
   void _toggleExpanded() {
@@ -119,127 +140,362 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return RefreshIndicator(
-      onRefresh: widget.onRefresh ?? () async {},
-      child: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            expandedHeight: 160,
-            surfaceTintColor: Colors.transparent,
-            flexibleSpace: _Header(userName: widget.userName, userCode: widget.userCode),
-            actions: [
-            //   Padding(
-            //   padding: const EdgeInsets.symmetric(horizontal: 8),
-            //   child: ThemeToggle(
-            //     mode: ThemeController.I.mode.value,
-            //     onChanged: ThemeController.I.set,
-            //   ),
-            // ),
-              IconButton(
-                tooltip: 'Yangilash',
-                onPressed: () => widget.onRefresh?.call(),
-                icon: const Icon(Icons.refresh),
+    return Scaffold(
+      key: _scaffoldKey,
+      drawer: _AppDrawer(
+        userName: widget.userName,
+        userCode: widget.userCode,
+        position: widget.position,
+        project: widget.project,
+        avatarUrl: widget.avatarUrl,
+        onOpenCustomers: widget.onOpenCustomers,
+        onReports: widget.onReports,
+        onCash: widget.onCash,
+        onDebitCredit: widget.onDebitCredit,
+        onWarehouses: widget.onWarehouses,
+        onProducts: widget.onOpenProducts,
+        onPrices: widget.onPrices,
+        onContracts: widget.onContracts,
+        onSettings: widget.onSettings,
+        onLogout: widget.onLogout,
+      ),
+      body: RefreshIndicator(
+        onRefresh: widget.onRefresh ?? () async {},
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              expandedHeight: 160,
+              surfaceTintColor: Colors.transparent,
+              leading: IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                tooltip: 'Menyu',
               ),
-              IconButton(
-                tooltip: 'Chiqish',
-                onPressed: widget.onLogout,
-                icon: const Icon(Icons.logout),
-              ),
+              flexibleSpace: _Header(userName: widget.userName, userCode: widget.userCode),
+              actions: [
+              //   Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 8),
+              //   child: ThemeToggle(
+              //     mode: ThemeController.I.mode.value,
+              //     onChanged: ThemeController.I.set,
+              //   ),
+              // ),
+                IconButton(
+                  tooltip: 'Yangilash',
+                  onPressed: () => widget.onRefresh?.call(),
+                  icon: const Icon(Icons.refresh),
+                ),
+                IconButton(
+                  tooltip: 'Chiqish',
+                  onPressed: widget.onLogout,
+                  icon: const Icon(Icons.logout),
+                ),
 
 
-            ],
-          ),
-
-          // KPI ring + quick stats (TAP TO TOGGLE BELOW CARDS)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: _KpiOverview(kpi: widget.kpi, onTap: _toggleExpanded, expanded: _expanded),
+              ],
             ),
-          ),
 
-          // KPI grid (animated show/hide when tapping overview)
-          SliverToBoxAdapter(
-            child: AnimatedSize(
-              duration: const Duration(milliseconds: 260),
-              curve: Curves.easeInOut,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                switchInCurve: Curves.easeOutQuad,
-                switchOutCurve: Curves.easeInQuad,
-                child: _expanded
-                    ? Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.90,
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    children: [
-                      _StatCard(
-                        title: 'Savdo summasi',
-                        value: AgentHomeModern._sumFmt(widget.kpi?.salesSum),
-                        icon: Icons.trending_up,
-                      ),
-                      _StatCard(
-                        title: 'Sotilgan tovarlar',
-                        value: widget.kpi?.itemsSold ?? '-',
-                        icon: Icons.inventory_2,
-                      ),
-                      _StatCard(
-                        title: 'Xizmat ko’rsatilgan mijozlar',
-                        value: widget.kpi?.customersServed ?? '-',
-                        icon: Icons.people_alt,
-                      ),
-                      _StatCard(
-                        title: 'OKB',
-                        value: widget.kpi?.okb ?? '-',
-                        icon: Icons.verified_user,
-                      ),
-                      _StatCard(
-                        title: 'AKB rejasi',
-                        value: widget.kpi?.akbPlan ?? '-',
-                        icon: Icons.flag,
-                      ),
-                      _StatCard(
-                        title: 'AKB fakt',
-                        value: widget.kpi?.akbFact ?? '-',
-                        icon: Icons.check_circle_outline,
-                      ),
-                      _StatCard(
-                        title: 'AKB %',
-                        value: AgentHomeModern._pct(widget.kpi?.akbPercent),
-                        icon: Icons.percent,
-                      ),
-                    ],
-                  ),
-                )
-                    : const SizedBox.shrink(),
+            // KPI ring + quick stats (TAP TO TOGGLE BELOW CARDS)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: _KpiOverview(kpi: widget.kpi, onTap: _toggleExpanded, expanded: _expanded),
               ),
             ),
-          ),
 
-          // Actions stay as-is
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              child: _ActionsRow(
-                onCreateOrder: widget.onCreateOrder,
-                onOpenCustomers: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
-                onOpenProducts: widget.onOpenProducts,
+            // KPI grid (animated show/hide when tapping overview)
+            SliverToBoxAdapter(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeInOut,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutQuad,
+                  switchOutCurve: Curves.easeInQuad,
+                  child: _expanded
+                      ? Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: GridView.count(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.90,
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      children: [
+                        _StatCard(
+                          title: 'Savdo summasi',
+                          value: AgentHomeModern._sumFmt(widget.kpi?.salesSum),
+                          icon: Icons.trending_up,
+                        ),
+                        _StatCard(
+                          title: 'Sotilgan tovarlar',
+                          value: widget.kpi?.itemsSold ?? '-',
+                          icon: Icons.inventory_2,
+                        ),
+                        _StatCard(
+                          title: 'Xizmat ko’rsatilgan mijozlar',
+                          value: widget.kpi?.customersServed ?? '-',
+                          icon: Icons.people_alt,
+                        ),
+                        _StatCard(
+                          title: 'OKB',
+                          value: AgentHomeModern._sumFmt(widget.kpi?.okb),
+                          icon: Icons.verified_user,
+                        ),
+                        _StatCard(
+                          title: 'AKB rejasi',
+                          value: AgentHomeModern._sumFmt(widget.kpi?.akbPlan),
+                          icon: Icons.flag,
+                        ),
+                        _StatCard(
+                          title: 'AKB fakt',
+                          value: AgentHomeModern._sumFmt(widget.kpi?.akbFact),
+                          icon: Icons.check_circle_outline,
+                        ),
+                        _StatCard(
+                          title: 'AKB %',
+                          value: AgentHomeModern._pct(widget.kpi?.akbPercent),
+                          icon: Icons.percent,
+                        ),
+                      ],
+                    ),
+                  )
+                      : const SizedBox.shrink(),
+                ),
               ),
             ),
-          ),
-        ],
+
+            // Actions stay as-is
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: _ActionsRow(
+                  onCreateOrder: widget.onCreateOrder,
+                  onOpenCustomers: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
+                  onOpenProducts: widget.onOpenProducts,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // Moved helper to stateful class; keep same behavior
 
+}
+
+class _AppDrawer extends StatelessWidget {
+  final String userName;
+  final String userCode;
+  final String? position;
+  final String? project;
+  final String? avatarUrl;
+  final VoidCallback? onOpenCustomers;
+  final VoidCallback? onReports;
+  final VoidCallback? onCash;
+  final VoidCallback? onDebitCredit;
+  final VoidCallback? onWarehouses;
+  final VoidCallback? onProducts;
+  final VoidCallback? onPrices;
+  final VoidCallback? onContracts;
+  final VoidCallback? onSettings;
+  final VoidCallback? onLogout;
+
+  const _AppDrawer({
+    required this.userName,
+    required this.userCode,
+    this.position,
+    this.project,
+    this.avatarUrl,
+    this.onOpenCustomers,
+    this.onReports,
+    this.onCash,
+    this.onDebitCredit,
+    this.onWarehouses,
+    this.onProducts,
+    this.onPrices,
+    this.onContracts,
+    this.onSettings,
+    this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Drawer(
+      child: Column(
+        children: [
+          // User info header
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
+            decoration: BoxDecoration(
+              color: cs.primaryContainer,
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+                  child: avatarUrl == null
+                      ? Text(
+                          userName.isNotEmpty ? userName.characters.first.toUpperCase() : 'U',
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: cs.onPrimaryContainer,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (position != null)
+                        Text(
+                          position!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: cs.onPrimaryContainer.withOpacity(0.8),
+                          ),
+                        ),
+                      Text(
+                        'ID: $userCode',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onPrimaryContainer.withOpacity(0.7),
+                        ),
+                      ),
+                      if (project != null)
+                        Text(
+                          project!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onPrimaryContainer.withOpacity(0.7),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Menu items
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _MenuItem(
+                  icon: Icons.people,
+                  title: 'Mijozlar',
+                  onTap: onOpenCustomers,
+                ),
+                _MenuItem(
+                  icon: Icons.bar_chart,
+                  title: 'Hisobotlar',
+                  onTap: onReports,
+                ),
+                _MenuItem(
+                  icon: Icons.account_balance_wallet,
+                  title: 'Kassa',
+                  onTap: onCash,
+                ),
+                _MenuItem(
+                  icon: Icons.account_balance,
+                  title: 'Debit-Kredit',
+                  onTap: onDebitCredit,
+                ),
+                _MenuItem(
+                  icon: Icons.warehouse,
+                  title: 'Skladlar',
+                  onTap: onWarehouses,
+                ),
+                _MenuItem(
+                  icon: Icons.storefront,
+                  title: 'Tovarlar',
+                  onTap: onProducts,
+                ),
+                _MenuItem(
+                  icon: Icons.price_change,
+                  title: 'Narxlar',
+                  onTap: onPrices,
+                ),
+                _MenuItem(
+                  icon: Icons.description,
+                  title: 'Shartnomalar',
+                  onTap: onContracts,
+                ),
+              ],
+            ),
+          ),
+
+          // Bottom section
+          const Divider(),
+          _MenuItem(
+            icon: Icons.brightness_6,
+            title: 'Dark mode',
+            trailing: SizedBox(
+              width: 80,
+              child: ThemeToggle(
+                mode: ThemeController.I.mode.value,
+                onChanged: ThemeController.I.set,
+              ),
+            ),
+            onTap: () {}, // No action, toggle handles it
+          ),
+          _MenuItem(
+            icon: Icons.settings,
+            title: 'Sozlamalar',
+            onTap: onSettings,
+          ),
+          _MenuItem(
+            icon: Icons.logout,
+            title: 'Chiqish',
+            onTap: onLogout,
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  const _MenuItem({
+    required this.icon,
+    required this.title,
+    this.trailing,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title, style: theme.textTheme.bodyLarge),
+      trailing: trailing,
+      onTap: onTap,
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    );
+  }
 }
 
 class _Header extends StatelessWidget {

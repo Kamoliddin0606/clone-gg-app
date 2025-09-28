@@ -11,6 +11,24 @@ import 'dart:ui'; // blur uchun
 
 import '../../../../core/router/app_router.dart';
 import '../../../navbars/fluid_nav_bar.dart';
+
+/// Transliterate Cyrillic characters to Latin (Uzbek standard)
+String transliterateToLatin(String text) {
+  const cyrillicToLatin = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+    'ж': 'j', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+    'ф': 'f', 'х': 'x', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
+    'ъ': "'", 'ы': 'y', 'ь': "'", 'э': 'e', 'ю': 'yu', 'я': 'ya',
+    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
+    'Ж': 'J', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+    'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+    'Ф': 'F', 'Х': 'X', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch',
+    'Ъ': "'", 'Ы': 'Y', 'Ь': "'", 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+  };
+
+  return text.split('').map((char) => cyrillicToLatin[char] ?? char).join('');
+}
 // (ixtiyoriy) agar Light/Dark toggle qo‘ymoqchi bo‘lsangiz, quyidagini oching:
 // import '../../../../theme/theme_controller.dart';
 // import '../../../../theme/theme_toggle.dart';
@@ -120,12 +138,12 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (query.isEmpty) {
         _filteredTradingPoints = List.from(_allTradingPoints);
       } else {
+        final qLatin = transliterateToLatin(query).toLowerCase();
         _filteredTradingPoints = _allTradingPoints.where((tp) {
-          final q = query.toLowerCase();
-          return tp.name.toLowerCase().contains(q) ||
-              tp.address.toLowerCase().contains(q) ||
-              tp.contactPerson.toLowerCase().contains(q) ||
-              tp.ownerName.toLowerCase().contains(q) ||
+          return transliterateToLatin(tp.name).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(tp.address).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(tp.contactPerson).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(tp.ownerName).toLowerCase().contains(qLatin) ||
               tp.inn.contains(query);
         }).toList();
       }

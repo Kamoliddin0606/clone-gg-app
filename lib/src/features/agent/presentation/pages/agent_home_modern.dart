@@ -360,7 +360,7 @@ class _AppDrawer extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           color: cs.onPrimaryContainer,
                         ),
-                        maxLines: 1,
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (position != null)
@@ -538,7 +538,7 @@ class _Header extends StatelessWidget {
                 children: [
                   Text(
                     userName,
-                    maxLines: 1,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: theme.colorScheme.onPrimary,

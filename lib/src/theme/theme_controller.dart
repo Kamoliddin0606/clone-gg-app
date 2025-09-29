@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/services/shared_preferences_service.dart';
 
 
 /// App-wide theme controller using ValueNotifier (no extra packages).

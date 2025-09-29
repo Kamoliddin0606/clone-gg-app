@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../services/shared_preferences_service.dart';
 
-enum ServerEnv { Evyap, Garnier, PPD, Avon }
+enum ServerEnv { Evyap, Garnier, PPD, Avon, AvonTest }
 
 extension ServerEnvX on ServerEnv {
   String get label => switch (this) {
@@ -9,6 +9,8 @@ extension ServerEnvX on ServerEnv {
     ServerEnv.Garnier => 'Garnier',
     ServerEnv.PPD    => 'PPD',
     ServerEnv.Avon     => 'Avon',
+    ServerEnv.AvonTest     => 'Avon Test',
+
   };
 
   String get url => switch (this) {
@@ -16,6 +18,7 @@ extension ServerEnvX on ServerEnv {
     ServerEnv.Garnier => 'http://kit.gloriya.uz:5443/loreal_ut/loreal_ut.1cws',
     ServerEnv.PPD    => 'http://kit.gloriya.uz:5443/UT_Professionnel/UT_Professionnel.1cws',
     ServerEnv.Avon     => 'http://kit.gloriya.uz:5443/AVON_UT/AVON_UT.1cws',
+    ServerEnv.AvonTest     => 'http://kit.gloriya.uz:5443/TEST_UT/TEST_UT.1cws',
   };
 }
 

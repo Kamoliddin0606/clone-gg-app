@@ -681,7 +681,7 @@ class TradingPointCard extends StatelessWidget {
             children: [
               _line(context, Icons.place_outlined, tradingPoint.address, soft: true, maxLines: 3, scrollable: true),
               const SizedBox(height: 2),
-              _line(context, Icons.badge_outlined, 'INN: ${tradingPoint.inn}'),
+              _line(context, Icons.badge_outlined, 'INN: ${tradingPoint.inn}', maxLines: 2),
             ],
           ),
         ),
@@ -872,7 +872,7 @@ class _ViewToolbar extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    Color _iconColor(bool active) =>
+    Color iconColor(bool active) =>
         active ? cs.primary : cs.onSurface.withOpacity(.45);
 
     return Row(
@@ -895,7 +895,7 @@ class _ViewToolbar extends StatelessWidget {
             child: Icon(
               Icons.view_agenda_rounded, // list
               size: 22,
-              color: _iconColor(mode == _ViewMode.list),
+              color: iconColor(mode == _ViewMode.list),
             ),
           ),
         ),
@@ -910,7 +910,7 @@ class _ViewToolbar extends StatelessWidget {
             child: Icon(
               Icons.grid_view_rounded, // grid
               size: 22,
-              color: _iconColor(mode == _ViewMode.grid),
+              color: iconColor(mode == _ViewMode.grid),
             ),
           ),
         ),
@@ -1302,7 +1302,6 @@ class _TradingPointDetailsSheet extends StatefulWidget {
   final VoidCallback onRefusal;
 
   const _TradingPointDetailsSheet({
-    super.key,
     required this.tradingPoint,
     required this.scrollController,
     required this.onCall,

@@ -6,6 +6,8 @@ import 'package:gloria_marketing_flutter/src/features/boss/presentation/pages/bo
 import 'package:gloria_marketing_flutter/src/features/collector/presentation/pages/collector_home_page.dart';
 import 'package:gloria_marketing_flutter/src/features/forwarder/presentation/pages/forwarder_home_page.dart';
 import 'package:gloria_marketing_flutter/src/features/packer/presentation/pages/packer_home_page.dart';
+import 'package:gloria_marketing_flutter/src/features/marketing/presentation/pages/marketing_page.dart';
+import 'package:gloria_marketing_flutter/src/features/marketing/presentation/pages/promotion_detail_page.dart';
 import 'package:gloria_marketing_flutter/src/features/warehouse_manager/presentation/pages/warehouse_manager_home_page.dart';
 
 class AppRouter {
@@ -17,6 +19,8 @@ class AppRouter {
   static const String packerHomeRoute = '/packer-home';
   static const String warehouseManagerHomeRoute = '/warehouse-manager-home';
   static const String tradingPointsRoute = '/trading-points';
+  static const String marketingRoute = '/marketing';
+  static const String promotionDetailRoute = '/promotion-detail';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -36,6 +40,10 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const WarehouseManagerHomePage());
       case tradingPointsRoute:
         return MaterialPageRoute(builder: (_) => const TradingPointsPage());
+      case marketingRoute:
+        return MaterialPageRoute(builder: (_) => const MarketingPage());
+      case promotionDetailRoute:
+        return MaterialPageRoute(builder: (_) => const PromotionDetailPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

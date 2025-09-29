@@ -7,8 +7,6 @@ import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/aut
 
 
 import '../../../../core/network/server_service.dart';
-import '../../../../theme/theme_controller.dart';
-import '../../../../theme/theme_toggle.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -246,6 +244,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           ServerEnv.Garnier => Color.fromRGBO(34, 50, 46, 1.0),
           ServerEnv.PPD    => Color.fromRGBO(0, 0, 0, 1.0),
           ServerEnv.Avon     => Color.fromRGBO(218, 0, 73, 1.0),
+          ServerEnv.AvonTest     => Color.fromRGBO(80, 209, 248, 1.0),
         };
         return ActionChip(
           label: Text(env.label),

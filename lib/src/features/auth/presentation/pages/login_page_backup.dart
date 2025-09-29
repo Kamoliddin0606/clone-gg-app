@@ -325,7 +325,6 @@ class _AnimatedInputField extends StatefulWidget {
   final VoidCallback? onPasswordToggle;
 
   const _AnimatedInputField({
-    super.key,
     required this.controller,
     required this.label,
     required this.icon,

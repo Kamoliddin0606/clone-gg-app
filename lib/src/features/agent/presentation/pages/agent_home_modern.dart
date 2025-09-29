@@ -406,6 +406,11 @@ class _AppDrawer extends StatelessWidget {
                   onTap: onReports,
                 ),
                 _MenuItem(
+                  icon: Icons.campaign,
+                  title: 'Marketing',
+                  onTap: () => Navigator.pushNamed(context, AppRouter.marketingRoute),
+                ),
+                _MenuItem(
                   icon: Icons.account_balance_wallet,
                   title: 'Kassa',
                   onTap: onCash,
@@ -682,9 +687,7 @@ class _ProgressRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final double? p = percent == null
-        ? null
-        : percent!.clamp(0.0, 1.0).toDouble();
+    final double? p = percent?.clamp(0.0, 1.0).toDouble();
     return SizedBox(
       width: 92,
       height: 92,

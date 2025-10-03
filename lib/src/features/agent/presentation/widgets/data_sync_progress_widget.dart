@@ -8,6 +8,7 @@ enum SyncStep {
   syncingProducts('Mahsulotlar yuklanmoqda...', Icons.inventory),
   syncingPriceTypes('Narx turlari yuklanmoqda...', Icons.price_change),
   syncingProductPrices('Mahsulot narxlari yuklanmoqda...', Icons.attach_money),
+  syncingPromotions('Aksiyalar yuklanmoqda...', Icons.local_offer),
   completed('Ma\'lumotlar yangilandi!', Icons.check_circle);
 
   const SyncStep(this.message, this.icon);

@@ -5,6 +5,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
+import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
   static final ApiDatabaseService _instance = ApiDatabaseService._internal();
@@ -25,7 +26,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -44,6 +45,43 @@ class ApiDatabaseService {
       await db.execute('DROP TABLE IF EXISTS price_types');
       await db.execute('DROP TABLE IF EXISTS product_prices');
       await _createTables(db);
+    } else if (oldVersion < 3) {
+      // Add promotions tables for version 3
+      await db.execute('''
+        CREATE TABLE promotions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code TEXT UNIQUE NOT NULL,
+          name TEXT NOT NULL,
+          type TEXT NOT NULL,
+          min_promo_product_count INTEGER NOT NULL,
+          bonus_count INTEGER NOT NULL,
+          date_start TEXT NOT NULL,
+          date_end TEXT NOT NULL,
+          last_synced TEXT,
+          is_active INTEGER DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE promotion_products (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          promotion_code TEXT NOT NULL,
+          product_code TEXT NOT NULL,
+          product_name TEXT NOT NULL,
+          product_type TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (promotion_code) REFERENCES promotions (code) ON DELETE CASCADE,
+          UNIQUE(promotion_code, product_code, product_type)
+        )
+      ''');
+
+      await db.execute('CREATE INDEX idx_promotions_code ON promotions(code)');
+      await db.execute('CREATE INDEX idx_promotions_active ON promotions(is_active)');
+      await db.execute('CREATE INDEX idx_promotions_date_range ON promotions(date_start, date_end)');
+      await db.execute('CREATE INDEX idx_promotion_products_promotion_code ON promotion_products(promotion_code)');
+      await db.execute('CREATE INDEX idx_promotion_products_type ON promotion_products(product_type)');
     }
   }
 
@@ -154,6 +192,45 @@ class ApiDatabaseService {
         UNIQUE(product_code, price_type_code)
       )
     ''');
+
+    // Create promotions table
+    await db.execute('''
+      CREATE TABLE promotions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        min_promo_product_count INTEGER NOT NULL,
+        bonus_count INTEGER NOT NULL,
+        date_start TEXT NOT NULL,
+        date_end TEXT NOT NULL,
+        last_synced TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create promotion products table (for productList and bonusList)
+    await db.execute('''
+      CREATE TABLE promotion_products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        promotion_code TEXT NOT NULL,
+        product_code TEXT NOT NULL,
+        product_name TEXT NOT NULL,
+        product_type TEXT NOT NULL, -- 'product' or 'bonus'
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (promotion_code) REFERENCES promotions (code) ON DELETE CASCADE,
+        UNIQUE(promotion_code, product_code, product_type)
+      )
+    ''');
+
+    // Create indexes for better performance
+    await db.execute('CREATE INDEX idx_promotions_code ON promotions(code)');
+    await db.execute('CREATE INDEX idx_promotions_active ON promotions(is_active)');
+    await db.execute('CREATE INDEX idx_promotions_date_range ON promotions(date_start, date_end)');
+    await db.execute('CREATE INDEX idx_promotion_products_promotion_code ON promotion_products(promotion_code)');
+    await db.execute('CREATE INDEX idx_promotion_products_type ON promotion_products(product_type)');
 
     print('API cache database tables created successfully');
   }
@@ -490,6 +567,239 @@ class ApiDatabaseService {
         .toList();
   }
 
+  // Promotions methods
+  Future<void> savePromotions(List<PromotionModel> promotions) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing promotions and their products
+    batch.delete('promotion_products');
+    batch.delete('promotions');
+
+    // Deduplicate promotions by code to avoid UNIQUE constraint violations
+    final uniquePromotions = <String, PromotionModel>{};
+    for (final promotion in promotions) {
+      uniquePromotions[promotion.code] = promotion;
+    }
+
+    // Add all inserts to batch
+    for (final promotion in uniquePromotions.values) {
+      batch.insert('promotions', {
+        'code': promotion.code,
+        'name': promotion.name,
+        'type': promotion.type,
+        'min_promo_product_count': promotion.minPromoProductCount,
+        'bonus_count': promotion.bonusCount,
+        'date_start': promotion.dateStart.toIso8601String(),
+        'date_end': promotion.dateEnd.toIso8601String(),
+        'last_synced': promotion.lastSynced?.toIso8601String(),
+        'is_active': promotion.isActive ? 1 : 0,
+        'created_at': now,
+        'updated_at': now,
+      });
+
+      // Insert product list
+      for (final product in promotion.productList) {
+        batch.insert('promotion_products', {
+          'promotion_code': promotion.code,
+          'product_code': product.code,
+          'product_name': product.productName,
+          'product_type': 'product',
+          'created_at': now,
+        });
+      }
+
+      // Insert bonus list
+      for (final bonus in promotion.bonusList) {
+        batch.insert('promotion_products', {
+          'promotion_code': promotion.code,
+          'product_code': bonus.code,
+          'product_name': bonus.productName,
+          'product_type': 'bonus',
+          'created_at': now,
+        });
+      }
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<PromotionModel>> getPromotions({
+    bool onlyActive = true,
+    String? searchQuery,
+    DateTime? dateFilter,
+  }) async {
+    final db = await database;
+
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    if (onlyActive) {
+      whereClause += 'WHERE is_active = 1';
+    }
+
+    if (dateFilter != null) {
+      final dateStr = dateFilter.toIso8601String().split('T')[0];
+      if (whereClause.isNotEmpty) {
+        whereClause += ' AND ';
+      } else {
+        whereClause = 'WHERE ';
+      }
+      whereClause += 'date_start <= ? AND date_end >= ?';
+      whereArgs.addAll([dateStr, dateStr]);
+    }
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      if (whereClause.isNotEmpty) {
+        whereClause += ' AND ';
+      } else {
+        whereClause = 'WHERE ';
+      }
+      whereClause += '(name LIKE ? OR code LIKE ?)';
+      whereArgs.addAll(['%$searchQuery%', '%$searchQuery%']);
+    }
+
+    final promotionResults = await db.rawQuery('''
+      SELECT * FROM promotions
+      $whereClause
+      ORDER BY date_start DESC, name ASC
+    ''', whereArgs);
+
+    final promotions = <PromotionModel>[];
+
+    for (final promoRow in promotionResults) {
+      final promotionCode = promoRow['code'] as String;
+
+      // Get products for this promotion
+      final productResults = await db.query(
+        'promotion_products',
+        where: 'promotion_code = ?',
+        whereArgs: [promotionCode],
+        orderBy: 'product_type ASC, product_name ASC',
+      );
+
+      final productList = <PromotionProduct>[];
+      final bonusList = <PromotionProduct>[];
+
+      for (final productRow in productResults) {
+        final product = PromotionProduct(
+          code: productRow['product_code'] as String,
+          productName: productRow['product_name'] as String,
+        );
+
+        if (productRow['product_type'] == 'product') {
+          productList.add(product);
+        } else {
+          bonusList.add(product);
+        }
+      }
+
+      promotions.add(PromotionModel(
+        code: promoRow['code'] as String,
+        name: promoRow['name'] as String,
+        type: promoRow['type'] as String,
+        minPromoProductCount: promoRow['min_promo_product_count'] as int,
+        bonusCount: promoRow['bonus_count'] as int,
+        dateStart: DateTime.parse(promoRow['date_start'] as String),
+        dateEnd: DateTime.parse(promoRow['date_end'] as String),
+        productList: productList,
+        bonusList: bonusList,
+        lastSynced: promoRow['last_synced'] != null
+            ? DateTime.parse(promoRow['last_synced'] as String)
+            : null,
+        isActive: (promoRow['is_active'] as int) == 1,
+      ));
+    }
+
+    return promotions;
+  }
+
+  Future<PromotionModel?> getPromotionByCode(String code) async {
+    final db = await database;
+    final results = await db.query(
+      'promotions',
+      where: 'code = ?',
+      whereArgs: [code],
+    );
+
+    if (results.isEmpty) return null;
+
+    final promoRow = results.first;
+    final promotionCode = promoRow['code'] as String;
+
+    // Get products for this promotion
+    final productResults = await db.query(
+      'promotion_products',
+      where: 'promotion_code = ?',
+      whereArgs: [promotionCode],
+      orderBy: 'product_type ASC, product_name ASC',
+    );
+
+    final productList = <PromotionProduct>[];
+    final bonusList = <PromotionProduct>[];
+
+    for (final productRow in productResults) {
+      final product = PromotionProduct(
+        code: productRow['product_code'] as String,
+        productName: productRow['product_name'] as String,
+      );
+
+      if (productRow['product_type'] == 'product') {
+        productList.add(product);
+      } else {
+        bonusList.add(product);
+      }
+    }
+
+    return PromotionModel(
+      code: promoRow['code'] as String,
+      name: promoRow['name'] as String,
+      type: promoRow['type'] as String,
+      minPromoProductCount: promoRow['min_promo_product_count'] as int,
+      bonusCount: promoRow['bonus_count'] as int,
+      dateStart: DateTime.parse(promoRow['date_start'] as String),
+      dateEnd: DateTime.parse(promoRow['date_end'] as String),
+      productList: productList,
+      bonusList: bonusList,
+      lastSynced: promoRow['last_synced'] != null
+          ? DateTime.parse(promoRow['last_synced'] as String)
+          : null,
+      isActive: (promoRow['is_active'] as int) == 1,
+    );
+  }
+
+  Future<void> updatePromotionSyncTime(String code, DateTime syncTime) async {
+    final db = await database;
+    await db.update(
+      'promotions',
+      {
+        'last_synced': syncTime.toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'code = ?',
+      whereArgs: [code],
+    );
+  }
+
+  Future<void> deletePromotion(String code) async {
+    final db = await database;
+    // Foreign key constraint will handle deleting related products
+    await db.delete('promotions', where: 'code = ?', whereArgs: [code]);
+  }
+
+  Future<int> getPromotionCount({bool onlyActive = true}) async {
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) as count FROM promotions
+      ${onlyActive ? 'WHERE is_active = 1' : ''}
+    ''');
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
   // Clear all data
   Future<void> clearAllData() async {
     final db = await database;
@@ -498,5 +808,7 @@ class ApiDatabaseService {
     await db.delete('products');
     await db.delete('price_types');
     await db.delete('product_prices');
+    await db.delete('promotion_products');
+    await db.delete('promotions');
   }
 }

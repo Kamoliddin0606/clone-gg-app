@@ -1,19 +1,121 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:xml/xml.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
+import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 
 class SoapApiService {
   final Dio _dio;
   final ServerService _serverService;
 
-  SoapApiService(this._dio, this._serverService);
+  SoapApiService(this._dio, this._serverService) {
+    _configureDio();
+  }
 
   String get _baseUrl => _serverService.baseUrl;
+
+  void _configureDio() {
+    _dio.options.connectTimeout = const Duration(seconds: 30);
+    _dio.options.receiveTimeout = const Duration(seconds: 30);
+    _dio.options.sendTimeout = const Duration(seconds: 30);
+
+    _dio.interceptors.addAll([
+      LogInterceptor(
+        request: true,
+        requestHeader: true,
+        requestBody: true,
+        responseHeader: true,
+        responseBody: true,
+        error: true,
+      ),
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          // Add common headers
+          options.headers.addAll({
+            'Accept': 'application/soap+xml, text/xml, application/xml',
+            'Cache-Control': 'no-cache',
+          });
+          return handler.next(options);
+        },
+        onError: (DioException error, handler) async {
+          // Retry logic for network errors
+          if (_shouldRetry(error)) {
+            try {
+              final response = await _dio.request(
+                error.requestOptions.path,
+                options: Options(
+                  method: error.requestOptions.method,
+                  headers: error.requestOptions.headers,
+                ),
+                data: error.requestOptions.data,
+                queryParameters: error.requestOptions.queryParameters,
+              );
+              return handler.resolve(response);
+            } catch (e) {
+              // If retry fails, continue with original error
+            }
+          }
+
+          // Enhanced error handling
+          final errorMessage = _getErrorMessage(error);
+          final enhancedError = DioException(
+            requestOptions: error.requestOptions,
+            response: error.response,
+            type: error.type,
+            error: errorMessage,
+          );
+
+          return handler.next(enhancedError);
+        },
+      ),
+    ]);
+  }
+
+  bool _shouldRetry(DioException error) {
+    return error.type == DioExceptionType.connectionTimeout ||
+           error.type == DioExceptionType.receiveTimeout ||
+           error.type == DioExceptionType.sendTimeout ||
+           (error.type == DioExceptionType.badResponse &&
+            error.response?.statusCode == 500);
+  }
+
+  String _getErrorMessage(DioException error) {
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+        return 'Connection timeout. Please check your internet connection.';
+      case DioExceptionType.sendTimeout:
+        return 'Send timeout. Please try again.';
+      case DioExceptionType.receiveTimeout:
+        return 'Receive timeout. Please try again.';
+      case DioExceptionType.badResponse:
+        final statusCode = error.response?.statusCode;
+        if (statusCode == 401) {
+          return 'Authentication failed. Please check your credentials.';
+        } else if (statusCode == 403) {
+          return 'Access forbidden. You do not have permission.';
+        } else if (statusCode == 404) {
+          return 'Service not found. Please contact support.';
+        } else if (statusCode == 500) {
+          return 'Server error. Please try again later.';
+        } else {
+          return 'Server error (${statusCode}). Please try again.';
+        }
+      case DioExceptionType.cancel:
+        return 'Request cancelled.';
+      case DioExceptionType.unknown:
+        if (error.error.toString().contains('SocketException')) {
+          return 'Network error. Please check your internet connection.';
+        }
+        return 'Unknown error occurred. Please try again.';
+      default:
+        return 'An unexpected error occurred. Please try again.';
+    }
+  }
 
   /// Get KPI data for agent
   Future<KpiData> getKpiData({
@@ -158,27 +260,27 @@ class SoapApiService {
       );
 
       final document = XmlDocument.parse(response.data);
-      
+
       // Handle nested structure: ProductBrand -> ProductSeries -> Products
       final products = <ProductData>[];
       final brandElements = document.findAllElements('m:ProductBrand');
-      
+
       for (final brandElement in brandElements) {
         final brandName = brandElement.innerText;
-        
+
         // Find all rows under this brand
         final brandParent = brandElement.parent;
         if (brandParent != null) {
           final seriesElements = brandParent.findAllElements('m:ProductSeries');
-          
+
           for (final seriesElement in seriesElements) {
             final seriesName = seriesElement.innerText;
-            
+
             // Find all product rows under this series
             final seriesParent = seriesElement.parent;
             if (seriesParent != null) {
               final productRows = seriesParent.findAllElements('m:Rows');
-              
+
               for (final row in productRows) {
                 // Only process rows that have product data
                 if (_getElementText(row, 'm:CodeProduct') != null) {
@@ -206,7 +308,7 @@ class SoapApiService {
           }
         }
       }
-      
+
       return products;
     } catch (e) {
       throw Exception('Mahsulotlar ro\'yxatini olishda xatolik: $e');
@@ -289,6 +391,44 @@ class SoapApiService {
       )).toList();
     } catch (e) {
       throw Exception('Mahsulot narxlarini olishda xatolik: $e');
+    }
+  }
+
+  /// Get promotions data
+  Future<List<PromotionModel>> getPromotions({
+    String? authToken,
+  }) async {
+    const soapEnvelope = '''
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sam="http://www.sample-package.org">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <sam:getPromo/>
+   </soapenv:Body>
+</soapenv:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+            if (authToken != null) 'Authorization': 'Bearer $authToken',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      debugPrint('Document data: ${document.toString()}');
+      //comment ---
+      final returnElements = document.findAllElements('m:return');
+      return returnElements.map((element) {
+        return PromotionModel.fromXml(element);
+      }).toList();
+    } catch (e) {
+      throw Exception('Promosyon ma\'lumotlarini olishda xatolik: $e');
     }
   }
 

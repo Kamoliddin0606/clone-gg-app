@@ -1,14 +1,19 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:dio/dio.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
+import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 
@@ -27,7 +32,67 @@ class DataSyncService {
   }) : _prefs = prefs,
         _apiService = apiService,
         _dbService = dbService,
-        _dbHelper = dbHelper;
+        _dbHelper = dbHelper {
+    _initializeWorkManager();
+  }
+
+  static const String _backgroundSyncTask = 'backgroundDataSync';
+  static const String _retrySyncTask = 'retryDataSync';
+
+  void _initializeWorkManager() {
+    Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: kDebugMode,
+    );
+  }
+
+  /// Register background sync task
+  Future<void> registerBackgroundSync({
+    Duration frequency = const Duration(hours: 6),
+    String? userCode,
+    String? password,
+    String? codeProject,
+    String? codeSklad,
+  }) async {
+    await Workmanager().registerPeriodicTask(
+      _backgroundSyncTask,
+      _backgroundSyncTask,
+      frequency: frequency,
+      inputData: {
+        'userCode': userCode,
+        'password': password,
+        'codeProject': codeProject,
+        'codeSklad': codeSklad,
+      },
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+        requiresBatteryNotLow: true,
+      ),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+    );
+  }
+
+  /// Cancel background sync
+  Future<void> cancelBackgroundSync() async {
+    await Workmanager().cancelByUniqueName(_backgroundSyncTask);
+  }
+
+  /// Register retry sync task for failed operations
+  Future<void> registerRetrySync({
+    required Map<String, dynamic> failedOperation,
+    Duration delay = const Duration(minutes: 15),
+  }) async {
+    await Workmanager().registerOneOffTask(
+      '${_retrySyncTask}_${DateTime.now().millisecondsSinceEpoch}',
+      _retrySyncTask,
+      inputData: failedOperation,
+      initialDelay: delay,
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+      existingWorkPolicy: ExistingWorkPolicy.replace,
+    );
+  }
 
   /// Check if preferences user matches database user table
   Future<bool> validateUserWithDatabase() async {
@@ -154,6 +219,9 @@ class DataSyncService {
       // Sync product prices
       await _syncProductPrices(userCode);
 
+      // Sync promotions
+      await _syncPromotions(null); // No auth token needed for now
+
       if (kDebugMode) {
         print('Full data sync completed successfully');
       }
@@ -219,7 +287,11 @@ class DataSyncService {
       yield SyncStep.syncingProductPrices;
       await _syncProductPrices(userCode);
 
-      // Step 8: Completed
+      // Step 8: Sync promotions
+      yield SyncStep.syncingPromotions;
+      await _syncPromotions(null); // No auth token needed for now
+
+      // Step 9: Completed
       yield SyncStep.completed;
 
       if (kDebugMode) {
@@ -361,6 +433,38 @@ class DataSyncService {
     return productPrices;
   }
 
+  /// Sync promotions data
+  Future<List<PromotionModel>> syncPromotions({
+    String? authToken,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getPromotions();
+      if (cached.isNotEmpty) {
+        // Check if data is recent (less than 24 hours old)
+        final mostRecentSync = cached
+            .where((p) => p.lastSynced != null)
+            .map((p) => p.lastSynced!)
+            .fold<DateTime?>(null, (prev, curr) => prev == null || curr.isAfter(prev) ? curr : prev);
+
+        if (mostRecentSync != null) {
+          final now = DateTime.now();
+          if (now.difference(mostRecentSync).inHours < 24) {
+            return cached;
+          }
+        }
+      }
+    }
+
+    return await _syncPromotions(authToken);
+  }
+
+  Future<List<PromotionModel>> _syncPromotions(String? authToken) async {
+    final promotions = await _apiService.getPromotions(authToken: authToken);
+    await _dbService.savePromotions(promotions);
+    return promotions;
+  }
+
   /// Get cached data (for offline scenarios)
   Future<KpiData?> getCachedKpiData(String userCode) => _dbService.getKpiData(userCode);
   Future<List<TradingPoint>> getCachedClients() => _dbService.getClients();
@@ -368,9 +472,207 @@ class DataSyncService {
   Future<List<PriceType>> getCachedPriceTypes() => _dbService.getPriceTypes();
   Future<List<ProductPrice>> getCachedProductPrices({String? priceTypeCode}) =>
       _dbService.getProductPrices(priceTypeCode: priceTypeCode);
+  Future<List<PromotionModel>> getCachedPromotions({
+    bool onlyActive = true,
+    String? searchQuery,
+    DateTime? dateFilter,
+  }) => _dbService.getPromotions(
+    onlyActive: onlyActive,
+    searchQuery: searchQuery,
+    dateFilter: dateFilter,
+  );
 
   /// Update cached clients (for local updates like visit status)
   Future<void> updateCachedClients(List<TradingPoint> clients) async {
     await _dbService.saveClients(clients);
+  }
+
+  /// Conflict resolution strategies
+  Future<void> resolveConflicts({
+    required String dataType,
+    required List<Map<String, dynamic>> localData,
+    required List<Map<String, dynamic>> remoteData,
+    ConflictResolutionStrategy strategy = ConflictResolutionStrategy.lastWriteWins,
+  }) async {
+    switch (strategy) {
+      case ConflictResolutionStrategy.lastWriteWins:
+        await _resolveLastWriteWins(dataType, localData, remoteData);
+        break;
+      case ConflictResolutionStrategy.userPrompt:
+        // For now, default to last write wins
+        // In a real app, this would show a dialog to the user
+        await _resolveLastWriteWins(dataType, localData, remoteData);
+        break;
+      case ConflictResolutionStrategy.merge:
+        await _resolveMerge(dataType, localData, remoteData);
+        break;
+    }
+  }
+
+  Future<void> _resolveLastWriteWins(
+    String dataType,
+    List<Map<String, dynamic>> localData,
+    List<Map<String, dynamic>> remoteData,
+  ) async {
+    // Compare timestamps and keep the most recent
+    final merged = <Map<String, dynamic>>[];
+
+    for (final remote in remoteData) {
+      final local = localData.firstWhere(
+        (l) => l['id'] == remote['id'] || l['code'] == remote['code'],
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (local.isEmpty) {
+        merged.add(remote);
+      } else {
+        final localTime = DateTime.parse(local['updated_at'] ?? local['last_synced'] ?? '1970-01-01');
+        final remoteTime = DateTime.parse(remote['updated_at'] ?? remote['last_synced'] ?? '1970-01-01');
+
+        merged.add(remoteTime.isAfter(localTime) ? remote : local);
+      }
+    }
+
+    // Save merged data based on type
+    switch (dataType) {
+      case 'promotions':
+        final promotions = merged.map((m) => PromotionModel.fromMap(m)).toList();
+        await _dbService.savePromotions(promotions);
+        break;
+      // Add other data types as needed
+    }
+  }
+
+  Future<void> _resolveMerge(
+    String dataType,
+    List<Map<String, dynamic>> localData,
+    List<Map<String, dynamic>> remoteData,
+  ) async {
+    // For promotions, merge by keeping all unique items
+    final merged = <Map<String, dynamic>>[...localData];
+
+    for (final remote in remoteData) {
+      final exists = merged.any((m) => m['code'] == remote['code']);
+      if (!exists) {
+        merged.add(remote);
+      }
+    }
+
+    switch (dataType) {
+      case 'promotions':
+        final promotions = merged.map((m) => PromotionModel.fromMap(m)).toList();
+        await _dbService.savePromotions(promotions);
+        break;
+    }
+  }
+
+  /// Retry failed sync operations
+  Future<void> retryFailedOperations() async {
+    try {
+      // Get failed operations from storage (you might want to implement this)
+      final failedOps = await _getFailedOperations();
+
+      for (final op in failedOps) {
+        try {
+          await _executeSyncOperation(op);
+          await _removeFailedOperation(op['id']);
+        } catch (e) {
+          // If still failing, schedule another retry with exponential backoff
+          final retryCount = op['retry_count'] ?? 0;
+          if (retryCount < 3) {
+            await registerRetrySync(
+              failedOperation: {...op, 'retry_count': retryCount + 1},
+              delay: Duration(minutes: (15 * (retryCount + 1)).toInt()),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error retrying failed operations: $e');
+      }
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _getFailedOperations() async {
+    // This would typically read from a persistent storage
+    // For now, return empty list
+    return [];
+  }
+
+  Future<void> _executeSyncOperation(Map<String, dynamic> operation) async {
+    final type = operation['type'];
+    final data = operation['data'];
+
+    switch (type) {
+      case 'sync_promotions':
+        await _syncPromotions(data['authToken']);
+        break;
+      // Add other operation types
+    }
+  }
+
+  Future<void> _removeFailedOperation(String id) async {
+    // Remove from persistent storage
+  }
+}
+
+/// Conflict resolution strategies
+enum ConflictResolutionStrategy {
+  lastWriteWins,
+  userPrompt,
+  merge,
+}
+
+/// WorkManager callback dispatcher
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    try {
+      switch (task) {
+        case 'backgroundDataSync':
+          return await _performBackgroundSync(inputData ?? {});
+        case 'retryDataSync':
+          return await _performRetrySync(inputData ?? {});
+        default:
+          return false;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('WorkManager task failed: $e');
+      }
+      return false;
+    }
+  });
+}
+
+Future<bool> _performBackgroundSync(Map<String, dynamic> inputData) async {
+  try {
+    // TODO: Implement background sync with proper service initialization
+    // For now, this is a placeholder
+    if (kDebugMode) {
+      print('Background sync executed with data: $inputData');
+    }
+    return true;
+  } catch (e) {
+    if (kDebugMode) {
+      print('Background sync failed: $e');
+    }
+    return false;
+  }
+}
+
+Future<bool> _performRetrySync(Map<String, dynamic> inputData) async {
+  try {
+    // TODO: Implement retry sync with proper service initialization
+    if (kDebugMode) {
+      print('Retry sync executed with data: $inputData');
+    }
+    return true;
+  } catch (e) {
+    if (kDebugMode) {
+      print('Retry sync failed: $e');
+    }
+    return false;
   }
 }

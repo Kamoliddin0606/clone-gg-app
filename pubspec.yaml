@@ -49,9 +49,9 @@ dependencies:
   path: ^1.9.0
 
   # Firebase
-  firebase_core: ^3.15.1
-  firebase_crashlytics: ^4.3.9
-  firebase_storage: ^12.4.9
+  firebase_core: ^4.1.1
+  firebase_crashlytics: ^5.0.2
+  firebase_storage: ^13.0.2
 
   # Maps & Permissions
   google_maps_flutter: ^2.6.0
@@ -71,8 +71,17 @@ dependencies:
 
   # Utilities
   archive: ^4.0.7
-  
-  intl: ^0.18.1
+
+  # Background tasks
+  workmanager: ^0.9.0
+
+  # UI enhancements
+  shimmer: ^3.0.0
+
+  # Connectivity
+  connectivity_plus: ^7.0.0
+
+  intl: ^0.20.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

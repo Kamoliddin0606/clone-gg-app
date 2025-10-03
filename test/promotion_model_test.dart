@@ -37,6 +37,7 @@ void main() {
       expect(promotion.bonusCount, 1);
       expect(promotion.productList.length, 1);
       expect(promotion.bonusList.length, 1);
+      expect(promotion.classList.length, 0);
       expect(promotion.productList[0].code, '00-00001378');
       expect(promotion.bonusList[0].code, '00-00001713');
     });
@@ -56,6 +57,7 @@ void main() {
         bonusList: [
           const PromotionProduct(code: 'B001', productName: 'Bonus 1'),
         ],
+        classList: [],
       );
 
       final map = original.toMap();
@@ -84,6 +86,7 @@ void main() {
         dateEnd: now.add(const Duration(days: 1)),
         productList: [],
         bonusList: [],
+        classList: [],
       );
 
       final inactivePromotion = PromotionModel(
@@ -96,6 +99,7 @@ void main() {
         dateEnd: now.subtract(const Duration(hours: 1)), // 1 hour ago
         productList: [],
         bonusList: [],
+        classList: [],
         isActive: false, // Explicitly set as inactive
       );
 

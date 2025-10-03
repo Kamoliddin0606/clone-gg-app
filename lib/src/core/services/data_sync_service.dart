@@ -335,6 +335,9 @@ class DataSyncService {
       userCode: userCode,
       password: password,
     );
+    if (kDebugMode) {
+      print('KPI ma\'lumotlari yuklandi: $kpiData');
+    }
     await _dbService.saveKpiData(userCode, kpiData);
     return kpiData;
   }
@@ -361,6 +364,9 @@ class DataSyncService {
       userCode: userCode,
       password: password,
     );
+    if (kDebugMode) {
+      print('Mijozlar ma\'lumotlari yuklandi: ${clients.length} ta mijoz');
+    }
     await _dbService.saveClients(clients);
     return clients;
   }
@@ -386,6 +392,9 @@ class DataSyncService {
       codeProject: codeProject,
       codeSklad: codeSklad,
     );
+    if (kDebugMode) {
+      print('Mahsulotlar ma\'lumotlari yuklandi: ${products.length} ta mahsulot');
+    }
     await _dbService.saveProducts(products);
     return products;
   }
@@ -407,6 +416,9 @@ class DataSyncService {
 
   Future<List<PriceType>> _syncPriceTypes(String userCode) async {
     final priceTypes = await _apiService.getPriceTypes(userCode: userCode);
+    if (kDebugMode) {
+      print('Narx turlari ma\'lumotlari yuklandi: ${priceTypes.length} ta narx turi');
+    }
     await _dbService.savePriceTypes(priceTypes);
     return priceTypes;
   }
@@ -429,6 +441,9 @@ class DataSyncService {
 
   Future<List<ProductPrice>> _syncProductPrices(String userCode) async {
     final productPrices = await _apiService.getProductPrices(userCode: userCode);
+    if (kDebugMode) {
+      print('Mahsulot narxlari ma\'lumotlari yuklandi: ${productPrices.length} ta narx');
+    }
     await _dbService.saveProductPrices(productPrices);
     return productPrices;
   }
@@ -438,8 +453,14 @@ class DataSyncService {
     String? authToken,
     bool forceRefresh = false,
   }) async {
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] DEBUG SYNC: syncPromotions called, forceRefresh: $forceRefresh');
+
     if (!forceRefresh) {
+      print('[$timestamp] DEBUG SYNC: Checking cached promotions');
       final cached = await _dbService.getPromotions();
+      print('[$timestamp] DEBUG SYNC: Cached promotions count: ${cached.length}');
+
       if (cached.isNotEmpty) {
         // Check if data is recent (less than 24 hours old)
         final mostRecentSync = cached
@@ -447,21 +468,41 @@ class DataSyncService {
             .map((p) => p.lastSynced!)
             .fold<DateTime?>(null, (prev, curr) => prev == null || curr.isAfter(prev) ? curr : prev);
 
+        print('[$timestamp] DEBUG SYNC: Most recent sync: $mostRecentSync');
+
         if (mostRecentSync != null) {
           final now = DateTime.now();
-          if (now.difference(mostRecentSync).inHours < 24) {
+          final diff = now.difference(mostRecentSync).inHours;
+          print('[$timestamp] DEBUG SYNC: Time difference: ${diff} hours');
+
+          if (diff < 24) {
+            print('[$timestamp] DEBUG SYNC: Returning cached data (recent)');
             return cached;
           }
         }
       }
     }
 
+    print('[$timestamp] DEBUG SYNC: Proceeding with fresh sync');
     return await _syncPromotions(authToken);
   }
 
   Future<List<PromotionModel>> _syncPromotions(String? authToken) async {
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] DEBUG SYNC: _syncPromotions called');
+
+    print('[$timestamp] DEBUG SYNC: Calling _apiService.getPromotions');
     final promotions = await _apiService.getPromotions(authToken: authToken);
+    print('[$timestamp] DEBUG SYNC: API returned ${promotions.length} promotions');
+
+    if (kDebugMode) {
+      print('Aksiyalar ma\'lumotlari yuklandi: ${promotions.length} ta aksiya');
+    }
+
+    print('[$timestamp] DEBUG SYNC: Saving promotions to database');
     await _dbService.savePromotions(promotions);
+    print('[$timestamp] DEBUG SYNC: Promotions saved to database');
+
     return promotions;
   }
 

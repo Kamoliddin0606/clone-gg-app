@@ -11,6 +11,7 @@ class PromotionModel extends Equatable {
   final DateTime dateEnd;
   final List<PromotionProduct> productList;
   final List<PromotionProduct> bonusList;
+  final List<PromotionProduct> classList;
   final DateTime? lastSynced;
   final bool isActive;
 
@@ -24,50 +25,82 @@ class PromotionModel extends Equatable {
     required this.dateEnd,
     required this.productList,
     required this.bonusList,
+    this.classList = const [],
     this.lastSynced,
     this.isActive = true,
   });
 
   factory PromotionModel.fromXml(XmlElement element) {
-    final code = element.findElements('m:code').first.innerText;
-    final name = element.findElements('m:name').first.innerText;
-    final type = element.findElements('m:type').first.innerText;
-    final minPromoProductCount = int.tryParse(
-        element.findElements('m:minPromoProductcount').first.innerText) ?? 0;
-    final bonusCount = int.tryParse(
-        element.findElements('m:bonusCount').first.innerText) ?? 0;
-    final dateStart = DateTime.parse(
-        element.findElements('m:dateStart').first.innerText);
-    final dateEnd = DateTime.parse(
-        element.findElements('m:dateEnd').first.innerText);
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] DEBUG MODEL: Parsing PromotionModel from XML');
 
-    final productList = element.findAllElements('m:productList').map((product) {
-      return PromotionProduct(
-        code: product.findElements('m:code').first.innerText,
-        productName: product.findElements('m:productName').first.innerText,
+    try {
+      final code = element.findElements('m:code').first.innerText;
+      final name = element.findElements('m:name').first.innerText;
+      final type = element.findElements('m:type').first.innerText;
+      final minPromoProductCount = int.tryParse(
+          element.findElements('m:minPromoProductcount').first.innerText) ?? 0;
+      final bonusCount = int.tryParse(
+          element.findElements('m:bonusCount').first.innerText) ?? 0;
+      final dateStart = DateTime.parse(
+          element.findElements('m:dateStart').first.innerText);
+      final dateEnd = DateTime.parse(
+          element.findElements('m:dateEnd').first.innerText);
+
+      print('[$timestamp] DEBUG MODEL: Basic fields - code: $code, name: $name, type: $type, dates: $dateStart to $dateEnd');
+
+      final productListRaw = element.findAllElements('m:productList').map((product) {
+        return PromotionProduct(
+          code: product.findElements('m:code').first.innerText,
+          productName: product.findElements('m:productName').first.innerText,
+        );
+      }).toList();
+
+      // Deduplicate product list by code
+      final productListMap = <String, PromotionProduct>{};
+      for (final product in productListRaw) {
+        productListMap[product.code] = product;
+      }
+      final productList = productListMap.values.toList();
+
+      final bonusListRaw = element.findAllElements('m:bonusList').map((bonus) {
+        return PromotionProduct(
+          code: bonus.findElements('m:code').first.innerText,
+          productName: bonus.findElements('m:productName').first.innerText,
+        );
+      }).toList();
+
+      // Deduplicate bonus list by code
+      final bonusListMap = <String, PromotionProduct>{};
+      for (final bonus in bonusListRaw) {
+        bonusListMap[bonus.code] = bonus;
+      }
+      final bonusList = bonusListMap.values.toList();
+
+      // Class list is not present in the current XML, so leave empty
+      final classList = <PromotionProduct>[];
+
+      print('[$timestamp] DEBUG MODEL: Products: ${productList.length}, Bonuses: ${bonusList.length}, Classes: ${classList.length}');
+
+      return PromotionModel(
+        code: code,
+        name: name,
+        type: type,
+        minPromoProductCount: minPromoProductCount,
+        bonusCount: bonusCount,
+        dateStart: dateStart,
+        dateEnd: dateEnd,
+        productList: productList,
+        bonusList: bonusList,
+        classList: classList,
+        lastSynced: DateTime.now(),
+        isActive: DateTime.now().isBefore(dateEnd),
       );
-    }).toList();
-
-    final bonusList = element.findAllElements('m:bonusList').map((bonus) {
-      return PromotionProduct(
-        code: bonus.findElements('m:code').first.innerText,
-        productName: bonus.findElements('m:productName').first.innerText,
-      );
-    }).toList();
-
-    return PromotionModel(
-      code: code,
-      name: name,
-      type: type,
-      minPromoProductCount: minPromoProductCount,
-      bonusCount: bonusCount,
-      dateStart: dateStart,
-      dateEnd: dateEnd,
-      productList: productList,
-      bonusList: bonusList,
-      lastSynced: DateTime.now(),
-      isActive: DateTime.now().isBefore(dateEnd),
-    );
+    } catch (e) {
+      print('[$timestamp] DEBUG MODEL: Error parsing XML: $e');
+      print('[$timestamp] DEBUG MODEL: XML element: ${element.toXmlString()}');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toMap() {
@@ -81,6 +114,7 @@ class PromotionModel extends Equatable {
       'date_end': dateEnd.toIso8601String(),
       'product_list': productList.map((p) => p.toMap()).toList(),
       'bonus_list': bonusList.map((p) => p.toMap()).toList(),
+      'class_list': classList.map((p) => p.toMap()).toList(),
       'last_synced': lastSynced?.toIso8601String(),
       'is_active': isActive ? 1 : 0,
     };
@@ -101,6 +135,9 @@ class PromotionModel extends Equatable {
       bonusList: (map['bonus_list'] as List<dynamic>?)
           ?.map((p) => PromotionProduct.fromMap(p))
           .toList() ?? [],
+      classList: (map['class_list'] as List<dynamic>?)
+          ?.map((p) => PromotionProduct.fromMap(p))
+          .toList() ?? [],
       lastSynced: map['last_synced'] != null
           ? DateTime.parse(map['last_synced'])
           : null,
@@ -118,6 +155,7 @@ class PromotionModel extends Equatable {
     DateTime? dateEnd,
     List<PromotionProduct>? productList,
     List<PromotionProduct>? bonusList,
+    List<PromotionProduct>? classList,
     DateTime? lastSynced,
     bool? isActive,
   }) {
@@ -131,6 +169,7 @@ class PromotionModel extends Equatable {
       dateEnd: dateEnd ?? this.dateEnd,
       productList: productList ?? this.productList,
       bonusList: bonusList ?? this.bonusList,
+      classList: classList ?? this.classList,
       lastSynced: lastSynced ?? this.lastSynced,
       isActive: isActive ?? this.isActive,
     );
@@ -147,6 +186,7 @@ class PromotionModel extends Equatable {
     dateEnd,
     productList,
     bonusList,
+    classList,
     lastSynced,
     isActive,
   ];

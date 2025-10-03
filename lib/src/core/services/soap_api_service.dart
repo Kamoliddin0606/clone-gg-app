@@ -398,6 +398,9 @@ class SoapApiService {
   Future<List<PromotionModel>> getPromotions({
     String? authToken,
   }) async {
+    final timestamp = DateTime.now().toIso8601String();
+    print('[$timestamp] DEBUG API: getPromotions called');
+
     const soapEnvelope = '''
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sam="http://www.sample-package.org">
    <soapenv:Header/>
@@ -408,6 +411,9 @@ class SoapApiService {
 ''';
 
     try {
+      print('[$timestamp] DEBUG API: Sending SOAP request to $_baseUrl');
+      print('[$timestamp] DEBUG API: SOAP Envelope: $soapEnvelope');
+
       final response = await _dio.post(
         _baseUrl,
         data: soapEnvelope,
@@ -420,14 +426,25 @@ class SoapApiService {
         ),
       );
 
+      print('[$timestamp] DEBUG API: Response status: ${response.statusCode}');
+      print('[$timestamp] DEBUG API: Response data length: ${response.data.length}');
+
       final document = XmlDocument.parse(response.data);
+      print('[$timestamp] DEBUG API: Parsed XML document');
       debugPrint('Document data: ${document.toString()}');
-      //comment ---
+
       final returnElements = document.findAllElements('m:return');
-      return returnElements.map((element) {
+      print('[$timestamp] DEBUG API: Found ${returnElements.length} return elements');
+
+      final promotions = returnElements.map((element) {
+        print('[$timestamp] DEBUG API: Parsing promotion from XML element');
         return PromotionModel.fromXml(element);
       }).toList();
+
+      print('[$timestamp] DEBUG API: Successfully parsed ${promotions.length} promotions');
+      return promotions;
     } catch (e) {
+      print('[$timestamp] DEBUG API: Error in getPromotions: $e');
       throw Exception('Promosyon ma\'lumotlarini olishda xatolik: $e');
     }
   }

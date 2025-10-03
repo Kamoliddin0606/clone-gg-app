@@ -1,10 +1,15 @@
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
 import '../../../navbars/fluid_nav_bar.dart';
 import 'agent_home_modern.dart';
@@ -21,8 +26,11 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
   String userCode = "";
   String password = "";
   String warehouseCode = "";
+  String codeProject = "";
   bool _isLoadingKpi = false;
   bool _isKpiCardsExpanded = false;
+  bool _isDataSyncInProgress = false;
+  Stream<SyncStep>? _syncStepStream;
 
   late AnimationController _planFactController;
   late AnimationController _expandController;
@@ -83,15 +91,134 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
         userCode = prefs.getUserCode() ?? "";
         password = prefs.getPassword() ?? "";
         warehouseCode = prefs.getWarehouseCode() ?? "";
+        codeProject = prefs.getCodeProject() ?? "";
         userName = prefs.getUserName() ?? "Agent User";
       });
 
-      if (userCode.isNotEmpty && password.isNotEmpty) {
-        await _loadKpiData();
+      // Check if preferences user matches database user
+      final dbHelper = DatabaseHelper();
+      final dbUsers = await dbHelper.getAllUsers();
+      final dbUser = dbUsers.isNotEmpty ? dbUsers.first : null;
+
+      final prefsUserCode = userCode;
+      final prefsUserName = userName;
+      if (! prefs.isOfflineMode()) {
+
+
+        if (dbUser != null &&
+            dbUser['code'] == prefsUserCode &&
+            dbUser['username'] == prefsUserName) {
+          // User matches, continue with normal flow
+          if (userCode.isNotEmpty && password.isNotEmpty) {
+            // Update user data in preferences (ensure it's current)
+            await _updateUserDataInPreferences();
+            // Check if user data needs to be synced
+            await _checkAndSyncUserData();
+          }
+        } else {
+          // User doesn't match, clear cache and load new data
+          final repository = sl<AgentRepository>();
+          await repository.clearCache();
+
+          if (userCode.isNotEmpty && password.isNotEmpty) {
+            // Update user data in preferences (ensure it's current)
+            await _updateUserDataInPreferences();
+            // Check if user data needs to be synced
+            await _checkAndSyncUserData();
+          }
+
+            await repository.savePrefsToUsers();
+
+        }
       }
+      else{
+          if (userCode.isNotEmpty && password.isNotEmpty) {
+            // Update user data in preferences (ensure it's current)
+            await _updateUserDataInPreferences();
+            // Check if user data needs to be synced
+            await _checkAndSyncUserData();
+          }
+      }
+
     } catch (e) {
       print('Error loading user data: $e');
     }
+  }
+
+  Future<void> _updateUserDataInPreferences() async {
+    try {
+      // Since user data comes from login API and is already saved,
+      // we can refresh it here if needed. For now, we'll ensure it's loaded properly.
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+
+      // Re-save current user data to ensure it's up to date
+      await prefs.saveUserData(
+        userCode: userCode,
+        userName: userName,
+        warehouseCode: warehouseCode,
+        codeProject: codeProject,
+      );
+
+      if (kDebugMode) {
+        print('User data updated in preferences: $userCode, $userName, $warehouseCode, $codeProject');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating user data in preferences: $e');
+      }
+    }
+  }
+
+  Future<void> _checkAndSyncUserData() async {
+    try {
+      final dataSyncService = sl<DataSyncService>();
+      final prefs = sl<SharedPreferencesService>();
+
+      // Check if we're in offline mode
+      final isOffline = prefs.isOfflineMode();
+
+      if (isOffline) {
+        // Offline mode - work with existing database data
+        if (kDebugMode) {
+          print('Offline mode detected - loading cached data');
+        }
+        await _loadKpiData();
+        return;
+      }
+
+      // Online mode - check if preferences user matches database user
+      final isValid = await dataSyncService.validateUserWithDatabase();
+
+      if (!isValid) {
+        // User data doesn't match - start sync with progress
+        setState(() {
+          _isDataSyncInProgress = true;
+          _syncStepStream = dataSyncService.syncAllUserDataWithProgress(
+            userCode: userCode,
+            password: password,
+            codeProject: codeProject,
+            codeSklad: warehouseCode,
+          );
+        });
+      } else {
+        // User data matches - load existing data
+        await _loadKpiData();
+      }
+    } catch (e) {
+      print('Error checking user data: $e');
+      // Load cached data as fallback
+      await _loadKpiData();
+    }
+  }
+
+  void _onDataSyncComplete() {
+    setState(() {
+      _isDataSyncInProgress = false;
+      _syncStepStream = null;
+    });
+    // Load fresh data after sync
+    _loadKpiData();
   }
 
   Future<void> _loadKpiData() async {
@@ -130,6 +257,14 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
   }
 
   Future<void> _refreshKpi() async {
+    final prefs = sl<SharedPreferencesService>();
+    if (prefs.isOfflineMode()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Siz offline rejimdasiz. Malumotlarni yangilash imkoni mavjud emas')),
+      );
+      return;
+      return ;
+    }
     if (userCode.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Foydalanuvchi ma\'lumotlari mavjud emas')),
@@ -187,67 +322,42 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final prefs = sl<SharedPreferencesService>();
+    final isOffline = prefs.isOfflineMode();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      // appBar: AppBar(
-      //   title: const Text('Agent'),
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   actions: [
-      //     PopupMenuButton<String>(
-      //       onSelected: (value) {
-      //         switch (value) {
-      //           case 'settings':
-      //             break;
-      //           case 'logout':
-      //             _showLogoutDialog();
-      //             break;
-      //         }
-      //       },
-      //       itemBuilder: (context) => [
-      //         const PopupMenuItem(
-      //           value: 'settings',
-      //           child: Row(
-      //             children: [
-      //               Icon(Icons.settings),
-      //               SizedBox(width: 8),
-      //               Text('Sozlamalar'),
-      //             ],
-      //           ),
-      //         ),
-      //         const PopupMenuItem(
-      //           value: 'logout',
-      //           child: Row(
-      //             children: [
-      //               Icon(Icons.logout),
-      //               SizedBox(width: 8),
-      //               Text('Chiqish'),
-      //             ],
-      //           ),
-      //         ),
-      //       ],
-      //     ),
-      //   ],
-      // ),
-      body: AgentHomeModern(
-        userName: userName,          // sizdagi o‘zgaruvchi nomi bo‘lishi mumkin
-        userCode: userCode,                 // sizdagi o‘zgaruvchi
-        kpi: KpiView(
-          salesSum: _kpiData?.totalForecast,   // yoki haqiqiy "savdo summasi" maydoningiz
-          itemsSold: null,      // bo‘lmasa null qoldiring
-          customersServed: null, // bo‘lmasa null
-          totalPercent: _kpiData?.totalPercent,
-          akbPlan: _kpiData?.akbPlan,
-          akbFact: _kpiData?.akbFact,
-          akbPercent: _kpiData?.akbPercent,
-          okb: _kpiData?.okb,
-        ),
-        onRefresh: _refreshKpi,                       // sizdagi mavjud funksiya
-        // onCreateOrder: () => context.pushNamed(AppRouter.tradingPointsRoute),
-        //onOpenCustomers: _openCustomers,              // agar sizda bor bo‘lsa
-        // onOpenProducts: _openProducts,                // agar sizda bor bo‘lsa
-        onLogout: () => _showLogoutDialog(),                            // mavjud logout dialog/handler
+      body: Stack(
+        children: [
+          AgentHomeModern(
+            userName: userName,
+            userCode: userCode,
+            kpi: KpiView(
+              salesSum: _kpiData?.totalForecast,
+              itemsSold: null,
+              customersServed: null,
+              totalPercent: _kpiData?.totalPercent,
+              akbPlan: _kpiData?.akbPlan,
+              akbFact: _kpiData?.akbFact,
+              akbPercent: _kpiData?.akbPercent,
+              okb: _kpiData?.okb,
+            ),
+            onRefresh: _refreshKpi,
+            onLogout: () => _showLogoutDialog(),
+          ),
+
+          // Data sync progress overlay
+          if (_isDataSyncInProgress && _syncStepStream != null)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: Center(
+                child: DataSyncProgressWidget(
+                  syncStepStream: _syncStepStream!,
+                  onComplete: _onDataSyncComplete,
+                ),
+              ),
+            ),
+        ],
       ),
       bottomNavigationBar: FluidNavBar(
         initialIndex: 0, // masalan, buyurtma default
@@ -706,9 +816,9 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
 
   Future<void> _logout(BuildContext context) async {
     try {
-      await sl.isReady<SharedPreferencesService>();
-      final prefs = sl<SharedPreferencesService>();
-      await prefs.clearCredentials();
+      // await sl.isReady<SharedPreferencesService>();
+      // final prefs = sl<SharedPreferencesService>();
+      // await prefs.clearCredentials();
     } catch (e) {}
     if (context.mounted) {
       Navigator.of(context).pop();

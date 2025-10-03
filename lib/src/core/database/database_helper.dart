@@ -5,10 +5,21 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+// Top-level function for unzipping in background isolate
+List<int> unzipDatabase(List<int> bytes) {
+  final archive = ZipDecoder().decodeBytes(bytes);
+  final file = archive.first;
+  if (file.isFile) {
+    return file.content as List<int>;
+  } else {
+    throw Exception("The zip archive does not contain a file.");
+  }
+}
+
 class DatabaseHelper {
   static const _dbName = "GloriyaMarketing.db";
   static const _zipAssetName = "GloriyaMarketing.zip";
-  static const _dbVersion = 1;
+  static const _dbVersion = 2;
 
   Database? _database;
 
@@ -40,18 +51,13 @@ class DatabaseHelper {
         try {
           ByteData data = await rootBundle.load(join("assets", "db", _zipAssetName));
           List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-          
-          final archive = ZipDecoder().decodeBytes(bytes);
-          // Assuming the first file in the zip is the database file
-          final file = archive.first;
-          
-          if (file.isFile) {
-            await File(path).writeAsBytes(file.content as List<int>, flush: true);
-            if (kDebugMode) {
-              print("Database copied successfully.");
-            }
-          } else {
-            throw Exception("The zip archive does not contain a file.");
+
+          // Unzip in background isolate to avoid blocking main thread
+          final unzippedBytes = await compute(unzipDatabase, bytes);
+
+          await File(path).writeAsBytes(unzippedBytes, flush: true);
+          if (kDebugMode) {
+            print("Database copied successfully.");
           }
         } catch (e) {
           if (kDebugMode) {
@@ -70,6 +76,7 @@ class DatabaseHelper {
         path,
         version: _dbVersion,
         onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
       );
     } catch (e) {
       if (kDebugMode) {
@@ -80,6 +87,7 @@ class DatabaseHelper {
         inMemoryDatabasePath,
         version: _dbVersion,
         onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
       );
     }
   }
@@ -89,6 +97,7 @@ class DatabaseHelper {
       path,
       version: _dbVersion,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -97,22 +106,120 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
         username TEXT NOT NULL,
         password TEXT NOT NULL,
+        name TEXT NOT NULL,
         role TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        warehouse_code TEXT,
+        code_project TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     ''');
 
     // Insert default test user
     await db.insert('users', {
+      'code': '001',
       'username': 'test',
       'password': 'test',
+      'name': 'Test User',
       'role': 'Agent',
+      'warehouse_code': 'W001',
+      'code_project': 'P001',
     });
 
     if (kDebugMode) {
       print("Empty database created with basic schema.");
     }
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Create users table if it doesn't exist
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code TEXT UNIQUE NOT NULL,
+          username TEXT NOT NULL,
+          password TEXT NOT NULL,
+          name TEXT NOT NULL,
+          role TEXT NOT NULL,
+          warehouse_code TEXT,
+          code_project TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      ''');
+    }
+  }
+
+  // User management methods
+  Future<void> saveUser(Map<String, dynamic> userData) async {
+    final db = await database;
+
+    // Clear all existing users before inserting new one
+    // This ensures only one user record exists at any time
+    await db.delete('users');
+
+    await db.insert(
+      'users',
+      {
+        ...userData,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<Map<String, dynamic>?> getUserByCredentials(String username, String password) async {
+    final db = await database;
+    final result = await db.query(
+      'users',
+      where: 'username = ? AND password = ?',
+      whereArgs: [username, password],
+      limit: 1,
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<Map<String, dynamic>?> getUserByCode(String code) async {
+    final db = await database;
+    final result = await db.query(
+      'users',
+      where: 'code = ?',
+      whereArgs: [code],
+      limit: 1,
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<List<Map<String, dynamic>>> getAllUsers() async {
+    final db = await database;
+    return await db.query('users', orderBy: 'created_at DESC');
+  }
+
+  Future<void> updateUser(String code, Map<String, dynamic> userData) async {
+    final db = await database;
+    await db.update(
+      'users',
+      {
+        ...userData,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'code = ?',
+      whereArgs: [code],
+    );
+  }
+
+  Future<void> deleteUser(String code) async {
+    final db = await database;
+    await db.delete('users', where: 'code = ?', whereArgs: [code]);
+  }
+
+  Future<void> clearAllUsersExcept(String code) async {
+    final db = await database;
+    await db.delete('users', where: 'code != ?', whereArgs: [code]);
   }
 }

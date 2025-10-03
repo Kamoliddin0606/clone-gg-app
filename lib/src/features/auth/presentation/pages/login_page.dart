@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 
 
@@ -108,6 +109,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         userCode: state.user.code,
         userName: state.user.name,
         warehouseCode: state.user.warehouseCode,
+        codeProject: state.user.codeProject,
       );
     } catch (_) {}
   }
@@ -122,10 +124,223 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         await prefs.clearCredentials();
       }
     } catch (_) {}
+
+    // First try online authentication
     context.read<AuthBloc>().add(LoginButtonPressed(
       username: _usernameController.text,
       password: _passwordController.text,
     ));
+  }
+
+  Future<void> _tryOfflineLogin(String username, String password) async {
+    try {
+      final prefs = sl<SharedPreferencesService>();
+      final dbHelper = sl<DatabaseHelper>();
+
+      // Get username and code from preferences
+      final prefsUsername = prefs.getSavedUsername();
+      final prefsUserCode = prefs.getUserCode();
+
+      if (prefsUsername == null || prefsUserCode == null) {
+        // No saved user data in preferences
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Internet mavjud emas va saqlangan foydalanuvchi ma\'lumotlari topilmadi'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Check if entered username matches preferences username
+      if (username != prefsUsername) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Internet mavjud emas va kiritilgan login saqlangan login bilan mos kelmaydi'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Get user from database by code
+      final userData = await dbHelper.getUserByCode(prefsUserCode);
+
+      if (userData != null && userData['username'] == prefsUsername && userData['code'] == prefsUserCode) {
+        // User found in database with matching username and code, offer offline mode
+        final shouldUseOffline = await _showOfflineModeDialog(userData);
+        if (shouldUseOffline && mounted) {
+          await _loginOffline(userData);
+        }
+      } else {
+        // User not found in database or data doesn't match
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Internet mavjud emas va foydalanuvchi ma\'lumotlari bazada topilmadi yoki mos kelmaydi'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Offline kirishda xatolik: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<bool> _showOfflineModeDialog(Map<String, dynamic> userData) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Internet mavjud emas'),
+        content: Text(
+          '${userData['name']} (${userData['username']}) sifatida offline rejimda kirishni xohlaysizmi?\n\n'
+          'Offline rejimda siz mavjud ma\'lumotlar bilan ishlashingiz mumkin, lekin yangi ma\'lumotlarni yuklay olmaysiz.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Offline kirish'),
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+
+  Future<void> _loginOffline(Map<String, dynamic> userData) async {
+    try {
+      // Set offline mode in preferences
+      final prefs = sl<SharedPreferencesService>();
+      await prefs.setOfflineMode(true);
+
+      // Save user data to preferences
+      await prefs.saveUserData(
+        userCode: userData['code'],
+        userName: userData['name'],
+        warehouseCode: userData['warehouse_code'],
+        codeProject: userData['code_project'],
+      );
+
+      // Navigate to home page
+      if (mounted) {
+        final role = userData['role'] ?? 'Agent';
+        switch (role) {
+          case 'Agent':
+          case 'Supervisor':
+            Navigator.pushReplacementNamed(context, AppRouter.agentHomeRoute);
+            break;
+          case 'Boss':
+            Navigator.pushReplacementNamed(context, AppRouter.bossHomeRoute);
+            break;
+          case 'Collector':
+            Navigator.pushReplacementNamed(context, AppRouter.collectorHomeRoute);
+            break;
+          case 'Forwarder':
+            Navigator.pushReplacementNamed(context, AppRouter.forwarderHomeRoute);
+            break;
+          case 'Packer':
+            Navigator.pushReplacementNamed(context, AppRouter.packerHomeRoute);
+            break;
+          case 'WarehouseManager':
+            Navigator.pushReplacementNamed(context, AppRouter.warehouseManagerHomeRoute);
+            break;
+          default:
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Unknown user role: $role')),
+            );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Offline login xatolik: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleOnlineLoginSuccess(AuthSuccess state) async {
+    try {
+      // Clear offline mode (since we're online)
+      final prefs = sl<SharedPreferencesService>();
+      await prefs.setOfflineMode(false);
+
+      // Save user data to preferences
+      await _saveUserData(state);
+
+      // Save user to database for future offline use
+      final dbHelper = sl<DatabaseHelper>();
+      await dbHelper.saveUser({
+        'code': state.user.code,
+        'username': state.user.username,
+        'password': '', // Don't store password in database
+        'name': state.user.name,
+        'role': state.user.role,
+        'warehouse_code': state.user.warehouseCode,
+        'code_project': state.user.codeProject,
+      });
+      final users = await dbHelper.getAllUsers();
+      print('DB Users: $users');
+      // Show success message and navigate
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(content: Text('Login Successful!')));
+
+        switch (state.user.role) {
+          case 'Agent':
+          case 'Supervisor':
+            Navigator.pushReplacementNamed(context, AppRouter.agentHomeRoute);
+            break;
+          case 'Boss':
+            Navigator.pushReplacementNamed(context, AppRouter.bossHomeRoute);
+            break;
+          case 'Collector':
+            Navigator.pushReplacementNamed(context, AppRouter.collectorHomeRoute);
+            break;
+          case 'Forwarder':
+            Navigator.pushReplacementNamed(context, AppRouter.forwarderHomeRoute);
+            break;
+          case 'Packer':
+            Navigator.pushReplacementNamed(context, AppRouter.packerHomeRoute);
+            break;
+          case 'WarehouseManager':
+            Navigator.pushReplacementNamed(context, AppRouter.warehouseManagerHomeRoute);
+            break;
+          default:
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text('Unknown user role: ${state.user.role}')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Online login processing error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _dismissKeyboard() => FocusScope.of(context).unfocus();
@@ -168,43 +383,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthFailure) {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: theme.colorScheme.error,
-                  ));
+                print(state.message);
+                // Try offline login when online login fails
+                _tryOfflineLogin(_usernameController.text, _passwordController.text);
               }
               if (state is AuthSuccess) {
-                _saveUserData(state);
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(const SnackBar(content: Text('Login Successful!')));
-                switch (state.user.role) {
-                  case 'Agent':
-                  case 'Supervisor':
-                    Navigator.pushReplacementNamed(context, AppRouter.agentHomeRoute);
-                    break;
-                  case 'Boss':
-                    Navigator.pushReplacementNamed(context, AppRouter.bossHomeRoute);
-                    break;
-                  case 'Collector':
-                    Navigator.pushReplacementNamed(context, AppRouter.collectorHomeRoute);
-                    break;
-                  case 'Forwarder':
-                    Navigator.pushReplacementNamed(context, AppRouter.forwarderHomeRoute);
-                    break;
-                  case 'Packer':
-                    Navigator.pushReplacementNamed(context, AppRouter.packerHomeRoute);
-                    break;
-                  case 'WarehouseManager':
-                    Navigator.pushReplacementNamed(context, AppRouter.warehouseManagerHomeRoute);
-                    break;
-                  default:
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(SnackBar(content: Text('Unknown user role:  ${state.user.role}')));
-                }
+                // Online login successful
+                _handleOnlineLoginSuccess(state);
               }
             },
             child: SafeArea(

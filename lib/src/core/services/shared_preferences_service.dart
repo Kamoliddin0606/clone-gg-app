@@ -8,8 +8,10 @@ class SharedPreferencesService {
   static const String _userCodeKey = 'user_code';
   static const String _userNameKey = 'user_name';
   static const String _warehouseCodeKey = 'warehouse_code';
+  static const String _codeProjectKey = 'code_project';
 
   static const String _serverNameKey = 'selected_server_env';
+  static const String _isOfflineModeKey = 'is_offline_mode';
   // static const String _serverName = 'selected_server_name';
 
   static SharedPreferencesService? _instance;
@@ -47,10 +49,12 @@ Future<void> init() async {
     required String userCode,
     required String userName,
     required String warehouseCode,
+    required String codeProject,
   }) async {
     await _preferences.setString(_userCodeKey, userCode);
     await _preferences.setString(_userNameKey, userName);
     await _preferences.setString(_warehouseCodeKey, warehouseCode);
+    await _preferences.setString(_codeProjectKey, codeProject);
   }
 
   // Get saved username
@@ -97,6 +101,11 @@ Future<void> init() async {
     return _preferences.getString(_warehouseCodeKey);
   }
 
+  // Get code project
+  String? getCodeProject() {
+    return _preferences.getString(_codeProjectKey);
+  }
+
   // Get password (for API calls)
   String? getPassword() {
     return _preferences.getString(_passwordKey);
@@ -107,6 +116,7 @@ Future<void> init() async {
     await _preferences.remove(_userCodeKey);
     await _preferences.remove(_userNameKey);
     await _preferences.remove(_warehouseCodeKey);
+    await _preferences.remove(_codeProjectKey);
   }
 
   Future<bool> setServerName(String name) async =>
@@ -117,4 +127,17 @@ Future<void> init() async {
 
   Future<bool> clearServerName() async =>
       _preferences.remove(_serverNameKey);
+
+  // Offline mode management
+  Future<void> setOfflineMode(bool isOffline) async {
+    await _preferences.setBool(_isOfflineModeKey, isOffline);
+  }
+
+  bool isOfflineMode() {
+    return _preferences.getBool(_isOfflineModeKey) ?? false;
+  }
+
+  Future<void> clearOfflineMode() async {
+    await _preferences.remove(_isOfflineModeKey);
+  }
 }

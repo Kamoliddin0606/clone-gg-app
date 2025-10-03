@@ -30,6 +30,18 @@ class _MarketingPageState extends State<MarketingPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Marketing'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Yangilash',
+            onPressed: () {
+              // TODO: Implement refresh functionality for marketing data
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Marketing ma\'lumotlari yangilanmoqda...')),
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [

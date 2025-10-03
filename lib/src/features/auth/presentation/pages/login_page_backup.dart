@@ -78,7 +78,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       await prefs.saveUserData(
         userCode: state.user.code,
         userName: state.user.name,
-        warehouseCode: state.user.warehouseCode,
+        warehouseCode: state.user.warehouseCode, codeProject: '',
       );
     } catch (e) {}
   }

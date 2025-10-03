@@ -1,7 +1,11 @@
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 
+import '../../../../core/network/server_service.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../theme/theme_controller.dart';
 import '../../../../theme/theme_toggle.dart';
@@ -136,6 +140,79 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
     setState(() => _expanded = !_expanded);
   }
 
+  void _onOfflineIndicatorTap() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Online rejimga qaytish'),
+        content: const Text('Internet bilan va server bilan aloqa borligini tekshirib, online rejimga qaytishni xohlaysizmi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Yo\'q'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Ha'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      try {
+        // Check internet connection
+        final dio = Dio();
+        await dio.get('https://www.google.com');
+
+        // Check server connection
+        final prefs = sl<SharedPreferencesService>();
+
+        final serverService = sl<ServerService>();
+        final serverUrl = serverService.baseUrl;
+
+        // final serverName = prefs.getServerName();
+        // final serverUrl = switch (serverName) {
+        //   'Evyap' => 'http://kit.gloriya.uz:5443/EVYAP_UT/EVYAP_UT.1cws',
+        //   'Garnier' => 'http://kit.gloriya.uz:5443/loreal_ut/loreal_ut.1cws',
+        //   'PPD' => 'http://kit.gloriya.uz:5443/UT_Professionnel/UT_Professionnel.1cws',
+        //   'Avon' => 'http://kit.gloriya.uz:5443/AVON_UT/AVON_UT.1cws',
+        //   'AvonTest' => 'http://kit.gloriya.uz:5443/TEST_UT/TEST_UT.1cws',
+        //   _ => 'http://kit.gloriya.uz:5443/EVYAP_UT/EVYAP_UT.1cws',
+        // };
+        // print('Server URL: $serverUrl');
+        //log serverUrl
+        if (serverUrl == null || serverUrl.isEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Server manzili topilmadi')),
+            );
+          }
+          return;
+        }
+        await dio.get(serverUrl);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Server URL: $serverUrl')),
+          );
+        }
+
+        // Success: set offline to false and reload
+        await prefs.setOfflineMode(false);
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, AppRouter.agentHomeRoute);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Aloqa yo\'q: ${e.toString()}')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -181,11 +258,57 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
               //     onChanged: ThemeController.I.set,
               //   ),
               // ),
+                Builder(
+                  builder: (context) {
+                    final prefs = sl<SharedPreferencesService>();
+                    final isOffline = prefs.isOfflineMode();
+                    if (!isOffline) return const SizedBox.shrink();
+                    return GestureDetector(
+                      onTap: _onOfflineIndicatorTap,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.wifi_off,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'Offline',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 IconButton(
                   tooltip: 'Yangilash',
                   onPressed: () => widget.onRefresh?.call(),
                   icon: const Icon(Icons.refresh),
                 ),
+                // Offline indicator - shows when app is in offline mode
+
                 IconButton(
                   tooltip: 'Chiqish',
                   onPressed: widget.onLogout,

@@ -1,5 +1,7 @@
-import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
@@ -7,14 +9,11 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_ty
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
 
 class AgentRepository {
-  final SoapApiService _apiService;
-  final ApiDatabaseService _databaseService;
+  final DataSyncService _dataSyncService;
 
   AgentRepository({
-    required SoapApiService apiService,
-    required ApiDatabaseService databaseService,
-  }) : _apiService = apiService,
-       _databaseService = databaseService;
+    required DataSyncService dataSyncService,
+  }) : _dataSyncService = dataSyncService;
 
   /// Get KPI data from server and cache locally
   Future<KpiData> getKpiData({
@@ -23,39 +22,20 @@ class AgentRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      if (!forceRefresh) {
-        // Try to get cached data first
-        final cachedData = await _databaseService.getKpiData(userCode);
-        print( 'Cached KPI data: $cachedData');
-        if (cachedData != null) {
-          // Check if data is not too old (less than 1 hour)
-          final updateTime = DateTime.parse(cachedData.updateDate);
-          final now = DateTime.now();
-          if (now.difference(updateTime).inHours < 1) {
-            return cachedData;
-          }
-        }
-      }
-
-      // Fetch fresh data from server
-      final kpiData = await _apiService.getKpiData(
+      return await _dataSyncService.syncKpiData(
         userCode: userCode,
         password: password,
+        forceRefresh: forceRefresh,
       );
-      print('Fetched KPI data: $kpiData');
-      // Cache the data
-      await _databaseService.saveKpiData(userCode, kpiData);
-      
-      return kpiData;
     } catch (e) {
       // If API fails, try to return cached data
       print('Error fetching KPI data: $e');
-      final cachedData = await _databaseService.getKpiData(userCode);
+      final cachedData = await _dataSyncService.getCachedKpiData(userCode);
       if (cachedData != null) {
         print('Returning cached KPI data: $cachedData');
         return cachedData;
       }
-      
+
       // If no cached data, return default values
       return KpiData(
         plan: '0',
@@ -79,31 +59,18 @@ class AgentRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      if (!forceRefresh) {
-        // Try to get cached data first
-        final cachedData = await _databaseService.getClients();
-        if (cachedData.isNotEmpty) {
-          return cachedData;
-        }
-      }
-
-      // Fetch fresh data from server
-      final clients = await _apiService.getClients(
+      return await _dataSyncService.syncClients(
         userCode: userCode,
         password: password,
+        forceRefresh: forceRefresh,
       );
-      
-      // Cache the data
-      await _databaseService.saveClients(clients);
-      
-      return clients;
     } catch (e) {
       // If API fails, try to return cached data
-      final cachedData = await _databaseService.getClients();
+      final cachedData = await _dataSyncService.getCachedClients();
       if (cachedData.isNotEmpty) {
         return cachedData;
       }
-      
+
       // Return empty list if no cached data
       return [];
     }
@@ -116,31 +83,18 @@ class AgentRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      if (!forceRefresh) {
-        // Try to get cached data first
-        final cachedData = await _databaseService.getProducts();
-        if (cachedData.isNotEmpty) {
-          return cachedData;
-        }
-      }
-
-      // Fetch fresh data from server
-      final products = await _apiService.getProducts(
+      return await _dataSyncService.syncProducts(
         codeProject: codeProject,
         codeSklad: codeSklad,
+        forceRefresh: forceRefresh,
       );
-      
-      // Cache the data
-      await _databaseService.saveProducts(products);
-      
-      return products;
     } catch (e) {
       // If API fails, try to return cached data
-      final cachedData = await _databaseService.getProducts();
+      final cachedData = await _dataSyncService.getCachedProducts();
       if (cachedData.isNotEmpty) {
         return cachedData;
       }
-      
+
       // Return empty list if no cached data
       return [];
     }
@@ -152,30 +106,17 @@ class AgentRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      if (!forceRefresh) {
-        // Try to get cached data first
-        final cachedData = await _databaseService.getPriceTypes();
-        if (cachedData.isNotEmpty) {
-          return cachedData;
-        }
-      }
-
-      // Fetch fresh data from server
-      final priceTypes = await _apiService.getPriceTypes(
+      return await _dataSyncService.syncPriceTypes(
         userCode: userCode,
+        forceRefresh: forceRefresh,
       );
-      
-      // Cache the data
-      await _databaseService.savePriceTypes(priceTypes);
-      
-      return priceTypes;
     } catch (e) {
       // If API fails, try to return cached data
-      final cachedData = await _databaseService.getPriceTypes();
+      final cachedData = await _dataSyncService.getCachedPriceTypes();
       if (cachedData.isNotEmpty) {
         return cachedData;
       }
-      
+
       // Return empty list if no cached data
       return [];
     }
@@ -188,30 +129,17 @@ class AgentRepository {
     String? priceTypeCode,
   }) async {
     try {
-      if (!forceRefresh) {
-        // Try to get cached data first
-        final cachedData = await _databaseService.getProductPrices(priceTypeCode: priceTypeCode);
-        if (cachedData.isNotEmpty) {
-          return cachedData;
-        }
-      }
-
-      // Fetch fresh data from server
-      final productPrices = await _apiService.getProductPrices(
+      return await _dataSyncService.syncProductPrices(
         userCode: userCode,
+        forceRefresh: forceRefresh,
       );
-      
-      // Cache the data
-      await _databaseService.saveProductPrices(productPrices);
-      
-      return productPrices;
     } catch (e) {
       // If API fails, try to return cached data
-      final cachedData = await _databaseService.getProductPrices(priceTypeCode: priceTypeCode);
+      final cachedData = await _dataSyncService.getCachedProductPrices(priceTypeCode: priceTypeCode);
       if (cachedData.isNotEmpty) {
         return cachedData;
       }
-      
+
       // Return empty list if no cached data
       return [];
     }
@@ -221,20 +149,20 @@ class AgentRepository {
   Future<void> updateClientVisitStatus(String clientId, bool isVisited) async {
     // TODO: Send visit status to server
     // For now, just update local cache
-    final clients = await _databaseService.getClients();
+    final clients = await _dataSyncService.getCachedClients();
     final updatedClients = clients.map((client) {
       if (client.id == clientId) {
         return client.copyWith(isVisited: isVisited);
       }
       return client;
     }).toList();
-    
-    await _databaseService.saveClients(updatedClients);
+
+    await _dataSyncService.updateCachedClients(updatedClients);
   }
 
   /// Clear all cached data
   Future<void> clearCache() async {
-    await _databaseService.clearAllData();
+    await _dataSyncService.clearAllCachedData();
   }
 
   /// Sync all data from server
@@ -244,41 +172,35 @@ class AgentRepository {
     required String codeProject,
     required String codeSklad,
   }) async {
+    await _dataSyncService.syncAllUserData(
+      userCode: userCode,
+      password: password,
+      codeProject: codeProject,
+      codeSklad: codeSklad,
+    );
+  }
+
+  /// Save user data from shared preferences to database
+  Future<void> savePrefsToUsers() async {
     try {
-      // Sync KPI data
-      await getKpiData(
-        userCode: userCode,
-        password: password,
-        forceRefresh: true,
-      );
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      final dbHelper = DatabaseHelper();
 
-      // Sync clients
-      await getClients(
-        userCode: userCode,
-        password: password,
-        forceRefresh: true,
-      );
+      final userData = {
+        'code': prefs.getUserCode() ?? '',
+        'username': prefs.getSavedUsername() ?? '',
+        'password': prefs.getPassword() ?? '',
+        'name': prefs.getUserName() ?? '',
+        'role': 'Agent',
+        'warehouse_code': prefs.getWarehouseCode() ?? '',
+        'code_project': prefs.getCodeProject() ?? '',
+      };
 
-      // Sync products
-      await getProducts(
-        codeProject: codeProject,
-        codeSklad: codeSklad,
-        forceRefresh: true,
-      );
-
-      // Sync price types
-      await getPriceTypes(
-        userCode: userCode,
-        forceRefresh: true,
-      );
-
-      // Sync product prices
-      await getProductPrices(
-        userCode: userCode,
-        forceRefresh: true,
-      );
+      await dbHelper.saveUser(userData);
     } catch (e) {
-      throw Exception('Failed to sync data: $e');
+      print('Error saving prefs to users: $e');
+      rethrow;
     }
   }
 }

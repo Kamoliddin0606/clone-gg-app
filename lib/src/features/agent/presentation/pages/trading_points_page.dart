@@ -5,7 +5,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 
 import 'dart:ui'; // blur uchun
 
@@ -89,14 +91,27 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         password = prefs.getPassword() ?? "";
       });
 
-      if (userCode.isNotEmpty && password.isNotEmpty) {
-        _loadTradingPoints();
-      } else {
+      // Validate user data exists
+      if (userCode.isEmpty || password.isEmpty) {
         setState(() => _isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Foydalanuvchi ma\'lumotlari mavjud emas')),
+          );
+        }
+        return;
       }
+
+      // No additional validation needed - user data is already validated in home page
+
+      _loadTradingPoints();
     } catch (e) {
-      // ignore
       setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Xatolik: $e')),
+        );
+      }
     }
   }
 

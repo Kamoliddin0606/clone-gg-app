@@ -214,10 +214,21 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.delete('clients');
+    // Use batch operations for much better performance
+    final batch = db.batch();
 
+    // Delete all existing clients
+    batch.delete('clients');
+
+    // Deduplicate clients by code to avoid UNIQUE constraint violations
+    final uniqueClients = <String, TradingPoint>{};
     for (final client in clients) {
-      await db.insert('clients', {
+      uniqueClients[client.id] = client;
+    }
+
+    // Add all inserts to batch
+    for (final client in uniqueClients.values) {
+      batch.insert('clients', {
         'code': client.id,
         'name': client.name,
         'address': client.address,
@@ -247,6 +258,9 @@ class ApiDatabaseService {
         'updated_at': now,
       });
     }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
   }
 
   Future<List<TradingPoint>> getClients() async {
@@ -293,10 +307,21 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.delete('products');
+    // Use batch operations for much better performance
+    final batch = db.batch();
 
+    // Delete all existing products
+    batch.delete('products');
+
+    // Deduplicate products by code to avoid UNIQUE constraint violations
+    final uniqueProducts = <String, ProductData>{};
     for (final product in products) {
-      await db.insert('products', {
+      uniqueProducts[product.code] = product;
+    }
+
+    // Add all inserts to batch
+    for (final product in uniqueProducts.values) {
+      batch.insert('products', {
         'code': product.code,
         'name': product.name,
         'unit': product.unit,
@@ -317,6 +342,9 @@ class ApiDatabaseService {
         'updated_at': now,
       });
     }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
   }
 
   Future<List<ProductData>> getProducts() async {
@@ -352,10 +380,21 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.delete('price_types');
+    // Use batch operations for much better performance
+    final batch = db.batch();
 
+    // Delete all existing price types
+    batch.delete('price_types');
+
+    // Deduplicate price types by code to avoid UNIQUE constraint violations
+    final uniquePriceTypes = <String, PriceType>{};
     for (final priceType in priceTypes) {
-      await db.insert('price_types', {
+      uniquePriceTypes[priceType.code] = priceType;
+    }
+
+    // Add all inserts to batch
+    for (final priceType in uniquePriceTypes.values) {
+      batch.insert('price_types', {
         'code': priceType.code,
         'name': priceType.name,
         'description': priceType.description,
@@ -364,6 +403,9 @@ class ApiDatabaseService {
         'updated_at': now,
       });
     }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
   }
 
   Future<List<PriceType>> getPriceTypes() async {
@@ -387,10 +429,22 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.delete('product_prices');
+    // Use batch operations for much better performance
+    final batch = db.batch();
 
+    // Delete all existing product prices
+    batch.delete('product_prices');
+
+    // Deduplicate product prices by (product_code, price_type_code) to avoid UNIQUE constraint violations
+    final uniqueProductPrices = <String, ProductPrice>{};
     for (final productPrice in productPrices) {
-      await db.insert('product_prices', {
+      final key = '${productPrice.productCode}_${productPrice.priceTypeCode}';
+      uniqueProductPrices[key] = productPrice;
+    }
+
+    // Add all inserts to batch
+    for (final productPrice in uniqueProductPrices.values) {
+      batch.insert('product_prices', {
         'product_code': productPrice.productCode,
         'price_type_code': productPrice.priceTypeCode,
         'price': productPrice.price,
@@ -401,6 +455,9 @@ class ApiDatabaseService {
         'updated_at': now,
       });
     }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
   }
 
   Future<List<ProductPrice>> getProductPrices({String? priceTypeCode}) async {

@@ -6,6 +6,7 @@ import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -48,10 +49,18 @@ Future<void> setupServiceLocator() async {
     // sl.registerLazySingleton(() => ApiService.fromServer(sl<ServerService>()));
   }
   if (!sl.isRegistered<SoapApiService>()) {
-    sl.registerLazySingleton<SoapApiService>(() => SoapApiService(sl<Dio>()));
+    sl.registerLazySingleton<SoapApiService>(() => SoapApiService(sl<Dio>(), sl<ServerService>()));
   }
   if (!sl.isRegistered<ApiDatabaseService>()) {
     sl.registerLazySingleton<ApiDatabaseService>(() => ApiDatabaseService());
+  }
+  if (!sl.isRegistered<DataSyncService>()) {
+    sl.registerLazySingleton<DataSyncService>(() => DataSyncService(
+      prefs: sl<SharedPreferencesService>(),
+      apiService: sl<SoapApiService>(),
+      dbService: sl<ApiDatabaseService>(),
+      dbHelper: sl<DatabaseHelper>(),
+    ));
   }
 
   // Repositories
@@ -60,14 +69,16 @@ Future<void> setupServiceLocator() async {
   }
   if (!sl.isRegistered<AgentRepository>()) {
     sl.registerLazySingleton<AgentRepository>(() => AgentRepository(
-      apiService: sl<SoapApiService>(),
-      databaseService: sl<ApiDatabaseService>(),
+      dataSyncService: sl<DataSyncService>(),
     ));
   }
 
   // Blocs
   if (!sl.isRegistered<AuthBloc>()) {
-    sl.registerFactory(() => AuthBloc(authRepository: sl()));
+    sl.registerFactory(() => AuthBloc(
+      authRepository: sl(),
+      dataSyncService: sl(),
+    ));
   }
 }
 

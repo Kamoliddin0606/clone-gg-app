@@ -5,12 +5,15 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
+import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 
 class SoapApiService {
   final Dio _dio;
-  static const String _baseUrl = 'http://109.94.175.104:5443/EVYAP_UT/EVYAP_UT.1cws';
+  final ServerService _serverService;
 
-  SoapApiService(this._dio);
+  SoapApiService(this._dio, this._serverService);
+
+  String get _baseUrl => _serverService.baseUrl;
 
   /// Get KPI data for agent
   Future<KpiData> getKpiData({

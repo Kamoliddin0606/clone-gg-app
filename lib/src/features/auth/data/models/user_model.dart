@@ -9,6 +9,7 @@ class UserModel extends UserEntity {
     required super.code,
     required super.name,
     required super.warehouseCode,
+    required super.codeProject,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +21,7 @@ class UserModel extends UserEntity {
       code: json['code'],
       name: json['name'],
       warehouseCode: json['warehouseCode'],
+      codeProject: json['codeProject'] ?? '',
     );
   }
 
@@ -32,6 +34,7 @@ class UserModel extends UserEntity {
       code: soapResponse['Code'],
       name: soapResponse['Name'],
       warehouseCode: soapResponse['WarehouseCode'] ?? '',
+      codeProject: soapResponse['CodeProject'] ?? '',
     );
   }
 
@@ -66,6 +69,7 @@ class UserModel extends UserEntity {
       'code': code,
       'name': name,
       'warehouseCode': warehouseCode,
+      'codeProject': codeProject,
     };
   }
 }

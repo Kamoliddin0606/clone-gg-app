@@ -433,10 +433,12 @@ class SoapApiService {
       print('[$timestamp] DEBUG API: Parsed XML document');
       debugPrint('Document data: ${document.toString()}');
 
-      final returnElements = document.findAllElements('m:return');
-      print('[$timestamp] DEBUG API: Found ${returnElements.length} return elements');
+      final returnElement = document.findAllElements('m:return').first;
+      final rowElements = returnElement.findAllElements('m:row').where((row) =>
+        row.children.isNotEmpty && row.findElements('m:code').isNotEmpty);
+      print('[$timestamp] DEBUG API: Found ${rowElements.length} row elements');
 
-      final promotions = returnElements.map((element) {
+      final promotions = rowElements.map((element) {
         print('[$timestamp] DEBUG API: Parsing promotion from XML element');
         return PromotionModel.fromXml(element);
       }).toList();

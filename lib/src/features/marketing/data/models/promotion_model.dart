@@ -77,8 +77,26 @@ class PromotionModel extends Equatable {
       }
       final bonusList = bonusListMap.values.toList();
 
-      // Class list is not present in the current XML, so leave empty
-      final classList = <PromotionProduct>[];
+      final classListRaw = element.findAllElements('m:classList').map((classItem) {
+        final classTypeElement = classItem.findElements('m:classType');
+        if (classTypeElement.isNotEmpty) {
+          final classType = classTypeElement.first.innerText.trim();
+          if (classType.isNotEmpty) {
+            return PromotionProduct(
+              code: classType,
+              productName: 'Class $classType',
+            );
+          }
+        }
+        return null;
+      }).where((e) => e != null).cast<PromotionProduct>().toList();
+
+      // Deduplicate class list by code
+      final classListMap = <String, PromotionProduct>{};
+      for (final classItem in classListRaw) {
+        classListMap[classItem.code] = classItem;
+      }
+      final classList = classListMap.values.toList();
 
       print('[$timestamp] DEBUG MODEL: Products: ${productList.length}, Bonuses: ${bonusList.length}, Classes: ${classList.length}');
 

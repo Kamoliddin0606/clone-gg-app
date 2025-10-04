@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
+import 'package:gloria_marketing_flutter/src/features/marketing/presentation/pages/promotion_detail_page.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/presentation/widgets/promotion_card.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/presentation/widgets/promotion_card_shimmer.dart';
 
@@ -313,8 +314,10 @@ class _PromotionsPageState extends State<PromotionsPage> {
   }
 
   void _navigateToDetail(PromotionModel promotion) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${promotion.name} tanlandi')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PromotionDetailPage(promotion: promotion),
+      ),
     );
   }
 }

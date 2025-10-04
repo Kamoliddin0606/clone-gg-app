@@ -22,11 +22,11 @@ class PromotionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: cs.surface,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
@@ -36,12 +36,24 @@ class PromotionCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Image
+              // Leading Avatar (matching TradingPointCard style)
               Container(
-                width: 100,
-                height: 100,
-                color: Colors.grey[300],
-                child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    id.substring(0, 2).toUpperCase(),
+                    style: TextStyle(
+                      color: cs.onPrimaryContainer,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               // Details
@@ -49,29 +61,57 @@ class PromotionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 4),
-                    Text('ID: $id', style: const TextStyle(fontSize: 12)),
-                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.tag_outlined, size: 16, color: cs.onSurfaceVariant),
+                        const SizedBox(width: 6),
+                        Text(
+                          'ID: $id',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
                     Text(
                       description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14),
+                      style: theme.textTheme.bodyMedium,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.date_range, size: 16),
-                        const SizedBox(width: 4),
-                        Text('$startDate - $endDate',
-                            style: const TextStyle(fontSize: 12)),
+                        Icon(Icons.date_range_outlined, size: 16, color: cs.onSurfaceVariant),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '$startDate - $endDate',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ],
                 ),
+              ),
+              // Trailing arrow
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: cs.onSurfaceVariant,
               ),
             ],
           ),

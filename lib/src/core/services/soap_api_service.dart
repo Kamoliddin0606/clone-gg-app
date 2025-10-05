@@ -7,6 +7,10 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 
@@ -270,6 +274,46 @@ class SoapApiService {
     }
   }
 
+  /// Get user warehouses list
+  Future<List<UserWarehouse>> getWarehousesUser({
+    required String userCode,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:GetWarehousesUser>
+         <sam:CodeUser>$userCode</sam:CodeUser>
+      </sam:GetWarehousesUser>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final warehouseElements = document.findAllElements('m:Warehouse');
+
+      return warehouseElements.map((warehouse) => UserWarehouse(
+        code: _getElementText(warehouse, 'm:Code') ?? '',
+        name: _getElementText(warehouse, 'm:Name') ?? '',
+        organization: _getElementText(warehouse, 'm:Organization') ?? '',
+      )).toList();
+    } catch (e) {
+      throw Exception('Foydalanuvchi omborlarini olishda xatolik: $e');
+    }
+  }
+
   /// Create new business region
   Future<String> createBusinessRegion({
     required String userCode,
@@ -502,6 +546,96 @@ class SoapApiService {
       return products;
     } catch (e) {
       throw Exception('Mahsulotlar ro\'yxatini olishda xatolik: $e');
+    }
+  }
+
+  /// Get product balances with brands and series
+  Future<Map<String, dynamic>> getProductBalances({
+    required String codeProject,
+    required String codeSklad,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:GetProductBalance>
+         <sam:CodeProject>$codeProject</sam:CodeProject>
+         <sam:CodeSklad>$codeSklad</sam:CodeSklad>
+      </sam:GetProductBalance>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+
+      final balances = <ProductBalance>[];
+      final brands = <ProductBrand>[];
+      final series = <ProductSeries>[];
+
+      // Handle nested structure: ProductBrand -> ProductSeries -> Products
+      final brandElements = document.findAllElements('m:ProductBrand');
+
+      for (final brandElement in brandElements) {
+        final brandName = brandElement.innerText;
+        brands.add(ProductBrand(name: brandName));
+
+        // Find all rows under this brand
+        final brandParent = brandElement.parent;
+        if (brandParent != null) {
+          final seriesElements = brandParent.findAllElements('m:ProductSeries');
+
+          for (final seriesElement in seriesElements) {
+            final seriesName = seriesElement.innerText;
+            series.add(ProductSeries(name: seriesName, brandName: brandName));
+
+            // Find all product rows under this series
+            final seriesParent = seriesElement.parent;
+            if (seriesParent != null) {
+              final productRows = seriesParent.findAllElements('m:Rows');
+
+              for (final row in productRows) {
+                // Only process rows that have product data
+                if (_getElementText(row, 'm:CodeProduct') != null) {
+                  balances.add(ProductBalance(
+                    codeSklad: _getElementText(row, 'm:CodeSklad') ?? '',
+                    codeProduct: _getElementText(row, 'm:CodeProduct') ?? '',
+                    nameProduct: _getElementText(row, 'm:NameProduct') ?? '',
+                    have: int.tryParse(_getElementText(row, 'm:Have') ?? '0') ?? 0,
+                    reserved: int.tryParse(_getElementText(row, 'm:Reserved') ?? '0') ?? 0,
+                    available: int.tryParse(_getElementText(row, 'm:Aviable') ?? '0') ?? 0,
+                    weight: double.tryParse(_getElementText(row, 'm:Weight') ?? '0') ?? 0.0,
+                    capacity: double.tryParse(_getElementText(row, 'm:Capacity') ?? '0') ?? 0.0,
+                    codeProject: _getElementText(row, 'm:CodeProject') ?? '',
+                    vendorCode: _getElementText(row, 'm:VendorCode') ?? '',
+                    productBrand: brandName,
+                    productSeries: seriesName,
+                  ));
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return {
+        'balances': balances,
+        'brands': brands,
+        'series': series,
+      };
+    } catch (e) {
+      throw Exception('Mahsulot balanslarini olishda xatolik: $e');
     }
   }
 

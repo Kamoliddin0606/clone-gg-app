@@ -8,7 +8,9 @@ enum SyncStep {
   syncingProducts('Mahsulotlar yuklanmoqda...', Icons.inventory),
   syncingPriceTypes('Narx turlari yuklanmoqda...', Icons.price_change),
   syncingBusinessRegions('Biznes rayonlari yuklanmoqda...', Icons.location_on),
+  syncingUserWarehouses('Foydalanuvchi omborlari yuklanmoqda...', Icons.warehouse),
   syncingProductPrices('Mahsulot narxlari yuklanmoqda...', Icons.attach_money),
+  syncingProductBalances('Mahsulot balanslari yuklanmoqda...', Icons.balance),
   syncingPromotions('Aksiyalar yuklanmoqda...', Icons.local_offer),
   completed('Ma\'lumotlar yangilandi!', Icons.check_circle);
 

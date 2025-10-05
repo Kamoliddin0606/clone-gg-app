@@ -6,6 +6,11 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
@@ -27,7 +32,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 8,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -184,6 +189,76 @@ class ApiDatabaseService {
       await db.execute('''
         CREATE INDEX idx_clients_code_region ON clients(code_region)
       ''');
+    } else if (oldVersion < 6) {
+      // Add user warehouses table for version 6
+      await db.execute('''
+        CREATE TABLE user_warehouses (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code TEXT UNIQUE NOT NULL,
+          name TEXT NOT NULL,
+          organization TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+    } else if (oldVersion < 7) {
+      // Add product balance, brands, and series tables for version 7
+      await db.execute('''
+        CREATE TABLE product_brands (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT UNIQUE NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE product_series (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          brand_name TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (brand_name) REFERENCES product_brands (name) ON DELETE CASCADE,
+          UNIQUE(name, brand_name)
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE product_balances (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code_sklad TEXT NOT NULL,
+          code_product TEXT NOT NULL,
+          name_product TEXT NOT NULL,
+          have INTEGER NOT NULL,
+          reserved INTEGER NOT NULL,
+          available INTEGER NOT NULL,
+          weight REAL NOT NULL,
+          capacity REAL NOT NULL,
+          code_project TEXT NOT NULL,
+          vendor_code TEXT NOT NULL,
+          product_brand TEXT NOT NULL,
+          product_series TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (code_sklad) REFERENCES user_warehouses (code) ON DELETE CASCADE,
+          FOREIGN KEY (code_product) REFERENCES products (code) ON DELETE CASCADE,
+          FOREIGN KEY (product_brand) REFERENCES product_brands (name) ON DELETE CASCADE,
+          UNIQUE(code_sklad, code_product)
+        )
+      ''');
+
+      // Create indexes for better performance
+      await db.execute('CREATE INDEX idx_product_balances_code_sklad ON product_balances(code_sklad)');
+      await db.execute('CREATE INDEX idx_product_balances_code_product ON product_balances(code_product)');
+      await db.execute('CREATE INDEX idx_product_balances_product_brand ON product_balances(product_brand)');
+      await db.execute('CREATE INDEX idx_product_balances_product_series ON product_balances(product_series)');
+      await db.execute('CREATE INDEX idx_product_series_brand_name ON product_series(brand_name)');
+    } else if (oldVersion < 8) {
+      // Add foreign key constraints for version 8
+      // Since this is a cache database that gets cleared and reloaded,
+      // the FK constraints will be applied when tables are recreated
+      // No specific migration needed as data is refreshed from server
     }
   }
 
@@ -215,6 +290,66 @@ class ApiDatabaseService {
         name TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create user warehouses table
+    await db.execute('''
+      CREATE TABLE user_warehouses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        organization TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create product brands table
+    await db.execute('''
+      CREATE TABLE product_brands (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create product series table
+    await db.execute('''
+      CREATE TABLE product_series (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        brand_name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (brand_name) REFERENCES product_brands (name) ON DELETE CASCADE,
+        UNIQUE(name, brand_name)
+      )
+    ''');
+
+    // Create product balances table
+    await db.execute('''
+      CREATE TABLE product_balances (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code_sklad TEXT NOT NULL,
+        code_product TEXT NOT NULL,
+        name_product TEXT NOT NULL,
+        have INTEGER NOT NULL,
+        reserved INTEGER NOT NULL,
+        available INTEGER NOT NULL,
+        weight REAL NOT NULL,
+        capacity REAL NOT NULL,
+        code_project TEXT NOT NULL,
+        vendor_code TEXT NOT NULL,
+        product_brand TEXT NOT NULL,
+        product_series TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (code_sklad) REFERENCES user_warehouses (code) ON DELETE CASCADE,
+        FOREIGN KEY (code_product) REFERENCES products (code) ON DELETE CASCADE,
+        FOREIGN KEY (product_brand) REFERENCES product_brands (name) ON DELETE CASCADE,
+        UNIQUE(code_sklad, code_product)
       )
     ''');
 
@@ -277,6 +412,10 @@ class ApiDatabaseService {
       )
     ''');
 
+    // Create indexes for products
+    await db.execute('CREATE INDEX idx_products_warehouse_code ON products(warehouse_code)');
+    await db.execute('CREATE INDEX idx_products_code_project ON products(code_project)');
+
     // Create price types table
     await db.execute('''
       CREATE TABLE price_types (
@@ -302,9 +441,15 @@ class ApiDatabaseService {
         valid_to TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
+        FOREIGN KEY (product_code) REFERENCES products (code) ON DELETE CASCADE,
+        FOREIGN KEY (price_type_code) REFERENCES price_types (code) ON DELETE CASCADE,
         UNIQUE(product_code, price_type_code)
       )
     ''');
+
+    // Create indexes for product prices
+    await db.execute('CREATE INDEX idx_product_prices_price_type_code ON product_prices(price_type_code)');
+    await db.execute('CREATE INDEX idx_product_prices_product_code ON product_prices(product_code)');
 
     // Create promotions table
     await db.execute('''
@@ -370,6 +515,13 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)');
     await db.execute('CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)');
     await db.execute('CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)');
+
+    // Indexes for product balance tables
+    await db.execute('CREATE INDEX idx_product_balances_code_sklad ON product_balances(code_sklad)');
+    await db.execute('CREATE INDEX idx_product_balances_code_product ON product_balances(code_product)');
+    await db.execute('CREATE INDEX idx_product_balances_product_brand ON product_balances(product_brand)');
+    await db.execute('CREATE INDEX idx_product_balances_product_series ON product_balances(product_series)');
+    await db.execute('CREATE INDEX idx_product_series_brand_name ON product_series(brand_name)');
 
     print('API cache database tables created successfully');
   }
@@ -1156,6 +1308,628 @@ class ApiDatabaseService {
     await db.delete('business_regions', where: 'code = ?', whereArgs: [code]);
   }
 
+  // User warehouses methods
+  Future<void> saveUserWarehouses(List<UserWarehouse> warehouses) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing warehouses
+    batch.delete('user_warehouses');
+
+    // Deduplicate warehouses by code to avoid UNIQUE constraint violations
+    final uniqueWarehouses = <String, UserWarehouse>{};
+    for (final warehouse in warehouses) {
+      uniqueWarehouses[warehouse.code] = warehouse;
+    }
+
+    // Add all inserts to batch
+    for (final warehouse in uniqueWarehouses.values) {
+      batch.insert('user_warehouses', {
+        'code': warehouse.code,
+        'name': warehouse.name,
+        'organization': warehouse.organization,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<UserWarehouse>> getUserWarehouses() async {
+    final db = await database;
+    final result = await db.query('user_warehouses', orderBy: 'name ASC');
+
+    return result
+        .map(
+          (row) => UserWarehouse(
+            code: row['code'] as String,
+            name: row['name'] as String,
+            organization: row['organization'] as String,
+            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+          ),
+        )
+        .toList();
+  }
+
+  Future<UserWarehouse?> getUserWarehouseByCode(String code) async {
+    final db = await database;
+    final result = await db.query(
+      'user_warehouses',
+      where: 'code = ?',
+      whereArgs: [code],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return UserWarehouse(
+      code: row['code'] as String,
+      name: row['name'] as String,
+      organization: row['organization'] as String,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    );
+  }
+
+  Future<void> saveUserWarehouse(UserWarehouse warehouse) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert(
+      'user_warehouses',
+      {
+        'code': warehouse.code,
+        'name': warehouse.name,
+        'organization': warehouse.organization,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateUserWarehouse(String code, UserWarehouse warehouse) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'user_warehouses',
+      {
+        'name': warehouse.name,
+        'organization': warehouse.organization,
+        'updated_at': now,
+      },
+      where: 'code = ?',
+      whereArgs: [code],
+    );
+  }
+
+  Future<void> deleteUserWarehouse(String code) async {
+    final db = await database;
+    await db.delete('user_warehouses', where: 'code = ?', whereArgs: [code]);
+  }
+
+  // Product brands methods
+  Future<void> saveProductBrands(List<ProductBrand> brands) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing brands
+    batch.delete('product_brands');
+
+    // Deduplicate brands by name to avoid UNIQUE constraint violations
+    final uniqueBrands = <String, ProductBrand>{};
+    for (final brand in brands) {
+      uniqueBrands[brand.name] = brand;
+    }
+
+    // Add all inserts to batch
+    for (final brand in uniqueBrands.values) {
+      batch.insert('product_brands', {
+        'name': brand.name,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<ProductBrand>> getProductBrands() async {
+    final db = await database;
+    final result = await db.query('product_brands', orderBy: 'name ASC');
+
+    return result
+        .map(
+          (row) => ProductBrand(
+            name: row['name'] as String,
+            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+          ),
+        )
+        .toList();
+  }
+
+  Future<ProductBrand?> getProductBrandByName(String name) async {
+    final db = await database;
+    final result = await db.query(
+      'product_brands',
+      where: 'name = ?',
+      whereArgs: [name],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return ProductBrand(
+      name: row['name'] as String,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    );
+  }
+
+  Future<void> saveProductBrand(ProductBrand brand) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert(
+      'product_brands',
+      {
+        'name': brand.name,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateProductBrand(String name, ProductBrand brand) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'product_brands',
+      {
+        'name': brand.name,
+        'updated_at': now,
+      },
+      where: 'name = ?',
+      whereArgs: [name],
+    );
+  }
+
+  Future<void> deleteProductBrand(String name) async {
+    final db = await database;
+    await db.delete('product_brands', where: 'name = ?', whereArgs: [name]);
+  }
+
+  // Product series methods
+  Future<void> saveProductSeries(List<ProductSeries> series) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing series
+    batch.delete('product_series');
+
+    // Deduplicate series by (name, brand_name) to avoid UNIQUE constraint violations
+    final uniqueSeries = <String, ProductSeries>{};
+    for (final serie in series) {
+      final key = '${serie.name}_${serie.brandName}';
+      uniqueSeries[key] = serie;
+    }
+
+    // Add all inserts to batch
+    for (final serie in uniqueSeries.values) {
+      batch.insert('product_series', {
+        'name': serie.name,
+        'brand_name': serie.brandName,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<ProductSeries>> getProductSeries({String? brandName}) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    if (brandName != null) {
+      whereClause = 'WHERE brand_name = ?';
+      whereArgs = [brandName];
+    }
+
+    final result = await db.rawQuery('''
+      SELECT * FROM product_series
+      $whereClause
+      ORDER BY brand_name ASC, name ASC
+    ''', whereArgs);
+
+    return result
+        .map(
+          (row) => ProductSeries(
+            name: row['name'] as String,
+            brandName: row['brand_name'] as String,
+            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+          ),
+        )
+        .toList();
+  }
+
+  Future<ProductSeries?> getProductSeriesByNameAndBrand(String name, String brandName) async {
+    final db = await database;
+    final result = await db.query(
+      'product_series',
+      where: 'name = ? AND brand_name = ?',
+      whereArgs: [name, brandName],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return ProductSeries(
+      name: row['name'] as String,
+      brandName: row['brand_name'] as String,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    );
+  }
+
+  Future<void> saveProductSerie(ProductSeries series) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert(
+      'product_series',
+      {
+        'name': series.name,
+        'brand_name': series.brandName,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateProductSeries(String name, String brandName, ProductSeries series) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'product_series',
+      {
+        'name': series.name,
+        'brand_name': series.brandName,
+        'updated_at': now,
+      },
+      where: 'name = ? AND brand_name = ?',
+      whereArgs: [name, brandName],
+    );
+  }
+
+  Future<void> deleteProductSeries(String name, String brandName) async {
+    final db = await database;
+    await db.delete('product_series', where: 'name = ? AND brand_name = ?', whereArgs: [name, brandName]);
+  }
+
+  // Product balances methods
+  Future<void> saveProductBalances(List<ProductBalance> balances) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing balances
+    batch.delete('product_balances');
+
+    // Deduplicate balances by (code_sklad, code_product) to avoid UNIQUE constraint violations
+    final uniqueBalances = <String, ProductBalance>{};
+    for (final balance in balances) {
+      final key = '${balance.codeSklad}_${balance.codeProduct}';
+      uniqueBalances[key] = balance;
+    }
+
+    // Add all inserts to batch
+    for (final balance in uniqueBalances.values) {
+      batch.insert('product_balances', {
+        'code_sklad': balance.codeSklad,
+        'code_product': balance.codeProduct,
+        'name_product': balance.nameProduct,
+        'have': balance.have,
+        'reserved': balance.reserved,
+        'available': balance.available,
+        'weight': balance.weight,
+        'capacity': balance.capacity,
+        'code_project': balance.codeProject,
+        'vendor_code': balance.vendorCode,
+        'product_brand': balance.productBrand,
+        'product_series': balance.productSeries,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<ProductBalance>> getProductBalances({
+    String? warehouseCode,
+    String? productBrand,
+    String? productSeries,
+  }) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    final conditions = <String>[];
+    if (warehouseCode != null) {
+      conditions.add('code_sklad = ?');
+      whereArgs.add(warehouseCode);
+    }
+    if (productBrand != null) {
+      conditions.add('product_brand = ?');
+      whereArgs.add(productBrand);
+    }
+    if (productSeries != null) {
+      conditions.add('product_series = ?');
+      whereArgs.add(productSeries);
+    }
+
+    if (conditions.isNotEmpty) {
+      whereClause = 'WHERE ${conditions.join(' AND ')}';
+    }
+
+    final result = await db.rawQuery('''
+      SELECT * FROM product_balances
+      $whereClause
+      ORDER BY code_sklad ASC, product_brand ASC, product_series ASC, name_product ASC
+    ''', whereArgs);
+
+    return result
+        .map(
+          (row) => ProductBalance(
+            codeSklad: row['code_sklad'] as String,
+            codeProduct: row['code_product'] as String,
+            nameProduct: row['name_product'] as String,
+            have: row['have'] as int,
+            reserved: row['reserved'] as int,
+            available: row['available'] as int,
+            weight: row['weight'] as double,
+            capacity: row['capacity'] as double,
+            codeProject: row['code_project'] as String,
+            vendorCode: row['vendor_code'] as String,
+            productBrand: row['product_brand'] as String,
+            productSeries: row['product_series'] as String,
+            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+          ),
+        )
+        .toList();
+  }
+
+  Future<ProductBalance?> getProductBalanceByCodes(String warehouseCode, String productCode) async {
+    final db = await database;
+    final result = await db.query(
+      'product_balances',
+      where: 'code_sklad = ? AND code_product = ?',
+      whereArgs: [warehouseCode, productCode],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return ProductBalance(
+      codeSklad: row['code_sklad'] as String,
+      codeProduct: row['code_product'] as String,
+      nameProduct: row['name_product'] as String,
+      have: row['have'] as int,
+      reserved: row['reserved'] as int,
+      available: row['available'] as int,
+      weight: row['weight'] as double,
+      capacity: row['capacity'] as double,
+      codeProject: row['code_project'] as String,
+      vendorCode: row['vendor_code'] as String,
+      productBrand: row['product_brand'] as String,
+      productSeries: row['product_series'] as String,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    );
+  }
+
+  Future<void> saveProductBalance(ProductBalance balance) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert(
+      'product_balances',
+      {
+        'code_sklad': balance.codeSklad,
+        'code_product': balance.codeProduct,
+        'name_product': balance.nameProduct,
+        'have': balance.have,
+        'reserved': balance.reserved,
+        'available': balance.available,
+        'weight': balance.weight,
+        'capacity': balance.capacity,
+        'code_project': balance.codeProject,
+        'vendor_code': balance.vendorCode,
+        'product_brand': balance.productBrand,
+        'product_series': balance.productSeries,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateProductBalance(String warehouseCode, String productCode, ProductBalance balance) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'product_balances',
+      {
+        'code_sklad': balance.codeSklad,
+        'code_product': balance.codeProduct,
+        'name_product': balance.nameProduct,
+        'have': balance.have,
+        'reserved': balance.reserved,
+        'available': balance.available,
+        'weight': balance.weight,
+        'capacity': balance.capacity,
+        'code_project': balance.codeProject,
+        'vendor_code': balance.vendorCode,
+        'product_brand': balance.productBrand,
+        'product_series': balance.productSeries,
+        'updated_at': now,
+      },
+      where: 'code_sklad = ? AND code_product = ?',
+      whereArgs: [warehouseCode, productCode],
+    );
+  }
+
+  Future<void> deleteProductBalance(String warehouseCode, String productCode) async {
+    final db = await database;
+    await db.delete('product_balances', where: 'code_sklad = ? AND code_product = ?', whereArgs: [warehouseCode, productCode]);
+  }
+
+  // Optimized method to get products with prices using JOINs
+  Future<List<ProductWithPrice>> getProductsWithPrices({
+    required String priceTypeCode,
+    List<String>? warehouseCodes,
+    String? searchQuery,
+    String? codeProject,
+  }) async {
+    print('DEBUG: ApiDatabaseService.getProductsWithPrices called');
+    print('DEBUG: priceTypeCode = $priceTypeCode');
+    print('DEBUG: warehouseCodes = $warehouseCodes');
+    print('DEBUG: searchQuery = $searchQuery');
+    print('DEBUG: codeProject = $codeProject');
+
+    final db = await database;
+
+    // Build WHERE conditions
+    final whereConditions = <String>[];
+    final whereArgs = <dynamic>[];
+
+    // Always filter by price type
+    whereConditions.add('pp.price_type_code = ?');
+    whereArgs.add(priceTypeCode);
+
+    // Filter by project code if provided and not empty
+    if (codeProject != null && codeProject.trim().isNotEmpty) {
+      whereConditions.add('p.code_project = ?');
+      whereArgs.add(codeProject.trim());
+    }
+
+    // Filter by warehouse codes if provided and not empty
+    if (warehouseCodes != null && warehouseCodes.isNotEmpty && warehouseCodes.any((w) => w.trim().isNotEmpty)) {
+      final validCodes = warehouseCodes.where((w) => w.trim().isNotEmpty).toList();
+      if (validCodes.isNotEmpty) {
+        final placeholders = List.filled(validCodes.length, '?').join(', ');
+        whereConditions.add('p.warehouse_code IN ($placeholders)');
+        whereArgs.addAll(validCodes);
+      }
+    }
+
+    // Build search condition if provided
+    String searchCondition = '';
+    if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+      final trimmedQuery = searchQuery.trim();
+      searchCondition = '''
+        AND (
+          p.name LIKE ? OR
+          p.code LIKE ? OR
+          pt.name LIKE ? OR
+          CAST(pp.price AS TEXT) LIKE ?
+        )
+      ''';
+      final searchPattern = '%$trimmedQuery%';
+      whereArgs.addAll([searchPattern, searchPattern, searchPattern, searchPattern]);
+    }
+
+    final whereClause = whereConditions.isNotEmpty ? 'WHERE ${whereConditions.join(' AND ')}' : '';
+
+    // Optimized JOIN query
+    final query = '''
+      SELECT
+        p.code as product_code,
+        p.name as product_name,
+        p.unit as unit,
+        p.quantity as quantity,
+        p.reserved as reserved,
+        p.available as available,
+        p.category as category,
+        p.barcode as barcode,
+        p.have as have,
+        p.warehouse_code as warehouse_code,
+        COALESCE(uw.name, '') as warehouse_name,
+        p.weight as weight,
+        p.capacity as capacity,
+        p.vendor_code as vendor_code,
+        p.product_brand as product_brand,
+        p.product_series as product_series,
+        p.code_project as code_project,
+        pp.price_type_code as price_type_code,
+        pt.name as price_type_name,
+        pp.price as price,
+        pp.currency as currency,
+        pp.valid_from as valid_from,
+        pp.valid_to as valid_to,
+        COALESCE(pb.available, 0) as stock
+      FROM product_prices pp
+      INNER JOIN products p ON pp.product_code = p.code
+      INNER JOIN price_types pt ON pp.price_type_code = pt.code
+      LEFT JOIN user_warehouses uw ON p.warehouse_code = uw.code
+      LEFT JOIN product_balances pb ON p.code = pb.code_product AND p.warehouse_code = pb.code_sklad
+      $whereClause
+      $searchCondition
+      ORDER BY p.name ASC, p.code ASC
+    ''';
+
+    print('DEBUG: Executing query: $query');
+    print('DEBUG: Query args: $whereArgs');
+
+    final result = await db.rawQuery(query, whereArgs);
+
+    print('DEBUG: Query returned ${result.length} rows');
+    if (result.isNotEmpty) {
+      print('DEBUG: First row sample: ${result.first}');
+    }
+
+    final productsWithPrices = result.map((row) => ProductWithPrice.fromMap(row)).toList();
+
+    print('DEBUG: Parsed ${productsWithPrices.length} ProductWithPrice objects');
+    if (productsWithPrices.isNotEmpty) {
+      print('DEBUG: First product: ${productsWithPrices.first.productName} - ${productsWithPrices.first.price}');
+    }
+
+    return productsWithPrices;
+  }
+
   // Clear all data
   Future<void> clearAllData() async {
     final db = await database;
@@ -1165,6 +1939,10 @@ class ApiDatabaseService {
     await db.delete('price_types');
     await db.delete('product_prices');
     await db.delete('business_regions');
+    await db.delete('user_warehouses');
+    await db.delete('product_balances');
+    await db.delete('product_series');
+    await db.delete('product_brands');
     await db.delete('promotion_product_list');
     await db.delete('promotion_bonus_list');
     await db.delete('promotion_class_list');

@@ -8,6 +8,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
 
 class AgentRepository {
   final DataSyncService _dataSyncService;
@@ -146,6 +149,26 @@ class AgentRepository {
     }
   }
 
+  /// Get products with prices using optimized JOIN query
+  Future<List<ProductWithPrice>> getProductsWithPrices({
+    required String priceTypeCode,
+    List<String>? warehouseCodes,
+    String? searchQuery,
+    String? codeProject,
+  }) async {
+    try {
+      return await _dataSyncService.getCachedProductsWithPrices(
+        priceTypeCode: priceTypeCode,
+        warehouseCodes: warehouseCodes,
+        searchQuery: searchQuery,
+        codeProject: codeProject,
+      );
+    } catch (e) {
+      print('Error fetching products with prices: $e');
+      return [];
+    }
+  }
+
   /// Update client visit status
   Future<void> updateClientVisitStatus(String clientId, bool isVisited) async {
     // TODO: Send visit status to server
@@ -197,6 +220,22 @@ class AgentRepository {
     );
   }
 
+  /// Get cached user warehouses
+  Future<List<UserWarehouse>> getCachedUserWarehouses() async {
+    return await _dataSyncService.getCachedUserWarehouses();
+  }
+
+  /// Sync user warehouses from server
+  Future<List<UserWarehouse>> syncUserWarehouses({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    return await _dataSyncService.syncUserWarehouses(
+      userCode: userCode,
+      forceRefresh: forceRefresh,
+    );
+  }
+
   /// Save user data from shared preferences to database
   Future<void> savePrefsToUsers() async {
     try {
@@ -219,5 +258,18 @@ class AgentRepository {
       print('Error saving prefs to users: $e');
       rethrow;
     }
+  }
+
+  /// Get cached product balances
+  Future<List<ProductBalance>> getCachedProductBalances({
+    String? warehouseCode,
+    String? productBrand,
+    String? productSeries,
+  }) async {
+    return await _dataSyncService.getCachedProductBalances(
+      warehouseCode: warehouseCode,
+      productBrand: productBrand,
+      productSeries: productSeries,
+    );
   }
 }

@@ -15,6 +15,11 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
@@ -221,8 +226,14 @@ class DataSyncService {
       // Sync business regions
       await _syncBusinessRegions(userCode);
 
+      // Sync user warehouses
+      await _syncUserWarehouses(userCode);
+
       // Sync product prices
       await _syncProductPrices(userCode);
+
+      // Sync product balances
+      await _syncProductBalances(codeProject, codeSklad);
 
       // Sync promotions
       await _syncPromotions(null); // No auth token needed for now
@@ -292,15 +303,23 @@ class DataSyncService {
       yield SyncStep.syncingBusinessRegions;
       await _syncBusinessRegions(userCode);
 
-      // Step 8: Sync product prices
+      // Step 8: Sync user warehouses
+      yield SyncStep.syncingUserWarehouses;
+      await _syncUserWarehouses(userCode);
+
+      // Step 9: Sync product prices
       yield SyncStep.syncingProductPrices;
       await _syncProductPrices(userCode);
 
-      // Step 9: Sync promotions
+      // Step 10: Sync product balances
+      yield SyncStep.syncingProductBalances;
+      await _syncProductBalances(codeProject, codeSklad);
+
+      // Step 11: Sync promotions
       yield SyncStep.syncingPromotions;
       await _syncPromotions(null); // No auth token needed for now
 
-      // Step 10: Completed
+      // Step 12: Completed
       yield SyncStep.completed;
 
       if (kDebugMode) {
@@ -479,6 +498,71 @@ class DataSyncService {
     }
     await _dbService.saveBusinessRegions(regions);
     return regions;
+  }
+
+  /// Sync user warehouses data
+  Future<List<UserWarehouse>> syncUserWarehouses({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getUserWarehouses();
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+    }
+
+    return await _syncUserWarehouses(userCode);
+  }
+
+  Future<List<UserWarehouse>> _syncUserWarehouses(String userCode) async {
+    final warehouses = await _apiService.getWarehousesUser(userCode: userCode);
+    if (kDebugMode) {
+      print('Foydalanuvchi omborlari ma\'lumotlari yuklandi: ${warehouses.length} ta ombor');
+    }
+    await _dbService.saveUserWarehouses(warehouses);
+    return warehouses;
+  }
+
+  /// Sync product balances data
+  Future<Map<String, dynamic>> syncProductBalances({
+    required String codeProject,
+    required String codeSklad,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getProductBalances();
+      if (cached.isNotEmpty) {
+        return {
+          'balances': cached,
+          'brands': await _dbService.getProductBrands(),
+          'series': await _dbService.getProductSeries(),
+        };
+      }
+    }
+
+    return await _syncProductBalances(codeProject, codeSklad);
+  }
+
+  Future<Map<String, dynamic>> _syncProductBalances(String codeProject, String codeSklad) async {
+    final data = await _apiService.getProductBalances(
+      codeProject: codeProject,
+      codeSklad: codeSklad,
+    );
+
+    final balances = data['balances'] as List<ProductBalance>;
+    final brands = data['brands'] as List<ProductBrand>;
+    final series = data['series'] as List<ProductSeries>;
+
+    if (kDebugMode) {
+      print('Mahsulot balanslari ma\'lumotlari yuklandi: ${balances.length} ta balans, ${brands.length} ta brand, ${series.length} ta seriya');
+    }
+
+    await _dbService.saveProductBalances(balances);
+    await _dbService.saveProductBrands(brands);
+    await _dbService.saveProductSeries(series);
+
+    return data;
   }
 
   /// Create new business region
@@ -693,6 +777,19 @@ class DataSyncService {
   Future<List<ProductPrice>> getCachedProductPrices({String? priceTypeCode}) =>
       _dbService.getProductPrices(priceTypeCode: priceTypeCode);
   Future<List<BusinessRegion>> getCachedBusinessRegions() => _dbService.getBusinessRegions();
+  Future<List<UserWarehouse>> getCachedUserWarehouses() => _dbService.getUserWarehouses();
+  Future<List<ProductBalance>> getCachedProductBalances({
+    String? warehouseCode,
+    String? productBrand,
+    String? productSeries,
+  }) => _dbService.getProductBalances(
+    warehouseCode: warehouseCode,
+    productBrand: productBrand,
+    productSeries: productSeries,
+  );
+  Future<List<ProductBrand>> getCachedProductBrands() => _dbService.getProductBrands();
+  Future<List<ProductSeries>> getCachedProductSeries({String? brandName}) =>
+      _dbService.getProductSeries(brandName: brandName);
   Future<List<PromotionModel>> getCachedPromotions({
     bool onlyActive = true,
     String? searchQuery,
@@ -701,6 +798,19 @@ class DataSyncService {
     onlyActive: onlyActive,
     searchQuery: searchQuery,
     dateFilter: dateFilter,
+  );
+
+  /// Get cached products with prices using optimized JOIN query
+  Future<List<ProductWithPrice>> getCachedProductsWithPrices({
+    required String priceTypeCode,
+    List<String>? warehouseCodes,
+    String? searchQuery,
+    String? codeProject,
+  }) => _dbService.getProductsWithPrices(
+    priceTypeCode: priceTypeCode,
+    warehouseCodes: warehouseCodes,
+    searchQuery: searchQuery,
+    codeProject: codeProject,
   );
 
   /// Update cached clients (for local updates like visit status)

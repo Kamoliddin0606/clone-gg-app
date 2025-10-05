@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import '../../../../Utility/formatter.dart';
 import '../../data/models/price_type.dart';
-import '../../data/models/product_data.dart';
-import '../../data/models/product_price.dart';
+import '../../data/models/product_with_price.dart';
 
 class PricesPage extends StatefulWidget {
   const PricesPage({super.key});
@@ -23,8 +24,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
   List<String> _selectedWarehouses = [];
   List<PriceType> _priceTypes = [];
   List<String> _warehouses = [];
-  List<ProductPrice> _productPrices = [];
-  List<ProductData> _products = [];
+  List<ProductWithPrice> _productsWithPrices = [];
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -59,23 +59,96 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
     });
 
     try {
-      final dbService = ApiDatabaseService();
-      final priceTypes = await dbService.getPriceTypes();
-      final products = await dbService.getProducts();
-      final productPrices = await dbService.getProductPrices();
+      // Get user code from shared preferences
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      final userCode = prefs.getUserCode();
 
-      // Extract unique warehouse codes
-      final warehouses = products
-          .map((p) => p.warehouseCode)
-          .where((w) => w.isNotEmpty)
-          .toSet()
-          .toList();
+      if (userCode == null || userCode.isEmpty) {
+        throw Exception('User code not found. Please login again.');
+      }
+
+      final repository = sl<AgentRepository>();
+
+      // Load price types and warehouses
+      var priceTypes = await repository.getPriceTypes(userCode: userCode);
+      var warehouses = await repository.getCachedUserWarehouses();
+
+      // Check if we need to sync data from API
+      bool needsSync = false;
+
+      // Check warehouses
+      if (warehouses.isEmpty) {
+        needsSync = true;
+      }
+
+      // Load products to check if they exist
+      var products = await repository.getProducts(
+        codeProject: prefs.getCodeProject() ?? '',
+        codeSklad: prefs.getWarehouseCode() ?? '',
+      );
+      if (products.isEmpty) {
+        needsSync = true;
+      }
+
+      // Load product prices to check if they exist
+      var productPrices = await repository.getProductPrices(userCode: userCode);
+      if (productPrices.isEmpty) {
+        needsSync = true;
+      }
+
+      // Load product balances to check if they exist
+      var productBalances = await repository.getCachedProductBalances();
+      if (productBalances.isEmpty) {
+        needsSync = true;
+      }
+
+      // If any table is empty, sync all data from API
+      if (needsSync) {
+        setState(() {
+          _isLoading = true;
+          _errorMessage = 'Ma\'lumotlar yuklanmoqda...';
+        });
+
+        try {
+          await repository.syncAllData(
+            userCode: userCode,
+            password: prefs.getPassword() ?? '',
+            codeProject: prefs.getCodeProject() ?? '',
+            codeSklad: prefs.getWarehouseCode() ?? '',
+          );
+
+          // Reload all data after sync
+          final syncedPriceTypes = await repository.getPriceTypes(userCode: userCode);
+          final syncedWarehouses = await repository.getCachedUserWarehouses();
+          final syncedProducts = await repository.getProducts(
+            codeProject: prefs.getCodeProject() ?? '',
+            codeSklad: prefs.getWarehouseCode() ?? '',
+          );
+          final syncedProductPrices = await repository.getProductPrices(userCode: userCode);
+          final syncedProductBalances = await repository.getCachedProductBalances();
+
+          // Update the variables with synced data
+          priceTypes = syncedPriceTypes;
+          warehouses = syncedWarehouses;
+          products.clear();
+          products.addAll(syncedProducts);
+          productPrices.clear();
+          productPrices.addAll(syncedProductPrices);
+          productBalances.clear();
+          productBalances.addAll(syncedProductBalances);
+        } catch (e) {
+          setState(() {
+            _errorMessage = 'Ma\'lumotlar yuklanmadi: ${e.toString()}';
+            _isLoading = false;
+          });
+          return;
+        }
+      }
 
       setState(() {
         _priceTypes = priceTypes;
-        _products = products;
-        _productPrices = productPrices;
-        _warehouses = warehouses;
+        _warehouses = warehouses.map((w) => w.code).toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -97,70 +170,64 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
     });
   }
 
-  void _onPriceTypeChanged(PriceType? priceType) {
+  Future<void> _onPriceTypeChanged(PriceType? priceType) async {
     setState(() {
       _selectedPriceType = priceType;
-      _updateFilteredData();
+      _productsWithPrices = []; // Clear previous data
     });
+
+    if (priceType != null) {
+      try {
+        await sl.isReady<SharedPreferencesService>();
+        final prefs = sl<SharedPreferencesService>();
+        final codeProject = prefs.getCodeProject();
+
+        final repository = sl<AgentRepository>();
+        final productsWithPrices = await repository.getProductsWithPrices(
+          priceTypeCode: priceType.code,
+          warehouseCodes: _selectedWarehouses.isNotEmpty ? _selectedWarehouses : null,
+          codeProject: codeProject,
+        );
+
+        setState(() {
+          _productsWithPrices = productsWithPrices;
+        });
+      } catch (e) {
+        setState(() {
+          _errorMessage = 'Failed to load products: ${e.toString()}';
+        });
+      }
+    }
   }
 
-  void _onWarehousesChanged(List<String> warehouses) {
+  Future<void> _onWarehousesChanged(List<String> warehouses) async {
     setState(() {
       _selectedWarehouses = warehouses;
-      _updateFilteredData();
     });
+
+    // Reload data if price type is selected
+    if (_selectedPriceType != null) {
+      await _onPriceTypeChanged(_selectedPriceType);
+    }
   }
 
-  void _updateFilteredData() {
-    // This will trigger a rebuild and the list will be filtered in build method
-  }
+  List<ProductWithPrice> _getFilteredProducts() {
+    final searchQuery = _searchController.text.trim();
 
-  List<Map<String, dynamic>> _getFilteredProducts() {
-    if (_selectedPriceType == null) {
-      return [];
+    if (searchQuery.isEmpty) {
+      return _productsWithPrices;
     }
 
-    final filteredPrices = _productPrices
-        .where((price) => price.priceTypeCode == _selectedPriceType!.code)
-        .toList();
+    // Client-side search filtering (database already filtered by price type and warehouses)
+    final filtered = _productsWithPrices.where((item) {
+      return matchesSearch(item.productName, searchQuery) ||
+             matchesSearch(item.productCode, searchQuery) ||
+             matchesSearch(item.vendorCode, searchQuery) ||
+             matchesSearch(item.priceTypeName, searchQuery) ||
+             matchesSearch(item.price.toString(), searchQuery);
+    }).toList();
 
-    final productsWithPrices = <Map<String, dynamic>>[];
-
-    for (final price in filteredPrices) {
-      final product = _products.firstWhere(
-        (p) => p.code == price.productCode,
-        orElse: () => ProductData(
-          code: price.productCode,
-          name: 'Unknown Product',
-          unit: '',
-          quantity: 0,
-          reserved: 0,
-          available: 0,
-          category: '',
-          barcode: '',
-          have: 0,
-          warehouseCode: '',
-          weight: 0,
-          capacity: 0,
-          vendorCode: '',
-          productBrand: '',
-          productSeries: '',
-          codeProject: '',
-        ),
-      );
-
-      if (_selectedWarehouses.isNotEmpty &&
-          !_selectedWarehouses.contains(product.warehouseCode)) {
-        continue;
-      }
-
-      productsWithPrices.add({
-        'product': product,
-        'price': price,
-      });
-    }
-
-    return productsWithPrices;
+    return filtered;
   }
 
   @override
@@ -210,7 +277,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
-                            hintText: 'Mahsulot nomini qidiring...',
+                            hintText: 'Mahsulot nomi, kodi yoki artikulini qidiring...',
                             prefixIcon: const Icon(Icons.search),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -375,9 +442,9 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
 
     if (_selectedWarehouses.isEmpty) {
       // Show tabs for each warehouse
-      final warehouseGroups = <String, List<Map<String, dynamic>>>{};
+      final warehouseGroups = <String, List<ProductWithPrice>>{};
       for (final item in filteredProducts) {
-        final warehouse = item['product'].warehouseCode;
+        final warehouse = item.warehouseCode;
         warehouseGroups.putIfAbsent(warehouse, () => []).add(item);
       }
 
@@ -393,8 +460,13 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                 indicatorColor: colorScheme.primary,
                 labelColor: colorScheme.primary,
                 unselectedLabelColor: colorScheme.onSurfaceVariant,
-                tabs: warehouseGroups.keys.map((warehouse) {
-                  return Tab(text: warehouse.isEmpty ? 'Noma\'lum' : warehouse);
+                tabs: warehouseGroups.keys.map((warehouseCode) {
+                  // Find warehouse name from the first product in this group
+                  final firstProduct = warehouseGroups[warehouseCode]?.first;
+                  final warehouseName = firstProduct?.warehouseName.isNotEmpty == true
+                      ? firstProduct!.warehouseName
+                      : (warehouseCode.isEmpty ? 'Noma\'lum' : warehouseCode);
+                  return Tab(text: warehouseName);
                 }).toList(),
               ),
             ),
@@ -414,29 +486,19 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
     }
   }
 
-  Widget _buildProductList(List<Map<String, dynamic>> products) {
+  Widget _buildProductList(List<ProductWithPrice> products) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final searchQuery = _searchController.text.trim();
-    final filteredProducts = products.where((item) {
-      final product = item['product'] as ProductData;
-      final price = item['price'] as ProductPrice;
-      final priceType = _selectedPriceType;
 
-      // Search in product name, code, price type name, and price
-      return matchesSearch(product.name, searchQuery) ||
-             matchesSearch(product.code, searchQuery) ||
-             (priceType != null && matchesSearch(priceType.name, searchQuery)) ||
-             matchesSearch(price.price.toString(), searchQuery);
-    }).toList();
+    if (products.isEmpty) {
+      return const Center(child: Text('Mahsulotlar yo\'q'));
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: filteredProducts.length,
+      itemCount: products.length,
       itemBuilder: (context, index) {
-        final item = filteredProducts[index];
-        final product = item['product'] as ProductData;
-        final price = item['price'] as ProductPrice;
+        final item = products[index];
 
         return Card(
           elevation: 0,
@@ -460,7 +522,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              product.name,
+                              item.productName,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: colorScheme.onSurface,
@@ -472,7 +534,33 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                                 Icon(Icons.tag_outlined, size: 16, color: colorScheme.onSurfaceVariant),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Kod: ${product.code}',
+                                  'Kod: ${item.productCode}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.inventory_2_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Artikul: ${item.vendorCode.isNotEmpty ? item.vendorCode : 'Noma\'lum'}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.warehouse_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Qoldiq: ${item.stock}',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
                                   ),
@@ -481,7 +569,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Narx turi: ${_selectedPriceType?.name ?? ''}',
+                              'Narx turi: ${item.priceTypeName}',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
                               ),
@@ -490,7 +578,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                         ),
                       ),
                       Text(
-                        '${price.price.toStringAsFixed(0)} ${price.currency}',
+                        '${item.price.toStringAsFixed(0)} ${item.currency}',
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: colorScheme.primary,
@@ -498,7 +586,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  if (product.warehouseCode.isNotEmpty) ...[
+                  if (item.warehouseCode.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -507,7 +595,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Sklad: ${product.warehouseCode}',
+                        'Sklad: ${item.warehouseName.isNotEmpty ? item.warehouseName : item.warehouseCode}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onPrimaryContainer,
                           fontWeight: FontWeight.w600,

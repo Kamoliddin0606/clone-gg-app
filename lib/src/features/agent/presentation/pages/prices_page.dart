@@ -6,6 +6,8 @@ import '../../../../Utility/formatter.dart';
 import '../../data/models/price_type.dart';
 import '../../data/models/product_with_price.dart';
 
+enum _ViewMode { list, grid }
+
 class PricesPage extends StatefulWidget {
   const PricesPage({super.key});
 
@@ -27,6 +29,8 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
   List<ProductWithPrice> _productsWithPrices = [];
   bool _isLoading = true;
   String? _errorMessage;
+  bool _showViewBar = false;
+  _ViewMode _viewMode = _ViewMode.list;
 
   @override
   void initState() {
@@ -237,10 +241,8 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Narxlar'),
-        elevation: 0,
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        title: Text('Narxlar', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
@@ -249,366 +251,499 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadData,
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error, size: 48, color: Colors.red),
-                        const SizedBox(height: 16),
-                        Text(_errorMessage!),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadData,
-                          child: const Text('Qayta urinish'),
-                        ),
-                      ],
-                    ),
-                  )
-                : Column(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.primary.withValues(alpha: 0.08),
+              colorScheme.primaryContainer.withValues(alpha: 0.06),
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            // Search bar (M3 uslub, yumshoq soya)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: _SearchField(
+                controller: _searchController,
+                onChanged: (value) => setState(() {}),
+              ),
+            ),
+            // Filter panel
+            SizeTransition(
+              sizeFactor: _filterAnimation,
+              child: Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                color: colorScheme.surfaceContainerHighest,
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Search bar
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Mahsulot nomi, kodi yoki artikulini qidiring...',
-                            prefixIcon: const Icon(Icons.search),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: colorScheme.outline),
-                            ),
-                            filled: true,
-                            fillColor: colorScheme.surfaceContainerHighest,
+                      // Price type selection
+                      DropdownButtonFormField<PriceType>(
+                        initialValue: _selectedPriceType,
+                        decoration: InputDecoration(
+                          labelText: 'Narx turi',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: colorScheme.outline),
                           ),
-                          onChanged: (value) => setState(() {}),
+                          filled: true,
+                          fillColor: colorScheme.surface,
+                        ),
+                        items: _priceTypes.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(type.name),
+                          );
+                        }).toList(),
+                        onChanged: _onPriceTypeChanged,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Warehouse selection
+                      Text(
+                        'Skladlar',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
                         ),
                       ),
-
-                      // Filter panel
-                      SizeTransition(
-                        sizeFactor: _filterAnimation,
-                        child: Card(
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          color: colorScheme.surfaceContainerHighest,
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Price type selection
-                                DropdownButtonFormField<PriceType>(
-                                  initialValue: _selectedPriceType,
-                                  decoration: InputDecoration(
-                                    labelText: 'Narx turi',
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(color: colorScheme.outline),
-                                    ),
-                                    filled: true,
-                                    fillColor: colorScheme.surface,
-                                  ),
-                                  items: _priceTypes.map((type) {
-                                    return DropdownMenuItem(
-                                      value: type,
-                                      child: Text(type.name),
-                                    );
-                                  }).toList(),
-                                  onChanged: _onPriceTypeChanged,
-                                ),
-                                const SizedBox(height: 16),
-
-                                // Warehouse selection
-                                Text(
-                                  'Skladlar',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: colorScheme.onSurface,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: _warehouses.map((warehouse) {
-                                    final isSelected = _selectedWarehouses.contains(warehouse);
-                                    return FilterChip(
-                                      label: Text(warehouse),
-                                      selected: isSelected,
-                                      onSelected: (selected) {
-                                        final newSelection = List<String>.from(_selectedWarehouses);
-                                        if (selected) {
-                                          newSelection.add(warehouse);
-                                        } else {
-                                          newSelection.remove(warehouse);
-                                        }
-                                        _onWarehousesChanged(newSelection);
-                                      },
-                                      backgroundColor: colorScheme.surfaceContainerHighest,
-                                      selectedColor: colorScheme.primaryContainer,
-                                      checkmarkColor: colorScheme.onPrimaryContainer,
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Content
-                      Expanded(
-                        child: _buildContent(),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _warehouses.map((warehouse) {
+                          final isSelected = _selectedWarehouses.contains(warehouse);
+                          return FilterChip(
+                            label: Text(warehouse),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              final newSelection = List<String>.from(_selectedWarehouses);
+                              if (selected) {
+                                newSelection.add(warehouse);
+                              } else {
+                                newSelection.remove(warehouse);
+                              }
+                              _onWarehousesChanged(newSelection);
+                            },
+                            backgroundColor: colorScheme.surfaceContainerHighest,
+                            selectedColor: colorScheme.primaryContainer,
+                            checkmarkColor: colorScheme.onPrimaryContainer,
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
+                ),
+              ),
+            ),
+            // === ADD: yashirin/ko'rinar panel (son + list/grid tugmalar) ===
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: _showViewBar
+                    ? _ViewToolbar(
+                  count: _getFilteredProducts().length,
+                  mode: _viewMode,
+                  onModeChanged: (m) => setState(() => _viewMode = m),
+                  onCollapse: () => setState(() => _showViewBar = false),
+                )
+                    : Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    tooltip: 'Ko‘rinish paneli',
+                    onPressed: () => setState(() => _showViewBar = true),
+                    icon: const Icon(Icons.tune), // biriktirilgan namunadagi kabi "tune" tugma
+                  ),
+                ),
+              ),
+            ),
+            // Content
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error, size: 48, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text(_errorMessage!),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadData,
+                                child: const Text('Qayta urinish'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _selectedPriceType == null
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.price_change,
+                                    size: 64,
+                                    color: colorScheme.outline,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Narx turini tanlang',
+                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                      color: colorScheme.onSurface,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Filtr panelidan narx turini tanlash uchun yuqoridagi filtr tugmasini bosing',
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : RefreshIndicator(
+                onRefresh: _loadData,
+                child: _viewMode == _ViewMode.list
+                    ? ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  itemCount: _getFilteredProducts().length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final product = _getFilteredProducts()[index];
+                    return ProductCard(
+                      product: product,
+                    );
+                  },
+                )
+                    : GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.60,
+                  ),
+                  itemCount: _getFilteredProducts().length,
+                  itemBuilder: (context, index) {
+                    final product = _getFilteredProducts()[index];
+                    return ProductGridTile(
+                      product: product,
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildContent() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final filteredProducts = _getFilteredProducts();
+/// M3 uslubdagi qidiruv
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  const _SearchField({required this.controller, required this.onChanged});
 
-    if (_selectedPriceType == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.price_change,
-              size: 64,
-              color: colorScheme.outline,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Narx turini tanlang',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Filtr panelidan narx turini tanlash uchun yuqoridagi filtr tugmasini bosing',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: cs.primary.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 6)),
+        ],
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        decoration: const InputDecoration(
+          hintText: 'Qidirish...',
+          prefixIcon: Icon(Icons.search),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
         ),
-      );
-    }
-
-    if (filteredProducts.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.inventory_2,
-              size: 64,
-              color: colorScheme.outline,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Mahsulotlar topilmadi',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tanlangan filtrlar bo\'yicha mahsulotlar mavjud emas',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_selectedWarehouses.isEmpty) {
-      // Show tabs for each warehouse
-      final warehouseGroups = <String, List<ProductWithPrice>>{};
-      for (final item in filteredProducts) {
-        final warehouse = item.warehouseCode;
-        warehouseGroups.putIfAbsent(warehouse, () => []).add(item);
-      }
-
-      return DefaultTabController(
-        length: warehouseGroups.length,
-        child: Column(
-          children: [
-            Container(
-              color: colorScheme.surface,
-              child: TabBar(
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                indicatorColor: colorScheme.primary,
-                labelColor: colorScheme.primary,
-                unselectedLabelColor: colorScheme.onSurfaceVariant,
-                tabs: warehouseGroups.keys.map((warehouseCode) {
-                  // Find warehouse name from the first product in this group
-                  final firstProduct = warehouseGroups[warehouseCode]?.first;
-                  final warehouseName = firstProduct?.warehouseName.isNotEmpty == true
-                      ? firstProduct!.warehouseName
-                      : (warehouseCode.isEmpty ? 'Noma\'lum' : warehouseCode);
-                  return Tab(text: warehouseName);
-                }).toList(),
-              ),
-            ),
-            Expanded(
-              child: TabBarView(
-                children: warehouseGroups.values.map((products) {
-                  return _buildProductList(products);
-                }).toList(),
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      // Show single list
-      return _buildProductList(filteredProducts);
-    }
+      ),
+    );
   }
+}
 
-  Widget _buildProductList(List<ProductWithPrice> products) {
+/// Ko'rinish paneli (count + list/grid tugmalar + yopish ikon)
+class _ViewToolbar extends StatelessWidget {
+  final int count;
+  final _ViewMode mode;
+  final ValueChanged<_ViewMode> onModeChanged;
+  final VoidCallback onCollapse;
+  const _ViewToolbar({
+    required this.count,
+    required this.mode,
+    required this.onModeChanged,
+    required this.onCollapse,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final cs = theme.colorScheme;
 
-    if (products.isEmpty) {
-      return const Center(child: Text('Mahsulotlar yo\'q'));
-    }
+    Color iconColor(bool active) =>
+        active ? cs.primary : cs.onSurface.withValues(alpha: 0.45);
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final item = products[index];
+    return Row(
+      children: [
+        // Mahsulotlar soni
+        Text(
+          'Mahsulotlar soni: $count',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
 
-        return Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          color: colorScheme.surface,
-          margin: const EdgeInsets.only(bottom: 12),
-          child: InkWell(
-            onTap: () {}, // Add tap functionality if needed
-            borderRadius: BorderRadius.circular(16),
-            splashColor: colorScheme.primary.withValues(alpha: 0.1),
-            highlightColor: colorScheme.primary.withValues(alpha: 0.1),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+        // List tugma
+        InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => onModeChanged(_ViewMode.list),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            child: Icon(
+              Icons.view_agenda_rounded, // list
+              size: 22,
+              color: iconColor(mode == _ViewMode.list),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+
+        // Grid tugma
+        InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => onModeChanged(_ViewMode.grid),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            child: Icon(
+              Icons.grid_view_rounded, // grid
+              size: 22,
+              color: iconColor(mode == _ViewMode.grid),
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 6),
+        // Yopish
+        IconButton(
+          tooltip: 'Yopish',
+          onPressed: onCollapse,
+          icon: const Icon(Icons.close),
+        ),
+      ],
+    );
+  }
+}
+
+class ProductCard extends StatelessWidget {
+  final ProductWithPrice product;
+  const ProductCard({super.key, required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: cs.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.productName,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(Icons.tag_outlined, size: 16, color: colorScheme.onSurfaceVariant),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Kod: ${item.productCode}',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(Icons.inventory_2_outlined, size: 16, color: colorScheme.onSurfaceVariant),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Artikul: ${item.vendorCode.isNotEmpty ? item.vendorCode : 'Noma\'lum'}',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(Icons.warehouse_outlined, size: 16, color: colorScheme.onSurfaceVariant),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Qoldiq: ${item.stock}',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Narx turi: ${item.priceTypeName}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                       Text(
-                        '${item.price.toStringAsFixed(0)} ${item.currency}',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.primary,
-                        ),
+                        product.productName,
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.tag_outlined, size: 16, color: cs.onSurfaceVariant),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Kod: ${product.productCode}',
+                              style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.inventory_2_outlined, size: 16, color: cs.onSurfaceVariant),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
+                              style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.warehouse_outlined, size: 16, color: cs.onSurfaceVariant),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Qoldiq: ${product.stock}',
+                              style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Narx turi: ${product.priceTypeName}',
+                        style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                  if (item.warehouseCode.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'Sklad: ${item.warehouseName.isNotEmpty ? item.warehouseName : item.warehouseCode}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                ),
+                Text(
+                  '${product.price.toStringAsFixed(0)} ${product.currency}',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: cs.primary,
+                  ),
+                ),
+              ],
+            ),
+            if (product.warehouseCode.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Sklad: ${product.warehouseName.isNotEmpty ? product.warehouseName : product.warehouseCode}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onPrimaryContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ProductGridTile extends StatelessWidget {
+  final ProductWithPrice product;
+  const ProductGridTile({super.key, required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Card(
+      elevation: 6,
+      shadowColor: Colors.black.withValues(alpha: 0.15),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {}, // Add tap functionality if needed
+        borderRadius: BorderRadius.circular(16),
+        splashColor: cs.primary.withValues(alpha: 0.10),
+        highlightColor: cs.primary.withValues(alpha: 0.10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // TOP: product icon
+            SizedBox(
+              height: 120,
+              child: Container(
+                color: cs.primaryContainer,
+                child: const Center(child: Icon(Icons.inventory, size: 40)),
+              ),
+            ),
+            // BODY: details
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.productName,
+                    maxLines: 2,
+                    softWrap: true,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Kod: ${product.productCode}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Narx: ${product.price.toStringAsFixed(0)} ${product.currency}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 }

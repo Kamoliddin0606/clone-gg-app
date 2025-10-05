@@ -1,0 +1,1330 @@
+import 'package:flutter/material.dart';
+
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sozlamalar'),
+        elevation: 0,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+      ),
+      body: Column(
+        children: [
+          // User Profile Section
+          const UserProfileSection(),
+
+          // Tab Bar
+          Container(
+            color: colorScheme.surface,
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              indicatorColor: colorScheme.primary,
+              labelColor: colorScheme.primary,
+              unselectedLabelColor: colorScheme.onSurfaceVariant,
+              tabs: const [
+                Tab(text: 'Narxlar'),
+                Tab(text: 'Skladlar'),
+                Tab(text: 'Biznes Regionlar'),
+                Tab(text: 'Ruxsatlar'),
+              ],
+            ),
+          ),
+
+          // Tab Bar View
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [
+                PricesTab(),
+                WarehousesTab(),
+                BusinessRegionsTab(),
+                PermissionsTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class UserProfileSection extends StatefulWidget {
+  const UserProfileSection({super.key});
+
+  @override
+  State<UserProfileSection> createState() => _UserProfileSectionState();
+}
+
+class _UserProfileSectionState extends State<UserProfileSection> with TickerProviderStateMixin {
+  bool _isEditing = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleEdit() {
+    setState(() {
+      _isEditing = !_isEditing;
+      if (_isEditing) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primaryContainer,
+            colorScheme.secondaryContainer,
+          ],
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: colorScheme.primary,
+                child: const Icon(Icons.person, size: 40, color: Colors.white),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'John Doe', // Replace with actual user name
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Agent ID: 12345', // Replace with actual ID
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'john.doe@example.com', // Replace with actual email
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onPrimaryContainer.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: _toggleEdit,
+                icon: Icon(
+                  _isEditing ? Icons.check : Icons.edit,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ],
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isEditing
+                ? FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Column(
+                        children: [
+                          TextField(
+                            decoration: InputDecoration(
+                              labelText: 'Ism',
+                              filled: true,
+                              fillColor: colorScheme.surface.withOpacity(0.9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              filled: true,
+                              fillColor: colorScheme.surface.withOpacity(0.9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            decoration: InputDecoration(
+                              labelText: 'Telefon',
+                              filled: true,
+                              fillColor: colorScheme.surface.withOpacity(0.9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PricesTab extends StatefulWidget {
+  const PricesTab({super.key});
+
+  @override
+  State<PricesTab> createState() => _PricesTabState();
+}
+
+class _PricesTabState extends State<PricesTab> with TickerProviderStateMixin {
+  String _selectedFilter = 'All';
+  final List<String> _filters = ['All', 'Today', 'Week', 'Month'];
+  late AnimationController _chartAnimationController;
+  late Animation<double> _chartAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _chartAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _chartAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _chartAnimationController, curve: Curves.easeInOut),
+    );
+    _chartAnimationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _chartAnimationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Filters
+          Row(
+            children: _filters.map((filter) {
+              final isSelected = _selectedFilter == filter;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(filter),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _selectedFilter = filter);
+                      _chartAnimationController.reset();
+                      _chartAnimationController.forward();
+                    }
+                  },
+                  backgroundColor: colorScheme.surfaceContainerHighest,
+                  selectedColor: colorScheme.primaryContainer,
+                  checkmarkColor: colorScheme.onPrimaryContainer,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 24),
+
+          // Price Chart
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Narxlar dinamikasi',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 200,
+                    child: AnimatedBuilder(
+                      animation: _chartAnimation,
+                      builder: (context, child) {
+                        return CustomPaint(
+                          painter: PriceChartPainter(
+                            animationValue: _chartAnimation.value,
+                            colorScheme: colorScheme,
+                          ),
+                          size: const Size(double.infinity, 200),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Price List
+          Text(
+            'Narxlar ro\'yxati',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 10,
+            itemBuilder: (context, index) {
+              return Card(
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: colorScheme.primaryContainer,
+                    child: Text('${index + 1}', style: TextStyle(color: colorScheme.onPrimaryContainer)),
+                  ),
+                  title: Text('Mahsulot ${index + 1}'),
+                  subtitle: Text('Kategoriya ${index % 3 + 1}'),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${(index + 1) * 10000} UZS',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      Text(
+                        '+${(index + 1) * 500} UZS',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PriceChartPainter extends CustomPainter {
+  final double animationValue;
+  final ColorScheme colorScheme;
+
+  PriceChartPainter({required this.animationValue, required this.colorScheme});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = colorScheme.primary
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+
+    final fillPaint = Paint()
+      ..color = colorScheme.primary.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    final fillPath = Path();
+
+    final points = <Offset>[];
+    for (int i = 0; i <= 10; i++) {
+      final x = (size.width / 10) * i;
+      final y = size.height - (size.height * 0.8 * (0.3 + 0.7 * (i / 10.0) + 0.2 * (i % 2))) * animationValue;
+      points.add(Offset(x, y));
+    }
+
+    path.moveTo(points[0].dx, points[0].dy);
+    fillPath.moveTo(points[0].dx, size.height);
+    fillPath.lineTo(points[0].dx, points[0].dy);
+
+    for (int i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
+      fillPath.lineTo(points[i].dx, points[i].dy);
+    }
+
+    fillPath.lineTo(points.last.dx, size.height);
+    fillPath.close();
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(path, paint);
+
+    // Draw points
+    final pointPaint = Paint()
+      ..color = colorScheme.primary
+      ..style = PaintingStyle.fill;
+
+    for (final point in points) {
+      canvas.drawCircle(point, 4, pointPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class WarehousesTab extends StatefulWidget {
+  const WarehousesTab({super.key});
+
+  @override
+  State<WarehousesTab> createState() => _WarehousesTabState();
+}
+
+class _WarehousesTabState extends State<WarehousesTab> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  final List<Map<String, dynamic>> _warehouses = [
+    {'name': 'Central Warehouse', 'location': 'Tashkent', 'stock': 1500, 'capacity': 2000, 'status': 'Active'},
+    {'name': 'North Warehouse', 'location': 'Samarkand', 'stock': 800, 'capacity': 1500, 'status': 'Active'},
+    {'name': 'South Warehouse', 'location': 'Bukhara', 'stock': 1200, 'capacity': 1800, 'status': 'Maintenance'},
+    {'name': 'East Warehouse', 'location': 'Andijan', 'stock': 600, 'capacity': 1000, 'status': 'Active'},
+    {'name': 'West Warehouse', 'location': 'Khiva', 'stock': 300, 'capacity': 800, 'status': 'Low Stock'},
+  ];
+
+  List<Map<String, dynamic>> get _filteredWarehouses {
+    if (_searchQuery.isEmpty) return _warehouses;
+    return _warehouses.where((warehouse) =>
+        warehouse['name'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
+        warehouse['location'].toLowerCase().contains(_searchQuery.toLowerCase())
+    ).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      children: [
+        // Search Bar
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Skladlarni qidirish...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colorScheme.outline),
+              ),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest,
+            ),
+            onChanged: (value) => setState(() => _searchQuery = value),
+          ),
+        ),
+
+        // Map Placeholder
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Container(
+              height: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: colorScheme.surfaceContainerHighest,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.map, size: 48, color: colorScheme.primary),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Skladlar xaritasi',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Warehouse List
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: _filteredWarehouses.length,
+            itemBuilder: (context, index) {
+              final warehouse = _filteredWarehouses[index];
+              final stockPercentage = warehouse['stock'] / warehouse['capacity'];
+              final statusColor = _getStatusColor(warehouse['status'], colorScheme);
+
+              return Card(
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  warehouse['name'],
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(Icons.location_on, size: 16, color: colorScheme.onSurfaceVariant),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      warehouse['location'],
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: statusColor),
+                            ),
+                            child: Text(
+                              warehouse['status'],
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: statusColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Zaxira: ${warehouse['stock']} / ${warehouse['capacity']}',
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: 8),
+                                LinearProgressIndicator(
+                                  value: stockPercentage,
+                                  backgroundColor: colorScheme.surfaceContainerHighest,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    stockPercentage > 0.8 ? colorScheme.error :
+                                    stockPercentage > 0.5 ? colorScheme.primary :
+                                    colorScheme.secondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            '${(stockPercentage * 100).toStringAsFixed(0)}%',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getStatusColor(String status, ColorScheme colorScheme) {
+    switch (status) {
+      case 'Active':
+        return colorScheme.primary;
+      case 'Maintenance':
+        return colorScheme.secondary;
+      case 'Low Stock':
+        return colorScheme.error;
+      default:
+        return colorScheme.onSurfaceVariant;
+    }
+  }
+}
+
+class BusinessRegionsTab extends StatefulWidget {
+  const BusinessRegionsTab({super.key});
+
+  @override
+  State<BusinessRegionsTab> createState() => _BusinessRegionsTabState();
+}
+
+class _BusinessRegionsTabState extends State<BusinessRegionsTab> {
+  final List<Map<String, dynamic>> _regions = [
+    {
+      'name': 'Tashkent Region',
+      'sales': 2500000,
+      'growth': 12.5,
+      'customers': 450,
+      'trends': [0.8, 0.9, 1.0, 1.1, 1.2, 1.3],
+      'isExpanded': false,
+    },
+    {
+      'name': 'Samarkand Region',
+      'sales': 1800000,
+      'growth': 8.3,
+      'customers': 320,
+      'trends': [0.7, 0.8, 0.9, 0.95, 1.0, 1.05],
+      'isExpanded': false,
+    },
+    {
+      'name': 'Bukhara Region',
+      'sales': 1200000,
+      'growth': -2.1,
+      'customers': 180,
+      'trends': [1.0, 0.95, 0.9, 0.85, 0.8, 0.75],
+      'isExpanded': false,
+    },
+    {
+      'name': 'Andijan Region',
+      'sales': 950000,
+      'growth': 15.7,
+      'customers': 290,
+      'trends': [0.6, 0.7, 0.8, 0.9, 1.0, 1.15],
+      'isExpanded': false,
+    },
+  ];
+
+  void _toggleExpansion(int index) {
+    setState(() {
+      _regions[index]['isExpanded'] = !_regions[index]['isExpanded'];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Map Overview
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Container(
+              height: 250,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Viloyatlar xaritasi',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: colorScheme.surfaceContainerHighest,
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.map_outlined, size: 48, color: colorScheme.primary),
+                            const SizedBox(height: 8),
+                            Text(
+                              'O\'zbekiston viloyatlari',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Analytics Summary
+          Row(
+            children: [
+              Expanded(
+                child: _AnalyticsCard(
+                  title: 'Jami savdo',
+                  value: '6 450 000 UZS',
+                  icon: Icons.trending_up,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _AnalyticsCard(
+                  title: 'O\'rtacha o\'sish',
+                  value: '+8.6%',
+                  icon: Icons.show_chart,
+                  color: colorScheme.secondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Region Details
+          Text(
+            'Viloyat tafsilotlari',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _regions.length,
+            itemBuilder: (context, index) {
+              final region = _regions[index];
+              final isExpanded = region['isExpanded'];
+              final growthColor = region['growth'] >= 0 ? colorScheme.primary : colorScheme.error;
+
+              return Card(
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: Text(
+                        region['name'],
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Row(
+                        children: [
+                          Text('${region['customers']} mijoz'),
+                          const SizedBox(width: 16),
+                          Text(
+                            '${region['growth'] >= 0 ? '+' : ''}${region['growth']}%',
+                            style: TextStyle(
+                              color: growthColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${(region['sales'] / 1000).toInt()}k UZS',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
+                            onPressed: () => _toggleExpansion(index),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isExpanded)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Savdo tendensiyasi',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 60,
+                              child: CustomPaint(
+                                painter: TrendLinePainter(
+                                  data: List<double>.from(region['trends']),
+                                  color: growthColor,
+                                ),
+                                size: const Size(double.infinity, 60),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _DetailItem(
+                                    label: 'Oy savdo',
+                                    value: '${(region['sales'] / 12 / 1000).toInt()}k UZS',
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _DetailItem(
+                                    label: 'Mijozlar soni',
+                                    value: '${region['customers']}',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AnalyticsCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _AnalyticsCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailItem extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DetailItem({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class TrendLinePainter extends CustomPainter {
+  final List<double> data;
+  final Color color;
+
+  TrendLinePainter({required this.data, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    final maxValue = data.reduce((a, b) => a > b ? a : b);
+    final minValue = data.reduce((a, b) => a < b ? a : b);
+    final range = maxValue - minValue;
+
+    for (int i = 0; i < data.length; i++) {
+      final x = (size.width / (data.length - 1)) * i;
+      final y = size.height - ((data[i] - minValue) / range) * size.height;
+
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    canvas.drawPath(path, paint);
+
+    // Draw points
+    final pointPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < data.length; i++) {
+      final x = (size.width / (data.length - 1)) * i;
+      final y = size.height - ((data[i] - minValue) / range) * size.height;
+      canvas.drawCircle(Offset(x, y), 3, pointPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class PermissionsTab extends StatefulWidget {
+  const PermissionsTab({super.key});
+
+  @override
+  State<PermissionsTab> createState() => _PermissionsTabState();
+}
+
+class _PermissionsTabState extends State<PermissionsTab> {
+  final Map<String, bool> _permissions = {
+    'view_reports': true,
+    'edit_products': true,
+    'manage_orders': false,
+    'access_warehouse': true,
+    'view_customers': true,
+    'edit_customers': false,
+    'manage_users': false,
+    'system_settings': false,
+    'financial_reports': true,
+    'export_data': false,
+  };
+
+  final Map<String, String> _permissionLabels = {
+    'view_reports': 'Hisobotlarni ko\'rish',
+    'edit_products': 'Mahsulotlarni tahrirlash',
+    'manage_orders': 'Buyurtmalarni boshqarish',
+    'access_warehouse': 'Skladga kirish',
+    'view_customers': 'Mijozlarni ko\'rish',
+    'edit_customers': 'Mijozlarni tahrirlash',
+    'manage_users': 'Foydalanuvchilarni boshqarish',
+    'system_settings': 'Tizim sozlamalari',
+    'financial_reports': 'Moliyaviy hisobotlar',
+    'export_data': 'Ma\'lumotlarni eksport qilish',
+  };
+
+  final Map<String, String> _permissionCategories = {
+    'view_reports': 'Ko\'rish',
+    'edit_products': 'Tahrirlash',
+    'manage_orders': 'Boshqarish',
+    'access_warehouse': 'Kirish',
+    'view_customers': 'Ko\'rish',
+    'edit_customers': 'Tahrirlash',
+    'manage_users': 'Boshqarish',
+    'system_settings': 'Tizim',
+    'financial_reports': 'Moliya',
+    'export_data': 'Eksport',
+  };
+
+  final Map<String, IconData> _permissionIcons = {
+    'view_reports': Icons.visibility,
+    'edit_products': Icons.edit,
+    'manage_orders': Icons.shopping_cart,
+    'access_warehouse': Icons.warehouse,
+    'view_customers': Icons.people,
+    'edit_customers': Icons.edit,
+    'manage_users': Icons.admin_panel_settings,
+    'system_settings': Icons.settings_system_daydream,
+    'financial_reports': Icons.account_balance,
+    'export_data': Icons.download,
+  };
+
+  final Map<String, Color> _categoryColors = {
+    'Ko\'rish': Colors.blue,
+    'Tahrirlash': Colors.orange,
+    'Boshqarish': Colors.red,
+    'Kirish': Colors.green,
+    'Tizim': Colors.purple,
+    'Moliya': Colors.teal,
+    'Eksport': Colors.indigo,
+  };
+
+  Map<String, List<String>> get _groupedPermissions {
+    final grouped = <String, List<String>>{};
+    for (final entry in _permissions.entries) {
+      final category = _permissionCategories[entry.key]!;
+      grouped.putIfAbsent(category, () => []).add(entry.key);
+    }
+    return grouped;
+  }
+
+  void _togglePermission(String key) {
+    setState(() {
+      _permissions[key] = !_permissions[key]!;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Security Overview
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.security, color: colorScheme.primary, size: 28),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Xavfsizlik darajasi',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SecurityBadge(
+                          label: 'Faol ruxsatlar',
+                          count: _permissions.values.where((v) => v).length,
+                          total: _permissions.length,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _SecurityBadge(
+                          label: 'Guruhlar',
+                          count: _groupedPermissions.length,
+                          total: _groupedPermissions.length,
+                          color: colorScheme.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Permissions by Category
+          Text(
+            'Ruxsatlar kategoriyasi bo\'yicha',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ..._groupedPermissions.entries.map((entry) {
+            final category = entry.key;
+            final permissions = entry.value;
+            final categoryColor = _categoryColors[category] ?? colorScheme.primary;
+
+            return Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: categoryColor.withOpacity(0.1),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.category,
+                          color: categoryColor,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          category,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: categoryColor,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: categoryColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${permissions.where((p) => _permissions[p]!).length}/${permissions.length}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ...permissions.map((permissionKey) {
+                    final isEnabled = _permissions[permissionKey]!;
+                    return SwitchListTile(
+                      title: Text(
+                        _permissionLabels[permissionKey]!,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: isEnabled ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      subtitle: isEnabled ? null : Text(
+                        'Ruxsat berilmagan',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.error,
+                        ),
+                      ),
+                      secondary: Icon(
+                        _permissionIcons[permissionKey],
+                        color: isEnabled ? categoryColor : colorScheme.onSurfaceVariant,
+                      ),
+                      value: isEnabled,
+                      onChanged: (value) => _togglePermission(permissionKey),
+                      activeColor: categoryColor,
+                    );
+                  }),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class _SecurityBadge extends StatelessWidget {
+  final String label;
+  final int count;
+  final int total;
+  final Color color;
+
+  const _SecurityBadge({
+    required this.label,
+    required this.count,
+    required this.total,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            '$count',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: color,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}

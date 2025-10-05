@@ -343,6 +343,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
               okb: _kpiData?.okb,
             ),
             onRefresh: _refreshKpi,
+            onSettings: () => Navigator.pushNamed(context, AppRouter.settingsRoute),
             onLogout: () => _showLogoutDialog(),
           ),
 

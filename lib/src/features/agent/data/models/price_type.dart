@@ -12,9 +12,20 @@ class PriceType {
   });
 
   factory PriceType.fromJson(Map<String, dynamic> json) {
+    final code = json['code']?.toString() ?? '';
+    final name = json['name']?.toString() ?? '';
+
+    // Validation
+    if (code.isEmpty) {
+      throw ArgumentError('PriceType code cannot be empty');
+    }
+    if (name.isEmpty) {
+      throw ArgumentError('PriceType name cannot be empty');
+    }
+
     return PriceType(
-      code: json['code']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
+      code: code,
+      name: name,
       description: json['description']?.toString() ?? '',
       isDefault: json['isDefault'] == true,
     );

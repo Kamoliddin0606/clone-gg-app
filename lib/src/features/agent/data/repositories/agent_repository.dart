@@ -7,6 +7,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 
 class AgentRepository {
   final DataSyncService _dataSyncService;
@@ -177,6 +178,22 @@ class AgentRepository {
       password: password,
       codeProject: codeProject,
       codeSklad: codeSklad,
+    );
+  }
+
+  /// Get cached business regions
+  Future<List<BusinessRegion>> getCachedBusinessRegions() async {
+    return await _dataSyncService.getCachedBusinessRegions();
+  }
+
+  /// Sync business regions from server
+  Future<List<BusinessRegion>> syncBusinessRegions({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    return await _dataSyncService.syncBusinessRegions(
+      userCode: userCode,
+      forceRefresh: forceRefresh,
     );
   }
 

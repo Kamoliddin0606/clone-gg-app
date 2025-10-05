@@ -5,6 +5,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
@@ -26,7 +27,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -167,6 +168,22 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)');
       await db.execute('CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)');
       await db.execute('CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)');
+    } else if (oldVersion < 5) {
+      // Add business regions table for version 5
+      await db.execute('''
+        CREATE TABLE business_regions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code TEXT UNIQUE NOT NULL,
+          name TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      // Add foreign key constraint to clients table
+      await db.execute('''
+        CREATE INDEX idx_clients_code_region ON clients(code_region)
+      ''');
     }
   }
 
@@ -187,6 +204,17 @@ class ApiDatabaseService {
         okb TEXT NOT NULL,
         update_date TEXT NOT NULL,
         created_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create business regions table
+    await db.execute('''
+      CREATE TABLE business_regions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
       )
     ''');
 
@@ -218,7 +246,7 @@ class ApiDatabaseService {
         trade_point_type TEXT,
         credit_limit REAL DEFAULT 0.0,
         accumulated_credit REAL DEFAULT 0.0,
-        code_region TEXT,
+        code_region TEXT REFERENCES business_regions(code) ON DELETE SET NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
@@ -565,6 +593,21 @@ class ApiDatabaseService {
 
   // Price types methods
   Future<void> savePriceTypes(List<PriceType> priceTypes) async {
+    // Validate input data
+    if (priceTypes.isEmpty) {
+      return; // Nothing to save
+    }
+
+    // Validate each price type
+    for (final priceType in priceTypes) {
+      if (priceType.code.isEmpty) {
+        throw ArgumentError('PriceType code cannot be empty');
+      }
+      if (priceType.name.isEmpty) {
+        throw ArgumentError('PriceType name cannot be empty');
+      }
+    }
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -614,6 +657,24 @@ class ApiDatabaseService {
 
   // Product prices methods
   Future<void> saveProductPrices(List<ProductPrice> productPrices) async {
+    // Validate input data
+    if (productPrices.isEmpty) {
+      return; // Nothing to save
+    }
+
+    // Validate each product price
+    for (final productPrice in productPrices) {
+      if (productPrice.productCode.isEmpty) {
+        throw ArgumentError('ProductPrice productCode cannot be empty');
+      }
+      if (productPrice.priceTypeCode.isEmpty) {
+        throw ArgumentError('ProductPrice priceTypeCode cannot be empty');
+      }
+      if (productPrice.price < 0) {
+        throw ArgumentError('ProductPrice price cannot be negative');
+      }
+    }
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -992,6 +1053,109 @@ class ApiDatabaseService {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
+  // Business regions methods
+  Future<void> saveBusinessRegions(List<BusinessRegion> regions) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing regions
+    batch.delete('business_regions');
+
+    // Deduplicate regions by code to avoid UNIQUE constraint violations
+    final uniqueRegions = <String, BusinessRegion>{};
+    for (final region in regions) {
+      uniqueRegions[region.code] = region;
+    }
+
+    // Add all inserts to batch
+    for (final region in uniqueRegions.values) {
+      batch.insert('business_regions', {
+        'code': region.code,
+        'name': region.name,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<BusinessRegion>> getBusinessRegions() async {
+    final db = await database;
+    final result = await db.query('business_regions', orderBy: 'name ASC');
+
+    return result
+        .map(
+          (row) => BusinessRegion(
+            code: row['code'] as String,
+            name: row['name'] as String,
+            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+          ),
+        )
+        .toList();
+  }
+
+  Future<BusinessRegion?> getBusinessRegionByCode(String code) async {
+    final db = await database;
+    final result = await db.query(
+      'business_regions',
+      where: 'code = ?',
+      whereArgs: [code],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return BusinessRegion(
+      code: row['code'] as String,
+      name: row['name'] as String,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    );
+  }
+
+  Future<void> saveBusinessRegion(BusinessRegion region) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert(
+      'business_regions',
+      {
+        'code': region.code,
+        'name': region.name,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateBusinessRegion(String code, BusinessRegion region) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'business_regions',
+      {
+        'name': region.name,
+        'updated_at': now,
+      },
+      where: 'code = ?',
+      whereArgs: [code],
+    );
+  }
+
+  Future<void> deleteBusinessRegion(String code) async {
+    final db = await database;
+    await db.delete('business_regions', where: 'code = ?', whereArgs: [code]);
+  }
+
   // Clear all data
   Future<void> clearAllData() async {
     final db = await database;
@@ -1000,6 +1164,7 @@ class ApiDatabaseService {
     await db.delete('products');
     await db.delete('price_types');
     await db.delete('product_prices');
+    await db.delete('business_regions');
     await db.delete('promotion_product_list');
     await db.delete('promotion_bonus_list');
     await db.delete('promotion_class_list');

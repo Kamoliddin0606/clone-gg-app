@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/agent_home_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/trading_points_page.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/pages/login_page.dart';
 import 'package:gloria_marketing_flutter/src/features/boss/presentation/pages/boss_home_page.dart';
@@ -19,6 +20,7 @@ class AppRouter {
   static const String warehouseManagerHomeRoute = '/warehouse-manager-home';
   static const String tradingPointsRoute = '/trading-points';
   static const String marketingRoute = '/marketing';
+  static const String settingsRoute = '/settings';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -40,6 +42,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const TradingPointsPage());
       case marketingRoute:
         return MaterialPageRoute(builder: (_) => const MarketingPage());
+      case settingsRoute:
+        return MaterialPageRoute(builder: (_) => const SettingsPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

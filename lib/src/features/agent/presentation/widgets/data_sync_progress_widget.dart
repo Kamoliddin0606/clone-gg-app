@@ -7,6 +7,7 @@ enum SyncStep {
   syncingClients('Mijozlar ro\'yxati yuklanmoqda...', Icons.people),
   syncingProducts('Mahsulotlar yuklanmoqda...', Icons.inventory),
   syncingPriceTypes('Narx turlari yuklanmoqda...', Icons.price_change),
+  syncingBusinessRegions('Biznes rayonlari yuklanmoqda...', Icons.location_on),
   syncingProductPrices('Mahsulot narxlari yuklanmoqda...', Icons.attach_money),
   syncingPromotions('Aksiyalar yuklanmoqda...', Icons.local_offer),
   completed('Ma\'lumotlar yangilandi!', Icons.check_circle);

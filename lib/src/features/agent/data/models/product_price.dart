@@ -16,10 +16,25 @@ class ProductPrice {
   });
 
   factory ProductPrice.fromJson(Map<String, dynamic> json) {
+    final productCode = json['productCode']?.toString() ?? '';
+    final priceTypeCode = json['priceTypeCode']?.toString() ?? '';
+    final price = (json['price'] as num?)?.toDouble() ?? 0.0;
+
+    // Validation
+    if (productCode.isEmpty) {
+      throw ArgumentError('ProductPrice productCode cannot be empty');
+    }
+    if (priceTypeCode.isEmpty) {
+      throw ArgumentError('ProductPrice priceTypeCode cannot be empty');
+    }
+    if (price < 0) {
+      throw ArgumentError('ProductPrice price cannot be negative');
+    }
+
     return ProductPrice(
-      productCode: json['productCode']?.toString() ?? '',
-      priceTypeCode: json['priceTypeCode']?.toString() ?? '',
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      productCode: productCode,
+      priceTypeCode: priceTypeCode,
+      price: price,
       currency: json['currency']?.toString() ?? 'UZS',
       validFrom: json['validFrom']?.toString() ?? '',
       validTo: json['validTo']?.toString() ?? '',

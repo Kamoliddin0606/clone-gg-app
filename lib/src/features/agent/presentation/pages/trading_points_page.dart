@@ -3,11 +3,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
-import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 
 import 'dart:ui'; // blur uchun
 
@@ -74,6 +73,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   int? _expandedIndex;
   bool _showViewBar = false;               // ADD: panel ko'rinish holati
   _ViewMode _viewMode = _ViewMode.list;    // ADD: hozirgi ko'rinish
+  Map<String, String> _regionNames = {};   // Business region code to name mapping
 
   @override
   void initState() {
@@ -127,10 +127,28 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     setState(() => _isLoading = true);
     try {
       final repository = sl<AgentRepository>();
-      final tradingPoints = await repository.getClients(
-        userCode: userCode,
-        password: password,
-      );
+
+      // Load clients and business regions in parallel for better performance
+      final results = await Future.wait([
+        repository.getClients(userCode: userCode, password: password),
+        repository.getCachedBusinessRegions(),
+      ]);
+
+      final tradingPoints = results[0] as List<TradingPoint>;
+      List<BusinessRegion> regions = results[1] as List<BusinessRegion>;
+
+      // If no cached regions, force sync from server
+      if (regions.isEmpty) {
+        try {
+          regions = await repository.syncBusinessRegions(userCode: userCode);
+        } catch (e) {
+          print('Failed to sync business regions: $e');
+          // Continue with empty regions - will show "Noma'lum"
+        }
+      }
+
+      // Create region code to name mapping for fast lookups
+      _regionNames = {for (final region in regions) region.code: region.name};
 
       _allTradingPoints = tradingPoints;
       _filteredTradingPoints = List.from(_allTradingPoints);
@@ -155,10 +173,12 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       } else {
         final qLatin = transliterateToLatin(query).toLowerCase();
         _filteredTradingPoints = _allTradingPoints.where((tp) {
+          final regionName = _regionNames[tp.codeRegion]?.toLowerCase() ?? '';
           return transliterateToLatin(tp.name).toLowerCase().contains(qLatin) ||
               transliterateToLatin(tp.address).toLowerCase().contains(qLatin) ||
               transliterateToLatin(tp.contactPerson).toLowerCase().contains(qLatin) ||
               transliterateToLatin(tp.ownerName).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(regionName).contains(qLatin) ||
               tp.inn.contains(query);
         }).toList();
       }
@@ -423,6 +443,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                       onViewContracts: () => _viewContracts(tp),
                       onRefusal: () => _showRefusalDialog(tp),
                       onOpenDetails: () => _openTpDetails(tp),
+                      regionNames: _regionNames,
 
                       expanded: _expandedIndex == index,
                       onExpand: (open) {
@@ -642,6 +663,7 @@ class TradingPointCard extends StatelessWidget {
   final VoidCallback onOpenDetails;
   final bool? expanded;
   final ValueChanged<bool>? onExpand;
+  final Map<String, String> regionNames;
   const TradingPointCard({
     super.key,
     required this.tradingPoint,
@@ -653,6 +675,7 @@ class TradingPointCard extends StatelessWidget {
     required this.onOpenDetails,
     this.expanded,
     this.onExpand,
+    required this.regionNames,
   });
 
   @override
@@ -702,6 +725,14 @@ class TradingPointCard extends StatelessWidget {
         ),
         children: [
           // Kontaktlar
+          Row(
+            children: [
+              const Icon(Icons.location_city_outlined, size: 16),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Biznes region: ${regionNames[tradingPoint.codeRegion] ?? 'Noma\'lum'}')),
+            ],
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
               const Icon(Icons.person, size: 16),

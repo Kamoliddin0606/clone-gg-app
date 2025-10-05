@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:dio/dio.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
@@ -13,6 +14,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
@@ -216,6 +218,9 @@ class DataSyncService {
       // Sync price types
       await _syncPriceTypes(userCode);
 
+      // Sync business regions
+      await _syncBusinessRegions(userCode);
+
       // Sync product prices
       await _syncProductPrices(userCode);
 
@@ -283,15 +288,19 @@ class DataSyncService {
       yield SyncStep.syncingPriceTypes;
       await _syncPriceTypes(userCode);
 
-      // Step 7: Sync product prices
+      // Step 7: Sync business regions
+      yield SyncStep.syncingBusinessRegions;
+      await _syncBusinessRegions(userCode);
+
+      // Step 8: Sync product prices
       yield SyncStep.syncingProductPrices;
       await _syncProductPrices(userCode);
 
-      // Step 8: Sync promotions
+      // Step 9: Sync promotions
       yield SyncStep.syncingPromotions;
       await _syncPromotions(null); // No auth token needed for now
 
-      // Step 9: Completed
+      // Step 10: Completed
       yield SyncStep.completed;
 
       if (kDebugMode) {
@@ -448,6 +457,176 @@ class DataSyncService {
     return productPrices;
   }
 
+  /// Sync business regions data
+  Future<List<BusinessRegion>> syncBusinessRegions({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getBusinessRegions();
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+    }
+
+    return await _syncBusinessRegions(userCode);
+  }
+
+  Future<List<BusinessRegion>> _syncBusinessRegions(String userCode) async {
+    final regions = await _apiService.getBusinessRegions(userCode: userCode);
+    if (kDebugMode) {
+      print('Biznes rayonlari ma\'lumotlari yuklandi: ${regions.length} ta rayon');
+    }
+    await _dbService.saveBusinessRegions(regions);
+    return regions;
+  }
+
+  /// Create new business region
+  Future<BusinessRegion> createBusinessRegion({
+    required String userCode,
+    required String code,
+    required String name,
+  }) async {
+    // Validate input
+    if (code.isEmpty || name.isEmpty) {
+      throw Exception('Kod va nom bo\'sh bo\'lishi mumkin emas');
+    }
+
+    // Check if region already exists
+    final existing = await _dbService.getBusinessRegionByCode(code);
+    if (existing != null) {
+      throw Exception('Bu kod bilan biznes rayoni allaqachon mavjud');
+    }
+
+    try {
+      // Call API
+      await _apiService.createBusinessRegion(
+        userCode: userCode,
+        code: code,
+        name: name,
+      );
+
+      // Create local region object
+      final region = BusinessRegion(
+        code: code,
+        name: name,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Save to local database
+      await _dbService.saveBusinessRegion(region);
+
+      return region;
+    } catch (e) {
+      throw Exception('Biznes rayoni yaratishda xatolik: $e');
+    }
+  }
+
+  /// Update business region
+  Future<BusinessRegion> updateBusinessRegion({
+    required String userCode,
+    required String code,
+    required String name,
+  }) async {
+    // Validate input
+    if (code.isEmpty || name.isEmpty) {
+      throw Exception('Kod va nom bo\'sh bo\'lishi mumkin emas');
+    }
+
+    // Check if region exists
+    final existing = await _dbService.getBusinessRegionByCode(code);
+    if (existing == null) {
+      throw Exception('Bu kod bilan biznes rayoni topilmadi');
+    }
+
+    try {
+      // Call API
+      await _apiService.updateBusinessRegion(
+        userCode: userCode,
+        code: code,
+        name: name,
+      );
+
+      // Update local region
+      final updatedRegion = existing.copyWith(
+        name: name,
+        updatedAt: DateTime.now(),
+      );
+
+      // Save to local database
+      await _dbService.updateBusinessRegion(code, updatedRegion);
+
+      return updatedRegion;
+    } catch (e) {
+      throw Exception('Biznes rayoni yangilashda xatolik: $e');
+    }
+  }
+
+  /// Delete business region by code
+  Future<void> deleteBusinessRegion({
+    required String userCode,
+    required String code,
+  }) async {
+    // Check if region exists
+    final existing = await _dbService.getBusinessRegionByCode(code);
+    if (existing == null) {
+      throw Exception('Bu kod bilan biznes rayoni topilmadi');
+    }
+
+    // Check for dependencies in clients table
+    final db = await _dbService.database;
+    final clientsWithRegion = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM clients WHERE code_region = ?',
+      [code],
+    );
+    final count = Sqflite.firstIntValue(clientsWithRegion) ?? 0;
+
+    if (count > 0) {
+      throw Exception('Bu biznes rayoni $count ta mijozda ishlatilgan. Avval mijozlardan olib tashlang.');
+    }
+
+    try {
+      // Call API
+      await _apiService.deleteBusinessRegion(
+        userCode: userCode,
+        code: code,
+      );
+
+      // Delete from local database
+      await _dbService.deleteBusinessRegion(code);
+    } catch (e) {
+      throw Exception('Biznes rayoni o\'chirishda xatolik: $e');
+    }
+  }
+
+  /// Delete all business regions
+  Future<void> deleteAllBusinessRegions({
+    required String userCode,
+  }) async {
+    // Check for dependencies in clients table
+    final db = await _dbService.database;
+    final clientsWithRegions = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM clients WHERE code_region IS NOT NULL AND code_region != ""',
+      [],
+    );
+    final count = Sqflite.firstIntValue(clientsWithRegions) ?? 0;
+
+    if (count > 0) {
+      throw Exception('Biznes rayonlari $count ta mijozda ishlatilgan. Avval mijozlardan olib tashlang.');
+    }
+
+    try {
+      // Call API
+      await _apiService.deleteAllBusinessRegions(userCode: userCode);
+
+      // Clear local database
+      await db.rawDelete('DELETE FROM business_regions');
+    } catch (e) {
+      throw Exception('Barcha biznes rayonlarini o\'chirishda xatolik: $e');
+    }
+  }
+
   /// Sync promotions data
   Future<List<PromotionModel>> syncPromotions({
     String? authToken,
@@ -513,6 +692,7 @@ class DataSyncService {
   Future<List<PriceType>> getCachedPriceTypes() => _dbService.getPriceTypes();
   Future<List<ProductPrice>> getCachedProductPrices({String? priceTypeCode}) =>
       _dbService.getProductPrices(priceTypeCode: priceTypeCode);
+  Future<List<BusinessRegion>> getCachedBusinessRegions() => _dbService.getBusinessRegions();
   Future<List<PromotionModel>> getCachedPromotions({
     bool onlyActive = true,
     String? searchQuery,

@@ -6,6 +6,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 
@@ -230,6 +231,195 @@ class SoapApiService {
     }
   }
 
+  /// Get business regions list
+  Future<List<BusinessRegion>> getBusinessRegions({
+    required String userCode,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:GetBusinessRegions>
+         <sam:UserCode>$userCode</sam:UserCode>
+      </sam:GetBusinessRegions>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final rowsElements = document.findAllElements('m:Rows');
+
+      return rowsElements.map((row) => BusinessRegion(
+        code: _getElementText(row, 'm:Code') ?? '',
+        name: _getElementText(row, 'm:Name') ?? '',
+      )).toList();
+    } catch (e) {
+      throw Exception('Biznes rayonlari ro\'yxatini olishda xatolik: $e');
+    }
+  }
+
+  /// Create new business region
+  Future<String> createBusinessRegion({
+    required String userCode,
+    required String code,
+    required String name,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:CreateBusinessRegion>
+         <sam:UserCode>$userCode</sam:UserCode>
+         <sam:Code>$code</sam:Code>
+         <sam:Name>$name</sam:Name>
+      </sam:CreateBusinessRegion>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final resultElement = document.findAllElements('m:result').firstOrNull;
+      return resultElement?.innerText ?? 'Success';
+    } catch (e) {
+      throw Exception('Biznes rayoni yaratishda xatolik: $e');
+    }
+  }
+
+  /// Update business region
+  Future<String> updateBusinessRegion({
+    required String userCode,
+    required String code,
+    required String name,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:UpdateBusinessRegion>
+         <sam:UserCode>$userCode</sam:UserCode>
+         <sam:Code>$code</sam:Code>
+         <sam:Name>$name</sam:Name>
+      </sam:UpdateBusinessRegion>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final resultElement = document.findAllElements('m:result').firstOrNull;
+      return resultElement?.innerText ?? 'Success';
+    } catch (e) {
+      throw Exception('Biznes rayoni yangilashda xatolik: $e');
+    }
+  }
+
+  /// Delete business region by code
+  Future<String> deleteBusinessRegion({
+    required String userCode,
+    required String code,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:DeleteBusinessRegion>
+         <sam:UserCode>$userCode</sam:UserCode>
+         <sam:Code>$code</sam:Code>
+      </sam:DeleteBusinessRegion>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final resultElement = document.findAllElements('m:result').firstOrNull;
+      return resultElement?.innerText ?? 'Success';
+    } catch (e) {
+      throw Exception('Biznes rayoni o\'chirishda xatolik: $e');
+    }
+  }
+
+  /// Delete all business regions
+  Future<String> deleteAllBusinessRegions({
+    required String userCode,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:DeleteAllBusinessRegions>
+         <sam:UserCode>$userCode</sam:UserCode>
+      </sam:DeleteAllBusinessRegions>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final resultElement = document.findAllElements('m:result').firstOrNull;
+      return resultElement?.innerText ?? 'Success';
+    } catch (e) {
+      throw Exception('Barcha biznes rayonlarini o\'chirishda xatolik: $e');
+    }
+  }
+
   /// Get products list from warehouse
   Future<List<ProductData>> getProducts({
     required String codeProject,
@@ -319,6 +509,10 @@ class SoapApiService {
   Future<List<PriceType>> getPriceTypes({
     required String userCode,
   }) async {
+    if (userCode.isEmpty) {
+      throw ArgumentError('UserCode cannot be empty');
+    }
+
     final soapEnvelope = '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
@@ -342,15 +536,46 @@ class SoapApiService {
         ),
       );
 
+      if (response.data == null || response.data.toString().isEmpty) {
+        throw Exception('Empty response from server');
+      }
+
       final document = XmlDocument.parse(response.data);
       final priceTypeElements = document.findAllElements('m:PriceType');
 
-      return priceTypeElements.map((priceType) => PriceType(
-        code: _getElementText(priceType, 'm:Code') ?? '',
-        name: _getElementText(priceType, 'm:Name') ?? '',
-      )).toList();
+      if (priceTypeElements.isEmpty) {
+        if (kDebugMode) {
+          print('No price types found in response');
+        }
+        return [];
+      }
+
+      final priceTypes = <PriceType>[];
+      for (final priceTypeElement in priceTypeElements) {
+        try {
+          final priceType = PriceType(
+            code: _getElementText(priceTypeElement, 'm:Code') ?? '',
+            name: _getElementText(priceTypeElement, 'm:Name') ?? '',
+          );
+          priceTypes.add(priceType);
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error parsing price type: $e');
+          }
+          // Continue with other price types instead of failing completely
+        }
+      }
+
+      return priceTypes;
+    } on XmlException catch (e) {
+      throw Exception('XML parsing error while getting price types: ${e.message}');
+    } on DioException catch (e) {
+      throw Exception('Network error while getting price types: ${e.message}');
     } catch (e) {
-      throw Exception('Narx turlarini olishda xatolik: $e');
+      if (e is ArgumentError) {
+        rethrow; // Re-throw validation errors
+      }
+      throw Exception('Unexpected error while getting price types: $e');
     }
   }
 
@@ -358,6 +583,10 @@ class SoapApiService {
   Future<List<ProductPrice>> getProductPrices({
     required String userCode,
   }) async {
+    if (userCode.isEmpty) {
+      throw ArgumentError('UserCode cannot be empty');
+    }
+
     final soapEnvelope = '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
@@ -381,16 +610,47 @@ class SoapApiService {
         ),
       );
 
+      if (response.data == null || response.data.toString().isEmpty) {
+        throw Exception('Empty response from server');
+      }
+
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 
-      return rowsElements.map((row) => ProductPrice(
-        priceTypeCode: _getElementText(row, 'm:CodeTypePrice') ?? '',
-        productCode: _getElementText(row, 'm:CodeProduct') ?? '',
-        price: double.tryParse(_getElementText(row, 'm:Price') ?? '0') ?? 0.0,
-      )).toList();
+      if (rowsElements.isEmpty) {
+        if (kDebugMode) {
+          print('No product prices found in response');
+        }
+        return [];
+      }
+
+      final productPrices = <ProductPrice>[];
+      for (final row in rowsElements) {
+        try {
+          final productPrice = ProductPrice(
+            priceTypeCode: _getElementText(row, 'm:CodeTypePrice') ?? '',
+            productCode: _getElementText(row, 'm:CodeProduct') ?? '',
+            price: double.tryParse(_getElementText(row, 'm:Price') ?? '0') ?? 0.0,
+          );
+          productPrices.add(productPrice);
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error parsing product price: $e');
+          }
+          // Continue with other product prices instead of failing completely
+        }
+      }
+
+      return productPrices;
+    } on XmlException catch (e) {
+      throw Exception('XML parsing error while getting product prices: ${e.message}');
+    } on DioException catch (e) {
+      throw Exception('Network error while getting product prices: ${e.message}');
     } catch (e) {
-      throw Exception('Mahsulot narxlarini olishda xatolik: $e');
+      if (e is ArgumentError) {
+        rethrow; // Re-throw validation errors
+      }
+      throw Exception('Unexpected error while getting product prices: $e');
     }
   }
 

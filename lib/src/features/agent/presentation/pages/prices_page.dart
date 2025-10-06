@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
@@ -7,6 +8,12 @@ import '../../data/models/price_type.dart';
 import '../../data/models/product_with_price.dart';
 
 enum _ViewMode { list, grid }
+
+/// Format number with spaces as thousand separators
+String formatNumber(num number) {
+  final formatter = NumberFormat('#,###', 'en_US');
+  return formatter.format(number).replaceAll(',', ' ');
+}
 
 class PricesPage extends StatefulWidget {
   const PricesPage({super.key});
@@ -141,6 +148,11 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
           productPrices.addAll(syncedProductPrices);
           productBalances.clear();
           productBalances.addAll(syncedProductBalances);
+
+          setState(() {
+            _isLoading = false;
+            _errorMessage = null;
+          });
         } catch (e) {
           setState(() {
             _errorMessage = 'Ma\'lumotlar yuklanmadi: ${e.toString()}';
@@ -233,6 +245,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
 
     return filtered;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -435,7 +448,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                     crossAxisCount: 2,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
-                    childAspectRatio: 0.60,
+                    childAspectRatio: 0.55,
                   ),
                   itemCount: _getFilteredProducts().length,
                   itemBuilder: (context, index) {
@@ -586,24 +599,24 @@ class ProductCard extends StatelessWidget {
                       Text(
                         product.productName,
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                        maxLines: 2,
+                        maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.tag_outlined, size: 16, color: cs.onSurfaceVariant),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'Kod: ${product.productCode}',
-                              style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
+                      // Row(
+                      //   children: [
+                      //     Icon(Icons.tag_outlined, size: 16, color: cs.onSurfaceVariant),
+                      //     const SizedBox(width: 6),
+                      //     Expanded(
+                      //       child: Text(
+                      //         'Kod: ${product.productCode}',
+                      //         style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      //         maxLines: 1,
+                      //         overflow: TextOverflow.ellipsis,
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -626,7 +639,7 @@ class ProductCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              'Qoldiq: ${product.stock}',
+                              'Qoldiq: ${formatNumber(product.stock)}',
                               style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -645,7 +658,7 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${product.price.toStringAsFixed(0)} ${product.currency}',
+                  '${formatNumber(product.price)} ${product.currency}',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: cs.primary,
@@ -718,24 +731,63 @@ class ProductGridTile extends StatelessWidget {
                 children: [
                   Text(
                     product.productName,
-                    maxLines: 2,
+                    maxLines: 4,
                     softWrap: true,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'Kod: ${product.productCode}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  // Text(
+                  //   'Kod: ${product.productCode} ',
+                  //   maxLines: 1,
+                  //   overflow: TextOverflow.ellipsis,
+                  //   style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  // ),
+                  const SizedBox(height: 2),
+                  // Text(
+                  //   'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
+                  //   maxLines: 1,
+                  //   overflow: TextOverflow.ellipsis,
+                  //   style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  // ),
+                  Row(
+                    children: [
+                      Icon(Icons.inventory_2_outlined, size: 16, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
+                          style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 2),
+
+                  Row(
+                    children: [
+                      Icon(Icons.warehouse_outlined, size: 16, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Qoldiq: ${formatNumber(product.stock)}',
+                          style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+
                   Text(
-                    'Narx: ${product.price.toStringAsFixed(0)} ${product.currency}',
+                    'Narx: ${formatNumber(product.price)} ${product.currency}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: cs.primary,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14
                     ),
                   ),
                 ],

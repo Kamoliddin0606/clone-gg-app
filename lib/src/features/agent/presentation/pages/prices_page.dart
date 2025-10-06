@@ -6,6 +6,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/ag
 import '../../../../Utility/formatter.dart';
 import '../../data/models/price_type.dart';
 import '../../data/models/product_with_price.dart';
+import '../../data/models/user_warehouse.dart';
 
 enum _ViewMode { list, grid }
 
@@ -32,7 +33,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
   PriceType? _selectedPriceType;
   List<String> _selectedWarehouses = [];
   List<PriceType> _priceTypes = [];
-  List<String> _warehouses = [];
+  List<UserWarehouse> _warehouses = [];
   List<ProductWithPrice> _productsWithPrices = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -164,7 +165,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
 
       setState(() {
         _priceTypes = priceTypes;
-        _warehouses = warehouses.map((w) => w.code).toList();
+        _warehouses = warehouses;
         _isLoading = false;
       });
     } catch (e) {
@@ -333,16 +334,16 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                         spacing: 8,
                         runSpacing: 8,
                         children: _warehouses.map((warehouse) {
-                          final isSelected = _selectedWarehouses.contains(warehouse);
+                          final isSelected = _selectedWarehouses.contains(warehouse.code);
                           return FilterChip(
-                            label: Text(warehouse),
+                            label: Text(warehouse.name),
                             selected: isSelected,
                             onSelected: (selected) {
                               final newSelection = List<String>.from(_selectedWarehouses);
                               if (selected) {
-                                newSelection.add(warehouse);
+                                newSelection.add(warehouse.code);
                               } else {
-                                newSelection.remove(warehouse);
+                                newSelection.remove(warehouse.code);
                               }
                               _onWarehousesChanged(newSelection);
                             },

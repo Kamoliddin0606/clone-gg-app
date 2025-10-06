@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -7,6 +9,8 @@ import '../../../../Utility/formatter.dart';
 import '../../data/models/price_type.dart';
 import '../../data/models/product_with_price.dart';
 import '../../data/models/user_warehouse.dart';
+import '../../data/models/product_brand.dart';
+import '../../data/models/product_series.dart';
 
 enum _ViewMode { list, grid }
 
@@ -32,12 +36,18 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
   bool _isFilterPanelVisible = false;
   PriceType? _selectedPriceType;
   List<String> _selectedWarehouses = [];
+  List<String> _selectedBrands = [];
+  List<String> _selectedCategories = [];
   List<PriceType> _priceTypes = [];
   List<UserWarehouse> _warehouses = [];
+  List<ProductBrand> _brands = [];
+  List<ProductSeries> _categories = [];
   List<ProductWithPrice> _productsWithPrices = [];
   bool _isLoading = true;
   String? _errorMessage;
   bool _showViewBar = false;
+  bool _isBrandFilterExpanded = false;
+  bool _isCategoryFilterExpanded = false;
   _ViewMode _viewMode = _ViewMode.list;
 
   @override
@@ -163,9 +173,15 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
         }
       }
 
+      // Load brands and categories
+      final brands = await repository.getCachedProductBrands();
+      final categories = await repository.getCachedProductSeries();
+
       setState(() {
         _priceTypes = priceTypes;
         _warehouses = warehouses;
+        _brands = brands;
+        _categories = categories;
         _isLoading = false;
       });
     } catch (e) {
@@ -228,21 +244,101 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
     }
   }
 
-  List<ProductWithPrice> _getFilteredProducts() {
-    final searchQuery = _searchController.text.trim();
+  Future<void> _onBrandsChanged(List<String> brands) async {
+    setState(() {
+      _selectedBrands = brands;
+      // Clear categories when brands change
+      _selectedCategories = [];
+      // Load categories for selected brands
+      _loadCategoriesForBrands(brands);
+    });
 
-    if (searchQuery.isEmpty) {
-      return _productsWithPrices;
+    // Reload data if price type is selected
+    if (_selectedPriceType != null) {
+      await _onPriceTypeChanged(_selectedPriceType);
+    }
+  }
+
+  Future<void> _onCategoriesChanged(List<String> categories) async {
+    setState(() {
+      _selectedCategories = categories;
+    });
+
+    // Reload data if price type is selected
+    if (_selectedPriceType != null) {
+      await _onPriceTypeChanged(_selectedPriceType);
+    }
+  }
+
+  Future<void> _loadCategoriesForBrands(List<String> brandNames) async {
+    if (brandNames.isEmpty) {
+      setState(() {
+        _categories = [];
+      });
+      return;
     }
 
-    // Client-side search filtering (database already filtered by price type and warehouses)
-    final filtered = _productsWithPrices.where((item) {
-      return matchesSearch(item.productName, searchQuery) ||
-             matchesSearch(item.productCode, searchQuery) ||
-             matchesSearch(item.vendorCode, searchQuery) ||
-             matchesSearch(item.priceTypeName, searchQuery) ||
-             matchesSearch(item.price.toString(), searchQuery);
-    }).toList();
+    try {
+      final repository = sl<AgentRepository>();
+      final allCategories = <ProductSeries>[];
+
+      for (final brandName in brandNames) {
+        final brandCategories = await repository.getCachedProductSeries(brandName: brandName);
+        allCategories.addAll(brandCategories);
+      }
+
+      setState(() {
+        _categories = allCategories;
+      });
+    } catch (e) {
+      // Handle error silently for now
+      setState(() {
+        _categories = [];
+      });
+    }
+  }
+
+  void _toggleBrandFilter() {
+    setState(() {
+      _isBrandFilterExpanded = !_isBrandFilterExpanded;
+    });
+  }
+
+  void _toggleCategoryFilter() {
+    setState(() {
+      _isCategoryFilterExpanded = !_isCategoryFilterExpanded;
+    });
+  }
+
+  List<ProductWithPrice> _getFilteredProducts() {
+    // Start with products filtered by price type and warehouses (from database)
+    var filtered = _productsWithPrices;
+
+    // Apply brand filtering
+    if (_selectedBrands.isNotEmpty) {
+      filtered = filtered.where((product) =>
+        _selectedBrands.contains(product.productBrand)
+      ).toList();
+    }
+
+    // Apply category (series) filtering
+    if (_selectedCategories.isNotEmpty) {
+      filtered = filtered.where((product) =>
+        _selectedCategories.contains(product.productSeries)
+      ).toList();
+    }
+
+    // Apply search filtering
+    final searchQuery = _searchController.text.trim();
+    if (searchQuery.isNotEmpty) {
+      filtered = filtered.where((item) {
+        return matchesSearch(item.productName, searchQuery) ||
+               matchesSearch(item.productCode, searchQuery) ||
+               matchesSearch(item.vendorCode, searchQuery) ||
+               matchesSearch(item.priceTypeName, searchQuery) ||
+               matchesSearch(item.price.toString(), searchQuery);
+      }).toList();
+    }
 
     return filtered;
   }
@@ -296,9 +392,12 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 50),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                       // Price type selection
                       DropdownButtonFormField<PriceType>(
                         initialValue: _selectedPriceType,
@@ -330,32 +429,309 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _warehouses.map((warehouse) {
-                          final isSelected = _selectedWarehouses.contains(warehouse.code);
-                          return FilterChip(
-                            label: Text(warehouse.name),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              final newSelection = List<String>.from(_selectedWarehouses);
-                              if (selected) {
-                                newSelection.add(warehouse.code);
-                              } else {
-                                newSelection.remove(warehouse.code);
-                              }
-                              _onWarehousesChanged(newSelection);
-                            },
-                            backgroundColor: colorScheme.surfaceContainerHighest,
-                            selectedColor: colorScheme.primaryContainer,
-                            checkmarkColor: colorScheme.onPrimaryContainer,
+                      Builder(
+                        builder: (context) {
+                          final half = (_warehouses.length / 2).ceil();
+                          final firstHalf = _warehouses.sublist(0, min(half, _warehouses.length));
+                          final secondHalf = _warehouses.length > half ? _warehouses.sublist(half) : <UserWarehouse>[];
+                          return Column(
+                            children: [
+                              if (firstHalf.isNotEmpty)
+                                SizedBox(
+                                  height: 40,
+                                  child: ListView(
+                                    scrollDirection: Axis.horizontal,
+                                    children: firstHalf.map((warehouse) {
+                                      final isSelected = _selectedWarehouses.contains(warehouse.code);
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 8),
+                                        child: FilterChip(
+                                          label: Text(warehouse.name),
+                                          selected: isSelected,
+                                          onSelected: (selected) {
+                                            final newSelection = List<String>.from(_selectedWarehouses);
+                                            if (selected) {
+                                              newSelection.add(warehouse.code);
+                                            } else {
+                                              newSelection.remove(warehouse.code);
+                                            }
+                                            _onWarehousesChanged(newSelection);
+                                          },
+                                          backgroundColor: colorScheme.surfaceContainerHighest,
+                                          selectedColor: colorScheme.primaryContainer,
+                                          checkmarkColor: colorScheme.onPrimaryContainer,
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              if (secondHalf.isNotEmpty)
+                                SizedBox(
+                                  height: 40,
+                                  child: ListView(
+                                    scrollDirection: Axis.horizontal,
+                                    children: secondHalf.map((warehouse) {
+                                      final isSelected = _selectedWarehouses.contains(warehouse.code);
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 8),
+                                        child: FilterChip(
+                                          label: Text(warehouse.name),
+                                          selected: isSelected,
+                                          onSelected: (selected) {
+                                            final newSelection = List<String>.from(_selectedWarehouses);
+                                            if (selected) {
+                                              newSelection.add(warehouse.code);
+                                            } else {
+                                              newSelection.remove(warehouse.code);
+                                            }
+                                            _onWarehousesChanged(newSelection);
+                                          },
+                                          backgroundColor: colorScheme.surfaceContainerHighest,
+                                          selectedColor: colorScheme.primaryContainer,
+                                          checkmarkColor: colorScheme.onPrimaryContainer,
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                            ],
                           );
-                        }).toList(),
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Brand selection header
+                      InkWell(
+                        onTap: _toggleBrandFilter,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Brandlar',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              const Spacer(),
+                              Icon(
+                                _isBrandFilterExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Brand selection (expandable)
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: _isBrandFilterExpanded
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Builder(
+                                builder: (context) {
+                                  final half = (_brands.length / 2).ceil();
+                                  final firstHalf = _brands.sublist(0, min(half, _brands.length));
+                                  final secondHalf = _brands.length > half ? _brands.sublist(half) : <ProductBrand>[];
+                                  return Column(
+                                    children: [
+                                      if (firstHalf.isNotEmpty)
+                                        SizedBox(
+                                          height: 40,
+                                          child: ListView(
+                                            scrollDirection: Axis.horizontal,
+                                            children: firstHalf.map((brand) {
+                                              final isSelected = _selectedBrands.contains(brand.name);
+                                              return Padding(
+                                                padding: const EdgeInsets.only(right: 8),
+                                                child: FilterChip(
+                                                  label: Text(brand.name),
+                                                  selected: isSelected,
+                                                  onSelected: (selected) {
+                                                    final newSelection = List<String>.from(_selectedBrands);
+                                                    if (selected) {
+                                                      newSelection.add(brand.name);
+                                                    } else {
+                                                      newSelection.remove(brand.name);
+                                                    }
+                                                    _onBrandsChanged(newSelection);
+                                                  },
+                                                  backgroundColor: colorScheme.surfaceContainerHighest,
+                                                  selectedColor: colorScheme.primaryContainer,
+                                                  checkmarkColor: colorScheme.onPrimaryContainer,
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      if (secondHalf.isNotEmpty)
+                                        SizedBox(
+                                          height: 40,
+                                          child: ListView(
+                                            scrollDirection: Axis.horizontal,
+                                            children: secondHalf.map((brand) {
+                                              final isSelected = _selectedBrands.contains(brand.name);
+                                              return Padding(
+                                                padding: const EdgeInsets.only(right: 8),
+                                                child: FilterChip(
+                                                  label: Text(brand.name),
+                                                  selected: isSelected,
+                                                  onSelected: (selected) {
+                                                    final newSelection = List<String>.from(_selectedBrands);
+                                                    if (selected) {
+                                                      newSelection.add(brand.name);
+                                                    } else {
+                                                      newSelection.remove(brand.name);
+                                                    }
+                                                    _onBrandsChanged(newSelection);
+                                                  },
+                                                  backgroundColor: colorScheme.surfaceContainerHighest,
+                                                  selectedColor: colorScheme.primaryContainer,
+                                                  checkmarkColor: colorScheme.onPrimaryContainer,
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Category selection header
+                      InkWell(
+                        onTap: _toggleCategoryFilter,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Kategoriyalar',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              const Spacer(),
+                              Icon(
+                                _isCategoryFilterExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Category selection (expandable)
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: _isCategoryFilterExpanded && _categories.isNotEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Builder(
+                                builder: (context) {
+                                  final half = (_categories.length / 2).ceil();
+                                  final firstHalf = _categories.sublist(0, min(half, _categories.length));
+                                  final secondHalf = _categories.length > half ? _categories.sublist(half) : <ProductSeries>[];
+                                  return Column(
+                                    children: [
+                                      if (firstHalf.isNotEmpty)
+                                        SizedBox(
+                                          height: 40,
+                                          child: ListView(
+                                            scrollDirection: Axis.horizontal,
+                                            children: firstHalf.map((category) {
+                                              final isSelected = _selectedCategories.contains(category.name);
+                                              return Padding(
+                                                padding: const EdgeInsets.only(right: 8),
+                                                child: FilterChip(
+                                                  label: Text(category.name),
+                                                  selected: isSelected,
+                                                  onSelected: (selected) {
+                                                    final newSelection = List<String>.from(_selectedCategories);
+                                                    if (selected) {
+                                                      newSelection.add(category.name);
+                                                    } else {
+                                                      newSelection.remove(category.name);
+                                                    }
+                                                    _onCategoriesChanged(newSelection);
+                                                  },
+                                                  backgroundColor: colorScheme.surfaceContainerHighest,
+                                                  selectedColor: colorScheme.primaryContainer,
+                                                  checkmarkColor: colorScheme.onPrimaryContainer,
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      if (secondHalf.isNotEmpty)
+                                        SizedBox(
+                                          height: 40,
+                                          child: ListView(
+                                            scrollDirection: Axis.horizontal,
+                                            children: secondHalf.map((category) {
+                                              final isSelected = _selectedCategories.contains(category.name);
+                                              return Padding(
+                                                padding: const EdgeInsets.only(right: 8),
+                                                child: FilterChip(
+                                                  label: Text(category.name),
+                                                  selected: isSelected,
+                                                  onSelected: (selected) {
+                                                    final newSelection = List<String>.from(_selectedCategories);
+                                                    if (selected) {
+                                                      newSelection.add(category.name);
+                                                    } else {
+                                                      newSelection.remove(category.name);
+                                                    }
+                                                    _onCategoriesChanged(newSelection);
+                                                  },
+                                                  backgroundColor: colorScheme.surfaceContainerHighest,
+                                                  selectedColor: colorScheme.primaryContainer,
+                                                  checkmarkColor: colorScheme.onPrimaryContainer,
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            )
+                          : _isCategoryFilterExpanded
+                            ? Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  'Avval brand tanlang',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
                       ),
                     ],
                   ),
                 ),
+              ),
+            ),
               ),
             ),
             // === ADD: yashirin/ko'rinar panel (son + list/grid tugmalar) ===

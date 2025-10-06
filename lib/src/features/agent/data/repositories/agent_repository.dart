@@ -10,6 +10,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
 
 class AgentRepository {
@@ -271,5 +273,15 @@ class AgentRepository {
       productBrand: productBrand,
       productSeries: productSeries,
     );
+  }
+
+  /// Get cached product brands
+  Future<List<ProductBrand>> getCachedProductBrands() async {
+    return await _dataSyncService.getCachedProductBrands();
+  }
+
+  /// Get cached product series (categories)
+  Future<List<ProductSeries>> getCachedProductSeries({String? brandName}) async {
+    return await _dataSyncService.getCachedProductSeries(brandName: brandName);
   }
 }

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 
 import '../../../../core/network/server_service.dart';
 import '../../../../core/router/app_router.dart';
@@ -136,9 +138,39 @@ class AgentHomeModern extends StatefulWidget {
 class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _expanded = true;
+  bool _isDataSyncInProgress = false;
+  Stream<SyncStep>? _syncStepStream;
 
   void _toggleExpanded() {
     setState(() => _expanded = !_expanded);
+  }
+
+  Future<void> _syncDataWithProgress() async {
+    final prefs = sl<SharedPreferencesService>();
+    final userCode = prefs.getUserCode() ?? '';
+    final password = prefs.getPassword() ?? '';
+    final codeProject = prefs.getCodeProject() ?? '';
+    final warehouseCode = prefs.getWarehouseCode() ?? '';
+    final dataSyncService = sl<DataSyncService>();
+
+    setState(() {
+      _isDataSyncInProgress = true;
+      _syncStepStream = dataSyncService.syncAllUserDataWithProgress(
+        userCode: userCode,
+        password: password,
+        codeProject: codeProject,
+        codeSklad: warehouseCode,
+      );
+    });
+  }
+
+  void _onDataSyncComplete() {
+    setState(() {
+      _isDataSyncInProgress = false;
+      _syncStepStream = null;
+    });
+    // Refresh KPI data after sync
+    widget.onRefresh?.call();
   }
 
   void _onOfflineIndicatorTap() async {
@@ -237,9 +269,11 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
         onSettings: widget.onSettings,
         onLogout: widget.onLogout,
       ),
-      body: RefreshIndicator(
-        onRefresh: widget.onRefresh ?? () async {},
-        child: CustomScrollView(
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: widget.onRefresh ?? () async {},
+            child: CustomScrollView(
           slivers: [
             SliverAppBar(
               pinned: true,
@@ -305,7 +339,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
                 ),
                 IconButton(
                   tooltip: 'Yangilash',
-                  onPressed: () => widget.onRefresh?.call(),
+                  onPressed: _syncDataWithProgress,
                   icon: const Icon(Icons.refresh),
                 ),
                 // Offline indicator - shows when app is in offline mode
@@ -405,7 +439,18 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
           ],
         ),
       ),
-    );
+      if (_isDataSyncInProgress && _syncStepStream != null)
+        Container(
+          color: Colors.black.withOpacity(0.5),
+          child: Center(
+            child: DataSyncProgressWidget(
+              syncStepStream: _syncStepStream!,
+              onComplete: _onDataSyncComplete,
+            ),
+          ),
+        ),
+    ],
+  ));
   }
 
   // Moved helper to stateful class; keep same behavior

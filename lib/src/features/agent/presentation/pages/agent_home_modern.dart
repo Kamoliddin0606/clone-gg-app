@@ -846,12 +846,12 @@ class _AppDrawer extends StatelessWidget {
                 _MenuItem(
                   icon: Icons.people,
                   title: 'Mijozlar',
-                  onTap: onOpenCustomers,
+                  onTap: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
                 ),
                 _MenuItem(
                   icon: Icons.bar_chart,
                   title: 'Hisobotlar',
-                  onTap: onReports,
+                  onTap: null,
                 ),
                 _MenuItem(
                   icon: Icons.campaign,
@@ -861,17 +861,17 @@ class _AppDrawer extends StatelessWidget {
                 _MenuItem(
                   icon: Icons.account_balance_wallet,
                   title: 'Kassa',
-                  onTap: onCash,
+                  onTap: null,
                 ),
                 _MenuItem(
                   icon: Icons.account_balance,
                   title: 'Debit-Kredit',
-                  onTap: onDebitCredit,
+                  onTap: null,
                 ),
                 _MenuItem(
                   icon: Icons.warehouse,
                   title: 'Skladlar',
-                  onTap: onWarehouses,
+                  onTap: () => Navigator.pushNamed(context, AppRouter.warehousesRoute),
                 ),
                 _MenuItem(
                   icon: Icons.storefront,
@@ -886,7 +886,7 @@ class _AppDrawer extends StatelessWidget {
                 _MenuItem(
                   icon: Icons.description,
                   title: 'Shartnomalar',
-                  onTap: onContracts,
+                  onTap: null,
                 ),
               ],
             ),
@@ -939,15 +939,31 @@ class _MenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDisabled = onTap == null;
 
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title, style: theme.textTheme.bodyLarge),
+    final listTile = ListTile(
+      leading: Icon(
+        icon,
+        color: isDisabled ? theme.disabledColor : null,
+      ),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: isDisabled ? theme.disabledColor : null,
+        ),
+      ),
       trailing: trailing,
       onTap: onTap,
       dense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
+
+    return isDisabled
+        ? Opacity(
+            opacity: 0.5,
+            child: listTile,
+          )
+        : listTile;
   }
 }
 

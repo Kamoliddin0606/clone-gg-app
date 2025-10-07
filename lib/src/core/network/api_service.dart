@@ -3,6 +3,23 @@ import 'package:dio/dio.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import '../services/service_locator.dart';
 
+// Custom exceptions for different error types
+class ConnectivityException implements Exception {
+  final String message;
+  ConnectivityException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class ServerException implements Exception {
+  final String message;
+  ServerException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class ApiService {
   final Dio _dio = Dio();
   final ServerService _server = sl<ServerService>();
@@ -37,7 +54,16 @@ class ApiService {
       );
       return res.data;
     } on DioException catch (e) {
-      throw Exception('Network Error: ${e.message}');
+      // Distinguish between connectivity errors and server errors
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          (e.type == DioExceptionType.unknown && e.error.toString().contains('SocketException'))) {
+        throw ConnectivityException('Network connection error: ${e.message}');
+      } else {
+        throw ServerException('Server error: ${e.message}');
+      }
     } catch (e) {
       throw Exception('Failed to perform SOAP request: $e');
     }

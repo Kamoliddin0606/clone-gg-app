@@ -165,6 +165,7 @@ class DataSyncService {
         'role': 'Agent', // Default role
         'warehouse_code': prefsWarehouseCode,
         'code_project': prefsCodeProject,
+        'base_url': _prefs.getBaseUrl() ?? '',
       });
 
       // Clear all other tables except users
@@ -274,6 +275,7 @@ class DataSyncService {
         name: _prefs.getUserName() ?? '',
         warehouseCode: codeSklad,
         codeProject: codeProject,
+        baseUrl: _prefs.getBaseUrl() ?? '',
       );
 
       final isValid = await validateUserWithDatabase();

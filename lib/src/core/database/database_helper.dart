@@ -19,7 +19,7 @@ List<int> unzipDatabase(List<int> bytes) {
 class DatabaseHelper {
   static const _dbName = "GloriyaMarketing.db";
   static const _zipAssetName = "GloriyaMarketing.zip";
-  static const _dbVersion = 2;
+  static const _dbVersion = 3;
 
   Database? _database;
 
@@ -113,6 +113,7 @@ class DatabaseHelper {
         role TEXT NOT NULL,
         warehouse_code TEXT,
         code_project TEXT,
+        base_url TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -127,6 +128,7 @@ class DatabaseHelper {
       'role': 'Agent',
       'warehouse_code': 'W001',
       'code_project': 'P001',
+      'base_url': 'http://kit.gloriya.uz:5443/EVYAP_UT/EVYAP_UT.1cws',
     });
 
     if (kDebugMode) {
@@ -152,11 +154,21 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 3) {
+      // Add base_url column to users table
+      await db.execute('ALTER TABLE users ADD COLUMN base_url TEXT NOT NULL DEFAULT ""');
+    }
   }
 
   // User management methods
   Future<void> saveUser(Map<String, dynamic> userData) async {
     final db = await database;
+
+    // Validate baseUrl if provided
+    final baseUrl = userData['base_url'] as String?;
+    if (baseUrl != null && baseUrl.isNotEmpty && !_isValidUrl(baseUrl)) {
+      throw ArgumentError('Invalid baseUrl format: $baseUrl');
+    }
 
     // Clear all existing users before inserting new one
     // This ensures only one user record exists at any time
@@ -221,5 +233,14 @@ class DatabaseHelper {
   Future<void> clearAllUsersExcept(String code) async {
     final db = await database;
     await db.delete('users', where: 'code != ?', whereArgs: [code]);
+  }
+
+  static bool _isValidUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.isAbsolute && (uri.scheme == 'http' || uri.scheme == 'https');
+    } catch (_) {
+      return false;
+    }
   }
 }

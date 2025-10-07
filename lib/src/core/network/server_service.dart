@@ -43,6 +43,7 @@ class ServerService {
   Future<void> set(ServerEnv env) async {
     current.value = env;
     await _prefs.setServerName(env.name);
+    await _prefs.setBaseUrl(env.url);
   }
 
   String get baseUrl => current.value.url;

@@ -17,6 +17,7 @@ CREATE TABLE users (
   role TEXT NOT NULL,
   warehouse_code TEXT,
   code_project TEXT,
+  base_url TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )

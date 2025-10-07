@@ -10,9 +10,14 @@ class UserModel extends UserEntity {
     required super.name,
     required super.warehouseCode,
     required super.codeProject,
+    required super.baseUrl,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final baseUrl = json['baseUrl'] ?? '';
+    if (baseUrl.isNotEmpty && !_isValidUrl(baseUrl)) {
+      throw FormatException('Invalid baseUrl format: $baseUrl');
+    }
     return UserModel(
       id: json['id'],
       username: json['username'],
@@ -22,10 +27,14 @@ class UserModel extends UserEntity {
       name: json['name'],
       warehouseCode: json['warehouseCode'],
       codeProject: json['codeProject'] ?? '',
+      baseUrl: baseUrl,
     );
   }
 
-  factory UserModel.fromSoap(Map<String, dynamic> soapResponse, {String? username}) {
+  factory UserModel.fromSoap(Map<String, dynamic> soapResponse, {String? username, required String baseUrl}) {
+    if (baseUrl.isNotEmpty && !_isValidUrl(baseUrl)) {
+      throw FormatException('Invalid baseUrl format: $baseUrl');
+    }
     return UserModel(
       id: soapResponse['Code'],
       username: username ?? '', // Username is passed from request
@@ -35,6 +44,7 @@ class UserModel extends UserEntity {
       name: soapResponse['Name'],
       warehouseCode: soapResponse['WarehouseCode'] ?? '',
       codeProject: soapResponse['CodeProject'] ?? '',
+      baseUrl: baseUrl,
     );
   }
 
@@ -60,6 +70,15 @@ class UserModel extends UserEntity {
     }
   }
 
+  static bool _isValidUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.isAbsolute && (uri.scheme == 'http' || uri.scheme == 'https');
+    } catch (_) {
+      return false;
+    }
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -70,6 +89,7 @@ class UserModel extends UserEntity {
       'name': name,
       'warehouseCode': warehouseCode,
       'codeProject': codeProject,
+      'baseUrl': baseUrl,
     };
   }
 }

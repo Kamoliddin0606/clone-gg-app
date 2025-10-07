@@ -253,6 +253,7 @@ class AgentRepository {
         'role': 'Agent',
         'warehouse_code': prefs.getWarehouseCode() ?? '',
         'code_project': prefs.getCodeProject() ?? '',
+        'base_url': prefs.getBaseUrl() ?? '',
       };
 
       await dbHelper.saveUser(userData);

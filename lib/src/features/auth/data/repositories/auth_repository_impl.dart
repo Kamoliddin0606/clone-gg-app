@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/user_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -7,8 +8,9 @@ import 'package:xml/xml.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final ApiService apiService;
+  final ServerService serverService;
 
-  AuthRepositoryImpl({required this.apiService});
+  AuthRepositoryImpl({required this.apiService, required this.serverService});
 
   @override
   Future<UserEntity> login({
@@ -61,7 +63,7 @@ class AuthRepositoryImpl implements AuthRepository {
           'Type': returnElement.findElements('m:Type').first.innerText,
           'CodeProject': returnElement.findElements('m:CodeProject').first.innerText,
           'WarehouseCode': returnElement.findElements('m:CodeSklad').first.innerText,
-        }, username: username);
+        }, username: username, baseUrl: serverService.baseUrl);
       } else {
         // Failed login
         final message = returnElement.findElements('m:Message').firstOrNull?.innerText;

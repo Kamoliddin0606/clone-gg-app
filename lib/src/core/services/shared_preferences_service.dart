@@ -11,6 +11,7 @@ class SharedPreferencesService {
   static const String _codeProjectKey = 'code_project';
 
   static const String _serverNameKey = 'selected_server_env';
+  static const String _baseUrlKey = 'selected_server_base_url';
   static const String _isOfflineModeKey = 'is_offline_mode';
   // static const String _serverName = 'selected_server_name';
 
@@ -127,6 +128,15 @@ Future<void> init() async {
 
   Future<bool> clearServerName() async =>
       _preferences.remove(_serverNameKey);
+
+  Future<bool> setBaseUrl(String url) async =>
+      _preferences.setString(_baseUrlKey, url);
+
+  String? getBaseUrl() =>
+      _preferences.getString(_baseUrlKey);
+
+  Future<bool> clearBaseUrl() async =>
+      _preferences.remove(_baseUrlKey);
 
   // Offline mode management
   Future<void> setOfflineMode(bool isOffline) async {

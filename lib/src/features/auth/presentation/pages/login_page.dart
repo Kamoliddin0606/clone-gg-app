@@ -169,7 +169,17 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
       // Get user from database by code
       final userData = await dbHelper.getUserByCode(prefsUserCode);
-
+      if(userData?['base_url'] != sl<ServerService>().current.value.url) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Saqlangan foydalanuvchi ma\'lumotlari joriy server bilan mos kelmaydi. Iltimos, serverni o\'zgartiring.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
       if (userData != null && userData['username'] == prefsUsername && userData['code'] == prefsUserCode) {
         // User found in database with matching username and code, offer offline mode
         final shouldUseOffline = await _showOfflineModeDialog(userData);
@@ -296,6 +306,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         'role': state.user.role,
         'warehouse_code': state.user.warehouseCode,
         'code_project': state.user.codeProject,
+        'base_url': state.user.baseUrl,
       });
       final users = await dbHelper.getAllUsers();
       print('DB Users: $users');
@@ -383,9 +394,21 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthFailure) {
-                print(state.message);
-                // Try offline login when online login fails
-                _tryOfflineLogin(_usernameController.text, _passwordController.text);
+                print('Auth failure: ${state.message}, type: ${state.errorType}');
+                if (state.errorType == AuthErrorType.connectivity) {
+                  // Only try offline login for connectivity issues
+                  _tryOfflineLogin(_usernameController.text, _passwordController.text);
+                } else {
+                  // For authentication or server errors, just show the error message
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               }
               if (state is AuthSuccess) {
                 // Online login successful

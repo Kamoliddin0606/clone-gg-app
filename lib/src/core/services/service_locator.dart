@@ -65,7 +65,7 @@ Future<void> setupServiceLocator() async {
 
   // Repositories
   if (!sl.isRegistered<AuthRepository>()) {
-    sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(apiService: sl()));
+    sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(apiService: sl(), serverService: sl()));
   }
   if (!sl.isRegistered<AgentRepository>()) {
     sl.registerLazySingleton<AgentRepository>(() => AgentRepository(

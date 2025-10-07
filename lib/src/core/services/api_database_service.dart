@@ -54,7 +54,7 @@ class ApiDatabaseService {
     } else if (oldVersion < 3) {
       // Add promotions tables for version 3
       await db.execute('''
-        CREATE TABLE promotions (
+        CREATE TABLE IF NOT EXISTS promotions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           code TEXT UNIQUE NOT NULL,
           name TEXT NOT NULL,
@@ -72,7 +72,7 @@ class ApiDatabaseService {
 
       // Create promotion product list table
       await db.execute('''
-        CREATE TABLE promotion_product_list (
+        CREATE TABLE IF NOT EXISTS promotion_product_list (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           promotion_code TEXT NOT NULL,
           product_code TEXT NOT NULL,
@@ -82,10 +82,10 @@ class ApiDatabaseService {
           UNIQUE(promotion_code, product_code)
         )
       ''');
-
+ 
       // Create promotion bonus list table
       await db.execute('''
-        CREATE TABLE promotion_bonus_list (
+        CREATE TABLE IF NOT EXISTS promotion_bonus_list (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           promotion_code TEXT NOT NULL,
           product_code TEXT NOT NULL,
@@ -95,10 +95,10 @@ class ApiDatabaseService {
           UNIQUE(promotion_code, product_code)
         )
       ''');
-
+ 
       // Create promotion class list table
       await db.execute('''
-        CREATE TABLE promotion_class_list (
+        CREATE TABLE IF NOT EXISTS promotion_class_list (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           promotion_code TEXT NOT NULL,
           class_code TEXT NOT NULL,
@@ -119,7 +119,7 @@ class ApiDatabaseService {
       // Migrate from old promotion_products table to separate tables
       // First, create the new tables
       await db.execute('''
-        CREATE TABLE promotion_product_list (
+        CREATE TABLE IF NOT EXISTS promotion_product_list (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           promotion_code TEXT NOT NULL,
           product_code TEXT NOT NULL,
@@ -131,7 +131,7 @@ class ApiDatabaseService {
       ''');
 
       await db.execute('''
-        CREATE TABLE promotion_bonus_list (
+        CREATE TABLE IF NOT EXISTS promotion_bonus_list (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           promotion_code TEXT NOT NULL,
           product_code TEXT NOT NULL,
@@ -143,7 +143,7 @@ class ApiDatabaseService {
       ''');
 
       await db.execute('''
-        CREATE TABLE promotion_class_list (
+        CREATE TABLE IF NOT EXISTS promotion_class_list (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           promotion_code TEXT NOT NULL,
           class_code TEXT NOT NULL,
@@ -176,7 +176,7 @@ class ApiDatabaseService {
     } else if (oldVersion < 5) {
       // Add business regions table for version 5
       await db.execute('''
-        CREATE TABLE business_regions (
+        CREATE TABLE IF NOT EXISTS business_regions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           code TEXT UNIQUE NOT NULL,
           name TEXT NOT NULL,
@@ -192,7 +192,7 @@ class ApiDatabaseService {
     } else if (oldVersion < 6) {
       // Add user warehouses table for version 6
       await db.execute('''
-        CREATE TABLE user_warehouses (
+        CREATE TABLE IF NOT EXISTS user_warehouses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           code TEXT UNIQUE NOT NULL,
           name TEXT NOT NULL,
@@ -204,7 +204,7 @@ class ApiDatabaseService {
     } else if (oldVersion < 7) {
       // Add product balance, brands, and series tables for version 7
       await db.execute('''
-        CREATE TABLE product_brands (
+        CREATE TABLE IF NOT EXISTS product_brands (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT UNIQUE NOT NULL,
           created_at TEXT NOT NULL,
@@ -213,7 +213,7 @@ class ApiDatabaseService {
       ''');
 
       await db.execute('''
-        CREATE TABLE product_series (
+        CREATE TABLE IF NOT EXISTS product_series (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
           brand_name TEXT NOT NULL,
@@ -225,7 +225,7 @@ class ApiDatabaseService {
       ''');
 
       await db.execute('''
-        CREATE TABLE product_balances (
+        CREATE TABLE IF NOT EXISTS product_balances (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           code_sklad TEXT NOT NULL,
           code_product TEXT NOT NULL,
@@ -453,7 +453,7 @@ class ApiDatabaseService {
 
     // Create promotions table
     await db.execute('''
-      CREATE TABLE promotions (
+      CREATE TABLE IF NOT EXISTS promotions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         code TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
@@ -471,7 +471,7 @@ class ApiDatabaseService {
 
     // Create promotion product list table
     await db.execute('''
-      CREATE TABLE promotion_product_list (
+      CREATE TABLE IF NOT EXISTS promotion_product_list (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         promotion_code TEXT NOT NULL,
         product_code TEXT NOT NULL,
@@ -484,7 +484,7 @@ class ApiDatabaseService {
 
     // Create promotion bonus list table
     await db.execute('''
-      CREATE TABLE promotion_bonus_list (
+      CREATE TABLE IF NOT EXISTS promotion_bonus_list (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         promotion_code TEXT NOT NULL,
         product_code TEXT NOT NULL,
@@ -497,7 +497,7 @@ class ApiDatabaseService {
 
     // Create promotion class list table
     await db.execute('''
-      CREATE TABLE promotion_class_list (
+      CREATE TABLE IF NOT EXISTS promotion_class_list (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         promotion_code TEXT NOT NULL,
         class_code TEXT NOT NULL,

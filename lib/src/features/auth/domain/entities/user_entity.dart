@@ -9,6 +9,7 @@ class UserEntity extends Equatable {
   final String name; // Display name
   final String warehouseCode; // Warehouse code
   final String codeProject; // Project code
+  final String baseUrl; // Server base URL for API calls
 
   const UserEntity({
     required this.id,
@@ -19,8 +20,9 @@ class UserEntity extends Equatable {
     required this.name,
     required this.warehouseCode,
     required this.codeProject,
+    required this.baseUrl,
   });
 
   @override
-  List<Object?> get props => [id, username, fullName, role, code, name, warehouseCode, codeProject];
+  List<Object?> get props => [id, username, fullName, role, code, name, warehouseCode, codeProject, baseUrl];
 }

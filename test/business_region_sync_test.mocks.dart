@@ -74,14 +74,14 @@ class MockSharedPreferencesService extends _i1.Mock
           )
           as _i5.Future<void>);
 
-  @override
-  _i5.Future<void> saveCredentials(String? username, String? password) =>
-      (super.noSuchMethod(
-            Invocation.method(#saveCredentials, [username, password]),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
-          )
-          as _i5.Future<void>);
+  // @override
+  // _i5.Future<void> saveCredentials(String? username, String? password, {bool? rememberMe}) =>
+  //     (super.noSuchMethod(
+  //           Invocation.method(#saveCredentials, [username, password, rememberMe]),
+  //           returnValue: _i5.Future<void>.value(),
+  //           returnValueForMissingStub: _i5.Future<void>.value(),
+  //         )
+  //         as _i5.Future<void>);
 
   @override
   _i5.Future<void> saveUserData({

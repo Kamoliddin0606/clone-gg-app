@@ -39,10 +39,10 @@ Future<void> init() async {
   }
 
   // Save login credentials
-  Future<void> saveCredentials(String username, String password) async {
+  Future<void> saveCredentials(String username, String password, bool rememberMe ) async {
     await _preferences.setString(_usernameKey, username);
     await _preferences.setString(_passwordKey, password);
-    await _preferences.setBool(_rememberMeKey, true);
+    await _preferences.setBool(_rememberMeKey, rememberMe);
   }
 
   // Save user data after successful login

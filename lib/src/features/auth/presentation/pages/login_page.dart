@@ -85,7 +85,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     try {
       await sl.isReady<SharedPreferencesService>();
       final prefs = sl<SharedPreferencesService>();
-      if (prefs.isRememberMeEnabled()) {
+      if(prefs.isRememberMeEnabled()) {
         final username = prefs.getSavedUsername();
         final password = prefs.getSavedPassword();
         if (username != null && password != null) {
@@ -119,9 +119,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       await sl.isReady<SharedPreferencesService>();
       final prefs = sl<SharedPreferencesService>();
       if (_rememberMe) {
-        await prefs.saveCredentials(_usernameController.text, _passwordController.text);
+        await prefs.saveCredentials(_usernameController.text, _passwordController.text, _rememberMe);
       } else {
-        await prefs.clearCredentials();
+        await prefs.saveCredentials(_usernameController.text, _passwordController.text, _rememberMe);
       }
     } catch (_) {}
 

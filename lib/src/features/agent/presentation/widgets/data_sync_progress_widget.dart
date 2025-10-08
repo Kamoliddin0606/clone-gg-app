@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 
 enum SyncStep {
   checkingUser('Foydalanuvchi tekshirilmoqda...', Icons.person_search),
@@ -12,7 +13,8 @@ enum SyncStep {
   syncingProductPrices('Mahsulot narxlari yuklanmoqda...', Icons.attach_money),
   syncingProductBalances('Mahsulot balanslari yuklanmoqda...', Icons.balance),
   syncingPromotions('Aksiyalar yuklanmoqda...', Icons.local_offer),
-  completed('Ma\'lumotlar yangilandi!', Icons.check_circle);
+  completed('Ma\'lumotlar yangilandi!', Icons.check_circle),
+  error('Xatolik yuz berdi', Icons.error);
 
   const SyncStep(this.message, this.icon);
   final String message;
@@ -22,11 +24,13 @@ enum SyncStep {
 class DataSyncProgressWidget extends StatefulWidget {
   final Stream<SyncStep> syncStepStream;
   final VoidCallback onComplete;
+  final Function(dynamic error)? onError;
 
   const DataSyncProgressWidget({
     super.key,
     required this.syncStepStream,
     required this.onComplete,
+    this.onError,
   });
 
   @override
@@ -36,20 +40,56 @@ class DataSyncProgressWidget extends StatefulWidget {
 class _DataSyncProgressWidgetState extends State<DataSyncProgressWidget> {
   SyncStep _currentStep = SyncStep.checkingUser;
   double _progress = 0.0;
+  String? _errorMessage;
+  bool _hasError = false;
 
   @override
   void initState() {
     super.initState();
-    widget.syncStepStream.listen((step) {
-      setState(() {
-        _currentStep = step;
-        _progress = (SyncStep.values.indexOf(step) + 1) / SyncStep.values.length;
-      });
+    widget.syncStepStream.listen(
+      (step) {
+        setState(() {
+          _currentStep = step;
+          _progress = (SyncStep.values.indexOf(step) + 1) / SyncStep.values.length;
+          _hasError = false;
+          _errorMessage = null;
+        });
 
-      if (step == SyncStep.completed) {
-        Future.delayed(const Duration(seconds: 1), widget.onComplete);
-      }
-    });
+        if (step == SyncStep.completed) {
+          Future.delayed(const Duration(seconds: 1), widget.onComplete);
+        }
+      },
+      onError: (error) {
+        setState(() {
+          _currentStep = SyncStep.error;
+          _progress = 1.0;
+          _hasError = true;
+          _errorMessage = _getErrorMessage(error);
+        });
+
+        // Call the error callback if provided
+        widget.onError?.call(error);
+
+        // Auto-complete after showing error for 3 seconds
+        Future.delayed(const Duration(seconds: 3), widget.onComplete);
+      },
+    );
+  }
+
+  String _getErrorMessage(dynamic error) {
+    if (error is PaymentRequiredException) {
+      return 'To\'lov talab qilinmoqda. Iltimos, obunangizni tekshiring.';
+    } else if (error is AuthenticationException) {
+      return 'Autentifikatsiya xatosi. Iltimos, qayta kiring.';
+    } else if (error is ForbiddenException) {
+      return 'Kirish taqiqlangan. Sizda ruxsat yo\'q.';
+    } else if (error is NotFoundException) {
+      return 'Xizmat topilmadi. Iltimos, qo\'llab-quvvatlashga murojaat qiling.';
+    } else if (error is ServerUnavailableException) {
+      return 'Server mavjud emas. Iltimos, keyinroq urinib ko\'ring.';
+    } else {
+      return 'Ma\'lumotlarni yangilashda xatolik yuz berdi. Kesh ma\'lumotlaridan foydalaniladi.';
+    }
   }
 
   @override

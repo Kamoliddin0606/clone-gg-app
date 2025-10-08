@@ -319,7 +319,15 @@ class DataSyncService {
 
       // Step 11: Sync promotions
       yield SyncStep.syncingPromotions;
-      await _syncPromotions(null); // No auth token needed for now
+      try {
+        await _syncPromotions(null); // No auth token needed for now
+      } catch (e) {
+        // Log error but don't fail the entire sync
+        if (kDebugMode) {
+          print('Error syncing promotions: $e');
+        }
+        // Continue with other steps
+      }
 
       // Step 12: Completed
       yield SyncStep.completed;
@@ -756,19 +764,34 @@ class DataSyncService {
     final timestamp = DateTime.now().toIso8601String();
     print('[$timestamp] DEBUG SYNC: _syncPromotions called');
 
-    print('[$timestamp] DEBUG SYNC: Calling _apiService.getPromotions');
-    final promotions = await _apiService.getPromotions(authToken: authToken);
-    print('[$timestamp] DEBUG SYNC: API returned ${promotions.length} promotions');
+    try {
+      print('[$timestamp] DEBUG SYNC: Calling _apiService.getPromotions');
+      final promotions = await _apiService.getPromotions(authToken: authToken);
+      print('[$timestamp] DEBUG SYNC: API returned ${promotions.length} promotions');
 
-    if (kDebugMode) {
-      print('Aksiyalar ma\'lumotlari yuklandi: ${promotions.length} ta aksiya');
+      if (kDebugMode) {
+        print('Aksiyalar ma\'lumotlari yuklandi: ${promotions.length} ta aksiya');
+      }
+
+      print('[$timestamp] DEBUG SYNC: Saving promotions to database');
+      await _dbService.savePromotions(promotions);
+      print('[$timestamp] DEBUG SYNC: Promotions saved to database');
+
+      return promotions;
+    } catch (e) {
+      print('[$timestamp] DEBUG SYNC: Error syncing promotions: $e');
+
+      // If promotion API fails, return cached data instead of failing the entire sync
+      try {
+        final cachedPromotions = await _dbService.getPromotions();
+        print('[$timestamp] DEBUG SYNC: Returning ${cachedPromotions.length} cached promotions');
+        return cachedPromotions;
+      } catch (cacheError) {
+        print('[$timestamp] DEBUG SYNC: Error getting cached promotions: $cacheError');
+        // Return empty list if both API and cache fail
+        return [];
+      }
     }
-
-    print('[$timestamp] DEBUG SYNC: Saving promotions to database');
-    await _dbService.savePromotions(promotions);
-    print('[$timestamp] DEBUG SYNC: Promotions saved to database');
-
-    return promotions;
   }
 
   /// Get cached data (for offline scenarios)

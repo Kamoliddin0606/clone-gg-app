@@ -5,6 +5,7 @@ import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 
 import '../../../../core/network/server_service.dart';
@@ -171,6 +172,40 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
     });
     // Refresh KPI data after sync
     widget.onRefresh?.call();
+  }
+
+  void _onDataSyncError(dynamic error) {
+    // Show user-friendly error message
+    String errorMessage = 'Ma\'lumotlarni yangilashda xatolik yuz berdi.';
+
+    if (error is PaymentRequiredException) {
+      errorMessage = 'To\'lov talab qilinmoqda. Iltimos, obunangizni tekshiring.';
+    } else if (error is AuthenticationException) {
+      errorMessage = 'Autentifikatsiya xatosi. Iltimos, qayta kiring.';
+    } else if (error is ForbiddenException) {
+      errorMessage = 'Kirish taqiqlangan. Sizda ruxsat yo\'q.';
+    } else if (error is NotFoundException) {
+      errorMessage = 'Xizmat topilmadi. Iltimos, qo\'llab-quvvatlashga murojaat qiling.';
+    } else if (error is ServerUnavailableException) {
+      errorMessage = 'Server mavjud emas. Iltimos, keyinroq urinib ko\'ring.';
+    } else if (error is SoapFaultException) {
+      errorMessage = 'Server xatosi: ${error.message}';
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'OK',
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+          ),
+        ),
+      );
+    }
   }
 
   void _onOfflineIndicatorTap() async {
@@ -446,6 +481,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
             child: DataSyncProgressWidget(
               syncStepStream: _syncStepStream!,
               onComplete: _onDataSyncComplete,
+              onError: _onDataSyncError,
             ),
           ),
         ),

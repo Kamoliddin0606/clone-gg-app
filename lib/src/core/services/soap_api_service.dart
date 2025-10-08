@@ -13,6 +13,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 
 class SoapApiService {
   final Dio _dio;
@@ -23,7 +24,7 @@ class SoapApiService {
   }
 
   String get _baseUrl => _serverService.baseUrl;
-
+  
   void _configureDio() {
     _dio.options.connectTimeout = const Duration(seconds: 30);
     _dio.options.receiveTimeout = const Duration(seconds: 30);
@@ -155,6 +156,7 @@ class SoapApiService {
 
       final returnElement = document.findAllElements('m:return').first;
       print('KPI data response: $returnElement');
+     
       return KpiData(
         plan: returnElement.findElements('m:TotalPlan').first.innerText,
         fact: returnElement.findElements('m:TotalFact').first.innerText,
@@ -819,9 +821,79 @@ class SoapApiService {
           },
         ),
       );
-
+      print('-------------------my check___________________ \n${response}');
       print('[$timestamp] DEBUG API: Response status: ${response.statusCode}');
       print('[$timestamp] DEBUG API: Response data length: ${response.data.length}');
+
+      // Check for HTTP status errors
+      final responseData = response.data.toString();
+      if (response.statusCode != 200) {
+        print('[$timestamp] DEBUG API: HTTP error detected: ${response.statusCode}');
+
+        // Prepare appropriate error message based on status code
+        String faultMessage;
+        switch (response.statusCode) {
+          case 400:
+            faultMessage = 'Bad Request: The request was malformed or invalid';
+            break;
+          case 401:
+            faultMessage = 'Unauthorized: Authentication required';
+            break;
+          case 403:
+            faultMessage = 'Forbidden: Access denied';
+            break;
+          case 404:
+            faultMessage = 'Not Found: The requested resource was not found';
+            break;
+          case 405:
+            faultMessage = 'Method Not Allowed: The HTTP method is not supported';
+            break;
+          case 408:
+            faultMessage = 'Request Timeout: The server timed out waiting for the request';
+            break;
+          case 429:
+            faultMessage = 'Too Many Requests: Rate limit exceeded';
+            break;
+          case 500:
+            faultMessage = 'Internal Server Error: An error occurred on the server';
+            break;
+          case 502:
+            faultMessage = 'Bad Gateway: Invalid response from upstream server';
+            break;
+          case 503:
+            faultMessage = 'Service Unavailable: The server is temporarily unavailable';
+            break;
+          case 504:
+            faultMessage = 'Gateway Timeout: The server timed out';
+            break;
+          default:
+            faultMessage = 'HTTP Error ${response.statusCode}: An unexpected error occurred';
+        }
+
+        // Try to extract SOAP fault details if present
+        try {
+          final document = XmlDocument.parse(responseData);
+          final faultElement = document.findAllElements('soap:Fault').firstOrNull ??
+                              document.findAllElements('Fault').firstOrNull;
+          if (faultElement != null) {
+            final faultString = faultElement.findAllElements('faultstring').firstOrNull?.innerText ??
+                               faultElement.findAllElements('detail').firstOrNull?.innerText ??
+                               'Unknown SOAP fault';
+            faultMessage = 'SOAP Fault (${response.statusCode}): $faultString';
+          }
+        } catch (e) {
+          print('[$timestamp] DEBUG API: Error parsing fault details: $e');
+          // Keep the HTTP status-based message
+        }
+
+        // Log the error
+        print('[$timestamp] ERROR API: $faultMessage');
+        print('[$timestamp] ERROR API: Status Code: ${response.statusCode}');
+        print('[$timestamp] ERROR API: Full response: $responseData');
+
+        // Throw SoapFaultException to be caught by the outer catch block
+        throw SoapFaultException(faultMessage, responseData);
+      }
 
       final document = XmlDocument.parse(response.data);
       print('[$timestamp] DEBUG API: Parsed XML document');
@@ -841,6 +913,16 @@ class SoapApiService {
       return promotions;
     } catch (e) {
       print('[$timestamp] DEBUG API: Error in getPromotions: $e');
+
+      // Check if this is a method not found error (common on some servers like Garnier)
+      if (e.toString().contains('method') ||
+          e.toString().contains('not found') ||
+          e.toString().contains('available') ||
+          e.toString().contains('500')) {
+        print('[$timestamp] DEBUG API: getPromo method not available on this server, returning empty list');
+        return []; // Return empty list instead of throwing
+      }
+
       throw Exception('Promosyon ma\'lumotlarini olishda xatolik: $e');
     }
   }

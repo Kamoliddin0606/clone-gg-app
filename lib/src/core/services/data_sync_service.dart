@@ -206,6 +206,24 @@ class DataSyncService {
     }
   }
 
+  /// Clear main report data
+  Future<void> clearMainReportData() async {
+    try {
+      if (kDebugMode) {
+        print('Clearing main report data...');
+      }
+      await _dbService.clearMainReport();
+      if (kDebugMode) {
+        print('Main report data cleared successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error clearing main report data: $e');
+      }
+      rethrow;
+    }
+  }
+
   /// Sync all data for a user (force refresh)
   Future<void> syncAllUserData({
     required String userCode,
@@ -916,16 +934,19 @@ class DataSyncService {
     );
 
     final mainReport = reportData['mainReport'] as MainReport;
-    final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
-    final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
+    final businessRegionReports = reportData['businessRegionReports'] as BusinessRegion;
+    final akbByCategories = reportData['akbByCategories'] as AKBByCategory;
 
     if (kDebugMode) {
-      print('Hisobot ma\'lumotlari yuklandi: ${businessRegionReports.length} ta biznes rayon, ${akbByCategories.length} ta kategoriya');
+      print('Hisobot ma\'lumotlari yuklandi: ${businessRegionReports.} ta biznes rayon, ${akbByCategories.length} ta kategoriya');
     }
 
     // Save main report first to get ID
+    await _dbService.saveMainReports();
+    await _dbService.saveMainReports();
     await _dbService.saveMainReports([mainReport]);
     final savedReports = await _dbService.getMainReports(userCode: userCode);
+
     final savedReport = savedReports.firstWhere(
       (r) => r.dateStart.toIso8601String().split('T')[0] == dateStart &&
              r.dateEnd.toIso8601String().split('T')[0] == dateEnd,
@@ -939,10 +960,18 @@ class DataSyncService {
     final updatedAKBByCategories = akbByCategories.map((category) =>
       category.copyWith(mainReportId: savedReport.id)
     ).toList();
-
+    print('yangilangan kategoriyalar: ${updatedAKBByCategories.length}');
     // Save related data
     await _dbService.saveBusinessRegionReports(updatedBusinessRegionReports);
     await _dbService.saveAKBByCategories(updatedAKBByCategories);
+
+    // Display the saved reports data for debugging/UI integration
+    if (kDebugMode) {
+      print('Saved reports data: $savedReports');
+      print('Main report: $savedReport');
+      print('Business region reports: ${updatedBusinessRegionReports.length} items');
+      print('AKB by categories: ${updatedAKBByCategories.length} items');
+    }
 
     return {
       'mainReport': savedReport,

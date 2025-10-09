@@ -1,5 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:get_it/get_it.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_report.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
 import '../widgets/modern_date_range_picker.dart';
 
 
@@ -265,61 +275,6 @@ class _CircularProgressPainter extends CustomPainter {
       oldDelegate.backgroundColor != backgroundColor;
 }
 
-/// === Telegram xabarini shu yerga joylashtiring tez sinov uchun ===
-const String sampleTelegramText = """
-#dailyReport
-📅 Sana: 9-10-2025  14:30:54
-🙎🏻‍♂️ FIO: URALOVA YULDUZOY (OLMALIQ-AXONGORON DIL ) 6361354711
-
-Hudud : ('Алмалык-1',)
-
-OKB va AKB:
-
-Hudud bo'yicha OKB --  227 t.t.
-Bugun tashrif buyurilgan savdo nuqtalari soni  --  13 t.t.
-Bugun faol mijozlar  --  8 t.t.
-
-
-AKB hududlar bo'yicha taqsimlanishi:
-
-Алмалык-1  --  8t.t.
-
-Buyurtmalar umumiy summasi:
-
-Naqd  --  1 220 360.0 So'm
-Naqdsiz  --  1 105 730.0 So'm
-Buyurtmalar umumiy summasi  --  2 326 090.0 So'm
-
-AKB tovar kategoriyalari bo'yicha:
-
-DURU SOAP  --  8t.t.
-DURU SHOWER GEL  --  1t.t.
-DEO EMOTION  --  3t.t.
-DEODORANT  --  3t.t.
-PRESHAVE  --  2t.t.
-AFTERSHAVE  --  1t.t.
-
-
-✿•┈┈┈┈••ৡ❀ৡ•┈┈┈┈•✿
-
-📊 Oylik reja va umumiy natijalar 9-10-2025  14:30:54 uchun
-
-Reja va fakt:
-
-Reja  --  170 000 000.0 So'm
-Fakt  --  26 832 890.0 So'm
-Fakt foizda  --  15.78%
-Bashorat  --  90 561 003.75 So'm
-Bashorat foizda  --  53.27%
-
-OKB va AKB:
-
-OKB  --  219 t.t.
-AKB reja  --  170 t.t.
-AKB fakt  --  53 t.t.
-AKB foizda --  31.18%
-""";
-
 class MainReportPage extends StatefulWidget {
   const MainReportPage({super.key});
 
@@ -329,25 +284,79 @@ class MainReportPage extends StatefulWidget {
 
 class _MainReportPageState extends State<MainReportPage>
     with SingleTickerProviderStateMixin {
-  late final DailyReport report;
+  MainReport? report;
   late final AnimationController _controller;
+  late final DataSyncService _dataSyncService;
+  late final ApiDatabaseService _dbService;
+  late final SharedPreferencesService _prefs;
   DateTimeRange? _selectedRange;
+  bool _isLoading = false;
+  Map<String, int> _akbByRegion = {};
+  Map<String, int> _categories = {};
 
   @override
   void initState() {
     super.initState();
-    report = DailyReport.fromTelegram(sampleTelegramText);
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..forward();
 
-    // Initialize selected range with report's date range
-    if (report.dateStart != null && report.dateEnd != null) {
-      _selectedRange = DateTimeRange(
-        start: report.dateStart!,
-        end: report.dateEnd!,
-      );
+    // Initialize services
+    _dataSyncService = DataSyncService(
+      prefs: GetIt.instance<SharedPreferencesService>(),
+      apiService: GetIt.instance<SoapApiService>(),
+      dbService: GetIt.instance<ApiDatabaseService>(),
+      dbHelper: GetIt.instance<DatabaseHelper>(),
+    );
+    _dbService = GetIt.instance<ApiDatabaseService>();
+    _prefs = GetIt.instance<SharedPreferencesService>();
+
+    // Load report data from database
+    _loadReportData();
+  }
+
+  Future<void> _loadReportData() async {
+    try {
+      final userCode = _prefs.getUserCode();
+      if (userCode != null) {
+        final mainReports = await _dbService.getMainReports(userCode: userCode);
+        if (mainReports.isNotEmpty) {
+          final mainReport = mainReports.first;
+          // Fetch related data
+          final businessRegionReports = await _dbService.getBusinessRegionReports(mainReportId: mainReport.id);
+          final akbByCategories = await _dbService.getAKBByCategories(mainReportId: mainReport.id);
+
+          // Convert to maps for UI
+          final akbByRegion = <String, int>{};
+          for (final regionReport in businessRegionReports) {
+            akbByRegion[regionReport.name] = regionReport.akb;
+          }
+
+          final categories = <String, int>{};
+          for (final category in akbByCategories) {
+            categories[category.name] = category.akb;
+          }
+
+          setState(() {
+            report = mainReport;
+            // Store related data for UI
+            _akbByRegion = akbByRegion;
+            _categories = categories;
+            // Initialize selected range with report's date range
+            if (report!.dateStart != null && report!.dateEnd != null) {
+              _selectedRange = DateTimeRange(
+                start: report!.dateStart!,
+                end: report!.dateEnd!,
+              );
+            }
+          });
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading report data: $e');
+      }
     }
   }
 
@@ -357,21 +366,142 @@ class _MainReportPageState extends State<MainReportPage>
     super.dispose();
   }
 
-  void _showReportPeriodCalendar(BuildContext context, DailyReport report) {
+  void _showReportPeriodCalendar(BuildContext context, MainReport? report) async {
     // Show the modern date range picker
-    ModernDateRangePicker.show(
+    final selectedRange = await ModernDateRangePicker.show(
       context,
       initialRange: _selectedRange,
       title: 'Hisobot davri',
       confirmText: 'Tasdiqlash',
       cancelText: 'Bekor qilish',
-    ).then((selectedRange) {
-      if (selectedRange != null) {
+    );
+    if (selectedRange != null) {
+      // Perform operations asynchronously in the background without blocking UI
+      _performBackgroundDataSync(selectedRange, context);
+    }
+  }
+
+  Future<void> _performBackgroundDataSync(DateTimeRange selectedRange, BuildContext context) async {
+    try {
+      // Get user code from preferences
+      final userCode = _prefs.getUserCode();
+      if (userCode == null) {
+        _showErrorSnackBar(context, 'Foydalanuvchi kodi topilmadi');
+        return;
+      }
+
+      if (kDebugMode) {
+        print('Starting background data sync for user: $userCode');
+      }
+
+      // Step 1: Clear main report data
+      await _dataSyncService.clearMainReportData();
+
+      // Step 2: Sync new report data
+      final reportData = await _dataSyncService.syncReportByPeriod(
+        userCode: userCode,
+        dateStart: selectedRange.start.toIso8601String().split('T')[0],
+        dateEnd: selectedRange.end.toIso8601String().split('T')[0],
+        forceRefresh: true,
+      );
+
+      // Step 3: Update UI with new data
+      // Parse the reportData and update the report object
+      if (mounted) {
+        final mainReport = reportData['mainReport'] as MainReport;
+        final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
+        final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
+
+        // Convert business region reports to map
+        final akbByRegion = <String, int>{};
+        for (final regionReport in businessRegionReports) {
+          akbByRegion[regionReport.name] = regionReport.akb;
+        }
+
+        // Convert AKB by categories to map
+        final categories = <String, int>{};
+        for (final category in akbByCategories) {
+          categories[category.name] = category.akb;
+        }
+
         setState(() {
           _selectedRange = selectedRange;
+          // Update report with synced data
+          report = mainReport;
         });
       }
-    });
+
+      if (kDebugMode) {
+        print('Background data sync completed successfully');
+      }
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Hisobot ma\'lumotlari muvaffaqiyatli yangilandi'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error during background data sync: $e');
+      }
+
+      // Show error message
+      if (mounted) {
+        _showErrorSnackBar(context, 'Ma\'lumotlarni yangilashda xatolik: $e');
+      }
+    }
+  }
+
+  void _showLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(message, textAlign: TextAlign.center),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _updateLoadingDialog(BuildContext context, String message) {
+    // Find the current dialog and update its content
+    Navigator.of(context).pop(); // Close current dialog
+    _showLoadingDialog(context, message); // Show new dialog with updated message
+  }
+
+  void _hideLoadingDialog(BuildContext context) {
+    Navigator.of(context).pop();
+  }
+
+  void _showErrorSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -389,7 +519,9 @@ class _MainReportPageState extends State<MainReportPage>
           ],
         ),
       ),
-      child: CustomScrollView(
+      child: Stack(
+        children: [
+          CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
@@ -468,7 +600,7 @@ class _MainReportPageState extends State<MainReportPage>
                                         const SizedBox(height: 2),
                                       ],
                                     )
-                                  else if (report.dateStart != null && report.dateEnd != null)
+                                  else if (report?.dateStart != null && report?.dateEnd != null)
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -476,7 +608,7 @@ class _MainReportPageState extends State<MainReportPage>
                                           children: [
                                             const SizedBox(width: 4),
                                             Text(
-                                              ' ${DateFormat('yyyy-MM-dd').format(report.dateStart!)} dan ${DateFormat('yyyy-MM-dd').format(report.dateEnd!)} gacha',
+                                              ' ${DateFormat('yyyy-MM-dd').format(report!.dateStart!)} dan ${DateFormat('yyyy-MM-dd').format(report!.dateEnd!)} gacha',
                                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                                 fontWeight: FontWeight.w600,
                                                 color: cs.primary,
@@ -489,7 +621,7 @@ class _MainReportPageState extends State<MainReportPage>
                                     )
                                   else
                                     Text(
-                                      report.formattedDateTime,
+                                      report?.dateStart?.toLocal().toString().split(' ')[0] ?? 'No Data',
                                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                         fontWeight: FontWeight.w700,
                                         color: cs.primary,
@@ -529,35 +661,35 @@ class _MainReportPageState extends State<MainReportPage>
                         children: [
                           _StatCard(
                             label: 'Hudud OKB',
-                            value: report.okbTerritory.toString(),
+                            value: (report?.countOKB ?? 0).toString(),
                             icon: Icons.map_outlined,
                             tooltip: 'Hudud bo\'yicha mijozlar bazasini qamrab olish',
                           ),
                           _StatCard(
                             label: 'Tashrif buyurilgan s.n.',
-                            value: report.visitedTT.toString(),
+                            value: (report?.countVisited ?? 0).toString(),
                             icon: Icons.store_mall_directory_outlined,
                             tooltip: 'Tashrif buyurilgan savdo nuqtalari soni',
                           ),
                           _StatCard(
                             label: 'Faol mijozlar',
-                            value: report.activeToday.toString(),
+                            value: (report?.countAKB ?? 0).toString(),
                             icon: Icons.check_circle,
                             tooltip: 'Bugun faol buyurtmalari bo\'lgan mijozlar',
                           ),
                           _MoneyCard(
                             label: 'Naqd',
-                            amount: report.cash,
+                            amount: report?.cash ?? 0.0,
                             icon: Icons.payments_outlined,
                           ),
                           _MoneyCard(
                             label: 'Naqdsiz',
-                            amount: report.cashless,
+                            amount: report?.transfer ?? 0.0,
                             icon: Icons.account_balance_outlined,
                           ),
                           _MoneyCard(
                             label: 'Buyurtmalar jami',
-                            amount: report.totalOrders,
+                            amount: report?.sum ?? 0.0,
                             icon: Icons.receipt_long_outlined,
                             highlight: true,
                           ),
@@ -571,25 +703,38 @@ class _MainReportPageState extends State<MainReportPage>
                   const SizedBox(height: 20),
                   _SectionTitle(icon: Icons.map_outlined, title: 'Hududlar bo\'yicha AKB'),
                   const SizedBox(height: 8),
-                  _RegionChips(regions: report.akbByRegion),
+                  _RegionChips(regions: _akbByRegion),
 
                   const SizedBox(height: 20),
                   _SectionTitle(icon: Icons.category_outlined, title: 'Tovar kategoriyalari bo\'yicha AKB'),
                   const SizedBox(height: 8),
-                  _CategoryList(categories: report.categories),
+                  _CategoryList(categories: _categories),
 
 
 
-                  const SizedBox(height: 28),
-                  _FooterNote(),
+                  // const SizedBox(height: 28),
+                  // _FooterNote(),
                   const SizedBox(height: 32),
                 ],
               ),
             ),
           ),
+          // Loading overlay
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
         ],
+
       ),
+     ]
+    ),
     );
+
+
   }
 }
 
@@ -763,7 +908,7 @@ class _GlassCard extends StatelessWidget {
 }
 
 class _PlanFactForecast extends StatelessWidget {
-  final DailyReport report;
+  final MainReport? report;
   const _PlanFactForecast({required this.report});
 
   @override
@@ -799,26 +944,28 @@ class _PlanFactForecast extends StatelessWidget {
 
     return Column(
       children: [
-        buildBar(
-          label: 'Fakt',
-          percent: report.fact / (report.plan == 0 ? 1 : report.plan),
-          color: cs.primary,
-          value: formatCurrencyUz(report.fact),
-        ),
-        const SizedBox(height: 10),
-        buildBar(
-          label: 'Bashorat',
-          percent: report.forecast / (report.plan == 0 ? 1 : report.plan),
-          color: cs.tertiary,
-          value: formatCurrencyUz(report.forecast),
-        ),
-        const SizedBox(height: 10),
-        buildBar(
-          label: 'Reja',
-          percent: 1,
-          color: cs.secondary,
-          value: formatCurrencyUz(report.plan),
-        ),
+        if (report != null) ...[
+          buildBar(
+            label: 'Fakt',
+            percent: report!.sum / (report!.sum == 0 ? 1 : report!.sum),
+            color: cs.primary,
+            value: formatCurrencyUz(report!.sum),
+          ),
+          const SizedBox(height: 10),
+          buildBar(
+            label: 'Naqd',
+            percent: report!.cash / (report!.sum == 0 ? 1 : report!.sum),
+            color: cs.tertiary,
+            value: formatCurrencyUz(report!.cash),
+          ),
+          const SizedBox(height: 10),
+          buildBar(
+            label: 'Naqdsiz',
+            percent: report!.transfer / (report!.sum == 0 ? 1 : report!.sum),
+            color: cs.secondary,
+            value: formatCurrencyUz(report!.transfer),
+          ),
+        ],
       ],
     );
   }
@@ -900,22 +1047,26 @@ class _CategoryList extends StatelessWidget {
 }
 
 class _OkbAkbMonthly extends StatelessWidget {
-  final DailyReport report;
+  final MainReport? report;
   const _OkbAkbMonthly({required this.report});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    if (report == null) {
+      return const SizedBox.shrink();
+    }
+    final akbPercent = report!.countAKB > 0 ? (report!.countAKB / report!.countOKB * 100) : 0.0;
     return Row(
       children: [
         Expanded(
           child: _GlassCard(
             child: AnimatedPercentageWidget(
-              percentage: report.akbPercent / 100.0,
+              percentage: akbPercent / 100.0,
               type: PercentageDisplayType.circular,
               color: cs.primary,
               label: 'AKB %',
-              valueText: '${report.akbPercent.toStringAsFixed(2)}%',
+              valueText: '${akbPercent.toStringAsFixed(2)}%',
               size: 100,
             ),
           ),
@@ -926,11 +1077,11 @@ class _OkbAkbMonthly extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _kv('Oylik OKB', report.okbMonth.toString()),
+                _kv('Oylik OKB', report!.countOKB.toString()),
                 const SizedBox(height: 6),
-                _kv('AKB reja', report.akbPlan.toString()),
+                _kv('AKB reja', report!.countAKB.toString()),
                 const SizedBox(height: 6),
-                _kv('AKB fakt', report.akbFact.toString()),
+                _kv('AKB fakt', report!.countAKB.toString()),
               ],
             ),
           ),
@@ -1175,190 +1326,190 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
 /// =====================
 /// Parsing & Model Layer
 /// =====================
-class DailyReport {
-   final DateTime? dateTime;
-   final DateTime? dateStart;
-   final DateTime? dateEnd;
-   final String agentName;
-   final String territoryLabel;
-
-  // Today
-  final int okbTerritory;
-  final int visitedTT;
-  final int activeToday;
-
-  // Orders
-  final double cash;
-  final double cashless;
-  final double totalOrders;
-
-  // Regions & Categories
-  final Map<String, int> akbByRegion;
-  final Map<String, int> categories;
-
-  // Monthly
-  final double plan;
-  final double fact;
-  final double forecast;
-  final double factPercent;
-  final double forecastPercent;
-  final int okbMonth;
-  final int akbPlan;
-  final int akbFact;
-  final double akbPercent;
-
-  DailyReport({
-    required this.dateTime,
-    this.dateStart,
-    this.dateEnd,
-    required this.agentName,
-    required this.territoryLabel,
-    required this.okbTerritory,
-    required this.visitedTT,
-    required this.activeToday,
-    required this.cash,
-    required this.cashless,
-    required this.totalOrders,
-    required this.akbByRegion,
-    required this.categories,
-    required this.plan,
-    required this.fact,
-    required this.forecast,
-    required this.factPercent,
-    required this.forecastPercent,
-    required this.okbMonth,
-    required this.akbPlan,
-    required this.akbFact,
-    required this.akbPercent,
-  });
-
-  String get formattedDateTime {
-    if (dateTime == null) return '-';
-    final d = dateTime!;
-    String two(int v) => v.toString().padLeft(2, '0');
-    return '${two(d.day)}.${two(d.month)}.${d.year}  ${two(d.hour)}:${two(d.minute)}';
-  }
-
-  factory DailyReport.fromTelegram(String raw) {
-    String getLineAfter(String label) {
-      final m = RegExp(RegExp.escape(label) + r"\s*([^\n]+)").firstMatch(raw);
-      return (m != null ? m.group(1) : '')!.trim();
-    }
-
-    double parseMoney(String s) {
-      // Keep digits and separators
-      final cleaned = s.replaceAll(RegExp(r"[^0-9.,]"), '').replaceAll(' ', '').replaceAll(',', '.');
-      if (cleaned.isEmpty) return 0;
-      return double.tryParse(cleaned) ?? 0;
-    }
-
-    int parseCount(String s) {
-      final m = RegExp(r"(\d+)").firstMatch(s);
-      return int.tryParse(m?.group(1) ?? '0') ?? 0;
-    }
-
-    // Date
-    DateTime? dt;
-    DateTime? dateStart, dateEnd;
-    try {
-      final dateLine = getLineAfter('Sana:');
-      // Expect formats like 9-10-2025  14:30:54
-      final parts = RegExp(r"(\d{1,2})[-./](\d{1,2})[-./](\d{4})\s+(\d{1,2}):(\d{2})").firstMatch(dateLine);
-      if (parts != null) {
-        final d = int.parse(parts.group(1)!);
-        final m = int.parse(parts.group(2)!);
-        final y = int.parse(parts.group(3)!);
-        final hh = int.parse(parts.group(4)!);
-        final mm = int.parse(parts.group(5)!);
-        dt = DateTime(y, m, d, hh, mm);
-      }
-
-      // For SOAP API integration, extract dateStart and dateEnd
-      // These would come from the SOAP response, but for now we'll use defaults
-      final now = DateTime.now();
-      dateStart = DateTime(now.year, now.month, 1); // First day of current month
-      print('now: $now $dateStart  $dateEnd }');
-      dateEnd = DateTime(now.year, now.month + 1, 0); // Last day of current month
-    } catch (_) {}
-
-    // Agent name
-    final nameLine = getLineAfter('FIO:');
-    final agentName = nameLine.isEmpty ? '—' : nameLine;
-
-    // Territory
-    String territory = '—';
-    final terr = getLineAfter('Hudud :');
-    final terrM = RegExp(r"\('([^']+)'\)").firstMatch(terr);
-    if (terrM != null) territory = terrM.group(1)!;
-
-    // Today block
-    final okbTerritory = parseCount(getLineAfter('Hudud bo\'yicha OKB --'));
-    final visited = parseCount(getLineAfter('Bugun tashrif buyurilgan savdo nuqtalari soni  --'));
-    final active = parseCount(getLineAfter('Bugun faol mijozlar  --'));
-
-    // Orders block
-    final cash = parseMoney(getLineAfter('Naqd  --'));
-    final cashless = parseMoney(getLineAfter('Naqdsiz  --'));
-    final total = parseMoney(getLineAfter('Buyurtmalar umumiy summasi  --'));
-
-    // Regions section
-    Map<String, int> regions = {};
-    final regionSection = _sectionBetween(raw, 'AKB hududlar bo\'yicha taqsimlanishi:', 'Buyurtmalar umumiy summasi:');
-    for (final line in regionSection.split('\n')) {
-      final m = RegExp(r"^\s*([^\-\n]+?)\s*--\s*(\d+)").firstMatch(line);
-      if (m != null) {
-        regions[m.group(1)!.trim()] = int.parse(m.group(2)!);
-      }
-    }
-
-    // Categories section
-    Map<String, int> categories = {};
-    final catSection = _sectionBetween(raw, 'AKB tovar kategoriyalari bo\'yicha:', '✿');
-    for (final line in catSection.split('\n')) {
-      final m = RegExp(r"^\s*([^\-\n]+?)\s*--\s*(\d+)").firstMatch(line);
-      if (m != null) {
-        categories[m.group(1)!.trim()] = int.parse(m.group(2)!);
-      }
-    }
-
-    // Monthly block
-    final plan = parseMoney(getLineAfter('Reja  --'));
-    final fact = parseMoney(getLineAfter('Fakt  --'));
-    final factP = parseMoney(getLineAfter('Fakt foizda  --'));
-    final forecast = parseMoney(getLineAfter('Bashorat  --'));
-    final forecastP = parseMoney(getLineAfter('Bashorat foizda  --'));
-
-    final okbMonth = parseCount(getLineAfter('OKB  --'));
-    final akbPlan = parseCount(getLineAfter('AKB reja  --'));
-    final akbFact = parseCount(getLineAfter('AKB fakt  --'));
-    final akbP = parseMoney(getLineAfter('AKB foizda --'));
-
-    return DailyReport(
-      dateTime: dt,
-      dateStart: dateStart,
-      dateEnd: dateEnd,
-      agentName: agentName,
-      territoryLabel: territory,
-      okbTerritory: okbTerritory,
-      visitedTT: visited,
-      activeToday: active,
-      cash: cash,
-      cashless: cashless,
-      totalOrders: total,
-      akbByRegion: regions.isEmpty ? {'—': 0} : regions,
-      categories: categories.isEmpty ? {'—': 0} : categories,
-      plan: plan,
-      fact: fact,
-      forecast: forecast,
-      factPercent: factP,
-      forecastPercent: forecastP,
-      okbMonth: okbMonth,
-      akbPlan: akbPlan,
-      akbFact: akbFact,
-      akbPercent: akbP,
-    );
-  }
-}
+// class DailyRepor {
+//    final DateTime? dateTime;
+//    final DateTime? dateStart;
+//    final DateTime? dateEnd;
+//    final String agentName;
+//    final String territoryLabel;
+//
+//   // Today
+//   final int okbTerritory;
+//   final int visitedTT;
+//   final int activeToday;
+//
+//   // Orders
+//   final double cash;
+//   final double cashless;
+//   final double totalOrders;
+//
+//   // Regions & Categories
+//   final Map<String, int> akbByRegion;
+//   final Map<String, int> categories;
+//
+//   // Monthly
+//   final double plan;
+//   final double fact;
+//   final double forecast;
+//   final double factPercent;
+//   final double forecastPercent;
+//   final int okbMonth;
+//   final int akbPlan;
+//   final int akbFact;
+//   final double akbPercent;
+//
+//   DailyReport({
+//     required this.dateTime,
+//     this.dateStart,
+//     this.dateEnd,
+//     required this.agentName,
+//     required this.territoryLabel,
+//     required this.okbTerritory,
+//     required this.visitedTT,
+//     required this.activeToday,
+//     required this.cash,
+//     required this.cashless,
+//     required this.totalOrders,
+//     required this.akbByRegion,
+//     required this.categories,
+//     required this.plan,
+//     required this.fact,
+//     required this.forecast,
+//     required this.factPercent,
+//     required this.forecastPercent,
+//     required this.okbMonth,
+//     required this.akbPlan,
+//     required this.akbFact,
+//     required this.akbPercent,
+//   });
+//
+//   String get formattedDateTime {
+//     if (dateTime == null) return '-';
+//     final d = dateTime!;
+//     String two(int v) => v.toString().padLeft(2, '0');
+//     return '${two(d.day)}.${two(d.month)}.${d.year}  ${two(d.hour)}:${two(d.minute)}';
+//   }
+//
+//   factory DailyReport.fromTelegram(String raw) {
+//     String getLineAfter(String label) {
+//       final m = RegExp(RegExp.escape(label) + r"\s*([^\n]+)").firstMatch(raw);
+//       return (m != null ? m.group(1) : '')!.trim();
+//     }
+//
+//     double parseMoney(String s) {
+//       // Keep digits and separators
+//       final cleaned = s.replaceAll(RegExp(r"[^0-9.,]"), '').replaceAll(' ', '').replaceAll(',', '.');
+//       if (cleaned.isEmpty) return 0;
+//       return double.tryParse(cleaned) ?? 0;
+//     }
+//
+//     int parseCount(String s) {
+//       final m = RegExp(r"(\d+)").firstMatch(s);
+//       return int.tryParse(m?.group(1) ?? '0') ?? 0;
+//     }
+//
+//     // Date
+//     DateTime? dt;
+//     DateTime? dateStart, dateEnd;
+//     try {
+//       final dateLine = getLineAfter('Sana:');
+//       // Expect formats like 9-10-2025  14:30:54
+//       final parts = RegExp(r"(\d{1,2})[-./](\d{1,2})[-./](\d{4})\s+(\d{1,2}):(\d{2})").firstMatch(dateLine);
+//       if (parts != null) {
+//         final d = int.parse(parts.group(1)!);
+//         final m = int.parse(parts.group(2)!);
+//         final y = int.parse(parts.group(3)!);
+//         final hh = int.parse(parts.group(4)!);
+//         final mm = int.parse(parts.group(5)!);
+//         dt = DateTime(y, m, d, hh, mm);
+//       }
+//
+//       // For SOAP API integration, extract dateStart and dateEnd
+//       // These would come from the SOAP response, but for now we'll use defaults
+//       final now = DateTime.now();
+//       dateStart = DateTime(now.year, now.month, 1); // First day of current month
+//       print('now: $now $dateStart  $dateEnd }');
+//       dateEnd = DateTime(now.year, now.month + 1, 0); // Last day of current month
+//     } catch (_) {}
+//
+//     // Agent name
+//     final nameLine = getLineAfter('FIO:');
+//     final agentName = nameLine.isEmpty ? '—' : nameLine;
+//
+//     // Territory
+//     String territory = '—';
+//     final terr = getLineAfter('Hudud :');
+//     final terrM = RegExp(r"\('([^']+)'\)").firstMatch(terr);
+//     if (terrM != null) territory = terrM.group(1)!;
+//
+//     // Today block
+//     final okbTerritory = parseCount(getLineAfter('Hudud bo\'yicha OKB --'));
+//     final visited = parseCount(getLineAfter('Bugun tashrif buyurilgan savdo nuqtalari soni  --'));
+//     final active = parseCount(getLineAfter('Bugun faol mijozlar  --'));
+//
+//     // Orders block
+//     final cash = parseMoney(getLineAfter('Naqd  --'));
+//     final cashless = parseMoney(getLineAfter('Naqdsiz  --'));
+//     final total = parseMoney(getLineAfter('Buyurtmalar umumiy summasi  --'));
+//
+//     // Regions section
+//     Map<String, int> regions = {};
+//     final regionSection = _sectionBetween(raw, 'AKB hududlar bo\'yicha taqsimlanishi:', 'Buyurtmalar umumiy summasi:');
+//     for (final line in regionSection.split('\n')) {
+//       final m = RegExp(r"^\s*([^\-\n]+?)\s*--\s*(\d+)").firstMatch(line);
+//       if (m != null) {
+//         regions[m.group(1)!.trim()] = int.parse(m.group(2)!);
+//       }
+//     }
+//
+//     // Categories section
+//     Map<String, int> categories = {};
+//     final catSection = _sectionBetween(raw, 'AKB tovar kategoriyalari bo\'yicha:', '✿');
+//     for (final line in catSection.split('\n')) {
+//       final m = RegExp(r"^\s*([^\-\n]+?)\s*--\s*(\d+)").firstMatch(line);
+//       if (m != null) {
+//         categories[m.group(1)!.trim()] = int.parse(m.group(2)!);
+//       }
+//     }
+//
+//     // Monthly block
+//     final plan = parseMoney(getLineAfter('Reja  --'));
+//     final fact = parseMoney(getLineAfter('Fakt  --'));
+//     final factP = parseMoney(getLineAfter('Fakt foizda  --'));
+//     final forecast = parseMoney(getLineAfter('Bashorat  --'));
+//     final forecastP = parseMoney(getLineAfter('Bashorat foizda  --'));
+//
+//     final okbMonth = parseCount(getLineAfter('OKB  --'));
+//     final akbPlan = parseCount(getLineAfter('AKB reja  --'));
+//     final akbFact = parseCount(getLineAfter('AKB fakt  --'));
+//     final akbP = parseMoney(getLineAfter('AKB foizda --'));
+//
+//     return DailyReport(
+//       dateTime: dt,
+//       dateStart: dateStart,
+//       dateEnd: dateEnd,
+//       agentName: agentName,
+//       territoryLabel: territory,
+//       okbTerritory: okbTerritory,
+//       visitedTT: visited,
+//       activeToday: active,
+//       cash: cash,
+//       cashless: cashless,
+//       totalOrders: total,
+//       akbByRegion: regions.isEmpty ? {'—': 0} : regions,
+//       categories: categories.isEmpty ? {'—': 0} : categories,
+//       plan: plan,
+//       fact: fact,
+//       forecast: forecast,
+//       factPercent: factP,
+//       forecastPercent: forecastP,
+//       okbMonth: okbMonth,
+//       akbPlan: akbPlan,
+//       akbFact: akbFact,
+//       akbPercent: akbP,
+//     );
+//   }
+// }
 
 String _sectionBetween(String raw, String start, String end) {
   final sIdx = raw.indexOf(start);

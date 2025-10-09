@@ -1044,14 +1044,14 @@ class SoapApiService {
       final returnElement = document.findAllElements('m:return').first;
 
       // Parse main report data
-      final countAKB = int.tryParse(_getElementText(returnElement, 'm:CountAKB') ?? '0') ?? 0;
-      final countOKB = int.tryParse(_getElementText(returnElement, 'm:CountOKB') ?? '0') ?? 0;
-      final cash = double.tryParse(_getElementText(returnElement, 'm:Cash') ?? '0') ?? 0.0;
-      final transfer = double.tryParse(_getElementText(returnElement, 'm:Transfer') ?? '0') ?? 0.0;
-      final sum = double.tryParse(_getElementText(returnElement, 'm:Sum') ?? '0') ?? 0.0;
-      final countVisited = int.tryParse(_getElementText(returnElement, 'm:CountVisited') ?? '0') ?? 0;
-      final dateStartParsed = _getElementText(returnElement, 'm:DateStart') ?? dateStart;
-      final dateEndParsed = _getElementText(returnElement, 'm:DateEnd') ?? dateEnd;
+      final countAKB = int.tryParse(_getElementText(returnElement, 'CountAKB') ?? '0') ?? 0;
+      final countOKB = int.tryParse(_getElementText(returnElement, 'CountOKB') ?? '0') ?? 0;
+      final cash = double.tryParse(_getElementText(returnElement, 'Cash') ?? '0') ?? 0.0;
+      final transfer = double.tryParse(_getElementText(returnElement, 'Transfer') ?? '0') ?? 0.0;
+      final sum = double.tryParse(_getElementText(returnElement, 'Sum') ?? '0') ?? 0.0;
+      final countVisited = int.tryParse(_getElementText(returnElement, 'CountVisited') ?? '0') ?? 0;
+      final dateStartParsed = _getElementText(returnElement, 'DateStart') ?? dateStart;
+      final dateEndParsed = _getElementText(returnElement, 'DateEnd') ?? dateEnd;
 
       final mainReport = MainReport(
         userCode: userCode,
@@ -1069,11 +1069,11 @@ class SoapApiService {
 
       // Parse business region reports
       final businessRegionReports = <BusinessRegionReport>[];
-      final businessRegionElements = returnElement.findAllElements('m:BusinessRegionReportRow');
+      final businessRegionElements = returnElement.findAllElements('BusinessRegionReportRow');
       for (final element in businessRegionElements) {
-        final code = _getElementText(element, 'm:Code') ?? '';
-        final name = _getElementText(element, 'm:Name') ?? '';
-        final akb = int.tryParse(_getElementText(element, 'm:AKB') ?? '0') ?? 0;
+        final code = _getElementText(element, 'Code') ?? '';
+        final name = _getElementText(element, 'Name') ?? '';
+        final akb = int.tryParse(_getElementText(element, 'AKB') ?? '0') ?? 0;
 
         if (code.isNotEmpty) {
           businessRegionReports.add(BusinessRegionReport(
@@ -1089,11 +1089,11 @@ class SoapApiService {
 
       // Parse AKB by categories
       final akbByCategories = <AKBByCategory>[];
-      final akbCategoryElements = returnElement.findAllElements('m:AKBByCotegoriesRow');
+      final akbCategoryElements = returnElement.findAllElements('AKBByCotegoriesRow');
       for (final element in akbCategoryElements) {
-        final code = _getElementText(element, 'm:Code') ?? '';
-        final name = _getElementText(element, 'm:Name') ?? '';
-        final akb = int.tryParse(_getElementText(element, 'm:AKB') ?? '0') ?? 0;
+        final code = _getElementText(element, 'Code') ?? '';
+        final name = _getElementText(element, 'Name') ?? '';
+        final akb = int.tryParse(_getElementText(element, 'AKB') ?? '0') ?? 0;
 
         if (code.isNotEmpty) {
           akbByCategories.add(AKBByCategory(

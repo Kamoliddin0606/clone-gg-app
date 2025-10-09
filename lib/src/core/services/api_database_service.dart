@@ -2383,10 +2383,10 @@ class ApiDatabaseService {
 
     // Use batch operations for much better performance
     final batch = db.batch();
-
-    // Delete all existing reports
+    //
+    // // Delete all existing reports
     batch.delete('main_reports');
-
+    // clearMainReport();
     // Deduplicate reports by user_code, date_start, date_end to avoid UNIQUE constraint violations
     final uniqueReports = <String, MainReport>{};
     for (final report in reports) {
@@ -2665,6 +2665,49 @@ class ApiDatabaseService {
         .toList();
   }
 
+  // Save main reports by clearing all related tables first
+  Future<void> saveMainReportsByDelete(List<MainReport> reports) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for clearing and saving
+    final batch = db.batch();
+
+    // Clear all report-related tables
+    batch.delete('main_reports');
+    batch.delete('business_region_reports');
+    batch.delete('akb_by_categories');
+    batch.delete('visit_plans');
+    batch.delete('visit_plan_lists');
+
+    // Deduplicate reports by user_code, date_start, date_end to avoid UNIQUE constraint violations
+    final uniqueReports = <String, MainReport>{};
+    for (final report in reports) {
+      final key = '${report.userCode}_${report.dateStart}_${report.dateEnd}';
+      uniqueReports[key] = report;
+    }
+
+    // Add all inserts to batch
+    for (final report in uniqueReports.values) {
+      batch.insert('main_reports', {
+        'user_code': report.userCode,
+        'date_start': report.dateStart.toIso8601String(),
+        'date_end': report.dateEnd.toIso8601String(),
+        'count_akb': report.countAKB,
+        'count_okb': report.countOKB,
+        'cash': report.cash,
+        'transfer': report.transfer,
+        'sum': report.sum,
+        'count_visited': report.countVisited,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
   // Clear all data
   Future<void> clearAllData() async {
     final db = await database;
@@ -2683,6 +2726,16 @@ class ApiDatabaseService {
     await db.delete('promotion_bonus_list');
     await db.delete('promotion_class_list');
     await db.delete('promotions');
+    await db.delete('main_reports');
+    await db.delete('business_region_reports');
+    await db.delete('akb_by_categories');
+    await db.delete('visit_plans');
+    await db.delete('visit_plan_lists');
+  }
+
+  Future<void> clearMainReport() async {
+    final db = await database;
+
     await db.delete('main_reports');
     await db.delete('business_region_reports');
     await db.delete('akb_by_categories');

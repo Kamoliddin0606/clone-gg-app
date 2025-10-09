@@ -36,7 +36,7 @@ class AgentBottomNavBar extends StatelessWidget {
         FluidNavItem(
           icon: Icons.insert_chart_outlined,
           label: 'Hisobot',
-          onTap: () => Navigator.pushNamed(context, '/reports'),
+            onTap: () => Navigator.pushNamed(context, '/reports'),
         ),
       ],
     );

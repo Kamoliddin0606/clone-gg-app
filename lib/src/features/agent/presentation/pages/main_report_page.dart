@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../widgets/modern_date_range_picker.dart';
 
 
 /// Animated Percentage Widget - Barcha percent elementlar uchun umumiy widget
@@ -330,6 +331,7 @@ class _MainReportPageState extends State<MainReportPage>
     with SingleTickerProviderStateMixin {
   late final DailyReport report;
   late final AnimationController _controller;
+  DateTimeRange? _selectedRange;
 
   @override
   void initState() {
@@ -339,6 +341,14 @@ class _MainReportPageState extends State<MainReportPage>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..forward();
+
+    // Initialize selected range with report's date range
+    if (report.dateStart != null && report.dateEnd != null) {
+      _selectedRange = DateTimeRange(
+        start: report.dateStart!,
+        end: report.dateEnd!,
+      );
+    }
   }
 
   @override
@@ -348,81 +358,20 @@ class _MainReportPageState extends State<MainReportPage>
   }
 
   void _showReportPeriodCalendar(BuildContext context, DailyReport report) {
-    if (report.dateStart == null || report.dateEnd == null) {
-      // Show a simple message if no date range is available
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Hisobot davri'),
-          content: const Text('Hisobot davri ma\'lumotlari mavjud emas.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    final startDate = report.dateStart!;
-    final endDate = report.dateEnd!;
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Hisobot davri',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '${DateFormat('dd.MM.yyyy').format(startDate)} - ${DateFormat('dd.MM.yyyy').format(endDate)}',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _CustomRangeCalendar(
-                  startDate: startDate,
-                  endDate: endDate,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Yopish'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    // Show the modern date range picker
+    ModernDateRangePicker.show(
+      context,
+      initialRange: _selectedRange,
+      title: 'Hisobot davri',
+      confirmText: 'Tasdiqlash',
+      cancelText: 'Bekor qilish',
+    ).then((selectedRange) {
+      if (selectedRange != null) {
+        setState(() {
+          _selectedRange = selectedRange;
+        });
+      }
+    });
   }
 
   @override
@@ -500,13 +449,31 @@ class _MainReportPageState extends State<MainReportPage>
                                     ],
                                   ),
                                   const SizedBox(height: 4),
-                                  if (report.dateStart != null && report.dateEnd != null)
+                                  if (_selectedRange != null)
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
-                                            // Icon(Icons.calendar_today, size: 16, color: cs.primary),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              ' ${DateFormat('yyyy-MM-dd').format(_selectedRange!.start)} dan ${DateFormat('yyyy-MM-dd').format(_selectedRange!.end)} gacha',
+                                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                color: cs.primary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                      ],
+                                    )
+                                  else if (report.dateStart != null && report.dateEnd != null)
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
                                             const SizedBox(width: 4),
                                             Text(
                                               ' ${DateFormat('yyyy-MM-dd').format(report.dateStart!)} dan ${DateFormat('yyyy-MM-dd').format(report.dateEnd!)} gacha',
@@ -518,19 +485,6 @@ class _MainReportPageState extends State<MainReportPage>
                                           ],
                                         ),
                                         const SizedBox(height: 2),
-                                        // Row(
-                                        //   children: [
-                                        //     Icon(Icons.event, size: 16, color: cs.secondary),
-                                        //     const SizedBox(width: 4),
-                                        //     Text(
-                                        //       'Tugash: ${report.dateEnd}',
-                                        //       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        //         fontWeight: FontWeight.w600,
-                                        //         color: cs.secondary,
-                                        //       ),
-                                        //     ),
-                                        //   ],
-                                        // ),
                                       ],
                                     )
                                   else

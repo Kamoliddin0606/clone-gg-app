@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -10,6 +11,10 @@ import 'package:gloria_marketing_flutter/src/theme/theme_schemes.dart';
 void main() async {
   // Ensure that Flutter bindings are initialized.
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize date formatting for intl package
+  await initializeDateFormatting('uz', null);
+
   await ThemeController.I.restore();
   // Set up service locator
   await setupServiceLocator();

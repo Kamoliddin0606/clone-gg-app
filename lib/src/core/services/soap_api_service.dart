@@ -12,6 +12,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_report.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
@@ -1003,6 +1006,114 @@ class SoapApiService {
       )).toList();
     } catch (e) {
       throw Exception('Shartnomalar ro\'yxatini olishda xatolik: $e');
+    }
+  }
+
+  /// Get report by period
+  Future<Map<String, dynamic>> getReportByPeriod({
+    required String userCode,
+    required String dateStart,
+    required String dateEnd,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+  <soap:Header/>
+  <soap:Body>
+    <sam:GetReportByPeriod>
+      <sam:UserCode>$userCode</sam:UserCode>
+      <sam:DateStart>$dateStart</sam:DateStart>
+      <sam:DateEnd>$dateEnd</sam:DateEnd>
+    </sam:GetReportByPeriod>
+  </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final returnElement = document.findAllElements('m:return').first;
+
+      // Parse main report data
+      final countAKB = int.tryParse(_getElementText(returnElement, 'm:CountAKB') ?? '0') ?? 0;
+      final countOKB = int.tryParse(_getElementText(returnElement, 'm:CountOKB') ?? '0') ?? 0;
+      final cash = double.tryParse(_getElementText(returnElement, 'm:Cash') ?? '0') ?? 0.0;
+      final transfer = double.tryParse(_getElementText(returnElement, 'm:Transfer') ?? '0') ?? 0.0;
+      final sum = double.tryParse(_getElementText(returnElement, 'm:Sum') ?? '0') ?? 0.0;
+      final countVisited = int.tryParse(_getElementText(returnElement, 'm:CountVisited') ?? '0') ?? 0;
+      final dateStartParsed = _getElementText(returnElement, 'm:DateStart') ?? dateStart;
+      final dateEndParsed = _getElementText(returnElement, 'm:DateEnd') ?? dateEnd;
+
+      final mainReport = MainReport(
+        userCode: userCode,
+        dateStart: DateTime.parse(dateStartParsed),
+        dateEnd: DateTime.parse(dateEndParsed),
+        countAKB: countAKB,
+        countOKB: countOKB,
+        cash: cash,
+        transfer: transfer,
+        sum: sum,
+        countVisited: countVisited,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Parse business region reports
+      final businessRegionReports = <BusinessRegionReport>[];
+      final businessRegionElements = returnElement.findAllElements('m:BusinessRegionReportRow');
+      for (final element in businessRegionElements) {
+        final code = _getElementText(element, 'm:Code') ?? '';
+        final name = _getElementText(element, 'm:Name') ?? '';
+        final akb = int.tryParse(_getElementText(element, 'm:AKB') ?? '0') ?? 0;
+
+        if (code.isNotEmpty) {
+          businessRegionReports.add(BusinessRegionReport(
+            mainReportId: 0, // Will be set when saving
+            code: code,
+            name: name,
+            akb: akb,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ));
+        }
+      }
+
+      // Parse AKB by categories
+      final akbByCategories = <AKBByCategory>[];
+      final akbCategoryElements = returnElement.findAllElements('m:AKBByCotegoriesRow');
+      for (final element in akbCategoryElements) {
+        final code = _getElementText(element, 'm:Code') ?? '';
+        final name = _getElementText(element, 'm:Name') ?? '';
+        final akb = int.tryParse(_getElementText(element, 'm:AKB') ?? '0') ?? 0;
+
+        if (code.isNotEmpty) {
+          akbByCategories.add(AKBByCategory(
+            mainReportId: 0, // Will be set when saving
+            code: code,
+            name: name,
+            akb: akb,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ));
+        }
+      }
+
+      return {
+        'mainReport': mainReport,
+        'businessRegionReports': businessRegionReports,
+        'akbByCategories': akbByCategories,
+      };
+    } catch (e) {
+      throw Exception('Hisobot ma\'lumotlarini olishda xatolik: $e');
     }
   }
 

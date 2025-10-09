@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 
 /// Animated Percentage Widget - Barcha percent elementlar uchun umumiy widget
@@ -346,6 +347,84 @@ class _MainReportPageState extends State<MainReportPage>
     super.dispose();
   }
 
+  void _showReportPeriodCalendar(BuildContext context, DailyReport report) {
+    if (report.dateStart == null || report.dateEnd == null) {
+      // Show a simple message if no date range is available
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Hisobot davri'),
+          content: const Text('Hisobot davri ma\'lumotlari mavjud emas.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final startDate = report.dateStart!;
+    final endDate = report.dateEnd!;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Hisobot davri',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '${DateFormat('dd.MM.yyyy').format(startDate)} - ${DateFormat('dd.MM.yyyy').format(endDate)}',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: _CustomRangeCalendar(
+                  startDate: startDate,
+                  endDate: endDate,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Yopish'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -369,6 +448,113 @@ class _MainReportPageState extends State<MainReportPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Report Period Display - Prominent UI element
+                  GestureDetector(
+                    onDoubleTap: () => _showReportPeriodCalendar(context, report),
+                    child: Card(
+                      elevation: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              cs.primary.withOpacity(0.1),
+                              cs.primaryContainer.withOpacity(0.05),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              color: cs.primary,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Hisobot davri',
+                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: cs.onSurface,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Icon(
+                                        Icons.touch_app,
+                                        size: 16,
+                                        color: cs.onSurfaceVariant.withOpacity(0.6),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (report.dateStart != null && report.dateEnd != null)
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            // Icon(Icons.calendar_today, size: 16, color: cs.primary),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              ' ${DateFormat('yyyy-MM-dd').format(report.dateStart!)} dan ${DateFormat('yyyy-MM-dd').format(report.dateEnd!)} gacha',
+                                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                color: cs.primary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        // Row(
+                                        //   children: [
+                                        //     Icon(Icons.event, size: 16, color: cs.secondary),
+                                        //     const SizedBox(width: 4),
+                                        //     Text(
+                                        //       'Tugash: ${report.dateEnd}',
+                                        //       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        //         fontWeight: FontWeight.w600,
+                                        //         color: cs.secondary,
+                                        //       ),
+                                        //     ),
+                                        //   ],
+                                        // ),
+                                      ],
+                                    )
+                                  else
+                                    Text(
+                                      report.formattedDateTime,
+                                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: cs.primary,
+                                        fontFeatures: const [FontFeature.tabularFigures()],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.info_outline,
+                              color: cs.onSurfaceVariant,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
 
                   _SectionTitle(icon: Icons.groups_2_outlined, title: 'Oylik OKB/AKB'),
                   const SizedBox(height: 8),
@@ -840,13 +1026,207 @@ class _FooterNote extends StatelessWidget {
   }
 }
 
+class _CustomRangeCalendar extends StatefulWidget {
+  final DateTime startDate;
+  final DateTime endDate;
+
+  const _CustomRangeCalendar({
+    required this.startDate,
+    required this.endDate,
+  });
+
+  @override
+  State<_CustomRangeCalendar> createState() => _CustomRangeCalendarState();
+}
+
+class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
+  late DateTime _currentMonth;
+  late DateTime _startDate;
+  late DateTime _endDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _startDate = widget.startDate;
+    _endDate = widget.endDate;
+    _currentMonth = DateTime(_startDate.year, _startDate.month, 1);
+  }
+
+  bool _isDateInRange(DateTime date) {
+    return date.isAtSameMomentAs(_startDate) ||
+           date.isAtSameMomentAs(_endDate) ||
+           (date.isAfter(_startDate) && date.isBefore(_endDate));
+  }
+
+  bool _isStartDate(DateTime date) {
+    return date.isAtSameMomentAs(_startDate);
+  }
+
+  bool _isEndDate(DateTime date) {
+    return date.isAtSameMomentAs(_endDate);
+  }
+
+  void _previousMonth() {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
+    });
+  }
+
+  void _nextMonth() {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final daysInMonth = DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month);
+    final firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
+    final firstWeekday = firstDayOfMonth.weekday; // 1 = Monday, 7 = Sunday
+
+    // Adjust for Monday as first day of week
+    final adjustedFirstWeekday = firstWeekday == 7 ? 0 : firstWeekday;
+
+    return Column(
+      children: [
+        // Month/Year header with navigation
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              onPressed: _previousMonth,
+              icon: Icon(Icons.chevron_left, color: cs.primary),
+            ),
+            Text(
+              DateFormat('MMMM yyyy', 'uz').format(_currentMonth),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            IconButton(
+              onPressed: _nextMonth,
+              icon: Icon(Icons.chevron_right, color: cs.primary),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Weekday headers
+        Row(
+          children: ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'].map((day) => Expanded(
+            child: Center(
+              child: Text(
+                day,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            ),
+          )).toList(),
+        ),
+        const SizedBox(height: 8),
+
+        // Calendar grid
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
+          ),
+          itemCount: 42, // 6 weeks * 7 days
+          itemBuilder: (context, index) {
+            final dayOffset = index - adjustedFirstWeekday + 1;
+            final isValidDay = dayOffset > 0 && dayOffset <= daysInMonth;
+            final currentDate = isValidDay
+                ? DateTime(_currentMonth.year, _currentMonth.month, dayOffset)
+                : null;
+
+            if (!isValidDay || currentDate == null) {
+              return const SizedBox.shrink();
+            }
+
+            final isInRange = _isDateInRange(currentDate);
+            final isStart = _isStartDate(currentDate);
+            final isEnd = _isEndDate(currentDate);
+
+            return Container(
+              decoration: BoxDecoration(
+                color: isInRange
+                    ? cs.primary.withOpacity(0.2)
+                    : cs.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isStart || isEnd
+                      ? cs.primary
+                      : isInRange
+                          ? cs.primary.withOpacity(0.5)
+                          : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  dayOffset.toString(),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: isStart || isEnd ? FontWeight.w800 : FontWeight.w500,
+                    color: isInRange ? cs.primary : cs.onSurface,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 16),
+
+        // Legend
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildLegendItem(cs.primary, 'Hisobot davri'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String label) {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: color, width: 1),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// =====================
 /// Parsing & Model Layer
 /// =====================
 class DailyReport {
-  final DateTime? dateTime;
-  final String agentName;
-  final String territoryLabel;
+   final DateTime? dateTime;
+   final DateTime? dateStart;
+   final DateTime? dateEnd;
+   final String agentName;
+   final String territoryLabel;
 
   // Today
   final int okbTerritory;
@@ -875,6 +1255,8 @@ class DailyReport {
 
   DailyReport({
     required this.dateTime,
+    this.dateStart,
+    this.dateEnd,
     required this.agentName,
     required this.territoryLabel,
     required this.okbTerritory,
@@ -923,6 +1305,7 @@ class DailyReport {
 
     // Date
     DateTime? dt;
+    DateTime? dateStart, dateEnd;
     try {
       final dateLine = getLineAfter('Sana:');
       // Expect formats like 9-10-2025  14:30:54
@@ -935,6 +1318,13 @@ class DailyReport {
         final mm = int.parse(parts.group(5)!);
         dt = DateTime(y, m, d, hh, mm);
       }
+
+      // For SOAP API integration, extract dateStart and dateEnd
+      // These would come from the SOAP response, but for now we'll use defaults
+      final now = DateTime.now();
+      dateStart = DateTime(now.year, now.month, 1); // First day of current month
+      print('now: $now $dateStart  $dateEnd }');
+      dateEnd = DateTime(now.year, now.month + 1, 0); // Last day of current month
     } catch (_) {}
 
     // Agent name
@@ -991,6 +1381,8 @@ class DailyReport {
 
     return DailyReport(
       dateTime: dt,
+      dateStart: dateStart,
+      dateEnd: dateEnd,
       agentName: agentName,
       territoryLabel: territory,
       okbTerritory: okbTerritory,

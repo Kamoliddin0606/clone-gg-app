@@ -12,6 +12,11 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_report.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
@@ -33,7 +38,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -294,6 +299,90 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX idx_client_contracts_code_client ON client_contracts(code_client)');
       await db.execute('CREATE INDEX idx_client_contracts_active ON client_contracts(active)');
       await db.execute('CREATE INDEX idx_client_contracts_status ON client_contracts(status)');
+    } else if (oldVersion < 10) {
+      // Add report tables for version 10
+      await db.execute('''
+        CREATE TABLE main_reports (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_code TEXT NOT NULL,
+          date_start TEXT NOT NULL,
+          date_end TEXT NOT NULL,
+          count_akb INTEGER NOT NULL,
+          count_okb INTEGER NOT NULL,
+          cash REAL NOT NULL,
+          transfer REAL NOT NULL,
+          sum REAL NOT NULL,
+          count_visited INTEGER NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE business_region_reports (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          main_report_id INTEGER NOT NULL,
+          code TEXT NOT NULL,
+          name TEXT NOT NULL,
+          akb INTEGER NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE akb_by_categories (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          main_report_id INTEGER NOT NULL,
+          code TEXT NOT NULL,
+          name TEXT NOT NULL,
+          akb INTEGER NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE visit_plans (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          main_report_id INTEGER NOT NULL,
+          client_code TEXT NOT NULL,
+          client_name TEXT NOT NULL,
+          planned_date TEXT NOT NULL,
+          actual_visit_date TEXT,
+          is_completed INTEGER DEFAULT 0,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE visit_plan_lists (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          visit_plan_id INTEGER NOT NULL,
+          product_code TEXT NOT NULL,
+          product_name TEXT NOT NULL,
+          planned_quantity INTEGER NOT NULL,
+          actual_quantity INTEGER,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (visit_plan_id) REFERENCES visit_plans (id) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create indexes for better performance
+      await db.execute('CREATE INDEX idx_main_reports_user_code ON main_reports(user_code)');
+      await db.execute('CREATE INDEX idx_main_reports_date_range ON main_reports(date_start, date_end)');
+      await db.execute('CREATE INDEX idx_business_region_reports_main_report_id ON business_region_reports(main_report_id)');
+      await db.execute('CREATE INDEX idx_akb_by_categories_main_report_id ON akb_by_categories(main_report_id)');
+      await db.execute('CREATE INDEX idx_visit_plans_main_report_id ON visit_plans(main_report_id)');
+      await db.execute('CREATE INDEX idx_visit_plans_client_code ON visit_plans(client_code)');
+      await db.execute('CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)');
     }
   }
 
@@ -591,6 +680,90 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX idx_client_contracts_code_client ON client_contracts(code_client)');
     await db.execute('CREATE INDEX idx_client_contracts_active ON client_contracts(active)');
     await db.execute('CREATE INDEX idx_client_contracts_status ON client_contracts(status)');
+
+    // Create report tables
+    await db.execute('''
+      CREATE TABLE main_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_code TEXT NOT NULL,
+        date_start TEXT NOT NULL,
+        date_end TEXT NOT NULL,
+        count_akb INTEGER NOT NULL,
+        count_okb INTEGER NOT NULL,
+        cash REAL NOT NULL,
+        transfer REAL NOT NULL,
+        sum REAL NOT NULL,
+        count_visited INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE business_region_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        main_report_id INTEGER NOT NULL,
+        code TEXT NOT NULL,
+        name TEXT NOT NULL,
+        akb INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE akb_by_categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        main_report_id INTEGER NOT NULL,
+        code TEXT NOT NULL,
+        name TEXT NOT NULL,
+        akb INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE visit_plans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        main_report_id INTEGER NOT NULL,
+        client_code TEXT NOT NULL,
+        client_name TEXT NOT NULL,
+        planned_date TEXT NOT NULL,
+        actual_visit_date TEXT,
+        is_completed INTEGER DEFAULT 0,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE visit_plan_lists (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        visit_plan_id INTEGER NOT NULL,
+        product_code TEXT NOT NULL,
+        product_name TEXT NOT NULL,
+        planned_quantity INTEGER NOT NULL,
+        actual_quantity INTEGER,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (visit_plan_id) REFERENCES visit_plans (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Indexes for report tables
+    await db.execute('CREATE INDEX idx_main_reports_user_code ON main_reports(user_code)');
+    await db.execute('CREATE INDEX idx_main_reports_date_range ON main_reports(date_start, date_end)');
+    await db.execute('CREATE INDEX idx_business_region_reports_main_report_id ON business_region_reports(main_report_id)');
+    await db.execute('CREATE INDEX idx_akb_by_categories_main_report_id ON akb_by_categories(main_report_id)');
+    await db.execute('CREATE INDEX idx_visit_plans_main_report_id ON visit_plans(main_report_id)');
+    await db.execute('CREATE INDEX idx_visit_plans_client_code ON visit_plans(client_code)');
+    await db.execute('CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)');
 
     print('API cache database tables created successfully');
   }
@@ -2203,6 +2376,295 @@ class ApiDatabaseService {
     await db.delete('client_contracts', where: 'code_contract = ?', whereArgs: [codeContract]);
   }
 
+  // Main Reports methods
+  Future<void> saveMainReports(List<MainReport> reports) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing reports
+    batch.delete('main_reports');
+
+    // Deduplicate reports by user_code, date_start, date_end to avoid UNIQUE constraint violations
+    final uniqueReports = <String, MainReport>{};
+    for (final report in reports) {
+      final key = '${report.userCode}_${report.dateStart}_${report.dateEnd}';
+      uniqueReports[key] = report;
+    }
+
+    // Add all inserts to batch
+    for (final report in uniqueReports.values) {
+      batch.insert('main_reports', {
+        'user_code': report.userCode,
+        'date_start': report.dateStart.toIso8601String(),
+        'date_end': report.dateEnd.toIso8601String(),
+        'count_akb': report.countAKB,
+        'count_okb': report.countOKB,
+        'cash': report.cash,
+        'transfer': report.transfer,
+        'sum': report.sum,
+        'count_visited': report.countVisited,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<MainReport>> getMainReports({String? userCode}) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    if (userCode != null) {
+      whereClause = 'WHERE user_code = ?';
+      whereArgs = [userCode];
+    }
+
+    final result = await db.rawQuery('''
+      SELECT * FROM main_reports
+      $whereClause
+      ORDER BY date_start DESC
+    ''', whereArgs);
+
+    return result
+        .map(
+          (row) => MainReport.fromMap(row),
+        )
+        .toList();
+  }
+
+  Future<MainReport?> getMainReportById(int id) async {
+    final db = await database;
+    final result = await db.query(
+      'main_reports',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+    return MainReport.fromMap(result.first);
+  }
+
+  // Business Region Reports methods
+  Future<void> saveBusinessRegionReports(List<BusinessRegionReport> reports) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing reports
+    batch.delete('business_region_reports');
+
+    // Add all inserts to batch
+    for (final report in reports) {
+      batch.insert('business_region_reports', {
+        'main_report_id': report.mainReportId,
+        'code': report.code,
+        'name': report.name,
+        'akb': report.akb,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<BusinessRegionReport>> getBusinessRegionReports({int? mainReportId}) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    if (mainReportId != null) {
+      whereClause = 'WHERE main_report_id = ?';
+      whereArgs = [mainReportId];
+    }
+
+    final result = await db.rawQuery('''
+      SELECT * FROM business_region_reports
+      $whereClause
+      ORDER BY name ASC
+    ''', whereArgs);
+
+    return result
+        .map(
+          (row) => BusinessRegionReport.fromMap(row),
+        )
+        .toList();
+  }
+
+  // AKB By Categories methods
+  Future<void> saveAKBByCategories(List<AKBByCategory> categories) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing categories
+    batch.delete('akb_by_categories');
+
+    // Add all inserts to batch
+    for (final category in categories) {
+      batch.insert('akb_by_categories', {
+        'main_report_id': category.mainReportId,
+        'code': category.code,
+        'name': category.name,
+        'akb': category.akb,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<AKBByCategory>> getAKBByCategories({int? mainReportId}) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    if (mainReportId != null) {
+      whereClause = 'WHERE main_report_id = ?';
+      whereArgs = [mainReportId];
+    }
+
+    final result = await db.rawQuery('''
+      SELECT * FROM akb_by_categories
+      $whereClause
+      ORDER BY name ASC
+    ''', whereArgs);
+
+    return result
+        .map(
+          (row) => AKBByCategory.fromMap(row),
+        )
+        .toList();
+  }
+
+  // Visit Plans methods
+  Future<void> saveVisitPlans(List<VisitPlan> plans) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing plans
+    batch.delete('visit_plans');
+
+    // Add all inserts to batch
+    for (final plan in plans) {
+      batch.insert('visit_plans', {
+        'main_report_id': plan.mainReportId,
+        'client_code': plan.clientCode,
+        'client_name': plan.clientName,
+        'planned_date': plan.plannedDate,
+        'actual_visit_date': plan.actualVisitDate,
+        'is_completed': plan.isCompleted ? 1 : 0,
+        'notes': plan.notes,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<VisitPlan>> getVisitPlans({int? mainReportId, String? clientCode}) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    final conditions = <String>[];
+    if (mainReportId != null) {
+      conditions.add('main_report_id = ?');
+      whereArgs.add(mainReportId);
+    }
+    if (clientCode != null) {
+      conditions.add('client_code = ?');
+      whereArgs.add(clientCode);
+    }
+
+    if (conditions.isNotEmpty) {
+      whereClause = 'WHERE ${conditions.join(' AND ')}';
+    }
+
+    final result = await db.rawQuery('''
+      SELECT * FROM visit_plans
+      $whereClause
+      ORDER BY planned_date ASC
+    ''', whereArgs);
+
+    return result
+        .map(
+          (row) => VisitPlan.fromMap(row),
+        )
+        .toList();
+  }
+
+  // Visit Plan Lists methods
+  Future<void> saveVisitPlanLists(List<VisitPlanList> lists) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing lists
+    batch.delete('visit_plan_lists');
+
+    // Add all inserts to batch
+    for (final list in lists) {
+      batch.insert('visit_plan_lists', {
+        'visit_plan_id': list.visitPlanId,
+        'product_code': list.productCode,
+        'product_name': list.productName,
+        'planned_quantity': list.plannedQuantity,
+        'actual_quantity': list.actualQuantity,
+        'notes': list.notes,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<VisitPlanList>> getVisitPlanLists({int? visitPlanId}) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    if (visitPlanId != null) {
+      whereClause = 'WHERE visit_plan_id = ?';
+      whereArgs = [visitPlanId];
+    }
+
+    final result = await db.rawQuery('''
+      SELECT * FROM visit_plan_lists
+      $whereClause
+      ORDER BY product_name ASC
+    ''', whereArgs);
+
+    return result
+        .map(
+          (row) => VisitPlanList.fromMap(row),
+        )
+        .toList();
+  }
+
   // Clear all data
   Future<void> clearAllData() async {
     final db = await database;
@@ -2221,5 +2683,10 @@ class ApiDatabaseService {
     await db.delete('promotion_bonus_list');
     await db.delete('promotion_class_list');
     await db.delete('promotions');
+    await db.delete('main_reports');
+    await db.delete('business_region_reports');
+    await db.delete('akb_by_categories');
+    await db.delete('visit_plans');
+    await db.delete('visit_plan_lists');
   }
 }

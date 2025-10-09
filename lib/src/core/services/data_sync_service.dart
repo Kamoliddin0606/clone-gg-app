@@ -21,6 +21,11 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_report.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
@@ -243,6 +248,23 @@ class DataSyncService {
       // Sync promotions
       await _syncPromotions(null); // No auth token needed for now
 
+      // Sync reports (current month by default)
+      try {
+        final now = DateTime.now();
+        final startOfMonth = DateTime(now.year, now.month, 1);
+        final endOfMonth = DateTime(now.year, now.month + 1, 0);
+
+        final dateStart = startOfMonth.toIso8601String().split('T')[0];
+        final dateEnd = endOfMonth.toIso8601String().split('T')[0];
+
+        await _syncReportByPeriod(userCode, dateStart, dateEnd);
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error syncing reports: $e');
+        }
+        // Continue with other steps - reports are optional
+      }
+
       if (kDebugMode) {
         print('Full data sync completed successfully');
       }
@@ -337,7 +359,26 @@ class DataSyncService {
         // Continue with other steps
       }
 
-      // Step 12: Completed
+      // Step 13: Sync reports (current month by default)
+      yield SyncStep.syncingReports;
+      try {
+        final now = DateTime.now();
+        final startOfMonth = DateTime(now.year, now.month, 1);
+        final endOfMonth = DateTime(now.year, now.month + 1, 0);
+
+        final dateStart = startOfMonth.toIso8601String().split('T')[0];
+        final dateEnd = endOfMonth.toIso8601String().split('T')[0];
+
+        await _syncReportByPeriod(userCode, dateStart, dateEnd);
+      } catch (e) {
+        // Log error but don't fail the entire sync
+        if (kDebugMode) {
+          print('Error syncing reports: $e');
+        }
+        // Continue with other steps
+      }
+
+      // Step 14: Completed
       yield SyncStep.completed;
 
       if (kDebugMode) {
@@ -826,6 +867,90 @@ class DataSyncService {
     }
   }
 
+  /// Sync report data
+  Future<Map<String, dynamic>> syncReportByPeriod({
+    required String userCode,
+    required String dateStart,
+    required String dateEnd,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getMainReports(userCode: userCode);
+      final existingReport = cached.firstWhere(
+        (report) => report.dateStart.toIso8601String().split('T')[0] == dateStart &&
+                    report.dateEnd.toIso8601String().split('T')[0] == dateEnd,
+        orElse: () => MainReport(
+          userCode: '',
+          dateStart: DateTime.parse(dateStart),
+          dateEnd: DateTime.parse(dateEnd),
+          countAKB: 0,
+          countOKB: 0,
+          cash: 0,
+          transfer: 0,
+          sum: 0,
+          countVisited: 0,
+        ),
+      );
+
+      if (existingReport.userCode.isNotEmpty) {
+        // Return cached data with related tables
+        final businessRegionReports = await _dbService.getBusinessRegionReports(mainReportId: existingReport.id);
+        final akbByCategories = await _dbService.getAKBByCategories(mainReportId: existingReport.id);
+
+        return {
+          'mainReport': existingReport,
+          'businessRegionReports': businessRegionReports,
+          'akbByCategories': akbByCategories,
+        };
+      }
+    }
+
+    return await _syncReportByPeriod(userCode, dateStart, dateEnd);
+  }
+
+  Future<Map<String, dynamic>> _syncReportByPeriod(String userCode, String dateStart, String dateEnd) async {
+    final reportData = await _apiService.getReportByPeriod(
+      userCode: userCode,
+      dateStart: dateStart,
+      dateEnd: dateEnd,
+    );
+
+    final mainReport = reportData['mainReport'] as MainReport;
+    final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
+    final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
+
+    if (kDebugMode) {
+      print('Hisobot ma\'lumotlari yuklandi: ${businessRegionReports.length} ta biznes rayon, ${akbByCategories.length} ta kategoriya');
+    }
+
+    // Save main report first to get ID
+    await _dbService.saveMainReports([mainReport]);
+    final savedReports = await _dbService.getMainReports(userCode: userCode);
+    final savedReport = savedReports.firstWhere(
+      (r) => r.dateStart.toIso8601String().split('T')[0] == dateStart &&
+             r.dateEnd.toIso8601String().split('T')[0] == dateEnd,
+    );
+
+    // Update related tables with correct main_report_id
+    final updatedBusinessRegionReports = businessRegionReports.map((report) =>
+      report.copyWith(mainReportId: savedReport.id)
+    ).toList();
+
+    final updatedAKBByCategories = akbByCategories.map((category) =>
+      category.copyWith(mainReportId: savedReport.id)
+    ).toList();
+
+    // Save related data
+    await _dbService.saveBusinessRegionReports(updatedBusinessRegionReports);
+    await _dbService.saveAKBByCategories(updatedAKBByCategories);
+
+    return {
+      'mainReport': savedReport,
+      'businessRegionReports': updatedBusinessRegionReports,
+      'akbByCategories': updatedAKBByCategories,
+    };
+  }
+
   /// Get cached data (for offline scenarios)
   Future<KpiData?> getCachedKpiData(String userCode) => _dbService.getKpiData(userCode);
   Future<List<TradingPoint>> getCachedClients() => _dbService.getClients();
@@ -864,6 +989,21 @@ class DataSyncService {
     searchQuery: searchQuery,
     dateFilter: dateFilter,
   );
+
+  Future<List<MainReport>> getCachedMainReports({String? userCode}) =>
+      _dbService.getMainReports(userCode: userCode);
+
+  Future<List<BusinessRegionReport>> getCachedBusinessRegionReports({int? mainReportId}) =>
+      _dbService.getBusinessRegionReports(mainReportId: mainReportId);
+
+  Future<List<AKBByCategory>> getCachedAKBByCategories({int? mainReportId}) =>
+      _dbService.getAKBByCategories(mainReportId: mainReportId);
+
+  Future<List<VisitPlan>> getCachedVisitPlans({int? mainReportId, String? clientCode}) =>
+      _dbService.getVisitPlans(mainReportId: mainReportId, clientCode: clientCode);
+
+  Future<List<VisitPlanList>> getCachedVisitPlanLists({int? visitPlanId}) =>
+      _dbService.getVisitPlanLists(visitPlanId: visitPlanId);
 
   /// Get cached products with prices using optimized JOIN query
   Future<List<ProductWithPrice>> getCachedProductsWithPrices({

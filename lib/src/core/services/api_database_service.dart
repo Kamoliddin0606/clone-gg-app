@@ -11,6 +11,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
@@ -32,7 +33,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -259,6 +260,40 @@ class ApiDatabaseService {
       // Since this is a cache database that gets cleared and reloaded,
       // the FK constraints will be applied when tables are recreated
       // No specific migration needed as data is refreshed from server
+    } else if (oldVersion < 9) {
+      // Add client contracts table for version 9
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS client_contracts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code_contract TEXT UNIQUE NOT NULL,
+          date_of_contract TEXT,
+          sum_of_contract REAL NOT NULL,
+          term_of_contract TEXT,
+          type_contract TEXT,
+          numb_reference TEXT,
+          numb_certificate TEXT,
+          term_reference TEXT,
+          term_certificate TEXT,
+          numb_passport TEXT,
+          term_passport TEXT,
+          certificate_unlimited INTEGER NOT NULL,
+          code_district TEXT,
+          name_district TEXT,
+          code_project TEXT,
+          code_client TEXT NOT NULL,
+          active INTEGER NOT NULL,
+          status TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (code_client) REFERENCES clients (code) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create indexes for better performance
+      await db.execute('CREATE INDEX idx_client_contracts_code_contract ON client_contracts(code_contract)');
+      await db.execute('CREATE INDEX idx_client_contracts_code_client ON client_contracts(code_client)');
+      await db.execute('CREATE INDEX idx_client_contracts_active ON client_contracts(active)');
+      await db.execute('CREATE INDEX idx_client_contracts_status ON client_contracts(status)');
     }
   }
 
@@ -384,6 +419,34 @@ class ApiDatabaseService {
         code_region TEXT REFERENCES business_regions(code) ON DELETE SET NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create client contracts table
+    await db.execute('''
+      CREATE TABLE client_contracts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code_contract TEXT UNIQUE NOT NULL,
+        date_of_contract TEXT,
+        sum_of_contract REAL NOT NULL,
+        term_of_contract TEXT,
+        type_contract TEXT,
+        numb_reference TEXT,
+        numb_certificate TEXT,
+        term_reference TEXT,
+        term_certificate TEXT,
+        numb_passport TEXT,
+        term_passport TEXT,
+        certificate_unlimited INTEGER NOT NULL,
+        code_district TEXT,
+        name_district TEXT,
+        code_project TEXT,
+        code_client TEXT NOT NULL,
+        active INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (code_client) REFERENCES clients (code) ON DELETE CASCADE
       )
     ''');
 
@@ -522,6 +585,12 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX idx_product_balances_product_brand ON product_balances(product_brand)');
     await db.execute('CREATE INDEX idx_product_balances_product_series ON product_balances(product_series)');
     await db.execute('CREATE INDEX idx_product_series_brand_name ON product_series(brand_name)');
+
+    // Indexes for client contracts table
+    await db.execute('CREATE INDEX idx_client_contracts_code_contract ON client_contracts(code_contract)');
+    await db.execute('CREATE INDEX idx_client_contracts_code_client ON client_contracts(code_client)');
+    await db.execute('CREATE INDEX idx_client_contracts_active ON client_contracts(active)');
+    await db.execute('CREATE INDEX idx_client_contracts_status ON client_contracts(status)');
 
     print('API cache database tables created successfully');
   }
@@ -1930,11 +1999,216 @@ class ApiDatabaseService {
     return productsWithPrices;
   }
 
+  // Client contracts methods
+  Future<void> saveClientContracts(List<ClientContract> contracts) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing contracts
+    batch.delete('client_contracts');
+
+    // Deduplicate contracts by code_contract to avoid UNIQUE constraint violations
+    final uniqueContracts = <String, ClientContract>{};
+    for (final contract in contracts) {
+      uniqueContracts[contract.codeContract] = contract;
+    }
+
+    // Add all inserts to batch
+    for (final contract in uniqueContracts.values) {
+      batch.insert('client_contracts', {
+        'code_contract': contract.codeContract,
+        'date_of_contract': contract.dateOfContract?.toIso8601String(),
+        'sum_of_contract': contract.sumOfContract,
+        'term_of_contract': contract.termOfContract?.toIso8601String(),
+        'type_contract': contract.typeContract,
+        'numb_reference': contract.numbReference,
+        'numb_certificate': contract.numbCertificate,
+        'term_reference': contract.termReference?.toIso8601String(),
+        'term_certificate': contract.termCertificate?.toIso8601String(),
+        'numb_passport': contract.numbPassport,
+        'term_passport': contract.termPassport?.toIso8601String(),
+        'certificate_unlimited': contract.certificateUnlimited,
+        'code_district': contract.codeDistrict,
+        'name_district': contract.nameDistrict,
+        'code_project': contract.codeProject,
+        'code_client': contract.codeClient,
+        'active': contract.active ? 1 : 0,
+        'status': contract.status,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<ClientContract>> getClientContracts({String? clientCode, bool? active}) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    final conditions = <String>[];
+    if (clientCode != null) {
+      conditions.add('code_client = ?');
+      whereArgs.add(clientCode);
+    }
+    if (active != null) {
+      conditions.add('active = ?');
+      whereArgs.add(active ? 1 : 0);
+    }
+
+    if (conditions.isNotEmpty) {
+      whereClause = 'WHERE ${conditions.join(' AND ')}';
+    }
+
+    final result = await db.rawQuery('''
+      SELECT * FROM client_contracts
+      $whereClause
+      ORDER BY date_of_contract DESC, code_contract ASC
+    ''', whereArgs);
+
+    return result
+        .map(
+          (row) => ClientContract(
+            codeContract: row['code_contract'] as String,
+            dateOfContract: row['date_of_contract'] != null ? DateTime.parse(row['date_of_contract'] as String) : null,
+            sumOfContract: (row['sum_of_contract'] as num?)?.toDouble() ?? 0.0,
+            termOfContract: row['term_of_contract'] != null ? DateTime.parse(row['term_of_contract'] as String) : null,
+            typeContract: row['type_contract'] as String?,
+            numbReference: row['numb_reference'] as String?,
+            numbCertificate: row['numb_certificate'] as String?,
+            termReference: row['term_reference'] != null ? DateTime.parse(row['term_reference'] as String) : null,
+            termCertificate: row['term_certificate'] != null ? DateTime.parse(row['term_certificate'] as String) : null,
+            numbPassport: row['numb_passport'] as String?,
+            termPassport: row['term_passport'] != null ? DateTime.parse(row['term_passport'] as String) : null,
+            certificateUnlimited: (row['certificate_unlimited'] as num?)?.toInt() ?? 0,
+            codeDistrict: row['code_district'] as String?,
+            nameDistrict: row['name_district'] as String?,
+            codeProject: row['code_project'] as String?,
+            codeClient: row['code_client'] as String,
+            active: (row['active'] as num?) == 1,
+            status: row['status'] as String,
+            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+          ),
+        )
+        .toList();
+  }
+
+  Future<ClientContract?> getClientContractByCode(String codeContract) async {
+    final db = await database;
+    final result = await db.query(
+      'client_contracts',
+      where: 'code_contract = ?',
+      whereArgs: [codeContract],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return ClientContract(
+      codeContract: row['code_contract'] as String,
+      dateOfContract: row['date_of_contract'] != null ? DateTime.parse(row['date_of_contract'] as String) : null,
+      sumOfContract: (row['sum_of_contract'] as num?)?.toDouble() ?? 0.0,
+      termOfContract: row['term_of_contract'] != null ? DateTime.parse(row['term_of_contract'] as String) : null,
+      typeContract: row['type_contract'] as String?,
+      numbReference: row['numb_reference'] as String?,
+      numbCertificate: row['numb_certificate'] as String?,
+      termReference: row['term_reference'] != null ? DateTime.parse(row['term_reference'] as String) : null,
+      termCertificate: row['term_certificate'] != null ? DateTime.parse(row['term_certificate'] as String) : null,
+      numbPassport: row['numb_passport'] as String?,
+      termPassport: row['term_passport'] != null ? DateTime.parse(row['term_passport'] as String) : null,
+      certificateUnlimited: (row['certificate_unlimited'] as num?)?.toInt() ?? 0,
+      codeDistrict: row['code_district'] as String?,
+      nameDistrict: row['name_district'] as String?,
+      codeProject: row['code_project'] as String?,
+      codeClient: row['code_client'] as String,
+      active: (row['active'] as num?) == 1,
+      status: row['status'] as String,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    );
+  }
+
+  Future<void> saveClientContract(ClientContract contract) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert(
+      'client_contracts',
+      {
+        'code_contract': contract.codeContract,
+        'date_of_contract': contract.dateOfContract?.toIso8601String(),
+        'sum_of_contract': contract.sumOfContract,
+        'term_of_contract': contract.termOfContract?.toIso8601String(),
+        'type_contract': contract.typeContract,
+        'numb_reference': contract.numbReference,
+        'numb_certificate': contract.numbCertificate,
+        'term_reference': contract.termReference?.toIso8601String(),
+        'term_certificate': contract.termCertificate?.toIso8601String(),
+        'numb_passport': contract.numbPassport,
+        'term_passport': contract.termPassport?.toIso8601String(),
+        'certificate_unlimited': contract.certificateUnlimited,
+        'code_district': contract.codeDistrict,
+        'name_district': contract.nameDistrict,
+        'code_project': contract.codeProject,
+        'code_client': contract.codeClient,
+        'active': contract.active ? 1 : 0,
+        'status': contract.status,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateClientContract(String codeContract, ClientContract contract) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'client_contracts',
+      {
+        'date_of_contract': contract.dateOfContract?.toIso8601String(),
+        'sum_of_contract': contract.sumOfContract,
+        'term_of_contract': contract.termOfContract?.toIso8601String(),
+        'type_contract': contract.typeContract,
+        'numb_reference': contract.numbReference,
+        'numb_certificate': contract.numbCertificate,
+        'term_reference': contract.termReference?.toIso8601String(),
+        'term_certificate': contract.termCertificate?.toIso8601String(),
+        'numb_passport': contract.numbPassport,
+        'term_passport': contract.termPassport?.toIso8601String(),
+        'certificate_unlimited': contract.certificateUnlimited,
+        'code_district': contract.codeDistrict,
+        'name_district': contract.nameDistrict,
+        'code_project': contract.codeProject,
+        'code_client': contract.codeClient,
+        'active': contract.active ? 1 : 0,
+        'status': contract.status,
+        'updated_at': now,
+      },
+      where: 'code_contract = ?',
+      whereArgs: [codeContract],
+    );
+  }
+
+  Future<void> deleteClientContract(String codeContract) async {
+    final db = await database;
+    await db.delete('client_contracts', where: 'code_contract = ?', whereArgs: [codeContract]);
+  }
+
   // Clear all data
   Future<void> clearAllData() async {
     final db = await database;
     await db.delete('kpi_data');
     await db.delete('clients');
+    await db.delete('client_contracts');
     await db.delete('products');
     await db.delete('price_types');
     await db.delete('product_prices');

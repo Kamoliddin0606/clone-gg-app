@@ -13,6 +13,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
 
 class AgentRepository {
   final DataSyncService _dataSyncService;
@@ -284,5 +285,16 @@ class AgentRepository {
   /// Get cached product series (categories)
   Future<List<ProductSeries>> getCachedProductSeries({String? brandName}) async {
     return await _dataSyncService.getCachedProductSeries(brandName: brandName);
+  }
+
+  /// Get cached client contracts
+  Future<List<ClientContract>> getCachedClientContracts({
+    String? clientCode,
+    bool? active,
+  }) async {
+    return await _dataSyncService.getCachedClientContracts(
+      clientCode: clientCode,
+      active: active,
+    );
   }
 }

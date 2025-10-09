@@ -11,6 +11,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_war
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
@@ -807,9 +808,32 @@ class SoapApiService {
 ''';
 
     try {
+
       print('[$timestamp] DEBUG API: Sending SOAP request to $_baseUrl');
       print('[$timestamp] DEBUG API: SOAP Envelope: $soapEnvelope');
-
+      try {
+        final response = await _dio.post(
+          _baseUrl,
+          data: soapEnvelope,
+          options: Options(
+            headers: {
+              'Content-Type': 'application/soap+xml; charset=utf-8',
+              'SOAPAction': '',
+              if (authToken != null) 'Authorization': 'Bearer $authToken',
+            },
+          ),
+        );
+        print('[$timestamp] DEBUG API: Received response from server');
+        // Log the auth token if available
+        if (authToken != null) {
+          print('[$timestamp] DEBUG API: Using auth token: $authToken');
+        } else {
+          print('[$timestamp] DEBUG API: No auth token provided');
+        }
+        print("-------------------my check___________________ ${response}");
+      } catch (e) {
+        print('[$timestamp] DEBUG API: Error printing auth token: $e');
+      }
       final response = await _dio.post(
         _baseUrl,
         data: soapEnvelope,
@@ -924,6 +948,73 @@ class SoapApiService {
       }
 
       throw Exception('Promosyon ma\'lumotlarini olishda xatolik: $e');
+    }
+  }
+
+  /// Get all client contracts
+  Future<List<ClientContract>> getAllContracts({
+    required String userCode,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:GetAllContracts>
+         <sam:CodeUser>$userCode</sam:CodeUser>
+      </sam:GetAllContracts>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final rowsElements = document.findAllElements('m:Rows');
+
+      return rowsElements.map((row) => ClientContract(
+        codeContract: _getElementText(row, 'm:CodeContract') ?? '',
+        dateOfContract: _parseDate(_getElementText(row, 'm:DateOfContract')),
+        sumOfContract: double.tryParse(_getElementText(row, 'm:SumOfContract') ?? '0') ?? 0.0,
+        termOfContract: _parseDate(_getElementText(row, 'm:TermOfContract')),
+        typeContract: _getElementText(row, 'm:TypeContract'),
+        numbReference: _getElementText(row, 'm:NumbReference'),
+        numbCertificate: _getElementText(row, 'm:NumbCertificate'),
+        termReference: _parseDate(_getElementText(row, 'm:TermReference')),
+        termCertificate: _parseDate(_getElementText(row, 'm:TermCertificate')),
+        numbPassport: _getElementText(row, 'm:NumbPassport'),
+        termPassport: _parseDate(_getElementText(row, 'm:TermPassport')),
+        certificateUnlimited: int.tryParse(_getElementText(row, 'm:CertificateUnlimited') ?? '0') ?? 0,
+        codeDistrict: _getElementText(row, 'm:CodeDistrict'),
+        nameDistrict: _getElementText(row, 'm:NameDistrict'),
+        codeProject: _getElementText(row, 'm:CodeProject'),
+        codeClient: _getElementText(row, 'm:CodeClient') ?? '',
+        active: _getElementText(row, 'm:Active')?.toLowerCase() == 'true',
+        status: _getElementText(row, 'm:Status') ?? 'Неизвестно',
+      )).toList();
+    } catch (e) {
+      throw Exception('Shartnomalar ro\'yxatini olishda xatolik: $e');
+    }
+  }
+
+  /// Helper method to parse date strings
+  DateTime? _parseDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty || dateString == '0001-01-01') {
+      return null;
+    }
+    try {
+      return DateTime.parse(dateString);
+    } catch (e) {
+      return null;
     }
   }
 

@@ -922,7 +922,7 @@ class _AppDrawer extends StatelessWidget {
                 _MenuItem(
                   icon: Icons.description,
                   title: 'Shartnomalar',
-                  onTap: null,
+                  onTap: () => Navigator.pushNamed(context, AppRouter.contractsRoute),
                 ),
               ],
             ),

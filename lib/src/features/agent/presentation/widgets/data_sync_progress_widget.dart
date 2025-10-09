@@ -12,6 +12,7 @@ enum SyncStep {
   syncingUserWarehouses('Foydalanuvchi omborlari yuklanmoqda...', Icons.warehouse),
   syncingProductPrices('Mahsulot narxlari yuklanmoqda...', Icons.attach_money),
   syncingProductBalances('Mahsulot balanslari yuklanmoqda...', Icons.balance),
+  syncingClientContracts('Mijoz shartnomalari yuklanmoqda...', Icons.description),
   syncingPromotions('Aksiyalar yuklanmoqda...', Icons.local_offer),
   completed('Ma\'lumotlar yangilandi!', Icons.check_circle),
   error('Xatolik yuz berdi', Icons.error);

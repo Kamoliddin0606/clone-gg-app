@@ -43,7 +43,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final soapResponseString = await apiService.performSoapRequest(soapRequest);
       if (kDebugMode) {
-        print("SOAP Response: $soapResponseString");
+        //print("SOAP Response: $soapResponseString");
       }
       final document = XmlDocument.parse(soapResponseString);
 

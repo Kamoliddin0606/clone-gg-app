@@ -20,6 +20,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
@@ -236,6 +237,9 @@ class DataSyncService {
       // Sync product balances
       await _syncProductBalances(codeProject, codeSklad);
 
+      // Sync client contracts
+      await _syncClientContracts(userCode);
+
       // Sync promotions
       await _syncPromotions(null); // No auth token needed for now
 
@@ -317,7 +321,11 @@ class DataSyncService {
       yield SyncStep.syncingProductBalances;
       await _syncProductBalances(codeProject, codeSklad);
 
-      // Step 11: Sync promotions
+      // Step 11: Sync client contracts
+      yield SyncStep.syncingClientContracts;
+      await _syncClientContracts(userCode);
+
+      // Step 12: Sync promotions
       yield SyncStep.syncingPromotions;
       try {
         await _syncPromotions(null); // No auth token needed for now
@@ -760,6 +768,30 @@ class DataSyncService {
     return await _syncPromotions(authToken);
   }
 
+  /// Sync client contracts data
+  Future<List<ClientContract>> syncClientContracts({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getClientContracts();
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+    }
+
+    return await _syncClientContracts(userCode);
+  }
+
+  Future<List<ClientContract>> _syncClientContracts(String userCode) async {
+    final contracts = await _apiService.getAllContracts(userCode: userCode);
+    if (kDebugMode) {
+      print('Mijoz shartnomalari ma\'lumotlari yuklandi: ${contracts.length} ta shartnoma');
+    }
+    await _dbService.saveClientContracts(contracts);
+    return contracts;
+  }
+
   Future<List<PromotionModel>> _syncPromotions(String? authToken) async {
     final timestamp = DateTime.now().toIso8601String();
     print('[$timestamp] DEBUG SYNC: _syncPromotions called');
@@ -815,6 +847,14 @@ class DataSyncService {
   Future<List<ProductBrand>> getCachedProductBrands() => _dbService.getProductBrands();
   Future<List<ProductSeries>> getCachedProductSeries({String? brandName}) =>
       _dbService.getProductSeries(brandName: brandName);
+  Future<List<ClientContract>> getCachedClientContracts({
+    String? clientCode,
+    bool? active,
+  }) => _dbService.getClientContracts(
+    clientCode: clientCode,
+    active: active,
+  );
+
   Future<List<PromotionModel>> getCachedPromotions({
     bool onlyActive = true,
     String? searchQuery,

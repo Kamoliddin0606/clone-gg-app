@@ -11,7 +11,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/ag
 import 'dart:ui'; // blur uchun
 
 import '../../../../core/router/app_router.dart';
-import '../../../navbars/fluid_nav_bar.dart';
+import '../../../navbars/agent_bottom_nav_bar.dart';
 
 /// Transliterate Cyrillic characters to Latin (Uzbek standard)
 String transliterateToLatin(String text) {
@@ -564,33 +564,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       ),
 
       // Pastki menyu — mavjud nav bar (o‘zgarmagan)
-      bottomNavigationBar: FluidNavBar(
-        initialIndex: 2, // mavjud tanlov
-        items: [
-          FluidNavItem(
-            icon: Icons.home,
-            label: 'Home',
-            onTap: () => Navigator.pushNamed(context, AppRouter.agentHomeRoute),
-          ),
-          FluidNavItem(
-            icon: Icons.add_shopping_cart,
-            label: 'Buyurtma',
-            // onTap: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
-          ),
-          FluidNavItem(
-            icon: Icons.people,
-            label: 'Mijozlar',
-            onTap: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
-          ),
-          const FluidNavItem(
-            icon: Icons.storefront,
-            label: 'Tovarlar',
-          ),
-          const FluidNavItem(
-            icon: Icons.insert_chart_outlined,
-            label: 'Hisobot',
-          ),
-        ],
+      bottomNavigationBar: const AgentBottomNavBar(
+        initialIndex: 2,
       ),
     );
   }

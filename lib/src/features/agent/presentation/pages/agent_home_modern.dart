@@ -14,6 +14,268 @@ import '../../../../theme/theme_controller.dart';
 import '../../../../theme/theme_toggle.dart';
 import '../../../navbars/fluid_nav_bar.dart';
 import 'prices_page.dart';
+
+/// Animated Percentage Widget - Barcha percent elementlar uchun umumiy widget
+enum PercentageDisplayType {
+  circular,    // Dial gauge (doiraviy progress)
+  linear,      // Chiziqli progress bar
+  text,        // Faqat matn ko'rinishida
+  number,      // Raqamlar uchun animatsiya
+}
+
+class AnimatedPercentageWidget extends StatefulWidget {
+  final double percentage; // 0.0 to 1.0
+  final PercentageDisplayType type;
+  final Color color;
+  final String? label;
+  final String? valueText;
+  final double size;
+  final Duration animationDuration;
+  final String? numberValue; // For number animation
+
+  const AnimatedPercentageWidget({
+    super.key,
+    required this.percentage,
+    this.type = PercentageDisplayType.circular,
+    required this.color,
+    this.label,
+    this.valueText,
+    this.size = 100,
+    this.animationDuration = const Duration(milliseconds: 1200),
+    this.numberValue,
+  });
+
+  @override
+  State<AnimatedPercentageWidget> createState() => _AnimatedPercentageWidgetState();
+}
+
+class _AnimatedPercentageWidgetState extends State<AnimatedPercentageWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: widget.animationDuration,
+    );
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: widget.percentage.clamp(0.0, 1.0),
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // Sahifa yuklanganda animatsiyani boshlash
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _animationController.forward();
+    });
+  }
+
+  @override
+  void didUpdateWidget(AnimatedPercentageWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.percentage != widget.percentage) {
+      _animation = Tween<double>(
+        begin: _animation.value,
+        end: widget.percentage.clamp(0.0, 1.0),
+      ).animate(CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      ));
+      _animationController.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        switch (widget.type) {
+          case PercentageDisplayType.circular:
+            return _buildCircularProgress();
+          case PercentageDisplayType.linear:
+            return _buildLinearProgress();
+          case PercentageDisplayType.text:
+            return _buildTextProgress();
+          case PercentageDisplayType.number:
+            return _buildNumberProgress();
+        }
+      },
+    );
+  }
+
+  Widget _buildCircularProgress() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: widget.size,
+          height: widget.size,
+          child: CustomPaint(
+            painter: _CircularProgressPainter(
+              progress: _animation.value,
+              color: widget.color,
+              backgroundColor: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.4),
+            ),
+            child: Center(
+              child: Text(
+                widget.valueText ?? '${(_animation.value * 100).toStringAsFixed(1)}%',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: widget.color,
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (widget.label != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            widget.label!,
+            style: Theme.of(context).textTheme.labelMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildLinearProgress() {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.label != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              widget.label!,
+              style: theme.textTheme.labelMedium,
+            ),
+          ),
+        Container(
+          height: 8,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.outlineVariant.withOpacity(0.35),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: _animation.value,
+            child: Container(
+              decoration: BoxDecoration(
+                color: widget.color,
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          ),
+        ),
+        if (widget.valueText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              widget.valueText!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTextProgress() {
+    return Text(
+      widget.valueText ?? '${(_animation.value * 100).toStringAsFixed(1)}%',
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.w800,
+        color: widget.color,
+      ),
+    );
+  }
+
+  Widget _buildNumberProgress() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: double.tryParse(widget.numberValue ?? '0') ?? 0),
+      duration: widget.animationDuration,
+      builder: (_, value, __) => Text(
+        widget.valueText ?? value.toStringAsFixed(0),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w800,
+          color: widget.color,
+        ),
+      ),
+    );
+  }
+}
+
+class _CircularProgressPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final Color backgroundColor;
+
+  _CircularProgressPainter({
+    required this.progress,
+    required this.color,
+    required this.backgroundColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width / 2) - 8;
+
+    final backgroundPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round;
+
+    final progressPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [color.withOpacity(0.7), color],
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round;
+
+    // Background arc
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      3.14159, // 180 degrees (semi-circle)
+      3.14159,
+      false,
+      backgroundPaint,
+    );
+
+    // Progress arc
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      3.14159,
+      3.14159 * progress,
+      false,
+      progressPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CircularProgressPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.color != color ||
+      oldDelegate.backgroundColor != backgroundColor;
+}
 /// Drop-in, logic-safe visual redesign for the agent home page.
 ///
 /// ✨ Key ideas
@@ -515,7 +777,13 @@ class _KpiOverview extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              _ProgressRing(percent: percent),
+              AnimatedPercentageWidget(
+                percentage: percent ?? 0.0,
+                type: PercentageDisplayType.circular,
+                color: theme.colorScheme.primary,
+                size: 92,
+                valueText: percent == null ? '—' : '${(percent * 100).toStringAsFixed(1)}%',
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -532,9 +800,11 @@ class _KpiOverview extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      percent == null ? '-' : '${(percent * 100).toStringAsFixed(1)}%',
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                    AnimatedPercentageWidget(
+                      percentage: percent ?? 0.0,
+                      type: PercentageDisplayType.text,
+                      color: theme.colorScheme.primary,
+                      valueText: percent == null ? '-' : '${(percent * 100).toStringAsFixed(1)}%',
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -605,37 +875,6 @@ class _KpiOverview extends StatelessWidget {
   }
 }
 
-class _ProgressRing extends StatelessWidget {
-  final double? percent; // 0..1
-  const _ProgressRing({this.percent});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final double? p = percent?.clamp(0.0, 1.0).toDouble();
-    return SizedBox(
-      width: 92,
-      height: 92,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: 92,
-            height: 92,
-            child: CircularProgressIndicator(
-              value: (p == null || p == 0.0) ? null : p,
-              strokeWidth: 10,
-            ),
-          ),
-          Text(
-            p == null ? '—' : '${(p * 100).toStringAsFixed(1)}%',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _StatCard extends StatelessWidget {
   final String title;
@@ -665,9 +904,12 @@ class _StatCard extends StatelessWidget {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      value.isEmpty ? '-' : value,
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                    child: AnimatedPercentageWidget(
+                      percentage: 1.0, // Always animate to full for numbers
+                      type: PercentageDisplayType.number,
+                      color: theme.colorScheme.primary,
+                      numberValue: value.isEmpty ? '0' : value.replaceAll(RegExp(r'[^0-9]'), ''), // Extract numbers
+                      valueText: value.isEmpty ? '-' : value,
                     ),
                   ),
                 ],
@@ -887,7 +1129,7 @@ class _AppDrawer extends StatelessWidget {
                 _MenuItem(
                   icon: Icons.bar_chart,
                   title: 'Hisobotlar',
-                  onTap: null,
+                  onTap: () => Navigator.pushNamed(context, AppRouter.reportsRoute),
                 ),
                 _MenuItem(
                   icon: Icons.campaign,

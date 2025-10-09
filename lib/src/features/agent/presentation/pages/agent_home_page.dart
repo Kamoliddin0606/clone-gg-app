@@ -11,7 +11,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
-import '../../../navbars/fluid_nav_bar.dart';
+import '../../../navbars/agent_bottom_nav_bar.dart';
 import 'agent_home_modern.dart';
 class AgentHomePage extends StatefulWidget {
   const AgentHomePage({super.key});
@@ -360,36 +360,8 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
             ),
         ],
       ),
-      bottomNavigationBar: FluidNavBar(
-        initialIndex: 0, // masalan, buyurtma default
-        items: [
-          FluidNavItem(
-            icon: Icons.home,     // placeholder
-            label: 'Home',
-            onTap: () => Navigator.pushNamed(context, AppRouter.agentHomeRoute),
-          ),
-          FluidNavItem(
-            icon: Icons.add_shopping_cart,
-            label: 'Buyurtma',
-            // onTap: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
-          ),
-          FluidNavItem(
-            icon: Icons.people,
-            label: 'Mijozlar',
-            onTap: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
-          ),
-          FluidNavItem(
-            icon: Icons.storefront,
-            label: 'Tovarlar',
-            // onTap: _openProducts,
-          ),
-          // Keyinchalik:
-          const FluidNavItem(
-            icon: Icons.insert_chart_outlined, // placeholder
-            label: 'Hisobot',
-          ),
-
-        ],
+      bottomNavigationBar: const AgentBottomNavBar(
+        initialIndex: 0,
       ),
     );
   }

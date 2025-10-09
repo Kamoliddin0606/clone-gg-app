@@ -4,6 +4,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/s
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/trading_points_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/warehouses_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/contracts_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/reports_page.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/pages/login_page.dart';
 import 'package:gloria_marketing_flutter/src/features/boss/presentation/pages/boss_home_page.dart';
 import 'package:gloria_marketing_flutter/src/features/collector/presentation/pages/collector_home_page.dart';
@@ -24,6 +25,7 @@ class AppRouter {
   static const String warehousesRoute = '/warehouses';
   static const String contractsRoute = '/contracts';
   static const String marketingRoute = '/marketing';
+  static const String reportsRoute = '/reports';
   static const String settingsRoute = '/settings';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -50,6 +52,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ContractsPage());
       case marketingRoute:
         return MaterialPageRoute(builder: (_) => const MarketingPage());
+      case reportsRoute:
+        return MaterialPageRoute(builder: (_) => const ReportsPage());
       case settingsRoute:
         return MaterialPageRoute(builder: (_) => const SettingsPage());
       default:

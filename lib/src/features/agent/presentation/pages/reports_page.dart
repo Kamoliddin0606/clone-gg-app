@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/services/reports_sync_service.dart';
+import '../../../../core/services/service_locator.dart';
+import '../../../../core/services/shared_preferences_service.dart';
 import '../../../navbars/agent_bottom_nav_bar.dart';
 import 'main_report_page.dart';
 import 'visits_report_page.dart';
@@ -29,6 +32,11 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
   late Animation<double> _headerOpacity;
   late Animation<Offset> _headerSlide;
   late PageController _pageController;
+
+  final prefs = sl<SharedPreferencesService>();
+  late final userCode = prefs.getUserCode() ?? '';
+  late final password = prefs.getPassword() ?? '';
+
 
   final List<Map<String, dynamic>> _reportItems = [
     {'key': 'asosiy_hisobotlar', 'title': 'Asosiy hisobotlar', 'icon': Icons.bar_chart, 'description': 'KPI ko\'rsatkichlari va asosiy statistikalar'},
@@ -181,6 +189,11 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                             tooltip: 'Headerni ${_isHeaderVisible ? "yashirish" : "ko\'rsatish"}',
                             onPressed: _toggleHeaderVisibility,
                             icon: Icon(_isHeaderVisible ? Icons.visibility_off : Icons.visibility),
+                          ),
+                          IconButton(
+                            tooltip: 'Refresh',
+                            onPressed: null,
+                            icon: const Icon(Icons.refresh),
                           ),
                           IconButton(
                             tooltip: 'Filtr',
@@ -412,8 +425,11 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        DateTime startDate = _selectedDateRange?.start ?? DateTime.now().subtract(const Duration(days: 30));
-        DateTime endDate = _selectedDateRange?.end ?? DateTime.now();
+        DateTimeRange? selectedRange = _selectedDateRange ??
+            DateTimeRange(
+              start: DateTime.now().subtract(const Duration(days: 30)),
+              end: DateTime.now(),
+            );
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -429,77 +445,140 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            labelText: 'Boshlanish sanasi',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          controller: TextEditingController(
-                            text: DateFormat('dd.MM.yyyy').format(startDate),
-                          ),
-                          readOnly: true,
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: startDate,
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime.now(),
-                            );
-                            if (picked != null) {
-                              setState(() {
-                                startDate = picked;
-                              });
-                            }
-                          },
+                  // Date range ribbon display
+                  if (selectedRange != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colorScheme.primary.withOpacity(0.5),
+                          width: 1,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            labelText: 'Tugash sanasi',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.date_range,
+                            color: colorScheme.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              '${DateFormat('dd.MM.yyyy').format(selectedRange!.start)} - ${DateFormat('dd.MM.yyyy').format(selectedRange!.end)}',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onPrimaryContainer,
+                              ),
                             ),
                           ),
-                          controller: TextEditingController(
-                            text: DateFormat('dd.MM.yyyy').format(endDate),
+                          IconButton(
+                            icon: Icon(
+                              Icons.edit,
+                              color: colorScheme.primary,
+                              size: 20,
+                            ),
+                            onPressed: () async {
+                              final picked = await showDateRangePicker(
+                                context: context,
+                                initialDateRange: selectedRange,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime.now(),
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  selectedRange = picked;
+                                });
+                              }
+                            },
+                            tooltip: 'Davrni o\'zgartirish',
                           ),
-                          readOnly: true,
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: endDate,
-                              firstDate: startDate,
-                              lastDate: DateTime.now(),
-                            );
-                            if (picked != null) {
-                              setState(() {
-                                endDate = picked;
-                              });
-                            }
-                          },
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 300,
-                    child: CalendarDatePicker(
-                      initialDate: startDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
-                      onDateChanged: (date) {
-                        // Handle single date selection if needed
-                      },
                     ),
-                  ),
+                  const SizedBox(height: 16),
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: TextField(
+                  //         decoration: InputDecoration(
+                  //           labelText: 'Boshlanish sanasi',
+                  //           border: OutlineInputBorder(
+                  //             borderRadius: BorderRadius.circular(12),
+                  //           ),
+                  //         ),
+                  //         controller: TextEditingController(
+                  //           text: selectedRange != null ? DateFormat('dd.MM.yyyy').format(selectedRange!.start) : '',
+                  //         ),
+                  //         readOnly: true,
+                  //         onTap: () async {
+                  //           final picked = await showDatePicker(
+                  //             context: context,
+                  //             initialDate: selectedRange?.start ?? DateTime.now().subtract(const Duration(days: 30)),
+                  //             firstDate: DateTime(2020),
+                  //             lastDate: DateTime.now(),
+                  //           );
+                  //           if (picked != null) {
+                  //             setState(() {
+                  //               selectedRange = DateTimeRange(
+                  //                 start: picked,
+                  //                 end: selectedRange?.end ?? picked.add(const Duration(days: 30)),
+                  //               );
+                  //             });
+                  //           }
+                  //         },
+                  //       ),
+                  //     ),
+                  //     const SizedBox(width: 12),
+                  //     Expanded(
+                  //       child: TextField(
+                  //         decoration: InputDecoration(
+                  //           labelText: 'Tugash sanasi',
+                  //           border: OutlineInputBorder(
+                  //             borderRadius: BorderRadius.circular(12),
+                  //           ),
+                  //         ),
+                  //         controller: TextEditingController(
+                  //           text: selectedRange != null ? DateFormat('dd.MM.yyyy').format(selectedRange!.end) : '',
+                  //         ),
+                  //         readOnly: true,
+                  //         onTap: () async {
+                  //           final picked = await showDatePicker(
+                  //             context: context,
+                  //             initialDate: selectedRange?.end ?? DateTime.now(),
+                  //             firstDate: selectedRange?.start ?? DateTime(2020),
+                  //             lastDate: DateTime.now(),
+                  //           );
+                  //           if (picked != null) {
+                  //             setState(() {
+                  //               selectedRange = DateTimeRange(
+                  //                 start: selectedRange?.start ?? picked.subtract(const Duration(days: 30)),
+                  //                 end: picked,
+                  //               );
+                  //             });
+                  //           }
+                  //         },
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
+                  // const SizedBox(height: 16),
+                  // SizedBox(
+                  //   height: 300,
+                  //   child: CalendarDatePicker(
+                  //     initialDate: selectedRange?.start ?? DateTime.now(),
+                  //     firstDate: DateTime(2020),
+                  //     lastDate: DateTime.now(),
+                  //     onDateChanged: (date) {
+                  //       // Handle single date selection - update range to single day
+                  //       setState(() {
+                  //         selectedRange = DateTimeRange(start: date, end: date);
+                  //       });
+                  //     },
+                  //   ),
+                  // ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -513,8 +592,10 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                       Expanded(
                         child: FilledButton(
                           onPressed: () {
+                            final  reportSyncService = sl<ReportsSyncService>();
+                            reportSyncService.syncAllReportsWithProgress( userCode: userCode, password: password, dateStart: selectedRange!.start, dateEnd: selectedRange!.end);
                             this.setState(() {
-                              _selectedDateRange = DateTimeRange(start: startDate, end: endDate);
+                              _selectedDateRange = selectedRange;
                             });
                             Navigator.pop(context);
                           },

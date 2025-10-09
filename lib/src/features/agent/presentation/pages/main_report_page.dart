@@ -375,9 +375,11 @@ class _MainReportPageState extends State<MainReportPage>
       confirmText: 'Tasdiqlash',
       cancelText: 'Bekor qilish',
     );
-    if (selectedRange != null) {
+    if (selectedRange != null && !_prefs.isOfflineMode()) {
       // Perform operations asynchronously in the background without blocking UI
       _performBackgroundDataSync(selectedRange, context);
+    }else{
+      _showErrorSnackBar(context, "Offline rejimda malumotlarni yangilashning imkoni yo'q");
     }
   }
 

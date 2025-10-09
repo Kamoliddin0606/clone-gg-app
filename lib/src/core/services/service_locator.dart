@@ -7,6 +7,7 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/reports_sync_service.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -56,6 +57,14 @@ Future<void> setupServiceLocator() async {
   }
   if (!sl.isRegistered<DataSyncService>()) {
     sl.registerLazySingleton<DataSyncService>(() => DataSyncService(
+      prefs: sl<SharedPreferencesService>(),
+      apiService: sl<SoapApiService>(),
+      dbService: sl<ApiDatabaseService>(),
+      dbHelper: sl<DatabaseHelper>(),
+    ));
+  }
+  if (!sl.isRegistered<ReportsSyncService>()) {
+    sl.registerLazySingleton<ReportsSyncService>(() => ReportsSyncService(
       prefs: sl<SharedPreferencesService>(),
       apiService: sl<SoapApiService>(),
       dbService: sl<ApiDatabaseService>(),

@@ -225,7 +225,7 @@ class DataSyncService {
   }
 
   /// Sync all data for a user (force refresh)
-  Future<void> syncAllUserData({
+    Future<void> syncAllUserData({
     required String userCode,
     required String password,
     required String codeProject,

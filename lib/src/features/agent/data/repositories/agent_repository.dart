@@ -19,7 +19,7 @@ class AgentRepository {
   final DataSyncService _dataSyncService;
 
   AgentRepository({
-    required DataSyncService dataSyncService,
+required DataSyncService dataSyncService,
   }) : _dataSyncService = dataSyncService;
 
   /// Get KPI data from server and cache locally

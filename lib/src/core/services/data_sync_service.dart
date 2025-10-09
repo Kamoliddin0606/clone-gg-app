@@ -934,17 +934,17 @@ class DataSyncService {
     );
 
     final mainReport = reportData['mainReport'] as MainReport;
-    final businessRegionReports = reportData['businessRegionReports'] as BusinessRegion;
-    final akbByCategories = reportData['akbByCategories'] as AKBByCategory;
+    final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
+    final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
 
     if (kDebugMode) {
-      print('Hisobot ma\'lumotlari yuklandi: ${businessRegionReports.} ta biznes rayon, ${akbByCategories.length} ta kategoriya');
+      print('Hisobot ma\'lumotlari yuklandi: ${businessRegionReports.length} ta biznes rayon, ${akbByCategories.length} ta kategoriya');
     }
 
     // Save main report first to get ID
-    await _dbService.saveMainReports();
-    await _dbService.saveMainReports();
     await _dbService.saveMainReports([mainReport]);
+    await _dbService.saveBusinessRegionReports(businessRegionReports);
+    await _dbService.saveAKBByCategories(akbByCategories);
     final savedReports = await _dbService.getMainReports(userCode: userCode);
 
     final savedReport = savedReports.firstWhere(

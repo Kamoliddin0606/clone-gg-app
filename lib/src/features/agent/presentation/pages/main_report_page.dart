@@ -428,6 +428,8 @@ class _MainReportPageState extends State<MainReportPage>
           _selectedRange = selectedRange;
           // Update report with synced data
           report = mainReport;
+          _akbByRegion = akbByRegion;
+          _categories = categories;
         });
       }
 

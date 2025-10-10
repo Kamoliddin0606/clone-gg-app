@@ -11,7 +11,6 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_rep
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
 import '../../../../core/services/reports_sync_service.dart';
-import '../widgets/modern_date_range_picker.dart';
 
 
 /// Animated Percentage Widget - Barcha percent elementlar uchun umumiy widget
@@ -284,7 +283,7 @@ class MainReportPage extends StatefulWidget {
 }
 
 class _MainReportPageState extends State<MainReportPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   MainReport? report;
   late final AnimationController _controller;
   late final DataSyncService _dataSyncService;
@@ -377,21 +376,450 @@ class _MainReportPageState extends State<MainReportPage>
     super.dispose();
   }
 
+  // void _showReportPeriodCalendar(BuildContext context, MainReport? report) async {
+  //   // Show the enhanced calendar dialog
+  //   _showEnhancedCalendarDialog(
+  //     context,
+  //     _selectedRange,
+  //     (selectedRange) {
+  //       if (selectedRange != null && !_prefs.isOfflineMode()) {
+  //         // Perform operations asynchronously in the background without blocking UI
+  //         _performBackgroundDataSync(selectedRange, context);
+  //       } else {
+  //         _showErrorSnackBar(context, "Offline rejimda malumotlarni yangilashning imkoni yo'q");
+  //       }
+  //     },
+  //   );
+  // }
+  // ESKI: _showEnhancedCalendarDialog(...) chaqirardi
+// YANGI: reports_page.dart dagidek Material date range picker dan foydalanamiz
   void _showReportPeriodCalendar(BuildContext context, MainReport? report) async {
-    // Show the modern date range picker
-    final selectedRange = await ModernDateRangePicker.show(
-      context,
-      initialRange: _selectedRange,
-      title: 'Hisobot davri',
-      confirmText: 'Tasdiqlash',
-      cancelText: 'Bekor qilish',
+    // 2-fayldagi parametrlar bilan bir xil: initialDateRange, firstDate, lastDate
+    final picked = await showDateRangePicker(
+      context: context,
+      initialDateRange: _selectedRange,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      // istasangiz quyidagilarni ham qo‘shsa bo‘ladi:
+      // initialEntryMode: DatePickerEntryMode.calendarOnly,
+      // helpText: 'Select range',
+      // saveText: 'Save',
     );
-    if (selectedRange != null && !_prefs.isOfflineMode()) {
-      // Perform operations asynchronously in the background without blocking UI
-      _performBackgroundDataSync(selectedRange, context);
-    }else{
-      _showErrorSnackBar(context, "Offline rejimda malumotlarni yangilashning imkoni yo'q");
+
+    if (picked != null) {
+      setState(() {
+        _selectedRange = picked;
+      });
+
+      if (!_prefs.isOfflineMode()) {
+        // 1-fayldagi mavjud sinxronizatsiya oqimi saqlanadi
+        _performBackgroundDataSync(picked, context);
+      } else {
+        _showErrorSnackBar(
+          context,
+          "Offline rejimda ma'lumotlarni yangilashning imkoni yo'q",
+        );
+      }
     }
+  }
+
+
+  /// Enhanced calendar dialog with modern UI effects and animations
+  void _showEnhancedCalendarDialog(
+    BuildContext context,
+    DateTimeRange? currentRange,
+    Function(DateTimeRange?) onRangeSelected,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // Animation controller for smooth transitions
+    final animationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    final scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: animationController, curve: Curves.elasticOut),
+    );
+
+    final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: animationController, curve: Curves.easeOut),
+    );
+
+    DateTimeRange? selectedRange = currentRange ??
+        DateTimeRange(
+          start: DateTime.now().subtract(const Duration(days: 30)),
+          end: DateTime.now(),
+        );
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Calendar Dialog',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation1, animation2) {
+        return Container();
+      },
+      transitionBuilder: (context, animation1, animation2, child) {
+        return ScaleTransition(
+          scale: animation1,
+          child: FadeTransition(
+            opacity: animation1,
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.9,
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header with gradient background
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              colorScheme.primary,
+                              colorScheme.primaryContainer,
+                            ],
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              color: colorScheme.onPrimary,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Davrni tanlang',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      color: colorScheme.onPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Hisobot uchun boshlanish va tugash sanalarini belgilang',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onPrimary.withOpacity(0.8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: Icon(
+                                Icons.close,
+                                color: colorScheme.onPrimary,
+                              ),
+                              tooltip: 'Yopish',
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Calendar content
+                      Flexible(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Current selection display
+                              AnimatedBuilder(
+                                animation: fadeAnimation,
+                                builder: (context, child) {
+                                  return FadeTransition(
+                                    opacity: fadeAnimation,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.primaryContainer.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: colorScheme.primary.withOpacity(0.2),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.date_range,
+                                            color: colorScheme.primary,
+                                            size: 24,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Tanlangan davr',
+                                                  style: theme.textTheme.bodySmall?.copyWith(
+                                                    color: colorScheme.onSurfaceVariant,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  '${DateFormat('dd.MM.yyyy').format(selectedRange!.start)} - ${DateFormat('dd.MM.yyyy').format(selectedRange!.end)}',
+                                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                                    color: colorScheme.onSurface,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              // Enhanced calendar picker
+                              AnimatedBuilder(
+                                animation: scaleAnimation,
+                                builder: (context, child) {
+                                  return ScaleTransition(
+                                    scale: scaleAnimation,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.surface,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: colorScheme.outline.withOpacity(0.3),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: CalendarDatePicker(
+                                          initialDate: selectedRange!.start,
+                                          firstDate: DateTime(2020),
+                                          lastDate: DateTime.now(),
+                                          onDateChanged: (date) {
+                                            // For single date selection, create a range
+                                            selectedRange = DateTimeRange(
+                                              start: date,
+                                              end: date.add(const Duration(days: 30)),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              // Quick selection buttons
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  _buildQuickSelectButton(
+                                    context,
+                                    'Bugun',
+                                    DateTimeRange(
+                                      start: DateTime.now(),
+                                      end: DateTime.now(),
+                                    ),
+                                    selectedRange,
+                                    (range) => selectedRange = range,
+                                  ),
+                                  _buildQuickSelectButton(
+                                    context,
+                                    'Oxirgi 7 kun',
+                                    DateTimeRange(
+                                      start: DateTime.now().subtract(const Duration(days: 7)),
+                                      end: DateTime.now(),
+                                    ),
+                                    selectedRange,
+                                    (range) => selectedRange = range,
+                                  ),
+                                  _buildQuickSelectButton(
+                                    context,
+                                    'Oxirgi 30 kun',
+                                    DateTimeRange(
+                                      start: DateTime.now().subtract(const Duration(days: 30)),
+                                      end: DateTime.now(),
+                                    ),
+                                    selectedRange,
+                                    (range) => selectedRange = range,
+                                  ),
+                                  _buildQuickSelectButton(
+                                    context,
+                                    'Joriy oy',
+                                    DateTimeRange(
+                                      start: DateTime(DateTime.now().year, DateTime.now().month, 1),
+                                      end: DateTime.now(),
+                                    ),
+                                    selectedRange,
+                                    (range) => selectedRange = range,
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Action buttons
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      icon: const Icon(Icons.cancel),
+                                      label: const Text('Bekor qilish'),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: FilledButton.icon(
+                                      onPressed: () {
+                                        onRangeSelected(selectedRange);
+                                        Navigator.of(context).pop();
+
+                                        // Trigger report sync based on server selection
+                                        final dataSyncService = _dataSyncService;
+                                        final reportsSyncService = _dbReportService;
+
+                                        if (dataSyncService.isEvyapServerSelected()) {
+                                          // Sync reports for Evyap server
+                                          reportsSyncService.syncReportByPeriod(
+                                            userCode: _prefs.getUserCode() ?? '',
+                                            dateStart: selectedRange!.start.toIso8601String().split('T')[0],
+                                            dateEnd: selectedRange!.end.toIso8601String().split('T')[0],
+                                          );
+                                        } else if (dataSyncService.isAvonServerSelected()) {
+                                          // Sync promotions for Avon server
+                                          dataSyncService.syncPromotions();
+                                        }
+                                      },
+                                      icon: const Icon(Icons.check),
+                                      label: const Text('Tasdiqlash'),
+                                      style: FilledButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    ).then((_) {
+      animationController.dispose();
+    });
+
+    // Start the animation
+    animationController.forward();
+  }
+
+  /// Helper method to build quick selection buttons
+  Widget _buildQuickSelectButton(
+    BuildContext context,
+    String label,
+    DateTimeRange range,
+    DateTimeRange? selectedRange,
+    Function(DateTimeRange) onSelected,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final isSelected = selectedRange != null &&
+        selectedRange.start == range.start &&
+        selectedRange.end == range.end;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: InkWell(
+        onTap: () => onSelected(range),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? colorScheme.primaryContainer
+                : colorScheme.surface,
+            border: Border.all(
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.outline.withOpacity(0.3),
+              width: 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: colorScheme.primary.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isSelected
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.onSurface,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _performBackgroundDataSync(DateTimeRange selectedRange, BuildContext context) async {

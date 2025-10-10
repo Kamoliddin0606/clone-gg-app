@@ -32,29 +32,31 @@ class ReportsSyncService {
     required String userCode,
     required String password,
   }) async {
-    try {
-      if (kDebugMode) {
-        print('Starting full reports sync for user: $userCode');
+    if(isEvyapServerSelected()){
+      try {
+        if (kDebugMode) {
+          print('Starting full reports sync for user: $userCode');
+        }
+
+        // Sync reports for current month by default
+        final now = DateTime.now();
+        final startOfMonth = DateTime(now.year, now.month, 1);
+        final endOfMonth = DateTime(now.year, now.month + 1, 0);
+
+        final dateStart = startOfMonth.toIso8601String().split('T')[0];
+        final dateEnd = endOfMonth.toIso8601String().split('T')[0];
+
+        await _syncReportByPeriod(userCode, dateStart, dateEnd);
+
+        if (kDebugMode) {
+          print('Full reports sync completed successfully');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error during full reports sync: $e');
+        }
+        rethrow;
       }
-
-      // Sync reports for current month by default
-      final now = DateTime.now();
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final endOfMonth = DateTime(now.year, now.month + 1, 0);
-
-      final dateStart = startOfMonth.toIso8601String().split('T')[0];
-      final dateEnd = endOfMonth.toIso8601String().split('T')[0];
-
-      await _syncReportByPeriod(userCode, dateStart, dateEnd);
-
-      if (kDebugMode) {
-        print('Full reports sync completed successfully');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error during full reports sync: $e');
-      }
-      rethrow;
     }
   }
 
@@ -65,41 +67,47 @@ class ReportsSyncService {
     required DateTime dateStart,
     required DateTime dateEnd,
   }) async* {
-    final controller = StreamController<ReportSyncStep>();
+    print('Checking if Evyap server is selected...');
+    if(isEvyapServerSelected()){
+      final controller = StreamController<ReportSyncStep>();
 
-    try {
-      if (kDebugMode) {
-        print('Starting full reports sync with progress for user: $userCode');
+      try {
+        if (kDebugMode) {
+          print('Starting full reports sync with progress for user: $userCode');
+        }
+
+        // Step 1: Sync main reports
+        yield ReportSyncStep.syncingMainReports;
+
+        // final now = DateTime.now();
+        // final startOfMonth = DateTime(now.year, now.month, 1);
+        // final endOfMonth = DateTime(now.year, now.month + 1, 0);
+
+        // final dateStart = startOfMonth.toIso8601String().split('T')[0];
+        // final dateEnd = endOfMonth.toIso8601String().split('T')[0];
+        final dateStart1 = dateStart.toIso8601String().split('T')[0];
+        final dateEnd1 = dateEnd.toIso8601String().split('T')[0];
+
+        await _syncReportByPeriod(userCode, dateStart1, dateEnd1);
+
+        // Step 2: Completed
+        yield ReportSyncStep.completed;
+
+        if (kDebugMode) {
+          print('Full reports sync with progress completed successfully');
+        }
+
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error during full reports sync with progress: $e');
+        }
+        controller.addError(e);
+      } finally {
+        await controller.close();
       }
 
-      // Step 1: Sync main reports
-      yield ReportSyncStep.syncingMainReports;
-      final now = DateTime.now();
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final endOfMonth = DateTime(now.year, now.month + 1, 0);
-
-      final dateStart = startOfMonth.toIso8601String().split('T')[0];
-      final dateEnd = endOfMonth.toIso8601String().split('T')[0];
-
-      await _syncReportByPeriod(userCode, dateStart, dateEnd);
-
-      // Step 2: Completed
-      yield ReportSyncStep.completed;
-
-      if (kDebugMode) {
-        print('Full reports sync with progress completed successfully');
-      }
-
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error during full reports sync with progress: $e');
-      }
-      controller.addError(e);
-    } finally {
-      await controller.close();
+      yield* controller.stream;
     }
-
-    yield* controller.stream;
   }
 
   /// Sync report data by period
@@ -109,39 +117,43 @@ class ReportsSyncService {
     required String dateEnd,
     bool forceRefresh = false,
   }) async {
-    if (!forceRefresh) {
-      final cached = await _dbService.getMainReports(userCode: userCode);
-      final existingReport = cached.firstWhere(
-        (report) => report.dateStart.toIso8601String().split('T')[0] == dateStart &&
-                    report.dateEnd.toIso8601String().split('T')[0] == dateEnd,
-        orElse: () => MainReport(
-          userCode: '',
-          dateStart: DateTime.parse(dateStart),
-          dateEnd: DateTime.parse(dateEnd),
-          countAKB: 0,
-          countOKB: 0,
-          cash: 0,
-          transfer: 0,
-          sum: 0,
-          countVisited: 0,
-        ),
-      );
+    if(isEvyapServerSelected()){
+      if (!forceRefresh) {
+        final cached = await _dbService.getMainReports(userCode: userCode);
+        final existingReport = cached.firstWhere(
+              (report) => report.dateStart.toIso8601String().split('T')[0] == dateStart &&
+              report.dateEnd.toIso8601String().split('T')[0] == dateEnd,
+          orElse: () => MainReport(
+            userCode: '',
+            dateStart: DateTime.parse(dateStart),
+            dateEnd: DateTime.parse(dateEnd),
+            countAKB: 0,
+            countOKB: 0,
+            cash: 0,
+            transfer: 0,
+            sum: 0,
+            countVisited: 0,
+          ),
+        );
 
-      if (existingReport.userCode.isNotEmpty) {
-        // Return cached data with related tables
-        final businessRegionReports = await _dbService.getBusinessRegionReports(mainReportId: existingReport.id);
-        final akbByCategories = await _dbService.getAKBByCategories(mainReportId: existingReport.id);
+        if (existingReport.userCode.isNotEmpty) {
+          // Return cached data with related tables
+          final businessRegionReports = await _dbService.getBusinessRegionReports(mainReportId: existingReport.id);
+          final akbByCategories = await _dbService.getAKBByCategories(mainReportId: existingReport.id);
 
-        return {
-          'mainReport': existingReport,
-          'businessRegionReports': businessRegionReports,
-          'akbByCategories': akbByCategories,
-        };
+          return {
+            'mainReport': existingReport,
+            'businessRegionReports': businessRegionReports,
+            'akbByCategories': akbByCategories,
+          };
+        }
       }
-    }
 
-    return await _syncReportByPeriod(userCode, dateStart, dateEnd);
-  }
+      return await _syncReportByPeriod(userCode, dateStart, dateEnd);
+
+    }
+    return {};
+    }
   /// Sync report data by period
   Future<Map<String, dynamic>> syncReportWithoutPeriod({
     required String userCode,
@@ -149,84 +161,93 @@ class ReportsSyncService {
     required String dateEnd,
     bool forceRefresh = false,
   }) async {
-    if (!forceRefresh) {
-      final cached = await _dbService.getMainReports(userCode: userCode);
-      print('Bazada malumot bor: ${cached.length}');
-      final existingReport = cached.firstWhere(
-            (report) => report.userCode == userCode,
-        orElse: () => MainReport(
-          userCode: '',
-          dateStart: DateTime.now(),
-          dateEnd: DateTime.now(),
-          countAKB: 0,
-          countOKB: 0,
-          cash: 0,
-          transfer: 0,
-          sum: 0,
-          countVisited: 0,
-        ),
-      );
+    if(isEvyapServerSelected()){
 
-      if (existingReport.userCode.isNotEmpty) {
-        // Return cached data with related tables
-        final businessRegionReports = await _dbService.getBusinessRegionReports(mainReportId: existingReport.id);
-        final akbByCategories = await _dbService.getAKBByCategories(mainReportId: existingReport.id);
+      if (!forceRefresh) {
+        final cached = await _dbService.getMainReports(userCode: userCode);
+        print('Bazada malumot bor: ${cached.length}');
+        final existingReport = cached.firstWhere(
+              (report) => report.userCode == userCode,
+          orElse: () => MainReport(
+            userCode: '',
+            dateStart: DateTime.now(),
+            dateEnd: DateTime.now(),
+            countAKB: 0,
+            countOKB: 0,
+            cash: 0,
+            transfer: 0,
+            sum: 0,
+            countVisited: 0,
+          ),
+        );
 
-        return {
-          'mainReport': existingReport,
-          'businessRegionReports': businessRegionReports,
-          'akbByCategories': akbByCategories,
-        };
+        if (existingReport.userCode.isNotEmpty) {
+          // Return cached data with related tables
+          final businessRegionReports = await _dbService.getBusinessRegionReports(mainReportId: existingReport.id);
+          final akbByCategories = await _dbService.getAKBByCategories(mainReportId: existingReport.id);
+
+          return {
+            'mainReport': existingReport,
+            'businessRegionReports': businessRegionReports,
+            'akbByCategories': akbByCategories,
+          };
+        }
       }
-    }
 
-    return await _syncReportByPeriod(userCode, dateStart, dateEnd);
+      return await _syncReportByPeriod(userCode, dateStart, dateEnd);
+
+    }
+    return {};
   }
 
   Future<Map<String, dynamic>> _syncReportByPeriod(String userCode, String dateStart, String dateEnd) async {
-    final reportData = await _apiService.getReportByPeriod(
-      userCode: userCode,
-      dateStart: dateStart,
-      dateEnd: dateEnd,
-    );
+    if(isEvyapServerSelected()){
 
-    final mainReport = reportData['mainReport'] as MainReport;
-    final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
-    final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
+      final reportData = await _apiService.getReportByPeriod(
+        userCode: userCode,
+        dateStart: dateStart,
+        dateEnd: dateEnd,
+      );
 
-    if (kDebugMode) {
-      print('Hisobot ma\'lumotlari yuklandi: ${businessRegionReports.length} ta biznes rayon, ${akbByCategories.length} ta kategoriya');
+      final mainReport = reportData['mainReport'] as MainReport;
+      final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
+      final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
+
+      if (kDebugMode) {
+        print('Hisobot ma\'lumotlari yuklandi: ${businessRegionReports.length} ta biznes rayon, ${akbByCategories.length} ta kategoriya');
+      }
+
+      // Save main report first to get ID
+      await _dbService.saveMainReports([mainReport]);
+      await _dbService.saveBusinessRegionReports(businessRegionReports);
+      await _dbService.saveAKBByCategories(akbByCategories);
+      final savedReports = await _dbService.getMainReports(userCode: userCode);
+
+      final savedReport = savedReports.firstWhere(
+            (r) => r.dateStart.toIso8601String().split('T')[0] == dateStart &&
+            r.dateEnd.toIso8601String().split('T')[0] == dateEnd,
+      );
+
+      // Update related tables with correct main_report_id
+      final updatedBusinessRegionReports = businessRegionReports.map((report) =>
+          report.copyWith(mainReportId: savedReport.id!)
+      ).toList();
+
+      final updatedAKBByCategories = akbByCategories.map((category) =>
+          category.copyWith(mainReportId: savedReport.id!)
+      ).toList();
+
+      // Save related data
+      await _dbService.saveBusinessRegionReports(updatedBusinessRegionReports);
+      await _dbService.saveAKBByCategories(updatedAKBByCategories);
+
+      return {
+        'mainReport': savedReport,
+        'businessRegionReports': updatedBusinessRegionReports,
+        'akbByCategories': updatedAKBByCategories,
+      };
     }
-
-    // Save main report first to get ID
-    await _dbService.saveMainReports([mainReport]);
-    await _dbService.saveBusinessRegionReports(businessRegionReports);
-    await _dbService.saveAKBByCategories(akbByCategories);
-    final savedReports = await _dbService.getMainReports(userCode: userCode);
-
-    final savedReport = savedReports.firstWhere(
-      (r) => r.dateStart.toIso8601String().split('T')[0] == dateStart &&
-             r.dateEnd.toIso8601String().split('T')[0] == dateEnd,
-    );
-
-    // Update related tables with correct main_report_id
-    final updatedBusinessRegionReports = businessRegionReports.map((report) =>
-      report.copyWith(mainReportId: savedReport.id!)
-    ).toList();
-
-    final updatedAKBByCategories = akbByCategories.map((category) =>
-      category.copyWith(mainReportId: savedReport.id!)
-    ).toList();
-
-    // Save related data
-    await _dbService.saveBusinessRegionReports(updatedBusinessRegionReports);
-    await _dbService.saveAKBByCategories(updatedAKBByCategories);
-
-    return {
-      'mainReport': savedReport,
-      'businessRegionReports': updatedBusinessRegionReports,
-      'akbByCategories': updatedAKBByCategories,
-    };
+    return {};
   }
 
   /// Get cached data (for offline scenarios)
@@ -367,7 +388,37 @@ class ReportsSyncService {
       throw Exception('Tashrif reja yaratishda xatolik: $e');
     }
   }
+
+
+  /// Check if user has selected Evyap server in preferences
+  /// Returns true if Evyap server is selected, false otherwise
+  bool isEvyapServerSelected() {
+    try {
+      final serverName = _prefs.getServerName();
+      return serverName == 'Evyap';
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking Evyap server selection: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Check if user has Avon server
+  /// Returns true if current server is Avon, false otherwise
+  bool isAvonServerSelected() {
+    try {
+      final serverName = _prefs.getServerName();
+      return serverName == 'Avon';
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking Avon server: $e');
+      }
+      return false;
+    }
+  }
 }
+
 
 /// Report sync progress steps
 enum ReportSyncStep {

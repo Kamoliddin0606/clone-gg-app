@@ -39,7 +39,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
 
 
   final List<Map<String, dynamic>> _reportItems = [
-    {'key': 'asosiy_hisobotlar', 'title': 'Asosiy hisobotlar', 'icon': Icons.bar_chart, 'description': 'KPI ko\'rsatkichlari va asosiy statistikalar'},
+    {'key': 'asosiy_hisobotlar', 'title': 'Asosiy hisobotlar(EVYAP uchun)', 'icon': Icons.bar_chart, 'description': 'KPI ko\'rsatkichlari va asosiy statistikalar'},
     {'key': 'vizitlar_hisobot', 'title': 'Vizitlar bo\'yicha hisobot', 'icon': Icons.location_on, 'description': 'Mijozlarga qilingan tashriflar haqida ma\'lumot'},
     {'key': 'akb_client', 'title': 'AKB Client', 'icon': Icons.people, 'description': 'AKB mijozlari bo\'yicha hisobot'},
     {'key': 'akb_sum', 'title': 'AKB Sum', 'icon': Icons.attach_money, 'description': 'AKB summalari bo\'yicha moliyaviy hisobot'},
@@ -191,9 +191,9 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                             icon: Icon(_isHeaderVisible ? Icons.visibility_off : Icons.visibility),
                           ),
                           IconButton(
-                            tooltip: 'Refresh',
+                            tooltip: 'Telegram bot orqali bot yuborish',
                             onPressed: null,
-                            icon: const Icon(Icons.refresh),
+                            icon: const Icon(Icons.telegram_outlined, color: Colors.blue),
                           ),
                           IconButton(
                             tooltip: 'Filtr',
@@ -498,87 +498,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                         ],
                       ),
                     ),
-                  const SizedBox(height: 16),
-                  // Row(
-                  //   children: [
-                  //     Expanded(
-                  //       child: TextField(
-                  //         decoration: InputDecoration(
-                  //           labelText: 'Boshlanish sanasi',
-                  //           border: OutlineInputBorder(
-                  //             borderRadius: BorderRadius.circular(12),
-                  //           ),
-                  //         ),
-                  //         controller: TextEditingController(
-                  //           text: selectedRange != null ? DateFormat('dd.MM.yyyy').format(selectedRange!.start) : '',
-                  //         ),
-                  //         readOnly: true,
-                  //         onTap: () async {
-                  //           final picked = await showDatePicker(
-                  //             context: context,
-                  //             initialDate: selectedRange?.start ?? DateTime.now().subtract(const Duration(days: 30)),
-                  //             firstDate: DateTime(2020),
-                  //             lastDate: DateTime.now(),
-                  //           );
-                  //           if (picked != null) {
-                  //             setState(() {
-                  //               selectedRange = DateTimeRange(
-                  //                 start: picked,
-                  //                 end: selectedRange?.end ?? picked.add(const Duration(days: 30)),
-                  //               );
-                  //             });
-                  //           }
-                  //         },
-                  //       ),
-                  //     ),
-                  //     const SizedBox(width: 12),
-                  //     Expanded(
-                  //       child: TextField(
-                  //         decoration: InputDecoration(
-                  //           labelText: 'Tugash sanasi',
-                  //           border: OutlineInputBorder(
-                  //             borderRadius: BorderRadius.circular(12),
-                  //           ),
-                  //         ),
-                  //         controller: TextEditingController(
-                  //           text: selectedRange != null ? DateFormat('dd.MM.yyyy').format(selectedRange!.end) : '',
-                  //         ),
-                  //         readOnly: true,
-                  //         onTap: () async {
-                  //           final picked = await showDatePicker(
-                  //             context: context,
-                  //             initialDate: selectedRange?.end ?? DateTime.now(),
-                  //             firstDate: selectedRange?.start ?? DateTime(2020),
-                  //             lastDate: DateTime.now(),
-                  //           );
-                  //           if (picked != null) {
-                  //             setState(() {
-                  //               selectedRange = DateTimeRange(
-                  //                 start: selectedRange?.start ?? picked.subtract(const Duration(days: 30)),
-                  //                 end: picked,
-                  //               );
-                  //             });
-                  //           }
-                  //         },
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
-                  // const SizedBox(height: 16),
-                  // SizedBox(
-                  //   height: 300,
-                  //   child: CalendarDatePicker(
-                  //     initialDate: selectedRange?.start ?? DateTime.now(),
-                  //     firstDate: DateTime(2020),
-                  //     lastDate: DateTime.now(),
-                  //     onDateChanged: (date) {
-                  //       // Handle single date selection - update range to single day
-                  //       setState(() {
-                  //         selectedRange = DateTimeRange(start: date, end: date);
-                  //       });
-                  //     },
-                  //   ),
-                  // ),
+
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -589,19 +509,74 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                         ),
                       ),
                       const SizedBox(width: 12),
+                      // Expanded(
+                      //   child: FilledButton(
+                      //     onPressed: () {
+                      //       final  reportSyncService = sl<ReportsSyncService>();
+                      //       reportSyncService.syncAllReportsWithProgress( userCode: userCode, password: password, dateStart: selectedRange!.start, dateEnd: selectedRange!.end);
+                      //       this.setState(() {
+                      //         _selectedDateRange = selectedRange;
+                      //       });
+                      //       Navigator.pop(context);
+                      //     },
+                      //     child: const Text('Qo\'llash'),
+                      //   ),
+                      // ),
                       Expanded(
                         child: FilledButton(
-                          onPressed: () {
-                            final  reportSyncService = sl<ReportsSyncService>();
-                            reportSyncService.syncAllReportsWithProgress( userCode: userCode, password: password, dateStart: selectedRange!.start, dateEnd: selectedRange!.end);
-                            this.setState(() {
-                              _selectedDateRange = selectedRange;
-                            });
-                            Navigator.pop(context);
+                          onPressed: () async {
+                            // 1) Guardlar
+                            final prefs = sl<SharedPreferencesService>();
+                            final userCode = prefs.getUserCode();
+                            final password = prefs.getPassword();
+
+                            if (selectedRange == null) {
+                               _showErrorSnackBar(context, "Davr tanlanmadi");
+
+                              return;
+                            }
+                            if ((userCode == null || userCode.isEmpty) ||
+                                (password == null || password.isEmpty)) {
+                              _showErrorSnackBar(context, "Foydalanuvchi ma'lumotlari topilmadi");
+
+                              return;
+                            }
+
+                            // 2) Progress ko‘rsatish
+                            _showLoadingDialog(context, "Ma'lumotlar sinxronlanmoqda...");
+
+                            try {
+                              final reportSyncService = sl<ReportsSyncService>();
+
+                              // 3) Asosiy chaqiruv — TO‘LIQ va await bilan
+                              await reportSyncService.syncAllReportsWithProgress(
+                                userCode: userCode,
+                                password: password,
+                                dateStart: selectedRange!.start,
+                                dateEnd: selectedRange!.end,
+                                // agar metodda callback bo‘lsa, qo‘ying:
+                                // onProgress: (p) => setState(() => _progress = p),
+                              ) ;
+
+                              // 4) Tanlangan davrni saqlaymiz va sahifalarni yangilaymiz
+                              setState(() {
+                                _selectedDateRange = selectedRange;
+                              });
+
+                              //await reportSyncService.syncAllReports(userCode: userCode, password: password); // <= sizda mavjud yuklash metod(lar)i: masalan _loadMainReports(), _loadSummary() va h.k.
+
+                              _hideLoadingDialog(context);
+                              Navigator.pop(context); // date-range dialogni yopish
+                              _showSuccessSnackBar(context, "Hisobotlar yangilandi");
+                            } catch (e) {
+                              _hideLoadingDialog(context);
+                              _showErrorSnackBar(context, "Sinxronizatsiya xatosi: $e");
+                            }
                           },
-                          child: const Text('Qo\'llash'),
+                          child: const Text("Qo'llash"),
                         ),
-                      ),
+                      )
+
                     ],
                   ),
                 ],
@@ -612,6 +587,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
       },
     );
   }
+
 
   int _getCurrentPageIndex() {
     return _reportItems.indexWhere((item) => item['key'] == _selectedReport);
@@ -624,7 +600,67 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
       });
     }
   }
+  void _showLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(message, textAlign: TextAlign.center),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
+  void _updateLoadingDialog(BuildContext context, String message) {
+    // Find the current dialog and update its content
+    Navigator.of(context).pop(); // Close current dialog
+    _showLoadingDialog(context, message); // Show new dialog with updated message
+  }
+
+  void _hideLoadingDialog(BuildContext context) {
+    Navigator.of(context).pop();
+  }
+
+  void _showErrorSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ),
+    );
+  }
+  void _showSuccessSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'OK',
+          // textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ),
+    );
+  }
   Widget _buildErrorState(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;

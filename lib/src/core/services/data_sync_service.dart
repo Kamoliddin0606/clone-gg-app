@@ -133,9 +133,9 @@ class DataSyncService {
 
       // Check if user data matches
       final userMatches = dbUser['code'] == prefsUserCode &&
-                          dbUser['name'] == prefsUserName &&
-                          dbUser['warehouse_code'] == prefsWarehouseCode &&
-                          dbUser['code_project'] == prefsCodeProject;
+          dbUser['name'] == prefsUserName &&
+          dbUser['warehouse_code'] == prefsWarehouseCode &&
+          dbUser['code_project'] == prefsCodeProject;
 
       if (kDebugMode) {
         print('User validation: prefs=($prefsUserCode, $prefsUserName, $prefsWarehouseCode, $prefsCodeProject) vs db=(${dbUser['code']}, ${dbUser['name']}, ${dbUser['warehouse_code']}, ${dbUser['code_project']}) - matches: $userMatches');
@@ -225,7 +225,7 @@ class DataSyncService {
   }
 
   /// Sync all data for a user (force refresh)
-    Future<void> syncAllUserData({
+  Future<void> syncAllUserData({
     required String userCode,
     required String password,
     required String codeProject,
@@ -264,23 +264,27 @@ class DataSyncService {
       await _syncClientContracts(userCode);
 
       // Sync promotions
-      await _syncPromotions(null); // No auth token needed for now
+      if ( isAvonServerSelected() || isEvyapServerSelected() ) {
+        await _syncPromotions(null); // No auth token needed for now
+      }
 
-      // Sync reports (current month by default)
-      try {
-        final now = DateTime.now();
-        final startOfMonth = DateTime(now.year, now.month, 1);
-        final endOfMonth = DateTime(now.year, now.month + 1, 0);
+      if(isEvyapServerSelected()){
+        // Sync reports (current month by default)
+        try {
+          final now = DateTime.now();
+          final startOfMonth = DateTime(now.year, now.month, 1);
+          final endOfMonth = DateTime(now.year, now.month + 1, 0);
 
-        final dateStart = startOfMonth.toIso8601String().split('T')[0];
-        final dateEnd = endOfMonth.toIso8601String().split('T')[0];
+          final dateStart = startOfMonth.toIso8601String().split('T')[0];
+          final dateEnd = endOfMonth.toIso8601String().split('T')[0];
 
-        await _syncReportByPeriod(userCode, dateStart, dateEnd);
-      } catch (e) {
-        if (kDebugMode) {
-          print('Error syncing reports: $e');
+          await _syncReportByPeriod(userCode, dateStart, dateEnd);
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error syncing reports: $e');
+          }
+          // Continue with other steps - reports are optional
         }
-        // Continue with other steps - reports are optional
       }
 
       if (kDebugMode) {
@@ -365,36 +369,38 @@ class DataSyncService {
       yield SyncStep.syncingClientContracts;
       await _syncClientContracts(userCode);
 
-      // Step 12: Sync promotions
-      yield SyncStep.syncingPromotions;
-      try {
-        await _syncPromotions(null); // No auth token needed for now
-      } catch (e) {
-        // Log error but don't fail the entire sync
-        if (kDebugMode) {
-          print('Error syncing promotions: $e');
-        }
-        // Continue with other steps
-      }
+      if( isAvonServerSelected() || isEvyapServerSelected() ) {
+        // Step 12: Sync promotions
+        yield SyncStep.syncingPromotions;
+        try {
+          await _syncPromotions(null); // No auth token needed for now
+        } catch (e) {
+          // Log error but don't fail the entire sync
+          if (kDebugMode) {
+            print('Error syncing promotions: $e');
+          }
+          // Continue with other steps
+        }}
 
-      // Step 13: Sync reports (current month by default)
-      yield SyncStep.syncingReports;
-      try {
-        final now = DateTime.now();
-        final startOfMonth = DateTime(now.year, now.month, 1);
-        final endOfMonth = DateTime(now.year, now.month + 1, 0);
+      if( isEvyapServerSelected() ) {
+        // Step 13: Sync reports (current month by default)
+        yield SyncStep.syncingReports;
+        try {
+          final now = DateTime.now();
+          final startOfMonth = DateTime(now.year, now.month, 1);
+          final endOfMonth = DateTime(now.year, now.month + 1, 0);
 
-        final dateStart = startOfMonth.toIso8601String().split('T')[0];
-        final dateEnd = endOfMonth.toIso8601String().split('T')[0];
+          final dateStart = startOfMonth.toIso8601String().split('T')[0];
+          final dateEnd = endOfMonth.toIso8601String().split('T')[0];
 
-        await _syncReportByPeriod(userCode, dateStart, dateEnd);
-      } catch (e) {
-        // Log error but don't fail the entire sync
-        if (kDebugMode) {
-          print('Error syncing reports: $e');
-        }
-        // Continue with other steps
-      }
+          await _syncReportByPeriod(userCode, dateStart, dateEnd);
+        } catch (e) {
+          // Log error but don't fail the entire sync
+          if (kDebugMode) {
+            print('Error syncing reports: $e');
+          }
+          // Continue with other steps
+        }}
 
       // Step 14: Completed
       yield SyncStep.completed;
@@ -793,38 +799,40 @@ class DataSyncService {
     String? authToken,
     bool forceRefresh = false,
   }) async {
+
     final timestamp = DateTime.now().toIso8601String();
     print('[$timestamp] DEBUG SYNC: syncPromotions called, forceRefresh: $forceRefresh');
 
-    if (!forceRefresh) {
-      print('[$timestamp] DEBUG SYNC: Checking cached promotions');
-      final cached = await _dbService.getPromotions();
-      print('[$timestamp] DEBUG SYNC: Cached promotions count: ${cached.length}');
+    print('[$timestamp] DEBUG SYNC: Checking cached promotions');
+    final cached = await _dbService.getPromotions();
+    print('[$timestamp] DEBUG SYNC: Cached promotions count: ${cached.length}');
 
-      if (cached.isNotEmpty) {
-        // Check if data is recent (less than 24 hours old)
-        final mostRecentSync = cached
-            .where((p) => p.lastSynced != null)
-            .map((p) => p.lastSynced!)
-            .fold<DateTime?>(null, (prev, curr) => prev == null || curr.isAfter(prev) ? curr : prev);
+    if (cached.isNotEmpty) {
+      // Check if data is recent (less than 24 hours old)
+      final mostRecentSync = cached
+          .where((p) => p.lastSynced != null)
+          .map((p) => p.lastSynced!)
+          .fold<DateTime?>(null, (prev, curr) => prev == null || curr.isAfter(prev) ? curr : prev);
 
-        print('[$timestamp] DEBUG SYNC: Most recent sync: $mostRecentSync');
+      print('[$timestamp] DEBUG SYNC: Most recent sync: $mostRecentSync');
 
-        if (mostRecentSync != null) {
-          final now = DateTime.now();
-          final diff = now.difference(mostRecentSync).inHours;
-          print('[$timestamp] DEBUG SYNC: Time difference: ${diff} hours');
+      if (mostRecentSync != null) {
+        final now = DateTime.now();
+        final diff = now.difference(mostRecentSync).inHours;
+        print('[$timestamp] DEBUG SYNC: Time difference: ${diff} hours');
 
-          if (diff < 24) {
-            print('[$timestamp] DEBUG SYNC: Returning cached data (recent)');
-            return cached;
-          }
+        if (diff < 24) {
+          print('[$timestamp] DEBUG SYNC: Returning cached data (recent)');
+          return cached;
         }
       }
     }
 
-    print('[$timestamp] DEBUG SYNC: Proceeding with fresh sync');
-    return await _syncPromotions(authToken);
+    if( isAvonServerSelected() || isEvyapServerSelected() ) {
+      print('[$timestamp] DEBUG SYNC: Proceeding with fresh sync');
+      return await _syncPromotions(authToken);
+    }
+    return <PromotionModel>[];
   }
 
   /// Sync client contracts data
@@ -852,37 +860,40 @@ class DataSyncService {
   }
 
   Future<List<PromotionModel>> _syncPromotions(String? authToken) async {
-    final timestamp = DateTime.now().toIso8601String();
-    print('[$timestamp] DEBUG SYNC: _syncPromotions called');
+    if(isEvyapServerSelected()|| isAvonServerSelected()){
+      final timestamp = DateTime.now().toIso8601String();
+      print('[$timestamp] DEBUG SYNC: _syncPromotions called');
 
-    try {
-      print('[$timestamp] DEBUG SYNC: Calling _apiService.getPromotions');
-      final promotions = await _apiService.getPromotions(authToken: authToken);
-      print('[$timestamp] DEBUG SYNC: API returned ${promotions.length} promotions');
-
-      if (kDebugMode) {
-        print('Aksiyalar ma\'lumotlari yuklandi: ${promotions.length} ta aksiya');
-      }
-
-      print('[$timestamp] DEBUG SYNC: Saving promotions to database');
-      await _dbService.savePromotions(promotions);
-      print('[$timestamp] DEBUG SYNC: Promotions saved to database');
-
-      return promotions;
-    } catch (e) {
-      print('[$timestamp] DEBUG SYNC: Error syncing promotions: $e');
-
-      // If promotion API fails, return cached data instead of failing the entire sync
       try {
-        final cachedPromotions = await _dbService.getPromotions();
-        print('[$timestamp] DEBUG SYNC: Returning ${cachedPromotions.length} cached promotions');
-        return cachedPromotions;
-      } catch (cacheError) {
-        print('[$timestamp] DEBUG SYNC: Error getting cached promotions: $cacheError');
-        // Return empty list if both API and cache fail
-        return [];
+        print('[$timestamp] DEBUG SYNC: Calling _apiService.getPromotions');
+        final promotions = await _apiService.getPromotions(authToken: authToken);
+        print('[$timestamp] DEBUG SYNC: API returned ${promotions.length} promotions');
+
+        if (kDebugMode) {
+          print('Aksiyalar ma\'lumotlari yuklandi: ${promotions.length} ta aksiya');
+        }
+
+        print('[$timestamp] DEBUG SYNC: Saving promotions to database');
+        await _dbService.savePromotions(promotions);
+        print('[$timestamp] DEBUG SYNC: Promotions saved to database');
+
+        return promotions;
+      } catch (e) {
+        print('[$timestamp] DEBUG SYNC: Error syncing promotions: $e');
+
+        // If promotion API fails, return cached data instead of failing the entire sync
+        try {
+          final cachedPromotions = await _dbService.getPromotions();
+          print('[$timestamp] DEBUG SYNC: Returning ${cachedPromotions.length} cached promotions');
+          return cachedPromotions;
+        } catch (cacheError) {
+          print('[$timestamp] DEBUG SYNC: Error getting cached promotions: $cacheError');
+          // Return empty list if both API and cache fail
+          return [];
+        }
       }
     }
+    return <PromotionModel>[];
   }
 
   /// Sync report data
@@ -892,92 +903,98 @@ class DataSyncService {
     required String dateEnd,
     bool forceRefresh = false,
   }) async {
-    if (!forceRefresh) {
-      final cached = await _dbService.getMainReports(userCode: userCode);
-      final existingReport = cached.firstWhere(
-        (report) => report.dateStart.toIso8601String().split('T')[0] == dateStart &&
-                    report.dateEnd.toIso8601String().split('T')[0] == dateEnd,
-        orElse: () => MainReport(
-          userCode: '',
-          dateStart: DateTime.parse(dateStart),
-          dateEnd: DateTime.parse(dateEnd),
-          countAKB: 0,
-          countOKB: 0,
-          cash: 0,
-          transfer: 0,
-          sum: 0,
-          countVisited: 0,
-        ),
-      );
+    if(isEvyapServerSelected()){
+      if (!forceRefresh) {
+        final cached = await _dbService.getMainReports(userCode: userCode);
+        final existingReport = cached.firstWhere(
+              (report) => report.dateStart.toIso8601String().split('T')[0] == dateStart &&
+              report.dateEnd.toIso8601String().split('T')[0] == dateEnd,
+          orElse: () => MainReport(
+            userCode: '',
+            dateStart: DateTime.parse(dateStart),
+            dateEnd: DateTime.parse(dateEnd),
+            countAKB: 0,
+            countOKB: 0,
+            cash: 0,
+            transfer: 0,
+            sum: 0,
+            countVisited: 0,
+          ),
+        );
 
-      if (existingReport.userCode.isNotEmpty) {
-        // Return cached data with related tables
-        final businessRegionReports = await _dbService.getBusinessRegionReports(mainReportId: existingReport.id);
-        final akbByCategories = await _dbService.getAKBByCategories(mainReportId: existingReport.id);
+        if (existingReport.userCode.isNotEmpty) {
+          // Return cached data with related tables
+          final businessRegionReports = await _dbService.getBusinessRegionReports(mainReportId: existingReport.id);
+          final akbByCategories = await _dbService.getAKBByCategories(mainReportId: existingReport.id);
 
-        return {
-          'mainReport': existingReport,
-          'businessRegionReports': businessRegionReports,
-          'akbByCategories': akbByCategories,
-        };
+          return {
+            'mainReport': existingReport,
+            'businessRegionReports': businessRegionReports,
+            'akbByCategories': akbByCategories,
+          };
+        }
       }
-    }
 
-    return await _syncReportByPeriod(userCode, dateStart, dateEnd);
+      return await _syncReportByPeriod(userCode, dateStart, dateEnd);
+    }
+    return {};
   }
 
   Future<Map<String, dynamic>> _syncReportByPeriod(String userCode, String dateStart, String dateEnd) async {
-    final reportData = await _apiService.getReportByPeriod(
-      userCode: userCode,
-      dateStart: dateStart,
-      dateEnd: dateEnd,
-    );
+    if(isEvyapServerSelected()){
+      final reportData = await _apiService.getReportByPeriod(
+        userCode: userCode,
+        dateStart: dateStart,
+        dateEnd: dateEnd,
+      );
 
-    final mainReport = reportData['mainReport'] as MainReport;
-    final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
-    final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
+      final mainReport = reportData['mainReport'] as MainReport;
+      final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
+      final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
 
-    if (kDebugMode) {
-      print('Hisobot ma\'lumotlari yuklandi: ${businessRegionReports.length} ta biznes rayon, ${akbByCategories.length} ta kategoriya');
+      if (kDebugMode) {
+        print('Hisobot ma\'lumotlari yuklandi: ${businessRegionReports.length} ta biznes rayon, ${akbByCategories.length} ta kategoriya');
+      }
+
+      // Save main report first to get ID
+      await _dbService.saveMainReports([mainReport]);
+      await _dbService.saveBusinessRegionReports(businessRegionReports);
+      await _dbService.saveAKBByCategories(akbByCategories);
+      final savedReports = await _dbService.getMainReports(userCode: userCode);
+
+      final savedReport = savedReports.firstWhere(
+            (r) => r.dateStart.toIso8601String().split('T')[0] == dateStart &&
+            r.dateEnd.toIso8601String().split('T')[0] == dateEnd,
+      );
+
+      // Update related tables with correct main_report_id
+      final updatedBusinessRegionReports = businessRegionReports.map((report) =>
+          report.copyWith(mainReportId: savedReport.id)
+      ).toList();
+
+      final updatedAKBByCategories = akbByCategories.map((category) =>
+          category.copyWith(mainReportId: savedReport.id)
+      ).toList();
+      print('yangilangan kategoriyalar: ${updatedAKBByCategories.length}');
+      // Save related data
+      await _dbService.saveBusinessRegionReports(updatedBusinessRegionReports);
+      await _dbService.saveAKBByCategories(updatedAKBByCategories);
+
+      // Display the saved reports data for debugging/UI integration
+      if (kDebugMode) {
+        print('Saved reports data: $savedReports');
+        print('Main report: $savedReport');
+        print('Business region reports: ${updatedBusinessRegionReports.length} items');
+        print('AKB by categories: ${updatedAKBByCategories.length} items');
+      }
+
+      return {
+        'mainReport': savedReport,
+        'businessRegionReports': updatedBusinessRegionReports,
+        'akbByCategories': updatedAKBByCategories,
+      };
     }
-
-    // Save main report first to get ID
-    await _dbService.saveMainReports([mainReport]);
-    await _dbService.saveBusinessRegionReports(businessRegionReports);
-    await _dbService.saveAKBByCategories(akbByCategories);
-    final savedReports = await _dbService.getMainReports(userCode: userCode);
-
-    final savedReport = savedReports.firstWhere(
-      (r) => r.dateStart.toIso8601String().split('T')[0] == dateStart &&
-             r.dateEnd.toIso8601String().split('T')[0] == dateEnd,
-    );
-
-    // Update related tables with correct main_report_id
-    final updatedBusinessRegionReports = businessRegionReports.map((report) =>
-      report.copyWith(mainReportId: savedReport.id)
-    ).toList();
-
-    final updatedAKBByCategories = akbByCategories.map((category) =>
-      category.copyWith(mainReportId: savedReport.id)
-    ).toList();
-    print('yangilangan kategoriyalar: ${updatedAKBByCategories.length}');
-    // Save related data
-    await _dbService.saveBusinessRegionReports(updatedBusinessRegionReports);
-    await _dbService.saveAKBByCategories(updatedAKBByCategories);
-
-    // Display the saved reports data for debugging/UI integration
-    if (kDebugMode) {
-      print('Saved reports data: $savedReports');
-      print('Main report: $savedReport');
-      print('Business region reports: ${updatedBusinessRegionReports.length} items');
-      print('AKB by categories: ${updatedAKBByCategories.length} items');
-    }
-
-    return {
-      'mainReport': savedReport,
-      'businessRegionReports': updatedBusinessRegionReports,
-      'akbByCategories': updatedAKBByCategories,
-    };
+    return {};
   }
 
   /// Get cached data (for offline scenarios)
@@ -1064,8 +1081,8 @@ class DataSyncService {
         await _resolveLastWriteWins(dataType, localData, remoteData);
         break;
       case ConflictResolutionStrategy.userPrompt:
-        // For now, default to last write wins
-        // In a real app, this would show a dialog to the user
+      // For now, default to last write wins
+      // In a real app, this would show a dialog to the user
         await _resolveLastWriteWins(dataType, localData, remoteData);
         break;
       case ConflictResolutionStrategy.merge:
@@ -1075,16 +1092,16 @@ class DataSyncService {
   }
 
   Future<void> _resolveLastWriteWins(
-    String dataType,
-    List<Map<String, dynamic>> localData,
-    List<Map<String, dynamic>> remoteData,
-  ) async {
+      String dataType,
+      List<Map<String, dynamic>> localData,
+      List<Map<String, dynamic>> remoteData,
+      ) async {
     // Compare timestamps and keep the most recent
     final merged = <Map<String, dynamic>>[];
 
     for (final remote in remoteData) {
       final local = localData.firstWhere(
-        (l) => l['id'] == remote['id'] || l['code'] == remote['code'],
+            (l) => l['id'] == remote['id'] || l['code'] == remote['code'],
         orElse: () => <String, dynamic>{},
       );
 
@@ -1104,15 +1121,15 @@ class DataSyncService {
         final promotions = merged.map((m) => PromotionModel.fromMap(m)).toList();
         await _dbService.savePromotions(promotions);
         break;
-      // Add other data types as needed
+    // Add other data types as needed
     }
   }
 
   Future<void> _resolveMerge(
-    String dataType,
-    List<Map<String, dynamic>> localData,
-    List<Map<String, dynamic>> remoteData,
-  ) async {
+      String dataType,
+      List<Map<String, dynamic>> localData,
+      List<Map<String, dynamic>> remoteData,
+      ) async {
     // For promotions, merge by keeping all unique items
     final merged = <Map<String, dynamic>>[...localData];
 
@@ -1173,12 +1190,40 @@ class DataSyncService {
       case 'sync_promotions':
         await _syncPromotions(data['authToken']);
         break;
-      // Add other operation types
+    // Add other operation types
     }
   }
 
   Future<void> _removeFailedOperation(String id) async {
     // Remove from persistent storage
+  }
+
+  /// Check if user has selected Evyap server in preferences
+  /// Returns true if Evyap server is selected, false otherwise
+  bool isEvyapServerSelected() {
+    try {
+      final serverName = _prefs.getServerName();
+      return serverName == 'Evyap';
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking Evyap server selection: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Check if user has Avon server
+  /// Returns true if current server is Avon, false otherwise
+  bool isAvonServerSelected() {
+    try {
+      final serverName = _prefs.getServerName();
+      return serverName == 'Avon';
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking Avon server: $e');
+      }
+      return false;
+    }
   }
 }
 

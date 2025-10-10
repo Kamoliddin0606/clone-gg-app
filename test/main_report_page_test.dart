@@ -6,7 +6,11 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/reports_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_report.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
@@ -15,6 +19,7 @@ import 'package:mockito/annotations.dart';
   ApiDatabaseService,
   SoapApiService,
   DataSyncService,
+  ReportsSyncService,
   DatabaseHelper,
 ])
 import 'main_report_page_test.mocks.dart';
@@ -24,6 +29,7 @@ void main() {
   late MockApiDatabaseService mockDbService;
   late MockSoapApiService mockSoapService;
   late MockDataSyncService mockDataSyncService;
+  late MockReportsSyncService mockReportsSyncService;
   late MockDatabaseHelper mockDbHelper;
 
   setUp(() {
@@ -31,6 +37,7 @@ void main() {
     mockDbService = MockApiDatabaseService();
     mockSoapService = MockSoapApiService();
     mockDataSyncService = MockDataSyncService();
+    mockReportsSyncService = MockReportsSyncService();
     mockDbHelper = MockDatabaseHelper();
 
     // Register services with GetIt
@@ -38,6 +45,7 @@ void main() {
     GetIt.instance.registerSingleton<ApiDatabaseService>(mockDbService);
     GetIt.instance.registerSingleton<SoapApiService>(mockSoapService);
     GetIt.instance.registerSingleton<DataSyncService>(mockDataSyncService);
+    GetIt.instance.registerSingleton<ReportsSyncService>(mockReportsSyncService);
     GetIt.instance.registerSingleton<DatabaseHelper>(mockDbHelper);
   });
 

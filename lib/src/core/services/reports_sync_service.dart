@@ -142,6 +142,46 @@ class ReportsSyncService {
 
     return await _syncReportByPeriod(userCode, dateStart, dateEnd);
   }
+  /// Sync report data by period
+  Future<Map<String, dynamic>> syncReportWithoutPeriod({
+    required String userCode,
+    required String dateStart,
+    required String dateEnd,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getMainReports(userCode: userCode);
+      print('Bazada malumot bor: ${cached.length}');
+      final existingReport = cached.firstWhere(
+            (report) => report.userCode == userCode,
+        orElse: () => MainReport(
+          userCode: '',
+          dateStart: DateTime.now(),
+          dateEnd: DateTime.now(),
+          countAKB: 0,
+          countOKB: 0,
+          cash: 0,
+          transfer: 0,
+          sum: 0,
+          countVisited: 0,
+        ),
+      );
+
+      if (existingReport.userCode.isNotEmpty) {
+        // Return cached data with related tables
+        final businessRegionReports = await _dbService.getBusinessRegionReports(mainReportId: existingReport.id);
+        final akbByCategories = await _dbService.getAKBByCategories(mainReportId: existingReport.id);
+
+        return {
+          'mainReport': existingReport,
+          'businessRegionReports': businessRegionReports,
+          'akbByCategories': akbByCategories,
+        };
+      }
+    }
+
+    return await _syncReportByPeriod(userCode, dateStart, dateEnd);
+  }
 
   Future<Map<String, dynamic>> _syncReportByPeriod(String userCode, String dateStart, String dateEnd) async {
     final reportData = await _apiService.getReportByPeriod(

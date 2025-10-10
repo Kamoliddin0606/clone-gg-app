@@ -10,6 +10,7 @@ import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_report.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
+import '../../../../core/services/reports_sync_service.dart';
 import '../widgets/modern_date_range_picker.dart';
 
 
@@ -288,6 +289,7 @@ class _MainReportPageState extends State<MainReportPage>
   late final AnimationController _controller;
   late final DataSyncService _dataSyncService;
   late final ApiDatabaseService _dbService;
+  late final ReportsSyncService _dbReportService;
   late final SharedPreferencesService _prefs;
   DateTimeRange? _selectedRange;
   bool _isLoading = false;
@@ -307,9 +309,11 @@ class _MainReportPageState extends State<MainReportPage>
       prefs: GetIt.instance<SharedPreferencesService>(),
       apiService: GetIt.instance<SoapApiService>(),
       dbService: GetIt.instance<ApiDatabaseService>(),
+      // dbReportService: GetIt.instance<ReportsSyncService>(),
       dbHelper: GetIt.instance<DatabaseHelper>(),
     );
     _dbService = GetIt.instance<ApiDatabaseService>();
+    _dbReportService = GetIt.instance<ReportsSyncService>();
     _prefs = GetIt.instance<SharedPreferencesService>();
 
     // Load report data from database
@@ -319,39 +323,46 @@ class _MainReportPageState extends State<MainReportPage>
   Future<void> _loadReportData() async {
     try {
       final userCode = _prefs.getUserCode();
+      print(userCode);
       if (userCode != null) {
-        final mainReports = await _dbService.getMainReports(userCode: userCode);
-        if (mainReports.isNotEmpty) {
-          final mainReport = mainReports.first;
-          // Fetch related data
-          final businessRegionReports = await _dbService.getBusinessRegionReports(mainReportId: mainReport.id);
-          final akbByCategories = await _dbService.getAKBByCategories(mainReportId: mainReport.id);
+        final today = DateTime.now();
+        final dateStart = today.toIso8601String().split('T')[0];
+        final dateEnd = dateStart;
+        final reportData = await _dbReportService.syncReportWithoutPeriod(
+          userCode: userCode,
+          dateStart: dateStart,
+          dateEnd: dateEnd,
+          forceRefresh: false,
+        );
+        final mainReport = reportData['mainReport'] as MainReport;
+        final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
+        final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
 
-          // Convert to maps for UI
-          final akbByRegion = <String, int>{};
-          for (final regionReport in businessRegionReports) {
-            akbByRegion[regionReport.name] = regionReport.akb;
-          }
-
-          final categories = <String, int>{};
-          for (final category in akbByCategories) {
-            categories[category.name] = category.akb;
-          }
-
-          setState(() {
-            report = mainReport;
-            // Store related data for UI
-            _akbByRegion = akbByRegion;
-            _categories = categories;
-            // Initialize selected range with report's date range
-            if (report!.dateStart != null && report!.dateEnd != null) {
-              _selectedRange = DateTimeRange(
-                start: report!.dateStart!,
-                end: report!.dateEnd!,
-              );
-            }
-          });
+        // Convert to maps for UI
+        final akbByRegion = <String, int>{};
+        for (final regionReport in businessRegionReports) {
+          akbByRegion[regionReport.name] = regionReport.akb;
         }
+
+        final categories = <String, int>{};
+        for (final category in akbByCategories) {
+          categories[category.name] = category.akb;
+        }
+
+        setState(() {
+          report = mainReport;
+          // Store related data for UI
+          _akbByRegion = akbByRegion;
+          _categories = categories;
+          // Initialize selected range with report's date range
+          if (report!.dateStart != null && report!.dateEnd != null) {
+            _selectedRange = DateTimeRange(
+              start: report!.dateStart!,
+              end: report!.dateEnd!,
+
+            );
+          }
+        });
       }
     } catch (e) {
       if (kDebugMode) {

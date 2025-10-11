@@ -1014,19 +1014,20 @@ class SoapApiService {
     required String userCode,
     required String dateStart,
     required String dateEnd,
-  }) async {
+  }) async
+  {
     final soapEnvelope = '''
-<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
-  <soap:Header/>
-  <soap:Body>
-    <sam:GetReportByPeriod>
-      <sam:UserCode>$userCode</sam:UserCode>
-      <sam:DateStart>$dateStart</sam:DateStart>
-      <sam:DateEnd>$dateEnd</sam:DateEnd>
-    </sam:GetReportByPeriod>
-  </soap:Body>
-</soap:Envelope>
-''';
+      <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+        <soap:Header/>
+        <soap:Body>
+          <sam:GetReportByPeriod>
+            <sam:UserCode>$userCode</sam:UserCode>
+            <sam:DateStart>$dateStart</sam:DateStart>
+            <sam:DateEnd>$dateEnd</sam:DateEnd>
+          </sam:GetReportByPeriod>
+        </soap:Body>
+      </soap:Envelope>
+      ''';
 
     try {
       final response = await _dio.post(

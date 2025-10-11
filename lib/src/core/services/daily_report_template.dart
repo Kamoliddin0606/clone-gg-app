@@ -9,23 +9,11 @@ class DailyReportTemplate {
     required String okbTerritory,
     required String visitedPoints,
     required String activeClients,
-    required String region,
-    required String akbRegion,
+    required List<String> regionLines,
     required String cash,
     required String nonCash,
     required String totalOrders,
-    required String product1,
-    required String quantity1,
-    required String product2,
-    required String quantity2,
-    required String product3,
-    required String quantity3,
-    required String product4,
-    required String quantity4,
-    required String product5,
-    required String quantity5,
-    required String product6,
-    required String quantity6,
+    required List<String> categoryLines,
     required String monthlyPlan,
     required String monthlyFact,
     required String factPercent,
@@ -36,6 +24,16 @@ class DailyReportTemplate {
     required String akbFact,
     required String akbPercent,
   }) {
+    // Build region section
+    final regionSection = regionLines.isNotEmpty
+        ? regionLines.join('\n')
+        : 'Нет данных по регионам';
+
+    // Build category section
+    final categorySection = categoryLines.isNotEmpty
+        ? categoryLines.join('\n')
+        : 'Нет данных по категориям';
+
     return '''
 #dailyReport
 📅 Дата: $date $time
@@ -51,7 +49,7 @@ class DailyReportTemplate {
 
 Разделение АКБ по регионам:
 
-$region -- $akbRegion т.т.
+$regionSection
 
 Общая стоимость заказов:
 
@@ -61,12 +59,7 @@ $region -- $akbRegion т.т.
 
 АКБ по категориям товаров:
 
-$product1 -- $quantity1 т.т.
-$product2 -- $quantity2 т.т.
-$product3 -- $quantity3 т.т.
-$product4 -- $quantity4 т.т.
-$product5 -- $quantity5 т.т.
-$product6 -- $quantity6 т.т.
+$categorySection
 
 ✿•┈┈┈┈••ৡ❀ৡ•┈┈┈┈•✿
 

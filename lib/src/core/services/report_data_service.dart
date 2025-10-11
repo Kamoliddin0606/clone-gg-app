@@ -72,12 +72,9 @@ class ReportDataService {
         throw DataConversionException('Main report data is null');
       }
 
-      // Format data for template
-      final formattedData = _formatReportData(
-        mainReport: mainReport,
-        businessRegionReports: businessRegionReports,
-        akbByCategories: akbByCategories,
-      );
+      // Build dynamic region and category lines
+      final regionLines = _buildRegionLines(businessRegionReports);
+      final categoryLines = _buildCategoryLines(akbByCategories);
 
       // Generate formatted report message
       return DailyReportTemplate.generateDailyReport(
@@ -87,35 +84,23 @@ class ReportDataService {
         territory: _prefs.getWarehouseCode() ?? 'Unknown',
         phone: '+998901234567', // TODO: Add phone field to user data
         territoryList: _prefs.getWarehouseCode() ?? 'Unknown Territory',
-        okbTerritory: formattedData['okbTerritory'] ?? '0',
-        visitedPoints: formattedData['visitedPoints'] ?? '0',
-        activeClients: formattedData['activeClients'] ?? '0',
-        region: formattedData['region'] ?? 'Unknown Region',
-        akbRegion: formattedData['akbRegion'] ?? '0',
-        cash: formattedData['cash'] ?? '0',
-        nonCash: formattedData['nonCash'] ?? '0',
-        totalOrders: formattedData['totalOrders'] ?? '0',
-        product1: formattedData['product1'] ?? 'N/A',
-        quantity1: formattedData['quantity1'] ?? '0',
-        product2: formattedData['product2'] ?? 'N/A',
-        quantity2: formattedData['quantity2'] ?? '0',
-        product3: formattedData['product3'] ?? 'N/A',
-        quantity3: formattedData['quantity3'] ?? '0',
-        product4: formattedData['product4'] ?? 'N/A',
-        quantity4: formattedData['quantity4'] ?? '0',
-        product5: formattedData['product5'] ?? 'N/A',
-        quantity5: formattedData['quantity5'] ?? '0',
-        product6: formattedData['product6'] ?? 'N/A',
-        quantity6: formattedData['quantity6'] ?? '0',
-        monthlyPlan: formattedData['monthlyPlan'] ?? '0',
-        monthlyFact: formattedData['monthlyFact'] ?? '0',
-        factPercent: formattedData['factPercent'] ?? '0',
-        forecast: formattedData['forecast'] ?? '0',
-        forecastPercent: formattedData['forecastPercent'] ?? '0',
-        okb: formattedData['okb'] ?? '0',
-        akbPlan: formattedData['akbPlan'] ?? '0',
-        akbFact: formattedData['akbFact'] ?? '0',
-        akbPercent: formattedData['akbPercent'] ?? '0',
+        okbTerritory: _safeString(mainReport.countOKB),
+        visitedPoints: _safeString(mainReport.countVisited),
+        activeClients: _safeString(mainReport.countAKB),
+        regionLines: regionLines,
+        cash: _formatCurrency(mainReport.cash),
+        nonCash: _formatCurrency(mainReport.transfer),
+        totalOrders: _formatCurrency(mainReport.sum),
+        categoryLines: categoryLines,
+        monthlyPlan: '0', // TODO: Add to MainReport model or calculate
+        monthlyFact: '0', // TODO: Add to MainReport model or calculate
+        factPercent: '0', // TODO: Add to MainReport model or calculate
+        forecast: '0', // TODO: Add to MainReport model or calculate
+        forecastPercent: '0', // TODO: Add to MainReport model or calculate
+        okb: _safeString(mainReport.countOKB),
+        akbPlan: '0', // TODO: Add to MainReport model
+        akbFact: _safeString(mainReport.countAKB),
+        akbPercent: '0', // TODO: Add to MainReport model or calculate
       );
 
     } on ReportFetchException {
@@ -131,70 +116,6 @@ class ReportDataService {
     }
   }
 
-  /// Formats raw API data into template-compatible format
-  /// Handles null values and provides defaults
-  Map<String, String> _formatReportData({
-    required MainReport mainReport,
-    List<BusinessRegionReport>? businessRegionReports,
-    List<AKBByCategory>? akbByCategories,
-  }) {
-    try {
-      final data = <String, String>{};
-
-      // Extract main report data
-      data['okbTerritory'] = _safeString(mainReport.countOKB);
-      data['visitedPoints'] = _safeString(mainReport.countVisited);
-      data['activeClients'] = _safeString(mainReport.countAKB);
-      data['cash'] = _formatCurrency(mainReport.cash);
-      data['nonCash'] = _formatCurrency(mainReport.transfer);
-      data['totalOrders'] = _formatCurrency(mainReport.sum);
-
-      // Note: MainReport doesn't have plan/fact/forecast fields, so we'll use defaults
-      // These would need to be added to the MainReport model or calculated separately
-      data['monthlyPlan'] = '0'; // TODO: Add to MainReport model or calculate
-      data['monthlyFact'] = '0'; // TODO: Add to MainReport model or calculate
-      data['factPercent'] = '0'; // TODO: Add to MainReport model or calculate
-      data['forecast'] = '0'; // TODO: Add to MainReport model or calculate
-      data['forecastPercent'] = '0'; // TODO: Add to MainReport model or calculate
-      data['okb'] = _safeString(mainReport.countOKB);
-      data['akbPlan'] = '0'; // TODO: Add to MainReport model
-      data['akbFact'] = _safeString(mainReport.countAKB);
-      data['akbPercent'] = '0'; // TODO: Add to MainReport model or calculate
-
-      // Extract business region data (first region as example)
-      if (businessRegionReports != null && businessRegionReports.isNotEmpty) {
-        final firstRegion = businessRegionReports.first;
-        data['region'] = firstRegion.name;
-        data['akbRegion'] = _safeString(firstRegion.akb);
-      } else {
-        data['region'] = 'No Region Data';
-        data['akbRegion'] = '0';
-      }
-
-      // Extract AKB by categories (up to 6 categories)
-      if (akbByCategories != null && akbByCategories.isNotEmpty) {
-        for (int i = 0; i < akbByCategories.length && i < 6; i++) {
-          final category = akbByCategories[i];
-          data['product${i + 1}'] = category.name;
-          data['quantity${i + 1}'] = _safeString(category.akb);
-        }
-      }
-
-      // Fill remaining categories with defaults if less than 6
-      for (int i = akbByCategories?.length ?? 0; i < 6; i++) {
-        data['product${i + 1}'] = 'N/A';
-        data['quantity${i + 1}'] = '0';
-      }
-
-      return data;
-
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error formatting report data: $e');
-      }
-      throw DataConversionException('Failed to format report data: $e', e);
-    }
-  }
 
   /// Safely converts a value to string, handling nulls
   String _safeString(dynamic value) {
@@ -222,5 +143,29 @@ class ReportDataService {
     }
 
     return buffer.toString().split('').reversed.join();
+  }
+
+  /// Builds dynamic region lines from business region reports
+  /// Returns a list of formatted strings for each region
+  List<String> _buildRegionLines(List<BusinessRegionReport>? businessRegionReports) {
+    if (businessRegionReports == null || businessRegionReports.isEmpty) {
+      return ['Нет данных по регионам'];
+    }
+
+    return businessRegionReports.map((region) {
+      return '${region.name} -- ${_safeString(region.akb)} т.т.';
+    }).toList();
+  }
+
+  /// Builds dynamic category lines from AKB by categories
+  /// Returns a list of formatted strings for each category
+  List<String> _buildCategoryLines(List<AKBByCategory>? akbByCategories) {
+    if (akbByCategories == null || akbByCategories.isEmpty) {
+      return ['Нет данных по категориям'];
+    }
+
+    return akbByCategories.map((category) {
+      return '${category.name} -- ${_safeString(category.akb)} т.т.';
+    }).toList();
   }
 }

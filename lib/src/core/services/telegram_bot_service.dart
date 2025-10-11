@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telegram_token_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/daily_report_template.dart';
 
 class TelegramBotService {
   final SharedPreferencesService _prefs = sl<SharedPreferencesService>();
@@ -31,9 +32,45 @@ class TelegramBotService {
         throw Exception('Chat ID not found in preferences');
       }
 
-      // Prepare message
-      String message = 'Hisobot yuborildi. xabar mobile ilova orqali yuborildi';
-      // TODO: Add actual report data here
+      // Prepare message using daily report template
+      // TODO: Replace placeholder data with actual API data
+      String message = DailyReportTemplate.generateDailyReport(
+        date: DateTime.now().toString().split(' ')[0], // YYYY-MM-DD format
+        time: DateTime.now().toString().split(' ')[1].substring(0, 8), // HH:MM:SS format
+        fullName: _prefs.getUserName() ?? 'Agent User',
+        territory: 'Tashkent', // TODO: Get from API
+        phone: '+998901234567', // TODO: Get from API
+        territoryList: 'Tashkent Region', // TODO: Get from API
+        okbTerritory: '150', // TODO: Get from API
+        visitedPoints: '25', // TODO: Get from API
+        activeClients: '20', // TODO: Get from API
+        region: 'Tashkent Center', // TODO: Get from API
+        akbRegion: '75', // TODO: Get from API
+        cash: '2,500,000', // TODO: Get from API
+        nonCash: '1,750,000', // TODO: Get from API
+        totalOrders: '4,250,000', // TODO: Get from API
+        product1: 'Kosmetika', // TODO: Get from API
+        quantity1: '50', // TODO: Get from API
+        product2: 'Parfum', // TODO: Get from API
+        quantity2: '30', // TODO: Get from API
+        product3: 'Shampun', // TODO: Get from API
+        quantity3: '25', // TODO: Get from API
+        product4: 'Krem', // TODO: Get from API
+        quantity4: '40', // TODO: Get from API
+        product5: 'Loson', // TODO: Get from API
+        quantity5: '15', // TODO: Get from API
+        product6: 'Maskara', // TODO: Get from API
+        quantity6: '35', // TODO: Get from API
+        monthlyPlan: '50,000,000', // TODO: Get from API
+        monthlyFact: '42,500,000', // TODO: Get from API
+        factPercent: '85', // TODO: Get from API
+        forecast: '48,000,000', // TODO: Get from API
+        forecastPercent: '96', // TODO: Get from API
+        okb: '180', // TODO: Get from API
+        akbPlan: '100', // TODO: Get from API
+        akbFact: '85', // TODO: Get from API
+        akbPercent: '85', // TODO: Get from API
+      );
 
       // Prepare request data
       Map<String, dynamic> data = {

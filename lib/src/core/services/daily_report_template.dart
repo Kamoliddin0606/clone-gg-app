@@ -36,49 +36,55 @@ class DailyReportTemplate {
 
     return '''
 #dailyReport
-📅 Дата: $date $time
-🙎🏻‍♂️ ФИО: $fullName  
+📅 <b>Дата:</b> $date $time
+🙎🏻‍♂️ <b>ФИО:</b> $fullName
 
-Территория : $territoryList
+🏢 <b><i>Территория :</i></b> $territoryList
 
-ОКБ и АКБ:
+<b>ОКБ и АКБ:</b>
 
-ОКБ по территории -- $okbTerritory т.т.
-Количество посещенных торговых точек -- $visitedPoints т.т.
-Активные клиенты сегодня -- $activeClients т.т.
+<i>• ОКБ по территории -- $okbTerritory т.т.
+• Количество посещенных торговых точек -- $visitedPoints т.т.
+• Активные клиенты сегодня -- $activeClients т.т.</i>
 
-Разделение АКБ по регионам:
+<b>Разделение АКБ по регионам:</b>
+<i>
+$regionSection</i>
 
-$regionSection
-
-Общая стоимость заказов:
-
-Наличные -- $cash Сум
-Безналичка -- $nonCash Сум
-Общая сумма заказов -- $totalOrders Сум
-
-АКБ по категориям товаров:
-
+<b>Общая стоимость заказов:</b>
+<i>
+• Наличные -- $cash Сум
+• Безналичка -- $nonCash Сум
+• <u>Общая сумма заказов -- $totalOrders Сум</u>
+</i>
+<b>АКБ по категориям товаров:</b>
+<i>
 $categorySection
-
+</i>
 ✿•┈┈┈┈••ৡ❀ৡ•┈┈┈┈•✿
 
-📊 Ежемесячный план и общие результаты на $date $time
+📊 <b>Ежемесячный план и общие результаты на $date $time</b>
 
-План и факт:
+<b>План и факт:</b>
+<i>
+• План -- $monthlyPlan Сум
+• Факт -- $monthlyFact Сум
+• Факт в процентах -- $factPercent%
+</i>
+<b>Прогноз:</b>
+<i>
+• Прогноз -- $forecast Сум
+• Прогноз в процентах -- $forecastPercent%
+</i>
+<b>ОКБ и АКБ:</b>
+<i>
+• ОКБ -- $okb т.т.
+• АКБ план -- $akbPlan т.т.
+• АКБ факт -- $akbFact т.т.
+• АКБ в процентах -- $akbPercent%
+</i>
+'''
 
-План -- $monthlyPlan Сум
-Факт -- $monthlyFact Сум
-Факт в процентах -- $factPercent%
-Прогноз -- $forecast Сум
-Прогноз в процентах -- $forecastPercent%
-
-ОКБ и АКБ:
-
-ОКБ -- $okb т.т.
-АКБ план -- $akbPlan т.т.
-АКБ факт -- $akbFact т.т.
-АКБ в процентах -- $akbPercent%
-''';
+    ;
   }
 }

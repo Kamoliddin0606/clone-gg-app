@@ -51,6 +51,7 @@ class TelegramBotService {
       Map<String, dynamic> data = {
         'chat_id': chatId,
         'text': message,
+        'parse_mode': 'HTML',
       };
 
       if (topicId != null) {

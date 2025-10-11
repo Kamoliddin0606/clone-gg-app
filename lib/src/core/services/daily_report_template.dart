@@ -37,7 +37,7 @@ class DailyReportTemplate {
     return '''
 #dailyReport
 📅 Дата: $date $time
-🙎🏻‍♂️ ФИО: $fullName ($territory) $phone
+🙎🏻‍♂️ ФИО: $fullName  
 
 Территория : $territoryList
 

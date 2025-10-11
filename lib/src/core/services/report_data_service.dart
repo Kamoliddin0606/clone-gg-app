@@ -44,8 +44,8 @@ class ReportDataService {
     try {
       // Get current date range (current month)
       final now = DateTime.now();
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final endOfMonth = DateTime(now.year, now.month+1, 0);
+      final startOfMonth = now;
+      final endOfMonth = now;
 
       final dateStart = startOfMonth.toIso8601String().split('T')[0];
       final dateEnd = endOfMonth.toIso8601String().split('T')[0];
@@ -75,6 +75,7 @@ class ReportDataService {
       // Build dynamic region and category lines
       final regionLines = _buildRegionLines(businessRegionReports);
       final categoryLines = _buildCategoryLines(akbByCategories);
+      final territoryList = _buildTerritoryList(businessRegionReports);
 
       // Generate formatted report message
       return DailyReportTemplate.generateDailyReport(
@@ -82,8 +83,8 @@ class ReportDataService {
         time: DateTime.now().toString().split(' ')[1].substring(0, 8),
         fullName: _prefs.getUserName() ?? 'Agent User',
         territory: _prefs.getWarehouseCode() ?? 'Unknown',
-        phone: '+998901234567', // TODO: Add phone field to user data
-        territoryList: _prefs.getWarehouseCode() ?? 'Unknown Territory',
+        phone: '-', // TODO: Add phone field to user data
+        territoryList: territoryList,
         okbTerritory: _safeString(mainReport.countOKB),
         visitedPoints: _safeString(mainReport.countVisited),
         activeClients: _safeString(mainReport.countAKB),
@@ -97,9 +98,9 @@ class ReportDataService {
         factPercent: '0', // TODO: Add to MainReport model or calculate
         forecast: '0', // TODO: Add to MainReport model or calculate
         forecastPercent: '0', // TODO: Add to MainReport model or calculate
-        okb: _safeString(mainReport.countOKB),
+        okb: "0", // TODO: Add to MainReport model or calculate
         akbPlan: '0', // TODO: Add to MainReport model
-        akbFact: _safeString(mainReport.countAKB),
+        akbFact: '0', // TODO: Add to MainReport model
         akbPercent: '0', // TODO: Add to MainReport model or calculate
       );
 
@@ -167,5 +168,16 @@ class ReportDataService {
     return akbByCategories.map((category) {
       return '${category.name} -- ${_safeString(category.akb)} т.т.';
     }).toList();
+  }
+
+  /// Builds territory list as comma-separated region names
+  /// Returns a string with all region names joined by commas
+  String _buildTerritoryList(List<BusinessRegionReport>? businessRegionReports) {
+    if (businessRegionReports == null || businessRegionReports.isEmpty) {
+      return _prefs.getWarehouseCode() ?? 'Unknown Territory';
+    }
+
+    final regionNames = businessRegionReports.map((region) => region.name).toList();
+    return regionNames.join(', ');
   }
 }

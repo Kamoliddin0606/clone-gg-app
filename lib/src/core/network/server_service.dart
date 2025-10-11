@@ -47,4 +47,10 @@ class ServerService {
   }
 
   String get baseUrl => current.value.url;
+
+  /// Retrieves the current server name from shared preferences.
+  /// Returns the server name or null if not set.
+  String? getCurrentServerName() {
+    return _prefs.getServerName();
+  }
 }

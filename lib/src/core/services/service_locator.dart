@@ -9,6 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/services/api_database_service.
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/reports_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telegram_bot_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telegram_token_service.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -71,6 +72,9 @@ Future<void> setupServiceLocator() async {
       dbService: sl<ApiDatabaseService>(),
       dbHelper: sl<DatabaseHelper>(),
     ));
+  }
+  if (!sl.isRegistered<TelegramTokenService>()) {
+    sl.registerLazySingleton<TelegramTokenService>(() => TelegramTokenService());
   }
   if (!sl.isRegistered<TelegramBotService>()) {
     sl.registerLazySingleton<TelegramBotService>(() => TelegramBotService());

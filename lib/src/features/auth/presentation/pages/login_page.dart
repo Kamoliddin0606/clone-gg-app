@@ -20,6 +20,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
+  bool _isServerExplicitlySelected = false;
   late AnimationController _animationController;
 
   // (Saqladim — lekin pastda Theme.of(context) ranglari ishlatiladi)
@@ -49,10 +50,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         );
       },
     );
-
+    print(' tanlangan server malumotlar ${selected.toString()}');
+    print(' tanlangan server url ${selected?.url}');
+    print(' tanlangan server nomi ${selected?.name}');
     if (selected != null) {
       // Tanlovni saqlaymiz — ApiService baseUrl avtomatik yangilanadi
       await service.set(selected);
+      _isServerExplicitlySelected = true;
 
       // (ixtiyoriy) eski login/credentiallarni tozalash:
       // await sl<SharedPreferencesService>().clearCredentials();
@@ -124,6 +128,17 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         await prefs.saveCredentials(_usernameController.text, _passwordController.text, _rememberMe);
       }
     } catch (_) {}
+
+    // Ensure server is saved if not explicitly selected
+    if (!_isServerExplicitlySelected) {
+      try {
+        final serverService = sl<ServerService>();
+        await serverService.set(serverService.current.value);
+      } catch (e) {
+        // Log error but don't block login
+        print('Error saving default server: $e');
+      }
+    }
 
     // First try online authentication
     context.read<AuthBloc>().add(LoginButtonPressed(

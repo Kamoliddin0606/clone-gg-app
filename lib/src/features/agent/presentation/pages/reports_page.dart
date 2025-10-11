@@ -208,6 +208,37 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                                       _isReportSentToTelegram = true;
                                     });
                                   }
+                                } else {
+                                  // Agar allaqachon yuborilgan bo'lsa, qayta yuborishni taklif qilish
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext dialogContext) {
+                                      return AlertDialog(
+                                        title: const Text('Hisobot yuborilgan'),
+                                        content: const Text(
+                                          'Hisobot allaqachon sizning Telegram guruhingizga  yuborilgan. Qayta yuborishni xohlaysizmi?',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(dialogContext).pop(),
+                                            child: const Text('Bekor qilish'),
+                                          ),
+                                          FilledButton(
+                                            onPressed: () async {
+                                              Navigator.of(dialogContext).pop();
+                                              final success = await telegramBotService.sendReportToTelegram(context);
+                                              if (success) {
+                                                setState(() {
+                                                  _isReportSentToTelegram = true;
+                                                });
+                                              }
+                                            },
+                                            child: const Text('Qayta yuborish'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
                                 }
                               },
                               icon: Icon(Icons.telegram_outlined, color: _isReportSentToTelegram ? Colors.grey : Colors.blue),

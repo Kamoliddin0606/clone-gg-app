@@ -189,12 +189,32 @@ Future<void> init() async {
     await _preferences.remove(_isOfflineModeKey);
   }
 
-  // Report sent to Telegram
+  // Report sent to Telegram (date-aware)
   Future<void> setReportSentToTelegram(bool value) async {
     await _preferences.setBool('isReportSentToTelegram', value);
+    if (value) {
+      // Set today's date when marking as sent
+      final today = DateTime.now().toIso8601String().split('T')[0]; // yyyy-MM-dd format
+      await _preferences.setString('sentTelegramReportDate', today);
+    } else {
+      // Clear the date when resetting
+      await _preferences.remove('sentTelegramReportDate');
+    }
   }
 
   bool isReportSentToTelegram() {
+    final savedDate = _preferences.getString('sentTelegramReportDate');
+    final today = DateTime.now().toIso8601String().split('T')[0]; // yyyy-MM-dd format
+
+    // If no date saved or date doesn't match today, reset to false
+    if (savedDate == null || savedDate != today) {
+      // Reset the flag since it's a new day
+      _preferences.setBool('isReportSentToTelegram', false);
+      _preferences.remove('sentTelegramReportDate');
+      return false;
+    }
+
+    // Return the current value
     return _preferences.getBool('isReportSentToTelegram') ?? false;
   }
 }

@@ -9,8 +9,7 @@ class TelegramBotService {
   final Dio _dio = sl<Dio>();
   final TelegramTokenService _tokenService = sl<TelegramTokenService>();
 
-  static const String _chatId = '-1002961331869';
-  static const int? _topicId = 6; // Set to topic id if needed
+  // Chat ID and Topic ID will be retrieved from shared preferences
 
   /// Sends report to Telegram bot.
   /// Configures to send to specified chat, uses topic if available.
@@ -23,18 +22,27 @@ class TelegramBotService {
       // Get token from server
       final botToken = await _tokenService.getToken();
 
+      // Get chat ID and topic ID from shared preferences
+      final chatId = _prefs.getChatID();
+      final topicIdString = _prefs.getTopicID();
+      final topicId = topicIdString != null ? int.tryParse(topicIdString) : null;
+
+      if (chatId == null || chatId.isEmpty) {
+        throw Exception('Chat ID not found in preferences');
+      }
+
       // Prepare message
       String message = 'Hisobot yuborildi. xabar mobile ilova orqali yuborildi';
       // TODO: Add actual report data here
 
       // Prepare request data
       Map<String, dynamic> data = {
-        'chat_id': _chatId,
+        'chat_id': chatId,
         'text': message,
       };
 
-      if (_topicId != null) {
-        data['message_thread_id'] = _topicId;
+      if (topicId != null) {
+        data['message_thread_id'] = topicId;
       }
 
       // Send message via Telegram API

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/services/reports_sync_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/shared_preferences_service.dart';
+import '../../../../core/services/telegram_bot_service.dart';
 import '../../../navbars/agent_bottom_nav_bar.dart';
 import 'main_report_page.dart';
 import 'visits_report_page.dart';
@@ -23,6 +24,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
   bool _isMenuOpen = false;
   bool _isHeaderVisible = true;
   bool _isLoading = false;
+  bool _isReportSentToTelegram = false;
   String? _errorMessage;
   late AnimationController _menuAnimationController;
   late Animation<double> _menuSlide;     // -1..0 (menu)
@@ -34,6 +36,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
   late PageController _pageController;
 
   final prefs = sl<SharedPreferencesService>();
+  final telegramBotService = sl<TelegramBotService>();
   late final userCode = prefs.getUserCode() ?? '';
   late final password = prefs.getPassword() ?? '';
 
@@ -96,6 +99,9 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
 
     // Start with header visible
     _headerAnimationController.value = 1.0;
+
+    // Load initial report sent status
+    _isReportSentToTelegram = prefs.isReportSentToTelegram();
   }
 
   @override
@@ -190,11 +196,22 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                             onPressed: _toggleHeaderVisibility,
                             icon: Icon(_isHeaderVisible ? Icons.visibility_off : Icons.visibility),
                           ),
-                          IconButton(
-                            tooltip: 'Telegram bot orqali bot yuborish',
-                            onPressed: null,
-                            icon: const Icon(Icons.telegram_outlined, color: Colors.blue),
-                          ),
+                          if (prefs.getServerName() == 'Evyap')
+
+                            IconButton(
+                              tooltip: 'Telegram bot orqali hisobot yuborish',
+                              onPressed: () async {
+                                if (!_isReportSentToTelegram) {
+                                  final success = await telegramBotService.sendReportToTelegram(context);
+                                  if (success) {
+                                    setState(() {
+                                      _isReportSentToTelegram = true;
+                                    });
+                                  }
+                                }
+                              },
+                              icon: Icon(Icons.telegram_outlined, color: _isReportSentToTelegram ? Colors.grey : Colors.blue),
+                            ),
                           IconButton(
                             tooltip: 'Filtr',
                             onPressed: _showDateFilterDialog,

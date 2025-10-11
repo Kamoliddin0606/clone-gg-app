@@ -123,8 +123,11 @@ Future<void> init() async {
   Future<bool> setServerName(String name) async =>
       _preferences.setString(_serverNameKey, name);
 
-  String? getServerName() =>
-      _preferences.getString(_serverNameKey);
+  String? getServerName() {
+    final serverName = _preferences.getString(_serverNameKey);
+    print('Retrieved server name: $serverName');
+    return serverName;
+  }
 
   Future<bool> clearServerName() async =>
       _preferences.remove(_serverNameKey);
@@ -149,5 +152,14 @@ Future<void> init() async {
 
   Future<void> clearOfflineMode() async {
     await _preferences.remove(_isOfflineModeKey);
+  }
+
+  // Report sent to Telegram
+  Future<void> setReportSentToTelegram(bool value) async {
+    await _preferences.setBool('isReportSentToTelegram', value);
+  }
+
+  bool isReportSentToTelegram() {
+    return _preferences.getBool('isReportSentToTelegram') ?? false;
   }
 }

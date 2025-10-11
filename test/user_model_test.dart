@@ -13,6 +13,9 @@ void main() {
       'warehouseCode': 'W001',
       'codeProject': 'P001',
       'baseUrl': 'http://example.com/api',
+      'telegramID': '123456789',
+      'chatID': '987654321',
+      'topicID': '123456',
     };
 
     test('fromJson creates UserModel with valid data', () {
@@ -51,6 +54,9 @@ void main() {
         'Type': '1',
         'CodeProject': 'P001',
         'WarehouseCode': 'W001',
+        'TelegramID': '123456789',
+        'ChatID': '987654321',
+        'TopicID': '123456',
       };
 
       final user = UserModel.fromSoap(soapData, baseUrl: 'http://example.com/api');
@@ -64,6 +70,9 @@ void main() {
       expect(user.warehouseCode, 'W001');
       expect(user.codeProject, 'P001');
       expect(user.baseUrl, 'http://example.com/api');
+      expect(user.telegramID, '123456789');
+      expect(user.chatID, '987654321');
+      expect(user.topicID, '123456');
     });
 
     test('fromSoap throws FormatException for invalid baseUrl', () {
@@ -76,11 +85,14 @@ void main() {
       expect(() => UserModel.fromSoap(soapData, baseUrl: 'invalid-url'), throwsFormatException);
     });
 
-    test('toJson includes baseUrl', () {
+    test('toJson includes all fields', () {
       final user = UserModel.fromJson(validUserData);
       final json = user.toJson();
 
       expect(json['baseUrl'], 'http://example.com/api');
+      expect(json['telegramID'], '123456789');
+      expect(json['chatID'], '987654321');
+      expect(json['topicID'], '123456');
     });
 
     test('UserModel constructor creates instance with all required fields', () {
@@ -94,9 +106,15 @@ void main() {
         warehouseCode: 'W001',
         codeProject: 'P001',
         baseUrl: 'http://example.com',
+        telegramID: '123456789',
+        chatID: '987654321',
+        topicID: '123456',
       );
 
       expect(user.baseUrl, 'http://example.com');
+      expect(user.telegramID, '123456789');
+      expect(user.chatID, '987654321');
+      expect(user.topicID, '123456');
     });
 
     test('_mapUserType maps user types correctly', () {

@@ -11,6 +11,9 @@ class UserModel extends UserEntity {
     required super.warehouseCode,
     required super.codeProject,
     required super.baseUrl,
+    required super.telegramID,
+    required super.chatID,
+    required super.topicID,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +31,9 @@ class UserModel extends UserEntity {
       warehouseCode: json['warehouseCode'],
       codeProject: json['codeProject'] ?? '',
       baseUrl: baseUrl,
+      telegramID: json['telegramID'] ?? '',
+      chatID: json['chatID'] ?? '',
+      topicID: json['topicID'] ?? '',
     );
   }
 
@@ -35,6 +41,11 @@ class UserModel extends UserEntity {
     if (baseUrl.isNotEmpty && !_isValidUrl(baseUrl)) {
       throw FormatException('Invalid baseUrl format: $baseUrl');
     }
+    // Log new parameters for debugging
+    print('TelegramID: ${soapResponse['TelegramID'] ?? 'N/A'}');
+    print('ChatID: ${soapResponse['ChatID'] ?? 'N/A'}');
+    print('TopicID: ${soapResponse['TopicID'] ?? 'N/A'}');
+
     return UserModel(
       id: soapResponse['Code'],
       username: username ?? '', // Username is passed from request
@@ -45,6 +56,9 @@ class UserModel extends UserEntity {
       warehouseCode: soapResponse['WarehouseCode'] ?? '',
       codeProject: soapResponse['CodeProject'] ?? '',
       baseUrl: baseUrl,
+      telegramID: soapResponse['TelegramID'] ?? '',
+      chatID: soapResponse['ChatID'] ?? '',
+      topicID: soapResponse['TopicID'] ?? '',
     );
   }
 
@@ -90,6 +104,9 @@ class UserModel extends UserEntity {
       'warehouseCode': warehouseCode,
       'codeProject': codeProject,
       'baseUrl': baseUrl,
+      'telegramID': telegramID,
+      'chatID': chatID,
+      'topicID': topicID,
     };
   }
 }

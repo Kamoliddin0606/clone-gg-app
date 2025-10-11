@@ -9,6 +9,9 @@ class SharedPreferencesService {
   static const String _userNameKey = 'user_name';
   static const String _warehouseCodeKey = 'warehouse_code';
   static const String _codeProjectKey = 'code_project';
+  static const String _telegramIDKey = 'telegram_id';
+  static const String _chatIDKey = 'chat_id';
+  static const String _topicIDKey = 'topic_id';
 
   static const String _serverNameKey = 'selected_server_env';
   static const String _baseUrlKey = 'selected_server_base_url';
@@ -51,11 +54,19 @@ Future<void> init() async {
     required String userName,
     required String warehouseCode,
     required String codeProject,
+    required String telegramID,
+    required String chatID,
+    required String topicID,
   }) async {
     await _preferences.setString(_userCodeKey, userCode);
     await _preferences.setString(_userNameKey, userName);
     await _preferences.setString(_warehouseCodeKey, warehouseCode);
     await _preferences.setString(_codeProjectKey, codeProject);
+    await _preferences.setString(_telegramIDKey, telegramID);
+    await _preferences.setString(_chatIDKey, chatID);
+    await _preferences.setString(_topicIDKey, topicID);
+    // Log for debugging
+    print('Saved TelegramID: $telegramID, ChatID: $chatID, TopicID: $topicID');
   }
 
   // Get saved username
@@ -107,6 +118,27 @@ Future<void> init() async {
     return _preferences.getString(_codeProjectKey);
   }
 
+  // Get telegram ID
+  String? getTelegramID() {
+    final id = _preferences.getString(_telegramIDKey);
+    print('Retrieved TelegramID: $id');
+    return id;
+  }
+
+  // Get chat ID
+  String? getChatID() {
+    final id = _preferences.getString(_chatIDKey);
+    print('Retrieved ChatID: $id');
+    return id;
+  }
+
+  // Get topic ID
+  String? getTopicID() {
+    final id = _preferences.getString(_topicIDKey);
+    print('Retrieved TopicID: $id');
+    return id;
+  }
+
   // Get password (for API calls)
   String? getPassword() {
     return _preferences.getString(_passwordKey);
@@ -118,6 +150,9 @@ Future<void> init() async {
     await _preferences.remove(_userNameKey);
     await _preferences.remove(_warehouseCodeKey);
     await _preferences.remove(_codeProjectKey);
+    await _preferences.remove(_telegramIDKey);
+    await _preferences.remove(_chatIDKey);
+    await _preferences.remove(_topicIDKey);
   }
 
   Future<bool> setServerName(String name) async =>

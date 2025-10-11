@@ -27,6 +27,9 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
   String password = "";
   String warehouseCode = "";
   String codeProject = "";
+  String telegramID = "";
+  String chatID = "";
+  String topicID = "";
   bool _isLoadingKpi = false;
   bool _isKpiCardsExpanded = false;
   bool _isDataSyncInProgress = false;
@@ -93,6 +96,9 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
         warehouseCode = prefs.getWarehouseCode() ?? "";
         codeProject = prefs.getCodeProject() ?? "";
         userName = prefs.getUserName() ?? "Agent User";
+        telegramID = prefs.getTelegramID() ?? "";
+        chatID = prefs.getChatID() ?? "";
+        topicID = prefs.getTopicID() ?? "";
       });
 
       // Check if preferences user matches database user
@@ -158,6 +164,9 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
         userName: userName,
         warehouseCode: warehouseCode,
         codeProject: codeProject,
+        telegramID: telegramID,
+        chatID: chatID,
+        topicID: topicID,
       );
 
       if (kDebugMode) {

@@ -19,7 +19,7 @@ List<int> unzipDatabase(List<int> bytes) {
 class DatabaseHelper {
   static const _dbName = "GloriyaMarketing.db";
   static const _zipAssetName = "GloriyaMarketing.zip";
-  static const _dbVersion = 3;
+  static const _dbVersion = 4;
 
   Database? _database;
 
@@ -114,6 +114,9 @@ class DatabaseHelper {
         warehouse_code TEXT,
         code_project TEXT,
         base_url TEXT NOT NULL,
+        telegram_id TEXT,
+        chat_id TEXT,
+        topic_id TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -157,6 +160,12 @@ class DatabaseHelper {
     if (oldVersion < 3) {
       // Add base_url column to users table
       await db.execute('ALTER TABLE users ADD COLUMN base_url TEXT NOT NULL DEFAULT ""');
+    }
+    if (oldVersion < 4) {
+      // Add Telegram-related columns to users table
+      await db.execute('ALTER TABLE users ADD COLUMN telegram_id TEXT');
+      await db.execute('ALTER TABLE users ADD COLUMN chat_id TEXT');
+      await db.execute('ALTER TABLE users ADD COLUMN topic_id TEXT');
     }
   }
 

@@ -114,6 +114,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         userName: state.user.name,
         warehouseCode: state.user.warehouseCode,
         codeProject: state.user.codeProject,
+        telegramID: state.user.telegramID,
+        chatID: state.user.chatID,
+        topicID: state.user.topicID,
       );
     } catch (_) {}
   }
@@ -259,6 +262,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         userName: userData['name'],
         warehouseCode: userData['warehouse_code'],
         codeProject: userData['code_project'],
+        telegramID: userData['telegram_id'] ?? '',
+        chatID: userData['chat_id'] ?? '',
+        topicID: userData['topic_id'] ?? '',
       );
 
       // Navigate to home page
@@ -322,6 +328,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         'warehouse_code': state.user.warehouseCode,
         'code_project': state.user.codeProject,
         'base_url': state.user.baseUrl,
+        'telegram_id': state.user.telegramID,
+        'chat_id': state.user.chatID,
+        'topic_id': state.user.topicID,
       });
       final users = await dbHelper.getAllUsers();
       print('DB Users: $users');

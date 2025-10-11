@@ -63,6 +63,9 @@ class AuthRepositoryImpl implements AuthRepository {
           'Type': returnElement.findElements('m:Type').first.innerText,
           'CodeProject': returnElement.findElements('m:CodeProject').first.innerText,
           'WarehouseCode': returnElement.findElements('m:CodeSklad').first.innerText,
+          'TelegramID': returnElement.findElements('m:telegramID').firstOrNull?.innerText ?? '',
+          'ChatID': returnElement.findElements('m:chatID').firstOrNull?.innerText ?? '',
+          'TopicID': returnElement.findElements('m:topicID').firstOrNull?.innerText ?? '',
         }, username: username, baseUrl: serverService.baseUrl);
       } else {
         // Failed login

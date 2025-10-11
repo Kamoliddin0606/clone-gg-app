@@ -172,6 +172,9 @@ class DataSyncService {
         'warehouse_code': prefsWarehouseCode,
         'code_project': prefsCodeProject,
         'base_url': _prefs.getBaseUrl() ?? '',
+        'telegram_id': _prefs.getTelegramID() ?? '',
+        'chat_id': _prefs.getChatID() ?? '',
+        'topic_id': _prefs.getTopicID() ?? '',
       });
 
       // Clear all other tables except users
@@ -324,6 +327,9 @@ class DataSyncService {
         warehouseCode: codeSklad,
         codeProject: codeProject,
         baseUrl: _prefs.getBaseUrl() ?? '',
+        telegramID: _prefs.getTelegramID() ?? '',
+        chatID: _prefs.getChatID() ?? '',
+        topicID: _prefs.getTopicID() ?? '',
       );
 
       final isValid = await validateUserWithDatabase();

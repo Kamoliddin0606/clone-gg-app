@@ -72,6 +72,12 @@ class ReportDataService {
         throw DataConversionException('Main report data is null');
       }
 
+      // Fetch KPI data for monthly statistics
+      final kpiData = await _soapApiService.getKpiData(
+        userCode: userCode,
+        password: _prefs.getPassword() ?? '',
+      );
+
       // Build dynamic region and category lines
       final regionLines = _buildRegionLines(businessRegionReports);
       final categoryLines = _buildCategoryLines(akbByCategories);
@@ -93,15 +99,15 @@ class ReportDataService {
         nonCash: _formatCurrency(mainReport.transfer),
         totalOrders: _formatCurrency(mainReport.sum),
         categoryLines: categoryLines,
-        monthlyPlan: '0', // TODO: Add to MainReport model or calculate
-        monthlyFact: '0', // TODO: Add to MainReport model or calculate
-        factPercent: '0', // TODO: Add to MainReport model or calculate
-        forecast: '0', // TODO: Add to MainReport model or calculate
-        forecastPercent: '0', // TODO: Add to MainReport model or calculate
-        okb: "0", // TODO: Add to MainReport model or calculate
-        akbPlan: '0', // TODO: Add to MainReport model
-        akbFact: '0', // TODO: Add to MainReport model
-        akbPercent: '0', // TODO: Add to MainReport model or calculate
+        monthlyPlan: _formatCurrency(kpiData.plan),
+        monthlyFact: _formatCurrency(kpiData.fact),
+        factPercent: kpiData.totalPercent,
+        forecast: _formatCurrency(kpiData.totalForecast),
+        forecastPercent: kpiData.totalPercentForecastFact,
+        okb: _safeString(kpiData.okb),
+        akbPlan: _safeString(kpiData.akbPlan),
+        akbFact: _safeString(kpiData.akbFact),
+        akbPercent: kpiData.akbPercent,
       );
 
     } on ReportFetchException {

@@ -4,6 +4,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/s
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/trading_points_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/warehouses_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/contracts_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/order_detail_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/orders_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/reports_page.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/pages/login_page.dart';
@@ -26,6 +28,7 @@ class AppRouter {
   static const String warehousesRoute = '/warehouses';
   static const String contractsRoute = '/contracts';
   static const String ordersRoute = '/orders';
+  static const String orderDetailRoute = '/order-detail';
   static const String marketingRoute = '/marketing';
   static const String reportsRoute = '/reports';
   static const String settingsRoute = '/settings';
@@ -54,6 +57,18 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ContractsPage());
       case ordersRoute:
         return MaterialPageRoute(builder: (_) => const OrdersPage());
+      case orderDetailRoute:
+        final order = settings.arguments as Order?;
+        if (order != null) {
+          return MaterialPageRoute(builder: (_) => OrderDetailPage(order: order));
+        }
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: const Center(
+              child: Text('Order not provided for detail page'),
+            ),
+          ),
+        );
       case marketingRoute:
         return MaterialPageRoute(builder: (_) => const MarketingPage());
       case reportsRoute:

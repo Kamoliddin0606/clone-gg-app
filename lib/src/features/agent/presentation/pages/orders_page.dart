@@ -496,9 +496,10 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   }
 
   void _navigateToOrderDetail(Order order) {
-    // TODO: Navigate to order detail page
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Buyurtma: ${order.numOrder}')),
+    Navigator.pushNamed(
+      context,
+      '/order-detail',
+      arguments: order,
     );
   }
 }

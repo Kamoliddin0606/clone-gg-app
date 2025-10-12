@@ -5,16 +5,15 @@ import 'package:intl/intl.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
-import '../../../../Utility/formatter.dart';
 import '../../data/models/order.dart';
+import '../widgets/order_card_widget.dart';
 
 enum _ViewMode { list, grid }
 enum OrderStatusFilter { all, delivered, pending, cancelled, expired }
 
-/// Format number with spaces as thousand separators
-String formatNumber(num number) {
-  final formatter = NumberFormat('#,###', 'en_US');
-  return formatter.format(number).replaceAll(',', ' ');
+/// Helper function for search matching
+bool matchesSearch(String text, String query) {
+  return text.toLowerCase().contains(query.toLowerCase());
 }
 
 class OrdersPage extends StatefulWidget {
@@ -445,12 +444,13 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                       itemCount: tabOrders.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
-                        final order = tabOrders[index];
-                        return OrderCard(
-                          order: order,
-                          onTap: () => _navigateToOrderDetail(order),
-                        );
-                      },
+                          final order = tabOrders[index];
+                          return OrderCardWidget(
+                            order: order,
+                            onTap: () => _navigateToOrderDetail(order),
+                            isGridView: false,
+                          );
+                        },
                     )
                         : GridView.builder(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -463,9 +463,10 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                       itemCount: tabOrders.length,
                       itemBuilder: (context, index) {
                         final order = tabOrders[index];
-                        return OrderGridTile(
+                        return OrderCardWidget(
                           order: order,
                           onTap: () => _navigateToOrderDetail(order),
+                          isGridView: true,
                         );
                       },
                     ),
@@ -604,261 +605,5 @@ class _ViewToolbar extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class OrderCard extends StatelessWidget {
-  final Order order;
-  final VoidCallback? onTap;
-
-  const OrderCard({
-    super.key,
-    required this.order,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: cs.surface,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          order.numOrder,
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.business, size: 16, color: cs.onSurfaceVariant),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Mijoz: ${order.clientName}',
-                                style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.calendar_today, size: 16, color: cs.onSurfaceVariant),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Sana: ${DateFormat('dd.MM.yyyy HH:mm').format(order.dateOrder)}',
-                              style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '${formatNumber(order.total)} UZS',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: cs.primary,
-                        ),
-                        textAlign: TextAlign.right,
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(order.mainStatus, cs),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          order.mainStatus,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: _getStatusTextColor(order.mainStatus, cs),
-                            fontWeight: FontWeight.w600,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Color _getStatusColor(String status, ColorScheme cs) {
-    if (status.contains('Доставлено')) {
-      return cs.primaryContainer;
-    } else if (status.contains('возврат')) {
-      return cs.errorContainer;
-    } else if (status.contains('Оператор') || status.contains('комплектации')) {
-      return cs.secondaryContainer;
-    } else if (status.contains('истёк')) {
-      return cs.tertiaryContainer;
-    }
-    return cs.surfaceContainerHighest;
-  }
-
-  Color _getStatusTextColor(String status, ColorScheme cs) {
-    if (status.contains('Доставлено')) {
-      return cs.onPrimaryContainer;
-    } else if (status.contains('возврат')) {
-      return cs.onErrorContainer;
-    } else if (status.contains('Оператор') || status.contains('комплектации')) {
-      return cs.onSecondaryContainer;
-    } else if (status.contains('истёк')) {
-      return cs.onTertiaryContainer;
-    }
-    return cs.onSurfaceVariant;
-  }
-}
-
-class OrderGridTile extends StatelessWidget {
-  final Order order;
-  final VoidCallback? onTap;
-
-  const OrderGridTile({
-    super.key,
-    required this.order,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
-    return Card(
-      elevation: 6,
-      shadowColor: Colors.black.withValues(alpha: 0.15),
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        splashColor: cs.primary.withValues(alpha: 0.10),
-        highlightColor: cs.primary.withValues(alpha: 0.10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // TOP: order icon
-            SizedBox(
-              height: 100,
-              child: Container(
-                color: cs.primaryContainer,
-                child: const Center(child: Icon(Icons.shopping_cart, size: 40)),
-              ),
-            ),
-            // BODY: details
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    order.numOrder,
-                    maxLines: 2,
-                    softWrap: true,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    order.clientName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Summa: ${formatNumber(order.total)} UZS',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(order.mainStatus, cs),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      order.mainStatus,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: _getStatusTextColor(order.mainStatus, cs),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 10,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _getStatusColor(String status, ColorScheme cs) {
-    if (status.contains('Доставлено')) {
-      return cs.primaryContainer;
-    } else if (status.contains('возврат')) {
-      return cs.errorContainer;
-    } else if (status.contains('Оператор') || status.contains('комплектации')) {
-      return cs.secondaryContainer;
-    } else if (status.contains('истёк')) {
-      return cs.tertiaryContainer;
-    }
-    return cs.surfaceContainerHighest;
-  }
-
-  Color _getStatusTextColor(String status, ColorScheme cs) {
-    if (status.contains('Доставлено')) {
-      return cs.onPrimaryContainer;
-    } else if (status.contains('возврат')) {
-      return cs.onErrorContainer;
-    } else if (status.contains('Оператор') || status.contains('комплектации')) {
-      return cs.onSecondaryContainer;
-    } else if (status.contains('истёк')) {
-      return cs.onTertiaryContainer;
-    }
-    return cs.onSurfaceVariant;
   }
 }

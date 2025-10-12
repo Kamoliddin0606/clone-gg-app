@@ -209,16 +209,51 @@ Orders can be accessed from the main drawer menu under "Buyurtmalar".
 - `intl`: Date and number formatting
 - `flutter_bloc`: State management (inherited from app architecture)
 
+## UI Design Updates
+
+### Order Card Widget
+A new modern order card widget has been implemented with the following features:
+
+- **Material Design 3 Compliance**: Uses proper color schemes, typography, and spacing
+- **Dual View Modes**: Supports both list and grid view layouts
+- **Status Color Coding**:
+  - **Доставлено** (Delivered): Primary container color
+  - **Возврат** (Return): Error container color
+  - **В процессе** (In Progress): Secondary container color
+  - **Истек** (Expired): Tertiary container color
+  - **Новый** (New): Default surface color
+- **Responsive Design**: Adapts to different screen sizes and content lengths
+- **Accessibility**: Proper contrast ratios and touch targets
+- **No Images**: Grid view does not include images as requested
+
+### Key UI Components
+
+#### List View Card
+- Order ID and status in header
+- Client information with business icon
+- Client code display
+- Date and amount in bottom row
+- Price type display (when available)
+
+#### Grid View Card
+- Compact status chip at top-right
+- Order ID and client name
+- Shortened date format
+- Amount display
+- Status chip with truncated text for long statuses
+
 ## Files Created/Modified
 
 ### New Files
 - `lib/src/features/agent/data/models/order.dart`
 - `lib/src/features/agent/data/models/order_status.dart`
 - `lib/src/features/agent/presentation/pages/orders_page.dart`
+- `lib/src/features/agent/presentation/widgets/order_card_widget.dart`
 - `test/order_database_test.dart`
 - `test/order_model_test.dart`
 - `test/order_status_database_test.dart`
 - `test/order_status_model_test.dart`
+- `test/order_card_widget_test.dart`
 
 ### Modified Files
 - `lib/src/core/database/database_helper.dart` (added order tables)

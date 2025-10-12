@@ -15,6 +15,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_c
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_report.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
@@ -1137,6 +1139,94 @@ class SoapApiService {
       return elements.isNotEmpty ? elements.first.innerText : null;
     } catch (e) {
       return null;
+    }
+  }
+
+  /// Get order status list
+  Future<List<OrderStatus>> getOrderStatusList({
+    required String userCode,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:getOrderStatusList>
+         <sam:CodeAgent>$userCode</sam:CodeAgent>
+      </sam:getOrderStatusList>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final rowsElements = document.findAllElements('m:Row');
+
+      return rowsElements.map((row) => OrderStatus(
+        message: _getElementText(row, 'm:message') ?? '',
+      )).toList();
+    } catch (e) {
+      throw Exception('Buyurtma statuslari ro\'yxatini olishda xatolik: $e');
+    }
+  }
+
+  /// Get order list
+  Future<List<Order>> getOrderList({
+    required String userCode,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:GetOrderList>
+         <sam:CodeAgent>$userCode</sam:CodeAgent>
+      </sam:GetOrderList>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final rowsElements = document.findAllElements('m:Rows');
+
+      return rowsElements.map((row) => Order(
+        numOrder: _getElementText(row, 'm:NumOrder') ?? '',
+        dateOrder: DateTime.parse(_getElementText(row, 'm:DateOrder') ?? DateTime.now().toIso8601String()),
+        captionOrder: _getElementText(row, 'm:CaptionOrder') ?? '',
+        typePriceCode: _getElementText(row, 'm:TypePrice') ?? '',
+        status: int.tryParse(_getElementText(row, 'm:Status') ?? '0') ?? 0,
+        commentSupervisor: _getElementText(row, 'm:CommentSupervisor'),
+        commentForwarder: _getElementText(row, 'm:CommentForwarder'),
+        commentAgent: _getElementText(row, 'm:CommentAgent'),
+        total: double.tryParse(_getElementText(row, 'm:Total') ?? '0') ?? 0.0,
+        clientCode: _getElementText(row, 'm:ClientCode') ?? '',
+        clientName: _getElementText(row, 'm:ClientName') ?? '',
+        codeOrg: _getElementText(row, 'm:CodeOrg') ?? '',
+        mainStatus: _getElementText(row, 'm:mainStatus') ?? '',
+      )).toList();
+    } catch (e) {
+      throw Exception('Buyurtmalar ro\'yxatini olishda xatolik: $e');
     }
   }
 }

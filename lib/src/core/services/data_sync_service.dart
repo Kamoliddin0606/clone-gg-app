@@ -26,6 +26,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
@@ -266,6 +268,12 @@ class DataSyncService {
       // Sync client contracts
       await _syncClientContracts(userCode);
 
+      // Sync order statuses
+      await _syncOrderStatuses(userCode);
+
+      // Sync orders
+      await _syncOrders(userCode);
+
       // Sync promotions
       if ( isAvonServerSelected() || isEvyapServerSelected() ) {
         await _syncPromotions(null); // No auth token needed for now
@@ -374,6 +382,14 @@ class DataSyncService {
       // Step 11: Sync client contracts
       yield SyncStep.syncingClientContracts;
       await _syncClientContracts(userCode);
+
+      // Step 12: Sync order statuses
+      yield SyncStep.syncingOrderStatuses;
+      await _syncOrderStatuses(userCode);
+
+      // Step 13: Sync orders
+      yield SyncStep.syncingOrders;
+      await _syncOrders(userCode);
 
       if( isAvonServerSelected() || isEvyapServerSelected() ) {
         // Step 12: Sync promotions
@@ -1231,6 +1247,78 @@ class DataSyncService {
       return false;
     }
   }
+
+  /// Sync order statuses data
+  Future<List<OrderStatus>> syncOrderStatuses({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getOrderStatuses();
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+    }
+
+    return await _syncOrderStatuses(userCode);
+  }
+
+  Future<List<OrderStatus>> _syncOrderStatuses(String userCode) async {
+    final statuses = await _apiService.getOrderStatusList(userCode: userCode);
+    if (kDebugMode) {
+      print('Buyurtma statuslari ma\'lumotlari yuklandi: ${statuses.length} ta status');
+    }
+    await _dbService.saveOrderStatuses(statuses);
+    return statuses;
+  }
+
+  /// Sync orders data
+  Future<List<Order>> syncOrders({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getOrders();
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+    }
+
+    return await _syncOrders(userCode);
+  }
+
+  Future<List<Order>> _syncOrders(String userCode) async {
+    final orders = await _apiService.getOrderList(userCode: userCode);
+    if (kDebugMode) {
+      print('Buyurtmalar ma\'lumotlari yuklandi: ${orders.length} ta buyurtma');
+    }
+    await _dbService.saveOrders(orders);
+    return orders;
+  }
+
+  /// Get cached order statuses
+  Future<List<OrderStatus>> getCachedOrderStatuses() => _dbService.getOrderStatuses();
+
+  /// Get cached orders
+  Future<List<Order>> getCachedOrders({
+    String? clientCode,
+    String? mainStatus,
+    String? typePriceCode,
+  }) => _dbService.getOrders(
+    clientCode: clientCode,
+    mainStatus: mainStatus,
+    typePriceCode: typePriceCode,
+  );
+
+  /// Get cached order by num order
+  Future<Order?> getCachedOrderByNumOrder(String numOrder) => _dbService.getOrderByNumOrder(numOrder);
+
+  /// Update cached order status
+  Future<void> updateCachedOrderStatus(String numOrder, String mainStatus) =>
+      _dbService.updateOrderStatus(numOrder, mainStatus);
+
+  /// Delete cached order
+  Future<void> deleteCachedOrder(String numOrder) => _dbService.deleteOrder(numOrder);
 }
 
 /// Conflict resolution strategies

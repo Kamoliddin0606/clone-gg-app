@@ -17,6 +17,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
@@ -38,7 +40,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -383,6 +385,47 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX idx_visit_plans_main_report_id ON visit_plans(main_report_id)');
       await db.execute('CREATE INDEX idx_visit_plans_client_code ON visit_plans(client_code)');
       await db.execute('CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)');
+    } else if (oldVersion < 11) {
+      // Add order statuses and orders tables for version 11
+      await db.execute('''
+        CREATE TABLE order_statuses (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          message TEXT UNIQUE NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE orders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          num_order TEXT UNIQUE NOT NULL,
+          date_order TEXT NOT NULL,
+          caption_order TEXT NOT NULL,
+          type_price_code TEXT NOT NULL,
+          status INTEGER NOT NULL,
+          comment_supervisor TEXT,
+          comment_forwarder TEXT,
+          comment_agent TEXT,
+          total REAL NOT NULL,
+          client_code TEXT NOT NULL,
+          client_name TEXT NOT NULL,
+          code_org TEXT NOT NULL,
+          main_status TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (type_price_code) REFERENCES price_types (code) ON DELETE CASCADE,
+          FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE,
+          FOREIGN KEY (main_status) REFERENCES order_statuses (message) ON DELETE SET NULL
+        )
+      ''');
+
+      // Create indexes for orders table
+      await db.execute('CREATE INDEX idx_orders_num_order ON orders(num_order)');
+      await db.execute('CREATE INDEX idx_orders_client_code ON orders(client_code)');
+      await db.execute('CREATE INDEX idx_orders_type_price_code ON orders(type_price_code)');
+      await db.execute('CREATE INDEX idx_orders_main_status ON orders(main_status)');
+      await db.execute('CREATE INDEX idx_order_statuses_message ON order_statuses(message)');
     }
   }
 
@@ -764,6 +807,48 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX idx_visit_plans_main_report_id ON visit_plans(main_report_id)');
     await db.execute('CREATE INDEX idx_visit_plans_client_code ON visit_plans(client_code)');
     await db.execute('CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)');
+
+    // Create order statuses table
+    await db.execute('''
+      CREATE TABLE order_statuses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message TEXT UNIQUE NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create orders table
+    await db.execute('''
+      CREATE TABLE orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        num_order TEXT UNIQUE NOT NULL,
+        date_order TEXT NOT NULL,
+        caption_order TEXT NOT NULL,
+        type_price_code TEXT NOT NULL,
+        status INTEGER NOT NULL,
+        comment_supervisor TEXT,
+        comment_forwarder TEXT,
+        comment_agent TEXT,
+        total REAL NOT NULL,
+        client_code TEXT NOT NULL,
+        client_name TEXT NOT NULL,
+        code_org TEXT NOT NULL,
+        main_status TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (type_price_code) REFERENCES price_types (code) ON DELETE CASCADE,
+        FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE,
+        FOREIGN KEY (main_status) REFERENCES order_statuses (message) ON DELETE SET NULL
+      )
+    ''');
+
+    // Create indexes for orders table
+    await db.execute('CREATE INDEX idx_orders_num_order ON orders(num_order)');
+    await db.execute('CREATE INDEX idx_orders_client_code ON orders(client_code)');
+    await db.execute('CREATE INDEX idx_orders_type_price_code ON orders(type_price_code)');
+    await db.execute('CREATE INDEX idx_orders_main_status ON orders(main_status)');
+    await db.execute('CREATE INDEX idx_order_statuses_message ON order_statuses(message)');
 
     print('API cache database tables created successfully');
   }
@@ -2731,6 +2816,8 @@ class ApiDatabaseService {
     await db.delete('akb_by_categories');
     await db.delete('visit_plans');
     await db.delete('visit_plan_lists');
+    await db.delete('orders');
+    await db.delete('order_statuses');
   }
 
   Future<void> clearMainReport() async {
@@ -2741,5 +2828,214 @@ class ApiDatabaseService {
     await db.delete('akb_by_categories');
     await db.delete('visit_plans');
     await db.delete('visit_plan_lists');
+  }
+
+  // Order Status methods
+  Future<void> saveOrderStatuses(List<OrderStatus> statuses) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing statuses
+    batch.delete('order_statuses');
+
+    // Deduplicate statuses by message to avoid UNIQUE constraint violations
+    final uniqueStatuses = <String, OrderStatus>{};
+    for (final status in statuses) {
+      uniqueStatuses[status.message] = status;
+    }
+
+    // Add all inserts to batch
+    for (final status in uniqueStatuses.values) {
+      batch.insert('order_statuses', {
+        'message': status.message,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<OrderStatus>> getOrderStatuses() async {
+    final db = await database;
+    final result = await db.query('order_statuses', orderBy: 'message ASC');
+
+    return result
+        .map(
+          (row) => OrderStatus(
+            id: row['id'] as int,
+            message: row['message'] as String,
+          ),
+        )
+        .toList();
+  }
+
+  Future<OrderStatus?> getOrderStatusByMessage(String message) async {
+    final db = await database;
+    final result = await db.query(
+      'order_statuses',
+      where: 'message = ?',
+      whereArgs: [message],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return OrderStatus(
+      id: row['id'] as int,
+      message: row['message'] as String,
+    );
+  }
+
+  // Order methods
+  Future<void> saveOrders(List<Order> orders) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing orders
+    batch.delete('orders');
+
+    // Deduplicate orders by num_order to avoid UNIQUE constraint violations
+    final uniqueOrders = <String, Order>{};
+    for (final order in orders) {
+      uniqueOrders[order.numOrder] = order;
+    }
+
+    // Add all inserts to batch
+    for (final order in uniqueOrders.values) {
+      batch.insert('orders', {
+        'num_order': order.numOrder,
+        'date_order': order.dateOrder.toIso8601String(),
+        'caption_order': order.captionOrder,
+        'type_price_code': order.typePriceCode,
+        'status': order.status,
+        'comment_supervisor': order.commentSupervisor,
+        'comment_forwarder': order.commentForwarder,
+        'comment_agent': order.commentAgent,
+        'total': order.total,
+        'client_code': order.clientCode,
+        'client_name': order.clientName,
+        'code_org': order.codeOrg,
+        'main_status': order.mainStatus,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<Order>> getOrders({
+    String? clientCode,
+    String? mainStatus,
+    String? typePriceCode,
+  }) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    final conditions = <String>[];
+    if (clientCode != null) {
+      conditions.add('client_code = ?');
+      whereArgs.add(clientCode);
+    }
+    if (mainStatus != null) {
+      conditions.add('main_status = ?');
+      whereArgs.add(mainStatus);
+    }
+    if (typePriceCode != null) {
+      conditions.add('type_price_code = ?');
+      whereArgs.add(typePriceCode);
+    }
+
+    if (conditions.isNotEmpty) {
+      whereClause = 'WHERE ${conditions.join(' AND ')}';
+    }
+
+    final result = await db.rawQuery('''
+      SELECT * FROM orders
+      $whereClause
+      ORDER BY date_order DESC, num_order ASC
+    ''', whereArgs);
+
+    return result
+        .map(
+          (row) => Order(
+            id: row['id'] as int,
+            numOrder: row['num_order'] as String,
+            dateOrder: DateTime.parse(row['date_order'] as String),
+            captionOrder: row['caption_order'] as String,
+            typePriceCode: row['type_price_code'] as String,
+            status: row['status'] as int,
+            commentSupervisor: row['comment_supervisor'] as String?,
+            commentForwarder: row['comment_forwarder'] as String?,
+            commentAgent: row['comment_agent'] as String?,
+            total: (row['total'] as num?)?.toDouble() ?? 0.0,
+            clientCode: row['client_code'] as String,
+            clientName: row['client_name'] as String,
+            codeOrg: row['code_org'] as String,
+            mainStatus: row['main_status'] as String,
+          ),
+        )
+        .toList();
+  }
+
+  Future<Order?> getOrderByNumOrder(String numOrder) async {
+    final db = await database;
+    final result = await db.query(
+      'orders',
+      where: 'num_order = ?',
+      whereArgs: [numOrder],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return Order(
+      id: row['id'] as int,
+      numOrder: row['num_order'] as String,
+      dateOrder: DateTime.parse(row['date_order'] as String),
+      captionOrder: row['caption_order'] as String,
+      typePriceCode: row['type_price_code'] as String,
+      status: row['status'] as int,
+      commentSupervisor: row['comment_supervisor'] as String?,
+      commentForwarder: row['comment_forwarder'] as String?,
+      commentAgent: row['comment_agent'] as String?,
+      total: (row['total'] as num?)?.toDouble() ?? 0.0,
+      clientCode: row['client_code'] as String,
+      clientName: row['client_name'] as String,
+      codeOrg: row['code_org'] as String,
+      mainStatus: row['main_status'] as String,
+    );
+  }
+
+  Future<void> updateOrderStatus(String numOrder, String mainStatus) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'orders',
+      {
+        'main_status': mainStatus,
+        'updated_at': now,
+      },
+      where: 'num_order = ?',
+      whereArgs: [numOrder],
+    );
+  }
+
+  Future<void> deleteOrder(String numOrder) async {
+    final db = await database;
+    await db.delete('orders', where: 'num_order = ?', whereArgs: [numOrder]);
   }
 }

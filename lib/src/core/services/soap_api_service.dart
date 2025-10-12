@@ -1151,12 +1151,12 @@ class SoapApiService {
    <soap:Header/>
    <soap:Body>
       <sam:getOrderStatusList>
-         <sam:CodeAgent>$userCode</sam:CodeAgent>
+         <sam:CodeUser>$userCode</sam:CodeUser>
       </sam:getOrderStatusList>
    </soap:Body>
 </soap:Envelope>
 ''';
-
+    //print(soapEnvelope);
     try {
       final response = await _dio.post(
         _baseUrl,
@@ -1168,7 +1168,7 @@ class SoapApiService {
           },
         ),
       );
-
+      //print('buyurtmalar statuslari soap holatda: ${response.data}');
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Row');
 
@@ -1206,7 +1206,7 @@ class SoapApiService {
           },
         ),
       );
-
+      print('buyurtmalar royxati soap holatda: ${response.data}');
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 

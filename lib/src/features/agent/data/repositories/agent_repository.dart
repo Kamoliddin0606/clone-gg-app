@@ -14,6 +14,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 
 class AgentRepository {
   final DataSyncService _dataSyncService;
@@ -295,6 +296,19 @@ required DataSyncService dataSyncService,
     return await _dataSyncService.getCachedClientContracts(
       clientCode: clientCode,
       active: active,
+    );
+  }
+
+  /// Get cached orders
+  Future<List<Order>> getCachedOrders({
+    String? clientCode,
+    String? mainStatus,
+    String? typePriceCode,
+  }) async {
+    return await _dataSyncService.getCachedOrders(
+      clientCode: clientCode,
+      mainStatus: mainStatus,
+      typePriceCode: typePriceCode,
     );
   }
 }

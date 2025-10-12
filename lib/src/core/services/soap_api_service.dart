@@ -1132,16 +1132,6 @@ class SoapApiService {
     }
   }
 
-  /// Helper method to get element text
-  String? _getElementText(XmlElement parent, String elementName) {
-    try {
-      final elements = parent.findElements(elementName);
-      return elements.isNotEmpty ? elements.first.innerText : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
   /// Get order status list
   Future<List<OrderStatus>> getOrderStatusList({
     required String userCode,
@@ -1156,7 +1146,7 @@ class SoapApiService {
    </soap:Body>
 </soap:Envelope>
 ''';
-    //print(soapEnvelope);
+
     try {
       final response = await _dio.post(
         _baseUrl,
@@ -1168,7 +1158,7 @@ class SoapApiService {
           },
         ),
       );
-      //print('buyurtmalar statuslari soap holatda: ${response.data}');
+
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Row');
 
@@ -1206,7 +1196,7 @@ class SoapApiService {
           },
         ),
       );
-      print('buyurtmalar royxati soap holatda: ${response.data}');
+
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 
@@ -1227,6 +1217,16 @@ class SoapApiService {
       )).toList();
     } catch (e) {
       throw Exception('Buyurtmalar ro\'yxatini olishda xatolik: $e');
+    }
+  }
+
+  /// Helper method to get element text
+  String? _getElementText(XmlElement parent, String elementName) {
+    try {
+      final elements = parent.findElements(elementName);
+      return elements.isNotEmpty ? elements.first.innerText : null;
+    } catch (e) {
+      return null;
     }
   }
 }

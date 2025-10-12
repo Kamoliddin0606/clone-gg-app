@@ -1166,6 +1166,11 @@ class _AppDrawer extends StatelessWidget {
                   title: 'Shartnomalar',
                   onTap: () => Navigator.pushNamed(context, AppRouter.contractsRoute),
                 ),
+                _MenuItem(
+                  icon: Icons.receipt_long,
+                  title: 'Buyurtmalar',
+                  onTap: () => Navigator.pushNamed(context, AppRouter.ordersRoute),
+                ),
               ],
             ),
           ),

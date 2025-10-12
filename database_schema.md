@@ -274,6 +274,43 @@ CREATE TABLE promotion_class_list (
 )
 ```
 
+### 16. order_status_list
+**Purpose**: Stores order status information
+```sql
+CREATE TABLE order_status_list (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  message TEXT UNIQUE NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+)
+```
+
+### 17. order_list
+**Purpose**: Stores order information with foreign key relationships
+```sql
+CREATE TABLE order_list (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  num_order TEXT UNIQUE NOT NULL,
+  date_order TEXT NOT NULL,
+  caption_order TEXT NOT NULL,
+  type_price_code TEXT NOT NULL,
+  status INTEGER NOT NULL,
+  comment_supervisor TEXT,
+  comment_forwarder TEXT,
+  comment_agent TEXT,
+  total REAL NOT NULL,
+  client_code TEXT NOT NULL,
+  client_name TEXT NOT NULL,
+  code_org TEXT NOT NULL,
+  main_status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (type_price_code) REFERENCES price_types (code) ON DELETE CASCADE,
+  FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE,
+  FOREIGN KEY (main_status) REFERENCES order_status_list (message) ON DELETE CASCADE
+)
+```
+
 ## Indexes
 
 ### Performance Indexes
@@ -312,6 +349,9 @@ CREATE INDEX idx_clients_code_region ON clients(code_region);
 - **promotions** ↔ **promotion_product_list**: One-to-many (promotion_code)
 - **promotions** ↔ **promotion_bonus_list**: One-to-many (promotion_code)
 - **promotions** ↔ **promotion_class_list**: One-to-many (promotion_code)
+- **price_types** ↔ **order_list**: Many-to-one (type_price_code)
+- **clients** ↔ **order_list**: Many-to-one (client_code)
+- **order_status_list** ↔ **order_list**: Many-to-one (main_status)
 
 ## Optimized Query for Prices Page
 

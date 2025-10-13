@@ -28,6 +28,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_pl
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
@@ -1349,6 +1350,57 @@ class DataSyncService {
 
   /// Get cached unique courier cars
   Future<List<String>> getCachedCourierCars() => _dbService.getUniqueCourierCars();
+
+  /// Sync order details data
+  Future<OrderDetail> syncOrderDetails({
+    required String numberOrder,
+    required String orderDate1,
+    required String orderDate2,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getOrderDetailByNumOrder(numberOrder);
+      if (cached != null) {
+        return cached;
+      }
+    }
+
+    return await _syncOrderDetails(numberOrder, orderDate1, orderDate2);
+  }
+
+  Future<OrderDetail> _syncOrderDetails(String numberOrder, String orderDate1, String orderDate2) async {
+    final orderDetail = await _apiService.getOrderDetails(
+      numberOrder: numberOrder,
+      orderDate1: orderDate1,
+      orderDate2: orderDate2,
+    );
+    if (kDebugMode) {
+      print('Buyurtma tafsilotlari yuklandi: ${orderDetail.numOrder}');
+    }
+
+    await _dbService.saveOrderDetail(orderDetail);
+    return orderDetail;
+  }
+
+  /// Get cached order details
+  Future<List<OrderDetail>> getCachedOrderDetails({String? numOrder}) =>
+      _dbService.getOrderDetails(numOrder: numOrder);
+
+  /// Get cached order detail by num order
+  Future<OrderDetail?> getCachedOrderDetailByNumOrder(String numOrder) =>
+      _dbService.getOrderDetailByNumOrder(numOrder);
+
+  /// Save cached order detail
+  Future<void> saveCachedOrderDetail(OrderDetail orderDetail) =>
+      _dbService.saveOrderDetail(orderDetail);
+
+  /// Update cached order detail
+  Future<void> updateCachedOrderDetail(String numOrder, OrderDetail orderDetail) =>
+      _dbService.updateOrderDetail(numOrder, orderDetail);
+
+  /// Delete cached order detail
+  Future<void> deleteCachedOrderDetail(String numOrder) =>
+      _dbService.deleteOrderDetail(numOrder);
 }
 
 /// Conflict resolution strategies

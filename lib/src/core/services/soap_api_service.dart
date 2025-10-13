@@ -17,6 +17,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
@@ -1230,6 +1231,108 @@ class SoapApiService {
       )).toList();
     } catch (e) {
       throw Exception('Buyurtmalar ro\'yxatini olishda xatolik: $e');
+    }
+  }
+
+  /// Get order details
+  Future<OrderDetail> getOrderDetails({
+    required String numberOrder,
+    required String orderDate1,
+    required String orderDate2,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:GetOrderDetailsnew>
+         <sam:NumberOrder>$numberOrder</sam:NumberOrder>
+         <sam:OrderDate1>$orderDate1</sam:OrderDate1>
+         <sam:OrderDate2>$orderDate2</sam:OrderDate2>
+      </sam:GetOrderDetailsnew>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final returnElement = document.findAllElements('m:return').first;
+
+      // Parse main order details
+      final credit = _getElementText(returnElement, 'm:Credit')?.toLowerCase() == 'true';
+      final codePrice = _getElementText(returnElement, 'm:CodePrice') ?? '';
+      final dateOrderStr = _getElementText(returnElement, 'm:DateOrder') ?? '';
+      final dateOrder = DateTime.parse(dateOrderStr);
+      final codeSklad = _getElementText(returnElement, 'm:CodeSklad') ?? '';
+      final commentSupervisor = _getElementText(returnElement, 'm:CommentSupervisor');
+      final commentForwarder = _getElementText(returnElement, 'm:CommentForwarder');
+      final commentAgent = _getElementText(returnElement, 'm:CommentAgent');
+      final shippingDateStr = _getElementText(returnElement, 'm:ShippingDate') ?? '';
+      final shippingDate = DateTime.parse(shippingDateStr);
+      final orderType = int.tryParse(_getElementText(returnElement, 'm:OrderType') ?? '0') ?? 0;
+      final codeOrg = _getElementText(returnElement, 'm:CodeOrg') ?? '';
+
+      // Parse product rows
+      final productRows = <OrderDetailProduct>[];
+      final productRowsElement = returnElement.findAllElements('m:ProductRows').firstOrNull;
+      if (productRowsElement != null) {
+        final rowsElements = productRowsElement.findAllElements('m:Rows');
+        for (final row in rowsElements) {
+          final product = OrderDetailProduct(
+            codeProduct: _getElementText(row, 'm:CodeProduct') ?? '',
+            nameProduct: _getElementText(row, 'm:NameProduct') ?? '',
+            amount: int.tryParse(_getElementText(row, 'm:Amount') ?? '0') ?? 0,
+            price: double.tryParse(_getElementText(row, 'm:Price') ?? '0') ?? 0.0,
+            total: double.tryParse(_getElementText(row, 'm:Total') ?? '0') ?? 0.0,
+            discountRate: double.tryParse(_getElementText(row, 'm:DiscountRate') ?? '0') ?? 0.0,
+            weight: double.tryParse(_getElementText(row, 'm:Weight') ?? '0') ?? 0.0,
+            capacity: double.tryParse(_getElementText(row, 'm:Capacity') ?? '0') ?? 0.0,
+          );
+          productRows.add(product);
+        }
+      }
+
+      // Parse credit details list (payments)
+      final creditDetailsList = <OrderPayment>[];
+      final creditDetailsElement = returnElement.findAllElements('m:CreditDetailsList').firstOrNull;
+      if (creditDetailsElement != null) {
+        final rowsElements = creditDetailsElement.findAllElements('m:Rows');
+        for (final row in rowsElements) {
+          final payment = OrderPayment(
+            dateOfPayment: _getElementText(row, 'm:DateOfPayment') ?? '',
+            total: double.tryParse(_getElementText(row, 'm:Total') ?? '0') ?? 0.0,
+          );
+          creditDetailsList.add(payment);
+        }
+      }
+
+      return OrderDetail(
+        numOrder: numberOrder,
+        credit: credit,
+        codePrice: codePrice,
+        dateOrder: dateOrder,
+        codeSklad: codeSklad,
+        commentSupervisor: commentSupervisor,
+        commentForwarder: commentForwarder,
+        commentAgent: commentAgent,
+        shippingDate: shippingDateStr,
+        orderType: orderType,
+        codeOrg: codeOrg,
+        productRows: productRows,
+        creditDetailsList: creditDetailsList,
+      );
+    } catch (e) {
+      throw Exception('Buyurtma tafsilotlarini olishda xatolik: $e');
     }
   }
 }

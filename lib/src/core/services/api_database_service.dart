@@ -19,6 +19,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_pl
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
@@ -462,6 +463,62 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX idx_couriers_name ON couriers(name)');
       await db.execute('CREATE INDEX idx_courier_cars_car ON courier_cars(car)');
       await db.execute('CREATE INDEX idx_order_couriers_order_num ON order_couriers(order_num)');
+    } else if (oldVersion < 12) {
+      // Add order details tables for version 12
+      await db.execute('''
+        CREATE TABLE order_details (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          num_order TEXT UNIQUE NOT NULL,
+          credit INTEGER NOT NULL DEFAULT 0,
+          code_price TEXT NOT NULL,
+          date_order TEXT NOT NULL,
+          code_sklad TEXT NOT NULL,
+          comment_supervisor TEXT,
+          comment_forwarder TEXT,
+          comment_agent TEXT,
+          shipping_date TEXT NOT NULL,
+          order_type INTEGER NOT NULL DEFAULT 0,
+          code_org TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (num_order) REFERENCES orders (num_order) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE order_detail_products (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          order_detail_id INTEGER NOT NULL,
+          code_product TEXT NOT NULL,
+          name_product TEXT NOT NULL,
+          amount INTEGER NOT NULL,
+          price REAL NOT NULL,
+          total REAL NOT NULL,
+          discount_rate REAL NOT NULL DEFAULT 0.0,
+          weight REAL NOT NULL DEFAULT 0.0,
+          capacity REAL NOT NULL DEFAULT 0.0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (order_detail_id) REFERENCES order_details (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE order_payments (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          order_detail_id INTEGER NOT NULL,
+          date_of_payment TEXT NOT NULL,
+          total REAL NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (order_detail_id) REFERENCES order_details (id) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create indexes for order details tables
+      await db.execute('CREATE INDEX idx_order_details_num_order ON order_details(num_order)');
+      await db.execute('CREATE INDEX idx_order_detail_products_order_detail_id ON order_detail_products(order_detail_id)');
+      await db.execute('CREATE INDEX idx_order_payments_order_detail_id ON order_payments(order_detail_id)');
     }
   }
 
@@ -2883,6 +2940,9 @@ class ApiDatabaseService {
     await db.delete('akb_by_categories');
     await db.delete('visit_plans');
     await db.delete('visit_plan_lists');
+    await db.delete('order_details');
+    await db.delete('order_detail_products');
+    await db.delete('order_payments');
     await db.delete('orders');
     await db.delete('order_statuses');
     await db.delete('couriers');
@@ -3208,5 +3268,276 @@ class ApiDatabaseService {
   Future<void> deleteOrder(String numOrder) async {
     final db = await database;
     await db.delete('orders', where: 'num_order = ?', whereArgs: [numOrder]);
+  }
+
+  // Order Details methods
+  Future<void> saveOrderDetails(List<OrderDetail> orderDetails) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing order details
+    batch.delete('order_details');
+    batch.delete('order_detail_products');
+    batch.delete('order_payments');
+
+    // Deduplicate order details by num_order to avoid UNIQUE constraint violations
+    final uniqueOrderDetails = <String, OrderDetail>{};
+    for (final orderDetail in orderDetails) {
+      uniqueOrderDetails[orderDetail.numOrder] = orderDetail;
+    }
+
+    // Add all inserts to batch
+    for (final orderDetail in uniqueOrderDetails.values) {
+      batch.insert('order_details', {
+        'num_order': orderDetail.numOrder,
+        'credit': orderDetail.credit ? 1 : 0,
+        'code_price': orderDetail.codePrice,
+        'date_order': orderDetail.dateOrder.toIso8601String(),
+        'code_sklad': orderDetail.codeSklad,
+        'comment_supervisor': orderDetail.commentSupervisor,
+        'comment_forwarder': orderDetail.commentForwarder,
+        'comment_agent': orderDetail.commentAgent,
+        'shipping_date': orderDetail.shippingDate,
+        'order_type': orderDetail.orderType,
+        'code_org': orderDetail.codeOrg,
+        'created_at': now,
+        'updated_at': now,
+      });
+
+      // Insert product rows
+      for (final product in orderDetail.productRows) {
+        batch.insert('order_detail_products', {
+          'order_detail_id': orderDetail.id,
+          'code_product': product.codeProduct,
+          'name_product': product.nameProduct,
+          'amount': product.amount,
+          'price': product.price,
+          'total': product.total,
+          'discount_rate': product.discountRate,
+          'weight': product.weight,
+          'capacity': product.capacity,
+          'created_at': now,
+          'updated_at': now,
+        });
+      }
+
+      // Insert payment rows
+      for (final payment in orderDetail.creditDetailsList) {
+        batch.insert('order_payments', {
+          'order_detail_id': orderDetail.id,
+          'date_of_payment': payment.dateOfPayment,
+          'total': payment.total,
+          'created_at': now,
+          'updated_at': now,
+        });
+      }
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<OrderDetail>> getOrderDetails({String? numOrder}) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    if (numOrder != null) {
+      whereClause = 'WHERE od.num_order = ?';
+      whereArgs = [numOrder];
+    }
+
+    final result = await db.rawQuery('''
+      SELECT od.*, odp.*, op.*
+      FROM order_details od
+      LEFT JOIN order_detail_products odp ON od.id = odp.order_detail_id
+      LEFT JOIN order_payments op ON od.id = op.order_detail_id
+      $whereClause
+      ORDER BY od.date_order DESC, od.num_order ASC
+    ''', whereArgs);
+
+    final orderDetailsMap = <String, OrderDetail>{};
+
+    for (final row in result) {
+      final orderNum = row['num_order'] as String;
+
+      if (!orderDetailsMap.containsKey(orderNum)) {
+        orderDetailsMap[orderNum] = OrderDetail(
+          id: row['id'] as int,
+          numOrder: orderNum,
+          credit: (row['credit'] as int?) == 1,
+          codePrice: row['code_price'] as String,
+          dateOrder: DateTime.parse(row['date_order'] as String),
+          codeSklad: row['code_sklad'] as String,
+          commentSupervisor: row['comment_supervisor'] as String?,
+          commentForwarder: row['comment_forwarder'] as String?,
+          commentAgent: row['comment_agent'] as String?,
+          shippingDate: row['shipping_date'] as String,
+          orderType: row['order_type'] as int,
+          codeOrg: row['code_org'] as String,
+          productRows: [],
+          creditDetailsList: [],
+        );
+      }
+
+      final orderDetail = orderDetailsMap[orderNum]!;
+
+      // Add product if exists
+      if (row['code_product'] != null) {
+        final product = OrderDetailProduct(
+          id: row['odp.id'] as int?,
+          codeProduct: row['code_product'] as String,
+          nameProduct: row['name_product'] as String,
+          amount: row['amount'] as int,
+          price: (row['price'] as num?)?.toDouble() ?? 0.0,
+          total: (row['total'] as num?)?.toDouble() ?? 0.0,
+          discountRate: (row['discount_rate'] as num?)?.toDouble() ?? 0.0,
+          weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
+          capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
+        );
+
+        if (!orderDetail.productRows.any((p) => p.codeProduct == product.codeProduct)) {
+          orderDetail.productRows.add(product);
+        }
+      }
+
+      // Add payment if exists
+      if (row['date_of_payment'] != null) {
+        final payment = OrderPayment(
+          id: row['op.id'] as int?,
+          dateOfPayment: row['date_of_payment'] as String,
+          total: (row['op.total'] as num?)?.toDouble() ?? 0.0,
+        );
+
+        if (!orderDetail.creditDetailsList.any((p) => p.dateOfPayment == payment.dateOfPayment)) {
+          orderDetail.creditDetailsList.add(payment);
+        }
+      }
+    }
+
+    return orderDetailsMap.values.toList();
+  }
+
+  Future<OrderDetail?> getOrderDetailByNumOrder(String numOrder) async {
+    final orderDetails = await getOrderDetails(numOrder: numOrder);
+    return orderDetails.isNotEmpty ? orderDetails.first : null;
+  }
+
+  Future<void> saveOrderDetail(OrderDetail orderDetail) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    final orderDetailId = await db.insert('order_details', {
+      'num_order': orderDetail.numOrder,
+      'credit': orderDetail.credit ? 1 : 0,
+      'code_price': orderDetail.codePrice,
+      'date_order': orderDetail.dateOrder.toIso8601String(),
+      'code_sklad': orderDetail.codeSklad,
+      'comment_supervisor': orderDetail.commentSupervisor,
+      'comment_forwarder': orderDetail.commentForwarder,
+      'comment_agent': orderDetail.commentAgent,
+      'shipping_date': orderDetail.shippingDate,
+      'order_type': orderDetail.orderType,
+      'code_org': orderDetail.codeOrg,
+      'created_at': now,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+    // Save products
+    for (final product in orderDetail.productRows) {
+      await db.insert('order_detail_products', {
+        'order_detail_id': orderDetailId,
+        'code_product': product.codeProduct,
+        'name_product': product.nameProduct,
+        'amount': product.amount,
+        'price': product.price,
+        'total': product.total,
+        'discount_rate': product.discountRate,
+        'weight': product.weight,
+        'capacity': product.capacity,
+        'created_at': now,
+        'updated_at': now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    // Save payments
+    for (final payment in orderDetail.creditDetailsList) {
+      await db.insert('order_payments', {
+        'order_detail_id': orderDetailId,
+        'date_of_payment': payment.dateOfPayment,
+        'total': payment.total,
+        'created_at': now,
+        'updated_at': now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+  }
+
+  Future<void> updateOrderDetail(String numOrder, OrderDetail orderDetail) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'order_details',
+      {
+        'credit': orderDetail.credit ? 1 : 0,
+        'code_price': orderDetail.codePrice,
+        'date_order': orderDetail.dateOrder.toIso8601String(),
+        'code_sklad': orderDetail.codeSklad,
+        'comment_supervisor': orderDetail.commentSupervisor,
+        'comment_forwarder': orderDetail.commentForwarder,
+        'comment_agent': orderDetail.commentAgent,
+        'shipping_date': orderDetail.shippingDate,
+        'order_type': orderDetail.orderType,
+        'code_org': orderDetail.codeOrg,
+        'updated_at': now,
+      },
+      where: 'num_order = ?',
+      whereArgs: [numOrder],
+    );
+
+    // Delete existing products and payments, then re-insert
+    final orderDetailResult = await db.query('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
+    if (orderDetailResult.isNotEmpty) {
+      final orderDetailId = orderDetailResult.first['id'] as int;
+
+      await db.delete('order_detail_products', where: 'order_detail_id = ?', whereArgs: [orderDetailId]);
+      await db.delete('order_payments', where: 'order_detail_id = ?', whereArgs: [orderDetailId]);
+
+      // Re-insert products
+      for (final product in orderDetail.productRows) {
+        await db.insert('order_detail_products', {
+          'order_detail_id': orderDetailId,
+          'code_product': product.codeProduct,
+          'name_product': product.nameProduct,
+          'amount': product.amount,
+          'price': product.price,
+          'total': product.total,
+          'discount_rate': product.discountRate,
+          'weight': product.weight,
+          'capacity': product.capacity,
+          'created_at': now,
+          'updated_at': now,
+        });
+      }
+
+      // Re-insert payments
+      for (final payment in orderDetail.creditDetailsList) {
+        await db.insert('order_payments', {
+          'order_detail_id': orderDetailId,
+          'date_of_payment': payment.dateOfPayment,
+          'total': payment.total,
+          'created_at': now,
+          'updated_at': now,
+        });
+      }
+    }
+  }
+
+  Future<void> deleteOrderDetail(String numOrder) async {
+    final db = await database;
+    await db.delete('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
   }
 }

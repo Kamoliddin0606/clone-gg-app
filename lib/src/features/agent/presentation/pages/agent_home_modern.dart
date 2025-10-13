@@ -1131,6 +1131,7 @@ class _AppDrawer extends StatelessWidget {
                   title: 'Hisobotlar',
                   onTap: () => Navigator.pushNamed(context, AppRouter.reportsRoute),
                 ),
+
                 _MenuItem(
                   icon: Icons.campaign,
                   title: 'Marketing',
@@ -1165,6 +1166,11 @@ class _AppDrawer extends StatelessWidget {
                   icon: Icons.description,
                   title: 'Shartnomalar',
                   onTap: () => Navigator.pushNamed(context, AppRouter.contractsRoute),
+                ),
+                _MenuItem(
+                  icon: Icons.receipt_long,
+                  title: 'Buyurtmalar',
+                  onTap: () => Navigator.pushNamed(context, AppRouter.ordersRoute),
                 ),
               ],
             ),

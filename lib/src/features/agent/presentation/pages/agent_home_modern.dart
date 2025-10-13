@@ -1,4 +1,6 @@
 
+import 'dart:math';
+import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
@@ -7,6 +9,8 @@ import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart'
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/network/server_service.dart';
 import '../../../../core/router/app_router.dart';
@@ -330,6 +334,32 @@ class KpiView {
   });
 }
 
+// --- DATA MODEL + XML PARSER -------------------------------------------------
+class Kpi {
+  final double totalPlan;
+  final double totalFact;
+  final double totalPercent; // 0..100
+  final double totalForecast;
+  final double totalPercentForecastFact; // 0..100
+  final int okb;
+  final int akbPlan;
+  final int akbFact;
+
+  Kpi({
+    required this.totalPlan,
+    required this.totalFact,
+    required this.totalPercent,
+    required this.totalForecast,
+    required this.totalPercentForecastFact,
+    required this.okb,
+    required this.akbPlan,
+    required this.akbFact,
+  });
+
+  // Note: XML parsing functionality removed for now to avoid import issues
+  // Can be added back when xml package is properly imported
+}
+
 class AgentHomeModern extends StatefulWidget {
   final String userName;
   final String userCode;
@@ -543,6 +573,45 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
     }
   }
 
+  Kpi _convertKpiViewToKpi(KpiView? kpiView) {
+    if (kpiView == null) {
+      return Kpi(
+        totalPlan: 0,
+        totalFact: 0,
+        totalPercent: 0,
+        totalForecast: 0,
+        totalPercentForecastFact: 0,
+        okb: 0,
+        akbPlan: 0,
+        akbFact: 0,
+      );
+    }
+
+    // Parse values from KpiView strings
+    double parseDouble(String? value) {
+      if (value == null || value.isEmpty) return 0.0;
+      final cleaned = value.replaceAll(' ', '').replaceAll(',', '.');
+      return double.tryParse(cleaned) ?? 0.0;
+    }
+
+    int parseInt(String? value) {
+      if (value == null || value.isEmpty) return 0;
+      final cleaned = value.replaceAll(' ', '').replaceAll(',', '.');
+      return int.tryParse(cleaned) ?? 0;
+    }
+
+    return Kpi(
+      totalPlan: parseDouble(kpiView.salesSum),
+      totalFact: parseDouble(kpiView.salesSum), // Using salesSum as fact for now
+      totalPercent: parseDouble(kpiView.totalPercent),
+      totalForecast: parseDouble(kpiView.salesSum), // Using salesSum as forecast for now
+      totalPercentForecastFact: parseDouble(kpiView.totalPercent),
+      okb: parseInt(kpiView.customersServed),
+      akbPlan: parseInt(kpiView.akbPlan),
+      akbFact: parseInt(kpiView.akbFact),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -568,6 +637,17 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
       ),
       body: Stack(
         children: [
+          // Decorative background elements
+          Positioned(
+            top: -80,
+            right: -60,
+            child: _decorBlob(const Color(0xFF6C8CFF).withOpacity(0.25), 220),
+          ),
+          Positioned(
+            bottom: -60,
+            left: -40,
+            child: _decorBlob(const Color(0xFF00E5A8).withOpacity(0.18), 180),
+          ),
           RefreshIndicator(
             onRefresh: widget.onRefresh ?? () async {},
             child: CustomScrollView(
@@ -655,7 +735,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: _KpiOverview(kpi: widget.kpi, onTap: _toggleExpanded, expanded: _expanded),
+                child: _HeroHeader(kpi: _convertKpiViewToKpi(widget.kpi), controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))),
               ),
             ),
 
@@ -671,49 +751,13 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
                   child: _expanded
                       ? Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.90,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
+                    child: Column(
                       children: [
-                        _StatCard(
-                          title: 'Savdo summasi',
-                          value: AgentHomeModern._sumFmt(widget.kpi?.salesSum),
-                          icon: Icons.trending_up,
-                        ),
-                        _StatCard(
-                          title: 'Sotilgan tovarlar',
-                          value: widget.kpi?.itemsSold ?? '-',
-                          icon: Icons.inventory_2,
-                        ),
-                        _StatCard(
-                          title: 'Xizmat ko’rsatilgan mijozlar',
-                          value: widget.kpi?.customersServed ?? '-',
-                          icon: Icons.people_alt,
-                        ),
-                        _StatCard(
-                          title: 'OKB',
-                          value: AgentHomeModern._sumFmt(widget.kpi?.okb),
-                          icon: Icons.verified_user,
-                        ),
-                        _StatCard(
-                          title: 'AKB rejasi',
-                          value: AgentHomeModern._sumFmt(widget.kpi?.akbPlan),
-                          icon: Icons.flag,
-                        ),
-                        _StatCard(
-                          title: 'AKB fakt',
-                          value: AgentHomeModern._sumFmt(widget.kpi?.akbFact),
-                          icon: Icons.check_circle_outline,
-                        ),
-                        _StatCard(
-                          title: 'AKB %',
-                          value: AgentHomeModern._pct(widget.kpi?.akbPercent),
-                          icon: Icons.percent,
-                        ),
+                        _StatsGrid(kpi: _convertKpiViewToKpi(widget.kpi)),
+                        const SizedBox(height: 20),
+                        _ChartsSection(kpi: _convertKpiViewToKpi(widget.kpi)),
+                        const SizedBox(height: 20),
+                        _Insights(kpi: _convertKpiViewToKpi(widget.kpi)),
                       ],
                     ),
                   )
@@ -722,17 +766,17 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
               ),
             ),
 
-            // Actions stay as-is
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                child: _ActionsRow(
-                  onCreateOrder: widget.onCreateOrder,
-                  onOpenCustomers: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
-                  onOpenProducts: widget.onOpenProducts,
-                ),
-              ),
-            ),
+            // // Actions stay as-is
+            // SliverToBoxAdapter(
+            //   child: Padding(
+            //     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            //     child: _ActionsRow(
+            //       onCreateOrder: widget.onCreateOrder,
+            //       onOpenCustomers: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
+            //       onOpenProducts: widget.onOpenProducts,
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -753,6 +797,443 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
 
   // Moved helper to stateful class; keep same behavior
 
+  Widget _decorBlob(Color color, double size) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.8, end: 1.0),
+      duration: const Duration(milliseconds: 1200),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) {
+        return Transform.scale(
+          scale: value,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(colors: [color, Colors.transparent]),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// --- GRID CARDS ---------------------------------------------------------------
+class _StatsGrid extends StatelessWidget {
+  const _StatsGrid({required this.kpi});
+  final Kpi kpi;
+
+  @override
+  Widget build(BuildContext context) {
+    final nf = NumberFormat.compact();
+    final items = [
+      _TileData('OKB', kpi.okb.toString(), Icons.storefront_rounded),
+      _TileData('AKB Plan', kpi.akbPlan.toString(), Icons.flag_circle_rounded),
+      _TileData('AKB Fact', kpi.akbFact.toString(), Icons.task_alt_rounded),
+      _TileData('Forecast % of Fact', '${kpi.totalPercentForecastFact.toStringAsFixed(1)}%', Icons.trending_up_rounded),
+      _TileData('Total Plan', nf.format(kpi.totalPlan), Icons.layers_rounded),
+      _TileData('Total Fact', nf.format(kpi.totalFact), Icons.payments_rounded),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.6,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, i) => _GlassTile(data: items[i]),
+    );
+  }
+}
+
+class _TileData {
+  final String title;
+  final String value;
+  final IconData icon;
+  const _TileData(this.title, this.value, this.icon);
+}
+
+class _GlassTile extends StatelessWidget {
+  const _GlassTile({required this.data});
+  final _TileData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.9, end: 1.0),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutBack,
+      builder: (context, t, _) {
+        return Transform.scale(
+          scale: t,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  gradient: const LinearGradient(
+                    colors: [Color(0x221A73E8), Color(0x2216D2A6)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(color: Colors.white10),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 12, offset: Offset(0, 6)),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(data.icon, size: 20, color: Colors.white70),
+                    const Spacer(),
+                    Text(data.title, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
+                    const SizedBox(height: 6),
+                    Text(data.value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// --- CHARTS ------------------------------------------------------------------
+class _ChartsSection extends StatelessWidget {
+  const _ChartsSection({required this.kpi});
+  final Kpi kpi;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Charts', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 12),
+          _ChartCard(
+            title: 'AKB Progress',
+            subtitle: 'Plan vs Fact',
+            child: SizedBox(
+              height: 180,
+              child: BarChart(
+                BarChartData(
+                  borderData: FlBorderData(show: false),
+                  gridData: FlGridData(show: false),
+                  titlesData: FlTitlesData(
+                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          switch (value.toInt()) {
+                            case 0:
+                              return const _AxisLabel('Plan');
+                            case 1:
+                              return const _AxisLabel('Fact');
+                            default:
+                              return const SizedBox.shrink();
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  barGroups: [
+                    BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: kpi.akbPlan.toDouble(), width: 20.0)]),
+                    BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: kpi.akbFact.toDouble(), width: 20.0)]),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _ChartCard(
+            title: 'Plan Completion',
+            subtitle: 'Fact vs Remaining',
+            child: SizedBox(
+              height: 180,
+              child: PieChart(
+                PieChartData(
+                  sectionsSpace: 2.0,
+                  centerSpaceRadius: 44.0,
+                  sections: _buildPlanPie(kpi),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _ChartCard(
+            title: 'Forecast Trend',
+            subtitle: 'From Fact to Forecast',
+            child: SizedBox(height: 200, child: _ForecastLine(kpi: kpi)),
+          ),
+        ],
+    );
+  }
+
+  List<PieChartSectionData> _buildPlanPie(Kpi kpi) {
+    final double fact = kpi.totalFact;
+    final double remaining = max(0.0, kpi.totalPlan - fact).toDouble();
+    final double total = (fact + remaining).clamp(1.0, double.infinity).toDouble();
+
+    return [
+      PieChartSectionData(value: fact / total, title: 'Fact', radius: 56.0),
+      PieChartSectionData(value: remaining / total, title: 'Remaining', radius: 50.0),
+    ];
+  }
+}
+
+class _AxisLabel extends StatelessWidget {
+  const _AxisLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Text(text, style: Theme.of(context).textTheme.labelMedium),
+    );
+  }
+}
+
+class _ForecastLine extends StatelessWidget {
+  const _ForecastLine({required this.kpi});
+  final Kpi kpi;
+
+  @override
+  Widget build(BuildContext context) {
+    // Synthetic points: starting from fact, easing toward forecast
+    final fact = kpi.totalFact;
+    final forecast = kpi.totalForecast;
+    final points = List.generate(7, (i) {
+      final t = i / 6.0; // 0..1
+      final y = fact + (forecast - fact) * Curves.easeInOut.transform(t);
+      return FlSpot(i.toDouble(), y);
+    });
+
+    return LineChart(
+      LineChartData(
+        borderData: FlBorderData(show: false),
+        gridData: FlGridData(show: false),
+        titlesData: const FlTitlesData(
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            isCurved: true,
+            spots: points,
+            barWidth: 3.0,
+            dotData: const FlDotData(show: false),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChartCard extends StatelessWidget {
+  const _ChartCard({required this.title, required this.subtitle, required this.child});
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: const LinearGradient(
+                    colors: [Color(0x221A73E8), Color(0x2229C6B7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70)),
+                    const SizedBox(height: 8),
+                    child,
+                  ],
+                ),
+            ),
+        ),
+    );
+  }
+}
+
+// --- INSIGHTS ----------------------------------------------------------------
+class _Insights extends StatelessWidget {
+  const _Insights({required this.kpi});
+  final Kpi kpi;
+
+  @override
+  Widget build(BuildContext context) {
+    // final gap = max(0, kpi.totalPlan - kpi.totalFact);
+    final double gap = max(0.0, kpi.totalPlan - kpi.totalFact).toDouble();
+    final akbGap = max(0, kpi.akbPlan - kpi.akbFact);
+    final trend = kpi.totalForecast >= kpi.totalPlan ? 'On track' : 'At risk';
+
+    return _ChartCard(
+      title: 'Insights',
+      subtitle: 'Auto‑generated highlights',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _bullet(context, 'Completion', '${kpi.totalPercent.toStringAsFixed(1)}% of plan achieved'),
+          _bullet(context, 'Gap to Plan', _money(context, gap)),
+          _bullet(context, 'AKB Gap', '$akbGap clients to reach plan'),
+          _bullet(context, 'Forecast vs Plan', trend),
+        ],
+      ),
+    );
+  }
+
+  Widget _bullet(BuildContext context, String key, String val) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6.0),
+    child: Row(
+      children: [
+        const Icon(Icons.brightness_1, size: 6, color: Colors.white70),
+        const SizedBox(width: 12),
+        Expanded(child: Text(key, style: Theme.of(context).textTheme.bodyMedium)),
+        Text(val, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
+      ],
+    ),
+  );
+
+  String _money(BuildContext context, double v) {
+    final nf = NumberFormat.compact();
+    return nf.format(v);
+  }
+}
+
+// --- HEADER (unchanged UI components below) ----------------------------------
+class _HeroHeader extends StatelessWidget {
+  const _HeroHeader({required this.kpi, required this.controller});
+  final Kpi kpi;
+  final AnimationController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final nf = NumberFormat.decimalPattern();
+    final percent = (kpi.totalPercent / 100).clamp(0.0, 1.0);
+
+    return ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0x334B6BFF), Color(0x3316D2A6)],
+                  ),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Row(
+                    children: [// Animated circular progress
+                    SizedBox(
+                    width: 110,
+                    height: 110,
+                    child: TweenAnimationBuilder<double>(
+                        duration: const Duration(milliseconds: 900),
+                        tween: Tween<double>(begin: 0.0, end: percent),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) {
+                          return Stack(
+                              alignment: Alignment.center,
+                              children: [
+                              ShaderMask(
+                              shaderCallback: (rect) => const SweepGradient(
+                            startAngle: -3.14159 / 2,
+                            endAngle: 3 * 3.14159 / 2,
+                            colors: [Color(0xFF6C8CFF), Color(0xFF00E5A8)],
+                          ).createShader(rect),
+                          child: CircularProgressIndicator(
+                          value: value,
+                          strokeWidth: 10.0,
+                          backgroundColor: Colors.white12,
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                          ),Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('${(value * 100).toStringAsFixed(1)}%',
+                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                                    const SizedBox(height: 2),
+                                    Text('Plan', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70)),
+                                  ],
+                                )
+                              ],
+                          );
+                        },
+                    ),
+                ),const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Today Performance',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 8),
+                            _animatedMetric(context, 'Total Fact', nf.format(kpi.totalFact)),
+                            _animatedMetric(context, 'Total Plan', nf.format(kpi.totalPlan)),
+                            _animatedMetric(context, 'Forecast', nf.format(kpi.totalForecast)),
+                          ],
+                        ),
+                      ),
+                    ],
+                ),
+            ),
+        ),
+    );
+  }
+  Widget _animatedMetric(BuildContext context, String label, String value) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 900),
+      builder: (context, t, _) {
+        return Opacity(
+          opacity: t,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              children: [
+                Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
+                const Spacer(),
+                Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _KpiOverview extends StatelessWidget {

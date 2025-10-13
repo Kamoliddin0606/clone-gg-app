@@ -1292,6 +1292,30 @@ class DataSyncService {
     if (kDebugMode) {
       print('Buyurtmalar ma\'lumotlari yuklandi: ${orders.length} ta buyurtma');
     }
+
+    // Extract and cache unique courier data
+    final uniqueCouriers = <String>{};
+    final uniqueCourierCars = <String>{};
+
+    for (final order in orders) {
+      if (order.courierName != null && order.courierName!.isNotEmpty) {
+        uniqueCouriers.add(order.courierName!);
+      }
+      if (order.courierCar != null && order.courierCar!.isNotEmpty) {
+        uniqueCourierCars.add(order.courierCar!);
+      }
+    }
+
+    // Save unique courier data to cache
+    for (final courierName in uniqueCouriers) {
+      final car = orders.firstWhere((order) => order.courierName == courierName).courierCar;
+      await _dbService.saveCourier(courierName, car);
+    }
+
+    for (final car in uniqueCourierCars) {
+      await _dbService.saveCourierCar(car);
+    }
+
     await _dbService.saveOrders(orders);
     return orders;
   }
@@ -1319,6 +1343,12 @@ class DataSyncService {
 
   /// Delete cached order
   Future<void> deleteCachedOrder(String numOrder) => _dbService.deleteOrder(numOrder);
+
+  /// Get cached unique courier names
+  Future<List<String>> getCachedCourierNames() => _dbService.getUniqueCourierNames();
+
+  /// Get cached unique courier cars
+  Future<List<String>> getCachedCourierCars() => _dbService.getUniqueCourierCars();
 }
 
 /// Conflict resolution strategies

@@ -396,6 +396,34 @@ class ApiDatabaseService {
         )
       ''');
 
+      await db.execute('''CREATE TABLE couriers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        car TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )''');
+
+      await db.execute('''CREATE TABLE courier_cars (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        car TEXT UNIQUE NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )''');
+
+      await db.execute('''CREATE TABLE order_couriers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_num TEXT NOT NULL,
+        courier_name TEXT,
+        courier_car TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (order_num) REFERENCES orders (num_order) ON DELETE CASCADE,
+        FOREIGN KEY (courier_name) REFERENCES couriers (name) ON DELETE SET NULL,
+        FOREIGN KEY (courier_car) REFERENCES courier_cars (car) ON DELETE SET NULL,
+        UNIQUE(order_num)
+      )''');
+
       await db.execute('''
         CREATE TABLE orders (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -412,11 +440,16 @@ class ApiDatabaseService {
           client_name TEXT NOT NULL,
           code_org TEXT NOT NULL,
           main_status TEXT NOT NULL,
+          courier_name TEXT,
+          courier_car TEXT,
+          server INTEGER NOT NULL DEFAULT 0,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL,
           FOREIGN KEY (type_price_code) REFERENCES price_types (code) ON DELETE CASCADE,
           FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE,
-          FOREIGN KEY (main_status) REFERENCES order_statuses (message) ON DELETE SET NULL
+          FOREIGN KEY (main_status) REFERENCES order_statuses (message) ON DELETE SET NULL,
+          FOREIGN KEY (courier_name) REFERENCES couriers (name) ON DELETE SET NULL,
+          FOREIGN KEY (courier_car) REFERENCES courier_cars (car) ON DELETE SET NULL
         )
       ''');
 
@@ -426,6 +459,9 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX idx_orders_type_price_code ON orders(type_price_code)');
       await db.execute('CREATE INDEX idx_orders_main_status ON orders(main_status)');
       await db.execute('CREATE INDEX idx_order_statuses_message ON order_statuses(message)');
+      await db.execute('CREATE INDEX idx_couriers_name ON couriers(name)');
+      await db.execute('CREATE INDEX idx_courier_cars_car ON courier_cars(car)');
+      await db.execute('CREATE INDEX idx_order_couriers_order_num ON order_couriers(order_num)');
     }
   }
 
@@ -819,29 +855,60 @@ class ApiDatabaseService {
     ''');
 
     // Create orders table
-    await db.execute('''
-      CREATE TABLE orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        num_order TEXT UNIQUE NOT NULL,
-        date_order TEXT NOT NULL,
-        caption_order TEXT NOT NULL,
-        type_price_code TEXT NOT NULL,
-        status INTEGER NOT NULL,
-        comment_supervisor TEXT,
-        comment_forwarder TEXT,
-        comment_agent TEXT,
-        total REAL NOT NULL,
-        client_code TEXT NOT NULL,
-        client_name TEXT NOT NULL,
-        code_org TEXT NOT NULL,
-        main_status TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        FOREIGN KEY (type_price_code) REFERENCES price_types (code) ON DELETE CASCADE,
-        FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE,
-        FOREIGN KEY (main_status) REFERENCES order_statuses (message) ON DELETE SET NULL
-      )
-    ''');
+    await db.execute('''CREATE TABLE couriers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE NOT NULL,
+      car TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )''');
+
+    await db.execute('''CREATE TABLE courier_cars (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      car TEXT UNIQUE NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )''');
+
+    await db.execute('''CREATE TABLE order_couriers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_num TEXT NOT NULL,
+      courier_name TEXT,
+      courier_car TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (order_num) REFERENCES orders (num_order) ON DELETE CASCADE,
+      FOREIGN KEY (courier_name) REFERENCES couriers (name) ON DELETE SET NULL,
+      FOREIGN KEY (courier_car) REFERENCES courier_cars (car) ON DELETE SET NULL,
+      UNIQUE(order_num)
+    )''');
+
+    await db.execute('''CREATE TABLE orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      num_order TEXT UNIQUE NOT NULL,
+      date_order TEXT NOT NULL,
+      caption_order TEXT NOT NULL,
+      type_price_code TEXT NOT NULL,
+      status INTEGER NOT NULL,
+      comment_supervisor TEXT,
+      comment_forwarder TEXT,
+      comment_agent TEXT,
+      total REAL NOT NULL,
+      client_code TEXT NOT NULL,
+      client_name TEXT NOT NULL,
+      code_org TEXT NOT NULL,
+      main_status TEXT NOT NULL,
+      courier_name TEXT,
+      courier_car TEXT,
+      server INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (type_price_code) REFERENCES price_types (code) ON DELETE CASCADE,
+      FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE,
+      FOREIGN KEY (main_status) REFERENCES order_statuses (message) ON DELETE SET NULL,
+      FOREIGN KEY (courier_name) REFERENCES couriers (name) ON DELETE SET NULL,
+      FOREIGN KEY (courier_car) REFERENCES courier_cars (car) ON DELETE SET NULL
+    )''');
 
     // Create indexes for orders table
     await db.execute('CREATE INDEX idx_orders_num_order ON orders(num_order)');
@@ -2818,6 +2885,9 @@ class ApiDatabaseService {
     await db.delete('visit_plan_lists');
     await db.delete('orders');
     await db.delete('order_statuses');
+    await db.delete('couriers');
+    await db.delete('courier_cars');
+    await db.delete('order_couriers');
   }
 
   Future<void> clearMainReport() async {
@@ -2892,6 +2962,50 @@ class ApiDatabaseService {
     );
   }
 
+  // Courier methods
+  Future<void> saveCourier(String name, String? car) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert(
+      'couriers',
+      {
+        'name': name,
+        'car': car,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore, // Ignore if already exists
+    );
+  }
+
+  Future<void> saveCourierCar(String car) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert(
+      'courier_cars',
+      {
+        'car': car,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore, // Ignore if already exists
+    );
+  }
+
+  Future<List<String>> getUniqueCourierNames() async {
+    final db = await database;
+    final result = await db.query('couriers', columns: ['name'], distinct: true);
+    return result.map((row) => row['name'] as String).toList();
+  }
+
+  Future<List<String>> getUniqueCourierCars() async {
+    final db = await database;
+    final result = await db.query('courier_cars', columns: ['car'], distinct: true);
+    return result.map((row) => row['car'] as String).toList();
+  }
+
   // Order methods
   Future<void> saveOrders(List<Order> orders) async {
     final db = await database;
@@ -2907,6 +3021,40 @@ class ApiDatabaseService {
     final uniqueOrders = <String, Order>{};
     for (final order in orders) {
       uniqueOrders[order.numOrder] = order;
+    }
+
+    // Extract and save unique courier data
+    final uniqueCouriers = <String>{};
+    final uniqueCourierCars = <String>{};
+
+    for (final order in uniqueOrders.values) {
+      if (order.courierName != null && order.courierName!.isNotEmpty) {
+        uniqueCouriers.add(order.courierName!);
+      }
+      if (order.courierCar != null && order.courierCar!.isNotEmpty) {
+        uniqueCourierCars.add(order.courierCar!);
+      }
+    }
+
+    // Save unique couriers and cars
+    for (final courierName in uniqueCouriers) {
+      final car = uniqueOrders.values
+          .firstWhere((order) => order.courierName == courierName)
+          .courierCar;
+      batch.insert('couriers', {
+        'name': courierName,
+        'car': car,
+        'created_at': now,
+        'updated_at': now,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+
+    for (final car in uniqueCourierCars) {
+      batch.insert('courier_cars', {
+        'car': car,
+        'created_at': now,
+        'updated_at': now,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
 
     // Add all inserts to batch
@@ -2925,9 +3073,23 @@ class ApiDatabaseService {
         'client_name': order.clientName,
         'code_org': order.codeOrg,
         'main_status': order.mainStatus,
+        'courier_name': order.courierName,
+        'courier_car': order.courierCar,
+        'server': order.server ? 1 : 0,
         'created_at': now,
         'updated_at': now,
       });
+
+      // Save order-courier relationship
+      if (order.courierName != null || order.courierCar != null) {
+        batch.insert('order_couriers', {
+          'order_num': order.numOrder,
+          'courier_name': order.courierName,
+          'courier_car': order.courierCar,
+          'created_at': now,
+          'updated_at': now,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
     }
 
     // Execute batch operation
@@ -2945,15 +3107,15 @@ class ApiDatabaseService {
 
     final conditions = <String>[];
     if (clientCode != null) {
-      conditions.add('client_code = ?');
+      conditions.add('o.client_code = ?');
       whereArgs.add(clientCode);
     }
     if (mainStatus != null) {
-      conditions.add('main_status = ?');
+      conditions.add('o.main_status = ?');
       whereArgs.add(mainStatus);
     }
     if (typePriceCode != null) {
-      conditions.add('type_price_code = ?');
+      conditions.add('o.type_price_code = ?');
       whereArgs.add(typePriceCode);
     }
 
@@ -2962,9 +3124,11 @@ class ApiDatabaseService {
     }
 
     final result = await db.rawQuery('''
-      SELECT * FROM orders
+      SELECT o.*, oc.courier_name, oc.courier_car
+      FROM orders o
+      LEFT JOIN order_couriers oc ON o.num_order = oc.order_num
       $whereClause
-      ORDER BY date_order DESC, num_order ASC
+      ORDER BY o.date_order DESC, o.num_order ASC
     ''', whereArgs);
 
     return result
@@ -2984,6 +3148,9 @@ class ApiDatabaseService {
             clientName: row['client_name'] as String,
             codeOrg: row['code_org'] as String,
             mainStatus: row['main_status'] as String,
+            courierName: row['courier_name'] as String?,
+            courierCar: row['courier_car'] as String?,
+            server: (row['server'] as int?) == 1,
           ),
         )
         .toList();
@@ -2991,12 +3158,13 @@ class ApiDatabaseService {
 
   Future<Order?> getOrderByNumOrder(String numOrder) async {
     final db = await database;
-    final result = await db.query(
-      'orders',
-      where: 'num_order = ?',
-      whereArgs: [numOrder],
-      limit: 1,
-    );
+    final result = await db.rawQuery('''
+      SELECT o.*, oc.courier_name, oc.courier_car
+      FROM orders o
+      LEFT JOIN order_couriers oc ON o.num_order = oc.order_num
+      WHERE o.num_order = ?
+      LIMIT 1
+    ''', [numOrder]);
 
     if (result.isEmpty) return null;
 
@@ -3016,6 +3184,9 @@ class ApiDatabaseService {
       clientName: row['client_name'] as String,
       codeOrg: row['code_org'] as String,
       mainStatus: row['main_status'] as String,
+      courierName: row['courier_name'] as String?,
+      courierCar: row['courier_car'] as String?,
+      server: (row['server'] as int?) == 1,
     );
   }
 

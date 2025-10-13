@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../widgets/order_card.dart';
+import '../widgets/order_card_grid.dart';
 import '../widgets/order_models.dart';
 import '../widgets/order_detail_sections.dart';
 import '../widgets/status_chip.dart';
@@ -122,11 +123,16 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
               : const SizedBox.shrink(),),
           const SizedBox(height: 6),
           // Content
-          Expanded(child: AnimatedSwitcher(duration: const Duration(milliseconds: 200), child: _isGrid
-              ? Padding(key: const ValueKey('grid'), padding: const EdgeInsets.symmetric(horizontal: 8), child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 0.95),
+          Expanded(child: AnimatedSwitcher(duration: const Duration(milliseconds: 300), child: _isGrid
+              ? Padding(key: const ValueKey('grid'), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.7,
+            ),
             itemCount: _filtered.length,
-            itemBuilder: (_, i){ final o = _filtered[i]; return OrderCard(order: o, margin: const EdgeInsets.all(8), onTap: ()=>_openBottomSheet(context, o), onDoubleTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>OrderDetailsPage(order: o)))); },
+            itemBuilder: (_, i){ final o = _filtered[i]; return OrderCardGrid(order: o, onTap: ()=>_openBottomSheet(context, o), onDoubleTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>OrderDetailsPage(order: o)))); },
           ))
               : ListView.builder(key: const ValueKey('list'), itemCount: _filtered.length, itemBuilder: (_, i){ final o = _filtered[i]; return OrderCard(order: o, onTap: ()=>_openBottomSheet(context, o), onDoubleTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>OrderDetailsPage(order: o)))); }),
           )),

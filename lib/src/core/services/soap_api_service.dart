@@ -1224,6 +1224,9 @@ class SoapApiService {
         clientName: _getElementText(row, 'm:ClientName') ?? '',
         codeOrg: _getElementText(row, 'm:CodeOrg') ?? '',
         mainStatus: _getElementText(row, 'm:mainStatus') ?? '',
+        courierName: _getElementText(row, 'm:CourierName'),
+        courierCar: _getElementText(row, 'm:CourierCar'),
+        server: true, // Server-sourced data
       )).toList();
     } catch (e) {
       throw Exception('Buyurtmalar ro\'yxatini olishda xatolik: $e');

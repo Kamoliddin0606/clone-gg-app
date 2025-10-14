@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -11,6 +12,7 @@ import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:equatable/equatable.dart';
 
 import '../../../../core/network/server_service.dart';
 import '../../../../core/router/app_router.dart';
@@ -281,38 +283,276 @@ class _CircularProgressPainter extends CustomPainter {
       oldDelegate.color != color ||
       oldDelegate.backgroundColor != backgroundColor;
 }
+
+/// BLoC State Management for Agent Home Modern Page
+abstract class AgentHomeState extends Equatable {
+  const AgentHomeState();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class AgentHomeInitial extends AgentHomeState {}
+
+class AgentHomeLoading extends AgentHomeState {}
+
+class AgentHomeLoaded extends AgentHomeState {
+  final KpiView kpi;
+  final bool isExpanded;
+  final bool isDataSyncInProgress;
+  final Stream<SyncStep>? syncStepStream;
+
+  const AgentHomeLoaded({
+    required this.kpi,
+    this.isExpanded = true,
+    this.isDataSyncInProgress = false,
+    this.syncStepStream,
+  });
+
+  @override
+  List<Object?> get props => [kpi, isExpanded, isDataSyncInProgress, syncStepStream];
+}
+
+class AgentHomeError extends AgentHomeState {
+  final String message;
+
+  const AgentHomeError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+abstract class AgentHomeEvent extends Equatable {
+  const AgentHomeEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class LoadAgentHomeData extends AgentHomeEvent {
+  final String userCode;
+  final String password;
+
+  const LoadAgentHomeData({required this.userCode, required this.password});
+
+  @override
+  List<Object?> get props => [userCode, password];
+}
+
+class RefreshKpiData extends AgentHomeEvent {
+  final String userCode;
+  final String password;
+  final bool forceRefresh;
+
+  const RefreshKpiData({
+    required this.userCode,
+    required this.password,
+    this.forceRefresh = false,
+  });
+
+  @override
+  List<Object?> get props => [userCode, password, forceRefresh];
+}
+
+class ToggleExpanded extends AgentHomeEvent {}
+
+class StartDataSync extends AgentHomeEvent {
+  final String userCode;
+  final String password;
+  final String codeProject;
+  final String warehouseCode;
+
+  const StartDataSync({
+    required this.userCode,
+    required this.password,
+    required this.codeProject,
+    required this.warehouseCode,
+  });
+
+  @override
+  List<Object?> get props => [userCode, password, codeProject, warehouseCode];
+}
+
+class DataSyncComplete extends AgentHomeEvent {}
+
+class DataSyncError extends AgentHomeEvent {
+  final dynamic error;
+
+  const DataSyncError(this.error);
+
+  @override
+  List<Object?> get props => [error];
+}
+
+class AgentHomeBloc extends Bloc<AgentHomeEvent, AgentHomeState> {
+  final DataSyncService _dataSyncService;
+
+  AgentHomeBloc({required DataSyncService dataSyncService})
+      : _dataSyncService = dataSyncService,
+        super(AgentHomeInitial()) {
+    on<LoadAgentHomeData>(_onLoadAgentHomeData);
+    on<RefreshKpiData>(_onRefreshKpiData);
+    on<ToggleExpanded>(_onToggleExpanded);
+    on<StartDataSync>(_onStartDataSync);
+    on<DataSyncComplete>(_onDataSyncComplete);
+    on<DataSyncError>(_onDataSyncError);
+  }
+
+  Future<void> _onLoadAgentHomeData(
+    LoadAgentHomeData event,
+    Emitter<AgentHomeState> emit,
+  ) async {
+    emit(AgentHomeLoading());
+    try {
+      final kpiData = await _dataSyncService.syncKpiData(
+        userCode: event.userCode,
+        password: event.password,
+      );
+
+      final kpiView = KpiView(
+        salesSum: kpiData.totalForecast,
+        itemsSold: null,
+        customersServed: null,
+        totalPercent: kpiData.totalPercent,
+        akbPlan: kpiData.akbPlan,
+        akbFact: kpiData.akbFact,
+        akbPercent: kpiData.akbPercent,
+        okb: kpiData.okb,
+      );
+
+      emit(AgentHomeLoaded(kpi: kpiView));
+    } catch (e) {
+      // Try to get cached data
+      try {
+        final cachedData = await _dataSyncService.getCachedKpiData(event.userCode);
+        if (cachedData != null) {
+          final kpiView = KpiView(
+            salesSum: cachedData.totalForecast,
+            itemsSold: null,
+            customersServed: null,
+            totalPercent: cachedData.totalPercent,
+            akbPlan: cachedData.akbPlan,
+            akbFact: cachedData.akbFact,
+            akbPercent: cachedData.akbPercent,
+            okb: cachedData.okb,
+          );
+          emit(AgentHomeLoaded(kpi: kpiView));
+          return;
+        }
+      } catch (_) {}
+
+      // Default fallback
+      const defaultKpi = KpiView(
+        salesSum: '0',
+        totalPercent: '0%',
+        akbPlan: '0',
+        akbFact: '0',
+        akbPercent: '0%',
+        okb: '0',
+      );
+      emit(AgentHomeLoaded(kpi: defaultKpi));
+    }
+  }
+
+  Future<void> _onRefreshKpiData(
+    RefreshKpiData event,
+    Emitter<AgentHomeState> emit,
+  ) async {
+    if (state is AgentHomeLoaded) {
+      final currentState = state as AgentHomeLoaded;
+      emit(AgentHomeLoading());
+      try {
+        final kpiData = await _dataSyncService.syncKpiData(
+          userCode: event.userCode,
+          password: event.password,
+          forceRefresh: event.forceRefresh,
+        );
+
+        final kpiView = KpiView(
+          salesSum: kpiData.totalForecast,
+          itemsSold: null,
+          customersServed: null,
+          totalPercent: kpiData.totalPercent,
+          akbPlan: kpiData.akbPlan,
+          akbFact: kpiData.akbFact,
+          akbPercent: kpiData.akbPercent,
+          okb: kpiData.okb,
+        );
+
+        emit(AgentHomeLoaded(
+          kpi: kpiView,
+          isExpanded: currentState.isExpanded,
+        ));
+      } catch (e) {
+        emit(AgentHomeError('KPI ma\'lumotlarini yangilashda xatolik: $e'));
+        // Revert to previous state
+        emit(currentState);
+      }
+    }
+  }
+
+  void _onToggleExpanded(ToggleExpanded event, Emitter<AgentHomeState> emit) {
+    if (state is AgentHomeLoaded) {
+      final currentState = state as AgentHomeLoaded;
+      emit(AgentHomeLoaded(
+        kpi: currentState.kpi,
+        isExpanded: !currentState.isExpanded,
+        isDataSyncInProgress: currentState.isDataSyncInProgress,
+        syncStepStream: currentState.syncStepStream,
+      ));
+    }
+  }
+
+  Future<void> _onStartDataSync(
+    StartDataSync event,
+    Emitter<AgentHomeState> emit,
+  ) async {
+    if (state is AgentHomeLoaded) {
+      final currentState = state as AgentHomeLoaded;
+      final syncStepStream = _dataSyncService.syncAllUserDataWithProgress(
+        userCode: event.userCode,
+        password: event.password,
+        codeProject: event.codeProject,
+        codeSklad: event.warehouseCode,
+      );
+
+      emit(AgentHomeLoaded(
+        kpi: currentState.kpi,
+        isExpanded: currentState.isExpanded,
+        isDataSyncInProgress: true,
+        syncStepStream: syncStepStream,
+      ));
+    }
+  }
+
+  void _onDataSyncComplete(DataSyncComplete event, Emitter<AgentHomeState> emit) {
+    if (state is AgentHomeLoaded) {
+      final currentState = state as AgentHomeLoaded;
+      emit(AgentHomeLoaded(
+        kpi: currentState.kpi,
+        isExpanded: currentState.isExpanded,
+        isDataSyncInProgress: false,
+        syncStepStream: null,
+      ));
+    }
+  }
+
+  void _onDataSyncError(DataSyncError event, Emitter<AgentHomeState> emit) {
+    if (state is AgentHomeLoaded) {
+      final currentState = state as AgentHomeLoaded;
+      emit(AgentHomeLoaded(
+        kpi: currentState.kpi,
+        isExpanded: currentState.isExpanded,
+        isDataSyncInProgress: false,
+        syncStepStream: null,
+      ));
+    }
+  }
+}
+
 /// Drop-in, logic-safe visual redesign for the agent home page.
 ///
-/// ✨ Key ideas
-/// - Purely presentational. No storage/network logic.
-/// - Parameterized with the data you already load (names resemble your existing fields).
-/// - All buttons are callbacks so your routing stays unchanged.
-/// - Material 3 tokens, modern cards, responsive grid, pull-to-refresh.
 ///
-/// How to use
-/// Replace the body of your current page with [AgentHomeModern] and
-/// pass the data + callbacks you already have.
-///
-/// Example:
-/// AgentHomeModern(
-///   userName: currentUserName,
-///   userCode: userCode,
-///   kpi: KpiView(
-///     salesSum: _kpiData?.totalForecast, // or actual sales sum if you have it
-///     itemsSold: _kpiData?.itemsSold,
-///     customersServed: _kpiData?.customersServed,
-///     totalPercent: _kpiData?.totalPercent,
-///     akbPlan: _kpiData?.akbPlan,
-///     akbFact: _kpiData?.akbFact,
-///     akbPercent: _kpiData?.akbPercent,
-///     okb: _kpiData?.okb,
-///   ),
-///   onRefresh: _refreshKpi,
-///   onCreateOrder: () => context.pushNamed(AppRouter.tradingPointsRoute),
-///   onOpenCustomers: _openCustomers,
-///   onOpenProducts: _openProducts,
-/// );
-
 class KpiView {
   final String? salesSum; // e.g. formatted "128 000 000"
   final String? itemsSold; // e.g. "342"
@@ -617,53 +857,57 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: _AppDrawer(
-        userName: widget.userName,
-        userCode: widget.userCode,
-        position: widget.position,
-        project: widget.project,
-        avatarUrl: widget.avatarUrl,
-        onOpenCustomers: widget.onOpenCustomers,
-        onReports: widget.onReports,
-        onCash: widget.onCash,
-        onDebitCredit: widget.onDebitCredit,
-        onWarehouses: widget.onWarehouses,
-        onProducts: widget.onOpenProducts,
-        onPrices: widget.onPrices,
-        onContracts: widget.onContracts,
-        onSettings: widget.onSettings,
-        onLogout: widget.onLogout,
-      ),
-      body: Stack(
-        children: [
-          // Decorative background elements
-          Positioned(
-            top: -80,
-            right: -60,
-            child: _decorBlob(Theme.of(context).extension<AppThemeExtension>()?.blobPrimary ?? const Color(0xFF6C8CFF), 220),
-          ),
-          Positioned(
-            bottom: -60,
-            left: -40,
-            child: _decorBlob(Theme.of(context).extension<AppThemeExtension>()?.blobSecondary ?? const Color(0xFF00E5A8), 180),
-          ),
-          RefreshIndicator(
-            onRefresh: widget.onRefresh ?? () async {},
-            child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              expandedHeight: 160,
-              surfaceTintColor: Colors.transparent,
-              leading: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                  tooltip: 'Menyu',
-              ),
-              flexibleSpace: _Header(userName: widget.userName, userCode: widget.userCode),
-              actions: [
+    return BlocProvider(
+      create: (context) => AgentHomeBloc(dataSyncService: sl<DataSyncService>()),
+      child: BlocBuilder<AgentHomeBloc, AgentHomeState>(
+        builder: (context, state) {
+          return Scaffold(
+            key: _scaffoldKey,
+            drawer: _AppDrawer(
+              userName: widget.userName,
+              userCode: widget.userCode,
+              position: widget.position,
+              project: widget.project,
+              avatarUrl: widget.avatarUrl,
+              onOpenCustomers: widget.onOpenCustomers,
+              onReports: widget.onReports,
+              onCash: widget.onCash,
+              onDebitCredit: widget.onDebitCredit,
+              onWarehouses: widget.onWarehouses,
+              onProducts: widget.onOpenProducts,
+              onPrices: widget.onPrices,
+              onContracts: widget.onContracts,
+              onSettings: widget.onSettings,
+              onLogout: widget.onLogout,
+            ),
+            body: Stack(
+              children: [
+                // Decorative background elements
+                Positioned(
+                  top: -80,
+                  right: -60,
+                  child: _decorBlob(Theme.of(context).extension<AppThemeExtension>()?.blobPrimary ?? const Color(0xFF6C8CFF), 220),
+                ),
+                Positioned(
+                  bottom: -60,
+                  left: -40,
+                  child: _decorBlob(Theme.of(context).extension<AppThemeExtension>()?.blobSecondary ?? const Color(0xFF00E5A8), 180),
+                ),
+                RefreshIndicator(
+                  onRefresh: widget.onRefresh ?? () async {},
+                  child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                pinned: true,
+                expandedHeight: 160,
+                surfaceTintColor: Colors.transparent,
+                leading: IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                    tooltip: 'Menyu',
+                ),
+                flexibleSpace: _Header(userName: widget.userName, userCode: widget.userCode),
+                actions: [
               //   Padding(
               //   padding: const EdgeInsets.symmetric(horizontal: 8),
               //   child: ThemeToggle(
@@ -671,86 +915,86 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
               //     onChanged: ThemeController.I.set,
               //   ),
               // ),
-                Builder(
-                  builder: (context) {
-                    final prefs = sl<SharedPreferencesService>();
-                    final isOffline = prefs.isOfflineMode();
-                    if (!isOffline) return const SizedBox.shrink();
-                    return GestureDetector(
-                      onTap: _onOfflineIndicatorTap,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.wifi_off,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'Offline',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                  Builder(
+                    builder: (context) {
+                      final prefs = sl<SharedPreferencesService>();
+                      final isOffline = prefs.isOfflineMode();
+                      if (!isOffline) return const SizedBox.shrink();
+                      return GestureDetector(
+                        onTap: _onOfflineIndicatorTap,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.wifi_off,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              const Text(
+                                'Offline',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-                IconButton(
-                  tooltip: 'Yangilash',
-                  onPressed: _syncDataWithProgress,
-                  icon: const Icon(Icons.refresh),
-                ),
-                // Offline indicator - shows when app is in offline mode
+                      );
+                    },
+                  ),
+                  IconButton(
+                    tooltip: 'Yangilash',
+                    onPressed: _syncDataWithProgress,
+                    icon: const Icon(Icons.refresh),
+                  ),
+                  // Offline indicator - shows when app is in offline mode
 
-                IconButton(
-                  tooltip: 'Chiqish',
-                  onPressed: widget.onLogout,
-                  icon: const Icon(Icons.logout),
-                ),
+                  IconButton(
+                    tooltip: 'Chiqish',
+                    onPressed: widget.onLogout,
+                    icon: const Icon(Icons.logout),
+                  ),
 
 
-              ],
-            ),
-
-            // KPI ring + quick stats (TAP TO TOGGLE BELOW CARDS)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: _HeroHeader(kpi: _convertKpiViewToKpi(widget.kpi), controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))),
+                ],
               ),
-            ),
 
-            // KPI grid (animated show/hide when tapping overview)
-            SliverToBoxAdapter(
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeInOut,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  switchInCurve: Curves.easeOutQuad,
-                  switchOutCurve: Curves.easeInQuad,
-                  child: _expanded
-                      ? Padding(
+              // KPI ring + quick stats (TAP TO TOGGLE BELOW CARDS)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: _HeroHeader(kpi: _convertKpiViewToKpi(widget.kpi), controller: AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))),
+                ),
+              ),
+
+              // KPI grid (animated show/hide when tapping overview)
+              SliverToBoxAdapter(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeInOut,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    switchInCurve: Curves.easeOutQuad,
+                    switchOutCurve: Curves.easeInQuad,
+                    child: _expanded
+                        ? Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: Column(
                       children: [
@@ -762,38 +1006,41 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
                       ],
                     ),
                   )
-                      : const SizedBox.shrink(),
+                        : const SizedBox.shrink(),
+                  ),
                 ),
               ),
-            ),
 
-            // // Actions stay as-is
-            // SliverToBoxAdapter(
-            //   child: Padding(
-            //     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            //     child: _ActionsRow(
-            //       onCreateOrder: widget.onCreateOrder,
-            //       onOpenCustomers: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
-            //       onOpenProducts: widget.onOpenProducts,
-            //     ),
-            //   ),
-            // ),
-          ],
-        ),
-      ),
-      if (_isDataSyncInProgress && _syncStepStream != null)
-        Container(
-          color: Colors.black.withOpacity(0.5),
-          child: Center(
-            child: DataSyncProgressWidget(
-              syncStepStream: _syncStepStream!,
-              onComplete: _onDataSyncComplete,
-              onError: _onDataSyncError,
-            ),
+              // // Actions stay as-is
+              // SliverToBoxAdapter(
+              //   child: Padding(
+              //     padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              //     child: _ActionsRow(
+              //       onCreateOrder: widget.onCreateOrder,
+              //       onOpenCustomers: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
+              //       onOpenProducts: widget.onOpenProducts,
+              //     ),
+              //   ),
+              // ),
+            ],
           ),
         ),
-    ],
-  ));
+              if (_isDataSyncInProgress && _syncStepStream != null)
+                Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: Center(
+                    child: DataSyncProgressWidget(
+                      syncStepStream: _syncStepStream!,
+                      onComplete: _onDataSyncComplete,
+                      onError: _onDataSyncError,
+                    ),
+                  ),
+                ),
+            ],
+          ));
+        },
+      ),
+    );
   }
 
   // Moved helper to stateful class; keep same behavior

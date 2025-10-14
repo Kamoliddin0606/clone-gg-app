@@ -1,35 +1,42 @@
 import 'package:flutter/material.dart';
 
-/// Light/Dark schemes matched to your AgentHome palette.
-final Color seed = const Color(0xFF6C63FF); // tweak if you like
+/// Seeds for color scheme generation
+const Color primarySeed = Color(0xFF3B82F6); // blue 500
+const Color secondarySeed = Color(0xFF64748B); // slate 500
+const Color tertiarySeed = Color(0xFF10B981); // emerald 500
 
 /// Custom colors for glassmorphism effects and modern UI
 class AppColors {
   // Glassmorphism background colors
-  static const Color glassLightBg = Color(0x334B6BFF);
-  static const Color glassDarkBg = Color(0x15FDFDFD);
+  static const Color glassLightBg = Color(0x333B82F6); // based on primary seed
+  static const Color glassDarkBg = Color(0x15E5E7EB); // based on onSurface light
 
   // Accent colors for gradients
-  static const Color accentLight = Color(0xFF6C8CFF);
-  static const Color accentDark = Color(0xFFEDF4F2);
+  static const Color accentLight = Color(0xFF3B82F6); // primary seed
+  static const Color accentDark = Color(0xFF64748B); // secondary seed
 
   // Decorative blob colors
-  static const Color blobPrimary = Color(0xFF6C8CFF);
-  static const Color blobSecondary = Color(0xFFE3F1ED);
+  static const Color blobPrimary = Color(0xFF3B82F6); // primary seed
+  static const Color blobSecondary = Color(0xFF10B981); // tertiary seed
 
   // Chart colors
-  static const Color chartPrimary = Color(0xFF6C8CFF);
+  static const Color chartPrimary = Color(0xFF3B82F6); // primary seed
   static const Color chartSecondary = Color(0xFFFFFFFF);
-  static const Color chartTertiary = Color(0xFFFFA726);
+  static const Color chartTertiary = Color(0xFF64748B); // secondary seed
 }
 
 final ThemeData appLight = ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(
-    seedColor: seed,
+    seedColor: primarySeed,
     brightness: Brightness.light,
-    primary: AppColors.accentLight,
-    secondary: AppColors.accentDark,
+    primary: primarySeed,
+    secondary: secondarySeed,
+    tertiary: tertiarySeed,
+    surface: const Color(0xFFF7F7F9),
+    surfaceContainerHighest: const Color(0xFFFFFFFF),
+    outline: const Color(0xFFE5E7EB),
+    onSurface: const Color(0xFF111827),
   ),
   // Custom extensions for glassmorphism
   extensions: [
@@ -46,10 +53,15 @@ final ThemeData appLight = ThemeData(
 final ThemeData appDark = ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(
-    seedColor: seed,
+    seedColor: primarySeed,
     brightness: Brightness.dark,
-    primary: AppColors.accentLight,
-    secondary: AppColors.accentDark,
+    primary: primarySeed,
+    secondary: secondarySeed,
+    tertiary: tertiarySeed,
+    surface: const Color(0xFF0F172A),
+    surfaceContainerHighest: const Color(0xFF1F2937),
+    outline: const Color(0xFF334155),
+    onSurface: const Color(0xFFE5E7EB),
   ),
   // Custom extensions for glassmorphism
   extensions: [

@@ -70,18 +70,28 @@ class OrdersFiltersPanel extends StatelessWidget {
         const SizedBox(height: 12),
         Text('Mijozlar', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
-        Wrap(spacing: 8, runSpacing: 8, children:[
-          for(final c in clients)
-            FilterChip(
-              label: Text(c, overflow: TextOverflow.ellipsis),
-              selected: state.clients.contains(c),
-              onSelected: (v){
-                final nc = {...state.clients};
-                if(v) nc.add(c); else nc.remove(c);
-                onChange(OrdersFilterState(statuses: state.statuses, clients: nc, range: state.range));
-              },
+        SizedBox(
+          height: 160, // Fixed height for scrollable container
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for(final c in clients)
+                  FilterChip(
+                    label: Text(c, overflow: TextOverflow.ellipsis),
+                    selected: state.clients.contains(c),
+                    onSelected: (v){
+                      final nc = {...state.clients};
+                      if(v) nc.add(c); else nc.remove(c);
+                      onChange(OrdersFilterState(statuses: state.statuses, clients: nc, range: state.range));
+                    },
+                  ),
+              ],
             ),
-        ]),
+          ),
+        ),
       ]),
     );
   }

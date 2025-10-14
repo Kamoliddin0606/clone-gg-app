@@ -4,6 +4,7 @@
 // =============================
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:get_it/get_it.dart';
 import '../widgets/order_card.dart';
 import '../widgets/order_card_grid.dart';
 import '../widgets/order_models.dart';
@@ -13,6 +14,10 @@ import '../widgets/order_filters_panel.dart';
 import '../shared/formatters.dart';
 import '../shared/order_status_utils.dart';
 import 'order_details_page.dart';
+import '../../../../core/services/data_sync_service.dart';
+import '../../../../core/services/shared_preferences_service.dart';
+import '../../../agent/data/models/order.dart';
+import '../../../agent/data/models/order_status.dart';
 
 class OrdersPage extends StatefulWidget { const OrdersPage({super.key}); @override State<OrdersPage> createState()=>_OrdersPageState(); }
 
@@ -22,18 +27,28 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   bool _showTuneRow = false;  // the count + list/grid row under search
   bool _isGrid = false;
 
-  // Static for now (future: fetch from DB)
-  final List<String> _statusTabs = const ['Barchasi','Доставлено','В процессе','Возврат','Истек'];
-  final Map<String,int?> _statusMap = const {'Barchasi': null,'Доставлено': 4,'В процессе': 2,'Возврат': 7,'Истек': 6};
+  // Dynamic status data
+  List<String> _statusTabs = ['Barchasi'];
+  Map<String,int?> _statusMap = {'Barchasi': null};
+  List<OrderStatus> _orderStatuses = [];
 
   int _currentTabIndex = 0;
   DateTimeRange? _pickedRange;
   final OrdersFilterState _filters = OrdersFilterState();
 
-  late List<OrderModel> _all;      // original
+  late List<Order> _allOrders;      // original orders from server
+  late List<OrderModel> _all;      // original presentation models
   late List<OrderModel> _filtered; // view
 
-  @override void initState(){ super.initState(); _all = _demoOrders(); _filtered = _all; _search.addListener(_applyAllFilters); }
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _search.addListener(_applyAllFilters);
+    _loadOrderStatusesAndOrders();
+  }
   @override void dispose(){ _search.dispose(); super.dispose(); }
 
   void _toggleFilters(){ setState(()=>_showFilters = !_showFilters); }
@@ -42,6 +57,145 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   void _switchToGrid(){ setState(()=>_isGrid=true); }
 
   void _onFiltersChanged(OrdersFilterState s){ setState(()=>{_filters.statuses = s.statuses, _filters.clients = s.clients, _filters.range = s.range}); _applyAllFilters(); }
+
+  /// Load order statuses and orders with cache-first approach
+  Future<void> _loadOrderStatusesAndOrders() async {
+    try {
+      setState(() => _isLoading = true);
+
+      // Load order statuses first
+      await _loadOrderStatuses();
+
+      // Load orders with cache-first approach
+      await _loadOrders();
+
+    } catch (e) {
+      debugPrint('Error loading data: $e');
+      setState(() => _error = e.toString());
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  /// Load order statuses from cache or server
+  Future<void> _loadOrderStatuses() async {
+    try {
+      final dataSyncService = GetIt.I<DataSyncService>();
+      final cachedStatuses = await dataSyncService.getCachedOrderStatuses();
+
+      if (cachedStatuses.isNotEmpty) {
+        _orderStatuses = cachedStatuses;
+        _buildStatusTabsAndMap();
+        return;
+      }
+
+      // If no cache, fetch from server
+      final userCode = await _getUserCode();
+      if (userCode != null) {
+        final freshStatuses = await dataSyncService.syncOrderStatuses(userCode: userCode);
+        _orderStatuses = freshStatuses;
+        _buildStatusTabsAndMap();
+      }
+    } catch (e) {
+      debugPrint('Error loading order statuses: $e');
+      // Fallback to default statuses
+      _buildDefaultStatusTabsAndMap();
+    }
+  }
+
+  /// Load orders with cache-first approach
+  Future<void> _loadOrders() async {
+    try {
+      final dataSyncService = GetIt.I<DataSyncService>();
+
+      // Try to get cached orders first
+      final cachedOrders = await dataSyncService.getCachedOrders();
+      if (cachedOrders.isNotEmpty) {
+        _allOrders = cachedOrders;
+        _all = _convertOrdersToOrderModels(_allOrders);
+        _filtered = List.from(_all);
+        return;
+      }
+
+      // If no cache, fetch from server
+      final userCode = await _getUserCode();
+      if (userCode != null) {
+        final freshOrders = await dataSyncService.syncOrders(userCode: userCode);
+        _allOrders = freshOrders;
+        _all = _convertOrdersToOrderModels(_allOrders);
+        _filtered = List.from(_all);
+      } else {
+        // Fallback to demo data if no user code
+        _all = _demoOrders();
+        _filtered = List.from(_all);
+      }
+    } catch (e) {
+      debugPrint('Error loading orders: $e');
+      // Fallback to demo data
+      _all = _demoOrders();
+      _filtered = List.from(_all);
+    }
+  }
+
+  /// Build status tabs and map from order statuses
+  void _buildStatusTabsAndMap() {
+    _statusTabs = ['Barchasi'];
+    _statusMap = {'Barchasi': null};
+
+    for (final status in _orderStatuses) {
+      if (status.id != null) {
+        _statusTabs.add(status.message);
+        _statusMap[status.message] = status.id;
+      }
+    }
+  }
+
+  /// Build default status tabs and map (fallback)
+  void _buildDefaultStatusTabsAndMap() {
+    _statusTabs = ['Barchasi', 'Доставлено', 'В процессе', 'Возврат', 'Истек'];
+    _statusMap = {
+      'Barchasi': null,
+      'Доставлено': 4,
+      'В процессе': 2,
+      'Возврат': 7,
+      'Истек': 6
+    };
+  }
+
+  /// Convert Order list to OrderModel list for presentation
+  List<OrderModel> _convertOrdersToOrderModels(List<Order> orders) {
+    return orders.map((order) => OrderModel(
+      id: order.id,
+      numOrder: order.numOrder,
+      dateOrder: order.dateOrder,
+      captionOrder: order.captionOrder,
+      typePriceCode: order.typePriceCode,
+      status: order.status,
+      commentSupervisor: order.commentSupervisor,
+      commentForwarder: order.commentForwarder,
+      commentAgent: order.commentAgent,
+      total: order.total,
+      clientCode: order.clientCode,
+      clientName: order.clientName,
+      codeOrg: order.codeOrg,
+      mainStatus: order.mainStatus,
+      courierName: order.courierName,
+      courierCar: order.courierCar,
+      courierPlate: order.courierCar, // Assuming courierCar contains plate info
+      items: const [], // Items will be loaded separately if needed
+    )).toList();
+  }
+
+  /// Get user code from shared preferences
+  Future<String?> _getUserCode() async {
+    try {
+      final prefs = GetIt.I<SharedPreferencesService>();
+      return await prefs.getUserCode();
+    } catch (e) {
+      debugPrint('Error getting user code: $e');
+      return null;
+    }
+  }
 
   void _applyAllFilters(){
     final String q = _normalize(_search.text);
@@ -82,7 +236,51 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   Widget build(BuildContext context){
     final cs = Theme.of(context).colorScheme;
     final tabs = _statusTabs.map((t)=>Tab(text: t)).toList();
-    final clients = _all.map((e)=>e.clientName).toSet().toList()..sort();
+    final clients = _isLoading ? [] : _all.map((e)=>e.clientName).toSet().toList()..sort();
+
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Buyurtmalar'),
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.maybePop(context)
+          ),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Buyurtmalar'),
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.maybePop(context)
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Xatolik yuz berdi: $_error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadOrderStatusesAndOrders,
+                child: const Text('Qayta urinib ko\'ring'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return DefaultTabController(
       initialIndex: _currentTabIndex,
@@ -115,7 +313,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
               ? Padding(padding: const EdgeInsets.fromLTRB(16,8,16,8), child: OrdersFiltersPanel(
             state: _filters,
             statusMap: _statusMap.entries.toList(),
-            clients: clients,
+            clients: clients.cast<String>(),
             onChange: _onFiltersChanged,
             onPickDateRange: _pickDateRange,
             onClearDateRange: () => _onFiltersChanged(OrdersFilterState(statuses: _filters.statuses, clients: _filters.clients, range: null)),

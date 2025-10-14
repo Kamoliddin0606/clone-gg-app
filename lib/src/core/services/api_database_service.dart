@@ -998,6 +998,7 @@ class ApiDatabaseService {
       'update_date': kpiData.updateDate,
       'created_at': now,
     });
+
   }
 
   Future<KpiData?> getKpiData(String userCode) async {
@@ -1014,6 +1015,7 @@ class ApiDatabaseService {
 
     final row = result.first;
     print('KPI data row: $row');
+
     return KpiData(
       plan: row['plan'] as String,
       fact: row['fact'] as String,

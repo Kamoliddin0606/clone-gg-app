@@ -5,7 +5,7 @@ import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart'
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
-
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 import '../../../../core/network/server_service.dart';
 
@@ -488,6 +488,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   }
   Widget _buildForm(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -504,7 +505,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Xush kelibsiz!',
+                l10n.welcome,
                 style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
@@ -512,7 +513,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         ),
         const SizedBox(height: 8),
         Text(
-          'Kirish uchun login va parolni kiriting',
+          l10n.enterCredentials,
           style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(.7)),
         ),
         const SizedBox(height: 20),
@@ -520,7 +521,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         // CHANGED: Inputlar — Material 3 uslubida, surface rang, outlineVariant border
         _M3Input(
           controller: _usernameController,
-          label: 'Login',
+          label: l10n.username,
           prefix: const Icon(Icons.person_outline),
           textInputAction: TextInputAction.next,
           onSubmitted: (_) {},
@@ -528,7 +529,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         const SizedBox(height: 12),
         _M3Input(
           controller: _passwordController,
-          label: 'Parol',
+          label: l10n.password,
           prefix: const Icon(Icons.lock_outline),
           obscureText: !_isPasswordVisible,
           suffix: IconButton(
@@ -550,7 +551,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             const Spacer(),
             TextButton(
               onPressed: () {}, // kerak bo‘lsa: parolni unutdingizmi
-              child: const Text('Parolni unutdingizmi?'),
+              child: Text(l10n.forgotPassword),
             ),
           ],
         ),
@@ -566,7 +567,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 onPressed: loading ? null : _onLoginButtonPressed,
                 child: loading
                     ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 3))
-                    : const Text('Kirish'),
+                    : Text(l10n.login),
               ),
             );
           },

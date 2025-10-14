@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -13,7 +14,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -26,10 +27,11 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sozlamalar'),
+        title: Text(l10n.settings),
         elevation: 0,
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
@@ -49,11 +51,12 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
               indicatorColor: colorScheme.primary,
               labelColor: colorScheme.primary,
               unselectedLabelColor: colorScheme.onSurfaceVariant,
-              tabs: const [
-                Tab(text: 'Narxlar'),
-                Tab(text: 'Skladlar'),
-                Tab(text: 'Biznes Regionlar'),
-                Tab(text: 'Ruxsatlar'),
+              tabs: [
+                Tab(text: l10n.prices),
+                Tab(text: l10n.warehouses),
+                Tab(text: l10n.businessRegions),
+                Tab(text: l10n.permissions),
+                Tab(text: l10n.interfaceSettings),
               ],
             ),
           ),
@@ -62,11 +65,12 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [
-                PricesTab(),
-                WarehousesTab(),
-                BusinessRegionsTab(),
-                PermissionsTab(),
+              children: [
+                const PricesTab(),
+                const WarehousesTab(),
+                const BusinessRegionsTab(),
+                const PermissionsTab(),
+                InterfaceSettingsTab(),
               ],
             ),
           ),
@@ -1324,6 +1328,311 @@ class _SecurityBadge extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class InterfaceSettingsTab extends StatefulWidget {
+  const InterfaceSettingsTab({super.key});
+
+  @override
+  State<InterfaceSettingsTab> createState() => _InterfaceSettingsTabState();
+}
+
+class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
+  String _selectedLanguage = 'uz'; // Default to Uzbek
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentLanguage();
+  }
+
+  Future<void> _loadCurrentLanguage() async {
+    // Load current language from shared preferences
+    // For now, we'll use a simple approach
+    setState(() {
+      _selectedLanguage = 'uz'; // Default
+    });
+  }
+
+  Future<void> _changeLanguage(String languageCode) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.confirmLanguageChange),
+        content: Text(l10n.languageChangeWarning),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.apply),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        _selectedLanguage = languageCode;
+      });
+
+      // Save language preference
+      // Here you would save to shared preferences
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.languageChanged),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+          ),
+        );
+      }
+
+      // Note: In a real app, you would restart the app or reload locale
+      // For this demo, we'll just update the state
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Language Settings Card
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.language, color: colorScheme.primary, size: 28),
+                      const SizedBox(width: 12),
+                      Text(
+                        l10n.interfaceSettings,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Current Language Display
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          l10n.currentLanguage,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          _getLanguageName(_selectedLanguage, l10n),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Available Languages
+                  Text(
+                    l10n.availableLanguages,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Language Options
+                  _LanguageOption(
+                    languageCode: 'uz',
+                    languageName: l10n.uzbek,
+                    isSelected: _selectedLanguage == 'uz',
+                    onTap: () => _changeLanguage('uz'),
+                  ),
+                  const SizedBox(height: 8),
+                  _LanguageOption(
+                    languageCode: 'ru',
+                    languageName: l10n.russian,
+                    isSelected: _selectedLanguage == 'ru',
+                    onTap: () => _changeLanguage('ru'),
+                  ),
+                  const SizedBox(height: 8),
+                  _LanguageOption(
+                    languageCode: 'en',
+                    languageName: l10n.english,
+                    isSelected: _selectedLanguage == 'en',
+                    onTap: () => _changeLanguage('en'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Additional Interface Settings
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.appearance,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Theme Toggle (placeholder for future implementation)
+                  ListTile(
+                    leading: Icon(Icons.palette, color: colorScheme.primary),
+                    title: Text(l10n.theme),
+                    subtitle: Text(l10n.light), // Current theme
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      // Future: Implement theme switching
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Theme switching will be implemented soon'),
+                          backgroundColor: colorScheme.secondary,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getLanguageName(String languageCode, AppLocalizations l10n) {
+    switch (languageCode) {
+      case 'uz':
+        return l10n.uzbek;
+      case 'ru':
+        return l10n.russian;
+      case 'en':
+        return l10n.english;
+      default:
+        return l10n.uzbek;
+    }
+  }
+}
+
+class _LanguageOption extends StatelessWidget {
+  final String languageCode;
+  final String languageName;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _LanguageOption({
+    required this.languageCode,
+    required this.languageName,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colorScheme.primaryContainer
+              : colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected
+                ? colorScheme.primary
+                : colorScheme.outline.withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Language Flag/Icon (placeholder)
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Text(
+                  languageCode.toUpperCase(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                languageName,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected
+                      ? colorScheme.onPrimaryContainer
+                      : colorScheme.onSurface,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                color: colorScheme.primary,
+              ),
+          ],
+        ),
       ),
     );
   }

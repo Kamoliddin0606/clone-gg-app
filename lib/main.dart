@@ -7,6 +7,7 @@ import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart'
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_schemes.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 void main() async {
   // Ensure that Flutter bindings are initialized.
@@ -55,6 +56,8 @@ class App extends StatelessWidget {
             themeMode: themeMode,
             onGenerateRoute: AppRouter.generateRoute,
             initialRoute: AppRouter.loginRoute,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
           );
         },
       ),

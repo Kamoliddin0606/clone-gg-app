@@ -270,9 +270,9 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
           _buildSlideMenu(context),
         ],
       ),
-      bottomNavigationBar: const AgentBottomNavBar(
-        initialIndex: 4,
-      ),
+      // bottomNavigationBar: const AgentBottomNavBar(
+      //   initialIndex: 4,
+      // ),
     );
   }
 

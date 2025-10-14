@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
@@ -13,6 +12,7 @@ import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
 import '../../../navbars/agent_bottom_nav_bar.dart';
 import 'agent_home_modern.dart';
+
 class AgentHomePage extends StatefulWidget {
   const AgentHomePage({super.key});
 
@@ -20,7 +20,7 @@ class AgentHomePage extends StatefulWidget {
   State<AgentHomePage> createState() => _AgentHomePageState();
 }
 
-class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateMixin {
+class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   KpiData? _kpiData;
   String userName = "Agent User";
   String userCode = "";
@@ -45,9 +45,10 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
   static const Color successColor = Color(0xFF3EBD84); // Yashil
   static const Color successColorText = Color(0xFF438E71); // Yashil
   static const Color accentColor = Color(0xFFFFE8A3); // To'q sariq
-  // static const Color primaryColor = Color(0xFF1E1E2E); // Asosiy ko'k
-  // static const Color successColor = Color(0xFF656565); // Yashil
-  // static const Color accentColor = Color(0xFFCDD6F4); // To'q sariq
+
+  @override
+  bool get wantKeepAlive => true; // State saqlanib qolinadi
+
   @override
   void initState() {
     super.initState();
@@ -330,6 +331,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin uchun majburiy
     final theme = Theme.of(context);
     final prefs = sl<SharedPreferencesService>();
     final isOffline = prefs.isOfflineMode();
@@ -369,9 +371,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
             ),
         ],
       ),
-      bottomNavigationBar: const AgentBottomNavBar(
-        initialIndex: 0,
-      ),
+      // BottomNavigationBar ni olib tashladik - endi MainAgentScreen boshqaradi
     );
   }
 
@@ -662,8 +662,8 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
             ],
           ),
         ],
-      ),
 
+      ),
     );
   }
 

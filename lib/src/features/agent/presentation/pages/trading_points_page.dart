@@ -564,9 +564,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       ),
 
       // Pastki menyu — mavjud nav bar (o‘zgarmagan)
-      bottomNavigationBar: const AgentBottomNavBar(
-        initialIndex: 2,
-      ),
+      // bottomNavigationBar: const AgentBottomNavBar(
+      //   initialIndex: 2,
+      // ),
     );
   }
 }

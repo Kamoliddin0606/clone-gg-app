@@ -10,6 +10,7 @@ class FluidNavItem {
 class FluidNavBar extends StatefulWidget {
   final List<FluidNavItem> items;   // 3–5 element
   final int initialIndex;
+  final ValueChanged<int>? onIndexChanged;
   final EdgeInsets padding;
   final double height;
 
@@ -17,6 +18,7 @@ class FluidNavBar extends StatefulWidget {
     super.key,
     required this.items,
     this.initialIndex = 0,
+    this.onIndexChanged,
     // this.padding = const EdgeInsets.fromLTRB(16, 8, 16, 12),
     this.padding = EdgeInsets.zero,
     this.height = 64,
@@ -53,7 +55,7 @@ class _FluidNavBarState extends State<FluidNavBar> {
               child: Stack(
               alignment: Alignment.bottomCenter,
               children: [
-                // pastdagi “track” chizig‘i (namunadagi ingichka chiziq)
+                // pastdagi "track" chizig'i (namunadagi ingichka chiziq)
                 Positioned(
                   bottom: 6,
                   child: Container(
@@ -78,7 +80,10 @@ class _FluidNavBarState extends State<FluidNavBar> {
                                           pillColor: pill,
                                           onPillColor: onPill,
                                           onTap: () {
-                                            if (_index != i) setState(() => _index = i);
+                                            if (_index != i) {
+                                              setState(() => _index = i);
+                                              widget.onIndexChanged?.call(i);
+                                            }
                                             item.onTap?.call();
                                           },
                                         ),
@@ -122,7 +127,7 @@ class _FluidItem extends StatelessWidget {
 
         // Slotga qarab moslashtirish
         final iconSize = w >= 96 ? 26.0 : w >= 80 ? 24.0 : 22.0;
-        final hPad = 10.0; // vertical tartibda gorizontal pad kamroq bo‘lsin
+        final hPad = 10.0; // vertical tartibda gorizontal pad kamroq bo'lsin
         const dur = Duration(milliseconds: 220);
         const curve = Curves.easeOutCubic;
 

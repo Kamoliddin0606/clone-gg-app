@@ -395,11 +395,21 @@ class _MainReportPageState extends State<MainReportPage>
 // YANGI: reports_page.dart dagidek Material date range picker dan foydalanamiz
   void _showReportPeriodCalendar(BuildContext context, MainReport? report) async {
     // 2-fayldagi parametrlar bilan bir xil: initialDateRange, firstDate, lastDate
+    // initialDateRange ni tekshirib, agar end lastDate dan keyin bo'lsa, uni lastDate ga teng qilish
+    DateTimeRange? safeInitialRange = _selectedRange;
+    final lastDate = DateTime.now();
+    if (safeInitialRange != null && safeInitialRange.end.isAfter(lastDate)) {
+      safeInitialRange = DateTimeRange(
+        start: safeInitialRange.start,
+        end: lastDate,
+      );
+    }
+
     final picked = await showDateRangePicker(
       context: context,
-      initialDateRange: _selectedRange,
+      initialDateRange: safeInitialRange,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
+      lastDate: lastDate,
       // istasangiz quyidagilarni ham qo‘shsa bo‘ladi:
       // initialEntryMode: DatePickerEntryMode.calendarOnly,
       // helpText: 'Select range',

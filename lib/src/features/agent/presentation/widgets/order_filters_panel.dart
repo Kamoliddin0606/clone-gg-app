@@ -35,19 +35,31 @@ class OrdersFiltersPanel extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
         Text('Status', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
-        Wrap(spacing: 8, runSpacing: 8, children:[
-          for(final e in statusMap)
-            if(e.value!=null)
-              FilterChip(
-                label: Text(e.key),
-                selected: state.statuses.contains(e.value),
-                onSelected: (v){
-                  final ns = {...state.statuses};
-                  if(v) ns.add(e.value!); else ns.remove(e.value!);
-                  onChange(OrdersFilterState(statuses: ns, clients: state.clients, range: state.range));
-                },
-              ),
-        ]),
+        SizedBox(
+          height: 120, // Fixed height for 3 rows (approximately 40px per row)
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              direction: Axis.vertical,
+              alignment: WrapAlignment.start,
+              children: [
+                for(final e in statusMap)
+                  if(e.value!=null)
+                    FilterChip(
+                      label: Text(e.key),
+                      selected: state.statuses.contains(e.value),
+                      onSelected: (v){
+                        final ns = {...state.statuses};
+                        if(v) ns.add(e.value!); else ns.remove(e.value!);
+                        onChange(OrdersFilterState(statuses: ns, clients: state.clients, range: state.range));
+                      },
+                    ),
+              ],
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
         Text('Sana oralig\'i', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),

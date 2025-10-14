@@ -16,6 +16,7 @@ import '../../../../core/network/server_service.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../theme/theme_controller.dart';
 import '../../../../theme/theme_toggle.dart';
+import '../../../../theme/theme_schemes.dart';
 import '../../../navbars/fluid_nav_bar.dart';
 import 'prices_page.dart';
 
@@ -641,12 +642,12 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
           Positioned(
             top: -80,
             right: -60,
-            child: _decorBlob(const Color(0xFF6C8CFF).withOpacity(0.25), 220),
+            child: _decorBlob(Theme.of(context).extension<AppThemeExtension>()?.blobPrimary ?? const Color(0xFF6C8CFF), 220),
           ),
           Positioned(
             bottom: -60,
             left: -40,
-            child: _decorBlob(const Color(0xFF00E5A8).withOpacity(0.18), 180),
+            child: _decorBlob(Theme.of(context).extension<AppThemeExtension>()?.blobSecondary ?? const Color(0xFF00E5A8), 180),
           ),
           RefreshIndicator(
             onRefresh: widget.onRefresh ?? () async {},
@@ -874,29 +875,29 @@ class _GlassTile extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(22),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(22),
-                  gradient: const LinearGradient(
-                    colors: [Color(0x221A73E8), Color(0x2216D2A6)],
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
+                    colors: [
+                      Theme.of(context).extension<AppThemeExtension>()?.glassBackground ?? const Color(0x334B6BFF),
+                      Theme.of(context).extension<AppThemeExtension>()?.accentSecondary.withOpacity(0.3) ?? const Color(0x3316D2A6),
+                    ],
                   ),
                   border: Border.all(color: Colors.white10),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black26, blurRadius: 12, offset: Offset(0, 6)),
-                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(data.icon, size: 20, color: Colors.white70),
+                    Icon(data.icon, size: 20, color: Theme.of(context).brightness == Brightness.light ? Colors.black87 : Colors.white70),
                     const Spacer(),
-                    Text(data.title, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
+                    Text(data.title, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).brightness == Brightness.light ? Colors.black87 : Colors.white70)),
                     const SizedBox(height: 6),
-                    Text(data.value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(data.value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white)),
                   ],
                 ),
               ),
@@ -1061,8 +1062,11 @@ class _ChartCard extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  gradient: const LinearGradient(
-                    colors: [Color(0x221A73E8), Color(0x2229C6B7)],
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).extension<AppThemeExtension>()?.glassBackground ?? const Color(0x221A73E8),
+                      Theme.of(context).extension<AppThemeExtension>()?.accentSecondary.withOpacity(0.3) ?? const Color(0x2229C6B7),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -1071,9 +1075,9 @@ class _ChartCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white)),
                     const SizedBox(height: 2),
-                    Text(subtitle, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70)),
+                    Text(subtitle, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Theme.of(context).brightness == Brightness.light ? Colors.black54 : Colors.white70)),
                     const SizedBox(height: 8),
                     child,
                   ],
@@ -1115,10 +1119,10 @@ class _Insights extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 6.0),
     child: Row(
       children: [
-        const Icon(Icons.brightness_1, size: 6, color: Colors.white70),
+        Icon(Icons.brightness_1, size: 6, color: Theme.of(context).brightness == Brightness.light ? Colors.black54 : Colors.white70),
         const SizedBox(width: 12),
-        Expanded(child: Text(key, style: Theme.of(context).textTheme.bodyMedium)),
-        Text(val, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white70)),
+        Expanded(child: Text(key, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white))),
+        Text(val, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).brightness == Brightness.light ? Colors.black54 : Colors.white70)),
       ],
     ),
   );
@@ -1148,10 +1152,15 @@ class _HeroHeader extends StatelessWidget {
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0x334B6BFF), Color(0x3316D2A6)],
+                    colors: [
+                      Theme.of(context).extension<AppThemeExtension>()?.glassBackground ?? const Color(
+                          0x804B2DA5),
+                      Theme.of(context).extension<AppThemeExtension>()?.accentSecondary.withOpacity(0.3) ?? const Color(
+                          0x32FDFDFD),
+                    ],
                   ),
                   border: Border.all(color: Colors.white10),
                 ),
@@ -1169,10 +1178,13 @@ class _HeroHeader extends StatelessWidget {
                               alignment: Alignment.center,
                               children: [
                               ShaderMask(
-                              shaderCallback: (rect) => const SweepGradient(
+                              shaderCallback: (rect) => SweepGradient(
                             startAngle: -3.14159 / 2,
                             endAngle: 3 * 3.14159 / 2,
-                            colors: [Color(0xFF6C8CFF), Color(0xFF00E5A8)],
+                            colors: [
+                              Theme.of(context).extension<AppThemeExtension>()?.accentPrimary ?? const Color(0xFF6C8CFF),
+                              Theme.of(context).extension<AppThemeExtension>()?.accentSecondary ?? const Color(0xFF00E5A8),
+                            ],
                           ).createShader(rect),
                           child: CircularProgressIndicator(
                           value: value,

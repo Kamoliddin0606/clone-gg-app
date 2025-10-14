@@ -201,10 +201,21 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
     final String q = _normalize(_search.text);
     final int? tabStatus = _statusMap[_statusTabs[_currentTabIndex]];
 
+    // Debug: Userdan kelgan filter statuslari va UI da oldindan bor statuslar ro'yxatini chiqarish
+    print('=== FILTER DEBUG ===');
+    print('User tanlagan filter statuslari (_filters.statuses): ${_filters.statuses}');
+    print('UI dagi mavjud statuslar ro\'yxati (_statusMap): $_statusMap');
+    print('Joriy tab index: $_currentTabIndex');
+    print('Joriy tab nomi: ${_statusTabs[_currentTabIndex]}');
+    print('Joriy tab status kodi (tabStatus): $tabStatus');
+    print('===================');
+
     setState((){
       _filtered = _all.where((o){
-        final matchTab = (tabStatus==null) ? true : o.status == tabStatus;
-        final matchStatusMulti = _filters.statuses.isEmpty ? true : _filters.statuses.contains(o.status);
+        print("Order status: ${o.mainStatus} tanlangan tab: ${_statusTabs[_currentTabIndex]}");
+        final matchTab = (tabStatus==null) ? true : o.mainStatus == _statusTabs[_currentTabIndex];
+        print("_filters.statuses: ${_filters.statuses} o.mainStatus: ${o.mainStatus} Check: ${_statusMap[o.mainStatus]}");
+        final matchStatusMulti = _filters.statuses.isEmpty ? true : _filters.statuses.contains(_statusMap[o.mainStatus]);
         final matchDate = _filters.range==null ? true : (o.dateOrder.isAfter(_filters.range!.start.subtract(const Duration(seconds:1))) && o.dateOrder.isBefore(_filters.range!.end.add(const Duration(seconds:1))));
         final matchClient = _filters.clients.isEmpty ? true : _filters.clients.contains(o.clientName);
         final text = _normalize([
@@ -212,9 +223,14 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
           NumberFormat('#,##0').format(o.total)
         ].join(' '));
         final matchSearch = q.isEmpty ? true : text.contains(q);
+
+        // Debug: Har bir order uchun filter natijalarini alohida chiqarish
+        print('Order: ${o.numOrder} | Status: ${o.status} | Tab Match: $matchTab | Multi Status Match: $matchStatusMulti | Date Match: $matchDate | Client Match: $matchClient | Search Match: $matchSearch | Overall: ${matchTab && matchStatusMulti && matchDate && matchClient && matchSearch}');
+
         return matchTab && matchStatusMulti && matchDate && matchClient && matchSearch;
       }).toList();
     });
+    
   }
 
   String _normalize(String s){ return s.toLowerCase().replaceAll(RegExp(r"\s+"), " ").trim(); /* TODO: add cyr/latin transliteration */ }

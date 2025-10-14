@@ -16,6 +16,7 @@ class SharedPreferencesService {
   static const String _serverNameKey = 'selected_server_env';
   static const String _baseUrlKey = 'selected_server_base_url';
   static const String _isOfflineModeKey = 'is_offline_mode';
+  static const String _languageCodeKey = 'language_code';
   // static const String _serverName = 'selected_server_name';
 
   static SharedPreferencesService? _instance;
@@ -187,6 +188,38 @@ Future<void> init() async {
 
   Future<void> clearOfflineMode() async {
     await _preferences.remove(_isOfflineModeKey);
+  }
+
+  // Language management
+  Future<void> setLanguageCode(String languageCode) async {
+    try {
+      await _preferences.setString(_languageCodeKey, languageCode);
+      print('Language code saved: $languageCode');
+    } catch (e) {
+      print('Error saving language code: $e');
+      rethrow;
+    }
+  }
+
+  String getLanguageCode() {
+    try {
+      final languageCode = _preferences.getString(_languageCodeKey) ?? 'uz'; // Default to Uzbek
+      print('Retrieved language code: $languageCode');
+      return languageCode;
+    } catch (e) {
+      print('Error retrieving language code: $e');
+      return 'uz'; // Fallback to Uzbek
+    }
+  }
+
+  Future<void> clearLanguageCode() async {
+    try {
+      await _preferences.remove(_languageCodeKey);
+      print('Language code cleared');
+    } catch (e) {
+      print('Error clearing language code: $e');
+      rethrow;
+    }
   }
 
   // Report sent to Telegram (date-aware)

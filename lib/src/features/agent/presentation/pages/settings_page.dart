@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -1350,11 +1353,17 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
   }
 
   Future<void> _loadCurrentLanguage() async {
-    // Load current language from shared preferences
-    // For now, we'll use a simple approach
-    setState(() {
-      _selectedLanguage = 'uz'; // Default
-    });
+    try {
+      final localeProvider = context.read<LocaleProvider>();
+      setState(() {
+        _selectedLanguage = localeProvider.currentLanguageCode;
+      });
+    } catch (e) {
+      print('Error loading current language: $e');
+      setState(() {
+        _selectedLanguage = 'uz'; // Fallback
+      });
+    }
   }
 
   Future<void> _changeLanguage(String languageCode) async {
@@ -1379,25 +1388,35 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
     );
 
     if (confirmed == true) {
-      setState(() {
-        _selectedLanguage = languageCode;
-      });
+      try {
+        // Update locale through provider
+        final localeProvider = context.read<LocaleProvider>();
+        await localeProvider.setLocaleByCode(languageCode);
 
-      // Save language preference
-      // Here you would save to shared preferences
+        setState(() {
+          _selectedLanguage = languageCode;
+        });
 
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.languageChanged),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.languageChanged),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+          );
+        }
+      } catch (e) {
+        print('Error changing language: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Tilni o\'zgartirishda xatolik yuz berdi'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
       }
-
-      // Note: In a real app, you would restart the app or reload locale
-      // For this demo, we'll just update the state
     }
   }
 

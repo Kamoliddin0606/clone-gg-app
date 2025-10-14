@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
+import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
@@ -20,7 +22,6 @@ void main() async {
   // Set up service locator
   await setupServiceLocator();
 
-
   // Wait for async services to be ready
   await sl.allReady();
 
@@ -37,27 +38,53 @@ void main() async {
 
 
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({super.key});
 
   @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  final LocaleProvider _localeProvider = LocaleProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeLocale();
+  }
+
+  Future<void> _initializeLocale() async {
+    await _localeProvider.initialize();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-
-
-      create: (context) => sl<AuthBloc>(),
+    return MultiProvider(
+      providers: [
+        BlocProvider(create: (context) => sl<AuthBloc>()),
+        ChangeNotifierProvider.value(value: _localeProvider),
+      ],
       child: ValueListenableBuilder<ThemeMode>(
         valueListenable: ThemeController.I.mode,
         builder: (context, themeMode, _) {
-          return MaterialApp(
-            title: 'Gloria Marketing',
-            theme: appLight,
-            darkTheme: appDark,
-            themeMode: themeMode,
-            onGenerateRoute: AppRouter.generateRoute,
-            initialRoute: AppRouter.loginRoute,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
+          return Consumer<LocaleProvider>(
+            builder: (context, localeProvider, _) {
+              return MaterialApp(
+                title: 'Gloria Marketing',
+                theme: appLight,
+                darkTheme: appDark,
+                themeMode: themeMode,
+                locale: localeProvider.locale,
+                onGenerateRoute: AppRouter.generateRoute,
+                initialRoute: AppRouter.loginRoute,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+              );
+            },
           );
         },
       ),

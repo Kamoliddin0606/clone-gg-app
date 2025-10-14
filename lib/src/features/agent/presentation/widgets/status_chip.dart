@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../shared/order_status_utils.dart';
 
 class StatusChip extends StatelessWidget {
-  final int status;
+  final String status;
   const StatusChip({super.key, required this.status});
 
   @override

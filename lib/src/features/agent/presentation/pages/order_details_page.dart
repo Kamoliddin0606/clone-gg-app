@@ -18,7 +18,7 @@ class OrderDetailsPage extends StatelessWidget {
             Text(order.numOrder, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
           ])),
-          StatusChip(status: order.status),
+          StatusChip(status: order.mainStatus),
         ])),
         const SizedBox(height: 12),
         const TabBar(tabs: [Tab(text:'Asosiy'), Tab(text:'Tarkibi')]),

@@ -51,7 +51,7 @@ class OrderCard extends StatelessWidget {
                 Row(children: [
                   Flexible(child: Text('№ ${order.numOrder}', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700))),
                   const SizedBox(width: 8),
-                  StatusChip(status: order.status),
+                  StatusChip(status: order.mainStatus),
                 ]),
                 const SizedBox(height: 8),
                 Text(order.clientName, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),

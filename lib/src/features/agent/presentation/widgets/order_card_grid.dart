@@ -162,7 +162,7 @@ class OrderCardGrid extends StatelessWidget {
                         width: constraints.maxWidth,
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
-                          child: StatusChip(status: order.status),
+                          child: StatusChip(status: order.mainStatus),
                         ),
                       );
                     },

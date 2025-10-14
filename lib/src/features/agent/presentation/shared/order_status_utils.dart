@@ -6,30 +6,34 @@
 import 'package:flutter/material.dart';
 
 
-String statusText(int status) {
+String statusText(String status) {
   switch (status) {
-    case 0: return 'Yangi';
-    case 1: return 'Tasdiqlangan';
-    case 2: return 'Jarayonda';
-    case 3: return 'Yo‘lda';
-    case 4: return 'Yetkazildi';
-    case 5: return 'Qisman to‘langan';
-    case 6: return 'Muddat o‘tgan';
+    case "Новый": return 'Yangi';
+    case "Оператор подтвердил и в процессе комплектации": return 'Tasdiqlangan';
+    case "Подтверподтверждено на складе / ожидает доставки": return 'Yetkazish jarayonida';
+    case "Доставлено и оплачено": return 'Yetkazildi';
+    case "Запрос на возврат": return 'Qaytarish so\'raldi';
+    case "Возврат одобрен": return 'Bekor qilindi';
+    case "Доставлено и ожидает оплаты": return 'Yetkazildi, to\'lanmadi';
+    case "Доставлено и частично оплачено": return 'Yetkazildi, qisman to\'landi';
+    case "Срок доставки истёк": return 'muddati o`tdi';
     default: return 'Noma’lum';
   }
 }
 
 
-Color statusColor(BuildContext context, int status) {
+Color statusColor(BuildContext context, String status) {
   final cs = Theme.of(context).colorScheme;
   switch (status) {
-    case 0: return cs.primary;
-    case 1: return cs.tertiary;
-    case 2: return cs.secondary;
-    case 3: return cs.inversePrimary;
-    case 4: return Colors.teal;
-    case 5: return Colors.orange;
-    case 6: return cs.error;
+    case "Новый": return cs.primary;
+    case "Оператор подтвердил и в процессе комплектации": return cs.tertiary;
+    case "Подтверподтверждено на складе / ожидает доставки": return cs.secondary;
+    case "Доставлено и оплачено": return cs.inversePrimary;
+    case "Запрос на возврат": return Colors.teal;
+    case "Возврат одобрен": return Colors.orange;
+    case "Доставлено и ожидает оплаты": return cs.error;
+    case "Доставлено и частично оплачено": return cs.onError;
+    case "Срок доставки истёк": return cs.onTertiary;
     default: return cs.outline;
   }
 }

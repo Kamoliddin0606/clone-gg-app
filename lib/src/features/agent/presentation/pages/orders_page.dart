@@ -219,7 +219,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
         final matchDate = _filters.range==null ? true : (o.dateOrder.isAfter(_filters.range!.start.subtract(const Duration(seconds:1))) && o.dateOrder.isBefore(_filters.range!.end.add(const Duration(seconds:1))));
         final matchClient = _filters.clients.isEmpty ? true : _filters.clients.contains(o.clientName);
         final text = _normalize([
-          o.numOrder, o.clientName, o.captionOrder, o.clientCode, o.codeOrg, statusText(o.status),
+          o.numOrder, o.clientName, o.captionOrder, o.clientCode, o.codeOrg, statusText(o.mainStatus),
           NumberFormat('#,##0').format(o.total)
         ].join(' '));
         final matchSearch = q.isEmpty ? true : text.contains(q);
@@ -377,7 +377,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
               Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children:[
                 Icon(Icons.receipt_long_rounded, color: cs.primary), const SizedBox(width: 8),
                 Expanded(child: Text('Buyurtma № ${order.numOrder}', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700))),
-                StatusChip(status: order.status),
+                StatusChip(status: order.mainStatus),
               ])),
               const SizedBox(height: 12),
               const TabBar(tabs: [Tab(text: 'Asosiy'), Tab(text: 'Tarkibi')]),
@@ -411,7 +411,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
         clientCode: '00-000${5000+i}',
         clientName: clients[i%clients.length],
         codeOrg: '00000000001',
-        mainStatus: statusText(st),
+        mainStatus: statusText(st.toString()),
         items: const [
           OrderItem(productName: 'Shampoo X', article: 'SHX-250', quantity: 10, price: 25000, priceType: 'Retail'),
           OrderItem(productName: 'Soap Y', article: 'SPY-100', quantity: 24, price: 9000, priceType: 'Retail'),

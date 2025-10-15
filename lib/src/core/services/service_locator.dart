@@ -102,6 +102,7 @@ Future<void> setupServiceLocator() async {
     sl.registerFactory(() => AuthBloc(
       authRepository: sl(),
       dataSyncService: sl(),
+      prefs: sl(),
     ));
   }
 }

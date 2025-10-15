@@ -692,7 +692,7 @@ class TradingPointCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _line(context, Icons.place_outlined, tradingPoint.address, soft: true, maxLines: 3, scrollable: true),
+              // _line(context, Icons.place_outlined, tradingPoint.address, soft: true, maxLines: 3, scrollable: true),
               const SizedBox(height: 2),
               _line(context, Icons.badge_outlined, 'INN: ${tradingPoint.inn}', maxLines: 2),
             ],
@@ -1604,6 +1604,30 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
     _checkLocationPermission();
   }
 
+  /// Validates and returns a valid LatLng, with fallback for invalid coordinates
+  LatLng _getValidLatLng(double latitude, double longitude, String clientName) {
+    // Check if coordinates are valid (not null, not zero, and within valid ranges)
+    const double minLat = -90.0;
+    const double maxLat = 90.0;
+    const double minLng = -180.0;
+    const double maxLng = 180.0;
+
+    // Default fallback coordinates (Tashkent, Uzbekistan)
+    const double defaultLat = 41.2995;
+    const double defaultLng = 69.2401;
+
+    bool isValid = latitude >= minLat && latitude <= maxLat &&
+                   longitude >= minLng && longitude <= maxLng &&
+                   latitude != 0.0 && longitude != 0.0;
+
+    if (!isValid) {
+      print('Warning: Invalid coordinates for $clientName: lat=$latitude, lng=$longitude. Using default location.');
+      return const LatLng(defaultLat, defaultLng);
+    }
+
+    return LatLng(latitude, longitude);
+  }
+
   Future<void> _checkLocationPermission() async {
     final status = await Permission.location.status;
     if (status.isGranted) {
@@ -1631,13 +1655,13 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
           child: _locationPermissionGranted
               ? GoogleMap(
                   initialCameraPosition: CameraPosition(
-                    target: LatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude),
+                    target: _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
                     zoom: 15,
                   ),
                   markers: {
                     Marker(
                       markerId: MarkerId(widget.tradingPoint.id),
-                      position: LatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude),
+                      position: _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
                       infoWindow: InfoWindow(title: widget.tradingPoint.name),
                     ),
                   },

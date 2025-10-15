@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class TradingPoint {
   final String id;
   final String name;
@@ -54,6 +56,26 @@ class TradingPoint {
   });
 
   factory TradingPoint.fromJson(Map<String, dynamic> json) {
+    // Helper function for safe double parsing
+    double _safeParseDouble(dynamic value, String fieldName) {
+      if (value == null) return 0.0;
+
+      // Handle different types safely
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        final parsed = double.tryParse(value);
+        if (parsed != null) return parsed;
+      }
+      if (value is num) return value.toDouble();
+
+      // Log warning for unexpected types (only in debug mode to avoid spam)
+      if (kDebugMode) {
+        print('Warning: Unexpected type for $fieldName: ${value.runtimeType} = $value');
+      }
+      return 0.0;
+    }
+
     return TradingPoint(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -68,8 +90,8 @@ class TradingPoint {
       hasContracts: json['hasContracts'] == true,
       isVisited: json['isVisited'] == true,
       hasContract: json['hasContract'] == true,
-      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
-      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      latitude: _safeParseDouble(json['latitude'], 'latitude'),
+      longitude: _safeParseDouble(json['longitude'], 'longitude'),
       region: json['region']?.toString() ?? '',
       district: json['district']?.toString() ?? '',
       signboard: json['signboard']?.toString() ?? '',
@@ -77,8 +99,8 @@ class TradingPoint {
       responsiblePerson: json['responsiblePerson']?.toString() ?? '',
       responsiblePersonPhone: json['responsiblePersonPhone']?.toString() ?? '',
       tradePointType: json['tradePointType']?.toString() ?? '',
-      creditLimit: (json['creditLimit'] as num?)?.toDouble() ?? 0.0,
-      accumulatedCredit: (json['accumulatedCredit'] as num?)?.toDouble() ?? 0.0,
+      creditLimit: _safeParseDouble(json['creditLimit'], 'creditLimit'),
+      accumulatedCredit: _safeParseDouble(json['accumulatedCredit'], 'accumulatedCredit'),
       codeRegion: json['codeRegion']?.toString() ?? '',
     );
   }

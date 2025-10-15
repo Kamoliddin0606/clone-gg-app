@@ -1088,6 +1088,24 @@ class ApiDatabaseService {
     final db = await database;
     final result = await db.query('clients', orderBy: 'name ASC');
 
+    // Helper function for safe double parsing from database
+    double _safeParseDoubleFromDb(dynamic value, String fieldName, String clientCode) {
+      if (value == null) return 0.0;
+
+      // Handle different types safely
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        final parsed = double.tryParse(value);
+        if (parsed != null) return parsed;
+      }
+      if (value is num) return value.toDouble();
+
+      // Log warning for unexpected types
+      print('Warning: Unexpected type for $fieldName in client $clientCode: ${value.runtimeType} = $value');
+      return 0.0;
+    }
+
     return result
         .map(
           (row) => TradingPoint(
@@ -1104,8 +1122,8 @@ class ApiDatabaseService {
             hasContracts: (row['has_contracts'] as int?) == 1,
             isVisited: (row['is_visited'] as int?) == 1,
             hasContract: (row['has_contract'] as int?) == 1,
-            latitude: (row['latitude'] as num?)?.toDouble() ?? 0.0,
-            longitude: (row['longitude'] as num?)?.toDouble() ?? 0.0,
+            latitude: _safeParseDoubleFromDb(row['latitude'], 'latitude', row['code'] as String),
+            longitude: _safeParseDoubleFromDb(row['longitude'], 'longitude', row['code'] as String),
             region: row['region'] as String? ?? '',
             district: row['district'] as String? ?? '',
             signboard: row['signboard'] as String? ?? '',
@@ -1114,9 +1132,9 @@ class ApiDatabaseService {
             responsiblePersonPhone:
                 row['responsible_person_phone'] as String? ?? '',
             tradePointType: row['trade_point_type'] as String? ?? '',
-            creditLimit: (row['credit_limit'] as num?)?.toDouble() ?? 0.0,
+            creditLimit: _safeParseDoubleFromDb(row['credit_limit'], 'creditLimit', row['code'] as String),
             accumulatedCredit:
-                (row['accumulated_credit'] as num?)?.toDouble() ?? 0.0,
+                _safeParseDoubleFromDb(row['accumulated_credit'], 'accumulatedCredit', row['code'] as String),
             codeRegion: row['code_region'] as String? ?? '',
           ),
         )

@@ -1,0 +1,9 @@
+1. Conduct a comprehensive deep analysis of the entire project: Thoroughly examine the interdependencies among files, methods, classes, imports, and their relationships in detail. Store all analyzed information in your memory (cache) for reference. Ensure that all subsequent tasks are interconnected and build upon the existing codebase without introducing conflicts or redundancies.
+2. Quidagi fayllarni 3- bandni bajarish uchun to'liq o'rganib chiq: data_sync_service.dart,  reports_sync_service.dart, api_database_service.dart,  soap_api_service.dart
+3.  (Bu yerga vazifa yoziladi) bu qatorni o'chiring
+4. Vazifalarni malumotlar bilan ishlashda yuqorida tilga olingan fayllarda joylashgan tayyor metodlardan foydalan.
+5. Kiritilayotgan barcha kod o‘zgarishlari ishlayotgan ilovani izdan chiqarmasligiga ishonch hosil qiling. Kodni toza kod prinsiplari, xatoliklarni qayta ishlash (try–catch), loglash va eng yaxshi amaliyotlarga qat’iy rioya qilgan holda yozing.
+
+6. Vazifani bajarishdan avval loyiha bo‘yicha tegishli va zarur barcha ma’lumotlarni puxta o‘rganing va aniqlang. To‘liq yo‘l xaritasini (roadmap) ishlab chiqing va aynan shu asosda ish yuriting.
+
+7. Vazifa yakunlangach, chuqur tahlil o‘tkazing, testlar yozing va funksionallikni tekshiring.

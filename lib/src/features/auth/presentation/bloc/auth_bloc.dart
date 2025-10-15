@@ -92,25 +92,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
       }
 
-      // Send syncAllUserData command to server
-      try {
-        await dataSyncService.syncAllUserData(
-          userCode: user.code,
-          password: '', // Password not stored for security
-          codeProject: user.codeProject,
-          codeSklad: user.warehouseCode,
-        );
+        // Send syncAllUserData command to server
+        try {
+          await dataSyncService.syncAllUserData(
+            userCode: user.code,
+            password: '', // Password not stored for security
+            codeProject: user.codeProject,
+            codeSklad: user.warehouseCode,
+          );
 
-        if (kDebugMode) {
-          print('syncAllUserData command sent to server successfully');
+          if (kDebugMode) {
+            print('syncAllUserData command sent to server successfully');
+          }
+        } catch (syncError) {
+          // Log the error but don't fail the login process
+          if (kDebugMode) {
+            print('Error during syncAllUserData: $syncError');
+          }
+          // Continue with login success
         }
-      } catch (syncError) {
-        // Log the error but don't fail the login process
-        if (kDebugMode) {
-          print('Error during syncAllUserData: $syncError');
-        }
-        // Continue with login success
-      }
 
     } catch (e) {
       // Log the error but don't fail the login process

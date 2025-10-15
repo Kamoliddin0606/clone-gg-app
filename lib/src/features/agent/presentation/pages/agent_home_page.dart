@@ -121,6 +121,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
             await _updateUserDataInPreferences();
             // Check if user data needs to be synced
             await _checkAndSyncUserData();
+
           }
         } else {
           // User doesn't match, clear cache and load new data

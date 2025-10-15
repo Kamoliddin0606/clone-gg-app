@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 
 void main() {
   // Initialize sqflite_common_ffi for testing
@@ -14,6 +15,23 @@ void main() {
     dbService = ApiDatabaseService();
     // Clear all data before each test
     await dbService.clearAllData();
+
+    // Create a test order first for foreign key references
+    await dbService.saveOrders([
+      Order(
+        numOrder: 'TS00-020980',
+        dateOrder: DateTime.parse('2025-10-13T13:35:20'),
+        captionOrder: 'Test Order',
+        typePriceCode: '00000000003',
+        status: 1,
+        total: 331980,
+        clientCode: 'TEST001',
+        clientName: 'Test Client',
+        codeOrg: '00000000002',
+        mainStatus: 'active',
+        server: true,
+      )
+    ]);
   });
 
   tearDown(() async {

@@ -1,0 +1,4 @@
+1. Conduct a comprehensive deep analysis of the entire project: Thoroughly examine the interdependencies among files, methods, classes, imports, and their relationships in detail. Store all analyzed information in your memory (cache) for reference. Ensure that all subsequent tasks are interconnected and build upon the existing codebase without introducing conflicts or redundancies.
+2. Quyidagi fayllarni 3- bandni bajarish uchun to'liq o'rganib chiq: data_sync_service.dart,  reports_sync_service.dart, api_database_service.dart,  soap_api_service.dart
+3.  (Buyerga tahlil, analiz va xulosa, yechimlar uchun vazifa yoziladi) bu qatorni o'chir.
+4. xulosa va yechimlar taklif qil.   KOdga o'zgartirish kiritma!! faqat hulosa va yechiim taklif qil.

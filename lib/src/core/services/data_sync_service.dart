@@ -236,7 +236,8 @@ class DataSyncService {
     required String password,
     required String codeProject,
     required String codeSklad,
-  }) async {
+  })
+  async {
     try {
       if (kDebugMode) {
         print('Starting full data sync for user: $userCode');

@@ -41,7 +41,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 11,
+      version: 12,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -3277,69 +3277,134 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    // Use batch operations for much better performance
-    final batch = db.batch();
+    // Validate input data
+    if (orderDetails.isEmpty) {
+      return; // Nothing to save
+    }
 
-    // Delete all existing order details
-    batch.delete('order_details');
-    batch.delete('order_detail_products');
-    batch.delete('order_payments');
-
-    // Deduplicate order details by num_order to avoid UNIQUE constraint violations
-    final uniqueOrderDetails = <String, OrderDetail>{};
+    // Validate each order detail
     for (final orderDetail in orderDetails) {
-      uniqueOrderDetails[orderDetail.numOrder] = orderDetail;
-    }
+      if (orderDetail.numOrder.isEmpty) {
+        throw ArgumentError('OrderDetail numOrder cannot be empty');
+      }
+      if (orderDetail.codePrice.isEmpty) {
+        throw ArgumentError('OrderDetail codePrice cannot be empty');
+      }
+      if (orderDetail.codeSklad.isEmpty) {
+        throw ArgumentError('OrderDetail codeSklad cannot be empty');
+      }
+      if (orderDetail.codeOrg.isEmpty) {
+        throw ArgumentError('OrderDetail codeOrg cannot be empty');
+      }
 
-    // Add all inserts to batch
-    for (final orderDetail in uniqueOrderDetails.values) {
-      batch.insert('order_details', {
-        'num_order': orderDetail.numOrder,
-        'credit': orderDetail.credit ? 1 : 0,
-        'code_price': orderDetail.codePrice,
-        'date_order': orderDetail.dateOrder.toIso8601String(),
-        'code_sklad': orderDetail.codeSklad,
-        'comment_supervisor': orderDetail.commentSupervisor,
-        'comment_forwarder': orderDetail.commentForwarder,
-        'comment_agent': orderDetail.commentAgent,
-        'shipping_date': orderDetail.shippingDate,
-        'order_type': orderDetail.orderType,
-        'code_org': orderDetail.codeOrg,
-        'created_at': now,
-        'updated_at': now,
-      });
-
-      // Insert product rows
+      // Validate products
       for (final product in orderDetail.productRows) {
-        batch.insert('order_detail_products', {
-          'order_detail_id': orderDetail.id,
-          'code_product': product.codeProduct,
-          'name_product': product.nameProduct,
-          'amount': product.amount,
-          'price': product.price,
-          'total': product.total,
-          'discount_rate': product.discountRate,
-          'weight': product.weight,
-          'capacity': product.capacity,
-          'created_at': now,
-          'updated_at': now,
-        });
+        if (product.codeProduct.isEmpty) {
+          throw ArgumentError('Product codeProduct cannot be empty for order ${orderDetail.numOrder}');
+        }
+        if (product.nameProduct.isEmpty) {
+          throw ArgumentError('Product nameProduct cannot be empty for order ${orderDetail.numOrder}');
+        }
+        if (product.amount <= 0) {
+          throw ArgumentError('Product amount must be positive for order ${orderDetail.numOrder}');
+        }
+        if (product.price < 0) {
+          throw ArgumentError('Product price cannot be negative for order ${orderDetail.numOrder}');
+        }
       }
 
-      // Insert payment rows
+      // Validate payments
       for (final payment in orderDetail.creditDetailsList) {
-        batch.insert('order_payments', {
-          'order_detail_id': orderDetail.id,
-          'date_of_payment': payment.dateOfPayment,
-          'total': payment.total,
-          'created_at': now,
-          'updated_at': now,
-        });
+        if (payment.dateOfPayment.isEmpty) {
+          throw ArgumentError('Payment dateOfPayment cannot be empty for order ${orderDetail.numOrder}');
+        }
+        if (payment.total < 0) {
+          throw ArgumentError('Payment total cannot be negative for order ${orderDetail.numOrder}');
+        }
       }
     }
 
-    // Execute batch operation
-    await batch.commit(noResult: true);
+    // Validate foreign key references for all orders
+    final orderNumbers = orderDetails.map((od) => od.numOrder).toSet();
+    for (final numOrder in orderNumbers) {
+      final orderExists = await db.query('orders', where: 'num_order = ?', whereArgs: [numOrder]);
+      if (orderExists.isEmpty) {
+        throw Exception('Referenced order $numOrder does not exist');
+      }
+    }
+
+    // Use transaction for atomicity
+    await db.transaction((txn) async {
+      try {
+        // Use batch operations for much better performance
+        final batch = txn.batch();
+
+        // Delete all existing order details (this method replaces all data)
+        batch.delete('order_details');
+        batch.delete('order_detail_products');
+        batch.delete('order_payments');
+
+        // Deduplicate order details by num_order to avoid UNIQUE constraint violations
+        final uniqueOrderDetails = <String, OrderDetail>{};
+        for (final orderDetail in orderDetails) {
+          uniqueOrderDetails[orderDetail.numOrder] = orderDetail;
+        }
+
+        // Add all inserts to batch
+        for (final orderDetail in uniqueOrderDetails.values) {
+          final orderDetailId = await txn.insert('order_details', {
+            'num_order': orderDetail.numOrder,
+            'credit': orderDetail.credit ? 1 : 0,
+            'code_price': orderDetail.codePrice,
+            'date_order': orderDetail.dateOrder.toIso8601String(),
+            'code_sklad': orderDetail.codeSklad,
+            'comment_supervisor': orderDetail.commentSupervisor,
+            'comment_forwarder': orderDetail.commentForwarder,
+            'comment_agent': orderDetail.commentAgent,
+            'shipping_date': orderDetail.shippingDate,
+            'order_type': orderDetail.orderType,
+            'code_org': orderDetail.codeOrg,
+            'created_at': now,
+            'updated_at': now,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+          // Insert product rows
+          for (final product in orderDetail.productRows) {
+            batch.insert('order_detail_products', {
+              'order_detail_id': orderDetailId,
+              'code_product': product.codeProduct,
+              'name_product': product.nameProduct,
+              'amount': product.amount,
+              'price': product.price,
+              'total': product.total,
+              'discount_rate': product.discountRate,
+              'weight': product.weight,
+              'capacity': product.capacity,
+              'created_at': now,
+              'updated_at': now,
+            });
+          }
+
+          // Insert payment rows
+          for (final payment in orderDetail.creditDetailsList) {
+            batch.insert('order_payments', {
+              'order_detail_id': orderDetailId,
+              'date_of_payment': payment.dateOfPayment,
+              'total': payment.total,
+              'created_at': now,
+              'updated_at': now,
+            });
+          }
+        }
+
+        // Execute batch operation
+        await batch.commit(noResult: true);
+      } catch (e) {
+        // Log error and rethrow
+        print('Error saving order details batch: $e');
+        rethrow;
+      }
+    });
   }
 
   Future<List<OrderDetail>> getOrderDetails({String? numOrder}) async {
@@ -3368,7 +3433,7 @@ class ApiDatabaseService {
 
       if (!orderDetailsMap.containsKey(orderNum)) {
         orderDetailsMap[orderNum] = OrderDetail(
-          id: row['id'] as int,
+          id: row['id'] as int? ?? 0,
           numOrder: orderNum,
           credit: (row['credit'] as int?) == 1,
           codePrice: row['code_price'] as String,
@@ -3390,7 +3455,7 @@ class ApiDatabaseService {
       // Add product if exists
       if (row['code_product'] != null) {
         final product = OrderDetailProduct(
-          id: row['odp.id'] as int?,
+          id: row['odp.id'] as int? ?? 0,
           codeProduct: row['code_product'] as String,
           nameProduct: row['name_product'] as String,
           amount: row['amount'] as int,
@@ -3409,7 +3474,7 @@ class ApiDatabaseService {
       // Add payment if exists
       if (row['date_of_payment'] != null) {
         final payment = OrderPayment(
-          id: row['op.id'] as int?,
+          id: row['op.id'] as int? ?? 0,
           dateOfPayment: row['date_of_payment'] as String,
           total: (row['op.total'] as num?)?.toDouble() ?? 0.0,
         );
@@ -3432,114 +3497,245 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    final orderDetailId = await db.insert('order_details', {
-      'num_order': orderDetail.numOrder,
-      'credit': orderDetail.credit ? 1 : 0,
-      'code_price': orderDetail.codePrice,
-      'date_order': orderDetail.dateOrder.toIso8601String(),
-      'code_sklad': orderDetail.codeSklad,
-      'comment_supervisor': orderDetail.commentSupervisor,
-      'comment_forwarder': orderDetail.commentForwarder,
-      'comment_agent': orderDetail.commentAgent,
-      'shipping_date': orderDetail.shippingDate,
-      'order_type': orderDetail.orderType,
-      'code_org': orderDetail.codeOrg,
-      'created_at': now,
-      'updated_at': now,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
-
-    // Save products
-    for (final product in orderDetail.productRows) {
-      await db.insert('order_detail_products', {
-        'order_detail_id': orderDetailId,
-        'code_product': product.codeProduct,
-        'name_product': product.nameProduct,
-        'amount': product.amount,
-        'price': product.price,
-        'total': product.total,
-        'discount_rate': product.discountRate,
-        'weight': product.weight,
-        'capacity': product.capacity,
-        'created_at': now,
-        'updated_at': now,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    // Validate input data
+    if (orderDetail.numOrder.isEmpty) {
+      throw ArgumentError('OrderDetail numOrder cannot be empty');
+    }
+    if (orderDetail.codePrice.isEmpty) {
+      throw ArgumentError('OrderDetail codePrice cannot be empty');
+    }
+    if (orderDetail.codeSklad.isEmpty) {
+      throw ArgumentError('OrderDetail codeSklad cannot be empty');
+    }
+    if (orderDetail.codeOrg.isEmpty) {
+      throw ArgumentError('OrderDetail codeOrg cannot be empty');
     }
 
-    // Save payments
-    for (final payment in orderDetail.creditDetailsList) {
-      await db.insert('order_payments', {
-        'order_detail_id': orderDetailId,
-        'date_of_payment': payment.dateOfPayment,
-        'total': payment.total,
-        'created_at': now,
-        'updated_at': now,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    // Validate foreign key references
+    final orderExists = await db.query('orders', where: 'num_order = ?', whereArgs: [orderDetail.numOrder]);
+    if (orderExists.isEmpty) {
+      throw Exception('Referenced order ${orderDetail.numOrder} does not exist');
     }
+
+    // Use transaction for atomicity
+    await db.transaction((txn) async {
+      try {
+        final orderDetailId = await txn.insert('order_details', {
+          'num_order': orderDetail.numOrder,
+          'credit': orderDetail.credit ? 1 : 0,
+          'code_price': orderDetail.codePrice,
+          'date_order': orderDetail.dateOrder.toIso8601String(),
+          'code_sklad': orderDetail.codeSklad,
+          'comment_supervisor': orderDetail.commentSupervisor,
+          'comment_forwarder': orderDetail.commentForwarder,
+          'comment_agent': orderDetail.commentAgent,
+          'shipping_date': orderDetail.shippingDate,
+          'order_type': orderDetail.orderType,
+          'code_org': orderDetail.codeOrg,
+          'created_at': now,
+          'updated_at': now,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+        // Save products
+        for (final product in orderDetail.productRows) {
+          if (product.codeProduct.isEmpty) {
+            throw ArgumentError('Product codeProduct cannot be empty');
+          }
+          if (product.nameProduct.isEmpty) {
+            throw ArgumentError('Product nameProduct cannot be empty');
+          }
+          if (product.amount <= 0) {
+            throw ArgumentError('Product amount must be positive');
+          }
+          if (product.price < 0) {
+            throw ArgumentError('Product price cannot be negative');
+          }
+
+          await txn.insert('order_detail_products', {
+            'order_detail_id': orderDetailId,
+            'code_product': product.codeProduct,
+            'name_product': product.nameProduct,
+            'amount': product.amount,
+            'price': product.price,
+            'total': product.total,
+            'discount_rate': product.discountRate,
+            'weight': product.weight,
+            'capacity': product.capacity,
+            'created_at': now,
+            'updated_at': now,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+
+        // Save payments
+        for (final payment in orderDetail.creditDetailsList) {
+          if (payment.dateOfPayment.isEmpty) {
+            throw ArgumentError('Payment dateOfPayment cannot be empty');
+          }
+          if (payment.total < 0) {
+            throw ArgumentError('Payment total cannot be negative');
+          }
+
+          await txn.insert('order_payments', {
+            'order_detail_id': orderDetailId,
+            'date_of_payment': payment.dateOfPayment,
+            'total': payment.total,
+            'created_at': now,
+            'updated_at': now,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      } catch (e) {
+        // Log error and rethrow
+        print('Error saving order detail ${orderDetail.numOrder}: $e');
+        rethrow;
+      }
+    });
   }
 
   Future<void> updateOrderDetail(String numOrder, OrderDetail orderDetail) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.update(
-      'order_details',
-      {
-        'credit': orderDetail.credit ? 1 : 0,
-        'code_price': orderDetail.codePrice,
-        'date_order': orderDetail.dateOrder.toIso8601String(),
-        'code_sklad': orderDetail.codeSklad,
-        'comment_supervisor': orderDetail.commentSupervisor,
-        'comment_forwarder': orderDetail.commentForwarder,
-        'comment_agent': orderDetail.commentAgent,
-        'shipping_date': orderDetail.shippingDate,
-        'order_type': orderDetail.orderType,
-        'code_org': orderDetail.codeOrg,
-        'updated_at': now,
-      },
-      where: 'num_order = ?',
-      whereArgs: [numOrder],
-    );
-
-    // Delete existing products and payments, then re-insert
-    final orderDetailResult = await db.query('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
-    if (orderDetailResult.isNotEmpty) {
-      final orderDetailId = orderDetailResult.first['id'] as int;
-
-      await db.delete('order_detail_products', where: 'order_detail_id = ?', whereArgs: [orderDetailId]);
-      await db.delete('order_payments', where: 'order_detail_id = ?', whereArgs: [orderDetailId]);
-
-      // Re-insert products
-      for (final product in orderDetail.productRows) {
-        await db.insert('order_detail_products', {
-          'order_detail_id': orderDetailId,
-          'code_product': product.codeProduct,
-          'name_product': product.nameProduct,
-          'amount': product.amount,
-          'price': product.price,
-          'total': product.total,
-          'discount_rate': product.discountRate,
-          'weight': product.weight,
-          'capacity': product.capacity,
-          'created_at': now,
-          'updated_at': now,
-        });
-      }
-
-      // Re-insert payments
-      for (final payment in orderDetail.creditDetailsList) {
-        await db.insert('order_payments', {
-          'order_detail_id': orderDetailId,
-          'date_of_payment': payment.dateOfPayment,
-          'total': payment.total,
-          'created_at': now,
-          'updated_at': now,
-        });
-      }
+    // Validate input data
+    if (numOrder.isEmpty) {
+      throw ArgumentError('numOrder cannot be empty');
     }
+    if (orderDetail.numOrder.isEmpty) {
+      throw ArgumentError('OrderDetail numOrder cannot be empty');
+    }
+    if (orderDetail.codePrice.isEmpty) {
+      throw ArgumentError('OrderDetail codePrice cannot be empty');
+    }
+    if (orderDetail.codeSklad.isEmpty) {
+      throw ArgumentError('OrderDetail codeSklad cannot be empty');
+    }
+    if (orderDetail.codeOrg.isEmpty) {
+      throw ArgumentError('OrderDetail codeOrg cannot be empty');
+    }
+
+    // Validate that the order detail exists
+    final existingOrderDetail = await db.query('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
+    if (existingOrderDetail.isEmpty) {
+      throw Exception('Order detail with num_order $numOrder does not exist');
+    }
+
+    // Validate foreign key references
+    final orderExists = await db.query('orders', where: 'num_order = ?', whereArgs: [orderDetail.numOrder]);
+    if (orderExists.isEmpty) {
+      throw Exception('Referenced order ${orderDetail.numOrder} does not exist');
+    }
+
+    // Use transaction for atomicity
+    await db.transaction((txn) async {
+      try {
+        await txn.update(
+          'order_details',
+          {
+            'num_order': orderDetail.numOrder, // Allow updating the order number
+            'credit': orderDetail.credit ? 1 : 0,
+            'code_price': orderDetail.codePrice,
+            'date_order': orderDetail.dateOrder.toIso8601String(),
+            'code_sklad': orderDetail.codeSklad,
+            'comment_supervisor': orderDetail.commentSupervisor,
+            'comment_forwarder': orderDetail.commentForwarder,
+            'comment_agent': orderDetail.commentAgent,
+            'shipping_date': orderDetail.shippingDate,
+            'order_type': orderDetail.orderType,
+            'code_org': orderDetail.codeOrg,
+            'updated_at': now,
+          },
+          where: 'num_order = ?',
+          whereArgs: [numOrder],
+        );
+
+        // Get the order detail ID
+        final orderDetailResult = await txn.query('order_details', where: 'num_order = ?', whereArgs: [orderDetail.numOrder]);
+        if (orderDetailResult.isNotEmpty) {
+          final orderDetailId = orderDetailResult.first['id'] as int;
+
+          // Delete existing products and payments
+          await txn.delete('order_detail_products', where: 'order_detail_id = ?', whereArgs: [orderDetailId]);
+          await txn.delete('order_payments', where: 'order_detail_id = ?', whereArgs: [orderDetailId]);
+
+          // Re-insert products with validation
+          for (final product in orderDetail.productRows) {
+            if (product.codeProduct.isEmpty) {
+              throw ArgumentError('Product codeProduct cannot be empty');
+            }
+            if (product.nameProduct.isEmpty) {
+              throw ArgumentError('Product nameProduct cannot be empty');
+            }
+            if (product.amount <= 0) {
+              throw ArgumentError('Product amount must be positive');
+            }
+            if (product.price < 0) {
+              throw ArgumentError('Product price cannot be negative');
+            }
+
+            await txn.insert('order_detail_products', {
+              'order_detail_id': orderDetailId,
+              'code_product': product.codeProduct,
+              'name_product': product.nameProduct,
+              'amount': product.amount,
+              'price': product.price,
+              'total': product.total,
+              'discount_rate': product.discountRate,
+              'weight': product.weight,
+              'capacity': product.capacity,
+              'created_at': now,
+              'updated_at': now,
+            });
+          }
+
+          // Re-insert payments with validation
+          for (final payment in orderDetail.creditDetailsList) {
+            if (payment.dateOfPayment.isEmpty) {
+              throw ArgumentError('Payment dateOfPayment cannot be empty');
+            }
+            if (payment.total < 0) {
+              throw ArgumentError('Payment total cannot be negative');
+            }
+
+            await txn.insert('order_payments', {
+              'order_detail_id': orderDetailId,
+              'date_of_payment': payment.dateOfPayment,
+              'total': payment.total,
+              'created_at': now,
+              'updated_at': now,
+            });
+          }
+        }
+      } catch (e) {
+        // Log error and rethrow
+        print('Error updating order detail $numOrder: $e');
+        rethrow;
+      }
+    });
   }
 
   Future<void> deleteOrderDetail(String numOrder) async {
     final db = await database;
-    await db.delete('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
+
+    // Validate input
+    if (numOrder.isEmpty) {
+      throw ArgumentError('numOrder cannot be empty');
+    }
+
+    // Check if order detail exists
+    final existingOrderDetail = await db.query('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
+    if (existingOrderDetail.isEmpty) {
+      throw Exception('Order detail with num_order $numOrder does not exist');
+    }
+
+    // Use transaction for atomicity
+    await db.transaction((txn) async {
+      try {
+        // Foreign key constraints will handle cascading deletes for related records
+        await txn.delete('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
+      } catch (e) {
+        // Log error and rethrow
+        print('Error deleting order detail $numOrder: $e');
+        rethrow;
+      }
+    });
   }
 }

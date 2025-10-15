@@ -2,25 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/db_view_page.dart';
 import 'package:mockito/mockito.dart';
 
 // Mock classes
 class MockApiDatabaseService extends Mock implements ApiDatabaseService {}
+class MockSharedPreferencesService extends Mock implements SharedPreferencesService {}
+class MockDatabaseHelper extends Mock implements DatabaseHelper {}
 
 void main() {
   late MockApiDatabaseService mockApiDatabaseService;
+  late MockSharedPreferencesService mockPrefsService;
+  late MockDatabaseHelper mockDbHelper;
 
   setUp(() {
     mockApiDatabaseService = MockApiDatabaseService();
+    mockPrefsService = MockSharedPreferencesService();
+    mockDbHelper = MockDatabaseHelper();
 
-    // Register the mock service with GetIt
+    // Register the mock services with GetIt
     GetIt.instance.registerSingleton<ApiDatabaseService>(mockApiDatabaseService);
+    GetIt.instance.registerSingleton<SharedPreferencesService>(mockPrefsService);
+    GetIt.instance.registerSingleton<DatabaseHelper>(mockDbHelper);
   });
 
   tearDown(() {
-    // Unregister the mock service
+    // Unregister the mock services
     GetIt.instance.unregister<ApiDatabaseService>();
+    GetIt.instance.unregister<SharedPreferencesService>();
+    GetIt.instance.unregister<DatabaseHelper>();
   });
 
   group('DbViewPage Widget Tests', () {

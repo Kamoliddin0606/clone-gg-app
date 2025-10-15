@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
@@ -31,6 +33,8 @@ class DbViewPage extends StatefulWidget {
 class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   late TabController _tabController;
   final ApiDatabaseService _dbService = sl<ApiDatabaseService>();
+  final SharedPreferencesService _prefsService = sl<SharedPreferencesService>();
+  final DatabaseHelper _dbHelper = sl<DatabaseHelper>();
 
   // Data holders for each table
   List<KpiData> _kpiData = [];
@@ -51,6 +55,12 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   List<OrderStatus> _orderStatuses = [];
   List<OrderDetail> _orderDetails = [];
   List<PromotionModel> _promotions = [];
+  List<Map<String, dynamic>> _users = [];
+  Map<String, dynamic> _preferences = {};
+  List<Map<String, dynamic>> _orderDetailProducts = [];
+  List<Map<String, dynamic>> _orderPayments = [];
+  List<Map<String, dynamic>> _couriers = [];
+  List<Map<String, dynamic>> _courierCars = [];
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -73,6 +83,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   }
 
   final List<String> _tableNames = [
+    'Users',
+    'Preferences',
     'KPI Data',
     'Clients',
     'Products',
@@ -90,6 +102,10 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     'Orders',
     'Order Statuses',
     'Order Details',
+    'Order Detail Products',
+    'Order Payments',
+    'Couriers',
+    'Courier Cars',
     'Promotions',
   ];
 
@@ -119,6 +135,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     try {
       // Load all data concurrently with individual error handling
       final futures = [
+        _safeLoadData(() => _dbHelper.getAllUsers(), 'Users'),
+        _safeLoadData(() => _loadPreferencesData(), 'Preferences'),
         _safeLoadData(() => _dbService.getKpiData(''), 'KPI Data'),
         _safeLoadData(() => _dbService.getClients(), 'Clients'),
         _safeLoadData(() => _dbService.getProducts(), 'Products'),
@@ -136,6 +154,10 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _safeLoadData(() => _dbService.getOrders(), 'Orders'),
         _safeLoadData(() => _dbService.getOrderStatuses(), 'Order Statuses'),
         _safeLoadData(() => _dbService.getOrderDetails(), 'Order Details'),
+        _safeLoadData(() => _loadOrderDetailProducts(), 'Order Detail Products'),
+        _safeLoadData(() => _loadOrderPayments(), 'Order Payments'),
+        _safeLoadData(() => _loadCouriers(), 'Couriers'),
+        _safeLoadData(() => _loadCourierCars(), 'Courier Cars'),
         _safeLoadData(() => _dbService.getPromotions(), 'Promotions'),
       ];
 
@@ -146,24 +168,30 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
       }
 
       setState(() {
-        _kpiData = _safeCast<KpiData>(results[0]);
-        _clients = _safeCast<TradingPoint>(results[1]);
-        _products = _safeCast<ProductData>(results[2]);
-        _priceTypes = _safeCast<PriceType>(results[3]);
-        _productPrices = _safeCast<ProductPrice>(results[4]);
-        _businessRegions = _safeCast<BusinessRegion>(results[5]);
-        _userWarehouses = _safeCast<UserWarehouse>(results[6]);
-        _productBalances = _safeCast<ProductBalance>(results[7]);
-        _productBrands = _safeCast<ProductBrand>(results[8]);
-        _productSeries = _safeCast<ProductSeries>(results[9]);
-        _clientContracts = _safeCast<ClientContract>(results[10]);
-        _mainReports = _safeCast<MainReport>(results[11]);
-        _businessRegionReports = _safeCast<BusinessRegionReport>(results[12]);
-        _akbByCategories = _safeCast<AKBByCategory>(results[13]);
-        _orders = _safeCast<Order>(results[14]);
-        _orderStatuses = _safeCast<OrderStatus>(results[15]);
-        _orderDetails = _safeCast<OrderDetail>(results[16]);
-        _promotions = _safeCast<PromotionModel>(results[17]);
+        _users = _safeCast<Map<String, dynamic>>(results[0]);
+        _preferences = _safeCast<Map<String, dynamic>>(results[1]).isNotEmpty ? results[1] : {};
+        _kpiData = _safeCast<KpiData>(results[2]);
+        _clients = _safeCast<TradingPoint>(results[3]);
+        _products = _safeCast<ProductData>(results[4]);
+        _priceTypes = _safeCast<PriceType>(results[5]);
+        _productPrices = _safeCast<ProductPrice>(results[6]);
+        _businessRegions = _safeCast<BusinessRegion>(results[7]);
+        _userWarehouses = _safeCast<UserWarehouse>(results[8]);
+        _productBalances = _safeCast<ProductBalance>(results[9]);
+        _productBrands = _safeCast<ProductBrand>(results[10]);
+        _productSeries = _safeCast<ProductSeries>(results[11]);
+        _clientContracts = _safeCast<ClientContract>(results[12]);
+        _mainReports = _safeCast<MainReport>(results[13]);
+        _businessRegionReports = _safeCast<BusinessRegionReport>(results[14]);
+        _akbByCategories = _safeCast<AKBByCategory>(results[15]);
+        _orders = _safeCast<Order>(results[16]);
+        _orderStatuses = _safeCast<OrderStatus>(results[17]);
+        _orderDetails = _safeCast<OrderDetail>(results[18]);
+        _orderDetailProducts = _safeCast<Map<String, dynamic>>(results[19]);
+        _orderPayments = _safeCast<Map<String, dynamic>>(results[20]);
+        _couriers = _safeCast<Map<String, dynamic>>(results[21]);
+        _courierCars = _safeCast<Map<String, dynamic>>(results[22]);
+        _promotions = _safeCast<PromotionModel>(results[23]);
         _isLoading = false;
       });
 
@@ -198,6 +226,83 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
       }
       // Return null instead of throwing to allow other data to load
       return null;
+    }
+  }
+
+  /// Load preferences data from SharedPreferences
+  Future<Map<String, dynamic>> _loadPreferencesData() async {
+    try {
+      return {
+        'userCode': _prefsService.getUserCode(),
+        'userName': _prefsService.getUserName(),
+        'warehouseCode': _prefsService.getWarehouseCode(),
+        'codeProject': _prefsService.getCodeProject(),
+        'telegramID': _prefsService.getTelegramID(),
+        'chatID': _prefsService.getChatID(),
+        'topicID': _prefsService.getTopicID(),
+        'serverName': _prefsService.getServerName(),
+        'baseUrl': _prefsService.getBaseUrl(),
+        'languageCode': _prefsService.getLanguageCode(),
+        'isOfflineMode': _prefsService.isOfflineMode(),
+        'isReportSentToTelegram': _prefsService.isReportSentToTelegram(),
+      };
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading preferences data: $e');
+      }
+      return {};
+    }
+  }
+
+  /// Load order detail products from database
+  Future<List<Map<String, dynamic>>> _loadOrderDetailProducts() async {
+    try {
+      final db = await _dbService.database;
+      return await db.query('order_detail_products');
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading order detail products: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Load order payments from database
+  Future<List<Map<String, dynamic>>> _loadOrderPayments() async {
+    try {
+      final db = await _dbService.database;
+      return await db.query('order_payments');
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading order payments: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Load couriers from database
+  Future<List<Map<String, dynamic>>> _loadCouriers() async {
+    try {
+      final db = await _dbService.database;
+      return await db.query('couriers');
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading couriers: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Load courier cars from database
+  Future<List<Map<String, dynamic>>> _loadCourierCars() async {
+    try {
+      final db = await _dbService.database;
+      return await db.query('courier_cars');
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading courier cars: $e');
+      }
+      return [];
     }
   }
 
@@ -242,6 +347,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
               : TabBarView(
                   controller: _tabController,
                   children: [
+                    _buildDataTable(_users, _getUsersColumns()),
+                    _buildPreferencesTable(),
                     _buildDataTable(_kpiData, _getKpiColumns()),
                     _buildDataTable(_clients, _getClientsColumns()),
                     _buildDataTable(_products, _getProductsColumns()),
@@ -259,6 +366,10 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
                     _buildDataTable(_orders, _getOrdersColumns()),
                     _buildDataTable(_orderStatuses, _getOrderStatusesColumns()),
                     _buildDataTable(_orderDetails, _getOrderDetailsColumns()),
+                    _buildDataTable(_orderDetailProducts, _getOrderDetailProductsColumns()),
+                    _buildDataTable(_orderPayments, _getOrderPaymentsColumns()),
+                    _buildDataTable(_couriers, _getCouriersColumns()),
+                    _buildDataTable(_courierCars, _getCourierCarsColumns()),
                     _buildDataTable(_promotions, _getPromotionsColumns()),
                   ],
                 ),
@@ -272,6 +383,30 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         child: DataTable(
           columns: columns,
           rows: data.map((item) => _buildDataRow(item, columns)).toList(),
+          columnSpacing: 16,
+          horizontalMargin: 16,
+          headingRowHeight: 56,
+          dataRowHeight: 48,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreferencesTable() {
+    final preferencesList = _preferences.entries.map((entry) => {'key': entry.key, 'value': entry.value}).toList();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        child: DataTable(
+          columns: const [
+            DataColumn(label: Text('Preference Key')),
+            DataColumn(label: Text('Value')),
+          ],
+          rows: preferencesList.map((pref) => DataRow(cells: [
+            DataCell(Text(pref['key'].toString())),
+            DataCell(Text(pref['value']?.toString() ?? 'null')),
+          ])).toList(),
           columnSpacing: 16,
           horizontalMargin: 16,
           headingRowHeight: 56,
@@ -476,6 +611,71 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.orderType.toString())),
         DataCell(Text(item.codeOrg)),
       ]);
+    } else if (item is Map<String, dynamic>) {
+      // Handle order_detail_products, order_payments, couriers, courier_cars tables
+      // Check which table this data belongs to based on available keys
+      if (item.containsKey('product_code')) {
+        // Order Detail Products table
+        cells.addAll([
+          DataCell(Text(item['id']?.toString() ?? '')),
+          DataCell(Text(item['order_detail_id']?.toString() ?? '')),
+          DataCell(Text(item['product_code']?.toString() ?? '')),
+          DataCell(Text(item['product_name']?.toString() ?? '')),
+          DataCell(Text(item['amount']?.toString() ?? '')),
+          DataCell(Text(item['price']?.toString() ?? '')),
+          DataCell(Text(item['total']?.toString() ?? '')),
+          DataCell(Text(item['discount_rate']?.toString() ?? '')),
+          DataCell(Text(item['weight']?.toString() ?? '')),
+          DataCell(Text(item['capacity']?.toString() ?? '')),
+          DataCell(Text(item['created_at']?.toString() ?? '')),
+          DataCell(Text(item['updated_at']?.toString() ?? '')),
+        ]);
+      } else if (item.containsKey('date_of_payment')) {
+        // Order Payments table
+        cells.addAll([
+          DataCell(Text(item['id']?.toString() ?? '')),
+          DataCell(Text(item['order_detail_id']?.toString() ?? '')),
+          DataCell(Text(item['date_of_payment']?.toString() ?? '')),
+          DataCell(Text(item['total']?.toString() ?? '')),
+          DataCell(Text(item['created_at']?.toString() ?? '')),
+          DataCell(Text(item['updated_at']?.toString() ?? '')),
+        ]);
+      } else if (item.containsKey('name') && item.containsKey('car')) {
+        // Couriers table
+        cells.addAll([
+          DataCell(Text(item['id']?.toString() ?? '')),
+          DataCell(Text(item['name']?.toString() ?? '')),
+          DataCell(Text(item['car']?.toString() ?? '')),
+          DataCell(Text(item['created_at']?.toString() ?? '')),
+          DataCell(Text(item['updated_at']?.toString() ?? '')),
+        ]);
+      } else if (item.containsKey('car') && !item.containsKey('name')) {
+        // Courier Cars table
+        cells.addAll([
+          DataCell(Text(item['id']?.toString() ?? '')),
+          DataCell(Text(item['car']?.toString() ?? '')),
+          DataCell(Text(item['created_at']?.toString() ?? '')),
+          DataCell(Text(item['updated_at']?.toString() ?? '')),
+        ]);
+      } else {
+        // Handle users table (Map<String, dynamic>)
+        cells.addAll([
+          DataCell(Text(item['id']?.toString() ?? '')),
+          DataCell(Text(item['code']?.toString() ?? '')),
+          DataCell(Text(item['username']?.toString() ?? '')),
+          DataCell(Text(item['password']?.toString() ?? '')),
+          DataCell(Text(item['name']?.toString() ?? '')),
+          DataCell(Text(item['role']?.toString() ?? '')),
+          DataCell(Text(item['warehouse_code']?.toString() ?? '')),
+          DataCell(Text(item['code_project']?.toString() ?? '')),
+          DataCell(Text(item['base_url']?.toString() ?? '')),
+          DataCell(Text(item['telegram_id']?.toString() ?? '')),
+          DataCell(Text(item['chat_id']?.toString() ?? '')),
+          DataCell(Text(item['topic_id']?.toString() ?? '')),
+          DataCell(Text(item['created_at']?.toString() ?? '')),
+          DataCell(Text(item['updated_at']?.toString() ?? '')),
+        ]);
+      }
     } else if (item is PromotionModel) {
       cells.addAll([
         DataCell(Text(item.code)),
@@ -492,6 +692,23 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
 
     return DataRow(cells: cells);
   }
+
+  List<DataColumn> _getUsersColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('Code')),
+        const DataColumn(label: Text('Username')),
+        const DataColumn(label: Text('Password')),
+        const DataColumn(label: Text('Name')),
+        const DataColumn(label: Text('Role')),
+        const DataColumn(label: Text('Warehouse Code')),
+        const DataColumn(label: Text('Code Project')),
+        const DataColumn(label: Text('Base URL')),
+        const DataColumn(label: Text('Telegram ID')),
+        const DataColumn(label: Text('Chat ID')),
+        const DataColumn(label: Text('Topic ID')),
+        const DataColumn(label: Text('Created At')),
+        const DataColumn(label: Text('Updated At')),
+      ];
 
   List<DataColumn> _getKpiColumns() => [
         const DataColumn(label: Text('Plan')),
@@ -679,6 +896,45 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         const DataColumn(label: Text('Shipping Date')),
         const DataColumn(label: Text('Order Type')),
         const DataColumn(label: Text('Organization')),
+      ];
+
+  List<DataColumn> _getOrderDetailProductsColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('Order Detail ID')),
+        const DataColumn(label: Text('Product Code')),
+        const DataColumn(label: Text('Product Name')),
+        const DataColumn(label: Text('Amount')),
+        const DataColumn(label: Text('Price')),
+        const DataColumn(label: Text('Total')),
+        const DataColumn(label: Text('Discount Rate')),
+        const DataColumn(label: Text('Weight')),
+        const DataColumn(label: Text('Capacity')),
+        const DataColumn(label: Text('Created At')),
+        const DataColumn(label: Text('Updated At')),
+      ];
+
+  List<DataColumn> _getOrderPaymentsColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('Order Detail ID')),
+        const DataColumn(label: Text('Date of Payment')),
+        const DataColumn(label: Text('Total')),
+        const DataColumn(label: Text('Created At')),
+        const DataColumn(label: Text('Updated At')),
+      ];
+
+  List<DataColumn> _getCouriersColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('Name')),
+        const DataColumn(label: Text('Car')),
+        const DataColumn(label: Text('Created At')),
+        const DataColumn(label: Text('Updated At')),
+      ];
+
+  List<DataColumn> _getCourierCarsColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('Car')),
+        const DataColumn(label: Text('Created At')),
+        const DataColumn(label: Text('Updated At')),
       ];
 
   List<DataColumn> _getPromotionsColumns() => [

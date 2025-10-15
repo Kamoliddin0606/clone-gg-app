@@ -315,8 +315,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       await prefs.setOfflineMode(false);
 
       // Save user data to preferences
+      print('user name login pageda bazaga yozishdan oldin: ${prefs.getSavedUsername()}');
       await _saveUserData(state);
-
+      print('user name login pageda bazaga yozishdan oldin: ${prefs.getSavedUsername()}');
       // Save user to database for future offline use
       final dbHelper = sl<DatabaseHelper>();
       await dbHelper.saveUser({

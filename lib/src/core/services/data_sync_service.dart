@@ -120,6 +120,7 @@ class DataSyncService {
 
       // If no stored preferences, consider it valid
       if (prefsUserCode == null || prefsUserName == null) {
+        print('No stored preferences found');
         return true;
       }
 
@@ -1307,6 +1308,8 @@ class DataSyncService {
         uniqueCourierCars.add(order.courierCar!);
       }
     }
+    print('uniqueCouriers: $uniqueCouriers');
+    print('uniqueCourierCars: $uniqueCourierCars');
 
     // Save unique courier data to cache
     for (final courierName in uniqueCouriers) {
@@ -1319,6 +1322,7 @@ class DataSyncService {
     }
 
     await _dbService.saveOrders(orders);
+
     return orders;
   }
 
@@ -1359,6 +1363,7 @@ class DataSyncService {
     required String orderDate2,
     bool forceRefresh = false,
   }) async {
+    print('syncOrderDetails called with numberOrder: $numberOrder, orderDate1: $orderDate1, orderDate2: $orderDate2');
     if (!forceRefresh) {
       final cached = await _dbService.getOrderDetailByNumOrder(numberOrder);
       if (cached != null) {

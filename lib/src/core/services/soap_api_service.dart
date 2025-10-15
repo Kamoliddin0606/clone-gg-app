@@ -1225,8 +1225,8 @@ class SoapApiService {
         clientName: _getElementText(row, 'm:ClientName') ?? '',
         codeOrg: _getElementText(row, 'm:CodeOrg') ?? '',
         mainStatus: _getElementText(row, 'm:mainStatus') ?? '',
-        courierName: _getElementText(row, 'm:CourierName'),
-        courierCar: _getElementText(row, 'm:CourierCar'),
+        courierName: _getElementText(row, 'm:courierName'),
+        courierCar: _getElementText(row, 'm:courierCar'),
         server: true, // Server-sourced data
       )).toList();
     } catch (e) {

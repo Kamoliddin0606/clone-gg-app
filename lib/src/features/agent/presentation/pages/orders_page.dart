@@ -218,6 +218,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
         final matchStatusMulti = _filters.statuses.isEmpty ? true : _filters.statuses.contains(_statusMap[o.mainStatus]);
         final matchDate = _filters.range==null ? true : (o.dateOrder.isAfter(_filters.range!.start.subtract(const Duration(seconds:1))) && o.dateOrder.isBefore(_filters.range!.end.add(const Duration(seconds:1))));
         final matchClient = _filters.clients.isEmpty ? true : _filters.clients.contains(o.clientName);
+        print('order main status : ${o.mainStatus}');
         final text = _normalize([
           o.numOrder, o.clientName, o.captionOrder, o.clientCode, o.codeOrg, statusText(o.mainStatus),
           NumberFormat('#,##0').format(o.total)

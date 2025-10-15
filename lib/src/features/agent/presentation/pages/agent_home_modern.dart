@@ -2,6 +2,7 @@
 import 'dart:math';
 import 'dart:ui';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
@@ -671,10 +672,45 @@ class AgentHomeModern extends StatefulWidget {
 }
 
 class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderStateMixin {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  bool _expanded = true;
-  bool _isDataSyncInProgress = false;
-  Stream<SyncStep>? _syncStepStream;
+   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+   bool _expanded = true;
+   bool _isDataSyncInProgress = false;
+   Stream<SyncStep>? _syncStepStream;
+
+   @override
+   void initState() {
+     super.initState();
+     _initializePageData();
+   }
+
+   /// Initialize page data by validating user and syncing if necessary
+   Future<void> _initializePageData() async {
+     try {
+       // Get DataSyncService instance
+       final dataSyncService = sl<DataSyncService>();
+
+       // Validate user with database
+       final isUserValid = await dataSyncService.validateUserWithDatabase();
+
+       if (!isUserValid) {
+         // User validation failed, trigger data sync
+         if (kDebugMode) {
+           print('User validation failed, starting data sync...');
+         }
+         await _syncDataWithProgress();
+       } else {
+         if (kDebugMode) {
+           print('User validation successful, no sync needed');
+         }
+       }
+     } catch (e) {
+       // Log error but don't show to user as this is background initialization
+       if (kDebugMode) {
+         print('Error during page initialization: $e');
+       }
+       // Continue with normal app flow - validation failure doesn't prevent app usage
+     }
+   }
 
   void _toggleExpanded() {
     setState(() => _expanded = !_expanded);

@@ -2,17 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mockito/mockito.dart';
+import 'package:get_it/get_it.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/agent_home_modern.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 
 // Mock classes
 class MockDataSyncService extends Mock implements DataSyncService {}
+class MockSharedPreferencesService extends Mock implements SharedPreferencesService {}
 
 void main() {
   late MockDataSyncService mockDataSyncService;
+  late MockSharedPreferencesService mockPrefsService;
 
   setUp(() {
     mockDataSyncService = MockDataSyncService();
+    mockPrefsService = MockSharedPreferencesService();
+
+    // Setup service locator mock
+    GetIt.instance.registerSingleton<DataSyncService>(mockDataSyncService);
+    GetIt.instance.registerSingleton<SharedPreferencesService>(mockPrefsService);
+  });
+
+  tearDown(() {
+    GetIt.instance.reset();
   });
 
   group('AgentHomeModern Widget Tests', () {
@@ -29,6 +43,9 @@ void main() {
         okb: '25',
       );
 
+      // Mock the validateUserWithDatabase method to return true (no sync needed)
+      when(mockDataSyncService.validateUserWithDatabase()).thenAnswer((_) async => true);
+
       // Act
       await tester.pumpWidget(
         MaterialApp(
@@ -42,6 +59,9 @@ void main() {
           ),
         ),
       );
+
+      // Wait for initialization to complete
+      await tester.pumpAndSettle();
 
       // Assert
       expect(find.text(userName), findsOneWidget);
@@ -59,6 +79,9 @@ void main() {
         okb: '25',
       );
 
+      // Mock the validateUserWithDatabase method to return true (no sync needed)
+      when(mockDataSyncService.validateUserWithDatabase()).thenAnswer((_) async => true);
+
       // Act
       await tester.pumpWidget(
         MaterialApp(
@@ -73,6 +96,9 @@ void main() {
         ),
       );
 
+      // Wait for initialization to complete
+      await tester.pumpAndSettle();
+
       // Assert
       expect(find.text('OKB'), findsOneWidget);
       expect(find.text('AKB Plan'), findsOneWidget);
@@ -80,6 +106,9 @@ void main() {
     });
 
     testWidgets('should handle null KPI data gracefully', (WidgetTester tester) async {
+      // Mock the validateUserWithDatabase method to return true (no sync needed)
+      when(mockDataSyncService.validateUserWithDatabase()).thenAnswer((_) async => true);
+
       // Act
       await tester.pumpWidget(
         MaterialApp(
@@ -94,9 +123,59 @@ void main() {
         ),
       );
 
+      // Wait for initialization to complete
+      await tester.pumpAndSettle();
+
       // Assert
       expect(find.text('Test User'), findsOneWidget);
       expect(find.text('ID: 12345'), findsOneWidget);
+    });
+
+    testWidgets('should trigger data sync when user validation fails', (WidgetTester tester) async {
+      // Mock the validateUserWithDatabase method to return false (sync needed)
+      when(mockDataSyncService.validateUserWithDatabase()).thenAnswer((_) async => false);
+
+      // Mock the sync method
+      when(mockPrefsService.getUserCode()).thenReturn('test_user');
+      when(mockPrefsService.getPassword()).thenReturn('test_pass');
+      when(mockPrefsService.getCodeProject()).thenReturn('test_project');
+      when(mockPrefsService.getWarehouseCode()).thenReturn('test_warehouse');
+
+      when(mockDataSyncService.syncAllUserDataWithProgress(
+        userCode: 'test_user',
+        password: 'test_pass',
+        codeProject: 'test_project',
+        codeSklad: 'test_warehouse',
+      )).thenAnswer((_) async* {
+        yield SyncStep.checkingUser;
+        yield SyncStep.completed;
+      });
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider(
+            create: (context) => AgentHomeBloc(dataSyncService: mockDataSyncService),
+            child: const AgentHomeModern(
+              userName: 'Test User',
+              userCode: '12345',
+              kpi: null,
+            ),
+          ),
+        ),
+      );
+
+      // Wait for initialization to complete
+      await tester.pumpAndSettle();
+
+      // Assert that sync was called
+      verify(mockDataSyncService.validateUserWithDatabase()).called(1);
+      verify(mockDataSyncService.syncAllUserDataWithProgress(
+        userCode: 'test_user',
+        password: 'test_pass',
+        codeProject: 'test_project',
+        codeSklad: 'test_warehouse',
+      )).called(1);
     });
   });
 

@@ -112,6 +112,10 @@ class DataSyncService {
 
   /// Check if preferences user matches database user table
   Future<bool> validateUserWithDatabase() async {
+    print('Validating user with database...');
+    print('User code: ${_prefs.getUserCode()}');
+    print('User name: ${_prefs.getUserName()}');
+
     try {
       final prefsUserCode = _prefs.getUserCode();
       final prefsUserName = _prefs.getUserName();
@@ -126,7 +130,7 @@ class DataSyncService {
 
       // Get user from database
       final dbUser = await _dbHelper.getUserByCode(prefsUserCode);
-
+      print('Database user: $dbUser');
       // If user not in database, consider it invalid (needs sync)
       if (dbUser == null) {
         if (kDebugMode) {
@@ -209,7 +213,8 @@ class DataSyncService {
       if (kDebugMode) {
         print('Error clearing cached data: $e');
       }
-      rethrow;
+      // Don't rethrow - continue with sync even if clearing fails
+      // This prevents the sync from failing due to missing tables
     }
   }
 

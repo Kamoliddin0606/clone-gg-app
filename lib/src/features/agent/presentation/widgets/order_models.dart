@@ -56,5 +56,47 @@ class OrderModel {
     this.courierPlate,
     this.items = const [],
   });
+
+  OrderModel copyWith({
+    int? id,
+    String? numOrder,
+    DateTime? dateOrder,
+    String? captionOrder,
+    String? typePriceCode,
+    int? status,
+    String? commentSupervisor,
+    String? commentForwarder,
+    String? commentAgent,
+    double? total,
+    String? clientCode,
+    String? clientName,
+    String? codeOrg,
+    String? mainStatus,
+    String? courierName,
+    String? courierCar,
+    String? courierPlate,
+    List<OrderItem>? items,
+  }) {
+    return OrderModel(
+      id: id ?? this.id,
+      numOrder: numOrder ?? this.numOrder,
+      dateOrder: dateOrder ?? this.dateOrder,
+      captionOrder: captionOrder ?? this.captionOrder,
+      typePriceCode: typePriceCode ?? this.typePriceCode,
+      status: status ?? this.status,
+      commentSupervisor: commentSupervisor ?? this.commentSupervisor,
+      commentForwarder: commentForwarder ?? this.commentForwarder,
+      commentAgent: commentAgent ?? this.commentAgent,
+      total: total ?? this.total,
+      clientCode: clientCode ?? this.clientCode,
+      clientName: clientName ?? this.clientName,
+      codeOrg: codeOrg ?? this.codeOrg,
+      mainStatus: mainStatus ?? this.mainStatus,
+      courierName: courierName ?? this.courierName,
+      courierCar: courierCar ?? this.courierCar,
+      courierPlate: courierPlate ?? this.courierPlate,
+      items: items ?? this.items,
+    );
+  }
 }
 

@@ -21,6 +21,7 @@ import '../../../../theme/theme_toggle.dart';
 import '../../../../theme/theme_schemes.dart';
 import '../../../navbars/fluid_nav_bar.dart';
 import 'prices_page.dart';
+import 'db_view_page.dart';
 
 /// Animated Percentage Widget - Barcha percent elementlar uchun umumiy widget
 enum PercentageDisplayType {
@@ -1911,6 +1912,11 @@ class _AppDrawer extends StatelessWidget {
                   icon: Icons.receipt_long,
                   title: 'Buyurtmalar',
                   onTap: () => Navigator.pushNamed(context, AppRouter.ordersRoute),
+                ),
+                _MenuItem(
+                  icon: Icons.storage,
+                  title: 'DB View',
+                  onTap: () => Navigator.pushNamed(context, AppRouter.dbViewRoute),
                 ),
               ],
             ),

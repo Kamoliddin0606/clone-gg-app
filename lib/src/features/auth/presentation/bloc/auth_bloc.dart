@@ -81,36 +81,36 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await dataSyncService.clearAllCachedData();
 
         // Sync user data with database
-        await dataSyncService.syncUserDataWithDatabase();
+        //await dataSyncService.syncUserDataWithDatabase();
 
-        if (kDebugMode) {
-          print('User data synced successfully after login validation');
-        }
+        // if (kDebugMode) {
+        //   print('User data synced successfully after login validation');
+        // }
       } else {
-        if (kDebugMode) {
-          print('User data validation passed. No sync needed.');
-        }
+        // if (kDebugMode) {
+        //   print('User data validation passed. No sync needed.');
+        // }
       }
 
-        // Send syncAllUserData command to server
-        try {
-          await dataSyncService.syncAllUserData(
-            userCode: user.code,
-            password: '', // Password not stored for security
-            codeProject: user.codeProject,
-            codeSklad: user.warehouseCode,
-          );
-
-          if (kDebugMode) {
-            print('syncAllUserData command sent to server successfully');
-          }
-        } catch (syncError) {
-          // Log the error but don't fail the login process
-          if (kDebugMode) {
-            print('Error during syncAllUserData: $syncError');
-          }
-          // Continue with login success
-        }
+        // // Send syncAllUserData command to server
+        // try {
+        //   await dataSyncService.syncAllUserData(
+        //     userCode: user.code,
+        //     password: '', // Password not stored for security
+        //     codeProject: user.codeProject,
+        //     codeSklad: user.warehouseCode,
+        //   );
+        //
+        //   if (kDebugMode) {
+        //     print('syncAllUserData command sent to server successfully');
+        //   }
+        // } catch (syncError) {
+        //   // Log the error but don't fail the login process
+        //   if (kDebugMode) {
+        //     print('Error during syncAllUserData: $syncError');
+        //   }
+        //   // Continue with login success
+        // }
 
     } catch (e) {
       // Log the error but don't fail the login process

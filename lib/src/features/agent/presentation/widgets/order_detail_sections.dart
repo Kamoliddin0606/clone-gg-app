@@ -49,8 +49,31 @@ class OrderItemsSection extends StatelessWidget {
   final OrderModel order; final ScrollController? controller; const OrderItemsSection({super.key, required this.order, this.controller});
   @override Widget build(BuildContext context){
     final cs = Theme.of(context).colorScheme;
+
+    // Handle empty items case
+    if (order.items.isEmpty) {
+      return Column(children:[
+        Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: cs.surfaceContainerLow, border: Border(bottom: BorderSide(color: cs.outlineVariant.withOpacity(0.6)))), child: Row(children: const [
+          _Head('Tovar nomi', flex: 3), _Head('Artikul', flex: 2), _Head('Soni'), _Head('Narx'), _Head('Summa'), _Head('Narx turi', flex: 2),
+        ])),
+        Expanded(child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.inventory_2_outlined, size: 64, color: cs.outline),
+          const SizedBox(height: 16),
+          Text('Bu buyurtmada mahsulotlar mavjud emas', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: cs.onSurfaceVariant)),
+          const SizedBox(height: 8),
+          Text('Mahsulotlar ro\'yxati bo\'sh', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.outline)),
+        ]))),
+        Container(padding: const EdgeInsets.fromLTRB(16,12,16,16), decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: const BorderRadius.vertical(top: Radius.circular(16)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0,-4))]), child: Row(children:[
+          const Icon(Icons.summarize_rounded), const SizedBox(width: 10), Expanded(child: Wrap(spacing: 16, runSpacing: 8, children:[
+            _Badge(label: 'Jami tovarlar', value: '0'), _Badge(label: 'Buyurtma summasi', value: uzsFormat.format(0.0)),
+          ])), FilledButton.icon(onPressed: ()=>Navigator.of(context).maybePop(), icon: const Icon(Icons.check_circle_outline), label: const Text('Yopish')),
+        ])),
+      ]);
+    }
+
     final totalItems = order.items.fold<double>(0, (p, e) => p + e.quantity);
     final totalSum = order.items.fold<double>(0, (p, e) => p + e.sum);
+
     return Column(children:[
       Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: cs.surfaceContainerLow, border: Border(bottom: BorderSide(color: cs.outlineVariant.withOpacity(0.6)))), child: Row(children: const [
         _Head('Tovar nomi', flex: 3), _Head('Artikul', flex: 2), _Head('Soni'), _Head('Narx'), _Head('Summa'), _Head('Narx turi', flex: 2),

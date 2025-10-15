@@ -40,6 +40,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       // Try to get cached order details first
       final cachedOrderDetail = await dataSyncService.getCachedOrderDetailByNumOrder(widget.order.numOrder);
       if (cachedOrderDetail != null) {
+        debugPrint('Loading order details from cache for order: ${widget.order.numOrder}');
         // Convert OrderDetail to OrderModel with additional data
         _detailedOrder = _convertOrderDetailToOrderModel(cachedOrderDetail, widget.order);
         setState(() => _isLoading = false);
@@ -49,6 +50,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       // If no cache, fetch from server
       final userCode = await _getUserCode();
       if (userCode != null) {
+        debugPrint('Fetching order details from server for order: ${widget.order.numOrder}');
         final orderDate1 = widget.order.dateOrder.toIso8601String().split('T')[0];
         final orderDate2 = widget.order.dateOrder.toIso8601String().split('T')[0];
 
@@ -62,57 +64,106 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         _detailedOrder = _convertOrderDetailToOrderModel(freshOrderDetail, widget.order);
         setState(() => _isLoading = false);
       } else {
+        debugPrint('No user code available, using original order data');
         // Fallback to original order if no user code
         _detailedOrder = widget.order;
         setState(() => _isLoading = false);
       }
-    } catch (e) {
-      debugPrint('Error loading order details: $e');
+    } catch (e, stackTrace) {
+      debugPrint('Error loading order details for ${widget.order.numOrder}: $e');
+      debugPrint('Stack trace: $stackTrace');
+
+      // Enhanced error handling with user-friendly messages
+      String errorMessage;
+      if (e.toString().contains('network') || e.toString().contains('connection')) {
+        errorMessage = 'Internet bilan bog\'liq xatolik. Iltimos, internetingizni tekshiring.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Server javob bermayapti. Keyinroq urinib ko\'ring.';
+      } else if (e.toString().contains('not found') || e.toString().contains('404')) {
+        errorMessage = 'Buyurtma tafsilotlari topilmadi.';
+      } else {
+        errorMessage = 'Buyurtma tafsilotlarini yuklashda xatolik yuz berdi.';
+      }
+
       setState(() {
-        _error = e.toString();
+        _error = errorMessage;
         _isLoading = false;
+        // Fallback to original order data
+        _detailedOrder = widget.order;
       });
     }
   }
 
   /// Convert OrderDetail to OrderModel with merged data
   OrderModel _convertOrderDetailToOrderModel(OrderDetail orderDetail, OrderModel originalOrder) {
-    // Convert order detail products to order items
-    final items = orderDetail.productRows?.map((product) => OrderItem(
-      productName: product.nameProduct ?? '',
-      article: product.codeProduct ?? '',
-      quantity: (product.amount ?? 0).toDouble(),
-      price: product.price ?? 0.0,
-      priceType: originalOrder.typePriceCode,
-    )).toList() ?? [];
+    try {
+      // Validate order detail data
+      if (orderDetail.productRows == null || orderDetail.productRows!.isEmpty) {
+        debugPrint('Warning: orderDetail.productRows is null or empty for order ${originalOrder.numOrder}');
+        return originalOrder.copyWith(items: []);
+      }
 
-    return OrderModel(
-      id: originalOrder.id,
-      numOrder: originalOrder.numOrder,
-      dateOrder: originalOrder.dateOrder,
-      captionOrder: originalOrder.captionOrder,
-      typePriceCode: originalOrder.typePriceCode,
-      status: originalOrder.status,
-      commentSupervisor: orderDetail.commentSupervisor,
-      commentForwarder: orderDetail.commentForwarder,
-      commentAgent: orderDetail.commentAgent,
-      total: originalOrder.total,
-      clientCode: originalOrder.clientCode,
-      clientName: originalOrder.clientName,
-      codeOrg: originalOrder.codeOrg,
-      mainStatus: originalOrder.mainStatus,
-      courierName: originalOrder.courierName,
-      courierCar: originalOrder.courierCar,
-      courierPlate: originalOrder.courierPlate,
-      items: items,
-    );
+      // Convert order detail products to order items with validation
+      final items = <OrderItem>[];
+      for (final product in orderDetail.productRows!) {
+        if (product == null) continue;
+
+        try {
+          // Validate required fields
+          final codeProduct = product.codeProduct?.trim();
+          if (codeProduct == null || codeProduct.isEmpty) continue;
+
+          final orderItem = OrderItem(
+            productName: product.nameProduct?.trim().isNotEmpty == true
+                ? product.nameProduct!.trim()
+                : 'Noma\'lum mahsulot',
+            article: codeProduct,
+            quantity: (product.amount ?? 0).toDouble(),
+            price: product.price ?? 0.0,
+            priceType: originalOrder.typePriceCode,
+          );
+          items.add(orderItem);
+        } catch (e) {
+          debugPrint('Error converting product ${product.codeProduct}: $e');
+          // Skip invalid products instead of adding error items
+        }
+      }
+
+      debugPrint('Successfully converted ${items.length} items for order ${originalOrder.numOrder}');
+
+      return OrderModel(
+        id: originalOrder.id,
+        numOrder: originalOrder.numOrder,
+        dateOrder: originalOrder.dateOrder,
+        captionOrder: originalOrder.captionOrder,
+        typePriceCode: originalOrder.typePriceCode,
+        status: originalOrder.status,
+        commentSupervisor: orderDetail.commentSupervisor,
+        commentForwarder: orderDetail.commentForwarder,
+        commentAgent: orderDetail.commentAgent,
+        total: originalOrder.total,
+        clientCode: originalOrder.clientCode,
+        clientName: originalOrder.clientName,
+        codeOrg: originalOrder.codeOrg,
+        mainStatus: originalOrder.mainStatus,
+        courierName: originalOrder.courierName,
+        courierCar: originalOrder.courierCar,
+        courierPlate: originalOrder.courierPlate,
+        items: items,
+      );
+    } catch (e) {
+      debugPrint('Error converting OrderDetail to OrderModel for order ${originalOrder.numOrder}: $e');
+      // Return original order with empty items as fallback
+      return originalOrder.copyWith(items: []);
+    }
   }
 
   /// Get user code from shared preferences
   Future<String?> _getUserCode() async {
     try {
       final prefs = GetIt.I<SharedPreferencesService>();
-      return await prefs.getUserCode();
+      final userCode = prefs.getUserCode();
+      return userCode;
     } catch (e) {
       debugPrint('Error getting user code: $e');
       return null;
@@ -148,18 +199,46 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           ),
         ),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Xatolik yuz berdi: $_error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loadOrderDetails,
-                child: const Text('Qayta urinib ko\'ring'),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Theme.of(context).colorScheme.error),
+                const SizedBox(height: 16),
+                Text(
+                  'Xatolik yuz berdi',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.maybePop(context),
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Orqaga'),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton.icon(
+                      onPressed: _loadOrderDetails,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Qayta urinib ko\'ring'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       );

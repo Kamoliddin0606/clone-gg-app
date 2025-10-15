@@ -4,8 +4,11 @@ import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 
 import '../../../../core/network/server_service.dart';
 
@@ -314,12 +317,36 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       final prefs = sl<SharedPreferencesService>();
       await prefs.setOfflineMode(false);
 
-      // Save user data to preferences
-      print('user name login pageda bazaga yozishdan oldin: ${prefs.getSavedUsername()}');
-      await _saveUserData(state);
-      print('user name login pageda bazaga yozishdan oldin: ${prefs.getSavedUsername()}');
-      // Save user to database for future offline use
+      // Check if user data in database matches current user
       final dbHelper = sl<DatabaseHelper>();
+      final dbUser = await dbHelper.getUserByCode(state.user.code);
+
+      bool needsDataSync = false;
+      if (dbUser == null) {
+        // No user in database, need to sync all data
+        needsDataSync = true;
+        print('No user found in database, will sync all data');
+      } else {
+        // Check if user data matches
+        final userMatches = dbUser['code'] == state.user.code &&
+            dbUser['name'] == state.user.name &&
+            dbUser['warehouse_code'] == state.user.warehouseCode &&
+            dbUser['code_project'] == state.user.codeProject &&
+            dbUser['base_url'] == state.user.baseUrl;
+
+        if (!userMatches) {
+          // User data doesn't match, need to sync all data
+          needsDataSync = true;
+          print('User data mismatch, will sync all data');
+        } else {
+          print('User data matches, no sync needed');
+        }
+      }
+
+      // Save user data to preferences
+      await _saveUserData(state);
+
+      // Save user to database for future offline use
       await dbHelper.saveUser({
         'code': state.user.code,
         'username': state.user.username,
@@ -333,39 +360,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         'chat_id': state.user.chatID,
         'topic_id': state.user.topicID,
       });
-      final users = await dbHelper.getAllUsers();
-      print('DB Users: $users');
+
+      // If user data doesn't match, show sync progress dialog
+      if (needsDataSync && mounted) {
+        await _showDataSyncDialog(state.user);
+      }
+
       // Show success message and navigate
       if (mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(const SnackBar(content: Text('Login Successful!')));
 
-        switch (state.user.role) {
-          case 'Agent':
-          case 'Supervisor':
-            Navigator.pushReplacementNamed(context, AppRouter.agentHomeRoute);
-            break;
-          case 'Boss':
-            Navigator.pushReplacementNamed(context, AppRouter.bossHomeRoute);
-            break;
-          case 'Collector':
-            Navigator.pushReplacementNamed(context, AppRouter.collectorHomeRoute);
-            break;
-          case 'Forwarder':
-            Navigator.pushReplacementNamed(context, AppRouter.forwarderHomeRoute);
-            break;
-          case 'Packer':
-            Navigator.pushReplacementNamed(context, AppRouter.packerHomeRoute);
-            break;
-          case 'WarehouseManager':
-            Navigator.pushReplacementNamed(context, AppRouter.warehouseManagerHomeRoute);
-            break;
-          default:
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(content: Text('Unknown user role: ${state.user.role}')));
-        }
+        _navigateToHomePage(state.user.role);
       }
     } catch (e) {
       if (mounted) {
@@ -376,6 +383,97 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           ),
         );
       }
+    }
+  }
+
+  Future<void> _showDataSyncDialog(UserEntity user) async {
+    final dataSyncService = sl<DataSyncService>();
+
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Ma\'lumotlar yangilanmoqda...'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: StreamBuilder<SyncStep>(
+            stream: dataSyncService.syncAllUserDataWithProgress(
+              userCode: user.code,
+              password: '', // Password not needed for sync
+              codeProject: user.codeProject,
+              codeSklad: user.warehouseCode,
+            ),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error, color: Colors.red, size: 48),
+                    const SizedBox(height: 16),
+                    Text('Xatolik: ${snapshot.error}'),
+                    const SizedBox(height: 16),
+                    const Text('Kesh ma\'lumotlaridan foydalaniladi'),
+                  ],
+                );
+              }
+
+              final step = snapshot.data ?? SyncStep.checkingUser;
+              final progress = (SyncStep.values.indexOf(step) + 1) / SyncStep.values.length;
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(step.icon, size: 48, color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(height: 16),
+                  Text(
+                    step.message,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  LinearProgressIndicator(value: progress),
+                  const SizedBox(height: 8),
+                  Text('${(progress * 100).round()}%'),
+                ],
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToHomePage(String role) {
+    switch (role) {
+      case 'Agent':
+      case 'Supervisor':
+        Navigator.pushReplacementNamed(context, AppRouter.agentHomeRoute);
+        break;
+      case 'Boss':
+        Navigator.pushReplacementNamed(context, AppRouter.bossHomeRoute);
+        break;
+      case 'Collector':
+        Navigator.pushReplacementNamed(context, AppRouter.collectorHomeRoute);
+        break;
+      case 'Forwarder':
+        Navigator.pushReplacementNamed(context, AppRouter.forwarderHomeRoute);
+        break;
+      case 'Packer':
+        Navigator.pushReplacementNamed(context, AppRouter.packerHomeRoute);
+        break;
+      case 'WarehouseManager':
+        Navigator.pushReplacementNamed(context, AppRouter.warehouseManagerHomeRoute);
+        break;
+      default:
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text('Unknown user role: $role')));
     }
   }
 

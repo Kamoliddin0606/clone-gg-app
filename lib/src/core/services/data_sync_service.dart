@@ -474,6 +474,7 @@ class DataSyncService {
     if (kDebugMode) {
       print('KPI ma\'lumotlari yuklandi: $kpiData');
     }
+    print("_________________________________ kpi plan ${kpiData.fact}");
     await _dbService.saveKpiData(userCode, kpiData);
     return kpiData;
   }

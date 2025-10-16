@@ -140,6 +140,9 @@ Future<void> init() async {
     return id;
   }
 
+  // Get SharedPreferences instance (for other services)
+  SharedPreferences get preferences => _preferences;
+
   // Get password (for API calls)
   String? getPassword() {
     return _preferences.getString(_passwordKey);

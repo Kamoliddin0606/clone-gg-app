@@ -9,9 +9,10 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 
 import 'dart:ui'; // blur uchun
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 
-import '../../../../core/router/app_router.dart';
-import '../../../navbars/agent_bottom_nav_bar.dart';
+import '../../../../core/services/location_service.dart';
 
 /// Transliterate Cyrillic characters to Latin (Uzbek standard)
 String transliterateToLatin(String text) {
@@ -64,21 +65,52 @@ class TradingPointsPage extends StatefulWidget {
 
 class _TradingPointsPageState extends State<TradingPointsPage> {
 
-  final TextEditingController _searchController = TextEditingController();
-  List<TradingPoint> _allTradingPoints = [];
-  List<TradingPoint> _filteredTradingPoints = [];
-  bool _isLoading = true;
-  String userCode = "";
-  String password = "";
-  int? _expandedIndex;
-  bool _showViewBar = false;               // ADD: panel ko'rinish holati
-  _ViewMode _viewMode = _ViewMode.list;    // ADD: hozirgi ko'rinish
-  Map<String, String> _regionNames = {};   // Business region code to name mapping
+   final TextEditingController _searchController = TextEditingController();
+   List<TradingPoint> _allTradingPoints = [];
+   List<TradingPoint> _filteredTradingPoints = [];
+   bool _isLoading = true;
+   String userCode = "";
+   String password = "";
+   int? _expandedIndex;
+   bool _showViewBar = false;               // ADD: panel ko'rinish holati
+   _ViewMode _viewMode = _ViewMode.list;    // ADD: hozirgi ko'rinish
+   Map<String, String> _regionNames = {};   // Business region code to name mapping
+
+   // Sorting related
+   bool _isAlphabeticalSort = true; // true = A-Z, false = Z-A
+   bool _isDistanceSort = false; // true = distance sort, false = alphabetical
+   Timer? _distanceUpdateTimer;
+   LocationService? _locationService;
+
+   // Distance calculation cache for performance
+   Map<String, double?> _distanceCache = {};
+   Timer? _locationCheckTimer;
 
   @override
   void initState() {
     super.initState();
+    _initializeLocationService();
     _loadUserData();
+  }
+
+  Future<void> _initializeLocationService() async {
+    try {
+      await sl.isReady<LocationService>();
+      _locationService = sl<LocationService>();
+      // LocationService already initialized in service locator
+
+      // Check for user location every 30 seconds and update distances if needed
+      _locationCheckTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+        if (mounted && _isDistanceSort) {
+          _checkAndUpdateUserLocation();
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error initializing location service: $e');
+      }
+      _locationService = null; // Explicitly set to null on error
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -118,6 +150,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _locationCheckTimer?.cancel();
+    _locationService?.dispose();
     super.dispose();
   }
 
@@ -152,6 +186,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
       _allTradingPoints = tradingPoints;
       _filteredTradingPoints = List.from(_allTradingPoints);
+      _clearDistanceCache(); // Clear cache for fresh calculations
+      _applySorting(); // Apply initial sorting
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);
@@ -182,7 +218,152 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
               tp.inn.contains(query);
         }).toList();
       }
+      _clearDistanceCache(); // Clear cache when filtering changes
+      _applySorting();
     });
+  }
+
+  void _applySorting() {
+    if (_isDistanceSort) {
+      _sortByDistance();
+    } else {
+      _sortAlphabetically();
+    }
+  }
+
+  void _sortAlphabetically() {
+    _filteredTradingPoints.sort((a, b) {
+      final aName = transliterateToLatin(a.name).toLowerCase();
+      final bName = transliterateToLatin(b.name).toLowerCase();
+      return _isAlphabeticalSort ? aName.compareTo(bName) : bName.compareTo(aName);
+    });
+  }
+
+  void _sortByDistance() {
+    if (_locationService == null) return;
+
+    _filteredTradingPoints.sort((a, b) {
+      final aDistance = _getCachedDistance(a);
+      final bDistance = _getCachedDistance(b);
+
+      // Handle null distances (put them at the end)
+      if (aDistance == null && bDistance == null) return 0;
+      if (aDistance == null) return 1;
+      if (bDistance == null) return -1;
+
+      return aDistance.compareTo(bDistance);
+    });
+  }
+
+  /// Get cached distance for a trading point, calculate if not cached
+  double? _getCachedDistance(TradingPoint tp) {
+    if (_locationService == null) return null; // Safety check
+
+    final cacheKey = '${tp.id}_${tp.latitude}_${tp.longitude}';
+    if (_distanceCache.containsKey(cacheKey)) {
+      return _distanceCache[cacheKey];
+    }
+
+    final distance = _locationService!.getDistanceToTradingPoint(tp.latitude, tp.longitude);
+    _distanceCache[cacheKey] = distance;
+    return distance;
+  }
+
+  /// Check user location and update distances if location changed
+  Future<void> _checkAndUpdateUserLocation() async {
+    if (_locationService == null) return; // Safety check
+
+    try {
+      final userLocation = _locationService!.getStoredLocation();
+      if (userLocation == null) {
+        // Try to get fresh location if not available
+        await _ensureUserLocationAvailable();
+        return;
+      }
+
+      // Clear distance cache to force recalculation with new location
+      _distanceCache.clear();
+
+      // Update sorting if currently in distance sort mode
+      if (_isDistanceSort && mounted) {
+        setState(() {
+          _sortByDistance();
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking and updating user location: $e');
+      }
+    }
+  }
+
+  /// Ensure user location is available, fetch if needed
+  Future<void> _ensureUserLocationAvailable() async {
+    if (_locationService == null) return; // Safety check
+
+    try {
+      final userLocation = _locationService!.getStoredLocation();
+      if (userLocation == null || !_locationService!.isLocationRecent()) {
+        // Location is not available or not recent, try to get it
+        // Note: LocationService already handles background updates every 10 seconds
+        // This is just a fallback check
+        if (kDebugMode) {
+          print('User location not available or not recent, waiting for background update');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error ensuring user location availability: $e');
+      }
+    }
+  }
+
+  /// Clear distance cache when data changes
+  void _clearDistanceCache() {
+    _distanceCache.clear();
+  }
+
+  void _toggleSorting() {
+    setState(() {
+      if (_isDistanceSort) {
+        // Switch to alphabetical
+        _isDistanceSort = false;
+        _isAlphabeticalSort = !_isAlphabeticalSort; // Toggle A-Z / Z-A
+      } else {
+        // Switch to distance - ensure user location is available
+        _ensureUserLocationForSorting().then((_) {
+          if (mounted) {
+            setState(() {
+              _isDistanceSort = true;
+              _applySorting();
+            });
+          }
+        });
+        return; // Don't call _applySorting here, it will be called in the callback
+      }
+      _applySorting();
+    });
+  }
+
+  /// Ensure user location is available before enabling distance sorting
+  Future<void> _ensureUserLocationForSorting() async {
+    if (_locationService == null) return; // Safety check
+
+    try {
+      final userLocation = _locationService!.getStoredLocation();
+      if (userLocation == null || !_locationService!.isLocationRecent()) {
+        // Try to get fresh location
+        if (kDebugMode) {
+          print('Getting fresh location for distance sorting');
+        }
+        // LocationService handles background updates, but we can wait a bit
+        await Future.delayed(const Duration(seconds: 2));
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error ensuring location for sorting: $e');
+      }
+    }
   }
 
   Future<void> _makeCall(String phoneNumber) async {
@@ -318,6 +499,15 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           title: Text('Savdo nuqtalari', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
           centerTitle: false,
           actions: [
+            // Sorting button
+            IconButton(
+              onPressed: _toggleSorting,
+              icon: Icon(
+                _isDistanceSort ? Icons.location_on : (_isAlphabeticalSort ? Icons.sort_by_alpha : Icons.sort_by_alpha_sharp),
+                color: theme.colorScheme.primary,
+              ),
+              tooltip: _isDistanceSort ? 'Masofaga ko\'ra tartiblash' : (_isAlphabeticalSort ? 'Alifbo tartibida (A-Z)' : 'Alifbo tartibida (Z-A)'),
+            ),
 
             PopupMenuButton<String>(
               onSelected: (value) {
@@ -440,6 +630,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                       onRefusal: () => _showRefusalDialog(tp),
                       onOpenDetails: () => _openTpDetails(tp),
                       regionNames: _regionNames,
+                      locationService: _locationService,
 
                       expanded: _expandedIndex == index,
                       onExpand: (open) {
@@ -475,6 +666,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                       onViewContracts: () => _viewContracts(tp),
                       onRefusal: () => _showRefusalDialog(tp),
                       onOpenDetails: () => _openTpDetails(tp),
+                      locationService: _locationService,
                     );
                   },
                 ),
@@ -561,6 +753,7 @@ class TradingPointCard extends StatelessWidget {
   final bool? expanded;
   final ValueChanged<bool>? onExpand;
   final Map<String, String> regionNames;
+  final LocationService? locationService;
   const TradingPointCard({
     super.key,
     required this.tradingPoint,
@@ -573,6 +766,7 @@ class TradingPointCard extends StatelessWidget {
     this.expanded,
     this.onExpand,
     required this.regionNames,
+    this.locationService,
   });
 
   @override
@@ -618,6 +812,16 @@ class TradingPointCard extends StatelessWidget {
               _line(context, Icons.place_outlined, tradingPoint.address, soft: true, maxLines: 3, scrollable: true),
               const SizedBox(height: 2),
               _line(context, Icons.badge_outlined, 'INN: ${tradingPoint.inn}', maxLines: 2),
+              // Add distance display for list view
+              
+              if (locationService != null) ...[
+                const SizedBox(height: 2),
+                Text('location servise ishladi'),
+                _buildDistanceDisplayForList(context, tradingPoint, locationService!),
+              ],
+              if (locationService == null) ...[
+                Text('location servise ishlamadi')
+              ]
             ],
           ),
         ),
@@ -721,6 +925,43 @@ class TradingPointCard extends StatelessWidget {
         const SizedBox(width: 6),
         Expanded(
           child: textWidget,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDistanceDisplayForList(BuildContext context, TradingPoint tp, LocationService locationService) {
+    print("tp.latitude: ${tp.latitude}, tp.longitude: ${tp.longitude} ${tp.name}");
+    final distance = locationService.getDistanceToTradingPoint(tp.latitude, tp.longitude);
+    print('Trading points distance ${distance}');
+    if (distance == null) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    // Format distance as specified: "2.1km" format
+    String distanceText;
+    if (distance < 1.0) {
+      // For distances under 1km, show in meters but format as km with decimal
+      distanceText = '${distance.toStringAsFixed(1)}km';
+    } else if (distance < 10.0) {
+      distanceText = '${distance.toStringAsFixed(1)}km';
+    } else {
+      distanceText = '${distance.toStringAsFixed(1)}km';
+    }
+    print('distanceText: $distanceText');
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(Icons.location_on, size: 16, color: cs.primary),
+        const SizedBox(width: 6),
+        Text(
+          "text: "+ distanceText,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: cs.primary,
+            fontWeight: FontWeight.w600,
+            fontSize: theme.textTheme.bodyMedium?.fontSize ?? 14,
+          ),
         ),
       ],
     );
@@ -1096,6 +1337,7 @@ class _TradingPointGridTile extends StatelessWidget {
   final TradingPoint tp;
   final VoidCallback onCall, onInformVisit, onCreateOrder, onViewContracts, onRefusal;
   final VoidCallback onOpenDetails;
+  final LocationService? locationService;
   const _TradingPointGridTile({
     required this.tp,
     required this.onCall,
@@ -1104,6 +1346,7 @@ class _TradingPointGridTile extends StatelessWidget {
     required this.onViewContracts,
     required this.onRefusal,
     required this.onOpenDetails,
+    this.locationService,
   });
 
   @override
@@ -1167,6 +1410,11 @@ class _TradingPointGridTile extends StatelessWidget {
                 _lineMultiline(context, Icons.place_outlined, tp.address, maxLines: 3, scrollable: true),     // CHANGED
                 const SizedBox(height: 2),
                 _lineMultiline(context, Icons.badge_outlined, 'INN: ${tp.inn}', maxLines: 2), // CHANGED
+                // Add distance display
+                if (locationService != null) ...[
+                  const SizedBox(height: 2),
+                  _buildDistanceDisplay(context, tp, locationService!),
+                ],
               ],
             ),
           ),
@@ -1229,6 +1477,43 @@ class _TradingPointGridTile extends StatelessWidget {
         const SizedBox(width: 6),
         Expanded(
           child: textWidget,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDistanceDisplay(BuildContext context, TradingPoint tp, LocationService locationService) {
+    final distance = locationService.getDistanceToTradingPoint(tp.latitude, tp.longitude);
+    if (distance == null) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    // Format distance as specified: "2.1km" format
+    String distanceText;
+    if (distance < 1.0) {
+      // For distances under 1km, show in meters but format as km with decimal
+      distanceText = '${distance.toStringAsFixed(1)}km';
+    } else if (distance < 10.0) {
+      distanceText = '${distance.toStringAsFixed(1)}km';
+    } else {
+      distanceText = '${distance.toStringAsFixed(1)}km';
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.location_on, size: 16, color: cs.primary),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            distanceText,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.primary,
+              fontWeight: FontWeight.w600,
+              fontSize: theme.textTheme.bodySmall?.fontSize ?? 12,
+            ),
+          ),
         ),
       ],
     );

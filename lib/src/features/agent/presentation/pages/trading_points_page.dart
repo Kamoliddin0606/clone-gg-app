@@ -1477,6 +1477,13 @@ class _TradingPointGridTile extends StatelessWidget {
                   Container(color: cs.primaryContainer), // default rang (agar rasm yo‘q bo‘lsa)
                 if (tp.isVisited)
                   Container(color: Colors.black.withOpacity(.22)),
+                // Add distance info on bottom-right corner of image
+                if (locationService != null)
+                  Positioned(
+                    bottom: 4,
+                    right: 4,
+                    child: _buildDistanceOverlay(tp, locationService!),
+                  ),
               ],
             ),
           ),
@@ -1498,10 +1505,10 @@ class _TradingPointGridTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 _lineMultiline(context, Icons.badge_outlined, 'INN: ${tp.inn}', maxLines: 2), // CHANGED
                 // Add distance display
-                if (locationService != null) ...[
-                  const SizedBox(height: 2),
-                  _buildDistanceDisplay(context, tp, locationService!),
-                ],
+                // if (locationService != null) ...[
+                //   const SizedBox(height: 2),
+                //   _buildDistanceDisplay(context, tp, locationService!),
+                // ],
               ],
             ),
           ),
@@ -1603,6 +1610,38 @@ class _TradingPointGridTile extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// Build distance overlay for image bottom-right corner
+  Widget _buildDistanceOverlay(TradingPoint tp, LocationService locationService) {
+    final distance = locationService.getDistanceToTradingPoint(tp.latitude, tp.longitude);
+    if (distance == null) return const SizedBox.shrink();
+
+    // Format distance as specified: "2.1km" format
+    String distanceText;
+    if (distance < 1.0) {
+      distanceText = '${distance.toStringAsFixed(1)}km';
+    } else if (distance < 10.0) {
+      distanceText = '${distance.toStringAsFixed(1)}km';
+    } else {
+      distanceText = '${distance.toStringAsFixed(1)}km';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        distanceText,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 

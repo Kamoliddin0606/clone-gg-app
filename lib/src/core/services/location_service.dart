@@ -19,17 +19,13 @@ class LocationService {
   /// Initialize location service with background tracking
   Future<void> initialize() async {
     try {
-      // Request location permissions
-      final permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        final requested = await Geolocator.requestPermission();
-        if (requested == LocationPermission.denied ||
-            requested == LocationPermission.deniedForever) {
-          if (kDebugMode) {
-            print('Location permission denied');
-          }
-          return;
+      // Check and ensure location permission before starting tracking
+      final hasPermission = await ensureLocationPermission();
+      if (!hasPermission) {
+        if (kDebugMode) {
+          print('Location permission not granted, cannot start location service');
         }
+        return;
       }
 
       // Start background location tracking
@@ -38,6 +34,58 @@ class LocationService {
       if (kDebugMode) {
         print('Error initializing location service: $e');
       }
+    }
+  }
+
+  /// Ensure location permission is granted using the proper geolocator flow
+  Future<bool> ensureLocationPermission() async {
+    try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (kDebugMode) {
+          print('Location services are disabled');
+        }
+        return false;
+      }
+
+      // Check current permission status
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (kDebugMode) {
+        print('Current location permission: $permission');
+      }
+
+      if (permission == LocationPermission.denied) {
+        // Request permission (Android 12+ will show approximate/precise dialog)
+        permission = await Geolocator.requestPermission();
+        if (kDebugMode) {
+          print('Permission after request: $permission');
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        // User denied forever - redirect to app settings
+        if (kDebugMode) {
+          print('Location permission denied forever, opening app settings');
+        }
+        await Geolocator.openAppSettings();
+        return false;
+      }
+
+      // Check if we have adequate permission
+      final hasPermission = permission == LocationPermission.always ||
+                           permission == LocationPermission.whileInUse;
+
+      if (kDebugMode) {
+        print('Location permission result: $hasPermission (permission: $permission)');
+      }
+
+      return hasPermission;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error ensuring location permission: $e');
+      }
+      return false;
     }
   }
 
@@ -61,6 +109,10 @@ class LocationService {
       ).listen((Position position) async {
         await _storeLocation(position);
       });
+
+      if (kDebugMode) {
+        print('Location tracking started successfully');
+      }
     } catch (e) {
       if (kDebugMode) {
         print('Error starting location tracking: $e');
@@ -80,6 +132,7 @@ class LocationService {
       if (kDebugMode) {
         print('Error updating location: $e');
       }
+      // Don't rethrow - location updates should be non-blocking
     }
   }
 
@@ -101,12 +154,13 @@ class LocationService {
       await _prefs.setString(_lastLocationUpdateKey, DateTime.now().toIso8601String());
 
       if (kDebugMode) {
-        print('Location updated: ${position.latitude}, ${position.longitude}');
+        print('Location updated: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error storing location: $e');
       }
+      // Don't rethrow - location storage should be non-blocking
     }
   }
 
@@ -114,7 +168,9 @@ class LocationService {
   Map<String, dynamic>? getStoredLocation() {
     try {
       final locationString = _prefs.getString(_userLocationKey);
-      print('Location string: $locationString');
+      if (kDebugMode) {
+        print('Location string: $locationString');
+      }
       if (locationString != null) {
         return jsonDecode(locationString);
       }
@@ -153,7 +209,9 @@ class LocationService {
 
   /// Calculate distance between two points using Haversine formula
   double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-    print('Calculating distance: $lat1, $lon1, $lat2, $lon2');
+    if (kDebugMode) {
+      print('Calculating distance: $lat1, $lon1, $lat2, $lon2');
+    }
 
     const double earthRadius = 6371; // Earth's radius in kilometers
 
@@ -169,6 +227,10 @@ class LocationService {
     final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
     final double distance = earthRadius * c;
 
+    if (kDebugMode) {
+      print('Calculated distance: ${distance.toStringAsFixed(2)} km');
+    }
+
     return distance; // Distance in kilometers
   }
 
@@ -178,10 +240,14 @@ class LocationService {
 
   /// Get distance to a trading point from current user location
   double? getDistanceToTradingPoint(double clientLat, double clientLon) {
-    print('Getting distance to trading point: $clientLat, $clientLon');
+    if (kDebugMode) {
+      print('Getting distance to trading point: $clientLat, $clientLon');
+    }
 
     final userLocation = getStoredLocation();
-    print('User location: $userLocation');
+    if (kDebugMode) {
+      print('User location: $userLocation');
+    }
     if (userLocation == null) return null;
 
     final userLat = userLocation['latitude'] as double?;

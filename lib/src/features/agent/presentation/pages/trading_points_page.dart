@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 
 import 'dart:ui'; // blur uchun
@@ -65,32 +67,71 @@ class TradingPointsPage extends StatefulWidget {
 
 class _TradingPointsPageState extends State<TradingPointsPage> {
 
-   final TextEditingController _searchController = TextEditingController();
-   List<TradingPoint> _allTradingPoints = [];
-   List<TradingPoint> _filteredTradingPoints = [];
-   bool _isLoading = true;
-   String userCode = "";
-   String password = "";
-   int? _expandedIndex;
-   bool _showViewBar = false;               // ADD: panel ko'rinish holati
-   _ViewMode _viewMode = _ViewMode.list;    // ADD: hozirgi ko'rinish
-   Map<String, String> _regionNames = {};   // Business region code to name mapping
+    final TextEditingController _searchController = TextEditingController();
+    List<TradingPoint> _allTradingPoints = [];
+    List<TradingPoint> _filteredTradingPoints = [];
+    bool _isLoading = true;
+    String userCode = "";
+    String password = "";
+    int? _expandedIndex;
+    bool _showViewBar = false;               // ADD: panel ko'rinish holati
+    _ViewMode _viewMode = _ViewMode.list;    // ADD: hozirgi ko'rinish
+    Map<String, String> _regionNames = {};   // Business region code to name mapping
 
-   // Sorting related
-   bool _isAlphabeticalSort = true; // true = A-Z, false = Z-A
-   bool _isDistanceSort = false; // true = distance sort, false = alphabetical
-   Timer? _distanceUpdateTimer;
-   LocationService? _locationService;
+    // Sorting related
+    bool _isAlphabeticalSort = true; // true = A-Z, false = Z-A
+    bool _isDistanceSort = false; // true = distance sort, false = alphabetical
+    Timer? _distanceUpdateTimer;
+    LocationService? _locationService;
 
-   // Distance calculation cache for performance
-   Map<String, double?> _distanceCache = {};
-   Timer? _locationCheckTimer;
+    // Permission related
+    AppPermissionStatus _locationPermissionStatus = AppPermissionStatus.unknown;
+
+    // Distance calculation cache for performance
+    Map<String, double?> _distanceCache = {};
+    Timer? _locationCheckTimer;
 
   @override
   void initState() {
     super.initState();
+    _initializePermissions();
     _initializeLocationService();
     _loadUserData();
+  }
+
+  /// Initialize permissions on page load
+  Future<void> _initializePermissions() async {
+    try {
+      final permissionManager = sl<PermissionManager>();
+      final status = await permissionManager.checkLocationPermission();
+      if (mounted) {
+        setState(() {
+          _locationPermissionStatus = status;
+        });
+      }
+
+      // Also check location services status
+      try {
+        final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled && mounted) {
+          // Show snackbar to inform user about disabled location services
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Joylashuv xizmatlari o\'chirilgan. Masofa bo\'yicha tartiblash ishlamaydi.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error checking location services: $e');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error initializing permissions: $e');
+      }
+    }
   }
 
   Future<void> _initializeLocationService() async {
@@ -330,12 +371,16 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         _isDistanceSort = false;
         _isAlphabeticalSort = !_isAlphabeticalSort; // Toggle A-Z / Z-A
       } else {
-        // Switch to distance - ensure user location is available
-        _ensureUserLocationForSorting().then((_) {
-          if (mounted) {
-            setState(() {
-              _isDistanceSort = true;
-              _applySorting();
+        // Switch to distance - ensure location permission first
+        _ensureLocationPermissionForSorting().then((hasPermission) {
+          if (hasPermission && mounted) {
+            _ensureUserLocationForSorting().then((_) {
+              if (mounted) {
+                setState(() {
+                  _isDistanceSort = true;
+                  _applySorting();
+                });
+              }
             });
           }
         });
@@ -343,6 +388,48 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       }
       _applySorting();
     });
+  }
+
+  /// Ensure location permission is granted before enabling distance sorting
+  Future<bool> _ensureLocationPermissionForSorting() async {
+    final permissionManager = sl<PermissionManager>();
+    final hasPermission = await permissionManager.showLocationPermissionDialog(context);
+
+    // Update local permission status
+    if (mounted) {
+      final currentStatus = await permissionManager.checkLocationPermission();
+      setState(() {
+        _locationPermissionStatus = currentStatus;
+      });
+    }
+
+    return hasPermission;
+  }
+
+  /// Get sort button color based on permission status
+  Color _getSortButtonColor(ThemeData theme) {
+    if (_isDistanceSort) {
+      // Distance sort active
+      if (_locationPermissionStatus == AppPermissionStatus.granted) {
+        return theme.colorScheme.primary;
+      } else if (_locationPermissionStatus == AppPermissionStatus.denied) {
+        return Colors.orange;
+      } else if (_locationPermissionStatus == AppPermissionStatus.permanentlyDenied) {
+        return Colors.red;
+      }
+    }
+    return theme.colorScheme.primary;
+  }
+
+  /// Get sort button tooltip based on current state
+  String _getSortButtonTooltip() {
+    if (_isDistanceSort) {
+      if (_locationPermissionStatus != AppPermissionStatus.granted) {
+        return 'Masofaga ko\'ra tartiblash uchun joylashuv ruxsati kerak';
+      }
+      return 'Masofaga ko\'ra tartiblash';
+    }
+    return _isAlphabeticalSort ? 'Alifbo tartibida (A-Z)' : 'Alifbo tartibida (Z-A)';
   }
 
   /// Ensure user location is available before enabling distance sorting
@@ -504,9 +591,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
               onPressed: _toggleSorting,
               icon: Icon(
                 _isDistanceSort ? Icons.location_on : (_isAlphabeticalSort ? Icons.sort_by_alpha : Icons.sort_by_alpha_sharp),
-                color: theme.colorScheme.primary,
+                color: _getSortButtonColor(theme),
               ),
-              tooltip: _isDistanceSort ? 'Masofaga ko\'ra tartiblash' : (_isAlphabeticalSort ? 'Alifbo tartibida (A-Z)' : 'Alifbo tartibida (Z-A)'),
+              tooltip: _getSortButtonTooltip(),
             ),
 
             PopupMenuButton<String>(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,7 @@ import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
 import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_schemes.dart';
@@ -30,6 +32,25 @@ void main() async {
 
   // Initialize Database
   await sl<DatabaseHelper>().database;
+
+  // Initialize Permission Manager (lazy singleton, no need for isReady)
+  // PermissionManager is ready when accessed
+
+  // Initialize critical permissions on app start
+  try {
+    final permissionManager = sl<PermissionManager>();
+    // Check location permission status on app start (doesn't request, just checks)
+    await permissionManager.checkLocationPermission();
+
+    // Also check location services status
+    final serviceEnabled = await permissionManager.isLocationServiceEnabled();
+    if (!serviceEnabled && kDebugMode) {
+      print('Location services are disabled on app start');
+    }
+  } catch (e) {
+    // Permission check failed, continue without it
+    // App will handle permissions when needed
+  }
 
   // TODO: Initialize other services
 

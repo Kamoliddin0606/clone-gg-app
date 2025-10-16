@@ -12,6 +12,7 @@ import 'package:gloria_marketing_flutter/src/core/services/report_data_service.d
 import 'package:gloria_marketing_flutter/src/core/services/telegram_bot_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telegram_token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -95,6 +96,9 @@ Future<void> setupServiceLocator() async {
       await locationService.initialize();
       return locationService;
     });
+  }
+  if (!sl.isRegistered<PermissionManager>()) {
+    sl.registerLazySingleton<PermissionManager>(() => PermissionManager());
   }
 
   // Repositories

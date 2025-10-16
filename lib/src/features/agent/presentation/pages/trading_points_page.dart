@@ -903,11 +903,11 @@ class TradingPointCard extends StatelessWidget {
               
               if (locationService != null) ...[
                 const SizedBox(height: 2),
-                Text('location servise ishladi'),
+                //Text('location servise ishladi'),
                 _buildDistanceDisplayForList(context, tradingPoint, locationService!),
               ],
               if (locationService == null) ...[
-                Text('location servise ishlamadi')
+                //Text('location servise ishlamadi')
               ]
             ],
           ),
@@ -1312,22 +1312,22 @@ class TradingPointGridCard extends StatelessWidget {
                         icon: const Icon(Icons.storefront, size: 16),
                         label: const Text('Tashrif'),
                       ),
-                    // FilledButton.tonalIcon(
-                    //   onPressed: onCreateOrder,
-                    //   icon: const Icon(Icons.shopping_cart, size: 16),
-                    //   label: const Text('Buyurtma'),
-                    // ),
-                    // if (tradingPoint.hasContract)
-                    //   OutlinedButton.icon(
-                    //     onPressed: onViewContracts,
-                    //     icon: const Icon(Icons.description, size: 16),
-                    //     label: const Text('Shartnoma'),
-                    //   ),
-                    // OutlinedButton.icon(
-                    //   onPressed: onRefusal,
-                    //   icon: const Icon(Icons.cancel, size: 16),
-                    //   label: const Text('Rad etish'),
-                    // ),
+                    FilledButton.tonalIcon(
+                      onPressed: onCreateOrder,
+                      icon: const Icon(Icons.shopping_cart, size: 16),
+                      label: const Text('Buyurtma'),
+                    ),
+                    if (tradingPoint.hasContract)
+                      OutlinedButton.icon(
+                        onPressed: onViewContracts,
+                        icon: const Icon(Icons.description, size: 16),
+                        label: const Text('Shartnoma'),
+                      ),
+                    OutlinedButton.icon(
+                      onPressed: onRefusal,
+                      icon: const Icon(Icons.cancel, size: 16),
+                      label: const Text('Rad etish'),
+                    ),
                   ],
                 ),
               ],
@@ -1494,7 +1494,7 @@ class _TradingPointGridTile extends StatelessWidget {
                 // _line(Icons.badge_outlined, 'INN: ${tp.inn}'),
 
                 // NEW:
-                _lineMultiline(context, Icons.place_outlined, tp.address, maxLines: 3, scrollable: true),     // CHANGED
+                _lineMultiline(context, Icons.place_outlined, tp.address, maxLines: 2, scrollable: true),     // CHANGED
                 const SizedBox(height: 2),
                 _lineMultiline(context, Icons.badge_outlined, 'INN: ${tp.inn}', maxLines: 2), // CHANGED
                 // Add distance display

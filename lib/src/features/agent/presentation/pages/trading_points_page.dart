@@ -310,69 +310,64 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      // AppBar — Material 3, AgentHome uslubi
-      appBar: AppBar(
-        title: Text('Savdo nuqtalari', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-        centerTitle: false,
-        actions: [
-          // (ixtiyoriy) Light/Dark toggle qo‘yish uchun quyidagini oching:
-          // Padding(
-          //   padding: const EdgeInsets.symmetric(horizontal: 8),
-          //   child: ThemeToggle(
-          //     mode: ThemeController.I.mode.value,
-          //     onChanged: ThemeController.I.set,
-          //   ),
-          // ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'orders':
-                // TODO
-                  break;
-                case 'new_client':
-                // TODO
-                  break;
-                case 'orders_history':
-                // TODO
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'orders',
-                child: Row(
-                  children: [
-                    Icon(Icons.shopping_cart),
-                    SizedBox(width: 8),
-                    Text('Buyurtmalar'),
-                  ],
+    return PageStorage(
+      bucket: PageStorageBucket(),
+      child: Scaffold(
+        // AppBar — Material 3, AgentHome uslubi
+        appBar: AppBar(
+          title: Text('Savdo nuqtalari', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+          centerTitle: false,
+          actions: [
+
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                switch (value) {
+                  case 'orders':
+                  // TODO
+                    break;
+                  case 'new_client':
+                    // TODO
+                    break;
+                  case 'orders_history':
+                    // TODO
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'orders',
+                  child: Row(
+                    children: [
+                      Icon(Icons.shopping_cart),
+                      SizedBox(width: 8),
+                      Text('Buyurtmalar'),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'new_client',
-                child: Row(
-                  children: [
-                    Icon(Icons.add_business),
-                    SizedBox(width: 8),
-                    Text('Yangi mijoz'),
-                  ],
+                const PopupMenuItem(
+                  value: 'new_client',
+                  child: Row(
+                    children: [
+                      Icon(Icons.add_business),
+                      SizedBox(width: 8),
+                      Text('Yangi mijoz'),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'orders_history',
-                child: Row(
-                  children: [
-                    Icon(Icons.history),
-                    SizedBox(width: 8),
-                    Text('Buyurtmalar tarixi'),
-                  ],
+                const PopupMenuItem(
+                  value: 'orders_history',
+                  child: Row(
+                    children: [
+                      Icon(Icons.history),
+                      SizedBox(width: 8),
+                      Text('Buyurtmalar tarixi'),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+              ],
+            ),
+          ],
+        ),
 
       // BODY — gradient fon + yuqorida qidiruv, pastda ro‘yxat
       body: Container(
@@ -429,6 +424,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                   ? RefreshIndicator(
                 onRefresh: _loadUserData,
                 child: ListView.separated(
+                  key: const PageStorageKey<String>('tp_list_scroll'),
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   itemCount: _filteredTradingPoints.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -458,6 +454,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                   : RefreshIndicator(
                 onRefresh: _loadUserData,
                 child: GridView.builder(
+                  key: const PageStorageKey<String>('tp_grid_scroll'),
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -483,82 +480,6 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                 ),
               )),
             )
-
-            // Expanded(
-            //   child: _isLoading
-            //       ? const Center(child: CircularProgressIndicator())
-            //       : _filteredTradingPoints.isEmpty
-            //       ? const _EmptyState()
-            //       : RefreshIndicator(
-            //     onRefresh: _loadUserData,
-            //     child: _isLoading
-            //         ? const Center(child: CircularProgressIndicator())
-            //         : _filteredTradingPoints.isEmpty
-            //         ? const _EmptyState()
-            //         : (_viewMode == _ViewMode.list
-            //         ? RefreshIndicator(
-            //       onRefresh: _loadUserData,
-            //       child: ListView.separated(
-            //         padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            //         itemCount: _filteredTradingPoints.length,
-            //         separatorBuilder: (_, __) => const SizedBox(height: 8),
-            //         itemBuilder: (context, index) {
-            //           final tp = _filteredTradingPoints[index];
-            //           return TradingPointCard(
-            //             tradingPoint: tp,
-            //             onCall: () => _makeCall(tp.phone),
-            //             onInformVisit: () => _informVisit(tp),
-            //             onCreateOrder: () => _createOrder(tp),
-            //             onViewContracts: () => _viewContracts(tp),
-            //             onRefusal: () => _showRefusalDialog(tp),
-            //           );
-            //         },
-            //       ),
-            //     )
-            //         : RefreshIndicator(
-            //       onRefresh: _loadUserData,
-            //       child: GridView.builder(
-            //         padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            //         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            //           crossAxisCount: 2,
-            //           mainAxisSpacing: 8,
-            //           crossAxisSpacing: 8,
-            //           childAspectRatio: 0.92,
-            //         ),
-            //         itemCount: _filteredTradingPoints.length,
-            //         itemBuilder: (context, index) {
-            //           final tp = _filteredTradingPoints[index];
-            //           // Grid’ga ham xuddi shu kartani qo‘llaymiz: ExpansionTile ochilmasa ham chiroyli turadi
-            //           return TradingPointCard(
-            //             tradingPoint: tp,
-            //             onCall: () => _makeCall(tp.phone),
-            //             onInformVisit: () => _informVisit(tp),
-            //             onCreateOrder: () => _createOrder(tp),
-            //             onViewContracts: () => _viewContracts(tp),
-            //             onRefusal: () => _showRefusalDialog(tp),
-            //           );
-            //         },
-            //       ),
-            //     )),
-            //
-            //     // child: ListView.separated(
-            //     //   padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            //     //   itemCount: _filteredTradingPoints.length,
-            //     //   separatorBuilder: (_, __) => const SizedBox(height: 8),
-            //     //   itemBuilder: (context, index) {
-            //     //     final tp = _filteredTradingPoints[index];
-            //     //     return TradingPointCard(
-            //     //       tradingPoint: tp,
-            //     //       onCall: () => _makeCall(tp.phone),
-            //     //       onInformVisit: () => _informVisit(tp),
-            //     //       onCreateOrder: () => _createOrder(tp),
-            //     //       onViewContracts: () => _viewContracts(tp),
-            //     //       onRefusal: () => _showRefusalDialog(tp),
-            //     //     );
-            //     //   },
-            //     // ),
-            //   ),
-            // ),
           ],
         ),
       ),
@@ -567,6 +488,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       // bottomNavigationBar: const AgentBottomNavBar(
       //   initialIndex: 2,
       // ),
+      ),
     );
   }
 }
@@ -672,7 +594,8 @@ class TradingPointCard extends StatelessWidget {
         },
         onDoubleTap: onOpenDetails,
         child: ExpansionTile(
-          key: ValueKey('tp_${tradingPoint.id}_${expanded == true}'), // NEW: qayta qurishni majburlaydi
+
+          key: PageStorageKey<String>('tp_expand_${tradingPoint.id}'), // FIXED: alohida kalit faqat ExpansionTile uchun
           initiallyExpanded: expanded ?? false,                       // NEW: tashqaridan boshqariladi
           onExpansionChanged: null,
           tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
@@ -692,7 +615,7 @@ class TradingPointCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // _line(context, Icons.place_outlined, tradingPoint.address, soft: true, maxLines: 3, scrollable: true),
+              _line(context, Icons.place_outlined, tradingPoint.address, soft: true, maxLines: 3, scrollable: true),
               const SizedBox(height: 2),
               _line(context, Icons.badge_outlined, 'INN: ${tradingPoint.inn}', maxLines: 2),
             ],
@@ -1046,7 +969,7 @@ class TradingPointGridCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.badge_outlined, size: 16),
                     const SizedBox(width: 6),
-                    Expanded(child: Text('INN: ${tradingPoint.inn}', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    Expanded(child: Text('INN: ${tradingPoint.inn}', maxLines: 2, overflow: TextOverflow.ellipsis)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -1057,26 +980,26 @@ class TradingPointGridCard extends StatelessWidget {
                   children: [
                     if (!tradingPoint.isVisited)
                       FilledButton.icon(
-                        onPressed: onInformVisit,
-                        icon: const Icon(Icons.location_on, size: 16),
+                        onPressed: null ,
+                        icon: const Icon(Icons.storefront, size: 16),
                         label: const Text('Tashrif'),
                       ),
-                    FilledButton.tonalIcon(
-                      onPressed: onCreateOrder,
-                      icon: const Icon(Icons.shopping_cart, size: 16),
-                      label: const Text('Buyurtma'),
-                    ),
-                    if (tradingPoint.hasContract)
-                      OutlinedButton.icon(
-                        onPressed: onViewContracts,
-                        icon: const Icon(Icons.description, size: 16),
-                        label: const Text('Shartnoma'),
-                      ),
-                    OutlinedButton.icon(
-                      onPressed: onRefusal,
-                      icon: const Icon(Icons.cancel, size: 16),
-                      label: const Text('Rad etish'),
-                    ),
+                    // FilledButton.tonalIcon(
+                    //   onPressed: onCreateOrder,
+                    //   icon: const Icon(Icons.shopping_cart, size: 16),
+                    //   label: const Text('Buyurtma'),
+                    // ),
+                    // if (tradingPoint.hasContract)
+                    //   OutlinedButton.icon(
+                    //     onPressed: onViewContracts,
+                    //     icon: const Icon(Icons.description, size: 16),
+                    //     label: const Text('Shartnoma'),
+                    //   ),
+                    // OutlinedButton.icon(
+                    //   onPressed: onRefusal,
+                    //   icon: const Icon(Icons.cancel, size: 16),
+                    //   label: const Text('Rad etish'),
+                    // ),
                   ],
                 ),
               ],

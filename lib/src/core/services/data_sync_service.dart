@@ -1440,13 +1440,42 @@ class DataSyncService {
   Future<SalesReqPermissions?> _syncSalesReqPermissions(String userCode) async {
     try {
       final permissions = await _apiService.getSalesReqPermissions(userCode: userCode);
+
+      // Debug: Log the full API response to identify null fields
       if (kDebugMode) {
-        print('Agent ruxsatlari ma\'lumotlari yuklandi: ${permissions['userCode']}');
+        print('DEBUG: Full API response for getSalesReqPermissions:');
+        print('permissions: $permissions');
+        if (permissions != null) {
+          permissions.forEach((key, value) {
+            print('  $key: $value (type: ${value?.runtimeType})');
+          });
+        }
+        print('Agent ruxsatlari ma\'lumotlari yuklandi: ${permissions?['userCode']}');
       }
 
-      // Convert API response to SalesReqPermissions object
+      // Validate required fields before type casting
+      if (permissions == null) {
+        if (kDebugMode) {
+          print('WARNING: API returned null response for getSalesReqPermissions');
+        }
+        return null;
+      }
+
+      // Check for null values in critical fields
+      permissions['userCode']= userCode;
+
+      final userCodeValue = permissions['userCode'];
+      if (userCodeValue == null) {
+        print('WARNING: userCode is null in API response: $userCodeValue');
+        if (kDebugMode) {
+          print('WARNING: userCode is null in API response');
+        }
+        return null;
+      }
+
+      // Convert API response to SalesReqPermissions object with safe casting
       final salesReqPermissions = SalesReqPermissions(
-        userCode: permissions['userCode'] as String,
+        userCode: userCodeValue as String,
         skipTINduplicateCheck: permissions['skipTINduplicateCheck'] as bool? ?? false,
         allowCreationWithoutTIN: permissions['allowCreationWithoutTIN'] as bool? ?? false,
         allowCreatingPointOfSale: permissions['allowCreatingPointOfSale'] as bool? ?? false,

@@ -1265,6 +1265,10 @@ class SoapApiService {
       final returnElement = document.findAllElements('m:return').first;
       print(returnElement.toString());
       // Parse main permissions
+
+      final userCoded = _getElementText(returnElement, 'm:userCode')?.toLowerCase() == '';
+      print('userCode: $userCoded');
+      print('userCode: $userCode');
       final skipTINduplicateCheck = _getElementText(returnElement, 'm:SkipTINduplicateCheck')?.toLowerCase() == 'true';
       final allowCreationWithoutTIN = _getElementText(returnElement, 'm:AllowCreationWithoutTIN')?.toLowerCase() == 'true';
       final allowCreatingPointOfSale = _getElementText(returnElement, 'm:AllowCreatingPointOfSale')?.toLowerCase() == 'true';

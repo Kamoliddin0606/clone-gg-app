@@ -1234,6 +1234,78 @@ class SoapApiService {
     }
   }
 
+  /// Get sales representative permissions
+  Future<Map<String, dynamic>> getSalesReqPermissions({
+    required String userCode,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:getSalesReqPermissions>
+         <sam:CodeUser>$userCode</sam:CodeUser>
+      </sam:getSalesReqPermissions>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final returnElement = document.findAllElements('m:return').first;
+
+      // Parse main permissions
+      final skipTINduplicateCheck = _getElementText(returnElement, 'm:SkipTINduplicateCheck')?.toLowerCase() == 'true';
+      final allowCreationWithoutTIN = _getElementText(returnElement, 'm:AllowCreationWithoutTIN')?.toLowerCase() == 'true';
+      final allowCreatingPointOfSale = _getElementText(returnElement, 'm:AllowCreatingPointOfSale')?.toLowerCase() == 'true';
+      final visit = _getElementText(returnElement, 'm:Visit')?.toLowerCase() == 'true';
+      final strictSequence = _getElementText(returnElement, 'm:StrictSequence')?.toLowerCase() == 'true';
+      final unplannedOrder = _getElementText(returnElement, 'm:UnplannedOrder')?.toLowerCase() == 'true';
+      final plannedRoute = _getElementText(returnElement, 'm:PlannedRoute')?.toLowerCase() == 'true';
+
+      // Parse visit steps
+      final visitSteps = <Map<String, dynamic>>[];
+      final stepElements = returnElement.findAllElements('m:StepList');
+      for (final stepElement in stepElements) {
+        final stepCode = int.tryParse(_getElementText(stepElement, 'm:stepCode') ?? '0') ?? 0;
+        final stepName = _getElementText(stepElement, 'm:stepName') ?? '';
+        final stepRequired = _getElementText(stepElement, 'm:stepRequired')?.toLowerCase() == 'true';
+
+        visitSteps.add({
+          'stepCode': stepCode,
+          'stepName': stepName,
+          'stepRequired': stepRequired,
+        });
+      }
+
+      return {
+        'permissions': {
+          'userCode': userCode,
+          'skipTINduplicateCheck': skipTINduplicateCheck,
+          'allowCreationWithoutTIN': allowCreationWithoutTIN,
+          'allowCreatingPointOfSale': allowCreatingPointOfSale,
+          'visit': visit,
+          'strictSequence': strictSequence,
+          'unplannedOrder': unplannedOrder,
+          'plannedRoute': plannedRoute,
+        },
+        'visitSteps': visitSteps,
+      };
+    } catch (e) {
+      throw Exception('Agent ruxsatlarini olishda xatolik: $e');
+    }
+  }
+
   /// Get order details
   Future<OrderDetail> getOrderDetails({
     required String numberOrder,

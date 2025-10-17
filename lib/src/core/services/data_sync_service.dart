@@ -29,6 +29,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_pl
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
@@ -281,6 +282,9 @@ class DataSyncService {
 
       // Sync orders
       await _syncOrders(userCode);
+
+      // Sync sales req permissions
+      await _syncSalesReqPermissions(userCode);
 
       // Sync promotions
       if ( isAvonServerSelected() || isEvyapServerSelected() ) {
@@ -1413,6 +1417,61 @@ class DataSyncService {
   /// Delete cached order detail
   Future<void> deleteCachedOrderDetail(String numOrder) =>
       _dbService.deleteOrderDetail(numOrder);
+
+  /// Sync sales req permissions data
+  Future<SalesReqPermissions?> syncSalesReqPermissions({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getSalesReqPermissions(userCode);
+      if (cached != null) {
+        return cached;
+      }
+    }
+
+    return await _syncSalesReqPermissions(userCode);
+  }
+
+  Future<SalesReqPermissions?> _syncSalesReqPermissions(String userCode) async {
+    try {
+      final permissions = await _apiService.getSalesReqPermissions(userCode: userCode);
+      if (kDebugMode) {
+        print('Agent ruxsatlari ma\'lumotlari yuklandi: ${permissions['userCode']}');
+      }
+
+      // Convert API response to SalesReqPermissions object
+      final salesReqPermissions = SalesReqPermissions(
+        userCode: permissions['userCode'] as String,
+        skipTINduplicateCheck: permissions['skipTINduplicateCheck'] as bool? ?? false,
+        allowCreationWithoutTIN: permissions['allowCreationWithoutTIN'] as bool? ?? false,
+        allowCreatingPointOfSale: permissions['allowCreatingPointOfSale'] as bool? ?? false,
+        visit: permissions['visit'] as bool? ?? false,
+        strictSequence: permissions['strictSequence'] as bool? ?? false,
+        unplannedOrder: permissions['unplannedOrder'] as bool? ?? false,
+        plannedRoute: permissions['plannedRoute'] as bool? ?? false,
+        visitSteps: (permissions['stepList'] as List<dynamic>? ?? []).map((step) => VisitStep(
+          stepCode: step['stepCode'] as int,
+          stepName: step['stepName'] as String,
+          stepRequired: step['stepRequired'] as bool? ?? false,
+        )).toList(),
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      await _dbService.saveSalesReqPermissions([salesReqPermissions]);
+      return salesReqPermissions;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error syncing sales req permissions: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Get cached sales req permissions
+  Future<SalesReqPermissions?> getCachedSalesReqPermissions(String userCode) =>
+      _dbService.getSalesReqPermissions(userCode);
 }
 
 /// Conflict resolution strategies

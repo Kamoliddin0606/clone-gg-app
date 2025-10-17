@@ -20,6 +20,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_pl
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
@@ -519,6 +520,41 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX idx_order_details_num_order ON order_details(num_order)');
       await db.execute('CREATE INDEX idx_order_detail_products_order_detail_id ON order_detail_products(order_detail_id)');
       await db.execute('CREATE INDEX idx_order_payments_order_detail_id ON order_payments(order_detail_id)');
+    } else if (oldVersion < 13) {
+      // Add sales req permissions and visit steps tables for version 13
+      await db.execute('''
+        CREATE TABLE sales_req_permissions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_code TEXT UNIQUE NOT NULL,
+          skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
+          allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
+          allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
+          visit INTEGER NOT NULL DEFAULT 0,
+          strict_sequence INTEGER NOT NULL DEFAULT 0,
+          unplanned_order INTEGER NOT NULL DEFAULT 0,
+          planned_route INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE visit_steps (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          sales_req_permissions_id INTEGER NOT NULL,
+          step_code INTEGER NOT NULL,
+          step_name TEXT NOT NULL,
+          step_required INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (sales_req_permissions_id) REFERENCES sales_req_permissions (id) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create indexes for sales req permissions tables
+      await db.execute('CREATE INDEX idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
+      await db.execute('CREATE INDEX idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
+      await db.execute('CREATE INDEX idx_visit_steps_step_code ON visit_steps(step_code)');
     }
   }
 
@@ -3755,5 +3791,113 @@ class ApiDatabaseService {
         rethrow;
       }
     });
+  }
+
+  /// Save sales req permissions
+  Future<void> saveSalesReqPermissions(List<SalesReqPermissions> permissions) async {
+    final db = await database;
+    final batch = db.batch();
+
+    for (final permission in permissions) {
+      batch.insert(
+        'sales_req_permissions',
+        permission.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    await batch.commit(noResult: true);
+  }
+
+  /// Get sales req permissions by user code
+  Future<SalesReqPermissions?> getSalesReqPermissions(String userCode) async {
+    final db = await database;
+    final maps = await db.query(
+      'sales_req_permissions',
+      where: 'user_code = ?',
+      whereArgs: [userCode],
+    );
+
+    if (maps.isEmpty) return null;
+
+    final permission = SalesReqPermissions.fromMap(maps.first);
+
+    // Get associated visit steps
+    final visitStepsMaps = await db.query(
+      'visit_steps',
+      where: 'sales_req_permissions_id = ?',
+      whereArgs: [permission.id],
+    );
+
+    final visitSteps = visitStepsMaps.map((map) => VisitStep.fromMap(map)).toList();
+    return permission.copyWith(visitSteps: visitSteps);
+  }
+
+  /// Get all sales req permissions
+  Future<List<SalesReqPermissions>> getAllSalesReqPermissions() async {
+    final db = await database;
+    final maps = await db.query('sales_req_permissions');
+
+    final permissions = <SalesReqPermissions>[];
+    for (final map in maps) {
+      final permission = SalesReqPermissions.fromMap(map);
+
+      // Get associated visit steps
+      final visitStepsMaps = await db.query(
+        'visit_steps',
+        where: 'sales_req_permissions_id = ?',
+        whereArgs: [permission.id],
+      );
+
+      final visitSteps = visitStepsMaps.map((map) => VisitStep.fromMap(map)).toList();
+      permissions.add(permission.copyWith(visitSteps: visitSteps));
+    }
+
+    return permissions;
+  }
+
+  /// Save visit steps
+  Future<void> saveVisitSteps(List<VisitStep> visitSteps) async {
+    final db = await database;
+    final batch = db.batch();
+
+    for (final step in visitSteps) {
+      batch.insert(
+        'visit_steps',
+        step.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    await batch.commit(noResult: true);
+  }
+
+  /// Get visit steps by sales req permissions id
+  Future<List<VisitStep>> getVisitSteps(int salesReqPermissionsId) async {
+    final db = await database;
+    final maps = await db.query(
+      'visit_steps',
+      where: 'sales_req_permissions_id = ?',
+      whereArgs: [salesReqPermissionsId],
+    );
+
+    return maps.map((map) => VisitStep.fromMap(map)).toList();
+  }
+
+  /// Delete sales req permissions by user code
+  Future<void> deleteSalesReqPermissions(String userCode) async {
+    final db = await database;
+    await db.delete(
+      'sales_req_permissions',
+      where: 'user_code = ?',
+      whereArgs: [userCode],
+    );
+  }
+
+  /// Clear all sales req permissions data
+  Future<void> clearSalesReqPermissions() async {
+    final db = await database;
+    await db.delete('visit_steps');
+    await db.delete('sales_req_permissions');
   }
 }

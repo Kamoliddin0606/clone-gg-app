@@ -885,12 +885,11 @@ class TradingPointCard extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           leading:  _AvatarLeading(tp: tradingPoint, visited: tradingPoint.isVisited),
 
-      title: Text(
-          tradingPoint.name,
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
+      title: _buildScrollableText(
+        tradingPoint.name,
+        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+        maxLines: 3,
+      ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Column(
@@ -991,9 +990,10 @@ class TradingPointCard extends StatelessWidget {
         child: ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
           child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             child: Text(
               text,
-              softWrap: true,
+              softWrap: false,
             ),
           ),
         ),
@@ -1014,6 +1014,21 @@ class TradingPointCard extends StatelessWidget {
           child: textWidget,
         ),
       ],
+    );
+  }
+
+  Widget _buildScrollableText(String text, {TextStyle? style, int maxLines = 2}) {
+    return SizedBox(
+      height: maxLines * 20.0, // Approximate height for maxLines
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Text(
+          text,
+          style: style,
+          maxLines: maxLines,
+          softWrap: true, // Enable word wrapping for vertical scroll
+        ),
+      ),
     );
   }
 
@@ -1493,8 +1508,9 @@ class _TradingPointGridTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tp.name, maxLines: 2, softWrap: true,overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                _buildScrollableText(tp.name,
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                    maxLines: 3),
                 const SizedBox(height: 4),
                 // _line(Icons.place_outlined, tp.address),
                 // const SizedBox(height: 2),
@@ -1640,6 +1656,21 @@ class _TradingPointGridTile extends StatelessWidget {
           color: Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScrollableText(String text, {TextStyle? style, int maxLines = 3}) {
+    return SizedBox(
+      height: maxLines * 20.0, // Approximate height for maxLines
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Text(
+          text,
+          style: style,
+          maxLines: maxLines,
+          softWrap: true, // Enable word wrapping for vertical scroll
         ),
       ),
     );

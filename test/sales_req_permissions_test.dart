@@ -54,8 +54,8 @@ void main() {
     );
 
     dbService = ApiDatabaseService();
-    // Override the database getter for testing
-    await dbService.database; // Initialize the database
+    // Use the test database instead of the singleton instance
+    // The ensureSalesReqPermissionsTableExists method will work on the test database
   });
 
   tearDown(() async {

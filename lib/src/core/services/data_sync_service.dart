@@ -1439,6 +1439,9 @@ class DataSyncService {
 
   Future<SalesReqPermissions?> _syncSalesReqPermissions(String userCode) async {
     try {
+      // Ensure tables exist before attempting sync
+      await _dbService.ensureSalesReqPermissionsTableExists();
+
       final permissions = await _apiService.getSalesReqPermissions(userCode: userCode);
 
       // Debug: Log the full API response to identify null fields

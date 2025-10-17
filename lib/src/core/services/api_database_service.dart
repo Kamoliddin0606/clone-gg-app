@@ -523,7 +523,7 @@ class ApiDatabaseService {
     } else if (oldVersion < 13) {
       // Add sales req permissions and visit steps tables for version 13
       await db.execute('''
-        CREATE TABLE sales_req_permissions (
+        CREATE TABLE IF NOT EXISTS sales_req_permissions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_code TEXT UNIQUE NOT NULL,
           skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
@@ -539,7 +539,7 @@ class ApiDatabaseService {
       ''');
 
       await db.execute('''
-        CREATE TABLE visit_steps (
+        CREATE TABLE IF NOT EXISTS visit_steps (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           sales_req_permissions_id INTEGER NOT NULL,
           step_code INTEGER NOT NULL,
@@ -552,9 +552,9 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for sales req permissions tables
-      await db.execute('CREATE INDEX idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
-      await db.execute('CREATE INDEX idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
-      await db.execute('CREATE INDEX idx_visit_steps_step_code ON visit_steps(step_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)');
     }
   }
 
@@ -3899,5 +3899,65 @@ class ApiDatabaseService {
     final db = await database;
     await db.delete('visit_steps');
     await db.delete('sales_req_permissions');
+  }
+
+  /// Ensure sales req permissions table exists (for migration issues)
+  Future<void> ensureSalesReqPermissionsTableExists() async {
+    final db = await database;
+
+    // Check if sales_req_permissions table exists
+    final salesReqPermissionsTable = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='sales_req_permissions'"
+    );
+
+    if (salesReqPermissionsTable.isEmpty) {
+      // Create sales_req_permissions table
+      await db.execute('''
+        CREATE TABLE sales_req_permissions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_code TEXT UNIQUE NOT NULL,
+          skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
+          allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
+          allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
+          visit INTEGER NOT NULL DEFAULT 0,
+          strict_sequence INTEGER NOT NULL DEFAULT 0,
+          unplanned_order INTEGER NOT NULL DEFAULT 0,
+          planned_route INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+    }
+
+    // Check if visit_steps table exists
+    final visitStepsTable = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='visit_steps'"
+    );
+
+    if (visitStepsTable.isEmpty) {
+      // Create visit_steps table
+      await db.execute('''
+        CREATE TABLE visit_steps (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          sales_req_permissions_id INTEGER NOT NULL,
+          step_code INTEGER NOT NULL,
+          step_name TEXT NOT NULL,
+          step_required INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (sales_req_permissions_id) REFERENCES sales_req_permissions (id) ON DELETE CASCADE
+        )
+      ''');
+    }
+
+    // Create indexes if they don't exist
+    try {
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)');
+    } catch (e) {
+      // Indexes might already exist, ignore error
+      print('Warning: Could not create indexes, they might already exist: $e');
+    }
   }
 }

@@ -1491,7 +1491,7 @@ class DataSyncService {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-
+      print(salesReqPermissions.toString());
       await _dbService.saveSalesReqPermissions([salesReqPermissions]);
       return salesReqPermissions;
     } catch (e) {

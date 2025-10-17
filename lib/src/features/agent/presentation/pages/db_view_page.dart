@@ -21,6 +21,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_c
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class DbViewPage extends StatefulWidget {
@@ -61,6 +62,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   List<Map<String, dynamic>> _orderPayments = [];
   List<Map<String, dynamic>> _couriers = [];
   List<Map<String, dynamic>> _courierCars = [];
+  List<SalesReqPermissions> _salesReqPermissions = [];
+  List<VisitStep> _visitSteps = [];
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -107,6 +110,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     'Couriers',
     'Courier Cars',
     'Promotions',
+    'Sales Req Permissions',
+    'Visit Steps',
   ];
 
   @override
@@ -159,10 +164,12 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _safeLoadData(() => _loadCouriers(), 'Couriers'),
         _safeLoadData(() => _loadCourierCars(), 'Courier Cars'),
         _safeLoadData(() => _dbService.getPromotions(), 'Promotions'),
+        _safeLoadData(() => _dbService.getAllSalesReqPermissions(), 'Sales Req Permissions'),
+        _safeLoadData(() => _loadVisitSteps(), 'Visit Steps'),
       ];
 
       final results = await Future.wait(futures);
-
+      print('results prefs: ${results}');
       if (kDebugMode) {
         print('DEBUG: All data loading completed, updating state');
       }
@@ -192,6 +199,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _couriers = _safeCast<Map<String, dynamic>>(results[21]);
         _courierCars = _safeCast<Map<String, dynamic>>(results[22]);
         _promotions = _safeCast<PromotionModel>(results[23]);
+        _salesReqPermissions = _safeCast<SalesReqPermissions>(results[24]);
+        _visitSteps = _safeCast<VisitStep>(results[25]);
         _isLoading = false;
       });
 
@@ -306,6 +315,20 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     }
   }
 
+  /// Load visit steps from database
+  Future<List<VisitStep>> _loadVisitSteps() async {
+    try {
+      final db = await _dbService.database;
+      final results = await db.query('visit_steps');
+      return results.map((row) => VisitStep.fromMap(row)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading visit steps: $e');
+      }
+      return [];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -371,6 +394,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
                     _buildDataTable(_couriers, _getCouriersColumns()),
                     _buildDataTable(_courierCars, _getCourierCarsColumns()),
                     _buildDataTable(_promotions, _getPromotionsColumns()),
+                    _buildDataTable(_salesReqPermissions, _getSalesReqPermissionsColumns()),
+                    _buildDataTable(_visitSteps, _getVisitStepsColumns()),
                   ],
                 ),
     );
@@ -688,6 +713,31 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.lastSynced?.toString() ?? '')),
         DataCell(Text(item.isActive.toString())),
       ]);
+    } else if (item is SalesReqPermissions) {
+      cells.addAll([
+        DataCell(Text(item.id?.toString() ?? '')),
+        DataCell(Text(item.userCode)),
+        DataCell(Text(item.skipTINduplicateCheck.toString())),
+        DataCell(Text(item.allowCreationWithoutTIN.toString())),
+        DataCell(Text(item.allowCreatingPointOfSale.toString())),
+        DataCell(Text(item.visit.toString())),
+        DataCell(Text(item.strictSequence.toString())),
+        DataCell(Text(item.unplannedOrder.toString())),
+        DataCell(Text(item.plannedRoute.toString())),
+        DataCell(Text(item.visitSteps.length.toString())),
+        DataCell(Text(item.createdAt?.toString() ?? '')),
+        DataCell(Text(item.updatedAt?.toString() ?? '')),
+      ]);
+    } else if (item is VisitStep) {
+      cells.addAll([
+        DataCell(Text(item.id?.toString() ?? '')),
+        DataCell(Text(item.salesReqPermissionsId?.toString() ?? '')),
+        DataCell(Text(item.stepCode.toString())),
+        DataCell(Text(item.stepName)),
+        DataCell(Text(item.stepRequired.toString())),
+        DataCell(Text(item.createdAt?.toString() ?? '')),
+        DataCell(Text(item.updatedAt?.toString() ?? '')),
+      ]);
     }
 
     return DataRow(cells: cells);
@@ -947,5 +997,30 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         const DataColumn(label: Text('End Date')),
         const DataColumn(label: Text('Last Synced')),
         const DataColumn(label: Text('Active')),
+      ];
+
+  List<DataColumn> _getSalesReqPermissionsColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('User Code')),
+        const DataColumn(label: Text('Skip TIN Duplicate')),
+        const DataColumn(label: Text('Allow Creation Without TIN')),
+        const DataColumn(label: Text('Allow Creating POS')),
+        const DataColumn(label: Text('Visit')),
+        const DataColumn(label: Text('Strict Sequence')),
+        const DataColumn(label: Text('Unplanned Order')),
+        const DataColumn(label: Text('Planned Route')),
+        const DataColumn(label: Text('Visit Steps Count')),
+        const DataColumn(label: Text('Created At')),
+        const DataColumn(label: Text('Updated At')),
+      ];
+
+  List<DataColumn> _getVisitStepsColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('Permissions ID')),
+        const DataColumn(label: Text('Step Code')),
+        const DataColumn(label: Text('Step Name')),
+        const DataColumn(label: Text('Required')),
+        const DataColumn(label: Text('Created At')),
+        const DataColumn(label: Text('Updated At')),
       ];
 }

@@ -46,6 +46,10 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         setState(() => _isLoading = false);
         return;
       }
+      else {
+        debugPrint('No cached order details found for order: ${widget.order.numOrder}');
+      }
+
 
       // If no cache, fetch from server
       final userCode = await _getUserCode();

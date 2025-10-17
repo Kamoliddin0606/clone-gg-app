@@ -403,6 +403,10 @@ class DataSyncService {
       yield SyncStep.syncingOrders;
       await _syncOrders(userCode);
 
+      // Step 14: Sync sales req permissions
+      yield SyncStep.syncingSalesReqPermissions;
+      await _syncSalesReqPermissions(userCode);
+
       if( isAvonServerSelected() || isEvyapServerSelected() ) {
         // Step 12: Sync promotions
         yield SyncStep.syncingPromotions;

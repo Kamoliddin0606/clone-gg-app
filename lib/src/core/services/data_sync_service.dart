@@ -1447,7 +1447,7 @@ class DataSyncService {
       // Debug: Log the full API response to identify null fields
       if (kDebugMode) {
         print('DEBUG: Full API response for getSalesReqPermissions:');
-        print('permissions: $permissions');
+        print('permissions: ${permissions['visitSteps']}');
         if (permissions != null) {
           permissions.forEach((key, value) {
             print('  $key: $value (type: ${value?.runtimeType})');
@@ -1469,7 +1469,7 @@ class DataSyncService {
 
       final userCodeValue = permissions['userCode'];
       if (userCodeValue == null) {
-        print('WARNING: userCode is null in API response: $userCodeValue');
+        print('WARNING: userCode is null in API response: ${permissions['visitSteps']}');
         if (kDebugMode) {
           print('WARNING: userCode is null in API response');
         }
@@ -1486,7 +1486,7 @@ class DataSyncService {
         strictSequence: permissions['strictSequence'] as bool? ?? false,
         unplannedOrder: permissions['unplannedOrder'] as bool? ?? false,
         plannedRoute: permissions['plannedRoute'] as bool? ?? false,
-        visitSteps: (permissions['stepList'] as List<dynamic>? ?? []).map((step) => VisitStep(
+        visitSteps: (permissions['visitSteps'] as List<dynamic>? ?? []).map((step) => VisitStep(
           stepCode: step['stepCode'] as int,
           stepName: step['stepName'] as String,
           stepRequired: step['stepRequired'] as bool? ?? false,
@@ -1495,8 +1495,41 @@ class DataSyncService {
         updatedAt: DateTime.now(),
       );
       print(salesReqPermissions.toString());
+
+      // Save sales req permissions first to get the ID
       await _dbService.saveSalesReqPermissions([salesReqPermissions]);
-      return salesReqPermissions;
+      final savedPermission = await _dbService.getSalesReqPermissions(userCode);
+
+      if (savedPermission == null) {
+        if (kDebugMode) {
+          print('WARNING: Could not retrieve saved sales req permissions for user: $userCode');
+        }
+        return null;
+      }
+
+      // Save visit steps with the correct sales_req_permissions_id
+      // print('salesReqPermissions.visitSteps.isNotEmpty: ${salesReqPermissions[0].visitSteps.isNotEmpty}');
+      if (salesReqPermissions.visitSteps.isNotEmpty) {
+        try {
+          final visitStepsWithId = salesReqPermissions.visitSteps.map((step) =>
+            step.copyWith(salesReqPermissionsId: savedPermission.id)
+          ).toList();
+
+          await _dbService.saveVisitSteps(visitStepsWithId);
+
+          if (kDebugMode) {
+            print('Successfully saved ${visitStepsWithId.length} visit steps for user: $userCode');
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error saving visit steps for user $userCode: $e');
+          }
+          // Don't fail the entire sync if visit steps save fails
+          // Log the error but continue
+        }
+      }
+
+      return savedPermission;
     } catch (e) {
       // Handle different types of API errors gracefully
       if (e is DioException) {

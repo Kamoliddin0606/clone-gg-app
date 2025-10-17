@@ -1280,6 +1280,7 @@ class SoapApiService {
       // Parse visit steps
       final visitSteps = <Map<String, dynamic>>[];
       final stepElements = returnElement.findAllElements('m:StepList');
+
       for (final stepElement in stepElements) {
         final stepCode = int.tryParse(_getElementText(stepElement, 'm:stepCode') ?? '0') ?? 0;
         final stepName = _getElementText(stepElement, 'm:stepName') ?? '';

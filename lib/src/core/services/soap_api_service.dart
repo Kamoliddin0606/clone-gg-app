@@ -1263,7 +1263,7 @@ class SoapApiService {
 
       final document = XmlDocument.parse(response.data);
       final returnElement = document.findAllElements('m:return').first;
-
+      print(returnElement.toString());
       // Parse main permissions
       final skipTINduplicateCheck = _getElementText(returnElement, 'm:SkipTINduplicateCheck')?.toLowerCase() == 'true';
       final allowCreationWithoutTIN = _getElementText(returnElement, 'm:AllowCreationWithoutTIN')?.toLowerCase() == 'true';
@@ -1287,7 +1287,19 @@ class SoapApiService {
           'stepRequired': stepRequired,
         });
       }
-
+      print({
+        'permissions': {
+          'userCode': userCode,
+          'skipTINduplicateCheck': skipTINduplicateCheck,
+          'allowCreationWithoutTIN': allowCreationWithoutTIN,
+          'allowCreatingPointOfSale': allowCreatingPointOfSale,
+          'visit': visit,
+          'strictSequence': strictSequence,
+          'unplannedOrder': unplannedOrder,
+          'plannedRoute': plannedRoute,
+        },
+        'visitSteps': visitSteps,
+      });
       return {
         'permissions': {
           'userCode': userCode,

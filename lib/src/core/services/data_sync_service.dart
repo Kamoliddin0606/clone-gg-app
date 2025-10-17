@@ -1466,10 +1466,58 @@ class DataSyncService {
       await _dbService.saveSalesReqPermissions([salesReqPermissions]);
       return salesReqPermissions;
     } catch (e) {
+      // Handle different types of API errors gracefully
+      if (e is DioException) {
+        final statusCode = e.response?.statusCode;
+        final responseData = e.response?.data?.toString() ?? '';
+
+        if (kDebugMode) {
+          print('DioException in _syncSalesReqPermissions: Status $statusCode');
+          print('Response data: $responseData');
+          print('Error message: ${e.message}');
+        }
+
+        // Handle specific HTTP status codes
+        if (statusCode == 500) {
+          // Server error - API might not exist or be temporarily unavailable
+          if (kDebugMode) {
+            print('WARNING: getSalesReqPermissions API returned 500 error. This API may not be available on the current server.');
+            print('The application will continue without sales request permissions data.');
+          }
+          // Return null instead of throwing - this allows the sync to continue
+          return null;
+        } else if (statusCode == 404) {
+          // API endpoint not found
+          if (kDebugMode) {
+            print('WARNING: getSalesReqPermissions API endpoint not found (404). This API may not exist on the current server.');
+            print('The application will continue without sales request permissions data.');
+          }
+          return null;
+        } else if (statusCode == 403) {
+          // Forbidden - user doesn't have permission
+          if (kDebugMode) {
+            print('WARNING: Access forbidden for getSalesReqPermissions API (403). User may not have permission.');
+            print('The application will continue without sales request permissions data.');
+          }
+          return null;
+        } else if (statusCode == 401) {
+          // Unauthorized
+          if (kDebugMode) {
+            print('WARNING: Unauthorized access to getSalesReqPermissions API (401). Authentication may be required.');
+            print('The application will continue without sales request permissions data.');
+          }
+          return null;
+        }
+      }
+
+      // For any other errors, log and continue
       if (kDebugMode) {
         print('Error syncing sales req permissions: $e');
+        print('The application will continue without sales request permissions data.');
       }
-      rethrow;
+
+      // Return null instead of rethrowing to prevent sync failure
+      return null;
     }
   }
 

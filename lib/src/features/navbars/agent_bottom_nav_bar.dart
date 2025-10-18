@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'fluid_nav_bar.dart';
 
 class AgentBottomNavBar extends StatefulWidget {
@@ -41,23 +42,23 @@ class _AgentBottomNavBarState extends State<AgentBottomNavBar> {
       items: [
         FluidNavItem(
           icon: Icons.home,
-          label: 'Home',
+          label: AppLocalizations.of(context)!.home,
         ),
         FluidNavItem(
           icon: Icons.add_shopping_cart,
-          label: 'Buyurtma',
+          label: AppLocalizations.of(context)!.orders,
         ),
         FluidNavItem(
           icon: Icons.people,
-          label: 'Mijozlar',
+          label: AppLocalizations.of(context)!.customers,
         ),
         FluidNavItem(
           icon: Icons.storefront,
-          label: 'Tovarlar',
+          label: AppLocalizations.of(context)!.products,
         ),
         FluidNavItem(
           icon: Icons.insert_chart_outlined,
-          label: 'Hisobot',
+          label: AppLocalizations.of(context)!.reports,
         ),
       ],
     );

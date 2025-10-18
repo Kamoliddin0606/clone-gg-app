@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -746,7 +747,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
 
   void _onDataSyncError(dynamic error) {
     // Show user-friendly error message
-    String errorMessage = 'Ma\'lumotlarni yangilashda xatolik yuz berdi.';
+    String errorMessage = AppLocalizations.of(context)!.syncError;
 
     if (error is PaymentRequiredException) {
       errorMessage = 'To\'lov talab qilinmoqda. Iltimos, obunangizni tekshiring.';
@@ -782,16 +783,16 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Online rejimga qaytish'),
-        content: const Text('Internet bilan va server bilan aloqa borligini tekshirib, online rejimga qaytishni xohlaysizmi?'),
+        title: Text(AppLocalizations.of(context)!.onlineModeReturn),
+        content: Text(AppLocalizations.of(context)!.onlineModeReturnConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Yo\'q'),
+            child: Text(AppLocalizations.of(context)!.no),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Ha'),
+            child: Text(AppLocalizations.of(context)!.yes),
           ),
         ],
       ),
@@ -823,7 +824,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
         if (serverUrl == null || serverUrl.isEmpty) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Server manzili topilmadi')),
+              SnackBar(content: Text(AppLocalizations.of(context)!.serverUrlNotFound)),
             );
           }
           return;
@@ -832,7 +833,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Server URL: $serverUrl')),
+            SnackBar(content: Text('${AppLocalizations.of(context)!.serverUrl}: $serverUrl')),
           );
         }
 
@@ -844,7 +845,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Aloqa yo\'q: ${e.toString()}')),
+            SnackBar(content: Text('${AppLocalizations.of(context)!.connectionError}: ${e.toString()}')),
           );
         }
       }
@@ -941,7 +942,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
                 leading: IconButton(
                   icon: const Icon(Icons.menu),
                   onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                    tooltip: 'Menyu',
+                    tooltip: AppLocalizations.of(context)!.menu,
                 ),
                 flexibleSpace: _Header(userName: widget.userName, userCode: widget.userCode),
                 actions: [
@@ -982,9 +983,9 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
                                 size: 16,
                               ),
                               const SizedBox(width: 4),
-                              const Text(
-                                'Offline',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(context)!.offline,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -997,14 +998,14 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
                     },
                   ),
                   IconButton(
-                    tooltip: 'Yangilash',
+                    tooltip: AppLocalizations.of(context)!.refresh,
                     onPressed: _syncDataWithProgress,
                     icon: const Icon(Icons.refresh),
                   ),
                   // Offline indicator - shows when app is in offline mode
 
                   IconButton(
-                    tooltip: 'Chiqish',
+                    tooltip: AppLocalizations.of(context)!.logout,
                     onPressed: widget.onLogout,
                     icon: const Icon(Icons.logout),
                   ),
@@ -1113,7 +1114,7 @@ class _StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final nf = NumberFormat.compact();
     final items = [
-      _TileData('OKB', kpi.okb.toString(), Icons.storefront_rounded),
+      _TileData(AppLocalizations.of(context)!.okb, kpi.okb.toString(), Icons.storefront_rounded),
       _TileData('AKB Plan', kpi.akbPlan.toString(), Icons.flag_circle_rounded),
       _TileData('AKB Fact', kpi.akbFact.toString(), Icons.task_alt_rounded),
       _TileData('Forecast % of Fact', '${kpi.totalPercentForecastFact.toStringAsFixed(1)}%', Icons.trending_up_rounded),
@@ -1203,11 +1204,11 @@ class _ChartsSection extends StatelessWidget {
     return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Charts', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+          Text(AppLocalizations.of(context)!.charts, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
           _ChartCard(
-            title: 'AKB Progress',
-            subtitle: 'Plan vs Fact',
+            title: AppLocalizations.of(context)!.akbProgress,
+            subtitle: AppLocalizations.of(context)!.planVsFact,
             child: SizedBox(
               height: 180,
               child: BarChart(
@@ -1244,8 +1245,8 @@ class _ChartsSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _ChartCard(
-            title: 'Plan Completion',
-            subtitle: 'Fact vs Remaining',
+            title: AppLocalizations.of(context)!.planCompletion,
+            subtitle: AppLocalizations.of(context)!.factVsRemaining,
             child: SizedBox(
               height: 180,
               child: PieChart(
@@ -1259,8 +1260,8 @@ class _ChartsSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _ChartCard(
-            title: 'Forecast Trend',
-            subtitle: 'From Fact to Forecast',
+            title: AppLocalizations.of(context)!.forecastTrend,
+            subtitle: AppLocalizations.of(context)!.fromFactToForecast,
             child: SizedBox(height: 200, child: _ForecastLine(kpi: kpi)),
           ),
         ],
@@ -1382,18 +1383,18 @@ class _Insights extends StatelessWidget {
     // final gap = max(0, kpi.totalPlan - kpi.totalFact);
     final double gap = max(0.0, kpi.totalPlan - kpi.totalFact).toDouble();
     final akbGap = max(0, kpi.akbPlan - kpi.akbFact);
-    final trend = kpi.totalForecast >= kpi.totalPlan ? 'On track' : 'At risk';
+    final trend = kpi.totalForecast >= kpi.totalPlan ? AppLocalizations.of(context)!.onTrack : AppLocalizations.of(context)!.atRisk;
 
     return _ChartCard(
-      title: 'Insights',
-      subtitle: 'Auto‑generated highlights',
+      title: AppLocalizations.of(context)!.insights,
+      subtitle: AppLocalizations.of(context)!.autoGeneratedHighlights,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-            _bullet(context, 'Completion', '${kpi.totalPercent.toStringAsFixed(1)}% of plan achieved'),
-          _bullet(context, 'Gap to Plan', _money(context, gap)),
-          _bullet(context, 'AKB Gap', '$akbGap clients to reach plan'),
-          _bullet(context, 'Forecast vs Plan', trend),
+            _bullet(context, AppLocalizations.of(context)!.completion, '${kpi.totalPercent.toStringAsFixed(1)} % of plan achieved'),
+          _bullet(context, AppLocalizations.of(context)!.gapToPlan, _money(context, gap)),
+          _bullet(context, AppLocalizations.of(context)!.akbGap, '$akbGap clients to reach plan'),
+          _bullet(context, AppLocalizations.of(context)!.forecastVsPlan, trend),
         ],
       ),
     );
@@ -1482,7 +1483,7 @@ class _HeroHeader extends StatelessWidget {
                                     Text('${(value * 100).toStringAsFixed(1)}%',
                                         style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
                                     const SizedBox(height: 2),
-                                    Text('Plan', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70)),
+                                    Text(AppLocalizations.of(context)!.plan, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70)),
                                   ],
                                 )
                               ],
@@ -1494,12 +1495,12 @@ class _HeroHeader extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Today Performance',
+                            Text(AppLocalizations.of(context)!.todayPerformance,
                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
                             const SizedBox(height: 8),
-                            _animatedMetric(context, 'Total Fact', nf.format(kpi.totalFact)),
-                            _animatedMetric(context, 'Total Plan', nf.format(kpi.totalPlan)),
-                            _animatedMetric(context, 'Forecast', nf.format(kpi.totalForecast)),
+                            _animatedMetric(context, AppLocalizations.of(context)!.totalFact, nf.format(kpi.totalFact)),
+                            _animatedMetric(context, AppLocalizations.of(context)!.totalPlan, nf.format(kpi.totalPlan)),
+                            _animatedMetric(context, AppLocalizations.of(context)!.forecast, nf.format(kpi.totalForecast)),
                           ],
                         ),
                       ),
@@ -1568,7 +1569,7 @@ class _KpiOverview extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: Text('Reja bajarilishi', style: theme.textTheme.titleMedium)),
+                        Expanded(child: Text(AppLocalizations.of(context)!.planExecution, style: theme.textTheme.titleMedium)),
                         AnimatedRotation(
                           duration: const Duration(milliseconds: 200),
                           turns: expanded ? 0.0 : 0.5,
@@ -1712,17 +1713,17 @@ class _ActionsRow extends StatelessWidget {
         final isWide = constraints.maxWidth >= 680;
         final children = <Widget>[
           _ActionTile(
-            label: 'Buyurtma yaratish',
+            label: AppLocalizations.of(context)!.createOrder,
             icon: Icons.add_shopping_cart,
             onTap: onCreateOrder,
           ),
           _ActionTile(
-            label: 'Mijozlar',
+            label: AppLocalizations.of(context)!.customers,
             icon: Icons.people,
             onTap: onOpenCustomers,
           ),
           _ActionTile(
-            label: 'Tovarlar',
+            label: AppLocalizations.of(context)!.products,
             icon: Icons.storefront,
             onTap: onOpenProducts,
           ),
@@ -1900,58 +1901,58 @@ class _AppDrawer extends StatelessWidget {
               children: [
                 _MenuItem(
                   icon: Icons.people,
-                  title: 'Mijozlar',
+                  title: AppLocalizations.of(context)!.customers,
                   onTap: () => Navigator.pushNamed(context, AppRouter.tradingPointsRoute),
                 ),
                 _MenuItem(
                   icon: Icons.bar_chart,
-                  title: 'Hisobotlar',
+                  title: AppLocalizations.of(context)!.reports,
                   onTap: () => Navigator.pushNamed(context, AppRouter.reportsRoute),
                 ),
 
                 _MenuItem(
                   icon: Icons.campaign,
-                  title: 'Marketing',
+                  title: AppLocalizations.of(context)!.marketing,
                   onTap: () => Navigator.pushNamed(context, AppRouter.marketingRoute),
                 ),
                 _MenuItem(
                   icon: Icons.account_balance_wallet,
-                  title: 'Kassa',
+                  title: AppLocalizations.of(context)!.cash,
                   onTap: null,
                 ),
                 _MenuItem(
                   icon: Icons.account_balance,
-                  title: 'Debit-Kredit',
+                  title: AppLocalizations.of(context)!.debitCredit,
                   onTap: null,
                 ),
                 _MenuItem(
                   icon: Icons.warehouse,
-                  title: 'Skladlar',
+                  title: AppLocalizations.of(context)!.warehouses,
                   onTap: () => Navigator.pushNamed(context, AppRouter.warehousesRoute),
                 ),
                 _MenuItem(
                   icon: Icons.storefront,
-                  title: 'Tovarlar',
+                  title: AppLocalizations.of(context)!.products,
                   onTap: onProducts,
                 ),
                 _MenuItem(
                   icon: Icons.price_change,
-                  title: 'Narxlar',
+                  title: AppLocalizations.of(context)!.prices,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PricesPage())),
                 ),
                 _MenuItem(
                   icon: Icons.description,
-                  title: 'Shartnomalar',
+                  title: AppLocalizations.of(context)!.contracts,
                   onTap: () => Navigator.pushNamed(context, AppRouter.contractsRoute),
                 ),
                 _MenuItem(
                   icon: Icons.receipt_long,
-                  title: 'Buyurtmalar',
+                  title: AppLocalizations.of(context)!.orders,
                   onTap: () => Navigator.pushNamed(context, AppRouter.ordersRoute),
                 ),
                 _MenuItem(
                   icon: Icons.storage,
-                  title: 'DB View',
+                  title: AppLocalizations.of(context)!.dbView,
                   onTap: () => Navigator.pushNamed(context, AppRouter.dbViewRoute),
                 ),
               ],
@@ -1962,7 +1963,7 @@ class _AppDrawer extends StatelessWidget {
           const Divider(),
           _MenuItem(
             icon: Icons.brightness_6,
-            title: 'Dark mode',
+            title: AppLocalizations.of(context)!.darkMode,
             trailing: SizedBox(
               width: 80,
               child: ThemeToggle(
@@ -1974,12 +1975,12 @@ class _AppDrawer extends StatelessWidget {
           ),
           _MenuItem(
             icon: Icons.settings,
-            title: 'Sozlamalar',
+            title: AppLocalizations.of(context)!.settings,
             onTap: onSettings,
           ),
           _MenuItem(
             icon: Icons.logout,
-            title: 'Chiqish',
+            title: AppLocalizations.of(context)!.logout,
             onTap: onLogout,
           ),
           const SizedBox(height: 8),

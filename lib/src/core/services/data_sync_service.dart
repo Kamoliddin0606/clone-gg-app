@@ -1490,11 +1490,13 @@ class DataSyncService {
           stepCode: step['stepCode'] as int,
           stepName: step['stepName'] as String,
           stepRequired: step['stepRequired'] as bool? ?? false,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
         )).toList(),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      print(salesReqPermissions.toString());
+      print(salesReqPermissions.visitSteps);
 
       // Save sales req permissions first to get the ID
       await _dbService.saveSalesReqPermissions([salesReqPermissions]);

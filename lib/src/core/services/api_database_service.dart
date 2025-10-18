@@ -3943,8 +3943,8 @@ class ApiDatabaseService {
           step_code INTEGER NOT NULL,
           step_name TEXT NOT NULL,
           step_required INTEGER NOT NULL DEFAULT 0,
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+          updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
           FOREIGN KEY (sales_req_permissions_id) REFERENCES sales_req_permissions (id) ON DELETE CASCADE
         )
       ''');

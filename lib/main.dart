@@ -12,6 +12,8 @@ import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/aut
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_schemes.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart'; // agar kerak bo‘lsa
 
 void main() async {
   // Ensure that Flutter bindings are initialized.
@@ -88,6 +90,12 @@ class _AppState extends State<App> {
       providers: [
         BlocProvider(create: (context) => sl<AuthBloc>()),
         ChangeNotifierProvider.value(value: _localeProvider),
+        Provider<SharedPreferencesService>.value(
+          value: sl<SharedPreferencesService>(),
+        ),
+        Provider<DataSyncService>.value(
+          value: sl<DataSyncService>(),
+        ),
       ],
       child: ValueListenableBuilder<ThemeMode>(
         valueListenable: ThemeController.I.mode,

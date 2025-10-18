@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
+import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
+import 'package:gloria_marketing_flutter/src/theme/theme_toggle.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -1055,94 +1059,308 @@ class PermissionsTab extends StatefulWidget {
 }
 
 class _PermissionsTabState extends State<PermissionsTab> {
-  final Map<String, bool> _permissions = {
-    'view_reports': true,
-    'edit_products': true,
-    'manage_orders': false,
-    'access_warehouse': true,
-    'view_customers': true,
-    'edit_customers': false,
-    'manage_users': false,
-    'system_settings': false,
-    'financial_reports': true,
-    'export_data': false,
-  };
+  SalesReqPermissions? _permissions;
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  final Map<String, String> _permissionLabels = {
-    'view_reports': 'Hisobotlarni ko\'rish',
-    'edit_products': 'Mahsulotlarni tahrirlash',
-    'manage_orders': 'Buyurtmalarni boshqarish',
-    'access_warehouse': 'Skladga kirish',
-    'view_customers': 'Mijozlarni ko\'rish',
-    'edit_customers': 'Mijozlarni tahrirlash',
-    'manage_users': 'Foydalanuvchilarni boshqarish',
-    'system_settings': 'Tizim sozlamalari',
-    'financial_reports': 'Moliyaviy hisobotlar',
-    'export_data': 'Ma\'lumotlarni eksport qilish',
-  };
+  @override
+  void initState() {
+    super.initState();
+    _loadPermissions();
+  }
 
-  final Map<String, String> _permissionCategories = {
-    'view_reports': 'Ko\'rish',
-    'edit_products': 'Tahrirlash',
-    'manage_orders': 'Boshqarish',
-    'access_warehouse': 'Kirish',
-    'view_customers': 'Ko\'rish',
-    'edit_customers': 'Tahrirlash',
-    'manage_users': 'Boshqarish',
-    'system_settings': 'Tizim',
-    'financial_reports': 'Moliya',
-    'export_data': 'Eksport',
-  };
+  Future<void> _loadPermissions() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
 
-  final Map<String, IconData> _permissionIcons = {
-    'view_reports': Icons.visibility,
-    'edit_products': Icons.edit,
-    'manage_orders': Icons.shopping_cart,
-    'access_warehouse': Icons.warehouse,
-    'view_customers': Icons.people,
-    'edit_customers': Icons.edit,
-    'manage_users': Icons.admin_panel_settings,
-    'system_settings': Icons.settings_system_daydream,
-    'financial_reports': Icons.account_balance,
-    'export_data': Icons.download,
-  };
+      // Get user code from shared preferences
+      final prefs = context.read<SharedPreferencesService>();
+      final userCode = prefs.getUserCode();
+      print('__________Setting permisionsda User code: $userCode');
+      if (userCode == null) {
+        setState(() {
+          _errorMessage = 'Foydalanuvchi kodi topilmadi';
+          _isLoading = false;
+        });
+        return;
+      }
 
-  final Map<String, Color> _categoryColors = {
-    'Ko\'rish': Colors.blue,
-    'Tahrirlash': Colors.orange,
-    'Boshqarish': Colors.red,
-    'Kirish': Colors.green,
-    'Tizim': Colors.purple,
-    'Moliya': Colors.teal,
-    'Eksport': Colors.indigo,
-  };
+      // Get permissions from data sync service
+      final dataSyncService = context.read<DataSyncService>();
+      final permissions = await dataSyncService.getCachedSalesReqPermissions(userCode);
+
+      setState(() {
+        _permissions = permissions;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Ruxsatlarni yuklashda xatolik: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _getPermissionLabel(String key, AppLocalizations l10n) {
+    switch (key) {
+      case 'skipTINduplicateCheck':
+        return 'INN takrorlanishini tekshirishni o\'tkazib yuborish';
+      case 'allowCreationWithoutTIN':
+        return 'INN kiritmasdan yaratishga ruxsat';
+      case 'allowCreatingPointOfSale':
+        return 'Savdo nuqtasi yaratishga ruxsat';
+      case 'visit':
+        return 'Tashrif';
+      case 'strictSequence':
+        return 'Qat\'iy ketma-ketlik';
+      case 'unplannedOrder':
+        return 'Rejalashtirilmagan buyurtma';
+      case 'plannedRoute':
+        return 'Rejalashtirilgan marshrut';
+      default:
+        return key;
+    }
+  }
+
+  String _getPermissionCategory(String key, AppLocalizations l10n) {
+    switch (key) {
+      case 'skipTINduplicateCheck':
+      case 'allowCreationWithoutTIN':
+      case 'allowCreatingPointOfSale':
+        return 'Ma\'lumotlarni tekshirish';
+      case 'visit':
+      case 'strictSequence':
+      case 'unplannedOrder':
+      case 'plannedRoute':
+        return 'Tashrif boshqaruvi';
+      default:
+        return 'Umumiy';
+    }
+  }
+
+  IconData _getPermissionIcon(String key) {
+    switch (key) {
+      case 'skipTINduplicateCheck':
+        return Icons.check_circle_outline;
+      case 'allowCreationWithoutTIN':
+        return Icons.add_circle_outline;
+      case 'allowCreatingPointOfSale':
+        return Icons.store;
+      case 'visit':
+        return Icons.location_on;
+      case 'strictSequence':
+        return Icons.timeline;
+      case 'unplannedOrder':
+        return Icons.add_shopping_cart;
+      case 'plannedRoute':
+        return Icons.route;
+      default:
+        return Icons.settings;
+    }
+  }
+
+  Color _getCategoryColor(String category, AppLocalizations l10n, ColorScheme colorScheme) {
+    switch (category) {
+      case 'Ma\'lumotlarni tekshirish':
+        return colorScheme.primary;
+      case 'Tashrif boshqaruvi':
+        return colorScheme.secondary;
+      default:
+        return colorScheme.tertiary;
+    }
+  }
 
   Map<String, List<String>> get _groupedPermissions {
+    if (_permissions == null) return {};
+
+    final l10n = AppLocalizations.of(context)!;
     final grouped = <String, List<String>>{};
-    for (final entry in _permissions.entries) {
-      final category = _permissionCategories[entry.key]!;
-      grouped.putIfAbsent(category, () => []).add(entry.key);
+
+    // Add main permissions
+    final mainPermissions = [
+      'skipTINduplicateCheck',
+      'allowCreationWithoutTIN',
+      'allowCreatingPointOfSale',
+      'visit',
+      'strictSequence',
+      'unplannedOrder',
+      'plannedRoute',
+    ];
+
+    for (final key in mainPermissions) {
+      final category = _getPermissionCategory(key, l10n);
+      grouped.putIfAbsent(category, () => []).add(key);
     }
+
     return grouped;
   }
 
-  void _togglePermission(String key) {
-    setState(() {
-      _permissions[key] = !_permissions[key]!;
-    });
+  bool _getPermissionValue(String key) {
+    if (_permissions == null) return false;
+
+    switch (key) {
+      case 'skipTINduplicateCheck':
+        return _permissions!.skipTINduplicateCheck;
+      case 'allowCreationWithoutTIN':
+        return _permissions!.allowCreationWithoutTIN;
+      case 'allowCreatingPointOfSale':
+        return _permissions!.allowCreatingPointOfSale;
+      case 'visit':
+        return _permissions!.visit;
+      case 'strictSequence':
+        return _permissions!.strictSequence;
+      case 'unplannedOrder':
+        return _permissions!.unplannedOrder;
+      case 'plannedRoute':
+        return _permissions!.plannedRoute;
+      default:
+        return false;
+    }
+  }
+
+  // Visit Steps section
+  Widget _buildVisitStepsSection(AppLocalizations l10n, ColorScheme colorScheme) {
+    if (_permissions == null || _permissions!.visitSteps.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.list_alt, color: colorScheme.primary, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Tashrif bosqichlari',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ..._permissions!.visitSteps.map((step) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${step.stepCode}',
+                        style: TextStyle(
+                          color: colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          step.stepName,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          step.stepRequired ? 'Majburiy bajarish' : 'Ixtiyoriy',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: step.stepRequired ? colorScheme.error : colorScheme.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    step.stepRequired ? Icons.check_circle : Icons.radio_button_unchecked,
+                    color: step.stepRequired ? colorScheme.error : colorScheme.secondary,
+                  ),
+                ],
+              ),
+            )),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              style: theme.textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadPermissions,
+              child: Text(l10n.retry),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_permissions == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.info_outline, size: 48, color: colorScheme.secondary),
+            const SizedBox(height: 16),
+            Text(
+              'Ruxsatlar ma\'lumotlari mavjud emas',
+              style: theme.textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Security Overview
+          // Permissions Overview
           Card(
             elevation: 4,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1156,7 +1374,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
                       Icon(Icons.security, color: colorScheme.primary, size: 28),
                       const SizedBox(width: 12),
                       Text(
-                        'Xavfsizlik darajasi',
+                        'Agent ruxsatlari',
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colorScheme.onSurface,
@@ -1165,26 +1383,11 @@ class _PermissionsTabState extends State<PermissionsTab> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _SecurityBadge(
-                          label: 'Faol ruxsatlar',
-                          count: _permissions.values.where((v) => v).length,
-                          total: _permissions.length,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _SecurityBadge(
-                          label: 'Guruhlar',
-                          count: _groupedPermissions.length,
-                          total: _groupedPermissions.length,
-                          color: colorScheme.secondary,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Foydalanuvchi uchun berilgan ruxsatlar va tashrif bosqichlari',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -1194,7 +1397,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
 
           // Permissions by Category
           Text(
-            'Ruxsatlar kategoriyasi bo\'yicha',
+            'Ruxsatlar',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
@@ -1204,7 +1407,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
           ..._groupedPermissions.entries.map((entry) {
             final category = entry.key;
             final permissions = entry.value;
-            final categoryColor = _categoryColors[category] ?? colorScheme.primary;
+            final categoryColor = _getCategoryColor(category, l10n, colorScheme);
 
             return Card(
               elevation: 2,
@@ -1245,7 +1448,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            '${permissions.where((p) => _permissions[p]!).length}/${permissions.length}',
+                            '${permissions.where((p) => _getPermissionValue(p)).length}/${permissions.length}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -1256,10 +1459,10 @@ class _PermissionsTabState extends State<PermissionsTab> {
                     ),
                   ),
                   ...permissions.map((permissionKey) {
-                    final isEnabled = _permissions[permissionKey]!;
-                    return SwitchListTile(
+                    final isEnabled = _getPermissionValue(permissionKey);
+                    return ListTile(
                       title: Text(
-                        _permissionLabels[permissionKey]!,
+                        _getPermissionLabel(permissionKey, l10n),
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: isEnabled ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                         ),
@@ -1270,19 +1473,23 @@ class _PermissionsTabState extends State<PermissionsTab> {
                           color: colorScheme.error,
                         ),
                       ),
-                      secondary: Icon(
-                        _permissionIcons[permissionKey],
+                      leading: Icon(
+                        _getPermissionIcon(permissionKey),
                         color: isEnabled ? categoryColor : colorScheme.onSurfaceVariant,
                       ),
-                      value: isEnabled,
-                      onChanged: (value) => _togglePermission(permissionKey),
-                      activeColor: categoryColor,
+                      trailing: Icon(
+                        isEnabled ? Icons.check_circle : Icons.cancel,
+                        color: isEnabled ? colorScheme.primary : colorScheme.error,
+                      ),
                     );
                   }),
                 ],
               ),
             );
           }),
+
+          // Visit Steps Section
+          _buildVisitStepsSection(l10n, colorScheme),
         ],
       ),
     );
@@ -1540,21 +1747,19 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Theme Toggle (placeholder for future implementation)
+                  // Theme Toggle
                   ListTile(
                     leading: Icon(Icons.palette, color: colorScheme.primary),
                     title: Text(l10n.theme),
-                    subtitle: Text(l10n.light), // Current theme
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      // Future: Implement theme switching
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Theme switching will be implemented soon'),
-                          backgroundColor: colorScheme.secondary,
-                        ),
-                      );
-                    },
+                    subtitle: Text(ThemeController.I.mode.value == ThemeMode.dark ? l10n.dark : l10n.light),
+                    trailing: SizedBox(
+                      width: 80,
+                      child: ThemeToggle(
+                        mode: ThemeController.I.mode.value,
+                        onChanged: ThemeController.I.set,
+                      ),
+                    ),
+                    onTap: () => ThemeController.I.set(ThemeController.I.mode.value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark),
                   ),
                 ],
               ),

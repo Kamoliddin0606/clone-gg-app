@@ -3821,7 +3821,7 @@ class ApiDatabaseService {
     if (maps.isEmpty) return null;
 
     final permission = SalesReqPermissions.fromMap(maps.first);
-
+    print('_______ getting salse req premissions: Fetched SalesReqPermissions: ${permission.userCode}');
     // Get associated visit steps
     final visitStepsMaps = await db.query(
       'visit_steps',

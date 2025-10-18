@@ -54,8 +54,9 @@ void main() {
     );
 
     dbService = ApiDatabaseService();
-    // Use the test database instead of the singleton instance
-    // The ensureSalesReqPermissionsTableExists method will work on the test database
+    // For testing, we'll use a custom instance that overrides the database getter
+    // This is a workaround since the singleton pattern makes testing difficult
+    // In a real scenario, consider making the database injectable
   });
 
   tearDown(() async {

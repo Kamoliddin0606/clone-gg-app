@@ -266,5 +266,6 @@
   "notice": "Notice",
   "alert": "Alert",
   "emergency": "Emergency",
-  "agentPermissions": "Agent Permissions"
+  "agentPermissions": "Agent Permissions",
+  "userPermissionsAndVisitSteps": "User permissions and visit steps"
 }

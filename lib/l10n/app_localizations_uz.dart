@@ -793,4 +793,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get agentPermissions => 'Agent ruxsatlari';
+
+  @override
+  String get userPermissionsAndVisitSteps => 'Foydalanuvchi uchun berilgan ruxsatlar va tashrif bosqichlari';
 }

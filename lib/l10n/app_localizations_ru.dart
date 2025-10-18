@@ -793,4 +793,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get agentPermissions => 'Разрешения агента';
+
+  @override
+  String get userPermissionsAndVisitSteps => 'Разрешения пользователя и этапы посещения';
 }

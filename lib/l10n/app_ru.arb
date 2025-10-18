@@ -266,5 +266,6 @@
   "notice": "Уведомление",
   "alert": "Тревога",
   "emergency": "Чрезвычайная ситуация",
-  "agentPermissions": "Разрешения агента"
+  "agentPermissions": "Разрешения агента",
+  "userPermissionsAndVisitSteps": "Разрешения пользователя и этапы посещения"
 }

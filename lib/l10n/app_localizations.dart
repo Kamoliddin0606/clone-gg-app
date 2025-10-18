@@ -1668,6 +1668,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Agent Permissions'**
   String get agentPermissions;
+
+  /// No description provided for @userPermissionsAndVisitSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'User permissions and visit steps'**
+  String get userPermissionsAndVisitSteps;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

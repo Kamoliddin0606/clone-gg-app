@@ -1384,7 +1384,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Foydalanuvchi uchun berilgan ruxsatlar va tashrif bosqichlari',
+                    l10n.userPermissionsAndVisitSteps,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),

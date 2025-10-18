@@ -793,4 +793,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentPermissions => 'Agent Permissions';
+
+  @override
+  String get userPermissionsAndVisitSteps => 'User permissions and visit steps';
 }

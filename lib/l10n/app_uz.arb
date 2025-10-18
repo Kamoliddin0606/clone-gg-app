@@ -266,5 +266,6 @@
   "notice": "E'tibor",
   "alert": "Signal",
   "emergency": "Favqulodda",
-  "agentPermissions": "Agent ruxsatlari"
+  "agentPermissions": "Agent ruxsatlari",
+  "userPermissionsAndVisitSteps": "Foydalanuvchi uchun berilgan ruxsatlar va tashrif bosqichlari"
 }

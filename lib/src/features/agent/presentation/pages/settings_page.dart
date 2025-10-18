@@ -1374,7 +1374,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
                       Icon(Icons.security, color: colorScheme.primary, size: 28),
                       const SizedBox(width: 12),
                       Text(
-                        'Agent ruxsatlari',
+                        l10n.agentPermissions,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colorScheme.onSurface,

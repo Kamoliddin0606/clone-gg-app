@@ -790,4 +790,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get alert => 'Alert';
+
+  @override
+  String get agentPermissions => 'Agent Permissions';
 }

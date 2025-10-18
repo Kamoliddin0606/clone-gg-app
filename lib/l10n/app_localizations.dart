@@ -1662,6 +1662,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Alert'**
   String get alert;
+
+  /// No description provided for @agentPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent Permissions'**
+  String get agentPermissions;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

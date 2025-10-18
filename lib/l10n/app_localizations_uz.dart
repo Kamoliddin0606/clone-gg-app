@@ -790,4 +790,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get alert => 'Signal';
+
+  @override
+  String get agentPermissions => 'Agent ruxsatlari';
 }

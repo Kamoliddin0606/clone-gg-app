@@ -265,5 +265,6 @@
   "emergency": "Favqulodda",
   "notice": "E'tibor",
   "alert": "Signal",
-  "emergency": "Favqulodda"
+  "emergency": "Favqulodda",
+  "agentPermissions": "Agent ruxsatlari"
 }

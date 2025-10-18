@@ -265,5 +265,6 @@
   "emergency": "Emergency",
   "notice": "Notice",
   "alert": "Alert",
-  "emergency": "Emergency"
+  "emergency": "Emergency",
+  "agentPermissions": "Agent Permissions"
 }

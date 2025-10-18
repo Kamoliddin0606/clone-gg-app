@@ -790,4 +790,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get alert => 'Тревога';
+
+  @override
+  String get agentPermissions => 'Разрешения агента';
 }

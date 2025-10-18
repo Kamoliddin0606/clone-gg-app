@@ -1674,6 +1674,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'User permissions and visit steps'**
   String get userPermissionsAndVisitSteps;
+
+  /// No description provided for @dataValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Validation'**
+  String get dataValidation;
+
+  /// No description provided for @visitManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Management'**
+  String get visitManagement;
+
+  /// No description provided for @visitSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Steps'**
+  String get visitSteps;
+
+  /// No description provided for @userCodeNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'User code not found'**
+  String get userCodeNotFound;
+
+  /// No description provided for @errorLoadingPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading permissions'**
+  String get errorLoadingPermissions;
+
+  /// No description provided for @skipTINDuplicateCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip TIN duplicate check'**
+  String get skipTINDuplicateCheck;
+
+  /// No description provided for @allowCreationWithoutTIN.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow creation without TIN'**
+  String get allowCreationWithoutTIN;
+
+  /// No description provided for @allowCreatingPointOfSale.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow creating point of sale'**
+  String get allowCreatingPointOfSale;
+
+  /// No description provided for @strictSequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Strict Sequence'**
+  String get strictSequence;
+
+  /// No description provided for @unplannedOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Unplanned Order'**
+  String get unplannedOrder;
+
+  /// No description provided for @plannedRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned Route'**
+  String get plannedRoute;
+
+  /// No description provided for @general.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get general;
+
+  /// No description provided for @mandatoryExecution.
+  ///
+  /// In en, this message translates to:
+  /// **'Mandatory Execution'**
+  String get mandatoryExecution;
+
+  /// No description provided for @optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optional;
+
+  /// No description provided for @permissionsDataNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions data not available'**
+  String get permissionsDataNotAvailable;
+
+  /// No description provided for @languageChangeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error changing language'**
+  String get languageChangeError;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -796,4 +796,52 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get userPermissionsAndVisitSteps => 'Разрешения пользователя и этапы посещения';
+
+  @override
+  String get dataValidation => 'Проверка данных';
+
+  @override
+  String get visitManagement => 'Управление посещениями';
+
+  @override
+  String get visitSteps => 'Этапы посещения';
+
+  @override
+  String get userCodeNotFound => 'Код пользователя не найден';
+
+  @override
+  String get errorLoadingPermissions => 'Ошибка загрузки разрешений';
+
+  @override
+  String get skipTINDuplicateCheck => 'Пропустить проверку дубликатов ИНН';
+
+  @override
+  String get allowCreationWithoutTIN => 'Разрешить создание без ИНН';
+
+  @override
+  String get allowCreatingPointOfSale => 'Разрешить создание точки продаж';
+
+  @override
+  String get strictSequence => 'Строгая последовательность';
+
+  @override
+  String get unplannedOrder => 'Незапланированный заказ';
+
+  @override
+  String get plannedRoute => 'Запланированный маршрут';
+
+  @override
+  String get general => 'Общее';
+
+  @override
+  String get mandatoryExecution => 'Обязательное выполнение';
+
+  @override
+  String get optional => 'Необязательно';
+
+  @override
+  String get permissionsDataNotAvailable => 'Данные разрешений недоступны';
+
+  @override
+  String get languageChangeError => 'Ошибка изменения языка';
 }

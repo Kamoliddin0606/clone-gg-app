@@ -1082,7 +1082,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
       print('__________Setting permisionsda User code: $userCode');
       if (userCode == null) {
         setState(() {
-          _errorMessage = 'Foydalanuvchi kodi topilmadi';
+          _errorMessage = AppLocalizations.of(context)!.userCodeNotFound;
           _isLoading = false;
         });
         return;
@@ -1098,7 +1098,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Ruxsatlarni yuklashda xatolik: $e';
+        _errorMessage = '${AppLocalizations.of(context)!.errorLoadingPermissions}: $e';
         _isLoading = false;
       });
     }
@@ -1107,19 +1107,19 @@ class _PermissionsTabState extends State<PermissionsTab> {
   String _getPermissionLabel(String key, AppLocalizations l10n) {
     switch (key) {
       case 'skipTINduplicateCheck':
-        return 'INN takrorlanishini tekshirishni o\'tkazib yuborish';
+        return l10n.skipTINDuplicateCheck;
       case 'allowCreationWithoutTIN':
-        return 'INN kiritmasdan yaratishga ruxsat';
+        return l10n.allowCreationWithoutTIN;
       case 'allowCreatingPointOfSale':
-        return 'Savdo nuqtasi yaratishga ruxsat';
+        return l10n.allowCreatingPointOfSale;
       case 'visit':
-        return 'Tashrif';
+        return l10n.visit;
       case 'strictSequence':
-        return 'Qat\'iy ketma-ketlik';
+        return l10n.strictSequence;
       case 'unplannedOrder':
-        return 'Rejalashtirilmagan buyurtma';
+        return l10n.unplannedOrder;
       case 'plannedRoute':
-        return 'Rejalashtirilgan marshrut';
+        return l10n.plannedRoute;
       default:
         return key;
     }
@@ -1130,14 +1130,14 @@ class _PermissionsTabState extends State<PermissionsTab> {
       case 'skipTINduplicateCheck':
       case 'allowCreationWithoutTIN':
       case 'allowCreatingPointOfSale':
-        return 'Ma\'lumotlarni tekshirish';
+        return AppLocalizations.of(context)!.dataValidation;
       case 'visit':
       case 'strictSequence':
       case 'unplannedOrder':
       case 'plannedRoute':
-        return 'Tashrif boshqaruvi';
+        return AppLocalizations.of(context)!.visitManagement;
       default:
-        return 'Umumiy';
+        return AppLocalizations.of(context)!.general;
     }
   }
 
@@ -1164,9 +1164,9 @@ class _PermissionsTabState extends State<PermissionsTab> {
 
   Color _getCategoryColor(String category, AppLocalizations l10n, ColorScheme colorScheme) {
     switch (category) {
-      case 'Ma\'lumotlarni tekshirish':
+      case 'dataValidation':
         return colorScheme.primary;
-      case 'Tashrif boshqaruvi':
+      case 'visitManagement':
         return colorScheme.secondary;
       default:
         return colorScheme.tertiary;
@@ -1241,7 +1241,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
                 Icon(Icons.list_alt, color: colorScheme.primary, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Tashrif bosqichlari',
+                  AppLocalizations.of(context)!.visitSteps,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.primary,
@@ -1283,7 +1283,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
                           ),
                         ),
                         Text(
-                          step.stepRequired ? 'Majburiy bajarish' : 'Ixtiyoriy',
+                          step.stepRequired ? AppLocalizations.of(context)!.mandatoryExecution : AppLocalizations.of(context)!.optional,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: step.stepRequired ? colorScheme.error : colorScheme.secondary,
                           ),
@@ -1346,7 +1346,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
             Icon(Icons.info_outline, size: 48, color: colorScheme.secondary),
             const SizedBox(height: 16),
             Text(
-              'Ruxsatlar ma\'lumotlari mavjud emas',
+              AppLocalizations.of(context)!.permissionsDataNotAvailable,
               style: theme.textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
@@ -1397,7 +1397,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
 
           // Permissions by Category
           Text(
-            'Ruxsatlar',
+            AppLocalizations.of(context)!.permissions,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
@@ -1468,7 +1468,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
                         ),
                       ),
                       subtitle: isEnabled ? null : Text(
-                        'Ruxsat berilmagan',
+                        AppLocalizations.of(context)!.permissionDenied,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.error,
                         ),
@@ -1618,7 +1618,7 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Tilni o\'zgartirishda xatolik yuz berdi'),
+              content: Text(AppLocalizations.of(context)!.languageChangeError),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );

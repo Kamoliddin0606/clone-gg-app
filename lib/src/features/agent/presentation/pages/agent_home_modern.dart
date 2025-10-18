@@ -1274,7 +1274,7 @@ class _ChartsSection extends StatelessWidget {
 
     return [
       PieChartSectionData(value: fact / total, title: 'Fact', radius: 56.0),
-      PieChartSectionData(value: remaining / total, title: 'Remaining', radius: 50.0),
+        PieChartSectionData(value: remaining / total, title: 'Remaining', radius: 50.0),
     ];
   }
 }
@@ -1390,7 +1390,7 @@ class _Insights extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _bullet(context, 'Completion', '${kpi.totalPercent.toStringAsFixed(1)}% of plan achieved'),
+            _bullet(context, 'Completion', '${kpi.totalPercent.toStringAsFixed(1)}% of plan achieved'),
           _bullet(context, 'Gap to Plan', _money(context, gap)),
           _bullet(context, 'AKB Gap', '$akbGap clients to reach plan'),
           _bullet(context, 'Forecast vs Plan', trend),

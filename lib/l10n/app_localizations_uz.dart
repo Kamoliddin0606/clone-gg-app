@@ -796,4 +796,52 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get userPermissionsAndVisitSteps => 'Foydalanuvchi uchun berilgan ruxsatlar va tashrif bosqichlari';
+
+  @override
+  String get dataValidation => 'Ma\'lumotlarni tekshirish';
+
+  @override
+  String get visitManagement => 'Tashrif boshqaruvi';
+
+  @override
+  String get visitSteps => 'Tashrif bosqichlari';
+
+  @override
+  String get userCodeNotFound => 'Foydalanuvchi kodi topilmadi';
+
+  @override
+  String get errorLoadingPermissions => 'Ruxsatlarni yuklashda xatolik';
+
+  @override
+  String get skipTINDuplicateCheck => 'INN takrorlanishini tekshirishni o\'tkazib yuborish';
+
+  @override
+  String get allowCreationWithoutTIN => 'INN kiritmasdan yaratishga ruxsat';
+
+  @override
+  String get allowCreatingPointOfSale => 'Savdo nuqtasi yaratishga ruxsat';
+
+  @override
+  String get strictSequence => 'Qat\'iy ketma-ketlik';
+
+  @override
+  String get unplannedOrder => 'Rejalashtirilmagan buyurtma';
+
+  @override
+  String get plannedRoute => 'Rejalashtirilgan marshrut';
+
+  @override
+  String get general => 'Umumiy';
+
+  @override
+  String get mandatoryExecution => 'Majburiy bajarish';
+
+  @override
+  String get optional => 'Ixtiyoriy';
+
+  @override
+  String get permissionsDataNotAvailable => 'Ruxsatlar ma\'lumotlari mavjud emas';
+
+  @override
+  String get languageChangeError => 'Tilni o\'zgartirishda xatolik yuz berdi';
 }

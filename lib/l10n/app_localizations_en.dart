@@ -796,4 +796,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get userPermissionsAndVisitSteps => 'User permissions and visit steps';
+
+  @override
+  String get dataValidation => 'Data Validation';
+
+  @override
+  String get visitManagement => 'Visit Management';
+
+  @override
+  String get visitSteps => 'Visit Steps';
+
+  @override
+  String get userCodeNotFound => 'User code not found';
+
+  @override
+  String get errorLoadingPermissions => 'Error loading permissions';
+
+  @override
+  String get skipTINDuplicateCheck => 'Skip TIN duplicate check';
+
+  @override
+  String get allowCreationWithoutTIN => 'Allow creation without TIN';
+
+  @override
+  String get allowCreatingPointOfSale => 'Allow creating point of sale';
+
+  @override
+  String get strictSequence => 'Strict Sequence';
+
+  @override
+  String get unplannedOrder => 'Unplanned Order';
+
+  @override
+  String get plannedRoute => 'Planned Route';
+
+  @override
+  String get general => 'General';
+
+  @override
+  String get mandatoryExecution => 'Mandatory Execution';
+
+  @override
+  String get optional => 'Optional';
+
+  @override
+  String get permissionsDataNotAvailable => 'Permissions data not available';
+
+  @override
+  String get languageChangeError => 'Error changing language';
 }

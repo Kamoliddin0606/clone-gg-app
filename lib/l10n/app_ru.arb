@@ -344,5 +344,6 @@
   "remaining": "Остаток",
   "createOrder": "Создать заказ",
   "customers": "Клиенты",
-  "products": "Товары"
+  "products": "Товары",
+  "rememberMe": "Запомнить меня"
 }

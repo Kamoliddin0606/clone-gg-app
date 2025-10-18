@@ -958,4 +958,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get planExecution => 'Reja bajarilishi';
+
+  @override
+  String get rememberMe => 'Eslab qolish';
 }

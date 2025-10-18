@@ -646,7 +646,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               activeColor: theme.colorScheme.primary,
               onChanged: (v) => setState(() => _rememberMe = v ?? false),
             ),
-            Text('Eslab qolish', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+            Text(l10n.rememberMe, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
             const Spacer(),
             TextButton(
               onPressed: () {}, // kerak bo‘lsa: parolni unutdingizmi

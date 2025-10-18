@@ -958,4 +958,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planExecution => 'Plan Execution';
+
+  @override
+  String get rememberMe => 'Remember me';
 }

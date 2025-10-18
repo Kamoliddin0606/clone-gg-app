@@ -2976,6 +2976,10 @@ class ApiDatabaseService {
   // Clear all data
   Future<void> clearAllData() async {
     final db = await database;
+    // Clear sales req permissions and visit steps tables
+    await db.delete('sales_req_permissions');
+    await db.delete('visit_steps');
+
     await db.delete('kpi_data');
     await db.delete('clients');
     await db.delete('client_contracts');
@@ -3004,6 +3008,7 @@ class ApiDatabaseService {
     await db.delete('couriers');
     await db.delete('courier_cars');
     await db.delete('order_couriers');
+
   }
 
   Future<void> clearMainReport() async {

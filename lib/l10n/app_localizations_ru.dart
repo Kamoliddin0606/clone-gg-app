@@ -958,4 +958,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get planExecution => 'Выполнение плана';
+
+  @override
+  String get rememberMe => 'Запомнить меня';
 }

@@ -1998,6 +1998,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Plan Execution'**
   String get planExecution;
+
+  /// No description provided for @rememberMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember me'**
+  String get rememberMe;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

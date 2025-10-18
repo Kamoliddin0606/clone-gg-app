@@ -344,5 +344,6 @@
   "remaining": "Remaining",
   "createOrder": "Create Order",
   "customers": "Customers",
-  "products": "Products"
+  "products": "Products",
+  "rememberMe": "Remember me"
 }

@@ -344,5 +344,6 @@
   "remaining": "Qolgan",
   "createOrder": "Buyurtma yaratish",
   "customers": "Mijozlar",
-  "products": "Tovarlar"
+  "products": "Tovarlar",
+  "rememberMe": "Eslab qolish"
 }

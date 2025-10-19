@@ -468,13 +468,22 @@ class AppLocalizationsUz extends AppLocalizations {
   String get visit => 'Tashrif';
 
   @override
+  String get visitClient => 'Tashrif buyurush';
+
+  @override
   String get createOrder => 'Buyurtma yaratish';
+
+  @override
+  String get unplannedOrder => 'Rejalashtirilmagan buyurtma';
 
   @override
   String get viewContracts => 'Shartnomalarni ko\'rish';
 
   @override
   String get refusal => 'Rad etish';
+
+  @override
+  String get route => 'Marshrut';
 
   @override
   String get refusalReason => 'Rad etish sababi';
@@ -826,9 +835,6 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get strictSequence => 'Qat\'iy ketma-ketlik';
-
-  @override
-  String get unplannedOrder => 'Rejalashtirilmagan buyurtma';
 
   @override
   String get plannedRoute => 'Rejalashtirilgan marshrut';

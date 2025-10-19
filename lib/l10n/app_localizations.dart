@@ -1015,11 +1015,23 @@ abstract class AppLocalizations {
   /// **'Visit'**
   String get visit;
 
+  /// No description provided for @visitClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Client'**
+  String get visitClient;
+
   /// No description provided for @createOrder.
   ///
   /// In en, this message translates to:
   /// **'Create Order'**
   String get createOrder;
+
+  /// No description provided for @unplannedOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Unplanned Order'**
+  String get unplannedOrder;
 
   /// No description provided for @viewContracts.
   ///
@@ -1032,6 +1044,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refusal'**
   String get refusal;
+
+  /// No description provided for @route.
+  ///
+  /// In en, this message translates to:
+  /// **'Route'**
+  String get route;
 
   /// No description provided for @refusalReason.
   ///
@@ -1734,12 +1752,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Strict Sequence'**
   String get strictSequence;
-
-  /// No description provided for @unplannedOrder.
-  ///
-  /// In en, this message translates to:
-  /// **'Unplanned Order'**
-  String get unplannedOrder;
 
   /// No description provided for @plannedRoute.
   ///

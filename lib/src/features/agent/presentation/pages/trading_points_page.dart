@@ -9,6 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart'
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/trading_points_filters_panel.dart';
 
 import 'dart:ui'; // blur uchun
@@ -1019,32 +1020,9 @@ class TradingPointCard extends StatelessWidget {
           const SizedBox(height: 12),
           // Actions — Material 3 uslub: Filled, Tonal, Outlined kombinatsiyasi
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (!tradingPoint.isVisited)
-                FilledButton.icon(
-                  onPressed: onInformVisit,
-                  icon: const Icon(Icons.location_on, size: 18),
-                  label: const Text('Tashrif'),
-                ),
-              FilledButton.tonalIcon(
-                onPressed: onCreateOrder,
-                icon: const Icon(Icons.shopping_cart, size: 18),
-                label: const Text('Buyurtma'),
-              ),
-              if (tradingPoint.hasContract)
-                OutlinedButton.icon(
-                  onPressed: onViewContracts,
-                  icon: const Icon(Icons.description, size: 18),
-                  label: const Text('Shartnoma'),
-                ),
-              OutlinedButton.icon(
-                onPressed: onRefusal,
-                icon: const Icon(Icons.cancel, size: 18),
-                label: const Text('Rad etish'),
-              ),
-            ],
+            spacing: 6,
+            runSpacing: 6,
+            children: _buildActionButtons(context, tradingPoint),
           ),
         ],
       ),
@@ -1099,6 +1077,72 @@ class TradingPointCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Build action buttons with localization and configuration
+  List<Widget> _buildActionButtons(BuildContext context, TradingPoint tradingPoint) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    return [
+      if (!tradingPoint.isVisited)
+        FilledButton.icon(
+          onPressed: onInformVisit,
+          icon: const Icon(Icons.location_on, size: 18),
+          label: Text(l10n.visitClient),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ),
+      FilledButton.tonalIcon(
+        onPressed: onCreateOrder,
+        icon: const Icon(Icons.shopping_cart, size: 18),
+        label: Text(l10n.unplannedOrder),
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+        ),
+      ),
+      if (tradingPoint.hasContract)
+        OutlinedButton.icon(
+          onPressed: onViewContracts,
+          icon: const Icon(Icons.description, size: 18),
+          label: Text(l10n.contracts),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ),
+      OutlinedButton.icon(
+        onPressed: () {
+          // TODO: Navigate to orders page
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${tradingPoint.name} uchun buyurtmalar')),
+          );
+        },
+        icon: const Icon(Icons.list_alt, size: 18),
+        label: Text(l10n.orders),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+        ),
+      ),
+      OutlinedButton.icon(
+        onPressed: () {
+          // TODO: Navigate to route page
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${tradingPoint.name} uchun marshrut')),
+          );
+        },
+        icon: const Icon(Icons.route, size: 18),
+        label: Text(l10n.route),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+        ),
+      ),
+    ];
   }
 
   Widget _buildDistanceDisplayForList(BuildContext context, TradingPoint tp, LocationService locationService) {

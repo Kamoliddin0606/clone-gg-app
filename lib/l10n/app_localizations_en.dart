@@ -468,13 +468,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get visit => 'Visit';
 
   @override
+  String get visitClient => 'Visit Client';
+
+  @override
   String get createOrder => 'Create Order';
+
+  @override
+  String get unplannedOrder => 'Unplanned Order';
 
   @override
   String get viewContracts => 'View Contracts';
 
   @override
   String get refusal => 'Refusal';
+
+  @override
+  String get route => 'Route';
 
   @override
   String get refusalReason => 'Refusal Reason';
@@ -826,9 +835,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get strictSequence => 'Strict Sequence';
-
-  @override
-  String get unplannedOrder => 'Unplanned Order';
 
   @override
   String get plannedRoute => 'Planned Route';

@@ -468,13 +468,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get visit => 'Посещение';
 
   @override
+  String get visitClient => 'Посетить клиента';
+
+  @override
   String get createOrder => 'Создать заказ';
+
+  @override
+  String get unplannedOrder => 'Незапланированный заказ';
 
   @override
   String get viewContracts => 'Просмотреть контракты';
 
   @override
   String get refusal => 'Отказ';
+
+  @override
+  String get route => 'Маршрут';
 
   @override
   String get refusalReason => 'Причина отказа';
@@ -826,9 +835,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get strictSequence => 'Строгая последовательность';
-
-  @override
-  String get unplannedOrder => 'Незапланированный заказ';
 
   @override
   String get plannedRoute => 'Запланированный маршрут';

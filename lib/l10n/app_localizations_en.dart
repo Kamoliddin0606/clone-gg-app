@@ -36,6 +36,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradingPoints => 'Trading Points';
 
   @override
+  String get tradingPointsFilter => 'Trading Points';
+
+  @override
   String get warehouses => 'Warehouses';
 
   @override

@@ -151,6 +151,12 @@ abstract class AppLocalizations {
   /// **'Trading Points'**
   String get tradingPoints;
 
+  /// No description provided for @tradingPointsFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading Points'**
+  String get tradingPointsFilter;
+
   /// No description provided for @warehouses.
   ///
   /// In en, this message translates to:

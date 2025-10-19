@@ -1,5 +1,4 @@
-import 'dart:math';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -7,10 +6,12 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import '../../../../Utility/formatter.dart';
 import '../../data/models/client_contract.dart';
+import '../../data/models/trading_point.dart';
+import '../widgets/contract_models.dart';
+import '../widgets/contracts_filters_panel.dart';
 import 'contract_detail_page.dart';
 
 enum _ViewMode { list, grid }
-enum ContractStatus { all, active, inactive, expired, pending }
 
 /// Format number with spaces as thousand separators
 String formatNumber(num number) {
@@ -33,13 +34,14 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
   late Animation<double> _filterAnimation;
 
   bool _isFilterPanelVisible = false;
-  ContractStatus _selectedStatusFilter = ContractStatus.all;
-  bool _selectedActiveFilter = true; // true for active, false for inactive, null for all
+  // Removed unused fields - now using _filters
   List<ClientContract> _contracts = [];
+  List<TradingPoint> _tradingPoints = [];
   bool _isLoading = true;
   String? _errorMessage;
   bool _showViewBar = false;
   _ViewMode _viewMode = _ViewMode.list;
+  final ContractsFilterState _filters = ContractsFilterState();
 
   @override
   void initState() {
@@ -127,6 +129,9 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
         _contracts = contracts;
         _isLoading = false;
       });
+
+      // Load trading points for filter
+      await _loadTradingPoints();
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to load data: ${e.toString()}';
@@ -146,25 +151,38 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
     });
   }
 
-  void _onStatusFilterChanged(ContractStatus? status) {
+  void _onFiltersChanged(ContractsFilterState state) {
     setState(() {
-      _selectedStatusFilter = status ?? ContractStatus.all;
-    });
-  }
-
-  void _onActiveFilterChanged(bool? active) {
-    setState(() {
-      _selectedActiveFilter = active ?? true;
+      _filters.tradingPointCodes.clear();
+      _filters.tradingPointCodes.addAll(state.tradingPointCodes);
+      _filters.dateRange = state.dateRange;
+      _filters.status = state.status;
     });
   }
 
   List<ClientContract> _getFilteredContracts() {
     var filtered = _contracts;
 
-    // Apply status filter
-    if (_selectedStatusFilter != ContractStatus.all) {
+    // Apply trading points filter
+    if (_filters.tradingPointCodes.isNotEmpty) {
       filtered = filtered.where((contract) {
-        switch (_selectedStatusFilter) {
+        return _filters.tradingPointCodes.contains(contract.codeClient);
+      }).toList();
+    }
+
+    // Apply date range filter
+    if (_filters.dateRange != null) {
+      filtered = filtered.where((contract) {
+        if (contract.dateOfContract == null) return false;
+        return contract.dateOfContract!.isAfter(_filters.dateRange!.start.subtract(const Duration(days: 1))) &&
+               contract.dateOfContract!.isBefore(_filters.dateRange!.end.add(const Duration(days: 1)));
+      }).toList();
+    }
+
+    // Apply status filter
+    if (_filters.status != null && _filters.status != ContractStatus.all) {
+      filtered = filtered.where((contract) {
+        switch (_filters.status) {
           case ContractStatus.active:
             return contract.active && contract.status == 'Действует';
           case ContractStatus.inactive:
@@ -179,19 +197,14 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       }).toList();
     }
 
-    // Apply active filter
-    if (_selectedActiveFilter != null) {
-      filtered = filtered.where((contract) => contract.active == _selectedActiveFilter).toList();
-    }
-
     // Apply search filtering
     final searchQuery = _searchController.text.trim();
     if (searchQuery.isNotEmpty) {
       filtered = filtered.where((contract) {
         return matchesSearch(contract.codeContract, searchQuery) ||
-               matchesSearch(contract.codeClient, searchQuery) ||
-               matchesSearch(contract.status, searchQuery) ||
-               matchesSearch(contract.sumOfContract.toString(), searchQuery);
+                matchesSearch(contract.codeClient, searchQuery) ||
+                matchesSearch(contract.status, searchQuery) ||
+                matchesSearch(contract.sumOfContract.toString(), searchQuery);
       }).toList();
     }
 
@@ -279,78 +292,12 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
                   child: SingleChildScrollView(
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 50),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Status filter
-                          Text(
-                            'Status',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<ContractStatus>(
-                            value: _selectedStatusFilter,
-                            decoration: InputDecoration(
-                              labelText: 'Status tanlang',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: colorScheme.outline),
-                              ),
-                              filled: true,
-                              fillColor: colorScheme.surface,
-                            ),
-                            items: ContractStatus.values.map((status) {
-                              return DropdownMenuItem(
-                                value: status,
-                                child: Text(_getStatusText(status)),
-                              );
-                            }).toList(),
-                            onChanged: _onStatusFilterChanged,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Active/Inactive filter
-                          Text(
-                            'Holati',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: FilterChip(
-                                  label: const Text('Faol'),
-                                  selected: _selectedActiveFilter == true,
-                                  onSelected: (selected) {
-                                    _onActiveFilterChanged(selected ? true : null);
-                                  },
-                                  backgroundColor: colorScheme.surfaceContainerHighest,
-                                  selectedColor: colorScheme.primaryContainer,
-                                  checkmarkColor: colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: FilterChip(
-                                  label: const Text('Faol emas'),
-                                  selected: _selectedActiveFilter == false,
-                                  onSelected: (selected) {
-                                    _onActiveFilterChanged(selected ? false : null);
-                                  },
-                                  backgroundColor: colorScheme.surfaceContainerHighest,
-                                  selectedColor: colorScheme.primaryContainer,
-                                  checkmarkColor: colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                      child: ContractsFiltersPanel(
+                        state: _filters,
+                        availableTradingPoints: _tradingPoints,
+                        onChange: _onFiltersChanged,
+                        onPickDateRange: _pickDateRange,
+                        onClearDateRange: () => _onFiltersChanged(_filters.copyWith(dateRange: null)),
                       ),
                     ),
                   ),
@@ -469,20 +416,56 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
     );
   }
 
-  String _getStatusText(ContractStatus status) {
-    switch (status) {
-      case ContractStatus.all:
-        return 'Barcha';
-      case ContractStatus.active:
-        return 'Faol';
-      case ContractStatus.inactive:
-        return 'Faol emas';
-      case ContractStatus.expired:
-        return 'Muddati tugagan';
-      case ContractStatus.pending:
-        return 'Tasdiqlanmagan';
+  Future<void> _loadTradingPoints() async {
+    try {
+      // Get user credentials
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      final userCode = prefs.getUserCode();
+
+      if (userCode == null || userCode.isEmpty) {
+        return;
+      }
+
+      final repository = sl<AgentRepository>();
+      final allTradingPoints = await repository.getClients(
+        userCode: userCode,
+        password: prefs.getPassword() ?? '',
+        forceRefresh: false,
+      );
+
+      // Filter trading points that have contracts
+      final contractClientCodes = _contracts.map((c) => c.codeClient).toSet();
+      final filteredTradingPoints = allTradingPoints
+          .where((tp) => contractClientCodes.contains(tp.id))
+          .toList();
+
+      setState(() {
+        _tradingPoints = filteredTradingPoints;
+      });
+    } catch (e) {
+      // Log error but don't fail the entire page load
+      if (kDebugMode) {
+        print('Error loading trading points: $e');
+      }
     }
   }
+
+  Future<void> _pickDateRange() async {
+    final now = DateTime.now();
+    final initial = _filters.dateRange ?? DateTimeRange(start: now.subtract(const Duration(days: 7)), end: now);
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 2),
+      lastDate: DateTime(now.year + 2),
+      initialDateRange: initial,
+      helpText: 'Sana oralig\'ini tanlang',
+    );
+    if (picked != null) {
+      _onFiltersChanged(_filters.copyWith(dateRange: picked));
+    }
+  }
+
 
   void _navigateToContractDetail(ClientContract contract) {
     Navigator.push(

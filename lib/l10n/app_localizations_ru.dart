@@ -36,6 +36,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tradingPoints => 'Торговые точки';
 
   @override
+  String get tradingPointsFilter => 'Торговые точки';
+
+  @override
   String get warehouses => 'Склады';
 
   @override

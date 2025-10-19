@@ -36,6 +36,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get tradingPoints => 'Savdo nuqtalari';
 
   @override
+  String get tradingPointsFilter => 'Savdo nuqtalari';
+
+  @override
   String get warehouses => 'Skladlar';
 
   @override

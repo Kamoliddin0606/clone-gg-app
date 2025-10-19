@@ -13,6 +13,7 @@ enum SyncStep {
   syncingProductPrices('Mahsulot narxlari yuklanmoqda...', Icons.attach_money),
   syncingProductBalances('Mahsulot balanslari yuklanmoqda...', Icons.balance),
   syncingClientContracts('Mijoz shartnomalari yuklanmoqda...', Icons.description),
+  updatingClientContractStatus('Mijoz shartnoma statuslari yangilanmoqda...', Icons.update),
   syncingOrderStatuses('Buyurtma statuslari yuklanmoqda...', Icons.list_alt),
   syncingOrders('Buyurtmalar yuklanmoqda...', Icons.shopping_cart),
   syncingSalesReqPermissions('Agent ruxsatlari yuklanmoqda...', Icons.security),

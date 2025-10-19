@@ -395,7 +395,11 @@ class DataSyncService {
       yield SyncStep.syncingClientContracts;
       await _syncClientContracts(userCode);
 
-      // Step 12: Sync order statuses
+      // Step 12: Update clients has_contract field
+      yield SyncStep.updatingClientContractStatus;
+      await updateClientsHasContractField();
+
+      // Step 13: Sync order statuses
       yield SyncStep.syncingOrderStatuses;
       await _syncOrderStatuses(userCode);
 
@@ -896,6 +900,80 @@ class DataSyncService {
     }
     await _dbService.saveClientContracts(contracts);
     return contracts;
+  }
+
+  /// Update clients has_contract field based on active contracts
+  /// This method should be called after client contracts sync to ensure data consistency
+  Future<void> updateClientsHasContractField() async {
+    try {
+      if (kDebugMode) {
+        print('Starting update of clients has_contract field...');
+      }
+
+      final db = await _dbService.database;
+
+      // 1. Get all active contract client codes using HashSet for O(1) lookup
+      final contractClientsResult = await db.rawQuery('''
+        SELECT DISTINCT code_client
+        FROM client_contracts
+        
+      ''');
+      // contractClientsResult  ni saralashga 919-qatorga joylashtirilishi kerak: WHERE active = 1
+      final contractClientCodes = <String>{};
+      for (final row in contractClientsResult) {
+        final code = row['code_client'] as String?;
+        if (code != null && code.isNotEmpty) {
+          contractClientCodes.add(code);
+        }
+      }
+
+      if (kDebugMode) {
+        print('Found ${contractClientCodes.length} clients with active contracts');
+      }
+
+      // 2. Get all clients and update has_contract field
+      final clients = await db.query('clients');
+      final batch = db.batch();
+      int updatedCount = 0;
+
+      for (final client in clients) {
+        final clientCode = client['code'] as String;
+        final hasContract = contractClientCodes.contains(clientCode) ? 1 : 0;
+        final currentHasContract = client['has_contract'] as int? ?? 0;
+
+        // Only update if there's a change to minimize database operations
+        if (hasContract != currentHasContract) {
+          batch.update(
+            'clients',
+            {
+              'has_contract': hasContract,
+              'updated_at': DateTime.now().toIso8601String(),
+            },
+            where: 'code = ?',
+            whereArgs: [clientCode],
+          );
+          updatedCount++;
+        }
+      }
+
+      // Execute batch update if there are changes
+      if (updatedCount > 0) {
+        await batch.commit(noResult: true);
+        if (kDebugMode) {
+          print('Successfully updated has_contract field for $updatedCount clients');
+        }
+      } else {
+        if (kDebugMode) {
+          print('No client has_contract fields needed updating');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating clients has_contract field: $e');
+      }
+      // Don't rethrow to prevent sync failure - this is a non-critical operation
+      // Log the error for debugging but allow sync to continue
+    }
   }
 
   Future<List<PromotionModel>> _syncPromotions(String? authToken) async {

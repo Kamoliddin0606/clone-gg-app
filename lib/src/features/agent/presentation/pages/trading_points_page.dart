@@ -1088,11 +1088,14 @@ class TradingPointCard extends StatelessWidget {
       if (!tradingPoint.isVisited)
         FilledButton.icon(
           onPressed: onInformVisit,
-          icon: const Icon(Icons.location_on, size: 18),
+          icon: const Icon(Icons.storefront, size: 18),
           label: Text(l10n.visitClient),
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: (theme.textTheme.labelLarge?.fontSize ?? 14) + 2,
+            ),
           ),
         ),
       FilledButton.tonalIcon(
@@ -1109,6 +1112,7 @@ class TradingPointCard extends StatelessWidget {
           onPressed: onViewContracts,
           icon: const Icon(Icons.description, size: 18),
           label: Text(l10n.contracts),
+          // label: Text(l10n.contracts),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),

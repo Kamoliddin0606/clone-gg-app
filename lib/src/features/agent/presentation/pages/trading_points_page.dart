@@ -9,6 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart'
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
+import '../widgets/trading_points_filters_panel.dart';
 
 import 'dart:ui'; // blur uchun
 import 'dart:async';
@@ -90,6 +91,11 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     // Distance calculation cache for performance
     Map<String, double?> _distanceCache = {};
     Timer? _locationCheckTimer;
+
+    // Filter related
+    bool _showFilters = false; // Filter panel visibility
+    TradingPointsFilterState _filters = TradingPointsFilterState(); // Filter state
+    List<String> _availableTradePointTypes = []; // Available trade point types for filtering
 
   @override
   void initState() {
@@ -227,6 +233,15 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
       _allTradingPoints = tradingPoints;
       _filteredTradingPoints = List.from(_allTradingPoints);
+
+      // Extract available trade point types for filtering
+      _availableTradePointTypes = _allTradingPoints
+          .map((tp) => tp.tradePointType)
+          .where((type) => type.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+
       _clearDistanceCache(); // Clear cache for fresh calculations
       _applySorting(); // Apply initial sorting
       setState(() => _isLoading = false);
@@ -245,22 +260,47 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
   void _filterTradingPoints(String query) {
     setState(() {
-      if (query.isEmpty) {
+      if (query.isEmpty && _filters.tradePointTypes.isEmpty && _filters.businessRegions.isEmpty) {
         _filteredTradingPoints = List.from(_allTradingPoints);
       } else {
         final qLatin = transliterateToLatin(query).toLowerCase();
         _filteredTradingPoints = _allTradingPoints.where((tp) {
+          // Search filter
           final regionName = _regionNames[tp.codeRegion]?.toLowerCase() ?? '';
-          return transliterateToLatin(tp.name).toLowerCase().contains(qLatin) ||
+          final searchMatch = query.isEmpty ||
+              transliterateToLatin(tp.name).toLowerCase().contains(qLatin) ||
               transliterateToLatin(tp.address).toLowerCase().contains(qLatin) ||
               transliterateToLatin(tp.contactPerson).toLowerCase().contains(qLatin) ||
               transliterateToLatin(tp.ownerName).toLowerCase().contains(qLatin) ||
               transliterateToLatin(regionName).contains(qLatin) ||
               tp.inn.contains(query);
+
+          // Trade point type filter
+          final typeMatch = _filters.tradePointTypes.isEmpty ||
+              _filters.tradePointTypes.contains(tp.tradePointType);
+
+          // Business region filter
+          final regionMatch = _filters.businessRegions.isEmpty ||
+              _filters.businessRegions.contains(tp.codeRegion);
+
+          return searchMatch && typeMatch && regionMatch;
         }).toList();
       }
       _clearDistanceCache(); // Clear cache when filtering changes
       _applySorting();
+    });
+  }
+
+  void _onFiltersChanged(TradingPointsFilterState newFilters) {
+    setState(() {
+      _filters = newFilters;
+      _filterTradingPoints(_searchController.text);
+    });
+  }
+
+  void _toggleFilters() {
+    setState(() {
+      _showFilters = !_showFilters;
     });
   }
 
@@ -586,6 +626,18 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           title: Text('Savdo nuqtalari', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
           centerTitle: false,
           actions: [
+            // Filter button
+            IconButton(
+              onPressed: _toggleFilters,
+              icon: Icon(
+                Icons.filter_alt_rounded,
+                color: (_filters.tradePointTypes.isNotEmpty || _filters.businessRegions.isNotEmpty)
+                    ? theme.colorScheme.primary
+                    : null,
+              ),
+              tooltip: 'Filter',
+            ),
+
             // Sorting button
             IconButton(
               onPressed: _toggleSorting,
@@ -689,6 +741,23 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                   ),
                 ),
               ),
+            ),
+
+            // Filters panel
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: _showFilters
+                  ? Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: TradingPointsFiltersPanel(
+                  state: _filters,
+                  availableTradePointTypes: _availableTradePointTypes,
+                  regionNames: _regionNames,
+                  onChange: _onFiltersChanged,
+                ),
+              )
+                  : const SizedBox.shrink(),
             ),
             // List
 

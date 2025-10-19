@@ -916,7 +916,7 @@ class DataSyncService {
       final contractClientsResult = await db.rawQuery('''
         SELECT DISTINCT code_client
         FROM client_contracts
-        
+        WHERE active = 1 OR active = 0
       ''');
       // contractClientsResult  ni saralashga 919-qatorga joylashtirilishi kerak: WHERE active = 1
       final contractClientCodes = <String>{};

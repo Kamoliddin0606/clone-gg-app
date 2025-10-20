@@ -1011,20 +1011,56 @@ class _SearchField extends StatelessWidget {
 }
 
 /// Bo‘sh state (topilmadi)
-class _EmptyState extends StatelessWidget {
+class _EmptyState extends StatefulWidget {
   const _EmptyState();
 
   @override
+  State<_EmptyState> createState() => _EmptyStateState();
+}
+
+class _EmptyStateState extends State<_EmptyState> {
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.find_in_page_outlined, size: 48, color: theme.hintColor),
-          const SizedBox(height: 8),
-          Text('Savdo nuqtalari topilmadi', style: theme.textTheme.titleMedium?.copyWith(color: theme.hintColor)),
-        ],
+    return RefreshIndicator(
+      onRefresh: () async {
+        // TradingPointsPage state'iga kirish uchun context orqali topish
+        final state = context.findAncestorStateOfType<_TradingPointsPageState>();
+        if (state != null) {
+          await state._loadUserData();
+        }
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.find_in_page_outlined, size: 48, color: theme.hintColor),
+                const SizedBox(height: 8),
+                Text(
+                  'Savdo nuqtalari topilmadi',
+                  style: theme.textTheme.titleMedium?.copyWith(color: theme.hintColor),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Pastga surib yangilash uchun urinib ko\'ring!',
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor.withOpacity(0.7)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Pastga surish ish bermasa sozlamalar menyusida joylashgan "barcha ma\'lumotlarni yangilash amalini bajaring',
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor.withOpacity(0.7)),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

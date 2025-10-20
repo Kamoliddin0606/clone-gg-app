@@ -1214,12 +1214,7 @@ class TradingPointCard extends StatelessWidget {
           ),
         ),
       OutlinedButton.icon(
-        onPressed: () {
-          // TODO: Navigate to orders page
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${tradingPoint.name} uchun buyurtmalar')),
-          );
-        },
+        onPressed: onCreateOrder,
         icon: const Icon(Icons.list_alt, size: 18),
         label: Text(l10n.orders),
         style: OutlinedButton.styleFrom(
@@ -1541,14 +1536,14 @@ class TradingPointGridCard extends StatelessWidget {
                       ),
                     FilledButton.tonalIcon(
                       onPressed: onCreateOrder,
-                      icon: const Icon(Icons.shopping_cart, size: 16),
-                      label: const Text('Buyurtma'),
+                      icon: const Icon(Icons.list_alt, size: 16),
+                      label: const Text('Buyurtmalar'),
                     ),
                     if (tradingPoint.hasContract)
                       OutlinedButton.icon(
                         onPressed: onViewContracts,
                         icon: const Icon(Icons.description, size: 16),
-                        label: const Text('Shartnoma'),
+                        label: const Text('Shartnomalar'),
                       ),
                     OutlinedButton.icon(
                       onPressed: onRefusal,

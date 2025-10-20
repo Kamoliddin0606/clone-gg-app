@@ -153,3 +153,146 @@ class ClientContract {
     return 'ClientContract(codeContract: $codeContract, codeClient: $codeClient, active: $active, status: $status)';
   }
 }
+
+/// Extended model for client contracts with client name
+/// This model is used for UI display purposes to avoid N+1 queries
+class ClientContractWithName extends ClientContract {
+  final String? clientName;
+
+  ClientContractWithName({
+    required super.codeContract,
+    super.dateOfContract,
+    required super.sumOfContract,
+    super.termOfContract,
+    super.typeContract,
+    super.numbReference,
+    super.numbCertificate,
+    super.termReference,
+    super.termCertificate,
+    super.numbPassport,
+    super.termPassport,
+    required super.certificateUnlimited,
+    super.codeDistrict,
+    super.nameDistrict,
+    super.codeProject,
+    required super.codeClient,
+    required super.active,
+    required super.status,
+    super.createdAt,
+    super.updatedAt,
+    this.clientName,
+  });
+
+  factory ClientContractWithName.fromMap(Map<String, dynamic> map) {
+    return ClientContractWithName(
+      codeContract: map['code_contract'] as String,
+      dateOfContract: map['date_of_contract'] != null ? DateTime.parse(map['date_of_contract'] as String) : null,
+      sumOfContract: (map['sum_of_contract'] as num?)?.toDouble() ?? 0.0,
+      termOfContract: map['term_of_contract'] != null ? DateTime.parse(map['term_of_contract'] as String) : null,
+      typeContract: map['type_contract'] as String?,
+      numbReference: map['numb_reference'] as String?,
+      numbCertificate: map['numb_certificate'] as String?,
+      termReference: map['term_reference'] != null ? DateTime.parse(map['term_reference'] as String) : null,
+      termCertificate: map['term_certificate'] != null ? DateTime.parse(map['term_certificate'] as String) : null,
+      numbPassport: map['numb_passport'] as String?,
+      termPassport: map['term_passport'] != null ? DateTime.parse(map['term_passport'] as String) : null,
+      certificateUnlimited: (map['certificate_unlimited'] as num?)?.toInt() ?? 0,
+      codeDistrict: map['code_district'] as String?,
+      nameDistrict: map['name_district'] as String?,
+      codeProject: map['code_project'] as String?,
+      codeClient: map['code_client'] as String,
+      active: (map['active'] as num?) == 1,
+      status: map['status'] as String,
+      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'] as String) : null,
+      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : null,
+      clientName: map['client_name'] as String?,
+    );
+  }
+
+  factory ClientContractWithName.fromClientContract(ClientContract contract, {String? clientName}) {
+    return ClientContractWithName(
+      codeContract: contract.codeContract,
+      dateOfContract: contract.dateOfContract,
+      sumOfContract: contract.sumOfContract,
+      termOfContract: contract.termOfContract,
+      typeContract: contract.typeContract,
+      numbReference: contract.numbReference,
+      numbCertificate: contract.numbCertificate,
+      termReference: contract.termReference,
+      termCertificate: contract.termCertificate,
+      numbPassport: contract.numbPassport,
+      termPassport: contract.termPassport,
+      certificateUnlimited: contract.certificateUnlimited,
+      codeDistrict: contract.codeDistrict,
+      nameDistrict: contract.nameDistrict,
+      codeProject: contract.codeProject,
+      codeClient: contract.codeClient,
+      active: contract.active,
+      status: contract.status,
+      createdAt: contract.createdAt,
+      updatedAt: contract.updatedAt,
+      clientName: clientName,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toMap() {
+    final map = super.toMap();
+    map['client_name'] = clientName;
+    return map;
+  }
+
+  @override
+  ClientContractWithName copyWith({
+    String? codeContract,
+    DateTime? dateOfContract,
+    double? sumOfContract,
+    DateTime? termOfContract,
+    String? typeContract,
+    String? numbReference,
+    String? numbCertificate,
+    DateTime? termReference,
+    DateTime? termCertificate,
+    String? numbPassport,
+    DateTime? termPassport,
+    int? certificateUnlimited,
+    String? codeDistrict,
+    String? nameDistrict,
+    String? codeProject,
+    String? codeClient,
+    bool? active,
+    String? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? clientName,
+  }) {
+    return ClientContractWithName(
+      codeContract: codeContract ?? this.codeContract,
+      dateOfContract: dateOfContract ?? this.dateOfContract,
+      sumOfContract: sumOfContract ?? this.sumOfContract,
+      termOfContract: termOfContract ?? this.termOfContract,
+      typeContract: typeContract ?? this.typeContract,
+      numbReference: numbReference ?? this.numbReference,
+      numbCertificate: numbCertificate ?? this.numbCertificate,
+      termReference: termReference ?? this.termReference,
+      termCertificate: termCertificate ?? this.termCertificate,
+      numbPassport: numbPassport ?? this.numbPassport,
+      termPassport: termPassport ?? this.termPassport,
+      certificateUnlimited: certificateUnlimited ?? this.certificateUnlimited,
+      codeDistrict: codeDistrict ?? this.codeDistrict,
+      nameDistrict: nameDistrict ?? this.nameDistrict,
+      codeProject: codeProject ?? this.codeProject,
+      codeClient: codeClient ?? this.codeClient,
+      active: active ?? this.active,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      clientName: clientName ?? this.clientName,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'ClientContractWithName(codeContract: $codeContract, codeClient: $codeClient, clientName: $clientName, active: $active, status: $status)';
+  }
+}

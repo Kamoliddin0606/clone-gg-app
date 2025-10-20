@@ -1143,6 +1143,15 @@ class DataSyncService {
     active: active,
   );
 
+  /// Get cached client contracts with client names using efficient JOIN query
+  Future<List<ClientContractWithName>> getCachedClientContractsWithNames({
+    String? clientCode,
+    bool? active,
+  }) => _dbService.getClientContractsWithNames(
+    clientCode: clientCode,
+    active: active,
+  );
+
   Future<List<PromotionModel>> getCachedPromotions({
     bool onlyActive = true,
     String? searchQuery,

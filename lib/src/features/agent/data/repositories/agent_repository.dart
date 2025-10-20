@@ -297,4 +297,28 @@ required DataSyncService dataSyncService,
       active: active,
     );
   }
+
+  /// Get cached client contracts with client names using efficient JOIN query
+  /// This method returns ClientContractWithName objects to avoid N+1 queries
+  Future<List<ClientContractWithName>> getCachedClientContractsWithNames({
+    String? clientCode,
+    bool? active,
+  }) async {
+    try {
+      return await _dataSyncService.getCachedClientContractsWithNames(
+        clientCode: clientCode,
+        active: active,
+      );
+    } catch (e) {
+      // Fallback to regular contracts if JOIN query fails
+      print('Error fetching contracts with names, falling back to regular contracts: $e');
+      final contracts = await getCachedClientContracts(
+        clientCode: clientCode,
+        active: active,
+      );
+      return contracts.map((contract) =>
+        ClientContractWithName.fromClientContract(contract)
+      ).toList();
+    }
+  }
 }

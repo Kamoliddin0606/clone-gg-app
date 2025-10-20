@@ -7,6 +7,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/ag
 import '../../../../Utility/formatter.dart';
 import '../../data/models/client_contract.dart';
 import '../../data/models/trading_point.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
 import '../widgets/contract_models.dart';
 import '../widgets/contracts_filters_panel.dart';
 import 'contract_detail_page.dart';
@@ -35,7 +36,7 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
   bool _isFilterPanelVisible = false;
   // Removed unused fields - now using _filters
-  List<ClientContract> _contracts = [];
+  List<ClientContractWithName> _contracts = [];
   List<TradingPoint> _tradingPoints = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -95,7 +96,7 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       final repository = sl<AgentRepository>();
 
       // Check if we need to sync data from API
-      var contracts = await repository.getCachedClientContracts();
+      var contracts = await repository.getCachedClientContractsWithNames();
       if (contracts.isEmpty) {
         setState(() {
           _isLoading = true;
@@ -111,7 +112,7 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
           );
 
           // Reload contracts after sync
-          contracts = await repository.getCachedClientContracts();
+          contracts = await repository.getCachedClientContractsWithNames();
           setState(() {
             _isLoading = false;
             _errorMessage = null;
@@ -160,7 +161,7 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
     });
   }
 
-  List<ClientContract> _getFilteredContracts() {
+  List<ClientContractWithName> _getFilteredContracts() {
     var filtered = _contracts;
 
     // Apply trading points filter
@@ -211,7 +212,7 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
     return filtered;
   }
 
-  List<ClientContract> _getContractsForTab(int tabIndex) {
+  List<ClientContractWithName> _getContractsForTab(int tabIndex) {
     final allFiltered = _getFilteredContracts();
 
     switch (tabIndex) {
@@ -467,7 +468,7 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
   }
 
 
-  void _navigateToContractDetail(ClientContract contract) {
+  void _navigateToContractDetail(ClientContractWithName contract) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -583,7 +584,7 @@ class _ViewToolbar extends StatelessWidget {
 }
 
 class ContractCard extends StatefulWidget {
-  final ClientContract contract;
+  final ClientContractWithName contract;
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
 
@@ -644,7 +645,7 @@ class _ContractCardState extends State<ContractCard> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                'Mijoz: ${widget.contract.codeClient}',
+                                'Mijoz: ${widget.contract.clientName ?? widget.contract.codeClient}',
                                 style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -774,7 +775,7 @@ class _ContractCardState extends State<ContractCard> {
 }
 
 class ContractGridTile extends StatelessWidget {
-  final ClientContract contract;
+  final ClientContractWithName contract;
   final VoidCallback? onTap;
 
   const ContractGridTile({
@@ -827,7 +828,7 @@ class ContractGridTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Mijoz: ${contract.codeClient}',
+                    'Mijoz: ${contract.clientName ?? contract.codeClient}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),

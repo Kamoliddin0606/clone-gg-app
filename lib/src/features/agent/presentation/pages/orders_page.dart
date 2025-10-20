@@ -61,13 +61,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
     super.initState();
     _search.addListener(_applyAllFilters);
     _loadOrderStatusesAndOrders();
-
-    // Agar initial mijoz parametri berilgan bo'lsa, filter qo'llash
-    if (widget.initialClientFilter != null && widget.initialClientName != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _applyInitialClientFilter();
-      });
-    }
+    // Initial filter endi _loadOrderStatusesAndOrders() ichida qo'llanadi
   }
   @override void dispose(){ _search.dispose(); super.dispose(); }
 
@@ -88,6 +82,11 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
 
       // Load orders with cache-first approach
       await _loadOrders();
+
+      // Ma'lumotlar yuklangandan keyin initial filter qo'llash
+      if (widget.initialClientFilter != null && widget.initialClientName != null) {
+        _applyInitialClientFilter();
+      }
 
     } catch (e) {
       debugPrint('Error loading data: $e');
@@ -224,8 +223,10 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
 
       setState(() {
         _filters.clients = {widget.initialClientName!};
-        _showFilters = true; // Filter panelini ko'rsatish
+        _showFilters = false; // Filter panelini yopish (faqat avtomatik filter)
       });
+
+      // Endi ma'lumotlar yuklangan, filter qo'llash mumkin
       _applyAllFilters();
 
       // Foydalanuvchiga bildirish
@@ -241,6 +242,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
 
       if (kDebugMode) {
         print('Applied initial client filter: ${widget.initialClientName}');
+        print('Filter state: clients=${_filters.clients}, filtered count: ${_filtered.length}');
       }
     } catch (e) {
       if (kDebugMode) {

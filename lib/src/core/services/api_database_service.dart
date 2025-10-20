@@ -2537,6 +2537,44 @@ class ApiDatabaseService {
         .toList();
   }
 
+  /// Get client contracts with client names using efficient JOIN query
+  /// This method returns ClientContractWithName objects to avoid N+1 queries
+  Future<List<ClientContractWithName>> getClientContractsWithNames({String? clientCode, bool? active}) async {
+    final db = await database;
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+
+    final conditions = <String>[];
+    if (clientCode != null) {
+      conditions.add('cc.code_client = ?');
+      whereArgs.add(clientCode);
+    }
+    if (active != null) {
+      conditions.add('cc.active = ?');
+      whereArgs.add(active ? 1 : 0);
+    }
+
+    if (conditions.isNotEmpty) {
+      whereClause = 'WHERE ${conditions.join(' AND ')}';
+    }
+
+    final result = await db.rawQuery('''
+      SELECT
+        cc.*,
+        c.name as client_name
+      FROM client_contracts cc
+      LEFT JOIN clients c ON cc.code_client = c.code
+      $whereClause
+      ORDER BY cc.date_of_contract DESC, cc.code_contract ASC
+    ''', whereArgs);
+
+    return result
+        .map(
+          (row) => ClientContractWithName.fromMap(row),
+        )
+        .toList();
+  }
+
   Future<ClientContract?> getClientContractByCode(String codeContract) async {
     final db = await database;
     final result = await db.query(

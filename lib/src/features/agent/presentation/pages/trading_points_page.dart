@@ -12,6 +12,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/ag
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/trading_points_filters_panel.dart';
 import 'orders_page.dart';
+import 'contracts_page.dart';
 
 import 'dart:ui'; // blur uchun
 import 'dart:async';
@@ -654,10 +655,45 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   }
 
   void _viewContracts(TradingPoint tradingPoint) {
-    // TODO: Navigate to contracts page
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${tradingPoint.name} shartnomalarini ko\'rish')),
-    );
+    try {
+      _saveState(); // Save current state before navigation
+
+      if (kDebugMode) {
+        print('Navigating to contracts page for client: ${tradingPoint.name} (ID: ${tradingPoint.id})');
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ContractsPage(
+            initialClientFilter: tradingPoint.id,
+            initialClientName: tradingPoint.name,
+          ),
+        ),
+      ).then((_) {
+        // Restore state when returning from contracts page
+        if (mounted) {
+          _restoreState();
+          if (kDebugMode) {
+            print('Returned from contracts page, state restored');
+          }
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error navigating to contracts page: $e');
+      }
+
+      // Fallback: show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Shartnomalar sahifasiga o\'tishda xatolik: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _showRefusalDialog(TradingPoint tradingPoint) {
@@ -1202,9 +1238,9 @@ class TradingPointCard extends StatelessWidget {
           textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
-      if (tradingPoint.hasContract)
+      // if (tradingPoint.hasContract)
         OutlinedButton.icon(
-          onPressed: onViewContracts,
+          onPressed: tradingPoint.hasContract?onViewContracts:null,
           icon: const Icon(Icons.description, size: 18),
           label: Text(l10n.contracts),
           // label: Text(l10n.contracts),
@@ -1539,9 +1575,9 @@ class TradingPointGridCard extends StatelessWidget {
                       icon: const Icon(Icons.list_alt, size: 16),
                       label: Text(AppLocalizations.of(context)!.orders),
                     ),
-                    if (tradingPoint.hasContract)
+                    //if (tradingPoint.hasContract)
                       OutlinedButton.icon(
-                        onPressed: onViewContracts,
+                        onPressed: tradingPoint.hasContract?onViewContracts:null,
                         icon: const Icon(Icons.description, size: 16),
                         label: Text(AppLocalizations.of(context)!.contracts),
                       ),
@@ -2213,7 +2249,34 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
       });
     }
   }
+  Future<void> confirmAndCall(BuildContext context, String rawPhone) async {
+    // tel: URI uchun raqamni tozalaymiz
+    final phone = rawPhone.replaceAll(RegExp(r'[^\d+]'), '');
+    final uri = Uri(scheme: 'tel', path: phone);
 
+    // Tasdiqlash dialogi
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Qo‘ng‘iroq qilish'),
+        content: Text('Mijozga qo‘ng‘iroq qilmoqchimisiz?\n$rawPhone'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Bekor qilish')),
+          ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Qo‘ng‘iroq qilish')),
+        ],
+      ),
+    );
+
+    if (ok == true && context.mounted) {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Dialer ochilmadi')),
+        );
+      }
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -2275,9 +2338,9 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
                 icon: const Icon(Icons.list_alt, size: 18),
                 label: Text(AppLocalizations.of(context)!.orders),
               ),
-              if (widget.tradingPoint.hasContract)
+              //if (widget.tradingPoint.hasContract)
                 OutlinedButton.icon(
-                  onPressed: widget.onViewContracts,
+                  onPressed: widget.tradingPoint.hasContract?widget.onViewContracts:null,
                   icon: const Icon(Icons.description, size: 18),
                   label: Text(AppLocalizations.of(context)!.contracts),
                 ),

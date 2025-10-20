@@ -21,7 +21,14 @@ String formatNumber(num number) {
 }
 
 class ContractsPage extends StatefulWidget {
-  const ContractsPage({super.key});
+  final String? initialClientFilter;
+  final String? initialClientName;
+
+  const ContractsPage({
+    super.key,
+    this.initialClientFilter,
+    this.initialClientName,
+  });
 
   @override
   State<ContractsPage> createState() => _ContractsPageState();
@@ -133,7 +140,15 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
       // Load trading points for filter
       await _loadTradingPoints();
+
+      // Apply initial client filter after data is loaded
+      if (widget.initialClientFilter != null && widget.initialClientName != null) {
+        _applyInitialClientFilter();
+      }
     } catch (e) {
+      if (kDebugMode) {
+        print('Error in _loadData: $e');
+      }
       setState(() {
         _errorMessage = 'Failed to load data: ${e.toString()}';
         _isLoading = false;
@@ -159,6 +174,47 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       _filters.dateRange = state.dateRange;
       _filters.status = state.status;
     });
+  }
+
+  /// Apply initial client filter when navigating from Trading Points page
+  void _applyInitialClientFilter() {
+    try {
+      if (widget.initialClientName == null || widget.initialClientName!.isEmpty) {
+        return;
+      }
+
+      if (kDebugMode) {
+        print('Applying initial client filter: ${widget.initialClientName}');
+      }
+
+      setState(() {
+        _filters.tradingPointCodes = {widget.initialClientName!};
+        _isFilterPanelVisible = false; // Hide filter panel for cleaner UX
+      });
+
+      // Apply filters immediately
+      _onFiltersChanged(_filters);
+
+      // Show user feedback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.initialClientName} mijozining shartnomalari'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      if (kDebugMode) {
+        print('Applied initial client filter successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error applying initial client filter: $e');
+      }
+      // Don't rethrow - allow the page to continue loading without the filter
+    }
   }
 
   List<ClientContractWithName> _getFilteredContracts() {

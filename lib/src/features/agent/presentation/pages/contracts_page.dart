@@ -7,7 +7,6 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/ag
 import '../../../../Utility/formatter.dart';
 import '../../data/models/client_contract.dart';
 import '../../data/models/trading_point.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
 import '../widgets/contract_models.dart';
 import '../widgets/contracts_filters_panel.dart';
 import 'contract_detail_page.dart';
@@ -179,29 +178,46 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
   /// Apply initial client filter when navigating from Trading Points page
   void _applyInitialClientFilter() {
     try {
-      if (widget.initialClientName == null || widget.initialClientName!.isEmpty) {
+      // Validate that we have the required parameters
+      if (widget.initialClientFilter == null || widget.initialClientFilter!.isEmpty) {
+        if (kDebugMode) {
+          print('Warning: initialClientFilter is null or empty, skipping filter application');
+        }
         return;
       }
 
       if (kDebugMode) {
-        print('Applying initial client filter: ${widget.initialClientName}');
+        print('Applying initial client filter: ID=${widget.initialClientFilter}, Name=${widget.initialClientName}');
       }
 
+      // Use client ID for filtering as it matches contract.codeClient
+      final filterValue = widget.initialClientFilter!;
+
       setState(() {
-        _filters.tradingPointCodes = {widget.initialClientName!};
+        _filters.tradingPointCodes = {filterValue};
         _isFilterPanelVisible = false; // Hide filter panel for cleaner UX
       });
 
       // Apply filters immediately
       _onFiltersChanged(_filters);
 
-      // Show user feedback
+      // Verify that filtering worked by checking filtered results
+      final filteredContracts = _getFilteredContracts();
+      if (kDebugMode) {
+        print('Filtered contracts count after applying filter: ${filteredContracts.length}');
+        if (filteredContracts.isNotEmpty) {
+          print('Sample contract codeClient: ${filteredContracts.first.codeClient}');
+        }
+      }
+
+      // Show user feedback with appropriate display name
       if (mounted) {
+        final displayName = widget.initialClientName ?? widget.initialClientFilter;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${widget.initialClientName} mijozining shartnomalari'),
+            content: Text('$displayName mijozining shartnomalari (${filteredContracts.length} ta)'),
             backgroundColor: Theme.of(context).colorScheme.primary,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -209,10 +225,23 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       if (kDebugMode) {
         print('Applied initial client filter successfully');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) {
         print('Error applying initial client filter: $e');
+        print('Stack trace: $stackTrace');
       }
+
+      // Show error feedback to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Filtr qo\'llashda xatolik yuz berdi'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
       // Don't rethrow - allow the page to continue loading without the filter
     }
   }
@@ -221,8 +250,12 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
     var filtered = _contracts;
 
     // Apply trading points filter
+
+    print('_filters.tradingPointCodes: ${_filters.tradingPointCodes}');
     if (_filters.tradingPointCodes.isNotEmpty) {
       filtered = filtered.where((contract) {
+        print('_filters.tradingPointCodes: ${_filters.tradingPointCodes}');
+        print('contracts code clients:${contract.codeClient}');
         return _filters.tradingPointCodes.contains(contract.codeClient);
       }).toList();
     }

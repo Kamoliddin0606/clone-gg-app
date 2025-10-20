@@ -66,11 +66,16 @@ required DataSyncService dataSyncService,
     bool forceRefresh = false,
   }) async {
     try {
-      return await _dataSyncService.syncClients(
-        userCode: userCode,
-        password: password,
-        forceRefresh: forceRefresh,
-      );
+      if (forceRefresh) {
+        return await _dataSyncService.syncClients(
+          userCode: userCode,
+          password: password,
+          forceRefresh: forceRefresh,
+        );
+      }
+      else {
+        return await _dataSyncService.getCachedClients();
+      }
     } catch (e) {
       // If API fails, try to return cached data
       final cachedData = await _dataSyncService.getCachedClients();

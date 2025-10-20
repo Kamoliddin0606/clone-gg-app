@@ -26,7 +26,10 @@ class MockSharedPreferencesService extends Mock implements SharedPreferencesServ
 
 class MockAgentRepository extends Mock implements AgentRepository {
   @override
-  Future<List<ClientContractWithName>> getCachedClientContractsWithNames() async {
+  Future<List<ClientContractWithName>> getCachedClientContractsWithNames({
+    bool? active,
+    String? clientCode,
+  }) async {
     return [
       ClientContractWithName(
         codeContract: 'TEST001',
@@ -162,8 +165,94 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      // Check if the snackbar with client name is shown
-      expect(find.text('Test Client mijozining shartnomalari'), findsOneWidget);
+      // Check if the snackbar with client name and contract count is shown
+      expect(find.textContaining('Test Client mijozining shartnomalari'), findsOneWidget);
+      // Verify that the contract is displayed (filtered correctly)
+      expect(find.text('TEST001'), findsOneWidget);
+    });
+
+    testWidgets('ContractsPage filters contracts by client ID correctly',
+        (WidgetTester tester) async {
+      // Arrange - Create contracts for different clients
+      final mockRepositoryWithMultipleContracts = MockAgentRepository();
+
+      // Override the method for this specific test
+      when(mockRepositoryWithMultipleContracts.getCachedClientContractsWithNames(
+        active: anyNamed('active'),
+        clientCode: anyNamed('clientCode'),
+      )).thenAnswer((_) async {
+        return [
+          ClientContractWithName(
+            codeContract: 'CONTRACT001',
+            dateOfContract: DateTime.now(),
+            sumOfContract: 1000000.0,
+            termOfContract: DateTime.now().add(const Duration(days: 365)),
+            typeContract: 'Test Contract',
+            numbReference: 'REF001',
+            numbCertificate: 'CERT001',
+            termReference: DateTime.now().add(const Duration(days: 30)),
+            termCertificate: DateTime.now().add(const Duration(days: 60)),
+            numbPassport: 'PASSPORT001',
+            termPassport: DateTime.now().add(const Duration(days: 90)),
+            certificateUnlimited: 0,
+            codeDistrict: 'DIST001',
+            nameDistrict: 'Test District',
+            codeProject: 'PROJ001',
+            codeClient: 'CLIENT001', // This should be filtered
+            active: true,
+            status: 'Действует',
+            clientName: 'Test Client 1',
+          ),
+          ClientContractWithName(
+            codeContract: 'CONTRACT002',
+            dateOfContract: DateTime.now(),
+            sumOfContract: 2000000.0,
+            termOfContract: DateTime.now().add(const Duration(days: 365)),
+            typeContract: 'Test Contract 2',
+            numbReference: 'REF002',
+            numbCertificate: 'CERT002',
+            termReference: DateTime.now().add(const Duration(days: 30)),
+            termCertificate: DateTime.now().add(const Duration(days: 60)),
+            numbPassport: 'PASSPORT002',
+            termPassport: DateTime.now().add(const Duration(days: 90)),
+            certificateUnlimited: 0,
+            codeDistrict: 'DIST002',
+            nameDistrict: 'Test District 2',
+            codeProject: 'PROJ002',
+            codeClient: 'CLIENT002', // This should NOT be filtered
+            active: true,
+            status: 'Действует',
+            clientName: 'Test Client 2',
+          ),
+        ];
+      });
+
+      GetIt.I.unregister<AgentRepository>();
+      GetIt.I.registerSingleton<AgentRepository>(mockRepositoryWithMultipleContracts);
+
+      const initialClientFilter = 'CLIENT001';
+      const initialClientName = 'Test Client 1';
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ContractsPage(
+            initialClientFilter: initialClientFilter,
+            initialClientName: initialClientName,
+          ),
+        ),
+      );
+
+      // Wait for data loading
+      await tester.pumpAndSettle();
+
+      // Assert
+      // Should show only CONTRACT001 (filtered by CLIENT001)
+      expect(find.text('CONTRACT001'), findsOneWidget);
+      expect(find.text('CONTRACT002'), findsNothing);
+
+      // Check snackbar shows correct count
+      expect(find.textContaining('Test Client 1 mijozining shartnomalari (1 ta)'), findsOneWidget);
     });
 
     testWidgets('TradingPointsPage _viewContracts method navigates to ContractsPage',

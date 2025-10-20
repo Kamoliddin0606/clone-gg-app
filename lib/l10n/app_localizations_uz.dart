@@ -468,7 +468,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get visit => 'Tashrif';
 
   @override
-  String get visitClient => 'Tashrif buyurush';
+  String get visitClient => 'Tashrif buyurish';
 
   @override
   String get createOrder => 'Buyurtma yaratish';

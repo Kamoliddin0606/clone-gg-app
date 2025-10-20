@@ -3,6 +3,7 @@
 // presentation/pages/orders_page.dart
 // =============================
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:get_it/get_it.dart';
 import '../widgets/order_card.dart';
@@ -19,7 +20,19 @@ import '../../../../core/services/shared_preferences_service.dart';
 import '../../../agent/data/models/order.dart';
 import '../../../agent/data/models/order_status.dart';
 
-class OrdersPage extends StatefulWidget { const OrdersPage({super.key}); @override State<OrdersPage> createState()=>_OrdersPageState(); }
+class OrdersPage extends StatefulWidget {
+  final String? initialClientFilter;
+  final String? initialClientName;
+
+  const OrdersPage({
+    super.key,
+    this.initialClientFilter,
+    this.initialClientName,
+  });
+
+  @override
+  State<OrdersPage> createState() => _OrdersPageState();
+}
 
 class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   final TextEditingController _search = TextEditingController();
@@ -48,6 +61,13 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
     super.initState();
     _search.addListener(_applyAllFilters);
     _loadOrderStatusesAndOrders();
+
+    // Agar initial mijoz parametri berilgan bo'lsa, filter qo'llash
+    if (widget.initialClientFilter != null && widget.initialClientName != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _applyInitialClientFilter();
+      });
+    }
   }
   @override void dispose(){ _search.dispose(); super.dispose(); }
 
@@ -194,6 +214,39 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
     } catch (e) {
       debugPrint('Error getting user code: $e');
       return null;
+    }
+  }
+
+  /// Apply initial client filter when navigating from Trading Points page
+  void _applyInitialClientFilter() {
+    try {
+      if (widget.initialClientName == null) return;
+
+      setState(() {
+        _filters.clients = {widget.initialClientName!};
+        _showFilters = true; // Filter panelini ko'rsatish
+      });
+      _applyAllFilters();
+
+      // Foydalanuvchiga bildirish
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.initialClientName} mijozining buyurtmalari'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      if (kDebugMode) {
+        print('Applied initial client filter: ${widget.initialClientName}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error applying initial client filter: $e');
+      }
+      // Agar xatolik yuz bersa, filter qo'llanmasdan davom etish
     }
   }
 

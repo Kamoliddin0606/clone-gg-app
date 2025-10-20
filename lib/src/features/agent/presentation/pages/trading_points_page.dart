@@ -11,6 +11,7 @@ import 'package:gloria_marketing_flutter/src/core/services/permission_manager.da
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/trading_points_filters_panel.dart';
+import 'orders_page.dart';
 
 import 'dart:ui'; // blur uchun
 import 'dart:async';
@@ -68,6 +69,15 @@ class TradingPointsPage extends StatefulWidget {
 }
 
 class _TradingPointsPageState extends State<TradingPointsPage> {
+    // PageStorage keys for state persistence
+    static const String _searchTextKey = 'trading_points_search';
+    static const String _filtersKey = 'trading_points_filters';
+    static const String _viewModeKey = 'trading_points_view_mode';
+    static const String _showFiltersKey = 'trading_points_show_filters';
+    static const String _showViewBarKey = 'trading_points_show_view_bar';
+    static const String _expandedIndexKey = 'trading_points_expanded_index';
+    static const String _isAlphabeticalSortKey = 'trading_points_alphabetical_sort';
+    static const String _isDistanceSortKey = 'trading_points_distance_sort';
 
     final TextEditingController _searchController = TextEditingController();
     List<TradingPoint> _allTradingPoints = [];
@@ -98,12 +108,17 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     TradingPointsFilterState _filters = TradingPointsFilterState(); // Filter state
     List<String> _availableTradePointTypes = []; // Available trade point types for filtering
 
+    // PageStorage bucket for state persistence
+    late final PageStorageBucket _storageBucket;
+
   @override
   void initState() {
     super.initState();
+    _storageBucket = PageStorageBucket();
     _initializePermissions();
     _initializeLocationService();
     _loadUserData();
+    _restoreState();
   }
 
   /// Initialize permissions on page load
@@ -197,10 +212,80 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
   @override
   void dispose() {
+    _saveState();
     _searchController.dispose();
     _locationCheckTimer?.cancel();
     _locationService?.dispose();
     super.dispose();
+  }
+
+  /// Save current state to PageStorage
+  void _saveState() {
+    try {
+      _storageBucket.writeState(context, _searchController.text);
+      _storageBucket.writeState(context, _filters);
+      _storageBucket.writeState(context, _viewMode);
+      _storageBucket.writeState(context, _showFilters);
+      _storageBucket.writeState(context, _showViewBar);
+      _storageBucket.writeState(context, _expandedIndex);
+      _storageBucket.writeState(context, _isAlphabeticalSort);
+      _storageBucket.writeState(context, _isDistanceSort);
+
+      if (kDebugMode) {
+        print('TradingPointsPage state saved successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error saving TradingPointsPage state: $e');
+      }
+    }
+  }
+
+  /// Restore state from PageStorage
+  void _restoreState() {
+    try {
+      final savedSearch = _storageBucket.readState(context) as String?;
+      final savedFilters = _storageBucket.readState(context) as TradingPointsFilterState?;
+      final savedViewMode = _storageBucket.readState(context) as _ViewMode?;
+      final savedShowFilters = _storageBucket.readState(context) as bool?;
+      final savedShowViewBar = _storageBucket.readState(context) as bool?;
+      final savedExpandedIndex = _storageBucket.readState(context) as int?;
+      final savedAlphabeticalSort = _storageBucket.readState(context) as bool?;
+      final savedDistanceSort = _storageBucket.readState(context) as bool?;
+
+      if (savedSearch != null && savedSearch.isNotEmpty) {
+        _searchController.text = savedSearch;
+      }
+      if (savedFilters != null) {
+        _filters = savedFilters;
+      }
+      if (savedViewMode != null) {
+        _viewMode = savedViewMode;
+      }
+      if (savedShowFilters != null) {
+        _showFilters = savedShowFilters;
+      }
+      if (savedShowViewBar != null) {
+        _showViewBar = savedShowViewBar;
+      }
+      if (savedExpandedIndex != null) {
+        _expandedIndex = savedExpandedIndex;
+      }
+      if (savedAlphabeticalSort != null) {
+        _isAlphabeticalSort = savedAlphabeticalSort;
+      }
+      if (savedDistanceSort != null) {
+        _isDistanceSort = savedDistanceSort;
+      }
+
+      if (kDebugMode) {
+        print('TradingPointsPage state restored successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error restoring TradingPointsPage state: $e');
+      }
+    }
   }
 
   Future<void> _loadTradingPoints() async {
@@ -552,10 +637,20 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   }
 
   void _createOrder(TradingPoint tradingPoint) {
-    // TODO: Navigate to order creation page
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${tradingPoint.name} uchun buyurtma yaratish')),
-    );
+    _saveState(); // State saqlash
+    // Orders sahifasiga mijoz parametrlar bilan o'tish
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OrdersPage(
+          initialClientFilter: tradingPoint.id,
+          initialClientName: tradingPoint.name,
+        ),
+      ),
+    ).then((_) {
+      // Qaytib kelganda state avtomatik tiklanadi
+      _restoreState();
+    });
   }
 
   void _viewContracts(TradingPoint tradingPoint) {

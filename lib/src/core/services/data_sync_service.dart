@@ -1534,7 +1534,7 @@ class DataSyncService {
       // Debug: Log the full API response to identify null fields
       if (kDebugMode) {
         print('DEBUG: Full API response for getSalesReqPermissions:');
-        print('permissions: ${permissions['visitSteps']}');
+        print('permissions: ${permissions['permissions']}');
         if (permissions != null) {
           permissions.forEach((key, value) {
             print('  $key: $value (type: ${value?.runtimeType})');
@@ -1566,13 +1566,13 @@ class DataSyncService {
       // Convert API response to SalesReqPermissions object with safe casting
       final salesReqPermissions = SalesReqPermissions(
         userCode: userCodeValue as String,
-        skipTINduplicateCheck: permissions['skipTINduplicateCheck'] as bool? ?? false,
-        allowCreationWithoutTIN: permissions['allowCreationWithoutTIN'] as bool? ?? false,
-        allowCreatingPointOfSale: permissions['allowCreatingPointOfSale'] as bool? ?? false,
-        visit: permissions['visit'] as bool? ?? false,
-        strictSequence: permissions['strictSequence'] as bool? ?? false,
-        unplannedOrder: permissions['unplannedOrder'] as bool? ?? false,
-        plannedRoute: permissions['plannedRoute'] as bool? ?? false,
+        skipTINduplicateCheck: permissions['permissions']['skipTINduplicateCheck'] as bool? ?? false,
+        allowCreationWithoutTIN: permissions['permissions']['allowCreationWithoutTIN'] as bool? ?? false,
+        allowCreatingPointOfSale: permissions['permissions']['allowCreatingPointOfSale'] as bool? ?? false,
+        visit: permissions['permissions']['visit'] as bool? ?? false,
+        strictSequence: permissions['permissions']['strictSequence'] as bool? ?? false,
+        unplannedOrder: permissions['permissions']['unplannedOrder'] as bool? ?? false,
+        plannedRoute: permissions['permissions']['plannedRoute'] as bool? ?? false,
         visitSteps: (permissions['visitSteps'] as List<dynamic>? ?? []).map((step) => VisitStep(
           stepCode: step['stepCode'] as int,
           stepName: step['stepName'] as String,

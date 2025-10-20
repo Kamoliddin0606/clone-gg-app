@@ -50,6 +50,9 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
   _ViewMode _viewMode = _ViewMode.list;
   final ContractsFilterState _filters = ContractsFilterState();
 
+  // Track if initial filter has been applied to prevent clearing
+  bool _initialFilterApplied = false;
+
   @override
   void initState() {
     super.initState();
@@ -141,8 +144,9 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       await _loadTradingPoints();
 
       // Apply initial client filter after data is loaded
-      if (widget.initialClientFilter != null && widget.initialClientName != null) {
+      if (widget.initialClientFilter != null && widget.initialClientName != null && !_initialFilterApplied) {
         _applyInitialClientFilter();
+        _initialFilterApplied = true;
       }
     } catch (e) {
       if (kDebugMode) {
@@ -168,8 +172,13 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
   void _onFiltersChanged(ContractsFilterState state) {
     setState(() {
-      _filters.tradingPointCodes.clear();
-      _filters.tradingPointCodes.addAll(state.tradingPointCodes);
+      // Preserve initial client filter values when filter panel changes other values
+      // Only update trading point codes if the state actually has different values
+      // or if no initial filter was applied
+      if (!_initialFilterApplied || state.tradingPointCodes.isNotEmpty) {
+        _filters.tradingPointCodes.clear();
+        _filters.tradingPointCodes.addAll(state.tradingPointCodes);
+      }
       _filters.dateRange = state.dateRange;
       _filters.status = state.status;
     });
@@ -194,12 +203,12 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       final filterValue = widget.initialClientFilter!;
 
       setState(() {
-        _filters.tradingPointCodes = {filterValue};
+        // Directly set the filter values without going through _onFiltersChanged
+        // to avoid clearing existing values
+        _filters.tradingPointCodes.clear();
+        _filters.tradingPointCodes.add(filterValue);
         _isFilterPanelVisible = false; // Hide filter panel for cleaner UX
       });
-
-      // Apply filters immediately
-      _onFiltersChanged(_filters);
 
       // Verify that filtering worked by checking filtered results
       final filteredContracts = _getFilteredContracts();

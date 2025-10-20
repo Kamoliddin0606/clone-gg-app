@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
@@ -2321,6 +2322,29 @@ class ApiDatabaseService {
   Future<void> deleteProductBalance(String warehouseCode, String productCode) async {
     final db = await database;
     await db.delete('product_balances', where: 'code_sklad = ? AND code_product = ?', whereArgs: [warehouseCode, productCode]);
+  }
+
+  /// Get cached trading points with permissions using optimized JOIN query
+  Future<List<TradingPointWithPermissions>> getTradingPointsWithPermissions(String userCode) async {
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT
+        c.*,
+        srp.id as permissions_id,
+        srp.user_code,
+        srp.skip_tin_duplicate_check,
+        srp.allow_creation_without_tin,
+        srp.allow_creating_point_of_sale,
+        srp.visit,
+        srp.strict_sequence,
+        srp.unplanned_order,
+        srp.planned_route
+      FROM clients c
+      LEFT JOIN sales_req_permissions srp ON srp.user_code = ?
+      ORDER BY c.name ASC
+    ''', [userCode]);
+
+    return result.map((row) => TradingPointWithPermissions.fromMap(row)).toList();
   }
 
   // Optimized method to get products with prices using JOINs

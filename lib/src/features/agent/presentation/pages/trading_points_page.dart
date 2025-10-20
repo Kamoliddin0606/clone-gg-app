@@ -4,10 +4,15 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
+import 'package:gloria_marketing_flutter/src/core/services/permissions_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/trading_points_filters_panel.dart';
@@ -81,8 +86,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     static const String _isDistanceSortKey = 'trading_points_distance_sort';
 
     final TextEditingController _searchController = TextEditingController();
-    List<TradingPoint> _allTradingPoints = [];
-    List<TradingPoint> _filteredTradingPoints = [];
+    List<TradingPointWithPermissions> _allTradingPoints = [];
+    List<TradingPointWithPermissions> _filteredTradingPoints = [];
     bool _isLoading = true;
     String userCode = "";
     String password = "";
@@ -90,6 +95,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     bool _showViewBar = false;               // ADD: panel ko'rinish holati
     _ViewMode _viewMode = _ViewMode.list;    // ADD: hozirgi ko'rinish
     Map<String, String> _regionNames = {};   // Business region code to name mapping
+
+    // Permissions service
+    late PermissionsService _permissionsService;
 
     // Sorting related
     bool _isAlphabeticalSort = true; // true = A-Z, false = Z-A
@@ -118,6 +126,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _storageBucket = PageStorageBucket();
     _initializePermissions();
     _initializeLocationService();
+    _initializePermissionsService();
     _loadUserData();
     _restoreState();
   }
@@ -154,6 +163,34 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (kDebugMode) {
         print('Error initializing permissions: $e');
       }
+    }
+  }
+
+  /// Initialize permissions service
+  Future<void> _initializePermissionsService() async {
+    try {
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      await sl.isReady<DataSyncService>();
+      final dataSyncService = sl<DataSyncService>();
+
+      _permissionsService = PermissionsService(
+        dataSyncService: dataSyncService,
+        prefs: prefs,
+      );
+
+      if (kDebugMode) {
+        print('PermissionsService initialized successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error initializing permissions service: $e');
+      }
+      // Create with default permissions if initialization fails
+      _permissionsService = PermissionsService(
+        dataSyncService: sl<DataSyncService>(),
+        prefs: sl<SharedPreferencesService>(),
+      );
     }
   }
 
@@ -217,6 +254,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _searchController.dispose();
     _locationCheckTimer?.cancel();
     _locationService?.dispose();
+    _permissionsService.dispose();
     super.dispose();
   }
 
@@ -295,6 +333,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     setState(() => _isLoading = true);
     try {
       final repository = sl<AgentRepository>();
+      final dbService = sl<ApiDatabaseService>();
 
       // Load clients and business regions in parallel for better performance
       final results = await Future.wait([
@@ -318,13 +357,16 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       // Create region code to name mapping for fast lookups
       _regionNames = {for (final region in regions) region.code: region.name};
 
-      _allTradingPoints = tradingPoints;
+      // Get trading points with permissions using efficient JOIN query
+      final tradingPointsWithPermissions = await dbService.getTradingPointsWithPermissions(userCode);
+
+      _allTradingPoints = tradingPointsWithPermissions;
       _filteredTradingPoints = List.from(_allTradingPoints);
 
       // Extract available trade point types for filtering
       _availableTradePointTypes = _allTradingPoints
-          .map((tp) => tp.tradePointType)
-          .where((type) => type.isNotEmpty)
+          .map((tp) => tp.tradingPoint.tradePointType)
+          .where((type) => type != null && type.isNotEmpty)
           .toSet()
           .toList()
         ..sort();
@@ -353,22 +395,22 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         final qLatin = transliterateToLatin(query).toLowerCase();
         _filteredTradingPoints = _allTradingPoints.where((tp) {
           // Search filter
-          final regionName = _regionNames[tp.codeRegion]?.toLowerCase() ?? '';
+          final regionName = _regionNames[tp.tradingPoint.codeRegion]?.toLowerCase() ?? '';
           final searchMatch = query.isEmpty ||
-              transliterateToLatin(tp.name).toLowerCase().contains(qLatin) ||
-              transliterateToLatin(tp.address).toLowerCase().contains(qLatin) ||
-              transliterateToLatin(tp.contactPerson).toLowerCase().contains(qLatin) ||
-              transliterateToLatin(tp.ownerName).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(tp.tradingPoint.name).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(tp.tradingPoint.address).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(tp.tradingPoint.contactPerson).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(tp.tradingPoint.ownerName).toLowerCase().contains(qLatin) ||
               transliterateToLatin(regionName).contains(qLatin) ||
-              tp.inn.contains(query);
+              tp.tradingPoint.inn.contains(query);
 
           // Trade point type filter
           final typeMatch = _filters.tradePointTypes.isEmpty ||
-              _filters.tradePointTypes.contains(tp.tradePointType);
+              _filters.tradePointTypes.contains(tp.tradingPoint.tradePointType);
 
           // Business region filter
           final regionMatch = _filters.businessRegions.isEmpty ||
-              _filters.businessRegions.contains(tp.codeRegion);
+              _filters.businessRegions.contains(tp.tradingPoint.codeRegion);
 
           return searchMatch && typeMatch && regionMatch;
         }).toList();
@@ -401,8 +443,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
   void _sortAlphabetically() {
     _filteredTradingPoints.sort((a, b) {
-      final aName = transliterateToLatin(a.name).toLowerCase();
-      final bName = transliterateToLatin(b.name).toLowerCase();
+      final aName = transliterateToLatin(a.tradingPoint.name).toLowerCase();
+      final bName = transliterateToLatin(b.tradingPoint.name).toLowerCase();
       return _isAlphabeticalSort ? aName.compareTo(bName) : bName.compareTo(aName);
     });
   }
@@ -424,15 +466,15 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   }
 
   /// Get cached distance for a trading point, calculate if not cached
-  double? _getCachedDistance(TradingPoint tp) {
+  double? _getCachedDistance(TradingPointWithPermissions tp) {
     if (_locationService == null) return null; // Safety check
 
-    final cacheKey = '${tp.id}_${tp.latitude}_${tp.longitude}';
+    final cacheKey = '${tp.tradingPoint.id}_${tp.tradingPoint.latitude}_${tp.tradingPoint.longitude}';
     if (_distanceCache.containsKey(cacheKey)) {
       return _distanceCache[cacheKey];
     }
 
-    final distance = _locationService!.getDistanceToTradingPoint(tp.latitude, tp.longitude);
+    final distance = _locationService!.getDistanceToTradingPoint(tp.tradingPoint.latitude, tp.tradingPoint.longitude);
     _distanceCache[cacheKey] = distance;
     return distance;
   }
@@ -600,7 +642,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     }
   }
 
-  Future<void> _informVisit(TradingPoint tradingPoint) async {
+  Future<void> _informVisit(TradingPointWithPermissions tradingPointWithPermissions) async {
+    final tradingPoint = tradingPointWithPermissions.tradingPoint;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -622,9 +665,13 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     Navigator.of(context).pop();
 
     setState(() {
-      final index = _allTradingPoints.indexWhere((tp) => tp.id == tradingPoint.id);
+      final index = _allTradingPoints.indexWhere((tp) => tp.tradingPoint.id == tradingPoint.id);
       if (index != -1) {
-        _allTradingPoints[index] = tradingPoint.copyWith(isVisited: true);
+        final updatedTradingPoint = tradingPoint.copyWith(isVisited: true);
+        _allTradingPoints[index] = TradingPointWithPermissions(
+          tradingPoint: updatedTradingPoint,
+          permissions: tradingPointWithPermissions.permissions,
+        );
         _filterTradingPoints(_searchController.text);
       }
     });
@@ -637,7 +684,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     );
   }
 
-  void _createOrder(TradingPoint tradingPoint) {
+  void _createOrder(TradingPointWithPermissions tradingPointWithPermissions) {
+    final tradingPoint = tradingPointWithPermissions.tradingPoint;
     _saveState(); // State saqlash
     // Orders sahifasiga mijoz parametrlar bilan o'tish
     Navigator.push(
@@ -654,7 +702,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     });
   }
 
-  void _viewContracts(TradingPoint tradingPoint) {
+  void _viewContracts(TradingPointWithPermissions tradingPointWithPermissions) {
+    final tradingPoint = tradingPointWithPermissions.tradingPoint;
     try {
       _saveState(); // Save current state before navigation
 
@@ -696,7 +745,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     }
   }
 
-  void _showRefusalDialog(TradingPoint tradingPoint) {
+  void _showRefusalDialog(TradingPointWithPermissions tradingPointWithPermissions) {
+    final tradingPoint = tradingPointWithPermissions.tradingPoint;
     showDialog(
       context: context,
       builder: (context) => RefusalDialog(
@@ -714,7 +764,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   }
 
   // ADD: Grid tile bosilganda batafsil oyna (bottom sheet) ochish
-  void _openTpDetails(TradingPoint tp) {
+  void _openTpDetails(TradingPointWithPermissions tp) {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
@@ -732,13 +782,14 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           minChildSize: 0.60,
           builder: (_, scrollCtrl) {
             return _TradingPointDetailsSheet(
-              tradingPoint: tp,
+              tradingPoint: tp.tradingPoint,
               scrollController: scrollCtrl,
-              onCall: () => _makeCall(tp.phone),
+              onCall: () => _makeCall(tp.tradingPoint.phone),
               onInformVisit: () => _informVisit(tp),
               onCreateOrder: () => _createOrder(tp),
               onViewContracts: () => _viewContracts(tp),
               onRefusal: () => _showRefusalDialog(tp),
+              permissions: tp.permissions,
             );
           },
         );
@@ -910,8 +961,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                     final tp = _filteredTradingPoints[index];
                     // LIST: eski ExpansionTile kartamiz, lekin leading – foto
                     return TradingPointCard(
-                      tradingPoint: tp,
-                      onCall: () => _makeCall(tp.phone),
+                      tradingPoint: tp.tradingPoint,
+                      onCall: () => _makeCall(tp.tradingPoint.phone),
                       onInformVisit: () => _informVisit(tp),
                       onCreateOrder: () => _createOrder(tp),
                       onViewContracts: () => _viewContracts(tp),
@@ -947,14 +998,15 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                     final tp = _filteredTradingPoints[index];
                     // GRID: foto yuqorida, qolgan ma’lumotlar bitta ustunda pastda
                     return _TradingPointGridTile(
-                      tp: tp,
-                      onCall: () => _makeCall(tp.phone),
+                      tp: tp.tradingPoint,
+                      onCall: () => _makeCall(tp.tradingPoint.phone),
                       onInformVisit: () => _informVisit(tp),
                       onCreateOrder: () => _createOrder(tp),
                       onViewContracts: () => _viewContracts(tp),
                       onRefusal: () => _showRefusalDialog(tp),
                       onOpenDetails: () => _openTpDetails(tp),
                       locationService: _locationService,
+                      permissions: tp.permissions,
                     );
                   },
                 ),
@@ -1078,6 +1130,7 @@ class TradingPointCard extends StatelessWidget {
   final ValueChanged<bool>? onExpand;
   final Map<String, String> regionNames;
   final LocationService? locationService;
+  final SalesReqPermissions? permissions;
   const TradingPointCard({
     super.key,
     required this.tradingPoint,
@@ -1091,6 +1144,7 @@ class TradingPointCard extends StatelessWidget {
     this.onExpand,
     required this.regionNames,
     this.locationService,
+    this.permissions,
   });
 
   @override
@@ -1252,9 +1306,10 @@ class TradingPointCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return [
-      //if (!tradingPoint.isVisited)
+      // Visit button - only enabled if user has visit permission
+      if (!tradingPoint.isVisited)
         FilledButton.icon(
-          onPressed: onInformVisit,
+          onPressed: permissions?.visit == true ? onInformVisit : null,
           icon: const Icon(Icons.storefront, size: 18),
           label: Text(l10n.visitClient),
           style: FilledButton.styleFrom(
@@ -1265,8 +1320,9 @@ class TradingPointCard extends StatelessWidget {
             ),
           ),
         ),
+      // Unplanned order button - only enabled if user has unplannedOrder permission
       FilledButton.tonalIcon(
-        onPressed: onCreateOrder,
+        onPressed: permissions?.unplannedOrder == true ? onCreateOrder : null,
         icon: const Icon(Icons.shopping_cart, size: 18),
         label: Text(l10n.unplannedOrder),
         style: FilledButton.styleFrom(
@@ -1274,17 +1330,17 @@ class TradingPointCard extends StatelessWidget {
           textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
-      // if (tradingPoint.hasContract)
-        OutlinedButton.icon(
-          onPressed: tradingPoint.hasContract?onViewContracts:null,
-          icon: const Icon(Icons.description, size: 18),
-          label: Text(l10n.contracts),
-          // label: Text(l10n.contracts),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-          ),
+      // Contracts button - only enabled if trading point has contract
+      OutlinedButton.icon(
+        onPressed: tradingPoint.hasContract ? onViewContracts : null,
+        icon: const Icon(Icons.description, size: 18),
+        label: Text(l10n.contracts),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
+      ),
+      // Orders button
       OutlinedButton.icon(
         onPressed: onCreateOrder,
         icon: const Icon(Icons.list_alt, size: 18),
@@ -1294,6 +1350,7 @@ class TradingPointCard extends StatelessWidget {
           textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
+      // Route button
       OutlinedButton.icon(
         onPressed: () {
           // TODO: Navigate to route page
@@ -1501,6 +1558,7 @@ class TradingPointGridCard extends StatelessWidget {
   final VoidCallback onCreateOrder;
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
+  final SalesReqPermissions? permissions;
 
   const TradingPointGridCard({
     super.key,
@@ -1510,6 +1568,7 @@ class TradingPointGridCard extends StatelessWidget {
     required this.onCreateOrder,
     required this.onViewContracts,
     required this.onRefusal,
+    this.permissions,
   });
 
   String? _photo(TradingPoint t) {
@@ -1600,20 +1659,20 @@ class TradingPointGridCard extends StatelessWidget {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    if (!tradingPoint.isVisited)
-                      FilledButton.icon(
-                          onPressed: null ,
+                    //if (!tradingPoint.isVisited)
+                    FilledButton.icon(
+                          onPressed: permissions?.visit == true ? onInformVisit : null,
                           icon: const Icon(Icons.storefront, size: 16),
                           label: Text(AppLocalizations.of(context)!.visitClient),
                         ),
                     FilledButton.tonalIcon(
-                      onPressed: onCreateOrder,
+                      onPressed: permissions?.unplannedOrder == true ? onCreateOrder : null,
                       icon: const Icon(Icons.list_alt, size: 16),
                       label: Text(AppLocalizations.of(context)!.orders),
                     ),
                     //if (tradingPoint.hasContract)
                       OutlinedButton.icon(
-                        onPressed: tradingPoint.hasContract?onViewContracts:null,
+                        onPressed: tradingPoint.hasContract ? onViewContracts : null,
                         icon: const Icon(Icons.description, size: 16),
                         label: Text(AppLocalizations.of(context)!.contracts),
                       ),
@@ -1719,6 +1778,7 @@ class _TradingPointGridTile extends StatelessWidget {
   final VoidCallback onCall, onInformVisit, onCreateOrder, onViewContracts, onRefusal;
   final VoidCallback onOpenDetails;
   final LocationService? locationService;
+  final SalesReqPermissions? permissions;
   const _TradingPointGridTile({
     required this.tp,
     required this.onCall,
@@ -1728,6 +1788,7 @@ class _TradingPointGridTile extends StatelessWidget {
     required this.onRefusal,
     required this.onOpenDetails,
     this.locationService,
+    this.permissions,
   });
 
   @override
@@ -1965,6 +2026,7 @@ class _TradingPointDetailsSheet extends StatefulWidget {
   final VoidCallback onCreateOrder;
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
+  final SalesReqPermissions? permissions;
 
   const _TradingPointDetailsSheet({
     required this.tradingPoint,
@@ -1974,6 +2036,7 @@ class _TradingPointDetailsSheet extends StatefulWidget {
     required this.onCreateOrder,
     required this.onViewContracts,
     required this.onRefusal,
+    this.permissions,
   });
 
   @override
@@ -2050,6 +2113,7 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
                   onCreateOrder: widget.onCreateOrder,
                   onViewContracts: widget.onViewContracts,
                   onRefusal: widget.onRefusal,
+                  permissions: widget.permissions,
                 ),
               ],
             ),
@@ -2225,6 +2289,7 @@ class _ActionsMapPage extends StatefulWidget {
   final VoidCallback onCreateOrder;
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
+  final SalesReqPermissions? permissions;
 
   const _ActionsMapPage({
     required this.tradingPoint,
@@ -2232,6 +2297,7 @@ class _ActionsMapPage extends StatefulWidget {
     required this.onCreateOrder,
     required this.onViewContracts,
     required this.onRefusal,
+    this.permissions,
   });
 
   @override
@@ -2363,13 +2429,18 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              if (!widget.tradingPoint.isVisited)
-                FilledButton.icon(
-                  onPressed: widget.onInformVisit,
+              //if (!widget.tradingPoint.isVisited)
+              FilledButton.icon(
+                  onPressed: widget.permissions?.visit == true ? widget.onInformVisit : null,
                   icon: const Icon(Icons.storefront, size: 18),
                   label: Text(AppLocalizations.of(context)!.visitClient),
                 ),
-              FilledButton.tonalIcon(
+              FilledButton.icon(
+                onPressed: widget.permissions?.unplannedOrder == true ? widget.onCreateOrder : null,
+                icon: const Icon(Icons.shopping_cart, size: 18),
+                label: Text(AppLocalizations.of(context)!.unplannedOrder),
+              ),
+              OutlinedButton.icon(
                 onPressed: widget.onCreateOrder,
                 icon: const Icon(Icons.list_alt, size: 18),
                 label: Text(AppLocalizations.of(context)!.orders),
@@ -2380,11 +2451,7 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
                   icon: const Icon(Icons.description, size: 18),
                   label: Text(AppLocalizations.of(context)!.contracts),
                 ),
-              OutlinedButton.icon(
-                onPressed: widget.onRefusal,
-                icon: const Icon(Icons.cancel, size: 18),
-                label: const Text('Rad etish'),
-              ),
+
               // TODO: Add reports, debit-credit, graph buttons
               OutlinedButton.icon(
                 onPressed: () {}, // TODO: Navigate to reports

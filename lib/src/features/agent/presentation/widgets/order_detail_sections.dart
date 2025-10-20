@@ -25,7 +25,7 @@ class OrderDetailsSection extends StatelessWidget {
   }
   @override Widget build(BuildContext context){
     final pairs = <Widget>[
-      _tile(context,'Mijoz nomi', order.clientName, icon: Icons.badge_rounded),
+      _tile(context,'Mijoz nomi', order.clientName.isNotEmpty ? order.clientName : order.clientCode, icon: Icons.badge_rounded),
       _tile(context,'Buyurtma raqami', order.numOrder, icon: Icons.confirmation_number_outlined),
       _tile(context,'Buyurtma sanasi', dateTimeFormat.format(order.dateOrder), icon: Icons.event),
       _tile(context,'Buyurtma summasi', uzsFormat.format(order.total), icon: Icons.payments_rounded),

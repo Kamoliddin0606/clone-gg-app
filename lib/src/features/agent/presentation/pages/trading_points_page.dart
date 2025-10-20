@@ -1180,7 +1180,7 @@ class TradingPointCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return [
-      if (!tradingPoint.isVisited)
+      //if (!tradingPoint.isVisited)
         FilledButton.icon(
           onPressed: onInformVisit,
           icon: const Icon(Icons.storefront, size: 18),
@@ -1530,25 +1530,25 @@ class TradingPointGridCard extends StatelessWidget {
                   children: [
                     if (!tradingPoint.isVisited)
                       FilledButton.icon(
-                        onPressed: null ,
-                        icon: const Icon(Icons.storefront, size: 16),
-                        label: const Text('Tashrif'),
-                      ),
+                          onPressed: null ,
+                          icon: const Icon(Icons.storefront, size: 16),
+                          label: Text(AppLocalizations.of(context)!.visitClient),
+                        ),
                     FilledButton.tonalIcon(
                       onPressed: onCreateOrder,
                       icon: const Icon(Icons.list_alt, size: 16),
-                      label: const Text('Buyurtmalar'),
+                      label: Text(AppLocalizations.of(context)!.orders),
                     ),
                     if (tradingPoint.hasContract)
                       OutlinedButton.icon(
                         onPressed: onViewContracts,
                         icon: const Icon(Icons.description, size: 16),
-                        label: const Text('Shartnomalar'),
+                        label: Text(AppLocalizations.of(context)!.contracts),
                       ),
                     OutlinedButton.icon(
                       onPressed: onRefusal,
                       icon: const Icon(Icons.cancel, size: 16),
-                      label: const Text('Rad etish'),
+                      label: Text(AppLocalizations.of(context)!.refusal),
                     ),
                   ],
                 ),
@@ -2267,19 +2267,19 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
               if (!widget.tradingPoint.isVisited)
                 FilledButton.icon(
                   onPressed: widget.onInformVisit,
-                  icon: const Icon(Icons.location_on, size: 18),
-                  label: const Text('Tashrif'),
+                  icon: const Icon(Icons.storefront, size: 18),
+                  label: Text(AppLocalizations.of(context)!.visitClient),
                 ),
               FilledButton.tonalIcon(
                 onPressed: widget.onCreateOrder,
-                icon: const Icon(Icons.shopping_cart, size: 18),
-                label: const Text('Buyurtma'),
+                icon: const Icon(Icons.list_alt, size: 18),
+                label: Text(AppLocalizations.of(context)!.orders),
               ),
               if (widget.tradingPoint.hasContract)
                 OutlinedButton.icon(
                   onPressed: widget.onViewContracts,
                   icon: const Icon(Icons.description, size: 18),
-                  label: const Text('Shartnoma'),
+                  label: Text(AppLocalizations.of(context)!.contracts),
                 ),
               OutlinedButton.icon(
                 onPressed: widget.onRefusal,

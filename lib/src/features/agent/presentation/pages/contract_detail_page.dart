@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart';
+// import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract_with_name.dart';
 import '../../../../Utility/formatter.dart';
 
 /// Format number with spaces as thousand separators
@@ -10,7 +11,7 @@ String formatNumber(num number) {
 }
 
 class ContractDetailPage extends StatefulWidget {
-  final ClientContract contract;
+  final ClientContractWithName contract;
 
   const ContractDetailPage({
     super.key,
@@ -129,7 +130,7 @@ class _ContractDetailPageState extends State<ContractDetailPage> with TickerProv
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Mijoz: ${contract.codeClient}',
+                    'Mijoz: ${contract.clientName ?? contract.codeClient}',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -353,7 +354,7 @@ class _ContractDetailPageState extends State<ContractDetailPage> with TickerProv
 
                         _buildDocumentSection('Tomorqalar', [
                           'Shartnoma raqami: ${contract.codeContract}',
-                          'Mijoz kodi: ${contract.codeClient}',
+                          'Mijoz: ${contract.clientName ?? contract.codeClient}',
                           'Boshlanish sanasi: ${contract.dateOfContract != null ? DateFormat('dd.MM.yyyy').format(contract.dateOfContract!) : 'Noma\'lum'}',
                           'Tugash sanasi: ${contract.termOfContract != null ? DateFormat('dd.MM.yyyy').format(contract.termOfContract!) : 'Noma\'lum'}',
                           'Shartnoma summasi: ${formatNumber(contract.sumOfContract)} UZS',
@@ -496,11 +497,15 @@ class _ContractDetailPageState extends State<ContractDetailPage> with TickerProv
             children: [
               Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
             ],

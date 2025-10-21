@@ -4019,6 +4019,17 @@ class ApiDatabaseService {
 
     return result.map((row) => PlannedRoute.fromMap(row)).toList();
   }
+  /// Get all planned routes
+  Future<List<PlannedRoute>> getAllPlannedRoutes() async {
+    final db = await database;
+    final result = await db.query(
+      'planned_routes',
+
+      orderBy: 'code_weekday ASC, client_name ASC',
+    );
+
+    return result.map((row) => PlannedRoute.fromMap(row)).toList();
+  }
 
   /// Get planned routes for a specific user and weekday
   Future<List<PlannedRoute>> getPlannedRoutesByWeekday(String userCode, int codeWeekday) async {

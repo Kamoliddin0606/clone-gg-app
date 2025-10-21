@@ -169,7 +169,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _safeLoadData(() => _dbService.getPromotions(), 'Promotions'),
         _safeLoadData(() => _dbService.getAllSalesReqPermissions(), 'Sales Req Permissions'),
         _safeLoadData(() => _loadVisitSteps(), 'Visit Steps'),
-        _safeLoadData(() => _dbService.getPlannedRoutes(''), 'Planned Routes'),
+        _safeLoadData(() => _dbService.getAllPlannedRoutes(), 'Planned Routes'),
       ];
 
       final results = await Future.wait(futures);

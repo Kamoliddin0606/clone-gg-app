@@ -970,7 +970,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                       onOpenDetails: () => _openTpDetails(tp),
                       regionNames: _regionNames,
                       locationService: _locationService,
-
+                      permissions: tp.permissions,
                       expanded: _expandedIndex == index,
                       onExpand: (open) {
                         setState(() {
@@ -1305,11 +1305,19 @@ class TradingPointCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
+    // Debug logging for permissions monitoring
+    if (kDebugMode) {
+      print('DEBUG: Building action buttons for ${tradingPoint.name}');
+      print('DEBUG: permissions object: ${tradingPoint}');
+      print('DEBUG: permissions?.visit: ${permissions?.visit}');
+      print('DEBUG: permissions?.unplannedOrder: ${permissions?.unplannedOrder}');
+    }
+
     return [
       // Visit button - only enabled if user has visit permission
       if (!tradingPoint.isVisited)
         FilledButton.icon(
-          onPressed: permissions?.visit == true ? onInformVisit : null,
+          onPressed: (permissions?.visit ?? false) ? onInformVisit : null,
           icon: const Icon(Icons.storefront, size: 18),
           label: Text(l10n.visitClient),
           style: FilledButton.styleFrom(

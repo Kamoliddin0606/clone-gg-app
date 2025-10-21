@@ -1266,7 +1266,7 @@ class SoapApiService {
       print(returnElement.toString());
       // Parse main permissions
 
-      final userCoded = _getElementText(returnElement, 'm:userCode')?.toLowerCase() == '';
+      final userCoded = _getElementText(returnElement, 'm:userCode');
       print('userCode: $userCoded');
       print('userCode: $userCode');
       final skipTINduplicateCheck = _getElementText(returnElement, 'm:SkipTINduplicateCheck')?.toLowerCase() == 'true';

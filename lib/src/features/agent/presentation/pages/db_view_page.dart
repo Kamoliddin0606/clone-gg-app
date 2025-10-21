@@ -22,6 +22,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.da
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class DbViewPage extends StatefulWidget {
@@ -64,6 +65,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   List<Map<String, dynamic>> _courierCars = [];
   List<SalesReqPermissions> _salesReqPermissions = [];
   List<VisitStep> _visitSteps = [];
+  List<PlannedRoute> _plannedRoutes = [];
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -112,6 +114,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     'Promotions',
     'Sales Req Permissions',
     'Visit Steps',
+    'Planned Routes',
   ];
 
   @override
@@ -166,6 +169,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _safeLoadData(() => _dbService.getPromotions(), 'Promotions'),
         _safeLoadData(() => _dbService.getAllSalesReqPermissions(), 'Sales Req Permissions'),
         _safeLoadData(() => _loadVisitSteps(), 'Visit Steps'),
+        _safeLoadData(() => _dbService.getPlannedRoutes(''), 'Planned Routes'),
       ];
 
       final results = await Future.wait(futures);
@@ -201,6 +205,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _promotions = _safeCast<PromotionModel>(results[23]);
         _salesReqPermissions = _safeCast<SalesReqPermissions>(results[24]);
         _visitSteps = _safeCast<VisitStep>(results[25]);
+        _plannedRoutes = _safeCast<PlannedRoute>(results[26]);
         _isLoading = false;
       });
 
@@ -396,6 +401,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
                     _buildDataTable(_promotions, _getPromotionsColumns()),
                     _buildDataTable(_salesReqPermissions, _getSalesReqPermissionsColumns()),
                     _buildDataTable(_visitSteps, _getVisitStepsColumns()),
+                    _buildDataTable(_plannedRoutes, _getPlannedRoutesColumns()),
                   ],
                 ),
     );
@@ -738,6 +744,17 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.createdAt?.toString() ?? '')),
         DataCell(Text(item.updatedAt?.toString() ?? '')),
       ]);
+    } else if (item is PlannedRoute) {
+      cells.addAll([
+        DataCell(Text(item.id.toString())),
+        DataCell(Text(item.userCode)),
+        DataCell(Text(item.codeWeekday.toString())),
+        DataCell(Text(item.weekDay)),
+        DataCell(Text(item.codeClient)),
+        DataCell(Text(item.clientName)),
+        DataCell(Text(item.createdAt.toString())),
+        DataCell(Text(item.updatedAt.toString())),
+      ]);
     }
 
     return DataRow(cells: cells);
@@ -1020,6 +1037,17 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         const DataColumn(label: Text('Step Code')),
         const DataColumn(label: Text('Step Name')),
         const DataColumn(label: Text('Required')),
+        const DataColumn(label: Text('Created At')),
+        const DataColumn(label: Text('Updated At')),
+      ];
+
+  List<DataColumn> _getPlannedRoutesColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('User Code')),
+        const DataColumn(label: Text('Weekday Code')),
+        const DataColumn(label: Text('Weekday')),
+        const DataColumn(label: Text('Client Code')),
+        const DataColumn(label: Text('Client Name')),
         const DataColumn(label: Text('Created At')),
         const DataColumn(label: Text('Updated At')),
       ];

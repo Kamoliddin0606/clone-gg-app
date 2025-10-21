@@ -3,38 +3,39 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i4;
+import 'dart:async' as _i5;
 
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart'
-    as _i3;
+    as _i4;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart'
-    as _i12;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart'
-    as _i17;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart'
-    as _i2;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart'
-    as _i9;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart'
-    as _i14;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart'
-    as _i15;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart'
-    as _i8;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart'
-    as _i10;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart'
-    as _i16;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart'
-    as _i11;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
-    as _i7;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart'
     as _i13;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart'
+    as _i18;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart'
+    as _i3;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart'
+    as _i10;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart'
+    as _i15;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart'
+    as _i16;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart'
+    as _i9;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart'
+    as _i11;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart'
+    as _i17;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart'
+    as _i12;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
+    as _i8;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart'
+    as _i14;
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart'
-    as _i6;
+    as _i7;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i5;
+import 'package:mockito/src/dummies.dart' as _i6;
+import 'package:shared_preferences/shared_preferences.dart' as _i2;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -51,8 +52,14 @@ import 'package:mockito/src/dummies.dart' as _i5;
 // ignore_for_file: subtype_of_sealed_class
 // ignore_for_file: invalid_use_of_internal_member
 
-class _FakeKpiData_0 extends _i1.SmartFake implements _i2.KpiData {
-  _FakeKpiData_0(Object parent, Invocation parentInvocation)
+class _FakeSharedPreferences_0 extends _i1.SmartFake
+    implements _i2.SharedPreferences {
+  _FakeSharedPreferences_0(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeKpiData_1 extends _i1.SmartFake implements _i3.KpiData {
+  _FakeKpiData_1(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -60,22 +67,33 @@ class _FakeKpiData_0 extends _i1.SmartFake implements _i2.KpiData {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockSharedPreferencesService extends _i1.Mock
-    implements _i3.SharedPreferencesService {
+    implements _i4.SharedPreferencesService {
   MockSharedPreferencesService() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<void> init() =>
+  _i2.SharedPreferences get preferences =>
       (super.noSuchMethod(
-            Invocation.method(#init, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            Invocation.getter(#preferences),
+            returnValue: _FakeSharedPreferences_0(
+              this,
+              Invocation.getter(#preferences),
+            ),
           )
-          as _i4.Future<void>);
+          as _i2.SharedPreferences);
 
   @override
-  _i4.Future<void> saveCredentials(
+  _i5.Future<void> init() =>
+      (super.noSuchMethod(
+            Invocation.method(#init, []),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> saveCredentials(
     String? username,
     String? password,
     bool? rememberMe,
@@ -86,13 +104,13 @@ class MockSharedPreferencesService extends _i1.Mock
               password,
               rememberMe,
             ]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> saveUserData({
+  _i5.Future<void> saveUserData({
     required String? userCode,
     required String? userName,
     required String? warehouseCode,
@@ -111,10 +129,10 @@ class MockSharedPreferencesService extends _i1.Mock
               #chatID: chatID,
               #topicID: topicID,
             }),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
   bool isRememberMeEnabled() =>
@@ -125,72 +143,72 @@ class MockSharedPreferencesService extends _i1.Mock
           as bool);
 
   @override
-  _i4.Future<void> clearCredentials() =>
+  _i5.Future<void> clearCredentials() =>
       (super.noSuchMethod(
             Invocation.method(#clearCredentials, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> setRememberMe(bool? value) =>
+  _i5.Future<void> setRememberMe(bool? value) =>
       (super.noSuchMethod(
             Invocation.method(#setRememberMe, [value]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> clearUserData() =>
+  _i5.Future<void> clearUserData() =>
       (super.noSuchMethod(
             Invocation.method(#clearUserData, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<bool> setServerName(String? name) =>
+  _i5.Future<bool> setServerName(String? name) =>
       (super.noSuchMethod(
             Invocation.method(#setServerName, [name]),
-            returnValue: _i4.Future<bool>.value(false),
+            returnValue: _i5.Future<bool>.value(false),
           )
-          as _i4.Future<bool>);
+          as _i5.Future<bool>);
 
   @override
-  _i4.Future<bool> clearServerName() =>
+  _i5.Future<bool> clearServerName() =>
       (super.noSuchMethod(
             Invocation.method(#clearServerName, []),
-            returnValue: _i4.Future<bool>.value(false),
+            returnValue: _i5.Future<bool>.value(false),
           )
-          as _i4.Future<bool>);
+          as _i5.Future<bool>);
 
   @override
-  _i4.Future<bool> setBaseUrl(String? url) =>
+  _i5.Future<bool> setBaseUrl(String? url) =>
       (super.noSuchMethod(
             Invocation.method(#setBaseUrl, [url]),
-            returnValue: _i4.Future<bool>.value(false),
+            returnValue: _i5.Future<bool>.value(false),
           )
-          as _i4.Future<bool>);
+          as _i5.Future<bool>);
 
   @override
-  _i4.Future<bool> clearBaseUrl() =>
+  _i5.Future<bool> clearBaseUrl() =>
       (super.noSuchMethod(
             Invocation.method(#clearBaseUrl, []),
-            returnValue: _i4.Future<bool>.value(false),
+            returnValue: _i5.Future<bool>.value(false),
           )
-          as _i4.Future<bool>);
+          as _i5.Future<bool>);
 
   @override
-  _i4.Future<void> setOfflineMode(bool? isOffline) =>
+  _i5.Future<void> setOfflineMode(bool? isOffline) =>
       (super.noSuchMethod(
             Invocation.method(#setOfflineMode, [isOffline]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
   bool isOfflineMode() =>
@@ -201,28 +219,28 @@ class MockSharedPreferencesService extends _i1.Mock
           as bool);
 
   @override
-  _i4.Future<void> clearOfflineMode() =>
+  _i5.Future<void> clearOfflineMode() =>
       (super.noSuchMethod(
             Invocation.method(#clearOfflineMode, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> setLanguageCode(String? languageCode) =>
+  _i5.Future<void> setLanguageCode(String? languageCode) =>
       (super.noSuchMethod(
             Invocation.method(#setLanguageCode, [languageCode]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
   String getLanguageCode() =>
       (super.noSuchMethod(
             Invocation.method(#getLanguageCode, []),
-            returnValue: _i5.dummyValue<String>(
+            returnValue: _i6.dummyValue<String>(
               this,
               Invocation.method(#getLanguageCode, []),
             ),
@@ -230,22 +248,22 @@ class MockSharedPreferencesService extends _i1.Mock
           as String);
 
   @override
-  _i4.Future<void> clearLanguageCode() =>
+  _i5.Future<void> clearLanguageCode() =>
       (super.noSuchMethod(
             Invocation.method(#clearLanguageCode, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> setReportSentToTelegram(bool? value) =>
+  _i5.Future<void> setReportSentToTelegram(bool? value) =>
       (super.noSuchMethod(
             Invocation.method(#setReportSentToTelegram, [value]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
   bool isReportSentToTelegram() =>
@@ -259,13 +277,13 @@ class MockSharedPreferencesService extends _i1.Mock
 /// A class which mocks [AgentRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
+class MockAgentRepository extends _i1.Mock implements _i7.AgentRepository {
   MockAgentRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<_i2.KpiData> getKpiData({
+  _i5.Future<_i3.KpiData> getKpiData({
     required String? userCode,
     required String? password,
     bool? forceRefresh = false,
@@ -276,8 +294,8 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #password: password,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i4.Future<_i2.KpiData>.value(
-              _FakeKpiData_0(
+            returnValue: _i5.Future<_i3.KpiData>.value(
+              _FakeKpiData_1(
                 this,
                 Invocation.method(#getKpiData, [], {
                   #userCode: userCode,
@@ -287,10 +305,10 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               ),
             ),
           )
-          as _i4.Future<_i2.KpiData>);
+          as _i5.Future<_i3.KpiData>);
 
   @override
-  _i4.Future<List<_i7.TradingPoint>> getClients({
+  _i5.Future<List<_i8.TradingPoint>> getClients({
     required String? userCode,
     required String? password,
     bool? forceRefresh = false,
@@ -301,14 +319,14 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #password: password,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i4.Future<List<_i7.TradingPoint>>.value(
-              <_i7.TradingPoint>[],
+            returnValue: _i5.Future<List<_i8.TradingPoint>>.value(
+              <_i8.TradingPoint>[],
             ),
           )
-          as _i4.Future<List<_i7.TradingPoint>>);
+          as _i5.Future<List<_i8.TradingPoint>>);
 
   @override
-  _i4.Future<List<_i8.ProductData>> getProducts({
+  _i5.Future<List<_i9.ProductData>> getProducts({
     required String? codeProject,
     required String? codeSklad,
     bool? forceRefresh = false,
@@ -319,14 +337,14 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #codeSklad: codeSklad,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i4.Future<List<_i8.ProductData>>.value(
-              <_i8.ProductData>[],
+            returnValue: _i5.Future<List<_i9.ProductData>>.value(
+              <_i9.ProductData>[],
             ),
           )
-          as _i4.Future<List<_i8.ProductData>>);
+          as _i5.Future<List<_i9.ProductData>>);
 
   @override
-  _i4.Future<List<_i9.PriceType>> getPriceTypes({
+  _i5.Future<List<_i10.PriceType>> getPriceTypes({
     required String? userCode,
     bool? forceRefresh = false,
   }) =>
@@ -335,14 +353,14 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #userCode: userCode,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i4.Future<List<_i9.PriceType>>.value(
-              <_i9.PriceType>[],
+            returnValue: _i5.Future<List<_i10.PriceType>>.value(
+              <_i10.PriceType>[],
             ),
           )
-          as _i4.Future<List<_i9.PriceType>>);
+          as _i5.Future<List<_i10.PriceType>>);
 
   @override
-  _i4.Future<List<_i10.ProductPrice>> getProductPrices({
+  _i5.Future<List<_i11.ProductPrice>> getProductPrices({
     required String? userCode,
     bool? forceRefresh = false,
     String? priceTypeCode,
@@ -353,14 +371,14 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #forceRefresh: forceRefresh,
               #priceTypeCode: priceTypeCode,
             }),
-            returnValue: _i4.Future<List<_i10.ProductPrice>>.value(
-              <_i10.ProductPrice>[],
+            returnValue: _i5.Future<List<_i11.ProductPrice>>.value(
+              <_i11.ProductPrice>[],
             ),
           )
-          as _i4.Future<List<_i10.ProductPrice>>);
+          as _i5.Future<List<_i11.ProductPrice>>);
 
   @override
-  _i4.Future<List<_i11.ProductWithPrice>> getProductsWithPrices({
+  _i5.Future<List<_i12.ProductWithPrice>> getProductsWithPrices({
     required String? priceTypeCode,
     List<String>? warehouseCodes,
     String? searchQuery,
@@ -373,32 +391,32 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #searchQuery: searchQuery,
               #codeProject: codeProject,
             }),
-            returnValue: _i4.Future<List<_i11.ProductWithPrice>>.value(
-              <_i11.ProductWithPrice>[],
+            returnValue: _i5.Future<List<_i12.ProductWithPrice>>.value(
+              <_i12.ProductWithPrice>[],
             ),
           )
-          as _i4.Future<List<_i11.ProductWithPrice>>);
+          as _i5.Future<List<_i12.ProductWithPrice>>);
 
   @override
-  _i4.Future<void> updateClientVisitStatus(String? clientId, bool? isVisited) =>
+  _i5.Future<void> updateClientVisitStatus(String? clientId, bool? isVisited) =>
       (super.noSuchMethod(
             Invocation.method(#updateClientVisitStatus, [clientId, isVisited]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> clearCache() =>
+  _i5.Future<void> clearCache() =>
       (super.noSuchMethod(
             Invocation.method(#clearCache, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> syncAllData({
+  _i5.Future<void> syncAllData({
     required String? userCode,
     required String? password,
     required String? codeProject,
@@ -411,23 +429,23 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #codeProject: codeProject,
               #codeSklad: codeSklad,
             }),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<List<_i12.BusinessRegion>> getCachedBusinessRegions() =>
+  _i5.Future<List<_i13.BusinessRegion>> getCachedBusinessRegions() =>
       (super.noSuchMethod(
             Invocation.method(#getCachedBusinessRegions, []),
-            returnValue: _i4.Future<List<_i12.BusinessRegion>>.value(
-              <_i12.BusinessRegion>[],
+            returnValue: _i5.Future<List<_i13.BusinessRegion>>.value(
+              <_i13.BusinessRegion>[],
             ),
           )
-          as _i4.Future<List<_i12.BusinessRegion>>);
+          as _i5.Future<List<_i13.BusinessRegion>>);
 
   @override
-  _i4.Future<List<_i12.BusinessRegion>> syncBusinessRegions({
+  _i5.Future<List<_i13.BusinessRegion>> syncBusinessRegions({
     required String? userCode,
     bool? forceRefresh = false,
   }) =>
@@ -436,24 +454,24 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #userCode: userCode,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i4.Future<List<_i12.BusinessRegion>>.value(
-              <_i12.BusinessRegion>[],
+            returnValue: _i5.Future<List<_i13.BusinessRegion>>.value(
+              <_i13.BusinessRegion>[],
             ),
           )
-          as _i4.Future<List<_i12.BusinessRegion>>);
+          as _i5.Future<List<_i13.BusinessRegion>>);
 
   @override
-  _i4.Future<List<_i13.UserWarehouse>> getCachedUserWarehouses() =>
+  _i5.Future<List<_i14.UserWarehouse>> getCachedUserWarehouses() =>
       (super.noSuchMethod(
             Invocation.method(#getCachedUserWarehouses, []),
-            returnValue: _i4.Future<List<_i13.UserWarehouse>>.value(
-              <_i13.UserWarehouse>[],
+            returnValue: _i5.Future<List<_i14.UserWarehouse>>.value(
+              <_i14.UserWarehouse>[],
             ),
           )
-          as _i4.Future<List<_i13.UserWarehouse>>);
+          as _i5.Future<List<_i14.UserWarehouse>>);
 
   @override
-  _i4.Future<List<_i13.UserWarehouse>> syncUserWarehouses({
+  _i5.Future<List<_i14.UserWarehouse>> syncUserWarehouses({
     required String? userCode,
     bool? forceRefresh = false,
   }) =>
@@ -462,23 +480,23 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #userCode: userCode,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i4.Future<List<_i13.UserWarehouse>>.value(
-              <_i13.UserWarehouse>[],
+            returnValue: _i5.Future<List<_i14.UserWarehouse>>.value(
+              <_i14.UserWarehouse>[],
             ),
           )
-          as _i4.Future<List<_i13.UserWarehouse>>);
+          as _i5.Future<List<_i14.UserWarehouse>>);
 
   @override
-  _i4.Future<void> savePrefsToUsers() =>
+  _i5.Future<void> savePrefsToUsers() =>
       (super.noSuchMethod(
             Invocation.method(#savePrefsToUsers, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<List<_i14.ProductBalance>> getCachedProductBalances({
+  _i5.Future<List<_i15.ProductBalance>> getCachedProductBalances({
     String? warehouseCode,
     String? productBrand,
     String? productSeries,
@@ -489,38 +507,38 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #productBrand: productBrand,
               #productSeries: productSeries,
             }),
-            returnValue: _i4.Future<List<_i14.ProductBalance>>.value(
-              <_i14.ProductBalance>[],
+            returnValue: _i5.Future<List<_i15.ProductBalance>>.value(
+              <_i15.ProductBalance>[],
             ),
           )
-          as _i4.Future<List<_i14.ProductBalance>>);
+          as _i5.Future<List<_i15.ProductBalance>>);
 
   @override
-  _i4.Future<List<_i15.ProductBrand>> getCachedProductBrands() =>
+  _i5.Future<List<_i16.ProductBrand>> getCachedProductBrands() =>
       (super.noSuchMethod(
             Invocation.method(#getCachedProductBrands, []),
-            returnValue: _i4.Future<List<_i15.ProductBrand>>.value(
-              <_i15.ProductBrand>[],
+            returnValue: _i5.Future<List<_i16.ProductBrand>>.value(
+              <_i16.ProductBrand>[],
             ),
           )
-          as _i4.Future<List<_i15.ProductBrand>>);
+          as _i5.Future<List<_i16.ProductBrand>>);
 
   @override
-  _i4.Future<List<_i16.ProductSeries>> getCachedProductSeries({
+  _i5.Future<List<_i17.ProductSeries>> getCachedProductSeries({
     String? brandName,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getCachedProductSeries, [], {
               #brandName: brandName,
             }),
-            returnValue: _i4.Future<List<_i16.ProductSeries>>.value(
-              <_i16.ProductSeries>[],
+            returnValue: _i5.Future<List<_i17.ProductSeries>>.value(
+              <_i17.ProductSeries>[],
             ),
           )
-          as _i4.Future<List<_i16.ProductSeries>>);
+          as _i5.Future<List<_i17.ProductSeries>>);
 
   @override
-  _i4.Future<List<_i17.ClientContract>> getCachedClientContracts({
+  _i5.Future<List<_i18.ClientContract>> getCachedClientContracts({
     String? clientCode,
     bool? active,
   }) =>
@@ -529,9 +547,23 @@ class MockAgentRepository extends _i1.Mock implements _i6.AgentRepository {
               #clientCode: clientCode,
               #active: active,
             }),
-            returnValue: _i4.Future<List<_i17.ClientContract>>.value(
-              <_i17.ClientContract>[],
+            returnValue: _i5.Future<List<_i18.ClientContract>>.value(
+              <_i18.ClientContract>[],
             ),
           )
-          as _i4.Future<List<_i17.ClientContract>>);
+          as _i5.Future<List<_i18.ClientContract>>);
+
+  @override
+  _i5.Future<List<_i18.ClientContractWithName>>
+  getCachedClientContractsWithNames({String? clientCode, bool? active}) =>
+      (super.noSuchMethod(
+            Invocation.method(#getCachedClientContractsWithNames, [], {
+              #clientCode: clientCode,
+              #active: active,
+            }),
+            returnValue: _i5.Future<List<_i18.ClientContractWithName>>.value(
+              <_i18.ClientContractWithName>[],
+            ),
+          )
+          as _i5.Future<List<_i18.ClientContractWithName>>);
 }

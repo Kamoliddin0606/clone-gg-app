@@ -22,6 +22,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.da
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
@@ -3968,6 +3969,106 @@ class ApiDatabaseService {
     await db.delete('sales_req_permissions');
   }
 
+  /// Save planned routes data
+  Future<void> savePlannedRoutes(List<PlannedRoute> routes) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing routes for the user(s) being saved
+    final userCodes = routes.map((r) => r.userCode).toSet();
+    for (final userCode in userCodes) {
+      batch.delete('planned_routes', where: 'user_code = ?', whereArgs: [userCode]);
+    }
+
+    // Deduplicate routes by (user_code, code_weekday, code_client) to avoid UNIQUE constraint violations
+    final uniqueRoutes = <String, PlannedRoute>{};
+    for (final route in routes) {
+      final key = '${route.userCode}_${route.codeWeekday}_${route.codeClient}';
+      uniqueRoutes[key] = route;
+    }
+
+    // Add all inserts to batch
+    for (final route in uniqueRoutes.values) {
+      batch.insert('planned_routes', {
+        'user_code': route.userCode,
+        'code_weekday': route.codeWeekday,
+        'week_day': route.weekDay,
+        'code_client': route.codeClient,
+        'client_name': route.clientName,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  /// Get planned routes for a specific user
+  Future<List<PlannedRoute>> getPlannedRoutes(String userCode) async {
+    final db = await database;
+    final result = await db.query(
+      'planned_routes',
+      where: 'user_code = ?',
+      whereArgs: [userCode],
+      orderBy: 'code_weekday ASC, client_name ASC',
+    );
+
+    return result.map((row) => PlannedRoute.fromMap(row)).toList();
+  }
+
+  /// Get planned routes for a specific user and weekday
+  Future<List<PlannedRoute>> getPlannedRoutesByWeekday(String userCode, int codeWeekday) async {
+    final db = await database;
+    final result = await db.query(
+      'planned_routes',
+      where: 'user_code = ? AND code_weekday = ?',
+      whereArgs: [userCode, codeWeekday],
+      orderBy: 'client_name ASC',
+    );
+
+    return result.map((row) => PlannedRoute.fromMap(row)).toList();
+  }
+
+  /// Get planned routes for a specific client
+  Future<List<PlannedRoute>> getPlannedRoutesByClient(String userCode, String codeClient) async {
+    final db = await database;
+    final result = await db.query(
+      'planned_routes',
+      where: 'user_code = ? AND code_client = ?',
+      whereArgs: [userCode, codeClient],
+      orderBy: 'code_weekday ASC',
+    );
+
+    return result.map((row) => PlannedRoute.fromMap(row)).toList();
+  }
+
+  /// Get all unique weekdays for a user
+  Future<List<int>> getUniqueWeekdays(String userCode) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT DISTINCT code_weekday FROM planned_routes WHERE user_code = ? ORDER BY code_weekday ASC',
+      [userCode],
+    );
+
+    return result.map((row) => row['code_weekday'] as int).toList();
+  }
+
+  /// Delete planned routes for a specific user
+  Future<void> deletePlannedRoutes(String userCode) async {
+    final db = await database;
+    await db.delete('planned_routes', where: 'user_code = ?', whereArgs: [userCode]);
+  }
+
+  /// Delete all planned routes data
+  Future<void> clearPlannedRoutes() async {
+    final db = await database;
+    await db.delete('planned_routes');
+  }
+
   /// Ensure sales req permissions table exists (for migration issues)
   Future<void> ensureSalesReqPermissionsTableExists() async {
     final db = await database;
@@ -4017,11 +4118,36 @@ class ApiDatabaseService {
       ''');
     }
 
+    // Check if planned_routes table exists
+    final plannedRoutesTable = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='planned_routes'"
+    );
+
+    if (plannedRoutesTable.isEmpty) {
+      // Create planned_routes table
+      await db.execute('''
+        CREATE TABLE planned_routes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_code TEXT NOT NULL,
+          code_weekday INTEGER NOT NULL,
+          week_day TEXT NOT NULL,
+          code_client TEXT NOT NULL,
+          client_name TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          UNIQUE(user_code, code_weekday, code_client)
+        )
+      ''');
+    }
+
     // Create indexes if they don't exist
     try {
       await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_user_code ON planned_routes(user_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_weekday ON planned_routes(code_weekday)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)');
     } catch (e) {
       // Indexes might already exist, ignore error
       print('Warning: Could not create indexes, they might already exist: $e');

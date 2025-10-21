@@ -30,6 +30,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.da
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
@@ -286,6 +287,9 @@ class DataSyncService {
       // Sync sales req permissions
       await _syncSalesReqPermissions(userCode);
 
+      // Sync planned routes
+      await _syncPlannedRoutes(userCode);
+
       // Sync promotions
       if ( isAvonServerSelected() || isEvyapServerSelected() ) {
         await _syncPromotions(null); // No auth token needed for now
@@ -411,8 +415,12 @@ class DataSyncService {
       yield SyncStep.syncingSalesReqPermissions;
       await _syncSalesReqPermissions(userCode);
 
+      // Step 15: Sync planned routes
+      yield SyncStep.syncingPlannedRoutes;
+      await _syncPlannedRoutes(userCode);
+
       if( isAvonServerSelected() || isEvyapServerSelected() ) {
-        // Step 12: Sync promotions
+        // Step 16: Sync promotions
         yield SyncStep.syncingPromotions;
         try {
           await _syncPromotions(null); // No auth token needed for now
@@ -1678,6 +1686,55 @@ class DataSyncService {
   /// Get cached sales req permissions
   Future<SalesReqPermissions?> getCachedSalesReqPermissions(String userCode) =>
       _dbService.getSalesReqPermissions(userCode);
+
+  /// Sync planned routes data
+  Future<List<PlannedRoute>> syncPlannedRoutes({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getPlannedRoutes(userCode);
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+    }
+
+    return await _syncPlannedRoutes(userCode);
+  }
+
+  Future<List<PlannedRoute>> _syncPlannedRoutes(String userCode) async {
+    final routeData = await _apiService.getPlannedRouteList(userCode: userCode);
+    if (kDebugMode) {
+      print('Rejalashtirilgan marshrutlar ma\'lumotlari yuklandi: ${routeData.length} ta marshrut');
+    }
+
+    // Convert API response to PlannedRoute objects
+    final routes = routeData.map((routeMap) => PlannedRoute(
+      id: 0, // Will be set by database
+      userCode: userCode,
+      codeWeekday: routeMap['codeWeekday'] as int,
+      weekDay: routeMap['weekDay'] as String,
+      codeClient: routeMap['codeClient'] as String,
+      clientName: routeMap['clientName'] as String,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    )).toList();
+
+    await _dbService.savePlannedRoutes(routes);
+    return routes;
+  }
+
+  /// Get cached planned routes
+  Future<List<PlannedRoute>> getCachedPlannedRoutes(String userCode) =>
+      _dbService.getPlannedRoutes(userCode);
+
+  /// Get cached planned routes by weekday
+  Future<List<PlannedRoute>> getCachedPlannedRoutesByWeekday(String userCode, int codeWeekday) =>
+      _dbService.getPlannedRoutesByWeekday(userCode, codeWeekday);
+
+  /// Get cached planned routes by client
+  Future<List<PlannedRoute>> getCachedPlannedRoutesByClient(String userCode, String codeClient) =>
+      _dbService.getPlannedRoutesByClient(userCode, codeClient);
 }
 
 /// Conflict resolution strategies

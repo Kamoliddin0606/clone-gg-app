@@ -1323,6 +1323,61 @@ class SoapApiService {
     }
   }
 
+  /// Get planned route list for a user
+  Future<List<Map<String, dynamic>>> getPlannedRouteList({
+    required String userCode,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:getPlannedRouteList>
+         <sam:CodeUser>$userCode</sam:CodeUser>
+      </sam:getPlannedRouteList>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final returnElement = document.findAllElements('m:return').firstOrNull;
+
+      if (returnElement == null) {
+        // Empty response - return empty list
+        return [];
+      }
+
+      // Parse row elements
+      final rowElements = returnElement.findAllElements('m:row');
+      final routes = <Map<String, dynamic>>[];
+
+      for (final row in rowElements) {
+        final route = {
+          'codeWeekday': int.tryParse(_getElementText(row, 'm:codeWeekday') ?? '0') ?? 0,
+          'weekDay': _getElementText(row, 'm:WeekDay') ?? '',
+          'codeClient': _getElementText(row, 'm:CodeClient') ?? '',
+          'clientName': _getElementText(row, 'm:ClientName') ?? '',
+        };
+        routes.add(route);
+      }
+
+      return routes;
+    } catch (e) {
+      throw Exception('Rejalashtirilgan marshrutlar ro\'yxatini olishda xatolik: $e');
+    }
+  }
+
   /// Get order details
   Future<OrderDetail> getOrderDetails({
     required String numberOrder,

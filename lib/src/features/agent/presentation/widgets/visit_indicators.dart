@@ -116,14 +116,14 @@ class VisitIndicators extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         VisitStatusIndicator(
           visitToday: visitToday,
           isVisited: isVisited,
         ),
-        if (visitToday) const SizedBox(height: 4),
+        if (visitToday) const SizedBox(width: 4),
         VisitStepIndicator(
           visitToday: visitToday,
           visitStepNumber: visitStepNumber,

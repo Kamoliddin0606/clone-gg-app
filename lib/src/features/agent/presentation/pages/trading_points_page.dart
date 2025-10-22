@@ -85,6 +85,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     static const String _expandedIndexKey = 'trading_points_expanded_index';
     static const String _isAlphabeticalSortKey = 'trading_points_alphabetical_sort';
     static const String _isDistanceSortKey = 'trading_points_distance_sort';
+    static const String _showVisitTodayOnlyKey = 'trading_points_visit_today_filter';
 
     final TextEditingController _searchController = TextEditingController();
     List<TradingPointWithPermissions> _allTradingPoints = [];
@@ -117,6 +118,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     bool _showFilters = false; // Filter panel visibility
     TradingPointsFilterState _filters = TradingPointsFilterState(); // Filter state
     List<String> _availableTradePointTypes = []; // Available trade point types for filtering
+    bool _showVisitTodayOnly = false; // Visit today filter state
 
     // PageStorage bucket for state persistence
     late final PageStorageBucket _storageBucket;
@@ -270,6 +272,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       _storageBucket.writeState(context, _expandedIndex);
       _storageBucket.writeState(context, _isAlphabeticalSort);
       _storageBucket.writeState(context, _isDistanceSort);
+      _storageBucket.writeState(context, _showVisitTodayOnly);
 
       if (kDebugMode) {
         print('TradingPointsPage state saved successfully');
@@ -292,6 +295,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       final savedExpandedIndex = _storageBucket.readState(context) as int?;
       final savedAlphabeticalSort = _storageBucket.readState(context) as bool?;
       final savedDistanceSort = _storageBucket.readState(context) as bool?;
+      final savedVisitTodayFilter = _storageBucket.readState(context) as bool?;
 
       if (savedSearch != null && savedSearch.isNotEmpty) {
         _searchController.text = savedSearch;
@@ -316,6 +320,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       }
       if (savedDistanceSort != null) {
         _isDistanceSort = savedDistanceSort;
+      }
+      if (savedVisitTodayFilter != null) {
+        _showVisitTodayOnly = savedVisitTodayFilter;
       }
 
       if (kDebugMode) {
@@ -390,6 +397,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);
+      if (kDebugMode) {
+        print('Error loading trading points: $e');
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -403,7 +413,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
   void _filterTradingPoints(String query) {
     setState(() {
-      if (query.isEmpty && _filters.tradePointTypes.isEmpty && _filters.businessRegions.isEmpty) {
+      if (query.isEmpty && _filters.tradePointTypes.isEmpty && _filters.businessRegions.isEmpty && !_showVisitTodayOnly) {
         _filteredTradingPoints = List.from(_allTradingPoints);
       } else {
         final qLatin = transliterateToLatin(query).toLowerCase();
@@ -426,7 +436,10 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           final regionMatch = _filters.businessRegions.isEmpty ||
               _filters.businessRegions.contains(tp.tradingPoint.codeRegion);
 
-          return searchMatch && typeMatch && regionMatch;
+          // Visit today filter
+          final visitTodayMatch = !_showVisitTodayOnly || tp.visitToday;
+
+          return searchMatch && typeMatch && regionMatch && visitTodayMatch;
         }).toList();
       }
       _clearDistanceCache(); // Clear cache when filtering changes
@@ -833,6 +846,21 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                     : null,
               ),
               tooltip: 'Filter',
+            ),
+
+            // Visit today filter button
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  _showVisitTodayOnly = !_showVisitTodayOnly;
+                  _filterTradingPoints(_searchController.text);
+                });
+              },
+              icon: Icon(
+                Icons.today,
+                color: _showVisitTodayOnly ? theme.colorScheme.primary : null,
+              ),
+              tooltip: _showVisitTodayOnly ? 'Bugungi tashrif filtrini o\'chirish' : 'Faqat bugungi tashrif mijozlarini ko\'rsatish',
             ),
 
             // Sorting button

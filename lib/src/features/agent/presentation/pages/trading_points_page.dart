@@ -393,6 +393,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         ..sort();
 
       _clearDistanceCache(); // Clear cache for fresh calculations
+      _filterTradingPoints(_searchController.text); // Re-apply current filters including visit_today
       _applySorting(); // Apply initial sorting
       setState(() => _isLoading = false);
     } catch (e) {
@@ -857,7 +858,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                 });
               },
               icon: Icon(
-                Icons.today,
+                Icons.today_outlined,
                 color: _showVisitTodayOnly ? theme.colorScheme.primary : null,
               ),
               tooltip: _showVisitTodayOnly ? 'Bugungi tashrif filtrini o\'chirish' : 'Faqat bugungi tashrif mijozlarini ko\'rsatish',

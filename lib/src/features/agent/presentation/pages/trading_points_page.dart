@@ -16,6 +16,7 @@ import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dar
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/trading_points_filters_panel.dart';
+import '../widgets/visit_indicators.dart';
 import 'orders_page.dart';
 import 'contracts_page.dart';
 
@@ -1189,10 +1190,22 @@ class TradingPointCard extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           leading:  _AvatarLeading(tp: tradingPoint, visited: tradingPoint.isVisited),
 
-      title: _buildScrollableText(
-        tradingPoint.name,
-        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-        maxLines: 3,
+      title: Row(
+        children: [
+          Expanded(
+            child: _buildScrollableText(
+              tradingPoint.name,
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              maxLines: 3,
+            ),
+          ),
+          const SizedBox(width: 8),
+          VisitIndicators(
+            visitToday: tradingPoint.visitToday,
+            isVisited: tradingPoint.isVisited,
+            visitStepNumber: tradingPoint.visitStepNumber,
+          ),
+        ],
       ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
@@ -1860,6 +1873,16 @@ class _TradingPointGridTile extends StatelessWidget {
                     right: 4,
                     child: _buildDistanceOverlay(tp, locationService!),
                   ),
+                // Add visit indicators on top-right corner
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: VisitIndicators(
+                    visitToday: tp.visitToday,
+                    isVisited: tp.isVisited,
+                    visitStepNumber: tp.visitStepNumber,
+                  ),
+                ),
               ],
             ),
           ),

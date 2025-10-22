@@ -1370,9 +1370,9 @@ class TradingPointCard extends StatelessWidget {
 
     return [
       // Visit button - only enabled if user has visit permission
-      if (!tradingPoint.isVisited)
+      if (permissions?.visit == true && tradingPoint.visitToday == true)
         FilledButton.icon(
-          onPressed: (permissions?.visit ?? false) ? onInformVisit : null,
+          onPressed:  onInformVisit,
           icon: const Icon(Icons.storefront, size: 18),
           label: Text(l10n.visitClient),
           style: FilledButton.styleFrom(
@@ -1384,8 +1384,9 @@ class TradingPointCard extends StatelessWidget {
           ),
         ),
       // Unplanned order button - only enabled if user has unplannedOrder permission
+     if(permissions?.visit == true && permissions?.unplannedOrder == true && tradingPoint.visitToday == false)
       FilledButton.tonalIcon(
-        onPressed: permissions?.unplannedOrder == true ? onCreateOrder : null,
+        onPressed: onCreateOrder ,
         icon: const Icon(Icons.shopping_cart, size: 18),
         label: Text(l10n.unplannedOrder),
         style: FilledButton.styleFrom(
@@ -1457,7 +1458,7 @@ class TradingPointCard extends StatelessWidget {
         Icon(Icons.location_on, size: 16, color: cs.primary),
         const SizedBox(width: 6),
         Text(
-          "text: "+ distanceText,
+          distanceText,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: cs.primary,
             fontWeight: FontWeight.w600,
@@ -1722,15 +1723,22 @@ class TradingPointGridCard extends StatelessWidget {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    //if (!tradingPoint.isVisited)
+                    if (permissions?.visit == true && tradingPoint.visitToday == true)
                     FilledButton.icon(
-                          onPressed: permissions?.visit == true ? onInformVisit : null,
+                          onPressed: onInformVisit,
                           icon: const Icon(Icons.storefront, size: 16),
                           label: Text(AppLocalizations.of(context)!.visitClient),
                         ),
+                    if(permissions?.visit == true && permissions?.unplannedOrder == true && tradingPoint.visitToday == false)
                     FilledButton.tonalIcon(
-                      onPressed: permissions?.unplannedOrder == true ? onCreateOrder : null,
+                      onPressed: onCreateOrder,
                       icon: const Icon(Icons.list_alt, size: 16),
+                      label: Text(AppLocalizations.of(context)!.unplannedOrder),
+                    ),
+
+                    OutlinedButton.icon(
+                      onPressed: onCreateOrder,
+                      icon: const Icon(Icons.description, size: 16),
                       label: Text(AppLocalizations.of(context)!.orders),
                     ),
                     //if (tradingPoint.hasContract)
@@ -1739,6 +1747,7 @@ class TradingPointGridCard extends StatelessWidget {
                         icon: const Icon(Icons.description, size: 16),
                         label: Text(AppLocalizations.of(context)!.contracts),
                       ),
+
                     OutlinedButton.icon(
                       onPressed: onRefusal,
                       icon: const Icon(Icons.cancel, size: 16),
@@ -2502,14 +2511,15 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              //if (!widget.tradingPoint.isVisited)
+              if (widget.permissions?.visit == true && widget.tradingPoint.visitToday == true)
               FilledButton.icon(
-                  onPressed: widget.permissions?.visit == true ? widget.onInformVisit : null,
+                  onPressed:  widget.onInformVisit,
                   icon: const Icon(Icons.storefront, size: 18),
                   label: Text(AppLocalizations.of(context)!.visitClient),
                 ),
+              if (widget.permissions?.visit == true && widget.permissions?.unplannedOrder == true && widget.tradingPoint.visitToday == false)
               FilledButton.icon(
-                onPressed: widget.permissions?.unplannedOrder == true ? widget.onCreateOrder : null,
+                onPressed:  widget.onCreateOrder,
                 icon: const Icon(Icons.shopping_cart, size: 18),
                 label: Text(AppLocalizations.of(context)!.unplannedOrder),
               ),

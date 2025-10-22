@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
@@ -2325,27 +2326,80 @@ class ApiDatabaseService {
     await db.delete('product_balances', where: 'code_sklad = ? AND code_product = ?', whereArgs: [warehouseCode, productCode]);
   }
 
-  /// Get cached trading points with permissions using optimized JOIN query
+  /// Get cached trading points with permissions and visit data using optimized JOIN query
   Future<List<TradingPointWithPermissions>> getTradingPointsWithPermissions(String userCode) async {
-    final db = await database;
-    final result = await db.rawQuery('''
-      SELECT
-        c.*,
-        srp.id as permissions_id,
-        srp.user_code,
-        srp.skip_tin_duplicate_check,
-        srp.allow_creation_without_tin,
-        srp.allow_creating_point_of_sale,
-        srp.visit,
-        srp.strict_sequence,
-        srp.unplanned_order,
-        srp.planned_route
-      FROM clients c
-      LEFT JOIN sales_req_permissions srp ON srp.user_code = ?
-      ORDER BY c.name ASC
-    ''', [userCode]);
+    try {
+      final db = await database;
 
-    return result.map((row) => TradingPointWithPermissions.fromMap(row)).toList();
+      // Joriy hafta kunini aniqlash
+      final now = DateTime.now();
+      final currentWeekdayCode = now.weekday; // 1 = Monday, 7 = Sunday
+
+      if (kDebugMode) {
+        print('DEBUG: Getting trading points for user: $userCode, weekday: $currentWeekdayCode');
+      }
+
+      final result = await db.rawQuery('''
+        SELECT
+          c.*,
+          srp.id as permissions_id,
+          srp.user_code,
+          srp.skip_tin_duplicate_check,
+          srp.allow_creation_without_tin,
+          srp.allow_creating_point_of_sale,
+          srp.visit,
+          srp.strict_sequence,
+          srp.unplanned_order,
+          srp.planned_route,
+          CASE WHEN pr.code_client IS NOT NULL THEN 1 ELSE 0 END as visit_today,
+          COALESCE(pr.visit_order, 0) as visit_step_number,
+          pr.week_day as planned_week_day
+        FROM clients c
+        LEFT JOIN sales_req_permissions srp ON srp.user_code = ?
+        LEFT JOIN (
+          SELECT
+            code_client,
+            ROW_NUMBER() OVER (ORDER BY id) as visit_order,
+            week_day
+          FROM planned_routes
+          WHERE user_code = ? AND code_weekday = ?
+        ) pr ON c.code = pr.code_client
+        ORDER BY c.name ASC''',[userCode, userCode, currentWeekdayCode]);
+
+      for (final row in result) {
+        print('DEBUG: client_code: ${row}');
+      }
+      if (kDebugMode) {
+        print('DEBUG: Query returned ${result.length} trading points');
+        if (result.isNotEmpty) {
+          final sample = result.first;
+          print('DEBUG: Sample result - visit_today: ${sample['visit_today']}, visit_step_number: ${sample['visit_step_number']}');
+        }
+      }
+
+      final tradingPoints = result.map((row) {
+        try {
+          return TradingPointWithPermissions.fromMap(row);
+        } catch (e) {
+          if (kDebugMode) {
+            print('ERROR: Failed to parse TradingPointWithPermissions from row: $row, error: $e');
+          }
+          rethrow;
+        }
+      }).toList();
+
+      if (kDebugMode) {
+        print('DEBUG: Successfully parsed ${tradingPoints.length} TradingPointWithPermissions objects');
+      }
+
+      return tradingPoints;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ERROR: Failed to get trading points with permissions: $e');
+        print('Stack trace: ${StackTrace.current}');
+      }
+      rethrow;
+    }
   }
 
   // Optimized method to get products with prices using JOINs

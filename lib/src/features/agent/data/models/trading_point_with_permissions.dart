@@ -40,6 +40,9 @@ class TradingPointWithPermissions {
       creditLimit: (map['credit_limit'] as num?)?.toDouble() ?? 0.0,
       accumulatedCredit: (map['accumulated_credit'] as num?)?.toDouble() ?? 0.0,
       codeRegion: map['code_region'] as String? ?? '',
+      visitToday: (map['visit_today'] as int?) == 1,
+      visitStepNumber: map['visit_step_number'] as int? ?? 0,
+      plannedWeekDay: map['planned_week_day'] as String?,
     );
 
     // Create permissions if available
@@ -76,6 +79,18 @@ class TradingPointWithPermissions {
   /// Check if user can view contracts for this trading point
   bool get canViewContracts => tradingPoint.hasContract;
 
+  /// Visit today flag (computed from trading point data)
+  bool get visitToday => tradingPoint.visitToday;
+
+  /// Strict visit sequence flag (computed from permissions)
+  bool get strictVisitSequence => permissions?.strictSequence ?? false;
+
+  /// Visit step number (computed from trading point data)
+  int get visitStepNumber => tradingPoint.visitStepNumber;
+
+  /// Planned week day text (computed from trading point data)
+  String? get plannedWeekDay => tradingPoint.plannedWeekDay;
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -89,6 +104,6 @@ class TradingPointWithPermissions {
 
   @override
   String toString() {
-    return 'TradingPointWithPermissions(tradingPoint: $tradingPoint, permissions: $permissions)';
+    return 'TradingPointWithPermissions(tradingPoint: $tradingPoint, permissions: $permissions, visitToday: $visitToday, strictVisitSequence: $strictVisitSequence, visitStepNumber: $visitStepNumber)';
   }
 }

@@ -357,8 +357,21 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       // Create region code to name mapping for fast lookups
       _regionNames = {for (final region in regions) region.code: region.name};
 
-      // Get trading points with permissions using efficient JOIN query
+      // Get trading points with permissions and visit data using efficient JOIN query
       final tradingPointsWithPermissions = await dbService.getTradingPointsWithPermissions(userCode);
+
+      if (kDebugMode) {
+        print('Loaded ${tradingPointsWithPermissions.length} trading points with permissions');
+
+        // Bugungi kun uchun planned routes sonini hisoblash
+        final todayPlannedCount = tradingPointsWithPermissions.where((tp) => tp.visitToday).length;
+        print('Bugungi kun uchun planned routes: $todayPlannedCount ta mijoz');
+
+        if (tradingPointsWithPermissions.isNotEmpty) {
+          final sample = tradingPointsWithPermissions.first;
+          print('Sample trading point: ${sample.tradingPoint.name}, visitToday: ${sample.visitToday}, visitStepNumber: ${sample.visitStepNumber}');
+        }
+      }
 
       _allTradingPoints = tradingPointsWithPermissions;
       _filteredTradingPoints = List.from(_allTradingPoints);
@@ -1363,7 +1376,7 @@ class TradingPointCard extends StatelessWidget {
         onPressed: () {
           // TODO: Navigate to route page
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${tradingPoint.name} uchun marshrut')),
+            SnackBar(content: Text('${tradingPoint.visitToday==null?"null":tradingPoint.visitToday}"} uchun marshrut')),
           );
         },
         icon: const Icon(Icons.route, size: 18),

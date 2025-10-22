@@ -27,6 +27,11 @@ class TradingPoint {
   final double accumulatedCredit;
   final String codeRegion;
 
+  // Yangi maydonlar: visit ma'lumotlari
+  final bool visitToday;
+  final int visitStepNumber;
+  final String? plannedWeekDay;
+
   const TradingPoint({
     required this.id,
     required this.name,
@@ -53,6 +58,9 @@ class TradingPoint {
     required this.creditLimit,
     required this.accumulatedCredit,
     required this.codeRegion,
+    this.visitToday = false,
+    this.visitStepNumber = 0,
+    this.plannedWeekDay,
   });
 
   factory TradingPoint.fromJson(Map<String, dynamic> json) {
@@ -102,6 +110,9 @@ class TradingPoint {
       creditLimit: _safeParseDouble(json['creditLimit'], 'creditLimit'),
       accumulatedCredit: _safeParseDouble(json['accumulatedCredit'], 'accumulatedCredit'),
       codeRegion: json['codeRegion']?.toString() ?? '',
+      visitToday: json['visitToday'] == true,
+      visitStepNumber: json['visitStepNumber'] ?? 0,
+      plannedWeekDay: json['plannedWeekDay']?.toString(),
     );
   }
 
@@ -132,6 +143,9 @@ class TradingPoint {
       'creditLimit': creditLimit,
       'accumulatedCredit': accumulatedCredit,
       'codeRegion': codeRegion,
+      'visitToday': visitToday,
+      'visitStepNumber': visitStepNumber,
+      'plannedWeekDay': plannedWeekDay,
     };
   }
 
@@ -161,6 +175,9 @@ class TradingPoint {
     double? creditLimit,
     double? accumulatedCredit,
     String? codeRegion,
+    bool? visitToday,
+    int? visitStepNumber,
+    String? plannedWeekDay,
   }) {
     return TradingPoint(
       id: id ?? this.id,
@@ -188,6 +205,9 @@ class TradingPoint {
       creditLimit: creditLimit ?? this.creditLimit,
       accumulatedCredit: accumulatedCredit ?? this.accumulatedCredit,
       codeRegion: codeRegion ?? this.codeRegion,
+      visitToday: visitToday ?? this.visitToday,
+      visitStepNumber: visitStepNumber ?? this.visitStepNumber,
+      plannedWeekDay: plannedWeekDay ?? this.plannedWeekDay,
     );
   }
 
@@ -202,6 +222,6 @@ class TradingPoint {
 
   @override
   String toString() {
-    return 'TradingPoint(id: $id, name: $name, address: $address)';
+    return 'TradingPoint(id: $id, name: $name, address: $address, visitToday: $visitToday, visitStepNumber: $visitStepNumber)';
   }
 }

@@ -96,7 +96,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get loading => 'Загрузка...';
 
   @override
-  String get noData => 'Данные отсутствуют';
+  String get noData => 'Нет данных';
 
   @override
   String get retry => 'Повторить';
@@ -970,4 +970,97 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get rememberMe => 'Запомнить меня';
+
+  @override
+  String get databaseView => 'Просмотр базы данных';
+
+  @override
+  String get preferenceKey => 'Ключ настройки';
+
+  @override
+  String get value => 'Значение';
+
+  @override
+  String get id => 'ID';
+
+  @override
+  String get code => 'Код';
+
+  @override
+  String get name => 'Имя';
+
+  @override
+  String get role => 'Роль';
+
+  @override
+  String get warehouseCode => 'Код склада';
+
+  @override
+  String get codeProject => 'Код проекта';
+
+  @override
+  String get baseUrl => 'Базовый URL';
+
+  @override
+  String get telegramId => 'Telegram ID';
+
+  @override
+  String get chatId => 'Chat ID';
+
+  @override
+  String get topicId => 'Topic ID';
+
+  @override
+  String get createdAt => 'Создано';
+
+  @override
+  String get updatedAt => 'Обновлено';
+
+  @override
+  String get totalPercent => 'Общий %';
+
+  @override
+  String get forecastPercent => 'Прогноз %';
+
+  @override
+  String get akbPercent => '% AKB';
+
+  @override
+  String get updateDate => 'Дата обновления';
+
+  @override
+  String get exit => 'Выход';
+
+  @override
+  String get confirmExit => 'Вы действительно хотите выйти?';
+
+  @override
+  String get contactPerson => 'Контакт';
+
+  @override
+  String get lastVisitDate => 'Последний визит';
+
+  @override
+  String get hasOrders => 'Есть заказы';
+
+  @override
+  String get hasContracts => 'Есть контракты';
+
+  @override
+  String get isVisited => 'Посещен';
+
+  @override
+  String get hasContract => 'Есть контракт';
+
+  @override
+  String get coordinates => 'Координаты';
+
+  @override
+  String get creditLimit => 'Кредитный лимит';
+
+  @override
+  String get accumulatedCredit => 'Накопленный кредит';
+
+  @override
+  String get codeRegion => 'Код региона';
 }

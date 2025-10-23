@@ -2156,9 +2156,6 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header image + title (uslub AgentHome bilan uyg‘un)
-          _HeaderImage(url: url, visited: widget.tradingPoint.isVisited),
-
           // Page Indicator Line
           SizedBox(
             height: 2,
@@ -2207,7 +2204,7 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
 }
 
 // Client Details Page
-class _ClientDetailsPage extends StatelessWidget {
+class _ClientDetailsPage extends StatefulWidget {
   final TradingPoint tradingPoint;
   final VoidCallback onCall;
 
@@ -2215,6 +2212,57 @@ class _ClientDetailsPage extends StatelessWidget {
     required this.tradingPoint,
     required this.onCall,
   });
+
+  @override
+  State<_ClientDetailsPage> createState() => _ClientDetailsPageState();
+}
+
+class _ClientDetailsPageState extends State<_ClientDetailsPage> {
+  bool _locationPermissionGranted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationPermission();
+  }
+
+  /// Validates and returns a valid LatLng, with fallback for invalid coordinates
+  LatLng _getValidLatLng(double latitude, double longitude, String clientName) {
+    // Check if coordinates are valid (not null, not zero, and within valid ranges)
+    const double minLat = -90.0;
+    const double maxLat = 90.0;
+    const double minLng = -180.0;
+    const double maxLng = 180.0;
+
+    // Default fallback coordinates (Tashkent, Uzbekistan)
+    const double defaultLat = 41.2995;
+    const double defaultLng = 69.2401;
+
+    bool isValid = latitude >= minLat && latitude <= maxLat &&
+                   longitude >= minLng && longitude <= maxLng &&
+                   latitude != 0.0 && longitude != 0.0;
+
+    if (!isValid) {
+      print('Warning: Invalid coordinates for $clientName: lat=$latitude, lng=$longitude. Using default location.');
+      return const LatLng(defaultLat, defaultLng);
+    }
+
+    return LatLng(latitude, longitude);
+  }
+
+  Future<void> _checkLocationPermission() async {
+    final status = await Permission.location.status;
+    if (status.isGranted) {
+      setState(() {
+        _locationPermissionGranted = true;
+      });
+    } else {
+      final result = await Permission.location.request();
+      setState(() {
+        _locationPermissionGranted = result.isGranted;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2226,8 +2274,41 @@ class _ClientDetailsPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Map component moved here
+          Container(
+            height: 200,
+            margin: const EdgeInsets.only(bottom: 16),
+            child: _locationPermissionGranted
+                ? GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target: _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
+                      zoom: 15,
+                    ),
+                    markers: {
+                      Marker(
+                        markerId: MarkerId(widget.tradingPoint.id),
+                        position: _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
+                        infoWindow: InfoWindow(title: widget.tradingPoint.name),
+                      ),
+                    },
+                    onMapCreated: (controller) {
+                      // Map controller can be managed here if needed
+                    },
+                  )
+                : Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.location_off, size: 48, color: Colors.grey),
+                        const SizedBox(height: 8),
+                        Text('Joylashuv ruxsati berilmagan', style: theme.textTheme.bodyMedium),
+                      ],
+                    ),
+                  ),
+          ),
+
           Text(
-            tradingPoint.name,
+            widget.tradingPoint.name,
             style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -2239,7 +2320,7 @@ class _ClientDetailsPage extends StatelessWidget {
             children: [
               const Icon(Icons.place_outlined, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text(tradingPoint.address, style: theme.textTheme.bodyMedium, maxLines: 3, overflow: TextOverflow.ellipsis)),
+              Expanded(child: Text(widget.tradingPoint.address, style: theme.textTheme.bodyMedium, maxLines: 3, overflow: TextOverflow.ellipsis)),
             ],
           ),
           const SizedBox(height: 6),
@@ -2249,18 +2330,18 @@ class _ClientDetailsPage extends StatelessWidget {
             children: [
               const Icon(Icons.badge_outlined, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text('INN: ${tradingPoint.inn}')),
+              Expanded(child: Text('INN: ${widget.tradingPoint.inn}')),
             ],
           ),
           const SizedBox(height: 6),
 
           // Owner Name
-          if (tradingPoint.ownerName.isNotEmpty)
+          if (widget.tradingPoint.ownerName.isNotEmpty)
             Row(
               children: [
                 const Icon(Icons.person, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Egasi: ${tradingPoint.ownerName}')),
+                Expanded(child: Text('Egasi: ${widget.tradingPoint.ownerName}')),
               ],
             ),
           const SizedBox(height: 6),
@@ -2270,7 +2351,7 @@ class _ClientDetailsPage extends StatelessWidget {
             children: [
               const Icon(Icons.person_outline, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text('Aloqa: ${tradingPoint.contactPerson}')),
+              Expanded(child: Text('Aloqa: ${widget.tradingPoint.contactPerson}')),
             ],
           ),
           const SizedBox(height: 6),
@@ -2281,10 +2362,10 @@ class _ClientDetailsPage extends StatelessWidget {
               const Icon(Icons.phone_outlined, size: 18),
               const SizedBox(width: 8),
               InkWell(
-                onTap: onCall,
+                onTap: widget.onCall,
                 borderRadius: BorderRadius.circular(6),
                 child: Text(
-                  tradingPoint.phone,
+                  widget.tradingPoint.phone,
                   style: TextStyle(
                     color: cs.primary,
                     decoration: TextDecoration.underline,
@@ -2296,34 +2377,34 @@ class _ClientDetailsPage extends StatelessWidget {
           const SizedBox(height: 6),
 
           // Responsible Person
-          if (tradingPoint.responsiblePerson.isNotEmpty)
+          if (widget.tradingPoint.responsiblePerson.isNotEmpty)
             Row(
               children: [
                 const Icon(Icons.account_circle_outlined, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Mas\'ul: ${tradingPoint.responsiblePerson}')),
+                Expanded(child: Text('Mas\'ul: ${widget.tradingPoint.responsiblePerson}')),
               ],
             ),
           const SizedBox(height: 6),
 
           // Responsible Person Phone
-          if (tradingPoint.responsiblePersonPhone.isNotEmpty)
+          if (widget.tradingPoint.responsiblePersonPhone.isNotEmpty)
             Row(
               children: [
                 const Icon(Icons.phone_android_outlined, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Mas\'ul tel: ${tradingPoint.responsiblePersonPhone}')),
+                Expanded(child: Text('Mas\'ul tel: ${widget.tradingPoint.responsiblePersonPhone}')),
               ],
             ),
           const SizedBox(height: 6),
 
           // Trade Point Type
-          if (tradingPoint.tradePointType.isNotEmpty)
+          if (widget.tradingPoint.tradePointType.isNotEmpty)
             Row(
               children: [
                 const Icon(Icons.storefront_outlined, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Turi: ${tradingPoint.tradePointType}')),
+                Expanded(child: Text('Turi: ${widget.tradingPoint.tradePointType}')),
               ],
             ),
           const SizedBox(height: 6),
@@ -2333,29 +2414,29 @@ class _ClientDetailsPage extends StatelessWidget {
             children: [
               const Icon(Icons.location_city_outlined, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text('${tradingPoint.region}, ${tradingPoint.district}')),
+              Expanded(child: Text('${widget.tradingPoint.region}, ${widget.tradingPoint.district}')),
             ],
           ),
           const SizedBox(height: 6),
 
           // Signboard
-          if (tradingPoint.signboard.isNotEmpty)
+          if (widget.tradingPoint.signboard.isNotEmpty)
             Row(
               children: [
                 const Icon(Icons.signpost_outlined, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Belgi: ${tradingPoint.signboard}')),
+                Expanded(child: Text('Belgi: ${widget.tradingPoint.signboard}')),
               ],
             ),
           const SizedBox(height: 6),
 
           // Reference Point
-          if (tradingPoint.referencePoint.isNotEmpty)
+          if (widget.tradingPoint.referencePoint.isNotEmpty)
             Row(
               children: [
                 const Icon(Icons.gps_fixed_outlined, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Mo\'ljal: ${tradingPoint.referencePoint}')),
+                Expanded(child: Text('Mo\'ljal: ${widget.tradingPoint.referencePoint}')),
               ],
             ),
         ],
@@ -2465,44 +2546,12 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final url = _safePhotoUrl(widget.tradingPoint);
 
     return Column(
       children: [
-        // Map at top
-        Expanded(
-          flex: 2, // Give more space to map
-          child: _locationPermissionGranted
-              ? GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
-                    zoom: 15,
-                  ),
-                  markers: {
-                    Marker(
-                      markerId: MarkerId(widget.tradingPoint.id),
-                      position: _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
-                      infoWindow: InfoWindow(title: widget.tradingPoint.name),
-                    ),
-                  },
-                  onMapCreated: (controller) {
-                    _mapController = controller;
-                  },
-                )
-              : Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.location_off, size: 48, color: Colors.grey),
-                      const SizedBox(height: 8),
-                      Text('Joylashuv ruxsati berilmagan', style: theme.textTheme.bodyMedium),
-                      TextButton(
-                        onPressed: _checkLocationPermission,
-                        child: const Text('Ruxsat so\'rash'),
-                      ),
-                    ],
-                  ),
-                ),
-        ),
+        // Header image before actions
+        _HeaderImage(url: url, visited: widget.tradingPoint.isVisited),
 
         // Actions below
         Padding(
@@ -2568,7 +2617,7 @@ class _HeaderImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final h = 180.0;
+    final h = 250.0;
     Widget content;
 
     if (url == null || url!.trim().isEmpty) {

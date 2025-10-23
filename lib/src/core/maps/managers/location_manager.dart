@@ -103,14 +103,14 @@ class LocationManager {
       // Stop existing subscription
       await stopLocationUpdates();
 
-      _positionSubscription = Geolocator.getPositionStream(
+      _positionSubscription = geolocator.Geolocator.getPositionStream(
         locationSettings: LocationSettings(
           accuracy: _convertAccuracy(accuracy),
           distanceFilter: distanceFilter,
           timeLimit: _defaultTimeout,
         ),
       ).listen(
-        (Position position) {
+        (geolocator.Position position) {
           final locationData = LocationData.fromPosition(position);
           _lastKnownLocation = locationData;
 
@@ -222,7 +222,7 @@ class LocationManager {
     await _ensureInitialized();
 
     try {
-      final position = await Geolocator.getCurrentPosition(
+      final position = await geolocator.Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best,
         timeLimit: _defaultTimeout,
       );
@@ -245,10 +245,10 @@ class LocationManager {
   /// Request location permissions
   Future<bool> requestPermissions() async {
     try {
-      final permission = await Geolocator.requestPermission();
+      final permission = await geolocator.Geolocator.requestPermission();
 
-      final granted = permission == LocationPermission.always ||
-                      permission == LocationPermission.whileInUse;
+      final granted = permission == geolocator.LocationPermission.always ||
+                      permission == geolocator.LocationPermission.whileInUse;
 
       if (granted) {
         _statusStreamController.add(LocationStatus.ready);
@@ -269,9 +269,9 @@ class LocationManager {
   /// Check location permissions
   Future<bool> _checkPermissions() async {
     try {
-      final permission = await Geolocator.checkPermission();
-      return permission == LocationPermission.always ||
-             permission == LocationPermission.whileInUse;
+      final permission = await geolocator.Geolocator.checkPermission();
+      return permission == geolocator.LocationPermission.always ||
+             permission == geolocator.LocationPermission.whileInUse;
     } catch (e) {
       if (kDebugMode) {
         print('Error checking permissions: $e');
@@ -283,7 +283,7 @@ class LocationManager {
   /// Check if location services are enabled
   Future<bool> _checkLocationServices() async {
     try {
-      return await Geolocator.isLocationServiceEnabled();
+      return await geolocator.Geolocator.isLocationServiceEnabled();
     } catch (e) {
       if (kDebugMode) {
         print('Error checking location services: $e');
@@ -295,7 +295,7 @@ class LocationManager {
   /// Open location settings
   Future<bool> openLocationSettings() async {
     try {
-      return await Geolocator.openLocationSettings();
+      return await geolocator.Geolocator.openLocationSettings();
     } catch (e) {
       if (kDebugMode) {
         print('Error opening location settings: $e');
@@ -307,7 +307,7 @@ class LocationManager {
   /// Open app settings
   Future<bool> openAppSettings() async {
     try {
-      return await Geolocator.openAppSettings();
+      return await geolocator.Geolocator.openAppSettings();
     } catch (e) {
       if (kDebugMode) {
         print('Error opening app settings: $e');
@@ -424,7 +424,7 @@ class LocationData {
     this.timestamp,
   });
 
-  factory LocationData.fromPosition(Position position) {
+  factory LocationData.fromPosition(geolocator.Position position) {
     return LocationData(
       latitude: position.latitude,
       longitude: position.longitude,
@@ -509,7 +509,7 @@ class LocationRegion {
     required this.name,
     required this.polygonPoints,
   }) : type = RegionType.polygon,
-       center = _calculatePolygonCenter(polygonPoints),
+       center = _calculatePolygonCenter(polygonPoints!),
        radius = null,
        bounds = null;
 

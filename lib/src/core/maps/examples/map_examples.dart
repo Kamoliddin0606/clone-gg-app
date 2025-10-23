@@ -45,7 +45,7 @@ class MapExamples {
           title: 'Main Office',
           description: 'Headquarters location',
         ),
-        type: MarkerType.client,
+        type: MarkerType.contract,
         title: 'Main Office',
         snippet: 'Our headquarters',
       ),
@@ -58,7 +58,7 @@ class MapExamples {
           title: 'Branch Office',
           description: 'Downtown branch',
         ),
-        type: MarkerType.client,
+        type: MarkerType.contract,
         title: 'Branch Office',
         snippet: 'Downtown location',
       ),
@@ -71,7 +71,7 @@ class MapExamples {
           title: 'Central Warehouse',
           description: 'Main storage facility',
         ),
-        type: MarkerType.warehouse,
+        type: MarkerType.user,
         title: 'Central Warehouse',
         snippet: 'Storage facility',
       ),
@@ -215,7 +215,7 @@ class _RoutePlanningExampleState extends State<RoutePlanningExample> {
       coordinates: _waypoints.map((p) => [p.longitude, p.latitude]).toList(),
       distance: 15.5, // km
       estimatedTime: Duration(minutes: 45),
-      travelMode: TravelMode.driving,
+      travelMode: TravelMode.driving, createdAt: DateTime.now(),
     );
 
     setState(() => _currentRoute = mockRoute);
@@ -501,7 +501,7 @@ class MarkerClusteringExample extends StatelessWidget {
         longitude: 69.2401 + (index ~/ 20 - 5) * 0.01,
         title: 'Marker $index',
       ),
-      type: MarkerType.client,
+      type: MarkerType.user,
     ),
   );
 
@@ -534,10 +534,10 @@ class CustomStylingExample extends StatelessWidget {
         provider: MapProvider.google,
         settings: MapSettings(
           mapType: MapType.satellite,
-          theme: MapTheme.dark,
+          // theme: MapTheme.dark,
           showUserLocation: true,
           showCompass: true,
-          enableRotate: true,
+          enableRotation: true,
           enableTilt: true,
         ),
         initialCenter: MapPoint(

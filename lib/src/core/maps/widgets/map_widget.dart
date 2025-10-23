@@ -2,15 +2,18 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import '../managers/location_manager.dart';
+import '../managers/marker_manager.dart';
+import '../managers/route_manager.dart';
 import '../models/map_point.dart';
 import '../models/map_route.dart';
-import '../models/map_marker.dart';
+import '../models/map_marker.dart' hide MarkerClusterConfig;
 import '../models/map_settings.dart';
-import '../services/map_service.dart';
+import '../services/map_service.dart' hide RouteService;
 import '../managers/marker_manager.dart' as marker_manager;
 import '../managers/route_manager.dart' as route_manager;
 import '../managers/location_manager.dart' as location_manager;
-
+import '../services/route_service.dart';
 /// Unified map widget that integrates all map services and managers
 class UnifiedMapWidget extends StatefulWidget {
   final MapProvider provider;
@@ -26,7 +29,7 @@ class UnifiedMapWidget extends StatefulWidget {
   final Function(MapPoint)? onTap;
   final Function(MapMarker)? onMarkerTap;
   final Function(MapRoute)? onRouteTap;
-  final Function(LocationData)? onLocationUpdate;
+  final Function(location_manager.LocationData)? onLocationUpdate;
 
   const UnifiedMapWidget({
     super.key,
@@ -52,9 +55,9 @@ class UnifiedMapWidget extends StatefulWidget {
 
 class _UnifiedMapWidgetState extends State<UnifiedMapWidget> {
   late final MapService _mapService;
-  late final MarkerManager _markerManager;
-  late final RouteManager _routeManager;
-  late final LocationManager _locationManager;
+  late final marker_manager.MarkerManager _markerManager;
+  late final route_manager.RouteManager _routeManager;
+  late final location_manager.LocationManager _locationManager;
 
   MapView? _mapView;
   bool _isInitialized = false;
@@ -85,7 +88,7 @@ class _UnifiedMapWidgetState extends State<UnifiedMapWidget> {
         mapService: _mapService,
         provider: widget.provider,
       );
-      _locationManager = LocationManager();
+      _locationManager = location_manager.LocationManager();
 
       // Initialize map service
       await _mapService.initialize();
@@ -273,7 +276,7 @@ class _UnifiedMapWidgetState extends State<UnifiedMapWidget> {
     }
   }
 
-  void _updateUserLocationMarker(LocationData location) {
+  void _updateUserLocationMarker(location_manager.LocationData location) {
     // Implementation for updating user location marker
     // This would create or update a special marker for user location
   }
@@ -454,7 +457,7 @@ class RouteInfoOverlay extends StatelessWidget {
                   if (onOptimize != null) ...[
                     TextButton.icon(
                       onPressed: onOptimize,
-                      icon: const Icon(Icons.optimize),
+                      icon: const Icon(Icons.star),
                       label: const Text('Optimize'),
                     ),
                     const SizedBox(width: 8),

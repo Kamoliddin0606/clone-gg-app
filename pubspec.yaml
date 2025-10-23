@@ -57,6 +57,9 @@ dependencies:
 
   # Maps & Permissions
   google_maps_flutter: ^2.6.0
+  yandex_mapkit: ^4.0.0
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
   permission_handler: ^12.0.1
 
   # Reactive Programming

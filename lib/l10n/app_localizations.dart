@@ -274,7 +274,7 @@ abstract class AppLocalizations {
   /// No description provided for @noData.
   ///
   /// In en, this message translates to:
-  /// **'No data available'**
+  /// **'No data'**
   String get noData;
 
   /// No description provided for @retry.
@@ -2022,6 +2022,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remember me'**
   String get rememberMe;
+
+  /// No description provided for @databaseView.
+  ///
+  /// In en, this message translates to:
+  /// **'Database View'**
+  String get databaseView;
+
+  /// No description provided for @preferenceKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Preference Key'**
+  String get preferenceKey;
+
+  /// No description provided for @value.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get value;
+
+  /// No description provided for @id.
+  ///
+  /// In en, this message translates to:
+  /// **'ID'**
+  String get id;
+
+  /// No description provided for @code.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get code;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @role.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get role;
+
+  /// No description provided for @warehouseCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse Code'**
+  String get warehouseCode;
+
+  /// No description provided for @codeProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Code Project'**
+  String get codeProject;
+
+  /// No description provided for @baseUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Base URL'**
+  String get baseUrl;
+
+  /// No description provided for @telegramId.
+  ///
+  /// In en, this message translates to:
+  /// **'Telegram ID'**
+  String get telegramId;
+
+  /// No description provided for @chatId.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat ID'**
+  String get chatId;
+
+  /// No description provided for @topicId.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic ID'**
+  String get topicId;
+
+  /// No description provided for @createdAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Created At'**
+  String get createdAt;
+
+  /// No description provided for @updatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated At'**
+  String get updatedAt;
+
+  /// No description provided for @totalPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Total %'**
+  String get totalPercent;
+
+  /// No description provided for @forecastPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast %'**
+  String get forecastPercent;
+
+  /// No description provided for @akbPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB %'**
+  String get akbPercent;
+
+  /// No description provided for @updateDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Date'**
+  String get updateDate;
+
+  /// No description provided for @exit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get exit;
+
+  /// No description provided for @confirmExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to exit?'**
+  String get confirmExit;
+
+  /// No description provided for @contactPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get contactPerson;
+
+  /// No description provided for @lastVisitDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Visit'**
+  String get lastVisitDate;
+
+  /// No description provided for @hasOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Has Orders'**
+  String get hasOrders;
+
+  /// No description provided for @hasContracts.
+  ///
+  /// In en, this message translates to:
+  /// **'Has Contracts'**
+  String get hasContracts;
+
+  /// No description provided for @isVisited.
+  ///
+  /// In en, this message translates to:
+  /// **'Is Visited'**
+  String get isVisited;
+
+  /// No description provided for @hasContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Has Contract'**
+  String get hasContract;
+
+  /// No description provided for @coordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'Coordinates'**
+  String get coordinates;
+
+  /// No description provided for @creditLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit Limit'**
+  String get creditLimit;
+
+  /// No description provided for @accumulatedCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Accumulated Credit'**
+  String get accumulatedCredit;
+
+  /// No description provided for @codeRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Code Region'**
+  String get codeRegion;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

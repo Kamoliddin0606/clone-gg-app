@@ -96,7 +96,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loading => 'Loading...';
 
   @override
-  String get noData => 'No data available';
+  String get noData => 'No data';
 
   @override
   String get retry => 'Retry';
@@ -970,4 +970,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rememberMe => 'Remember me';
+
+  @override
+  String get databaseView => 'Database View';
+
+  @override
+  String get preferenceKey => 'Preference Key';
+
+  @override
+  String get value => 'Value';
+
+  @override
+  String get id => 'ID';
+
+  @override
+  String get code => 'Code';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get role => 'Role';
+
+  @override
+  String get warehouseCode => 'Warehouse Code';
+
+  @override
+  String get codeProject => 'Code Project';
+
+  @override
+  String get baseUrl => 'Base URL';
+
+  @override
+  String get telegramId => 'Telegram ID';
+
+  @override
+  String get chatId => 'Chat ID';
+
+  @override
+  String get topicId => 'Topic ID';
+
+  @override
+  String get createdAt => 'Created At';
+
+  @override
+  String get updatedAt => 'Updated At';
+
+  @override
+  String get totalPercent => 'Total %';
+
+  @override
+  String get forecastPercent => 'Forecast %';
+
+  @override
+  String get akbPercent => 'AKB %';
+
+  @override
+  String get updateDate => 'Update Date';
+
+  @override
+  String get exit => 'Exit';
+
+  @override
+  String get confirmExit => 'Are you sure you want to exit?';
+
+  @override
+  String get contactPerson => 'Contact';
+
+  @override
+  String get lastVisitDate => 'Last Visit';
+
+  @override
+  String get hasOrders => 'Has Orders';
+
+  @override
+  String get hasContracts => 'Has Contracts';
+
+  @override
+  String get isVisited => 'Is Visited';
+
+  @override
+  String get hasContract => 'Has Contract';
+
+  @override
+  String get coordinates => 'Coordinates';
+
+  @override
+  String get creditLimit => 'Credit Limit';
+
+  @override
+  String get accumulatedCredit => 'Accumulated Credit';
+
+  @override
+  String get codeRegion => 'Code Region';
 }

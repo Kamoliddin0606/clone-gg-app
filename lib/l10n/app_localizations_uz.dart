@@ -96,7 +96,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get loading => 'Yuklanmoqda...';
 
   @override
-  String get noData => 'Ma\'lumotlar mavjud emas';
+  String get noData => 'Ma\'lumotlar yo\'q';
 
   @override
   String get retry => 'Qayta urinib ko\'ring';
@@ -468,7 +468,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get visit => 'Tashrif';
 
   @override
-  String get visitClient => 'Tashrif buyurish';
+  String get visitClient => 'Tashrif buyurush';
 
   @override
   String get createOrder => 'Buyurtma yaratish';
@@ -970,4 +970,97 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get rememberMe => 'Eslab qolish';
+
+  @override
+  String get databaseView => 'Ma\'lumotlar bazasi ko\'rinishi';
+
+  @override
+  String get preferenceKey => 'Sozlama kaliti';
+
+  @override
+  String get value => 'Qiymat';
+
+  @override
+  String get id => 'ID';
+
+  @override
+  String get code => 'Kod';
+
+  @override
+  String get name => 'Ism';
+
+  @override
+  String get role => 'Rol';
+
+  @override
+  String get warehouseCode => 'Sklad kodi';
+
+  @override
+  String get codeProject => 'Loyiha kodi';
+
+  @override
+  String get baseUrl => 'Asosiy URL';
+
+  @override
+  String get telegramId => 'Telegram ID';
+
+  @override
+  String get chatId => 'Chat ID';
+
+  @override
+  String get topicId => 'Topic ID';
+
+  @override
+  String get createdAt => 'Yaratilgan';
+
+  @override
+  String get updatedAt => 'Yangilangan';
+
+  @override
+  String get totalPercent => 'Jami %';
+
+  @override
+  String get forecastPercent => 'Bashorat %';
+
+  @override
+  String get akbPercent => 'AKB %';
+
+  @override
+  String get updateDate => 'Yangilanish sanasi';
+
+  @override
+  String get exit => 'Chiqish';
+
+  @override
+  String get confirmExit => 'Haqiqatan ham chiqmoqchimisiz?';
+
+  @override
+  String get contactPerson => 'Aloqa';
+
+  @override
+  String get lastVisitDate => 'Oxirgi tashrif';
+
+  @override
+  String get hasOrders => 'Buyurtmalar mavjud';
+
+  @override
+  String get hasContracts => 'Shartnomalar mavjud';
+
+  @override
+  String get isVisited => 'Tashrif buyurilgan';
+
+  @override
+  String get hasContract => 'Shartnoma mavjud';
+
+  @override
+  String get coordinates => 'Koordinatalar';
+
+  @override
+  String get creditLimit => 'Kredit limiti';
+
+  @override
+  String get accumulatedCredit => 'To\'plangan kredit';
+
+  @override
+  String get codeRegion => 'Viloyat kodi';
 }

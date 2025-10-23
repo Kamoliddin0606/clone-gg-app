@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
@@ -337,10 +338,11 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Database View'),
+        title: Text(l10n.databaseView),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -350,7 +352,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadAllData,
-            tooltip: 'Yangilash',
+            tooltip: l10n.refresh,
           ),
         ],
       ),
@@ -424,15 +426,16 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   }
 
   Widget _buildPreferencesTable() {
+    final l10n = AppLocalizations.of(context)!;
     final preferencesList = _preferences.entries.map((entry) => {'key': entry.key, 'value': entry.value}).toList();
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: DataTable(
-          columns: const [
-            DataColumn(label: Text('Preference Key')),
-            DataColumn(label: Text('Value')),
+          columns: [
+            DataColumn(label: Text(l10n.preferenceKey)),
+            DataColumn(label: Text(l10n.value)),
           ],
           rows: preferencesList.map((pref) => DataRow(cells: [
             DataCell(Text(pref['key'].toString())),
@@ -761,60 +764,60 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   }
 
   List<DataColumn> _getUsersColumns() => [
-        const DataColumn(label: Text('ID')),
-        const DataColumn(label: Text('Code')),
-        const DataColumn(label: Text('Username')),
-        const DataColumn(label: Text('Password')),
-        const DataColumn(label: Text('Name')),
-        const DataColumn(label: Text('Role')),
-        const DataColumn(label: Text('Warehouse Code')),
-        const DataColumn(label: Text('Code Project')),
-        const DataColumn(label: Text('Base URL')),
-        const DataColumn(label: Text('Telegram ID')),
-        const DataColumn(label: Text('Chat ID')),
-        const DataColumn(label: Text('Topic ID')),
-        const DataColumn(label: Text('Created At')),
-        const DataColumn(label: Text('Updated At')),
+        DataColumn(label: Text(AppLocalizations.of(context)!.id)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.code)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.username)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.password)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.name)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.role)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.warehouseCode)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.codeProject)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.baseUrl)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.telegramId)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.chatId)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.topicId)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.createdAt)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.updatedAt)),
       ];
 
   List<DataColumn> _getKpiColumns() => [
-        const DataColumn(label: Text('Plan')),
-        const DataColumn(label: Text('Fact')),
-        const DataColumn(label: Text('Total %')),
-        const DataColumn(label: Text('Forecast')),
-        const DataColumn(label: Text('Forecast %')),
-        const DataColumn(label: Text('OKB')),
-        const DataColumn(label: Text('AKB Plan')),
-        const DataColumn(label: Text('AKB Fact')),
-        const DataColumn(label: Text('AKB %')),
-        const DataColumn(label: Text('Update Date')),
+        DataColumn(label: Text(AppLocalizations.of(context)!.plan)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.fact)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.totalPercent)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.forecast)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.forecastPercent)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.okb)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.akbPlan)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.akbFact)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.akbPercent)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.updateDate)),
       ];
 
   List<DataColumn> _getClientsColumns() => [
-        const DataColumn(label: Text('ID')),
-        const DataColumn(label: Text('Name')),
-        const DataColumn(label: Text('Address')),
-        const DataColumn(label: Text('Phone')),
-        const DataColumn(label: Text('Owner')),
-        const DataColumn(label: Text('Contact')),
-        const DataColumn(label: Text('INN')),
-        const DataColumn(label: Text('Status')),
-        const DataColumn(label: Text('Last Visit')),
-        const DataColumn(label: Text('Has Orders')),
-        const DataColumn(label: Text('Has Contracts')),
-        const DataColumn(label: Text('Is Visited')),
-        const DataColumn(label: Text('Has Contract')),
-        const DataColumn(label: Text('Coordinates')),
-        const DataColumn(label: Text('Region')),
-        const DataColumn(label: Text('District')),
-        const DataColumn(label: Text('Signboard')),
-        const DataColumn(label: Text('Reference Point')),
-        const DataColumn(label: Text('Responsible')),
-        const DataColumn(label: Text('Resp. Phone')),
-        const DataColumn(label: Text('Trade Type')),
-        const DataColumn(label: Text('Credit Limit')),
-        const DataColumn(label: Text('Accumulated Credit')),
-        const DataColumn(label: Text('Code Region')),
+        DataColumn(label: Text(AppLocalizations.of(context)!.id)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.name)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.address)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.phone)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.ownerName)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.contactPerson)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.inn)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.status)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.lastVisitDate)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.hasOrders)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.hasContracts)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.isVisited)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.hasContract)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.coordinates)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.region)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.district)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.signboard)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.referencePoint)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.responsiblePerson)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.responsiblePersonPhone)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.tradePointType)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.creditLimit)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.accumulatedCredit)),
+        DataColumn(label: Text(AppLocalizations.of(context)!.codeRegion)),
       ];
 
   List<DataColumn> _getProductsColumns() => [

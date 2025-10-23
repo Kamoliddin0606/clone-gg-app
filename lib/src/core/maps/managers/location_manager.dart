@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart' as geolocator;
 import '../models/map_point.dart';
-import '../models/map_settings.dart';
 
 /// Enhanced location manager with GPS, network positioning, and advanced features
 class LocationManager {
@@ -104,10 +103,9 @@ class LocationManager {
       await stopLocationUpdates();
 
       _positionSubscription = geolocator.Geolocator.getPositionStream(
-        locationSettings: LocationSettings(
+        locationSettings: geolocator.LocationSettings(
           accuracy: _convertAccuracy(accuracy),
-          distanceFilter: distanceFilter,
-          timeLimit: _defaultTimeout,
+          distanceFilter: distanceFilter.toInt(),
         ),
       ).listen(
         (geolocator.Position position) {
@@ -183,7 +181,7 @@ class LocationManager {
   bool isLocationInRegion(MapPoint location, LocationRegion region) {
     switch (region.type) {
       case RegionType.circle:
-        return calculateDistance(location, region.center) <= region.radius;
+        return calculateDistance(location, region.center) <= (region.radius ?? 0.0);
       case RegionType.rectangle:
         return location.latitude >= region.bounds!['south']! &&
                location.latitude <= region.bounds!['north']! &&
@@ -223,7 +221,7 @@ class LocationManager {
 
     try {
       final position = await geolocator.Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
+        desiredAccuracy: _convertAccuracy(LocationAccuracy.best),
         timeLimit: _defaultTimeout,
       );
 
@@ -248,7 +246,7 @@ class LocationManager {
       final permission = await geolocator.Geolocator.requestPermission();
 
       final granted = permission == geolocator.LocationPermission.always ||
-                      permission == geolocator.LocationPermission.whileInUse;
+                       permission == geolocator.LocationPermission.whileInUse;
 
       if (granted) {
         _statusStreamController.add(LocationStatus.ready);
@@ -372,20 +370,20 @@ class LocationManager {
   }
 
   /// Convert custom accuracy to Geolocator accuracy
-  LocationAccuracy _convertAccuracy(LocationAccuracy accuracy) {
+  geolocator.LocationAccuracy _convertAccuracy(LocationAccuracy accuracy) {
     switch (accuracy) {
       case LocationAccuracy.lowest:
-        return LocationAccuracy.lowest;
+        return geolocator.LocationAccuracy.lowest;
       case LocationAccuracy.low:
-        return LocationAccuracy.low;
+        return geolocator.LocationAccuracy.low;
       case LocationAccuracy.medium:
-        return LocationAccuracy.medium;
+        return geolocator.LocationAccuracy.medium;
       case LocationAccuracy.high:
-        return LocationAccuracy.high;
+        return geolocator.LocationAccuracy.high;
       case LocationAccuracy.best:
-        return LocationAccuracy.best;
+        return geolocator.LocationAccuracy.best;
       case LocationAccuracy.bestForNavigation:
-        return LocationAccuracy.bestForNavigation;
+        return geolocator.LocationAccuracy.bestForNavigation;
     }
   }
 
@@ -509,7 +507,7 @@ class LocationRegion {
     required this.name,
     required this.polygonPoints,
   }) : type = RegionType.polygon,
-       center = _calculatePolygonCenter(polygonPoints!),
+       center = _calculatePolygonCenter(polygonPoints ?? []),
        radius = null,
        bounds = null;
 

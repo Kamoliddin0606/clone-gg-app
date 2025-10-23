@@ -2180,12 +2180,7 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
             child: PageView(
               controller: _pageController,
               children: [
-                // First page: Client Details
-                _ClientDetailsPage(
-                  tradingPoint: widget.tradingPoint,
-                  onCall: widget.onCall,
-                ),
-                // Second page: Actions and Map
+                // First page: Actions and Map
                 _ActionsMapPage(
                   tradingPoint: widget.tradingPoint,
                   onInformVisit: widget.onInformVisit,
@@ -2193,6 +2188,11 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
                   onViewContracts: widget.onViewContracts,
                   onRefusal: widget.onRefusal,
                   permissions: widget.permissions,
+                ),
+                // Second page: Client Details
+                _ClientDetailsPage(
+                  tradingPoint: widget.tradingPoint,
+                  onCall: widget.onCall,
                 ),
               ],
             ),

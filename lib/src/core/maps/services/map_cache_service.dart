@@ -5,6 +5,8 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:dio/dio.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../models/map_point.dart';
 import '../models/map_route.dart';
 import '../models/map_marker.dart';
@@ -12,23 +14,37 @@ import '../models/map_settings.dart';
 
 /// Map cache service for offline support
 class MapCacheService {
-  static const String _cacheDirectory = 'map_cache';
-  static const String _tilesDirectory = 'tiles';
-  static const String _routesDirectory = 'routes';
-  static const String _markersDirectory = 'markers';
-  static const String _metadataFile = 'cache_metadata.json';
+   static const String _cacheDirectory = 'map_cache';
+   static const String _tilesDirectory = 'tiles';
+   static const String _routesDirectory = 'routes';
+   static const String _markersDirectory = 'markers';
+   static const String _metadataFile = 'cache_metadata.json';
 
-  static const Duration _defaultCacheDuration = Duration(days: 30);
-  static const int _maxCacheSizeMB = 500; // 500MB limit
+   static const Duration _defaultCacheDuration = Duration(days: 30);
+   static const int _maxCacheSizeMB = 500; // 500MB limit
 
-  late final Directory _cacheDir;
-  bool _initialized = false;
+   late final Directory _cacheDir;
+   bool _initialized = false;
+   late final Dio _dio;
+   late final Connectivity _connectivity;
 
   /// Initialize cache service
   Future<void> initialize() async {
     if (_initialized) return;
 
     try {
+      // Initialize HTTP client
+      _dio = Dio(BaseOptions(
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+        headers: {
+          'User-Agent': 'com.gloria.marketing.app',
+        },
+      ));
+
+      // Initialize connectivity
+      _connectivity = Connectivity();
+
       final appDir = await getApplicationDocumentsDirectory();
       _cacheDir = Directory(path.join(appDir.path, _cacheDirectory));
 
@@ -193,12 +209,44 @@ class MapCacheService {
     final tileUrl = _getTileUrl(tile, provider);
 
     try {
-      // TODO: Implement actual HTTP download
-      // For now, create placeholder
-      await tileFile.writeAsBytes([0]); // Placeholder byte
+      // Check network connectivity before downloading
+      final connectivityResult = await _connectivity.checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        if (kDebugMode) {
+          print('No network connectivity, skipping tile download');
+        }
+        return;
+      }
 
-      if (kDebugMode) {
-        print('Cached tile: ${tile['z']}/${tile['x']}/${tile['y']}');
+      // Download tile using Dio
+      final response = await _dio.get(
+        tileUrl,
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {
+            'Accept': 'image/png,image/jpeg,image/*',
+            'Cache-Control': 'no-cache',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        // Ensure parent directories exist
+        final tileDir = Directory(path.dirname(tilePath));
+        if (!await tileDir.exists()) {
+          await tileDir.create(recursive: true);
+        }
+
+        // Write tile data to file
+        await tileFile.writeAsBytes(response.data);
+
+        if (kDebugMode) {
+          print('Cached tile: ${tile['z']}/${tile['x']}/${tile['y']} (${response.data.length} bytes)');
+        }
+      } else {
+        if (kDebugMode) {
+          print('Failed to download tile ${tile['z']}/${tile['x']}/${tile['y']}: HTTP ${response.statusCode}');
+        }
       }
     } catch (e) {
       if (kDebugMode) {
@@ -613,6 +661,12 @@ class MapCacheService {
       }
       return {};
     }
+  }
+
+  /// Dispose of resources
+  void dispose() {
+    _dio.close();
+    // Google Maps Flutter handles cleanup automatically
   }
 }
 

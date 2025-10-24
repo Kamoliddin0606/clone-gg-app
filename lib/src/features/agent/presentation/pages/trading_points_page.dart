@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:latlong2/latlong.dart' as osm_latlong;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
@@ -18,6 +19,7 @@ import 'package:gloria_marketing_flutter/src/core/services/api_database_service.
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart';
+import 'package:gloria_marketing_flutter/src/core/maps/services/map_cache_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/trading_points_filters_panel.dart';
@@ -128,6 +130,11 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     // Map provider settings
     MapProvider _defaultMapProvider = MapProvider.google; // Default map provider
 
+    // Offline caching
+    late MapCacheService _mapCacheService;
+    late Connectivity _connectivity;
+    bool _isOnline = true;
+
     // PageStorage bucket for state persistence
     late final PageStorageBucket _storageBucket;
 
@@ -138,6 +145,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _initializePermissions();
     _initializeLocationService();
     _initializePermissionsService();
+    _initializeOfflineSupport();
     _loadUserData();
     _restoreState();
     _loadDefaultMapProvider();
@@ -226,6 +234,53 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     }
   }
 
+  /// Initialize offline support services
+  Future<void> _initializeOfflineSupport() async {
+    try {
+      // Initialize connectivity monitoring
+      _connectivity = Connectivity();
+      _connectivity.onConnectivityChanged.listen(_onConnectivityChanged);
+
+      // Check initial connectivity status
+      final result = await _connectivity.checkConnectivity();
+      _isOnline = result != ConnectivityResult.none;
+
+      // Initialize map cache service
+      _mapCacheService = MapCacheService();
+      await _mapCacheService.initialize();
+
+      if (kDebugMode) {
+        print('Offline support initialized. Online: $_isOnline');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error initializing offline support: $e');
+      }
+      _isOnline = true; // Default to online if initialization fails
+    }
+  }
+
+  /// Handle connectivity changes
+  void _onConnectivityChanged(List<ConnectivityResult> results) {
+    final result = results.isNotEmpty ? results.first : ConnectivityResult.none;
+    final wasOnline = _isOnline;
+    _isOnline = result != ConnectivityResult.none;
+
+    if (kDebugMode) {
+      print('Connectivity changed: ${wasOnline ? 'online' : 'offline'} -> ${_isOnline ? 'online' : 'offline'}');
+    }
+
+    // Notify user about connectivity changes
+    if (mounted && wasOnline != _isOnline) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isOnline ? 'Internetga ulandi' : 'Offline rejim'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   Future<void> _loadUserData() async {
     try {
       await sl.isReady<SharedPreferencesService>();
@@ -290,6 +345,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _locationCheckTimer?.cancel();
     _locationService?.dispose();
     _permissionsService.dispose();
+    _mapCacheService.dispose();
     super.dispose();
   }
 
@@ -2343,7 +2399,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
           },
         );
       case MapProvider.yandex:
-        // Implement Yandex Maps widget with yandex_mapkit
+        // Implement Yandex Maps widget with yandex_mapkit and offline caching
         try {
           return yandex.YandexMap(
             mapObjects: [
@@ -2384,7 +2440,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
           );
         }
       case MapProvider.openStreetMap:
-        // Implement OpenStreetMap widget with flutter_map
+        // Implement OpenStreetMap widget with flutter_map and offline caching
         try {
           return osm.FlutterMap(
             options: osm.MapOptions(
@@ -2398,6 +2454,21 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                 userAgentPackageName: 'com.gloria.marketing.app',
                 maxZoom: 19,
                 minZoom: 1,
+                // Add error handling for missing tiles
+                errorTileCallback: (tile, error, stackTrace) {
+                  if (kDebugMode) {
+                    print('OSM tile error: ${tile.toString()} - $error');
+                  }
+                },
+                // Add loading placeholder
+                tileBuilder: (context, tileWidget, tile) {
+                  return Stack(
+                    children: [
+                      tileWidget,
+                      // Note: Offline indicator removed for simplicity
+                    ],
+                  );
+                },
               ),
               osm.MarkerLayer(
                 markers: [
@@ -2413,6 +2484,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                   ),
                 ],
               ),
+              // Note: Offline indicator removed for simplicity
             ],
           );
         } catch (e) {

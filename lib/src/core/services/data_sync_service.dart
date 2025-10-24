@@ -295,6 +295,16 @@ class DataSyncService {
         await _syncPromotions(null); // No auth token needed for now
       }
 
+      // Sync map tokens
+      try {
+        await syncMapTokens(userCode: userCode);
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error syncing map tokens during full data sync: $e');
+        }
+        // Continue with other sync operations - map tokens are optional
+      }
+
       if(isEvyapServerSelected()){
         // Sync reports (current month by default)
         try {
@@ -431,6 +441,18 @@ class DataSyncService {
           }
           // Continue with other steps
         }}
+
+      // Step 17: Sync map tokens
+      yield SyncStep.syncingMapTokens;
+      try {
+        await syncMapTokens(userCode: userCode);
+      } catch (e) {
+        // Log error but don't fail the entire sync
+        if (kDebugMode) {
+          print('Error syncing map tokens: $e');
+        }
+        // Continue with other steps - map tokens are optional
+      }
 
       if( isEvyapServerSelected() ) {
         // Step 13: Sync reports (current month by default)
@@ -1735,6 +1757,66 @@ class DataSyncService {
   /// Get cached planned routes by client
   Future<List<PlannedRoute>> getCachedPlannedRoutesByClient(String userCode, String codeClient) =>
       _dbService.getPlannedRoutesByClient(userCode, codeClient);
+
+  /// Sync map tokens from server and save to shared preferences
+  /// This method fetches Yandex and Google map tokens from the server
+  /// and stores them in shared preferences for map services to use
+  Future<Map<String, String>> syncMapTokens({
+    required String userCode,
+  }) async {
+    try {
+      if (kDebugMode) {
+        print('DataSyncService: Starting map tokens sync for user: $userCode');
+      }
+
+      // Fetch tokens from server using SOAP API
+      final tokens = await _apiService.getMapTokens(userCode: userCode);
+
+      if (kDebugMode) {
+        print('DataSyncService: Retrieved tokens from server - Yandex: ${tokens['yandexToken']?.isNotEmpty == true ? 'Present' : 'Empty'}, Google: ${tokens['googleToken']?.isNotEmpty == true ? 'Present' : 'Empty'}');
+      }
+
+      // Save tokens to shared preferences
+      final saved = await _prefs.saveMapTokens(
+        yandexToken: tokens['yandexToken'] ?? '',
+        googleToken: tokens['googleToken'] ?? '',
+      );
+
+      if (!saved) {
+        if (kDebugMode) {
+          print('DataSyncService: Failed to save map tokens to preferences');
+        }
+        throw Exception('Failed to save map tokens to shared preferences');
+      }
+
+      if (kDebugMode) {
+        print('DataSyncService: Map tokens sync completed successfully');
+      }
+
+      return tokens;
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: Error syncing map tokens: $e');
+      }
+      // Re-throw to allow caller to handle the error appropriately
+      rethrow;
+    }
+  }
+
+  /// Get cached map tokens from shared preferences
+  Map<String, String> getCachedMapTokens() {
+    return _prefs.getMapTokens();
+  }
+
+  /// Check if valid map tokens are available
+  bool hasValidMapTokens() {
+    return _prefs.hasValidMapTokens();
+  }
+
+  /// Get last time map tokens were updated
+  DateTime? getMapTokensLastUpdated() {
+    return _prefs.getMapTokensLastUpdated();
+  }
 }
 
 /// Conflict resolution strategies

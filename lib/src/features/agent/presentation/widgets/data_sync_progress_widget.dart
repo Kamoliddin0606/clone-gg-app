@@ -19,6 +19,7 @@ enum SyncStep {
   syncingSalesReqPermissions('Agent ruxsatlari yuklanmoqda...', Icons.security),
   syncingPlannedRoutes('Rejalashtirilgan marshrutlar yuklanmoqda...', Icons.route),
   syncingPromotions('Aksiyalar yuklanmoqda...', Icons.local_offer),
+  syncingMapTokens('Xarita tokenlari yuklanmoqda...', Icons.map),
   syncingReports('Hisobotlar yuklanmoqda...', Icons.analytics),
   completed('Ma\'lumotlar yangilandi!', Icons.check_circle),
   error('Xatolik yuz berdi', Icons.error);

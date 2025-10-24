@@ -253,4 +253,106 @@ Future<void> init() async {
     // Return the current value
     return _preferences.getBool('isReportSentToTelegram') ?? false;
   }
+
+  /// Save map tokens (Yandex and Google) to shared preferences
+  Future<bool> saveMapTokens({
+    required String yandexToken,
+    required String googleToken,
+  }) async {
+    try {
+      await _preferences.setString('yandex_maps_api_key', yandexToken);
+      await _preferences.setString('google_maps_api_key', googleToken);
+      await _preferences.setString('map_tokens_last_updated', DateTime.now().toIso8601String());
+
+      print('Map tokens saved successfully - Yandex: ${yandexToken.isNotEmpty ? 'Present' : 'Empty'}, Google: ${googleToken.isNotEmpty ? 'Present' : 'Empty'}');
+
+      return true;
+    } catch (e) {
+      print('Error saving map tokens: $e');
+      return false;
+    }
+  }
+
+  /// Get map tokens from shared preferences
+  Map<String, String> getMapTokens() {
+    try {
+      final yandexToken = _preferences.getString('yandex_maps_token') ?? '';
+      final googleToken = _preferences.getString('google_maps_token') ?? '';
+
+      return {
+        'yandexToken': yandexToken,
+        'googleToken': googleToken,
+      };
+    } catch (e) {
+      print('Error getting map tokens: $e');
+      return {
+        'yandexToken': '',
+        'googleToken': '',
+      };
+    }
+  }
+
+  /// Get Yandex maps token
+  String? getYandexMapsToken() {
+    return _preferences.getString('yandex_maps_token');
+  }
+
+  /// Get Google maps token
+  String? getGoogleMapsToken() {
+    return _preferences.getString('google_maps_token');
+  }
+
+  /// Check if map tokens are valid (not empty and recently updated)
+  bool hasValidMapTokens() {
+    try {
+      final yandexToken = getYandexMapsToken();
+      final googleToken = getGoogleMapsToken();
+
+      // Check if at least one token is present
+      final hasTokens = (yandexToken != null && yandexToken.isNotEmpty) ||
+                       (googleToken != null && googleToken.isNotEmpty);
+
+      if (!hasTokens) return false;
+
+      // Check if tokens were updated recently (within 30 days)
+      final lastUpdatedStr = _preferences.getString('map_tokens_last_updated');
+      if (lastUpdatedStr == null) return false;
+
+      final lastUpdated = DateTime.parse(lastUpdatedStr);
+      final now = DateTime.now();
+      final difference = now.difference(lastUpdated);
+
+      return difference.inDays <= 30;
+    } catch (e) {
+      print('Error checking map token validity: $e');
+      return false;
+    }
+  }
+
+  /// Get last time map tokens were updated
+  DateTime? getMapTokensLastUpdated() {
+    try {
+      final lastUpdatedStr = _preferences.getString('map_tokens_last_updated');
+      return lastUpdatedStr != null ? DateTime.parse(lastUpdatedStr) : null;
+    } catch (e) {
+      print('Error getting map tokens last updated: $e');
+      return null;
+    }
+  }
+
+  /// Clear map tokens
+  Future<bool> clearMapTokens() async {
+    try {
+      await _preferences.remove('yandex_maps_token');
+      await _preferences.remove('google_maps_token');
+      await _preferences.remove('map_tokens_last_updated');
+
+      print('Map tokens cleared successfully');
+
+      return true;
+    } catch (e) {
+      print('Error clearing map tokens: $e');
+      return false;
+    }
+  }
 }

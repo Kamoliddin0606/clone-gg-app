@@ -1378,6 +1378,68 @@ class SoapApiService {
     }
   }
 
+  /// Get map tokens (Yandex and Google) from server
+  /// Returns a map containing yandexToken and googleToken
+  /// If tokens are not set on server, returns empty strings
+  Future<Map<String, String>> getMapTokens({
+    required String userCode,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:getMapTokens>
+         <sam:CodeUser>$userCode</sam:CodeUser>
+      </sam:getMapTokens>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      if (kDebugMode) {
+        print('SOAP API: Requesting map tokens for user: $userCode');
+      }
+
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      if (kDebugMode) {
+        print('SOAP API: Map tokens response received');
+      }
+
+      final document = XmlDocument.parse(response.data);
+      final returnElement = document.findAllElements('m:return').first;
+
+      // Parse tokens from response
+      final yandexToken = _getElementText(returnElement, 'm:yandexToken') ?? '';
+      final googleToken = _getElementText(returnElement, 'm:googleToken') ?? '';
+
+      final tokens = {
+        'yandexToken': yandexToken,
+        'googleToken': googleToken,
+      };
+
+      if (kDebugMode) {
+        print('SOAP API: Retrieved map tokens - Yandex: ${yandexToken.isNotEmpty ? 'Present' : 'Empty'}, Google: ${googleToken.isNotEmpty ? 'Present' : 'Empty'}');
+      }
+
+      return tokens;
+    } catch (e) {
+      if (kDebugMode) {
+        print('SOAP API: Error retrieving map tokens: $e');
+      }
+      throw Exception('Xarita tokenlarini olishda xatolik: $e');
+    }
+  }
+
   /// Get order details
   Future<OrderDetail> getOrderDetails({
     required String numberOrder,

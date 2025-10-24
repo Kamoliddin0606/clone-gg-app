@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:yandex_mapkit/yandex_mapkit.dart' as yandex;
+import 'package:flutter_map/flutter_map.dart' as osm;
+import 'package:latlong2/latlong.dart' as osm_latlong;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
@@ -13,6 +16,7 @@ import 'package:gloria_marketing_flutter/src/core/services/permission_manager.da
 import 'package:gloria_marketing_flutter/src/core/services/permissions_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
@@ -2339,15 +2343,84 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
           },
         );
       case MapProvider.yandex:
-        // TODO: Implement Yandex Maps widget when available
-        return const Center(
-          child: Text('Yandex Maps - Coming Soon'),
-        );
+        // Implement Yandex Maps widget with yandex_mapkit
+        try {
+          return yandex.YandexMap(
+            mapObjects: [
+              yandex.PlacemarkMapObject(
+                mapId: yandex.MapObjectId(markerId),
+                point: yandex.Point(
+                  latitude: position.latitude,
+                  longitude: position.longitude,
+                ),
+                icon: yandex.PlacemarkIcon.single(
+                  yandex.PlacemarkIconStyle(
+                    image: yandex.BitmapDescriptor.fromAssetImage('assets/images/marker.png'),
+                    scale: 0.8,
+                  ),
+                ),
+                opacity: 1.0,
+              ),
+            ],
+            onMapCreated: (controller) {
+              // Yandex map controller setup
+              controller.moveCamera(
+                yandex.CameraUpdate.newCameraPosition(
+                  yandex.CameraPosition(
+                    target: yandex.Point(
+                      latitude: position.latitude,
+                      longitude: position.longitude,
+                    ),
+                    zoom: 15,
+                  ),
+                ),
+              );
+            },
+          );
+        } catch (e) {
+          // Fallback if Yandex Maps fails
+          return const Center(
+            child: Text('Yandex Maps yuklanmadi. Google Maps ishlatiladi.'),
+          );
+        }
       case MapProvider.openStreetMap:
-        // TODO: Implement OSM widget when available
-        return const Center(
-          child: Text('OpenStreetMap - Coming Soon'),
-        );
+        // Implement OpenStreetMap widget with flutter_map
+        try {
+          return osm.FlutterMap(
+            options: osm.MapOptions(
+              initialCenter: osm_latlong.LatLng(position.latitude, position.longitude),
+              initialZoom: 15.0,
+            ),
+            children: [
+              osm.TileLayer(
+                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c'],
+                userAgentPackageName: 'com.gloria.marketing.app',
+                maxZoom: 19,
+                minZoom: 1,
+              ),
+              osm.MarkerLayer(
+                markers: [
+                  osm.Marker(
+                    width: 40.0,
+                    height: 40.0,
+                    point: osm_latlong.LatLng(position.latitude, position.longitude),
+                    child: const Icon(
+                      Icons.location_on,
+                      color: Colors.red,
+                      size: 40,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        } catch (e) {
+          // Fallback if OSM fails
+          return const Center(
+            child: Text('OpenStreetMap yuklanmadi. Google Maps ishlatiladi.'),
+          );
+        }
       default:
         // Fallback to Google Maps
         return GoogleMap(

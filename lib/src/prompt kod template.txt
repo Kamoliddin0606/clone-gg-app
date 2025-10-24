@@ -2,7 +2,7 @@
 2. Quidagi fayllarni 3- bandni bajarish uchun to'liq o'rganib chiq: data_sync_service.dart,  reports_sync_service.dart, api_database_service.dart,  soap_api_service.dart
 3.  (Bu yerga vazifa yoziladi) bu qatorni o'chiring
 4. Vazifalarni malumotlar bilan ishlashda yuqorida tilga olingan fayllarda joylashgan tayyor metodlardan foydalan.
-5. Kiritilayotgan barcha kod o‘zgarishlari ishlayotgan ilovani izdan chiqarmasligiga ishonch hosil qiling. Kodni toza kod prinsiplari, xatoliklarni qayta ishlash (try–catch), loglash va eng yaxshi amaliyotlarga qat’iy rioya qilgan holda yozing.
+5. Kod yozishda kommenting(izohlash qoidalariga qatiy amal qil. Bu keyinchalik kodni tahlil qilish o'rganish yangilash kengaytirish qayta qo'sllashda yordam berishi kerak. Kiritilayotgan barcha kod o‘zgarishlari ishlayotgan ilovani izdan chiqarmasligiga ishonch hosil qiling. Kodni toza kod prinsiplari, xatoliklarni qayta ishlash (try–catch), loglash va eng yaxshi amaliyotlarga qat’iy rioya qilgan holda yozing.
 
 6. Vazifani bajarishdan avval loyiha bo‘yicha tegishli va zarur barcha ma’lumotlarni puxta o‘rganing va aniqlang. To‘liq yo‘l xaritasini (roadmap) ishlab chiqing va aynan shu asosda ish yuriting.
 

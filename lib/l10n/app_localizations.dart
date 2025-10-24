@@ -2208,6 +2208,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Code Region'**
   String get codeRegion;
+
+  /// No description provided for @maps.
+  ///
+  /// In en, this message translates to:
+  /// **'Maps'**
+  String get maps;
+
+  /// No description provided for @selectDefaultMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Default Map'**
+  String get selectDefaultMap;
+
+  /// No description provided for @googleMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Maps'**
+  String get googleMaps;
+
+  /// No description provided for @yandexMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Yandex Maps'**
+  String get yandexMaps;
+
+  /// No description provided for @openStreetMap.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenStreetMap'**
+  String get openStreetMap;
+
+  /// No description provided for @mapProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Provider'**
+  String get mapProvider;
+
+  /// No description provided for @apiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API Key'**
+  String get apiKey;
+
+  /// No description provided for @configured.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured'**
+  String get configured;
+
+  /// No description provided for @notConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Configured'**
+  String get notConfigured;
+
+  /// No description provided for @mapSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Settings'**
+  String get mapSettings;
+
+  /// No description provided for @defaultMapChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Default map changed successfully'**
+  String get defaultMapChanged;
+
+  /// No description provided for @currentMapProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Map Provider'**
+  String get currentMapProvider;
+
+  /// No description provided for @availableMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Maps'**
+  String get availableMaps;
+
+  /// No description provided for @mapConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Configuration'**
+  String get mapConfiguration;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

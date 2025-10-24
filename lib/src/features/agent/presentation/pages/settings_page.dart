@@ -3,6 +3,7 @@ import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_toggle.dart';
@@ -21,7 +22,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -63,6 +64,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
                 Tab(text: l10n.warehouses),
                 Tab(text: l10n.businessRegions),
                 Tab(text: l10n.permissions),
+                Tab(text: l10n.maps),
                 Tab(text: l10n.interfaceSettings),
               ],
             ),
@@ -73,12 +75,13 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
             child: TabBarView(
               controller: _tabController,
               children: [
-                const PricesTab(),
-                const WarehousesTab(),
-                const BusinessRegionsTab(),
-                const PermissionsTab(),
-                InterfaceSettingsTab(),
-              ],
+                 const PricesTab(),
+                 const WarehousesTab(),
+                 const BusinessRegionsTab(),
+                 const PermissionsTab(),
+                 const MapsTab(),
+                 InterfaceSettingsTab(),
+               ],
             ),
           ),
         ],
@@ -1781,6 +1784,317 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
       default:
         return l10n.uzbek;
     }
+  }
+}
+
+class MapsTab extends StatefulWidget {
+  const MapsTab({super.key});
+
+  @override
+  State<MapsTab> createState() => _MapsTabState();
+}
+
+class _MapsTabState extends State<MapsTab> {
+  MapProvider _selectedProvider = MapProvider.openStreetMap; // Default
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentMapSettings();
+  }
+
+  Future<void> _loadCurrentMapSettings() async {
+    try {
+      final prefs = context.read<SharedPreferencesService>();
+      final savedProvider = prefs.preferences.getString('default_map_provider');
+
+      if (savedProvider != null) {
+        setState(() {
+          _selectedProvider = MapProvider.values.firstWhere(
+            (provider) => provider.toString() == savedProvider,
+            orElse: () => MapProvider.openStreetMap,
+          );
+        });
+      }
+    } catch (e) {
+      print('Error loading map settings: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _changeDefaultMap(MapProvider provider) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.selectDefaultMap),
+        content: Text('${l10n.selectDefaultMap} ${provider.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.apply),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final prefs = context.read<SharedPreferencesService>();
+        await prefs.preferences.setString('default_map_provider', provider.toString());
+
+        setState(() {
+          _selectedProvider = provider;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.defaultMapChanged),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+          );
+        }
+      } catch (e) {
+        print('Error saving map settings: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${l10n.error}: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  String _getMapProviderName(MapProvider provider, AppLocalizations l10n) {
+    switch (provider) {
+      case MapProvider.google:
+        return l10n.googleMaps;
+      case MapProvider.yandex:
+        return l10n.yandexMaps;
+      case MapProvider.openStreetMap:
+        return l10n.openStreetMap;
+    }
+  }
+
+  String _getApiKeyStatus(MapProvider provider) {
+    // This would check if API keys are configured
+    // For now, return demo status
+    switch (provider) {
+      case MapProvider.google:
+        return 'demo_key_configured'; // Replace with actual check
+      case MapProvider.yandex:
+        return 'demo_key_configured'; // Replace with actual check
+      case MapProvider.openStreetMap:
+        return 'no_key_required'; // OSM doesn't require API key
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Map Settings Header
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.map, color: colorScheme.primary, size: 28),
+                      const SizedBox(width: 12),
+                      Text(
+                        l10n.mapSettings,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.mapConfiguration,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Current Map Provider
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.currentMapProvider,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.map_outlined, color: colorScheme.onPrimaryContainer),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _getMapProviderName(_selectedProvider, l10n),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.check_circle,
+                          color: colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Available Maps
+          Text(
+            l10n.availableMaps,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...MapProvider.values.map((provider) {
+            final isSelected = provider == _selectedProvider;
+            final apiKeyStatus = _getApiKeyStatus(provider);
+
+            return Card(
+              elevation: 1,
+              margin: const EdgeInsets.only(bottom: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: InkWell(
+                onTap: () => _changeDefaultMap(provider),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      // Map Icon
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Icon(
+                          Icons.map,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _getMapProviderName(provider, l10n),
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Text(
+                                  '${l10n.apiKey}: ',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                Text(
+                                  apiKeyStatus == 'no_key_required'
+                                      ? l10n.notConfigured
+                                      : apiKeyStatus.contains('configured')
+                                          ? l10n.configured
+                                          : l10n.notConfigured,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: apiKeyStatus.contains('configured') || apiKeyStatus == 'no_key_required'
+                                        ? colorScheme.primary
+                                        : colorScheme.error,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isSelected)
+                        Icon(
+                          Icons.check_circle,
+                          color: colorScheme.primary,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
   }
 }
 

@@ -398,5 +398,19 @@
   "coordinates": "Координаты",
   "creditLimit": "Кредитный лимит",
   "accumulatedCredit": "Накопленный кредит",
-  "codeRegion": "Код региона"
+  "codeRegion": "Код региона",
+  "maps": "Карты",
+  "selectDefaultMap": "Выберите карту по умолчанию",
+  "googleMaps": "Google Карты",
+  "yandexMaps": "Yandex Карты",
+  "openStreetMap": "OpenStreetMap",
+  "mapProvider": "Провайдер карт",
+  "apiKey": "API ключ",
+  "configured": "Настроено",
+  "notConfigured": "Не настроено",
+  "mapSettings": "Настройки карт",
+  "defaultMapChanged": "Карта по умолчанию успешно изменена",
+  "currentMapProvider": "Текущий провайдер карт",
+  "availableMaps": "Доступные карты",
+  "mapConfiguration": "Конфигурация карт"
 }

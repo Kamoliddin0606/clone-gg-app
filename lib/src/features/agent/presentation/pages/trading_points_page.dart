@@ -13,6 +13,7 @@ import 'package:gloria_marketing_flutter/src/core/services/permission_manager.da
 import 'package:gloria_marketing_flutter/src/core/services/permissions_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/trading_points_filters_panel.dart';
@@ -120,6 +121,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     List<String> _availableTradePointTypes = []; // Available trade point types for filtering
     bool _showVisitTodayOnly = false; // Visit today filter state
 
+    // Map provider settings
+    MapProvider _defaultMapProvider = MapProvider.google; // Default map provider
+
     // PageStorage bucket for state persistence
     late final PageStorageBucket _storageBucket;
 
@@ -132,6 +136,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _initializePermissionsService();
     _loadUserData();
     _restoreState();
+    _loadDefaultMapProvider();
   }
 
   /// Initialize permissions on page load
@@ -248,6 +253,29 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           SnackBar(content: Text('Xatolik: $e')),
         );
       }
+    }
+  }
+
+  /// Load default map provider from settings
+  Future<void> _loadDefaultMapProvider() async {
+    try {
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      final savedProvider = prefs.preferences.getString('default_map_provider');
+
+      if (savedProvider != null) {
+        setState(() {
+          _defaultMapProvider = MapProvider.values.firstWhere(
+            (provider) => provider.toString() == savedProvider,
+            orElse: () => MapProvider.openStreetMap,
+          );
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading default map provider: $e');
+      }
+      // Keep default value
     }
   }
 
@@ -2219,11 +2247,13 @@ class _ClientDetailsPage extends StatefulWidget {
 
 class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   bool _locationPermissionGranted = false;
+  MapProvider _defaultMapProvider = MapProvider.google;
 
   @override
   void initState() {
     super.initState();
     _checkLocationPermission();
+    _loadDefaultMapProvider();
   }
 
   /// Validates and returns a valid LatLng, with fallback for invalid coordinates
@@ -2264,6 +2294,81 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     }
   }
 
+  /// Load default map provider from settings
+  Future<void> _loadDefaultMapProvider() async {
+    try {
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      final savedProvider = prefs.preferences.getString('default_map_provider');
+
+      if (savedProvider != null) {
+        setState(() {
+          _defaultMapProvider = MapProvider.values.firstWhere(
+            (provider) => provider.toString() == savedProvider,
+            orElse: () => MapProvider.google,
+          );
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading default map provider: $e');
+      }
+      // Keep default value
+    }
+  }
+
+  /// Build map widget based on selected provider
+  Widget _buildMapWidget(LatLng position, String title, String markerId) {
+    // Use the default map provider from settings
+    switch (_defaultMapProvider) {
+      case MapProvider.google:
+        return GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: position,
+            zoom: 15,
+          ),
+          markers: {
+            Marker(
+              markerId: MarkerId(markerId),
+              position: position,
+              infoWindow: InfoWindow(title: title),
+            ),
+          },
+          onMapCreated: (controller) {
+            // Map controller can be managed here if needed
+          },
+        );
+      case MapProvider.yandex:
+        // TODO: Implement Yandex Maps widget when available
+        return const Center(
+          child: Text('Yandex Maps - Coming Soon'),
+        );
+      case MapProvider.openStreetMap:
+        // TODO: Implement OSM widget when available
+        return const Center(
+          child: Text('OpenStreetMap - Coming Soon'),
+        );
+      default:
+        // Fallback to Google Maps
+        return GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: position,
+            zoom: 15,
+          ),
+          markers: {
+            Marker(
+              markerId: MarkerId(markerId),
+              position: position,
+              infoWindow: InfoWindow(title: title),
+            ),
+          },
+          onMapCreated: (controller) {
+            // Map controller can be managed here if needed
+          },
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -2279,21 +2384,10 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             height: 200,
             margin: const EdgeInsets.only(bottom: 16),
             child: _locationPermissionGranted
-                ? GoogleMap(
-                    initialCameraPosition: CameraPosition(
-                      target: _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
-                      zoom: 15,
-                    ),
-                    markers: {
-                      Marker(
-                        markerId: MarkerId(widget.tradingPoint.id),
-                        position: _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
-                        infoWindow: InfoWindow(title: widget.tradingPoint.name),
-                      ),
-                    },
-                    onMapCreated: (controller) {
-                      // Map controller can be managed here if needed
-                    },
+                ? _buildMapWidget(
+                    _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
+                    widget.tradingPoint.name,
+                    widget.tradingPoint.id,
                   )
                 : Center(
                     child: Column(

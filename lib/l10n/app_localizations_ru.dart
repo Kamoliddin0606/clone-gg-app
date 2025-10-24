@@ -1063,4 +1063,46 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get codeRegion => 'Код региона';
+
+  @override
+  String get maps => 'Карты';
+
+  @override
+  String get selectDefaultMap => 'Выберите карту по умолчанию';
+
+  @override
+  String get googleMaps => 'Google Карты';
+
+  @override
+  String get yandexMaps => 'Yandex Карты';
+
+  @override
+  String get openStreetMap => 'OpenStreetMap';
+
+  @override
+  String get mapProvider => 'Провайдер карт';
+
+  @override
+  String get apiKey => 'API ключ';
+
+  @override
+  String get configured => 'Настроено';
+
+  @override
+  String get notConfigured => 'Не настроено';
+
+  @override
+  String get mapSettings => 'Настройки карт';
+
+  @override
+  String get defaultMapChanged => 'Карта по умолчанию успешно изменена';
+
+  @override
+  String get currentMapProvider => 'Текущий провайдер карт';
+
+  @override
+  String get availableMaps => 'Доступные карты';
+
+  @override
+  String get mapConfiguration => 'Конфигурация карт';
 }

@@ -398,5 +398,19 @@
   "coordinates": "Coordinates",
   "creditLimit": "Credit Limit",
   "accumulatedCredit": "Accumulated Credit",
-  "codeRegion": "Code Region"
+  "codeRegion": "Code Region",
+  "maps": "Maps",
+  "selectDefaultMap": "Select Default Map",
+  "googleMaps": "Google Maps",
+  "yandexMaps": "Yandex Maps",
+  "openStreetMap": "OpenStreetMap",
+  "mapProvider": "Map Provider",
+  "apiKey": "API Key",
+  "configured": "Configured",
+  "notConfigured": "Not Configured",
+  "mapSettings": "Map Settings",
+  "defaultMapChanged": "Default map changed successfully",
+  "currentMapProvider": "Current Map Provider",
+  "availableMaps": "Available Maps",
+  "mapConfiguration": "Map Configuration"
 }

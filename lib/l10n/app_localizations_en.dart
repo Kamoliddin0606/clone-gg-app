@@ -1063,4 +1063,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get codeRegion => 'Code Region';
+
+  @override
+  String get maps => 'Maps';
+
+  @override
+  String get selectDefaultMap => 'Select Default Map';
+
+  @override
+  String get googleMaps => 'Google Maps';
+
+  @override
+  String get yandexMaps => 'Yandex Maps';
+
+  @override
+  String get openStreetMap => 'OpenStreetMap';
+
+  @override
+  String get mapProvider => 'Map Provider';
+
+  @override
+  String get apiKey => 'API Key';
+
+  @override
+  String get configured => 'Configured';
+
+  @override
+  String get notConfigured => 'Not Configured';
+
+  @override
+  String get mapSettings => 'Map Settings';
+
+  @override
+  String get defaultMapChanged => 'Default map changed successfully';
+
+  @override
+  String get currentMapProvider => 'Current Map Provider';
+
+  @override
+  String get availableMaps => 'Available Maps';
+
+  @override
+  String get mapConfiguration => 'Map Configuration';
 }

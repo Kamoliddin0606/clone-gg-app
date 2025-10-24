@@ -1063,4 +1063,46 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get codeRegion => 'Viloyat kodi';
+
+  @override
+  String get maps => 'Xaritalar';
+
+  @override
+  String get selectDefaultMap => 'Asosiy xaritani tanlang';
+
+  @override
+  String get googleMaps => 'Google Xaritalar';
+
+  @override
+  String get yandexMaps => 'Yandex Xaritalar';
+
+  @override
+  String get openStreetMap => 'OpenStreetMap';
+
+  @override
+  String get mapProvider => 'Xarita provayderi';
+
+  @override
+  String get apiKey => 'API kaliti';
+
+  @override
+  String get configured => 'Sozlangan';
+
+  @override
+  String get notConfigured => 'Sozlanmagan';
+
+  @override
+  String get mapSettings => 'Xarita sozlamalari';
+
+  @override
+  String get defaultMapChanged => 'Asosiy xarita muvaffaqiyatli o\'zgartirildi';
+
+  @override
+  String get currentMapProvider => 'Joriy xarita provayderi';
+
+  @override
+  String get availableMaps => 'Mavjud xaritalar';
+
+  @override
+  String get mapConfiguration => 'Xarita konfiguratsiyasi';
 }

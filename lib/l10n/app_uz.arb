@@ -398,5 +398,19 @@
   "coordinates": "Koordinatalar",
   "creditLimit": "Kredit limiti",
   "accumulatedCredit": "To'plangan kredit",
-  "codeRegion": "Viloyat kodi"
+  "codeRegion": "Viloyat kodi",
+  "maps": "Xaritalar",
+  "selectDefaultMap": "Asosiy xaritani tanlang",
+  "googleMaps": "Google Xaritalar",
+  "yandexMaps": "Yandex Xaritalar",
+  "openStreetMap": "OpenStreetMap",
+  "mapProvider": "Xarita provayderi",
+  "apiKey": "API kaliti",
+  "configured": "Sozlangan",
+  "notConfigured": "Sozlanmagan",
+  "mapSettings": "Xarita sozlamalari",
+  "defaultMapChanged": "Asosiy xarita muvaffaqiyatli o'zgartirildi",
+  "currentMapProvider": "Joriy xarita provayderi",
+  "availableMaps": "Mavjud xaritalar",
+  "mapConfiguration": "Xarita konfiguratsiyasi"
 }

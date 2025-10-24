@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gloria_marketing_flutter/src/core/services/map_token_platform_service.dart';
 
 class SharedPreferencesService {
   late final SharedPreferences _preferences;
@@ -352,6 +354,30 @@ Future<void> init() async {
       return true;
     } catch (e) {
       print('Error clearing map tokens: $e');
+      return false;
+    }
+  }
+
+  /// Update platform-specific configuration files with map tokens
+  /// This method should be called after successfully saving map tokens
+  Future<bool> updatePlatformMapTokens() async {
+    try {
+      final yandexToken = getYandexMapsToken();
+      final googleToken = getGoogleMapsToken();
+
+      if (kDebugMode) {
+        print('Updating platform-specific map tokens via Platform Channel...');
+        print('Yandex token available: ${yandexToken?.isNotEmpty == true}');
+        print('Google token available: ${googleToken?.isNotEmpty == true}');
+      }
+
+      // Use Platform Channel to update native map configurations
+      return await MapTokenPlatformService.initializeMapTokens();
+
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating platform map tokens: $e');
+      }
       return false;
     }
   }

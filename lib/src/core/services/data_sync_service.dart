@@ -1782,6 +1782,11 @@ class DataSyncService {
         googleToken: tokens['googleToken'] ?? '',
       );
 
+      // Update platform-specific configuration if tokens were saved successfully
+      if (saved) {
+        await _prefs.updatePlatformMapTokens();
+      }
+
       if (!saved) {
         if (kDebugMode) {
           print('DataSyncService: Failed to save map tokens to preferences');

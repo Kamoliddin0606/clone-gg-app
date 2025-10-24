@@ -141,6 +141,23 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     // PageStorage bucket for state persistence
     late final PageStorageBucket _storageBucket;
 
+  /// Initialize map tokens on app start
+  Future<void> _initializeMapTokens() async {
+    try {
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+
+      // Check if we have valid tokens and initialize platform
+      if (prefs.hasValidMapTokens()) {
+        await prefs.updatePlatformMapTokens();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error initializing map tokens: $e');
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -149,6 +166,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _initializeLocationService();
     _initializePermissionsService();
     _initializeOfflineSupport();
+    _initializeMapTokens();
     _loadUserData();
     _restoreState();
     _loadDefaultMapProvider();
@@ -2382,9 +2400,30 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   }
 
 
+
+  /// Get Yandex Maps token from shared preferences
+  Future<String?> _getYandexMapsToken() async {
+    try {
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      final token = prefs.getYandexMapsToken();
+
+      if (kDebugMode) {
+        print('Retrieved Yandex Maps token: ${token != null && token.isNotEmpty ? 'Present (${token.length} chars)' : 'Empty/Null'}');
+      }
+
+      return token;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting Yandex Maps token: $e');
+      }
+      return null;
+    }
+  }
+
   /// Build map widget based on selected provider with marker rotation support
   /// This ensures markers remain fixed at their geographic coordinates regardless of map rotation
-  Widget _buildMapWidget(LatLng position, String title, String markerId) {
+  Future<Widget> _buildMapWidget(LatLng position, String title, String markerId) async {
     // Use the default map provider from settings
     switch (_defaultMapProvider) {
       case MapProvider.google:
@@ -2409,6 +2448,103 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
       case MapProvider.yandex:
         // Implement Yandex Maps widget with yandex_mapkit and offline caching
         try {
+          // Get Yandex Maps token from shared preferences
+          final yandexToken = await _getYandexMapsToken();
+
+          if (yandexToken != null && yandexToken.isNotEmpty) {
+            // Set API key for Yandex MapKit
+            // Note: YandexMapKit.setApiKey() is not available in the current version
+            // The token should be set in platform-specific files (AndroidManifest.xml, Info.plist)
+            // For now, we'll proceed with YandexMap creation and let the platform handle the token
+
+            if (kDebugMode) {
+              print('Yandex Maps token retrieved: ${yandexToken.substring(0, 10)}...');
+              print('Creating YandexMap widget...');
+            }
+
+            try {
+              return yandex.YandexMap(
+                mapObjects: [
+                  yandex.PlacemarkMapObject(
+                    mapId: yandex.MapObjectId(markerId),
+                    point: yandex.Point(
+                      latitude: position.latitude,
+                      longitude: position.longitude,
+                    ),
+                    icon: yandex.PlacemarkIcon.single(
+                      yandex.PlacemarkIconStyle(
+                        image: yandex.BitmapDescriptor.fromAssetImage('assets/images/marker.png'),
+                        scale: 0.8,
+                      ),
+                    ),
+                    // Markers are naturally upright in Yandex Maps - no direction needed
+                    opacity: 1.0,
+                  ),
+                ],
+                onMapCreated: (controller) {
+                  if (kDebugMode) {
+                    print('YandexMap created successfully, moving camera...');
+                  }
+                  // Yandex map controller setup
+                  controller.moveCamera(
+                    yandex.CameraUpdate.newCameraPosition(
+                      yandex.CameraPosition(
+                        target: yandex.Point(
+                          latitude: position.latitude,
+                          longitude: position.longitude,
+                        ),
+                        zoom: 15,
+                      ),
+                    ),
+                  );
+
+                  // No rotation tracking needed - markers are naturally upright
+                },
+                onMapTap: (point) {
+                  if (kDebugMode) {
+                    print('YandexMap tapped at: ${point.latitude}, ${point.longitude}');
+                  }
+                },
+              );
+            } catch (e) {
+              if (kDebugMode) {
+                print('Error creating YandexMap: $e');
+              }
+              // Fallback to Google Maps on error
+              return GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: position,
+                  zoom: 15,
+                ),
+                markers: {
+                  Marker(
+                    markerId: MarkerId(markerId),
+                    position: position,
+                    infoWindow: InfoWindow(title: title),
+                  ),
+                },
+              );
+            }
+          } else {
+            if (kDebugMode) {
+              print('Warning: Yandex Maps token not available, falling back to Google Maps');
+            }
+            // Fallback to Google Maps if no Yandex token
+            return GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: position,
+                zoom: 15,
+              ),
+              markers: {
+                Marker(
+                  markerId: MarkerId(markerId),
+                  position: position,
+                  infoWindow: InfoWindow(title: title),
+                ),
+              },
+            );
+          }
+
           return yandex.YandexMap(
             mapObjects: [
               yandex.PlacemarkMapObject(
@@ -2445,6 +2581,9 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             },
           );
         } catch (e) {
+          if (kDebugMode) {
+            print('Error setting up Yandex Maps: $e');
+          }
           // Fallback if Yandex Maps fails
           return const Center(
             child: Text('Yandex Maps yuklanmadi. Google Maps ishlatiladi.'),
@@ -2549,10 +2688,25 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             height: 200,
             margin: const EdgeInsets.only(bottom: 16),
             child: _locationPermissionGranted
-                ? _buildMapWidget(
-                    _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
-                    widget.tradingPoint.name,
-                    widget.tradingPoint.id,
+                ? FutureBuilder<Widget>(
+                    future: _buildMapWidget(
+                      _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
+                      widget.tradingPoint.name,
+                      widget.tradingPoint.id,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(
+                          child: Text('Xarita yuklanmadi: ${snapshot.error}'),
+                        );
+                      } else {
+                        return snapshot.data ?? const Center(
+                          child: Text('Xarita mavjud emas'),
+                        );
+                      }
+                    },
                   )
                 : Center(
                     child: Column(

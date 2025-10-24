@@ -2584,8 +2584,8 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                     width: 40.0,
                     height: 40.0,
                     point: osm_latlong.LatLng(position.latitude, position.longitude),
-                    // OSM markers don't rotate with map by default, which is desired behavior
-                    // No additional rotation needed as flutter_map markers stay fixed
+                    // OSM markers should stay upright regardless of map rotation
+                    // No rotation needed - flutter_map markers are automatically fixed
                     child: const Icon(
                       Icons.location_on,
                       color: Colors.red,

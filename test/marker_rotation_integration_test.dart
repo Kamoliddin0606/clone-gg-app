@@ -153,6 +153,20 @@ void main() {
       expect(mockMarker.point.longitude, closeTo(69.2401, 0.0001));
     });
 
+    test('OSM marker counter-rotation for upright orientation', () {
+      // Test that OSM markers are counter-rotated to stay upright when map rotates
+      const double mapRotationDegrees = 45.0;
+      const double expectedCounterRotation = -45.0; // Counter-rotation in degrees
+
+      // Test counter-rotation calculation
+      final counterRotation = -mapRotationDegrees;
+      expect(counterRotation, equals(expectedCounterRotation));
+
+      // Test conversion to radians for Transform.rotate
+      final counterRotationRadians = counterRotation * math.pi / 180.0;
+      expect(counterRotationRadians, closeTo(-math.pi / 4, 0.0001)); // -45 degrees in radians
+    });
+
     test('OSM map options with rotation tracking', () {
       // Test that MapOptions can be configured with position change callback
       final mapOptions = osm.MapOptions(

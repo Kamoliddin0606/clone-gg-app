@@ -1950,16 +1950,16 @@ class _MapsTabState extends State<MapsTab> {
       switch (provider) {
         case MapProvider.google:
           final hasKey = await _apiKeyService.hasApiKey(ApiKeyService.googleMapsApiKey);
-          return hasKey ? 'configured' : 'not_configured';
+          return hasKey ? 'sozlangan' : 'sozlanmagan';
         case MapProvider.yandex:
           final hasKey = await _apiKeyService.hasApiKey(ApiKeyService.yandexMapsApiKey);
-          return hasKey ? 'configured' : 'not_configured';
+          return hasKey ? 'sozlangan' : 'sozlanmagan';
         case MapProvider.openStreetMap:
-          return 'no_key_required'; // OSM doesn't require API key
+          return 'kalit_shart_emas'; // OSM doesn't require API key
       }
     } catch (e) {
       print('Error checking API key status: $e');
-      return 'error';
+      return 'xatolik';
     }
   }
 
@@ -1970,7 +1970,7 @@ class _MapsTabState extends State<MapsTab> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('API key saved successfully'),
+              content: Text('API kaliti muvaffaqiyatli saqlandi'),
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
@@ -1979,7 +1979,7 @@ class _MapsTabState extends State<MapsTab> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${result.errorMessage}'),
+              content: Text('Xatolik: ${result.errorMessage}'),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -2008,21 +2008,21 @@ class _MapsTabState extends State<MapsTab> {
       case MapProvider.google:
         keyType = ApiKeyService.googleMapsApiKey;
         controller = _googleApiKeyController;
-        title = 'Google Maps API Key';
+        title = 'Google Maps API Kaliti';
         hint = 'AIza...';
         break;
       case MapProvider.yandex:
         keyType = ApiKeyService.yandexMapsApiKey;
         controller = _yandexApiKeyController;
-        title = 'Yandex Maps API Key';
-        hint = 'your-yandex-api-key';
+        title = 'Yandex Maps API Kaliti';
+        hint = 'sizning-yandex-api-kalitingiz';
         break;
       case MapProvider.openStreetMap:
         // OSM doesn't require API key, but we can store custom config
         keyType = ApiKeyService.openStreetMapsApiKey;
         controller = _osmApiKeyController;
-        title = 'OpenStreetMap Configuration';
-        hint = 'optional-custom-config';
+        title = 'OpenStreetMap Konfiguratsiyasi';
+        hint = 'ixtiyoriy-maxsus-konfiguratsiya';
         break;
     }
 
@@ -2074,136 +2074,119 @@ class _MapsTabState extends State<MapsTab> {
       );
     }
 
-    return FutureBuilder<List<Card>>(
-      future: _buildMapProviderCards(l10n, theme, colorScheme),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Text('Error loading map providers: ${snapshot.error}'),
-          );
-        }
-
-        final mapProviderCards = snapshot.data ?? [];
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Map Settings Header
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Map Settings Header
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Icon(Icons.map, color: colorScheme.primary, size: 28),
-                          const SizedBox(width: 12),
-                          Text(
-                            l10n.mapSettings,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
+                      Icon(Icons.map, color: colorScheme.primary, size: 28),
+                      const SizedBox(width: 12),
                       Text(
-                        l10n.mapConfiguration,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Current Map Provider
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.currentMapProvider,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+                        l10n.mapSettings,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
                           color: colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.map_outlined, color: colorScheme.onPrimaryContainer),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _getMapProviderName(_selectedProvider, l10n),
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.check_circle,
-                              color: colorScheme.primary,
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.mapConfiguration,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-
-              // Available Maps
-              Text(
-                l10n.availableMaps,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ...mapProviderCards,
-            ],
+            ),
           ),
-        );
-      },
+          const SizedBox(height: 24),
+
+          // Current Map Provider
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.currentMapProvider,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.map_outlined, color: colorScheme.onPrimaryContainer),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _getMapProviderName(_selectedProvider, l10n),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.check_circle,
+                          color: colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Available Maps
+          Text(
+            l10n.availableMaps,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...MapProvider.values.map((provider) => _buildMapProviderCard(provider, l10n, theme, colorScheme)),
+        ],
+      ),
     );
   }
 
-  Future<List<Card>> _buildMapProviderCards(AppLocalizations l10n, ThemeData theme, ColorScheme colorScheme) async {
-    final cards = <Card>[];
+  Widget _buildMapProviderCard(MapProvider provider, AppLocalizations l10n, ThemeData theme, ColorScheme colorScheme) {
+    final isSelected = provider == _selectedProvider;
 
-    for (final provider in MapProvider.values) {
-      final isSelected = provider == _selectedProvider;
-      final apiKeyStatus = await _getApiKeyStatus(provider);
+    return FutureBuilder<String>(
+      future: _getApiKeyStatus(provider),
+      builder: (context, snapshot) {
+        final apiKeyStatus = snapshot.data ?? 'xatolik';
 
-      cards.add(
-        Card(
+        return Card(
           elevation: 1,
           margin: const EdgeInsets.only(bottom: 8),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -2245,19 +2228,19 @@ class _MapsTabState extends State<MapsTab> {
                         Row(
                           children: [
                             Text(
-                              'API Key: ',
+                              'API Kaliti: ',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                             Text(
-                              apiKeyStatus == 'no_key_required'
-                                  ? 'Not required'
-                                  : apiKeyStatus == 'configured'
-                                      ? 'Configured'
-                                      : 'Not configured',
+                              apiKeyStatus == 'kalit_shart_emas'
+                                  ? 'Kalit shart emas'
+                                  : apiKeyStatus == 'sozlangan'
+                                      ? 'Sozlangan'
+                                      : 'Sozlanmagan',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: apiKeyStatus == 'configured' || apiKeyStatus == 'no_key_required'
+                                color: apiKeyStatus == 'sozlangan' || apiKeyStatus == 'kalit_shart_emas'
                                     ? colorScheme.primary
                                     : colorScheme.error,
                                 fontWeight: FontWeight.w500,
@@ -2288,11 +2271,9 @@ class _MapsTabState extends State<MapsTab> {
               ),
             ),
           ),
-        ),
-      );
-    }
-
-    return cards;
+        );
+      },
+    );
   }
 }
 

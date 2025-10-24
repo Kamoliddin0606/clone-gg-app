@@ -20,7 +20,6 @@ import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dar
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/services/map_cache_service.dart';
-import 'package:gloria_marketing_flutter/src/core/maps/utils/marker_rotation_utils.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/trading_points_filters_panel.dart';
@@ -132,9 +131,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     // Map provider settings
     MapProvider _defaultMapProvider = MapProvider.google; // Default map provider
 
-    // Marker rotation management
-    double _currentMapRotation = 0.0; // Current map rotation angle in degrees
-    bool _markersNeedRotationUpdate = false; // Flag to track if markers need rotation update
+    // Map rotation tracking removed - markers are naturally upright in all map providers
 
     // Offline caching
     late MapCacheService _mapCacheService;
@@ -2315,9 +2312,6 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   bool _locationPermissionGranted = false;
   MapProvider _defaultMapProvider = MapProvider.google;
 
-  // Marker rotation state for this map instance
-  double _currentMapRotation = 0.0;
-  bool _markersNeedRotationUpdate = false;
 
   @override
   void initState() {
@@ -2387,22 +2381,6 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     }
   }
 
-  /// Update map rotation from Google Maps controller
-  /// This method initializes rotation tracking for Google Maps
-  Future<void> _updateMapRotationFromController(GoogleMapController controller) async {
-    try {
-      // Note: Google Maps doesn't directly provide bearing in getVisibleRegion
-      // Rotation is tracked via onCameraMove callback instead
-      // This method is called initially to set up rotation tracking
-      if (kDebugMode) {
-        print('Map rotation tracking initialized for Google Maps');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error initializing map rotation tracking: $e');
-      }
-    }
-  }
 
   /// Build map widget based on selected provider with marker rotation support
   /// This ensures markers remain fixed at their geographic coordinates regardless of map rotation
@@ -2420,31 +2398,12 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               markerId: MarkerId(markerId),
               position: position,
               infoWindow: InfoWindow(title: title),
-              // Apply fixed marker rotation to prevent rotation with map
-              // This ensures markers stay upright regardless of map orientation
-              rotation: MarkerRotationUtils.calculateFixedMarkerRotation(_currentMapRotation),
+              // Markers are naturally upright in Google Maps - no rotation needed
             ),
           },
           onMapCreated: (controller) {
             // Map controller can be managed here if needed
-            // Listen for camera changes to update marker rotation
-            controller.getVisibleRegion().then((bounds) {
-              // Update map rotation when camera changes
-              _updateMapRotationFromController(controller);
-            });
-          },
-          onCameraMove: (position) {
-            // Update current map rotation when camera moves
-            // This ensures markers are recalculated to stay upright
-            if (_currentMapRotation != position.bearing) {
-              if (kDebugMode) {
-                print('Map rotation changed: $_currentMapRotation -> ${position.bearing}');
-              }
-              setState(() {
-                _currentMapRotation = position.bearing;
-                _markersNeedRotationUpdate = true;
-              });
-            }
+            // No rotation tracking needed - markers are naturally upright
           },
         );
       case MapProvider.yandex:
@@ -2464,9 +2423,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                     scale: 0.8,
                   ),
                 ),
-                // Apply fixed marker rotation for Yandex Maps to keep markers upright
-                // This prevents markers from rotating with the map orientation
-                direction: MarkerRotationUtils.calculateFixedMarkerRotation(_currentMapRotation),
+                // Markers are naturally upright in Yandex Maps - no direction needed
                 opacity: 1.0,
               ),
             ],
@@ -2484,28 +2441,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                 ),
               );
 
-              // Listen for camera changes in Yandex Maps
-              controller.getCameraPosition().then((cameraPosition) {
-                if (cameraPosition.azimuth != _currentMapRotation) {
-                  setState(() {
-                    _currentMapRotation = cameraPosition.azimuth;
-                    _markersNeedRotationUpdate = true;
-                  });
-                }
-              });
-            },
-            onCameraPositionChanged: (cameraPosition, reason, finished) {
-              // Update rotation when Yandex map camera changes
-              // This ensures markers stay upright during map rotation
-              if (cameraPosition.azimuth != _currentMapRotation) {
-                if (kDebugMode) {
-                  print('Yandex map rotation changed: $_currentMapRotation -> ${cameraPosition.azimuth}');
-                }
-                setState(() {
-                  _currentMapRotation = cameraPosition.azimuth;
-                  _markersNeedRotationUpdate = true;
-                });
-              }
+              // No rotation tracking needed - markers are naturally upright
             },
           );
         } catch (e) {
@@ -2523,36 +2459,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               initialZoom: 15.0,
               // Enhanced rotation handling for OSM with proper tracking
               onPositionChanged: (position, hasGesture) {
-                try {
-                  // Track map rotation changes for marker orientation
-                  // flutter_map v8+ supports rotation in MapPosition
-                  if (position != null && position.rotation != null) {
-                    final newRotation = position.rotation! * 180.0 / math.pi; // Convert radians to degrees
-
-                    // Only update if rotation has actually changed to avoid unnecessary rebuilds
-                    if (_currentMapRotation != newRotation) {
-                      if (kDebugMode) {
-                        print('OSM map rotation changed: $_currentMapRotation° -> ${newRotation}°');
-                      }
-
-                      // Update rotation state with proper error handling
-                      setState(() {
-                        _currentMapRotation = newRotation;
-                        _markersNeedRotationUpdate = true;
-                      });
-                    }
-                  }
-
-                  // Log position changes for debugging (only in debug mode)
-                  if (kDebugMode) {
-                    print('OSM map position changed - center: ${position?.center}, zoom: ${position?.zoom}, rotation: ${position?.rotation}');
-                  }
-                } catch (e) {
-                  // Log error but don't crash the app
-                  if (kDebugMode) {
-                    print('Error tracking OSM map position changes: $e');
-                  }
-                }
+                // No rotation tracking needed - OSM markers are naturally upright
               },
             ),
             children: [
@@ -2579,10 +2486,13 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                 },
               ),
               osm.MarkerLayer(
+                rotate: true,
+                // alignment: Alignment.bottomCenter,
                 markers: [
                   osm.Marker(
                     width: 40.0,
                     height: 40.0,
+                    alignment: Alignment.bottomCenter,
                     point: osm_latlong.LatLng(position.latitude, position.longitude),
                     // OSM markers should stay upright regardless of map rotation
                     // No rotation needed - flutter_map markers are automatically fixed
@@ -2820,9 +2730,6 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
   GoogleMapController? _mapController;
   bool _locationPermissionGranted = false;
 
-  // Marker rotation state for this map instance
-  double _currentMapRotation = 0.0;
-  bool _markersNeedRotationUpdate = false;
 
   @override
   void initState() {

@@ -278,8 +278,8 @@ Future<void> init() async {
   /// Get map tokens from shared preferences
   Map<String, String> getMapTokens() {
     try {
-      final yandexToken = _preferences.getString('yandex_maps_token') ?? '';
-      final googleToken = _preferences.getString('google_maps_token') ?? '';
+      final yandexToken = _preferences.getString('yandex_maps_api_key') ?? '';
+      final googleToken = _preferences.getString('google_maps_api_key') ?? '';
 
       return {
         'yandexToken': yandexToken,
@@ -296,12 +296,12 @@ Future<void> init() async {
 
   /// Get Yandex maps token
   String? getYandexMapsToken() {
-    return _preferences.getString('yandex_maps_token');
+    return _preferences.getString('yandex_maps_api_key');
   }
 
   /// Get Google maps token
   String? getGoogleMapsToken() {
-    return _preferences.getString('google_maps_token');
+    return _preferences.getString('google_maps_api_key');
   }
 
   /// Check if map tokens are valid (not empty and recently updated)
@@ -345,8 +345,8 @@ Future<void> init() async {
   /// Clear map tokens
   Future<bool> clearMapTokens() async {
     try {
-      await _preferences.remove('yandex_maps_token');
-      await _preferences.remove('google_maps_token');
+      await _preferences.remove('yandex_maps_api_key');
+      await _preferences.remove('google_maps_api_key');
       await _preferences.remove('map_tokens_last_updated');
 
       print('Map tokens cleared successfully');

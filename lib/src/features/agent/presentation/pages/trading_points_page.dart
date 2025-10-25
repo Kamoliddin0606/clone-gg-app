@@ -2464,11 +2464,12 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             ),
             children: [
               osm.TileLayer(
-                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                subdomains: const ['a', 'b', 'c'],
-                userAgentPackageName: 'com.gloria.marketing.app',
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: const [],
+                userAgentPackageName: 'uz.gg.gloria_marketing',
                 maxZoom: 19,
                 minZoom: 1,
+               // attributionBuilder: (_) => const Text('© OpenStreetMap contributors'),
                 // Add error handling for missing tiles
                 errorTileCallback: (tile, error, stackTrace) {
                   if (kDebugMode) {

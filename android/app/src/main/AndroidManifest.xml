@@ -13,6 +13,14 @@
         android:label="gloria_marketing_flutter"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDcAsWru_IG1IBm1n199EJoCyJtayWklrs"/>
+        <!-- Yandex MapKit API Key -->
+        <meta-data
+            android:name="com.yandex.maps.apikey"
+            android:value="bf2fb1fa-dd2f-4d56-8ea5-3f9d6350ea67"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

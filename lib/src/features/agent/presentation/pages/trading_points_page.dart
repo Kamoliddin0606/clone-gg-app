@@ -18,7 +18,7 @@ import 'package:gloria_marketing_flutter/src/core/services/permissions_service.d
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
-import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart';
+import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart' hide MapType;
 import 'package:gloria_marketing_flutter/src/core/maps/services/map_cache_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
@@ -2388,68 +2388,156 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     // Use the default map provider from settings
     switch (_defaultMapProvider) {
       case MapProvider.google:
+      // Google Maps — kalit AndroidManifest/Info.plist da.
+        final camera = CameraPosition(target: position, zoom: 15);
+
         return GoogleMap(
-          initialCameraPosition: CameraPosition(
-            target: position,
-            zoom: 15,
-          ),
+          mapType: MapType.hybrid,
+          initialCameraPosition: camera,
+          myLocationEnabled: _locationPermissionGranted,
+          myLocationButtonEnabled: true,
+          compassEnabled: true,
+          tiltGesturesEnabled: true,
+          rotateGesturesEnabled: true,
+          zoomControlsEnabled: false,
           markers: {
             Marker(
               markerId: MarkerId(markerId),
               position: position,
               infoWindow: InfoWindow(title: title),
-              // Markers are naturally upright in Google Maps - no rotation needed
+              // marker tagi pastdan “tiralib” tursin
+              anchor: const Offset(0.5, 1.0),
             ),
           },
           onMapCreated: (controller) {
-            // Map controller can be managed here if needed
-            // No rotation tracking needed - markers are naturally upright
+            // Agar kerak bo‘lsa controller’ni saqlab qo‘yish mumkin
+            // _googleController = controller;
+            // (Kalit manifestda bo‘lgani uchun bu yerda API init shart emas)
           },
         );
-      case MapProvider.yandex:
-        // Implement Yandex Maps widget with yandex_mapkit and offline caching
-        try {
-          return yandex.YandexMap(
-            mapObjects: [
-              yandex.PlacemarkMapObject(
-                mapId: yandex.MapObjectId(markerId),
-                point: yandex.Point(
-                  latitude: position.latitude,
-                  longitude: position.longitude,
-                ),
-                icon: yandex.PlacemarkIcon.single(
-                  yandex.PlacemarkIconStyle(
-                    image: yandex.BitmapDescriptor.fromAssetImage('assets/images/marker.png'),
-                    scale: 0.8,
-                  ),
-                ),
-                // Markers are naturally upright in Yandex Maps - no direction needed
-                opacity: 1.0,
-              ),
-            ],
-            onMapCreated: (controller) {
-              // Yandex map controller setup
-              controller.moveCamera(
-                yandex.CameraUpdate.newCameraPosition(
-                  yandex.CameraPosition(
-                    target: yandex.Point(
-                      latitude: position.latitude,
-                      longitude: position.longitude,
-                    ),
-                    zoom: 15,
-                  ),
-                ),
-              );
 
-              // No rotation tracking needed - markers are naturally upright
-            },
-          );
-        } catch (e) {
-          // Fallback if Yandex Maps fails
-          return const Center(
-            child: Text('Yandex Maps yuklanmadi. Google Maps ishlatiladi.'),
-          );
-        }
+      case MapProvider.yandex:
+      // Yandex MapKit — API key AndroidManifest/iOS AppDelegate’da berilgan.
+      // Runtime’da hech narsa o‘qimaymiz; bevosita xaritani ko‘rsatamiz.
+        final yPoint = yandex.Point(
+          latitude: position.latitude,
+          longitude: position.longitude,
+        );
+
+        return yandex.YandexMap(
+          // Barcha gesture’lar yoqilgan
+          tiltGesturesEnabled: true,
+          rotateGesturesEnabled: true,
+          scrollGesturesEnabled: true,
+          zoomGesturesEnabled: true,
+
+          // Bitta marker (placemark)
+          mapObjects: [
+            yandex.PlacemarkMapObject(
+              mapId: yandex.MapObjectId(markerId),
+              point: yPoint,
+              opacity: 1.0,
+              icon: yandex.PlacemarkIcon.single(
+                yandex.PlacemarkIconStyle(
+                  // Aktiv asset bo‘lmasa default pin ham ishlaydi
+                  image: yandex.BitmapDescriptor.fromAssetImage(
+                    'assets/images/marker.png',
+                  ),
+                  // Marker aylanishsiz tik turadi
+                  rotationType: yandex.RotationType.noRotation,
+                  scale: 1.0,
+                  // anchor berish shart emas, lekin xohlasang:
+                  // anchor: const Offset(0.5, 1.0),
+                ),
+              ),
+            ),
+          ],
+
+          onMapCreated: (controller) async {
+            // Kamera joyini bir maromda ochamiz
+            await controller.moveCamera(
+              yandex.CameraUpdate.newCameraPosition(
+                yandex.CameraPosition(
+                  target: yPoint,
+                  zoom: 15,
+                  azimuth: 0,
+                  tilt: 0,
+                ),
+              ),
+            );
+
+            // (Kalit manifest/AppDelegate’da, shu sabab bu yerda setApiKey shart emas)
+          },
+
+          // onMapRendered: () {
+          //   // kerak bo‘lsa: birlamchi renderingdan keyin ishlar
+          //   // debugPrint('Yandex map rendered');
+          // },
+        );
+
+    // case MapProvider.google:
+      //   return GoogleMap(
+      //     initialCameraPosition: CameraPosition(
+      //       target: position,
+      //       zoom: 15,
+      //     ),
+      //     markers: {
+      //       Marker(
+      //         markerId: MarkerId(markerId),
+      //         position: position,
+      //         infoWindow: InfoWindow(title: title),
+      //         // Markers are naturally upright in Google Maps - no rotation needed
+      //       ),
+      //     },
+      //     onMapCreated: (controller) {
+      //       // Map controller can be managed here if needed
+      //       // No rotation tracking needed - markers are naturally upright
+      //     },
+      //   );
+      // case MapProvider.yandex:
+      //   // Implement Yandex Maps widget with yandex_mapkit and offline caching
+      //   try {
+      //     return yandex.YandexMap(
+      //       mapObjects: [
+      //         yandex.PlacemarkMapObject(
+      //           mapId: yandex.MapObjectId(markerId),
+      //           point: yandex.Point(
+      //             latitude: position.latitude,
+      //             longitude: position.longitude,
+      //           ),
+      //           icon: yandex.PlacemarkIcon.single(
+      //             yandex.PlacemarkIconStyle(
+      //               image: yandex.BitmapDescriptor.fromAssetImage('assets/images/marker.png'),
+      //               scale: 0.8,
+      //             ),
+      //           ),
+      //           // Markers are naturally upright in Yandex Maps - no direction needed
+      //           opacity: 1.0,
+      //         ),
+      //       ],
+      //       onMapCreated: (controller) {
+      //         // Yandex map controller setup
+      //         controller.moveCamera(
+      //           yandex.CameraUpdate.newCameraPosition(
+      //             yandex.CameraPosition(
+      //               target: yandex.Point(
+      //                 latitude: position.latitude,
+      //                 longitude: position.longitude,
+      //               ),
+      //               zoom: 15,
+      //             ),
+      //           ),
+      //         );
+      //
+      //         // No rotation tracking needed - markers are naturally upright
+      //       },
+      //     );
+      //   } catch (e) {
+      //     // Fallback if Yandex Maps fails
+      //     return const Center(
+      //       child: Text('Yandex Maps yuklanmadi. Google Maps ishlatiladi.'),
+      //     );
+      //   }
       case MapProvider.openStreetMap:
         // Implement OpenStreetMap widget with flutter_map and offline caching
         try {

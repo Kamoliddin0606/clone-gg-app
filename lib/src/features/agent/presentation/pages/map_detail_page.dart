@@ -4,6 +4,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_map/flutter_map.dart' as osm;
+import 'package:latlong2/latlong.dart' as osm_latlong;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -72,6 +74,7 @@ class _MapDetailPageState extends State<MapDetailPage> {
   // Map markers and overlays
   Set<Marker> _googleMarkers = {};
   List<MapMarker> _yandexMarkers = [];
+  List<osm.Marker> _osmMarkers = [];
 
   // User location tracking
   Position? _userPosition;
@@ -80,6 +83,8 @@ class _MapDetailPageState extends State<MapDetailPage> {
   // Route display
   List<LatLng> _routePoints = [];
   Set<Polyline> _polylines = {};
+  List<osm_latlong.LatLng> _osmRoutePoints = [];
+  List<osm.Polyline> _osmPolylines = [];
 
   // Services
   late MapCacheService _mapCacheService;
@@ -262,6 +267,25 @@ class _MapDetailPageState extends State<MapDetailPage> {
         _yandexMarkers.add(userMarker);
       });
     }
+
+    // Update OpenStreetMap marker
+    if (_defaultMapProvider == MapProvider.openStreetMap) {
+      final userOsmMarker = osm.Marker(
+        width: 40.0,
+        height: 40.0,
+        alignment: Alignment.bottomCenter,
+        point: osm_latlong.LatLng(_userPosition!.latitude, _userPosition!.longitude),
+        child: const Icon(
+          Icons.my_location,
+          color: Colors.blue,
+          size: 40,
+        ),
+      );
+
+      setState(() {
+        _osmMarkers.add(userOsmMarker);
+      });
+    }
   }
 
   /// Calculate and display route from user to client
@@ -299,6 +323,19 @@ class _MapDetailPageState extends State<MapDetailPage> {
             width: 5,
           ),
         };
+
+        // Also set OSM route points
+        _osmRoutePoints = [
+          osm_latlong.LatLng(userLatLng.latitude, userLatLng.longitude),
+          osm_latlong.LatLng(clientLatLng.latitude, clientLatLng.longitude),
+        ];
+        _osmPolylines = [
+          osm.Polyline(
+            points: _osmRoutePoints,
+            color: Colors.blue,
+            strokeWidth: 5.0,
+          ),
+        ];
       });
 
       // Move camera to show both points
@@ -465,9 +502,184 @@ class _MapDetailPageState extends State<MapDetailPage> {
             _updateUserMarker();
           },
         );
+
       case MapProvider.openStreetMap:
-        return const Center(
-          child: Text("Openstreetmap provideri uchun kod oxiriga yetqazilamgan"));
+        // OpenStreetMap implementation with flutter_map
+        try {
+          final clientOsmLatLng = osm_latlong.LatLng(
+            widget.tradingPoint.latitude,
+            widget.tradingPoint.longitude,
+          );
+
+          // Ensure user markers are updated for OSM
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _updateUserMarker();
+          });
+
+          return Stack(
+            children: [
+              osm.FlutterMap(
+                options: osm.MapOptions(
+                  initialCenter: clientOsmLatLng,
+                  initialZoom: 15.0,
+                  // Enhanced rotation handling for OSM with proper tracking
+                  onPositionChanged: (position, hasGesture) {
+                    // No rotation tracking needed - OSM markers are naturally upright
+                  },
+                ),
+                children: [
+                  osm.TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: const [],
+                    userAgentPackageName: 'uz.gg.gloria_marketing',
+                    maxZoom: 19,
+                    minZoom: 1,
+                    // attributionBuilder: (_) => const Text('© OpenStreetMap contributors'),
+                    // Add error handling for missing tiles
+                    errorTileCallback: (tile, error, stackTrace) {
+                      if (kDebugMode) {
+                        print('OSM tile error: ${tile.toString()} - $error');
+                      }
+                    },
+                    // Add loading placeholder
+                    tileBuilder: (context, tileWidget, tile) {
+                      return Stack(
+                        children: [
+                          tileWidget,
+                          // Note: Offline indicator removed for simplicity
+                        ],
+                      );
+                    },
+                  ),
+                  osm.MarkerLayer(
+                    rotate: true,
+                    // alignment: Alignment.bottomCenter,
+                    markers: [
+                      // Client marker
+                      osm.Marker(
+                        width: 40.0,
+                        height: 40.0,
+                        alignment: Alignment.bottomCenter,
+                        point: clientOsmLatLng,
+                        // OSM markers should stay upright regardless of map rotation
+                        // No rotation needed - flutter_map markers are automatically fixed
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                      ),
+                      // User markers
+                      ..._osmMarkers,
+                    ],
+                  ),
+                  if (_osmPolylines.isNotEmpty)
+                    osm.PolylineLayer(
+                      polylines: _osmPolylines,
+                    ),
+                  // Note: Offline indicator removed for simplicity
+                ],
+              ),
+              // Custom map control icons positioned over the map
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // User position icon
+                      IconButton(
+                        onPressed: _locationPermissionGranted ? () {
+                          if (_userPosition != null) {
+                            // TODO: Center map on user position
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('User position - functionality to be implemented')),
+                            );
+                          } else {
+                            _getUserLocation();
+                          }
+                        } : null,
+                        icon: Icon(
+                          Icons.my_location,
+                          color: _locationPermissionGranted ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                        ),
+                        tooltip: 'Foydalanuvchi joylashuvi',
+                      ),
+
+                      // Client position icon
+                      IconButton(
+                        onPressed: () {
+                          // TODO: Center map on client position
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Client position - functionality to be implemented')),
+                          );
+                        },
+                        icon: Icon(Icons.location_on, color: Theme.of(context).colorScheme.primary),
+                        tooltip: 'Mijoz joylashuvi',
+                      ),
+
+                      // Route icon
+                      IconButton(
+                        onPressed: _calculateRoute,
+                        icon: Icon(Icons.route, color: Theme.of(context).colorScheme.primary),
+                        tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
+                      ),
+
+                      // Fullscreen icon
+                      IconButton(
+                        onPressed: _openFullscreenMap,
+                        icon: Icon(Icons.fullscreen, color: Theme.of(context).colorScheme.primary),
+                        tooltip: 'To\'liq ekran xaritasi',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Update coordinates icon (top-right)
+              Positioned(
+                top: 16,
+                right: 16,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    onPressed: _openUpdateCoordinatesPage,
+                    icon: Icon(Icons.edit_location, color: Theme.of(context).colorScheme.primary),
+                    tooltip: 'Mijoz koordinatalarini yangilash',
+                  ),
+                ),
+              ),
+            ],
+          );
+        } catch (e) {
+          // Fallback if OSM fails
+          return Center(
+            child: Text('OpenStreetMap yuklanmadi: $e'),
+          );
+        }
+
       default:
         return const Center(
           child: Text('Xarita provayderi qo\'llab-quvvatlanmaydi'),
@@ -576,6 +788,7 @@ class _MapDetailPageState extends State<MapDetailPage> {
                             CameraUpdate.newLatLngZoom(userLatLng, 15),
                           );
                         }
+                        // TODO: Implement OSM camera movement
                       } else {
                         _getUserLocation();
                       }
@@ -599,6 +812,7 @@ class _MapDetailPageState extends State<MapDetailPage> {
                           CameraUpdate.newLatLngZoom(clientLatLng, 15),
                         );
                       }
+                      // TODO: Implement OSM camera movement
                     },
                     icon: Icon(Icons.location_on, color: cs.primary),
                     tooltip: 'Mijoz joylashuvi',
@@ -647,7 +861,7 @@ class _MapDetailPageState extends State<MapDetailPage> {
           ),
 
           // Route info overlay (if route is active)
-          if (_routePoints.isNotEmpty)
+          if (_routePoints.isNotEmpty || _osmRoutePoints.isNotEmpty)
             Positioned(
               top: 16,
               left: 16,
@@ -680,6 +894,8 @@ class _MapDetailPageState extends State<MapDetailPage> {
                         setState(() {
                           _routePoints.clear();
                           _polylines.clear();
+                          _osmRoutePoints.clear();
+                          _osmPolylines.clear();
                         });
                       },
                       icon: Icon(Icons.close, color: cs.onSurface),

@@ -465,7 +465,9 @@ class _MapDetailPageState extends State<MapDetailPage> {
             _updateUserMarker();
           },
         );
-
+      case MapProvider.openStreetMap:
+        return const Center(
+          child: Text("Openstreetmap provideri uchun kod oxiriga yetqazilamgan"));
       default:
         return const Center(
           child: Text('Xarita provayderi qo\'llab-quvvatlanmaydi'),

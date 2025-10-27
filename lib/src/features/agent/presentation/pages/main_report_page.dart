@@ -864,7 +864,7 @@ class _MainReportPageState extends State<MainReportPage>
         final mainReport = reportData['mainReport'] as MainReport;
         final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
         final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
-
+        print('malumotlarni saqlashdan oldin to\'liq main report qismlar ${reportData}');
         // Convert business region reports to map
         final akbByRegion = <String, int>{};
         for (final regionReport in businessRegionReports) {

@@ -2405,29 +2405,187 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
       // Google Maps — kalit AndroidManifest/Info.plist da.
         final camera = CameraPosition(target: position, zoom: 15);
 
-        return GoogleMap(
-          mapType: MapType.hybrid,
-          initialCameraPosition: camera,
-          myLocationEnabled: _locationPermissionGranted,
-          myLocationButtonEnabled: true,
-          compassEnabled: true,
-          tiltGesturesEnabled: true,
-          rotateGesturesEnabled: true,
-          zoomControlsEnabled: false,
-          markers: {
-            Marker(
-              markerId: MarkerId(markerId),
-              position: position,
-              infoWindow: InfoWindow(title: title),
-              // marker tagi pastdan “tiralib” tursin
-              anchor: const Offset(0.5, 1.0),
+        return Stack(
+          children: [
+            GoogleMap(
+              mapType: MapType.hybrid,
+              initialCameraPosition: camera,
+              myLocationEnabled: _locationPermissionGranted,
+              myLocationButtonEnabled: false, // Disable default button to use custom icons
+              compassEnabled: true,
+              tiltGesturesEnabled: true,
+              rotateGesturesEnabled: true,
+              zoomControlsEnabled: false,
+              markers: {
+                Marker(
+                  markerId: MarkerId(markerId),
+                  position: position,
+                  infoWindow: InfoWindow(title: title),
+                  // marker tagi pastdan "tiralib" tursin
+                  anchor: const Offset(0.5, 1.0),
+                ),
+              },
+              onMapCreated: (controller) {
+                // Agar kerak bo'lsa controller'ni saqlab qo'yish mumkin
+                // _googleController = controller;
+                // (Kalit manifestda bo'lgani uchun bu yerda API init shart emas)
+              },
             ),
-          },
-          onMapCreated: (controller) {
-            // Agar kerak bo‘lsa controller’ni saqlab qo‘yish mumkin
-            // _googleController = controller;
-            // (Kalit manifestda bo‘lgani uchun bu yerda API init shart emas)
-          },
+            // Custom map control icons positioned over the map
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // User position icon (top of the column)
+                  Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.my_location, color: Colors.blue),
+                      onPressed: () {
+                        // TODO: Center map on user position
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('User position - functionality to be implemented')),
+                        );
+                      },
+                      tooltip: 'User position',
+                      iconSize: 24,
+                    ),
+                  ),
+                  // Client position icon
+                  Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.location_on, color: Colors.red),
+                      onPressed: () {
+                        // TODO: Center map on client position
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Client position - functionality to be implemented')),
+                        );
+                      },
+                      tooltip: 'Client position',
+                      iconSize: 24,
+                    ),
+                  ),
+                  // Route icon
+                  Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.directions, color: Colors.green),
+                      onPressed: () {
+                        // TODO: Show route from user to client
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Route - functionality to be implemented')),
+                        );
+                      },
+                      tooltip: 'Route',
+                      iconSize: 24,
+                    ),
+                  ),
+                  // Fullscreen icon
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.fullscreen, color: Colors.black),
+                      onPressed: () {
+                        // Navigate to fullscreen map detail page
+                        Navigator.pushNamed(
+                          context,
+                          '/map-detail',
+                          arguments: widget.tradingPoint,
+                        );
+                      },
+                      tooltip: 'Fullscreen',
+                      iconSize: 24,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Update coordinates icon (top-right)
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.edit_location, color: Colors.orange),
+                  onPressed: () {
+                    // TODO: Open page to update client coordinates and send to server
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Update coordinates - functionality to be implemented')),
+                    );
+                  },
+                  tooltip: 'Update coordinates',
+                  iconSize: 24,
+                ),
+              ),
+            ),
+          ],
         );
 
       case MapProvider.yandex:
@@ -2446,72 +2604,388 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
           ),
         ];
 
-        return YandexFullMapView(
-          latitude: position.latitude,
-          longitude: position.longitude,
-          markers: markers, // Yangi API
-          clusterConfig: const marker_manager.MarkerClusterConfig(
-            enableClustering: false, // Bitta marker uchun clustering kerak emas
-          ),
-          // initHook: ymk_init.initMapkit(apiKey: 'YOUR_REAL_YANDEX_API_KEY'),
+        return Stack(
+          children: [
+            YandexFullMapView(
+              latitude: position.latitude,
+              longitude: position.longitude,
+              markers: markers, // Yangi API
+              clusterConfig: const marker_manager.MarkerClusterConfig(
+                enableClustering: false, // Bitta marker uchun clustering kerak emas
+              ),
+              // initHook: ymk_init.initMapkit(apiKey: 'YOUR_REAL_YANDEX_API_KEY'),
+            ),
+            // Custom map control icons positioned over the map
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // User position icon (top of the column)
+                  Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.my_location, color: Colors.blue),
+                      onPressed: () {
+                        // TODO: Center map on user position
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('User position - functionality to be implemented')),
+                        );
+                      },
+                      tooltip: 'User position',
+                      iconSize: 24,
+                    ),
+                  ),
+                  // Client position icon
+                  Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.location_on, color: Colors.red),
+                      onPressed: () {
+                        // TODO: Center map on client position
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Client position - functionality to be implemented')),
+                        );
+                      },
+                      tooltip: 'Client position',
+                      iconSize: 24,
+                    ),
+                  ),
+                  // Route icon
+                  Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.directions, color: Colors.green),
+                      onPressed: () {
+                        // TODO: Show route from user to client
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Route - functionality to be implemented')),
+                        );
+                      },
+                      tooltip: 'Route',
+                      iconSize: 24,
+                    ),
+                  ),
+                  // Fullscreen icon
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.fullscreen, color: Colors.black),
+                      onPressed: () {
+                        // Navigate to fullscreen map detail page
+                        Navigator.pushNamed(
+                          context,
+                          '/map-detail',
+                          arguments: widget.tradingPoint,
+                        );
+                      },
+                      tooltip: 'Fullscreen',
+                      iconSize: 24,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Update coordinates icon (top-right)
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.edit_location, color: Colors.orange),
+                  onPressed: () {
+                    // TODO: Open page to update client coordinates and send to server
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Update coordinates - functionality to be implemented')),
+                    );
+                  },
+                  tooltip: 'Update coordinates',
+                  iconSize: 24,
+                ),
+              ),
+            ),
+          ],
         );
 
       case MapProvider.openStreetMap:
         // Implement OpenStreetMap widget with flutter_map and offline caching
         try {
-          return osm.FlutterMap(
-            options: osm.MapOptions(
-              initialCenter: osm_latlong.LatLng(position.latitude, position.longitude),
-              initialZoom: 15.0,
-              // Enhanced rotation handling for OSM with proper tracking
-              onPositionChanged: (position, hasGesture) {
-                // No rotation tracking needed - OSM markers are naturally upright
-              },
-            ),
+          return Stack(
             children: [
-              osm.TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                subdomains: const [],
-                userAgentPackageName: 'uz.gg.gloria_marketing',
-                maxZoom: 19,
-                minZoom: 1,
-               // attributionBuilder: (_) => const Text('© OpenStreetMap contributors'),
-                // Add error handling for missing tiles
-                errorTileCallback: (tile, error, stackTrace) {
-                  if (kDebugMode) {
-                    print('OSM tile error: ${tile.toString()} - $error');
-                  }
-                },
-                // Add loading placeholder
-                tileBuilder: (context, tileWidget, tile) {
-                  return Stack(
-                    children: [
-                      tileWidget,
-                      // Note: Offline indicator removed for simplicity
-                    ],
-                  );
-                },
-              ),
-              osm.MarkerLayer(
-                rotate: true,
-                // alignment: Alignment.bottomCenter,
-                markers: [
-                  osm.Marker(
-                    width: 40.0,
-                    height: 40.0,
-                    alignment: Alignment.bottomCenter,
-                    point: osm_latlong.LatLng(position.latitude, position.longitude),
-                    // OSM markers should stay upright regardless of map rotation
-                    // No rotation needed - flutter_map markers are automatically fixed
-                    child: const Icon(
-                      Icons.location_on,
-                      color: Colors.red,
-                      size: 40,
-                    ),
+              osm.FlutterMap(
+                options: osm.MapOptions(
+                  initialCenter: osm_latlong.LatLng(position.latitude, position.longitude),
+                  initialZoom: 15.0,
+                  // Enhanced rotation handling for OSM with proper tracking
+                  onPositionChanged: (position, hasGesture) {
+                    // No rotation tracking needed - OSM markers are naturally upright
+                  },
+                ),
+                children: [
+                  osm.TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: const [],
+                    userAgentPackageName: 'uz.gg.gloria_marketing',
+                    maxZoom: 19,
+                    minZoom: 1,
+                   // attributionBuilder: (_) => const Text('© OpenStreetMap contributors'),
+                    // Add error handling for missing tiles
+                    errorTileCallback: (tile, error, stackTrace) {
+                      if (kDebugMode) {
+                        print('OSM tile error: ${tile.toString()} - $error');
+                      }
+                    },
+                    // Add loading placeholder
+                    tileBuilder: (context, tileWidget, tile) {
+                      return Stack(
+                        children: [
+                          tileWidget,
+                          // Note: Offline indicator removed for simplicity
+                        ],
+                      );
+                    },
                   ),
+                  osm.MarkerLayer(
+                    rotate: true,
+                    // alignment: Alignment.bottomCenter,
+                    markers: [
+                      osm.Marker(
+                        width: 40.0,
+                        height: 40.0,
+                        alignment: Alignment.bottomCenter,
+                        point: osm_latlong.LatLng(position.latitude, position.longitude),
+                        // OSM markers should stay upright regardless of map rotation
+                        // No rotation needed - flutter_map markers are automatically fixed
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Note: Offline indicator removed for simplicity
                 ],
               ),
-              // Note: Offline indicator removed for simplicity
+              // Custom map control icons positioned over the map
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // User position icon (top of the column)
+                    Container(
+                      width: 44,
+                      height: 44,
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.my_location, color: Colors.blue),
+                        onPressed: () {
+                          // TODO: Center map on user position
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('User position - functionality to be implemented')),
+                          );
+                        },
+                        tooltip: 'User position',
+                        iconSize: 24,
+                      ),
+                    ),
+                    // Client position icon
+                    Container(
+                      width: 44,
+                      height: 44,
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.location_on, color: Colors.red),
+                        onPressed: () {
+                          // TODO: Center map on client position
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Client position - functionality to be implemented')),
+                          );
+                        },
+                        tooltip: 'Client position',
+                        iconSize: 24,
+                      ),
+                    ),
+                    // Route icon
+                    Container(
+                      width: 44,
+                      height: 44,
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.directions, color: Colors.green),
+                        onPressed: () {
+                          // TODO: Show route from user to client
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Route - functionality to be implemented')),
+                          );
+                        },
+                        tooltip: 'Route',
+                        iconSize: 24,
+                      ),
+                    ),
+                    // Fullscreen icon
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.fullscreen, color: Colors.black),
+                        onPressed: () {
+                          // Navigate to fullscreen map detail page
+                          Navigator.pushNamed(
+                            context,
+                            '/map-detail',
+                            arguments: widget.tradingPoint,
+                          );
+                        },
+                        tooltip: 'Fullscreen',
+                        iconSize: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Update coordinates icon (top-right)
+              Positioned(
+                top: 16,
+                right: 16,
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.edit_location, color: Colors.orange),
+                    onPressed: () {
+                      // TODO: Open page to update client coordinates and send to server
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Update coordinates - functionality to be implemented')),
+                      );
+                    },
+                    tooltip: 'Update coordinates',
+                    iconSize: 24,
+                  ),
+                ),
+              ),
             ],
           );
         } catch (e) {

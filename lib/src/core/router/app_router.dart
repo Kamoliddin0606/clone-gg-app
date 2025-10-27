@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/agent_home_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/trading_points_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/map_detail_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/warehouses_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/contracts_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/reports_page.dart';
@@ -26,6 +28,7 @@ class AppRouter {
   static const String packerHomeRoute = '/packer-home';
   static const String warehouseManagerHomeRoute = '/warehouse-manager-home';
   static const String tradingPointsRoute = '/trading-points';
+  static const String mapDetailRoute = '/map-detail';
   static const String warehousesRoute = '/warehouses';
   static const String contractsRoute = '/contracts';
   static const String marketingRoute = '/marketing';
@@ -55,6 +58,20 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const WarehouseManagerHomePage());
       case tradingPointsRoute:
         return MaterialPageRoute(builder: (_) => const TradingPointsPage());
+      case mapDetailRoute:
+        final tradingPoint = settings.arguments as model.TradingPoint?;
+        if (tradingPoint != null) {
+          return MaterialPageRoute(
+            builder: (_) => MapDetailPage(tradingPoint: tradingPoint),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: const Center(
+              child: Text('Trading point data is required for map detail page'),
+            ),
+          ),
+        );
       case warehousesRoute:
         return MaterialPageRoute(builder: (_) => const WarehousesPage());
       case contractsRoute:

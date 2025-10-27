@@ -1106,15 +1106,16 @@ class DataSyncService {
       // Save main report first to get ID
       await _dbService.saveMainReports([mainReport]);
       await _dbService.saveBusinessRegionReports(businessRegionReports);
+      debugPrint('all report data saved successfully');
       await _dbService.saveAKBByCategories(akbByCategories);
       debugPrint('all report data saved successfully');
       final savedReports = await _dbService.getMainReports(userCode: userCode);
-
+      print("___________saved report${savedReports.first.id}");
       final savedReport = savedReports.firstWhere(
             (r) => r.dateStart.toIso8601String().split('T')[0] == dateStart &&
             r.dateEnd.toIso8601String().split('T')[0] == dateEnd,
       );
-
+      print("___________saved report${savedReport}");
       // Update related tables with correct main_report_id
       final updatedBusinessRegionReports = businessRegionReports.map((report) =>
           report.copyWith(mainReportId: savedReport.id)

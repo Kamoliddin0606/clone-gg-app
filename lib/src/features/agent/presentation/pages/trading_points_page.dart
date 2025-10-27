@@ -20,6 +20,9 @@ import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dar
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart' hide MapType;
 import 'package:gloria_marketing_flutter/src/core/maps/services/map_cache_service.dart';
+import 'package:gloria_marketing_flutter/src/core/maps/models/map_marker.dart' hide MarkerClusterConfig;
+import 'package:gloria_marketing_flutter/src/core/maps/models/map_point.dart';
+import 'package:gloria_marketing_flutter/src/core/maps/managers/marker_manager.dart' as marker_manager;
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/trading_points_filters_panel.dart';
@@ -2428,10 +2431,28 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
         );
 
       case MapProvider.yandex:
+        // Yangi MarkerManager integratsiyasi bilan
+        final markers = [
+          MapMarker(
+            id: markerId,
+            point: MapPoint(
+              id: markerId,
+              latitude: position.latitude,
+              longitude: position.longitude,
+              title: title,
+            ),
+            type: MarkerType.default_,
+            title: title,
+          ),
+        ];
+
         return YandexFullMapView(
           latitude: position.latitude,
           longitude: position.longitude,
-          markerId: markerId,
+          markers: markers, // Yangi API
+          clusterConfig: const marker_manager.MarkerClusterConfig(
+            enableClustering: false, // Bitta marker uchun clustering kerak emas
+          ),
           // initHook: ymk_init.initMapkit(apiKey: 'YOUR_REAL_YANDEX_API_KEY'),
         );
 

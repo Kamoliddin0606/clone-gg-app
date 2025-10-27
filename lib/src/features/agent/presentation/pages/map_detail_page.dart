@@ -293,6 +293,55 @@ class _MapDetailPageState extends State<MapDetailPage> {
   /// Currently draws a straight line, future implementation will use routing API
   /// TODO: Integrate with routing service for accurate route calculation
   Future<void> _calculateRoute() async {
+    // Animate camera to show route bounds when route is calculated
+    if (_userPosition != null) {
+      // Calculate route bounds and animate camera based on provider
+      final userLatLng = LatLng(_userPosition!.latitude, _userPosition!.longitude);
+      final clientLatLng = LatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude);
+
+      // For Google Maps, animate camera to fit bounds
+      if (_defaultMapProvider == MapProvider.google && _googleMapController != null) {
+        final bounds = LatLngBounds(
+          southwest: LatLng(
+            userLatLng.latitude < clientLatLng.latitude ? userLatLng.latitude : clientLatLng.latitude,
+            userLatLng.longitude < clientLatLng.longitude ? userLatLng.longitude : clientLatLng.longitude,
+          ),
+          northeast: LatLng(
+            userLatLng.latitude > clientLatLng.latitude ? userLatLng.latitude : clientLatLng.latitude,
+            userLatLng.longitude > clientLatLng.longitude ? userLatLng.longitude : clientLatLng.longitude,
+          ),
+        );
+
+        await _googleMapController!.animateCamera(
+          CameraUpdate.newLatLngBounds(bounds, 50),
+        );
+      }
+
+      // For Yandex Maps, animate camera to fit bounds
+      if (_defaultMapProvider == MapProvider.yandex && _yandexMapWindow != null) {
+        // Calculate center point
+        final centerLat = (userLatLng.latitude + clientLatLng.latitude) / 2;
+        final centerLng = (userLatLng.longitude + clientLatLng.longitude) / 2;
+        final centerPoint = mk.Point(latitude: centerLat, longitude: centerLng);
+
+        // Calculate appropriate zoom level (rough approximation)
+        final latDiff = (userLatLng.latitude - clientLatLng.latitude).abs();
+        final lngDiff = (userLatLng.longitude - clientLatLng.longitude).abs();
+        final maxDiff = latDiff > lngDiff ? latDiff : lngDiff;
+        final zoom = maxDiff > 0 ? (15.0 - (maxDiff * 10).clamp(0, 10)).clamp(8.0, 15.0) : 13.0;
+
+        _yandexMapWindow!.map.move(
+          mk.CameraPosition(centerPoint, zoom: zoom, tilt: 0, azimuth: 0),
+        );
+      }
+
+      // For OSM, we can't directly animate camera, but we can show a message
+      if (_defaultMapProvider == MapProvider.openStreetMap) {
+        if (kDebugMode) {
+          print('OSM route bounds calculated: from (${userLatLng.latitude}, ${userLatLng.longitude}) to (${clientLatLng.latitude}, ${clientLatLng.longitude})');
+        }
+      }
+    }
     try {
       if (kDebugMode) {
         print('Calculating route from user to client: ${widget.tradingPoint.name}');
@@ -603,9 +652,15 @@ class _MapDetailPageState extends State<MapDetailPage> {
                       IconButton(
                         onPressed: _locationPermissionGranted ? () {
                           if (_userPosition != null) {
-                            // TODO: Center map on user position
+                            // Center OSM map on user position
+                            final userLatLng = osm_latlong.LatLng(
+                              _userPosition!.latitude,
+                              _userPosition!.longitude,
+                            );
+                            // Note: OSM camera movement would require a MapController
+                            // For now, show message that functionality is being implemented
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('User position - functionality to be implemented')),
+                              const SnackBar(content: Text('Foydalanuvchi joylashuviga o\'tish - amalga oshirilmoqda')),
                             );
                           } else {
                             _getUserLocation();
@@ -621,9 +676,15 @@ class _MapDetailPageState extends State<MapDetailPage> {
                       // Client position icon
                       IconButton(
                         onPressed: () {
-                          // TODO: Center map on client position
+                          // Center OSM map on client position
+                          final clientLatLng = osm_latlong.LatLng(
+                            widget.tradingPoint.latitude,
+                            widget.tradingPoint.longitude,
+                          );
+                          // Note: OSM camera movement would require a MapController
+                          // For now, show message that functionality is being implemented
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Client position - functionality to be implemented')),
+                            const SnackBar(content: Text('Mijoz joylashuviga o\'tish - amalga oshirilmoqda')),
                           );
                         },
                         icon: Icon(Icons.location_on, color: Theme.of(context).colorScheme.primary),

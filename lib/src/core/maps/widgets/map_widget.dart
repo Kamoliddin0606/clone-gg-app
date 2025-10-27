@@ -5,20 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as google_maps;
 import 'package:yandex_maps_mapkit/yandex_map.dart' as yandex_map;
 import 'package:yandex_maps_mapkit/mapkit.dart' as yandex_mk;
-import 'package:yandex_maps_mapkit/mapkit_factory.dart' as yandex_mkf;
-import 'package:yandex_maps_mapkit/image.dart' as yandex_img;
 import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:latlong2/latlong.dart' as osm_latlong;
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../models/map_settings.dart';
 import '../models/map_marker.dart';
 import '../models/map_point.dart';
 import '../models/map_route.dart';
 import '../services/map_service.dart';
-import '../services/map_cache_service.dart';
 import '../managers/marker_manager.dart' as marker_manager;
 import '../managers/route_manager.dart' as route_manager;
 import '../managers/location_manager.dart' as location_manager;
@@ -246,6 +240,30 @@ class _UnifiedMapWidgetState extends State<UnifiedMapWidget> {
     }
   }
 
+  Future<void> moveCamera(MapPoint point, {double? zoom}) async {
+    if (!_isInitialized || _mapView == null) return;
+
+    try {
+      await _mapView!.moveCamera(point, zoom: zoom);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error moving camera: $e');
+      }
+    }
+  }
+
+  Future<void> fitBounds(List<MapPoint> points) async {
+    if (!_isInitialized || _mapView == null || points.isEmpty) return;
+
+    try {
+      await _mapView!.fitBounds(points);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fitting bounds: $e');
+      }
+    }
+  }
+
   Future<void> removeMarkers(List<String> markerIds) async {
     if (!_isInitialized || _mapView == null) return;
 
@@ -289,6 +307,16 @@ class _UnifiedMapWidgetState extends State<UnifiedMapWidget> {
   void _updateUserLocationMarker(location_manager.LocationData? location) {
     // Implementation for updating user location marker
     // This would create or update a special marker for user location
+  }
+
+  /// Public method to move camera to a point (accessible from parent widgets)
+  Future<void> moveCameraToPoint(MapPoint point, {double? zoom}) async {
+    await moveCamera(point, zoom: zoom);
+  }
+
+  /// Public method to fit camera to bounds (accessible from parent widgets)
+  Future<void> fitCameraToBounds(List<MapPoint> points) async {
+    await fitBounds(points);
   }
 
   List<MapPoint> _calculateBounds(List<MapPoint> points) {

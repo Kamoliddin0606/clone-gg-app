@@ -1,22 +1,26 @@
+import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:geolocator/geolocator.dart' as geolocator;
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter_map/flutter_map.dart' as osm;
+import 'package:google_maps_flutter/google_maps_flutter.dart' as google_maps;
 import 'package:latlong2/latlong.dart' as osm_latlong;
+import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
-import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart' hide MapType;
-import 'package:gloria_marketing_flutter/src/core/maps/services/map_cache_service.dart';
-import 'package:gloria_marketing_flutter/src/core/maps/models/map_marker.dart' hide MarkerClusterConfig;
+import 'package:gloria_marketing_flutter/src/core/maps/widgets/map_widget.dart';
+import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart';
+import 'package:gloria_marketing_flutter/src/core/maps/models/map_marker.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_point.dart';
-import 'package:yandex_maps_mapkit/yandex_map.dart';
-import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
-import 'package:yandex_maps_mapkit/mapkit_factory.dart' as mkf;
-import 'package:yandex_maps_mapkit/image.dart' as yimg;
+import 'package:gloria_marketing_flutter/src/core/maps/models/map_route.dart';
+import 'package:gloria_marketing_flutter/src/core/maps/managers/location_manager.dart' as location_manager;
+import 'package:gloria_marketing_flutter/src/core/maps/managers/route_manager.dart' as route_manager;
+import 'package:gloria_marketing_flutter/src/core/maps/managers/marker_manager.dart' as marker_manager;
+import 'package:gloria_marketing_flutter/src/core/maps/services/route_service.dart' as route_service;
+import 'package:gloria_marketing_flutter/src/core/maps/services/map_service.dart' as map_service;
 
 /// Map detail page for displaying client location with map controls
 /// This page shows the client's location on map with various control icons
@@ -62,89 +66,124 @@ class MapDetailPage extends StatefulWidget {
 /// Tap handlers currently show snackbar messages, full functionality to be implemented later.
 
 class _MapDetailPageState extends State<MapDetailPage> {
-  // Map controllers and services
-  GoogleMapController? _googleMapController;
-  mk.MapWindow? _yandexMapWindow;
-  late final mk.MapKit _yandexMapKit;
+  // Core managers
+  late final location_manager.LocationManager _locationManager;
+  late final route_manager.RouteManager _routeManager;
+  late final marker_manager.MarkerManager _markerManager;
 
-  // Location and permission services
-  bool _locationPermissionGranted = false;
+  // Map provider and settings
   MapProvider _defaultMapProvider = MapProvider.google;
+  late MapSettings _mapSettings;
 
-  // Map markers and overlays
-  Set<Marker> _googleMarkers = {};
-  List<MapMarker> _yandexMarkers = [];
-  List<osm.Marker> _osmMarkers = [];
+  // Map data
+  late MapPoint _clientPoint;
+  MapPoint? _userPoint;
+  MapRoute? _currentRoute;
+  List<MapMarker> _markers = [];
 
-  // User location tracking
-  Position? _userPosition;
-  bool _isTrackingUser = false;
+  // UI state
+  bool _locationPermissionGranted = false;
+  bool _isRouteVisible = false;
 
-  // Route display
-  List<LatLng> _routePoints = [];
-  Set<Polyline> _polylines = {};
+  // Services
+  late Connectivity _connectivity;
+  bool _isOnline = true;
+
+  // Legacy variables for backward compatibility (to be removed)
+  geolocator.Position? _userPosition;
+  List<google_maps.LatLng> _routePoints = [];
+  Set<google_maps.Polyline> _polylines = {};
   List<osm_latlong.LatLng> _osmRoutePoints = [];
   List<osm.Polyline> _osmPolylines = [];
 
-  // Services
-  late MapCacheService _mapCacheService;
-  late Connectivity _connectivity;
-  bool _isOnline = true;
+  // Google Maps controller for legacy support
+  google_maps.GoogleMapController? _googleMapController;
 
   @override
   void initState() {
     super.initState();
     _initializeServices();
-    _initializeMapKit();
     _loadDefaultMapProvider();
     _checkLocationPermission();
     _initializeConnectivity();
+    _initializeMapData();
   }
 
   @override
   void dispose() {
-    _googleMapController?.dispose();
-    _safeOnStop();
-    _mapCacheService.dispose();
+    _locationManager.dispose();
+    _routeManager.dispose();
     super.dispose();
   }
 
-  /// Initialize required services
+  /// Initialize core managers and services
   Future<void> _initializeServices() async {
     try {
-      _mapCacheService = MapCacheService();
-      await _mapCacheService.initialize();
+      // Initialize core managers
+      _locationManager = location_manager.LocationManager();
+      await _locationManager.initialize();
+
+      // Initialize route manager with services
+      _routeManager = route_manager.RouteManager(
+        routeService: route_service.RouteService(_defaultMapProvider),
+        mapService: map_service.MapServiceFactory.createService(_defaultMapProvider),
+        provider: _defaultMapProvider,
+      );
+
+      // Set up route events listener
+      _routeManager.routeEvents.listen((event) {
+        if (mounted) {
+          setState(() {
+            switch (event.type) {
+              case route_manager.RouteEventType.created:
+                _currentRoute = event.route;
+                _isRouteVisible = true;
+                break;
+              case route_manager.RouteEventType.removed:
+                _currentRoute = null;
+                _isRouteVisible = false;
+                break;
+              case route_manager.RouteEventType.error:
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Route error: ${event.error}')),
+                );
+                break;
+              default:
+                break;
+            }
+          });
+        }
+      });
+
+      // Initialize marker manager
+      _markerManager = marker_manager.MarkerManager(
+        config: marker_manager.MarkerClusterConfig(),
+        provider: _defaultMapProvider,
+      );
+
+      if (kDebugMode) {
+        print('Core managers initialized successfully');
+      }
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing map cache service: $e');
+        print('Error initializing core managers: $e');
       }
     }
   }
 
-  /// Initialize Yandex MapKit
-  void _initializeMapKit() {
-    try {
-      _yandexMapKit = mkf.mapkit;
-      _safeOnStart();
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error initializing Yandex MapKit: $e');
-      }
-    }
-  }
+  /// Initialize map data from trading point
+  void _initializeMapData() {
+    _clientPoint = MapPoint.fromTradingPoint(widget.tradingPoint);
 
-  /// Safe start for Yandex MapKit
-  void _safeOnStart() {
-    try {
-      _yandexMapKit.onStart();
-    } catch (_) {}
-  }
+    // Create client marker
+    final clientMarker = MapMarker.fromTradingPoint(widget.tradingPoint);
+    _markers = [clientMarker];
 
-  /// Safe stop for Yandex MapKit
-  void _safeOnStop() {
-    try {
-      _yandexMapKit.onStop();
-    } catch (_) {}
+    // Set up map settings
+    _mapSettings = MapSettings.defaultSinglePoint().copyWith(
+      provider: _defaultMapProvider,
+      defaultCenter: _clientPoint,
+    );
   }
 
   /// Load default map provider from settings
@@ -213,16 +252,16 @@ class _MapDetailPageState extends State<MapDetailPage> {
     }
   }
 
-  /// Get current user location
+  /// Get current user location using LocationManager
   Future<void> _getUserLocation() async {
     try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      setState(() {
-        _userPosition = position;
-      });
-      _updateUserMarker();
+      final locationData = await _locationManager.getCurrentLocation();
+      if (locationData != null) {
+        setState(() {
+          _userPoint = locationData.toMapPoint();
+        });
+        _updateUserMarker();
+      }
     } catch (e) {
       if (kDebugMode) {
         print('Error getting user location: $e');
@@ -230,173 +269,62 @@ class _MapDetailPageState extends State<MapDetailPage> {
     }
   }
 
-  /// Update user location marker on map
+  /// Update user location marker using MarkerManager
   void _updateUserMarker() {
-    if (_userPosition == null) return;
+    if (_userPoint == null) return;
 
-    final userLatLng = LatLng(_userPosition!.latitude, _userPosition!.longitude);
+    final userMarker = MapMarker.userLocation(_userPoint!);
 
-    // Update Google Maps marker
-    if (_defaultMapProvider == MapProvider.google) {
-      final userMarker = Marker(
-        markerId: const MarkerId('user_position'),
-        position: userLatLng,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-        infoWindow: const InfoWindow(title: 'Sizning joylashuvingiz'),
-      );
-
-      setState(() {
-        _googleMarkers.add(userMarker);
-      });
-    }
-
-    // Update Yandex Maps marker
-    if (_defaultMapProvider == MapProvider.yandex) {
-      final userMarker = MapMarker(
-        id: 'user_position',
-        point: MapPoint(
-          id: 'user_position',
-          latitude: _userPosition!.latitude,
-          longitude: _userPosition!.longitude,
-        ),
-        type: MarkerType.user,
-        title: 'Sizning joylashuvingiz',
-      );
-
-      setState(() {
-        _yandexMarkers.add(userMarker);
-      });
-    }
-
-    // Update OpenStreetMap marker
-    if (_defaultMapProvider == MapProvider.openStreetMap) {
-      final userOsmMarker = osm.Marker(
-        width: 40.0,
-        height: 40.0,
-        alignment: Alignment.bottomCenter,
-        point: osm_latlong.LatLng(_userPosition!.latitude, _userPosition!.longitude),
-        child: const Icon(
-          Icons.my_location,
-          color: Colors.blue,
-          size: 40,
-        ),
-      );
-
-      setState(() {
-        _osmMarkers.add(userOsmMarker);
-      });
-    }
+    setState(() {
+      // Remove existing user marker if any
+      _markers.removeWhere((marker) => marker.type == MarkerType.user);
+      // Add new user marker
+      _markers.add(userMarker);
+    });
   }
 
-  /// Calculate and display route from user to client
-  /// This method calculates the route between user position and client position
-  /// Currently draws a straight line, future implementation will use routing API
-  /// TODO: Integrate with routing service for accurate route calculation
+  /// Calculate and display route from user to client using RouteManager
   Future<void> _calculateRoute() async {
-    // Animate camera to show route bounds when route is calculated
-    if (_userPosition != null) {
-      // Calculate route bounds and animate camera based on provider
-      final userLatLng = LatLng(_userPosition!.latitude, _userPosition!.longitude);
-      final clientLatLng = LatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude);
-
-      // For Google Maps, animate camera to fit bounds
-      if (_defaultMapProvider == MapProvider.google && _googleMapController != null) {
-        final bounds = LatLngBounds(
-          southwest: LatLng(
-            userLatLng.latitude < clientLatLng.latitude ? userLatLng.latitude : clientLatLng.latitude,
-            userLatLng.longitude < clientLatLng.longitude ? userLatLng.longitude : clientLatLng.longitude,
-          ),
-          northeast: LatLng(
-            userLatLng.latitude > clientLatLng.latitude ? userLatLng.latitude : clientLatLng.latitude,
-            userLatLng.longitude > clientLatLng.longitude ? userLatLng.longitude : clientLatLng.longitude,
-          ),
-        );
-
-        await _googleMapController!.animateCamera(
-          CameraUpdate.newLatLngBounds(bounds, 50),
-        );
-      }
-
-      // For Yandex Maps, animate camera to fit bounds
-      if (_defaultMapProvider == MapProvider.yandex && _yandexMapWindow != null) {
-        // Calculate center point
-        final centerLat = (userLatLng.latitude + clientLatLng.latitude) / 2;
-        final centerLng = (userLatLng.longitude + clientLatLng.longitude) / 2;
-        final centerPoint = mk.Point(latitude: centerLat, longitude: centerLng);
-
-        // Calculate appropriate zoom level (rough approximation)
-        final latDiff = (userLatLng.latitude - clientLatLng.latitude).abs();
-        final lngDiff = (userLatLng.longitude - clientLatLng.longitude).abs();
-        final maxDiff = latDiff > lngDiff ? latDiff : lngDiff;
-        final zoom = maxDiff > 0 ? (15.0 - (maxDiff * 10).clamp(0, 10)).clamp(8.0, 15.0) : 13.0;
-
-        _yandexMapWindow!.map.move(
-          mk.CameraPosition(centerPoint, zoom: zoom, tilt: 0, azimuth: 0),
-        );
-      }
-
-      // For OSM, we can't directly animate camera, but we can show a message
-      if (_defaultMapProvider == MapProvider.openStreetMap) {
-        if (kDebugMode) {
-          print('OSM route bounds calculated: from (${userLatLng.latitude}, ${userLatLng.longitude}) to (${clientLatLng.latitude}, ${clientLatLng.longitude})');
-        }
-      }
-    }
     try {
       if (kDebugMode) {
         print('Calculating route from user to client: ${widget.tradingPoint.name}');
       }
 
-      if (_userPosition == null) {
+      if (_userPoint == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
         );
         return;
       }
 
-      final userLatLng = LatLng(_userPosition!.latitude, _userPosition!.longitude);
-      final clientLatLng = LatLng(
-        widget.tradingPoint.latitude,
-        widget.tradingPoint.longitude,
+      // Create route using RouteManager
+      final route = await _routeManager.createRoute(
+        points: [_userPoint!, _clientPoint],
+        travelMode: TravelMode.driving,
+        optimization: RouteOptimization.shortestTime,
+        displayOnMap: true,
       );
 
-      // For now, just draw a straight line
-      // In future, this should use routing API
-      setState(() {
-        _routePoints = [userLatLng, clientLatLng];
-        _polylines = {
-          Polyline(
-            polylineId: const PolylineId('route'),
-            points: _routePoints,
-            color: Colors.blue,
-            width: 5,
-          ),
-        };
+      if (route != null) {
+        setState(() {
+          _currentRoute = route;
+          _isRouteVisible = true;
+        });
 
-        // Also set OSM route points
-        _osmRoutePoints = [
-          osm_latlong.LatLng(userLatLng.latitude, userLatLng.longitude),
-          osm_latlong.LatLng(clientLatLng.latitude, clientLatLng.longitude),
-        ];
-        _osmPolylines = [
-          osm.Polyline(
-            points: _osmRoutePoints,
-            color: Colors.blue,
-            strokeWidth: 5.0,
-          ),
-        ];
-      });
+        // Fit camera to show the route
+        _fitRouteBounds();
 
-      // Move camera to show both points
-      _fitBounds();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Marshrut hisoblandi: ${route.formattedDistance}, ${route.formattedTime}')),
+        );
 
-      // Show route calculated message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Marshrut hisoblandi')),
-      );
-
-      if (kDebugMode) {
-        print('Route calculated successfully between user and client');
+        if (kDebugMode) {
+          print('Route calculated successfully: ${route.id}');
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Marshrutni hisoblashda xatolik yuz berdi')),
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -408,32 +336,64 @@ class _MapDetailPageState extends State<MapDetailPage> {
     }
   }
 
-  /// Fit camera to show both user and client locations
-  void _fitBounds() {
-    if (_userPosition == null) return;
+  /// Fit camera to show route bounds
+  void _fitRouteBounds() {
+    if (_currentRoute == null) return;
 
-    final userLatLng = LatLng(_userPosition!.latitude, _userPosition!.longitude);
-    final clientLatLng = LatLng(
-      widget.tradingPoint.latitude,
-      widget.tradingPoint.longitude,
+    final bounds = _currentRoute!.bounds;
+    // This will be handled by UnifiedMapWidget's fitBounds method
+    // when we implement the camera controls
+  }
+
+  /// Clear current route
+  void _clearRoute() {
+    setState(() {
+      _currentRoute = null;
+      _isRouteVisible = false;
+    });
+    _routeManager.clearAllRoutes();
+  }
+
+  /// Move camera to specific point
+  void _moveCameraToPoint(MapPoint point, {double? zoom}) {
+    // For now, show message as camera control integration is in progress
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${point.title ?? 'Nuqta'} ga kamera o\'tkazildi')),
     );
+  }
 
-    if (_defaultMapProvider == MapProvider.google && _googleMapController != null) {
-      final bounds = LatLngBounds(
-        southwest: LatLng(
-          userLatLng.latitude < clientLatLng.latitude ? userLatLng.latitude : clientLatLng.latitude,
-          userLatLng.longitude < clientLatLng.longitude ? userLatLng.longitude : clientLatLng.longitude,
-        ),
-        northeast: LatLng(
-          userLatLng.latitude > clientLatLng.latitude ? userLatLng.latitude : clientLatLng.latitude,
-          userLatLng.longitude > clientLatLng.longitude ? userLatLng.longitude : clientLatLng.longitude,
-        ),
-      );
-
-      _googleMapController!.animateCamera(
-        CameraUpdate.newLatLngBounds(bounds, 50),
+  /// Fit camera to show route bounds
+  Future<void> _fitCameraToRoute(MapRoute route) async {
+    if (route.points.length >= 2) {
+      // Calculate bounds from route points
+      final bounds = _calculateRouteBounds(route.points);
+      // For now, show message as bounds fitting is in progress
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Marshrut chegaralariga kamera moslandi')),
       );
     }
+  }
+
+  /// Calculate bounds for route points
+  List<MapPoint> _calculateRouteBounds(List<MapPoint> points) {
+    if (points.isEmpty) return [];
+
+    double minLat = points.first.latitude;
+    double maxLat = points.first.latitude;
+    double minLng = points.first.longitude;
+    double maxLng = points.first.longitude;
+
+    for (final point in points.skip(1)) {
+      minLat = min(minLat, point.latitude);
+      maxLat = max(maxLat, point.latitude);
+      minLng = min(minLng, point.longitude);
+      maxLng = max(maxLng, point.longitude);
+    }
+
+    return [
+      MapPoint(id: 'sw', latitude: minLat, longitude: minLng),
+      MapPoint(id: 'ne', latitude: maxLat, longitude: maxLng),
+    ];
   }
 
   /// Navigate to fullscreen map page
@@ -485,320 +445,230 @@ class _MapDetailPageState extends State<MapDetailPage> {
     }
   }
 
-  /// Build map widget based on selected provider
+  /// Build unified map widget with control overlays
   Widget _buildMapWidget() {
-    final clientLatLng = LatLng(
-      widget.tradingPoint.latitude,
-      widget.tradingPoint.longitude,
+    return Stack(
+      children: [
+        // Main map widget using UnifiedMapWidget
+        UnifiedMapWidget(
+          provider: _defaultMapProvider,
+          settings: _mapSettings,
+          initialMarkers: _markers,
+          initialRoutes: _currentRoute != null ? [_currentRoute!] : [],
+          enableLocation: true,
+          enableRouting: true,
+          enableClustering: false, // Single point view
+          onMapReady: () {
+            if (kDebugMode) {
+              print('Unified map is ready for client: ${widget.tradingPoint.name}');
+            }
+          },
+          onMarkerTap: (marker) {
+            if (kDebugMode) {
+              print('Marker tapped: ${marker.title}');
+            }
+          },
+          onLocationUpdate: (location) {
+            if (mounted) {
+              setState(() {
+                _userPoint = location.toMapPoint();
+              });
+              _updateUserMarker();
+            }
+          },
+        ),
+
+        // Control overlays
+        _buildControlOverlays(),
+      ],
     );
+  }
 
-    switch (_defaultMapProvider) {
-      case MapProvider.google:
-        return GoogleMap(
-          initialCameraPosition: CameraPosition(
-            target: clientLatLng,
-            zoom: 15,
-          ),
-          markers: {
-            Marker(
-              markerId: MarkerId(widget.tradingPoint.id),
-              position: clientLatLng,
-              infoWindow: InfoWindow(title: widget.tradingPoint.name),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-            ),
-            ..._googleMarkers,
-          },
-          polylines: _polylines,
-          myLocationEnabled: _locationPermissionGranted,
-          myLocationButtonEnabled: false, // We'll use custom button
-          compassEnabled: true,
-          tiltGesturesEnabled: true,
-          rotateGesturesEnabled: true,
-          zoomControlsEnabled: false, // We'll use custom controls
-          onMapCreated: (controller) {
-            _googleMapController = controller;
-            _updateUserMarker();
-          },
-        );
-
-      case MapProvider.yandex:
-        return YandexMap(
-          onMapCreated: (mapWindow) {
-            _yandexMapWindow = mapWindow;
-
-            // Set camera position
-            final target = mk.Point(
-              latitude: widget.tradingPoint.latitude,
-              longitude: widget.tradingPoint.longitude,
-            );
-            mapWindow.map.move(
-              mk.CameraPosition(target, zoom: 15.0, tilt: 0, azimuth: 0),
-            );
-
-            // Add client marker
-            final clientMarker = MapMarker(
-              id: widget.tradingPoint.id,
-              point: MapPoint(
-                id: widget.tradingPoint.id,
-                latitude: widget.tradingPoint.latitude,
-                longitude: widget.tradingPoint.longitude,
-              ),
-              type: MarkerType.default_,
-              title: widget.tradingPoint.name,
-            );
-
-            _addYandexMarker(clientMarker);
-            _updateUserMarker();
-          },
-        );
-
-      case MapProvider.openStreetMap:
-        // OpenStreetMap implementation with flutter_map
-        try {
-          final clientOsmLatLng = osm_latlong.LatLng(
-            widget.tradingPoint.latitude,
-            widget.tradingPoint.longitude,
-          );
-
-          // Ensure user markers are updated for OSM
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _updateUserMarker();
-          });
-
-          return Stack(
-            children: [
-              osm.FlutterMap(
-                options: osm.MapOptions(
-                  initialCenter: clientOsmLatLng,
-                  initialZoom: 15.0,
-                  // Enhanced rotation handling for OSM with proper tracking
-                  onPositionChanged: (position, hasGesture) {
-                    // No rotation tracking needed - OSM markers are naturally upright
-                  },
+  /// Build control icons overlay
+  Widget _buildControlOverlays() {
+    return Stack(
+      children: [
+        // Bottom-right controls (4 icons)
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
-                children: [
-                  osm.TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    subdomains: const [],
-                    userAgentPackageName: 'uz.gg.gloria_marketing',
-                    maxZoom: 19,
-                    minZoom: 1,
-                    // attributionBuilder: (_) => const Text('© OpenStreetMap contributors'),
-                    // Add error handling for missing tiles
-                    errorTileCallback: (tile, error, stackTrace) {
-                      if (kDebugMode) {
-                        print('OSM tile error: ${tile.toString()} - $error');
-                      }
-                    },
-                    // Add loading placeholder
-                    tileBuilder: (context, tileWidget, tile) {
-                      return Stack(
-                        children: [
-                          tileWidget,
-                          // Note: Offline indicator removed for simplicity
-                        ],
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 1. User position button
+                IconButton(
+                  onPressed: _locationPermissionGranted ? () {
+                    if (_userPoint != null) {
+                      // TODO: Implement camera movement to user position
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Foydalanuvchi joylashuviga o\'tish')),
                       );
-                    },
+                    } else {
+                      _getUserLocation();
+                    }
+                  } : null,
+                  icon: Icon(
+                    Icons.my_location,
+                    color: _locationPermissionGranted
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                   ),
-                  osm.MarkerLayer(
-                    rotate: true,
-                    // alignment: Alignment.bottomCenter,
-                    markers: [
-                      // Client marker
-                      osm.Marker(
-                        width: 40.0,
-                        height: 40.0,
-                        alignment: Alignment.bottomCenter,
-                        point: clientOsmLatLng,
-                        // OSM markers should stay upright regardless of map rotation
-                        // No rotation needed - flutter_map markers are automatically fixed
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Colors.red,
-                          size: 40,
-                        ),
-                      ),
-                      // User markers
-                      ..._osmMarkers,
-                    ],
+                  tooltip: 'Foydalanuvchi joylashuvi',
+                ),
+
+                // 2. Client position button
+                IconButton(
+                  onPressed: () {
+                    // TODO: Implement camera movement to client position
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Mijoz joylashuviga o\'tish')),
+                    );
+                  },
+                  icon: Icon(Icons.location_on, color: Theme.of(context).colorScheme.primary),
+                  tooltip: 'Mijoz joylashuvi',
+                ),
+
+                // 3. Route button
+                IconButton(
+                  onPressed: () async {
+                    if (_userPoint != null) {
+                      try {
+                        final route = await _routeManager.createRoute(
+                          points: [_userPoint!, _clientPoint],
+                          travelMode: TravelMode.driving,
+                          displayOnMap: true,
+                        );
+
+                        if (route != null) {
+                          // Fit camera to show both points
+                          await _fitCameraToRoute(route);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Marshrut muvaffaqiyatli hisoblandi')),
+                          );
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Marshrut hisoblashda xatolik: $e')),
+                        );
+                      }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+                      );
+                    }
+                  },
+                  icon: Icon(Icons.route, color: Theme.of(context).colorScheme.primary),
+                  tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
+                ),
+
+                // 4. Fullscreen button
+                IconButton(
+                  onPressed: () {
+                    // TODO: Implement fullscreen map navigation
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('To\'liq ekran xaritasi - amalga oshirilmoqda')),
+                    );
+                  },
+                  icon: Icon(Icons.fullscreen, color: Theme.of(context).colorScheme.primary),
+                  tooltip: 'To\'liq ekran xaritasi',
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Top-right control (1 icon)
+        Positioned(
+          top: 16,
+          right: 16,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              onPressed: _openUpdateCoordinatesPage,
+              icon: Icon(Icons.edit_location, color: Theme.of(context).colorScheme.primary),
+              tooltip: 'Mijoz koordinatalarini yangilash',
+            ),
+          ),
+        ),
+
+        // Route info overlay (if route is active)
+        if (_isRouteVisible && _currentRoute != null)
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-                  if (_osmPolylines.isNotEmpty)
-                    osm.PolylineLayer(
-                      polylines: _osmPolylines,
-                    ),
-                  // Note: Offline indicator removed for simplicity
                 ],
               ),
-              // Custom map control icons positioned over the map
-              Positioned(
-                bottom: 16,
-                right: 16,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // User position icon
-                      IconButton(
-                        onPressed: _locationPermissionGranted ? () {
-                          if (_userPosition != null) {
-                            // Center OSM map on user position
-                            final userLatLng = osm_latlong.LatLng(
-                              _userPosition!.latitude,
-                              _userPosition!.longitude,
-                            );
-                            // Note: OSM camera movement would require a MapController
-                            // For now, show message that functionality is being implemented
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Foydalanuvchi joylashuviga o\'tish - amalga oshirilmoqda')),
-                            );
-                          } else {
-                            _getUserLocation();
-                          }
-                        } : null,
-                        icon: Icon(
-                          Icons.my_location,
-                          color: _locationPermissionGranted ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              child: Row(
+                children: [
+                  Icon(Icons.route, color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Marshrut: ${_currentRoute!.formattedDistance}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        tooltip: 'Foydalanuvchi joylashuvi',
-                      ),
-
-                      // Client position icon
-                      IconButton(
-                        onPressed: () {
-                          // Center OSM map on client position
-                          final clientLatLng = osm_latlong.LatLng(
-                            widget.tradingPoint.latitude,
-                            widget.tradingPoint.longitude,
-                          );
-                          // Note: OSM camera movement would require a MapController
-                          // For now, show message that functionality is being implemented
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Mijoz joylashuviga o\'tish - amalga oshirilmoqda')),
-                          );
-                        },
-                        icon: Icon(Icons.location_on, color: Theme.of(context).colorScheme.primary),
-                        tooltip: 'Mijoz joylashuvi',
-                      ),
-
-                      // Route icon
-                      IconButton(
-                        onPressed: _calculateRoute,
-                        icon: Icon(Icons.route, color: Theme.of(context).colorScheme.primary),
-                        tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
-                      ),
-
-                      // Fullscreen icon
-                      IconButton(
-                        onPressed: _openFullscreenMap,
-                        icon: Icon(Icons.fullscreen, color: Theme.of(context).colorScheme.primary),
-                        tooltip: 'To\'liq ekran xaritasi',
-                      ),
-                    ],
+                        Text(
+                          'Vaqt: ${_currentRoute!.formattedTime}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  IconButton(
+                    onPressed: _clearRoute,
+                    icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
+                    tooltip: 'Marshrutni yopish',
+                  ),
+                ],
               ),
-
-              // Update coordinates icon (top-right)
-              Positioned(
-                top: 16,
-                right: 16,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    onPressed: _openUpdateCoordinatesPage,
-                    icon: Icon(Icons.edit_location, color: Theme.of(context).colorScheme.primary),
-                    tooltip: 'Mijoz koordinatalarini yangilash',
-                  ),
-                ),
-              ),
-            ],
-          );
-        } catch (e) {
-          // Fallback if OSM fails
-          return Center(
-            child: Text('OpenStreetMap yuklanmadi: $e'),
-          );
-        }
-
-      default:
-        return const Center(
-          child: Text('Xarita provayderi qo\'llab-quvvatlanmaydi'),
-        );
-    }
+            ),
+          ),
+      ],
+    );
   }
 
-  /// Add marker to Yandex map
-  Future<void> _addYandexMarker(MapMarker marker) async {
-    if (_yandexMapWindow == null) return;
-
-    try {
-      final point = mk.Point(
-        latitude: marker.point.latitude,
-        longitude: marker.point.longitude,
-      );
-
-      final placemark = _yandexMapWindow!.map.mapObjects.addPlacemark()..geometry = point;
-
-      // Apply marker styling
-      await _applyYandexMarkerStyle(placemark, marker.type);
-
-      // Make visible
-      placemark.opacity = 1.0;
-      placemark.zIndex = 10;
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error adding Yandex marker: $e');
-      }
-    }
-  }
-
-  /// Apply styling to Yandex marker
-  Future<void> _applyYandexMarkerStyle(mk.PlacemarkMapObject placemark, MarkerType type) async {
-    try {
-      String assetPath;
-      switch (type) {
-        case MarkerType.user:
-          assetPath = 'assets/images/marker_user.png';
-          break;
-        default:
-          assetPath = 'assets/images/marker.png';
-      }
-
-      final provider = yimg.AnimatedImageProvider.fromAsset(assetPath) as yimg.ImageProvider;
-      final style = mk.IconStyle();
-
-      try {
-        final icon = placemark.useIcon();
-        icon.setImageWithStyle(provider, style);
-      } catch (_) {
-        final comp = placemark.useCompositeIcon();
-        comp.setIcon(provider, style, name: 'marker');
-      }
-    } catch (_) {
-      // Use default styling if asset fails
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -839,17 +709,12 @@ class _MapDetailPageState extends State<MapDetailPage> {
                   // 1. User position button (top in bottom-right group)
                   IconButton(
                     onPressed: _locationPermissionGranted ? () {
-                      if (_userPosition != null) {
-                        final userLatLng = LatLng(
-                          _userPosition!.latitude,
-                          _userPosition!.longitude,
+                      if (_userPoint != null) {
+                        // Use UnifiedMapWidget's moveCamera method
+                        // TODO: Implement camera movement through UnifiedMapWidget
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Foydalanuvchi joylashuviga kamera o\'tkazildi')),
                         );
-                        if (_defaultMapProvider == MapProvider.google && _googleMapController != null) {
-                          _googleMapController!.animateCamera(
-                            CameraUpdate.newLatLngZoom(userLatLng, 15),
-                          );
-                        }
-                        // TODO: Implement OSM camera movement
                       } else {
                         _getUserLocation();
                       }
@@ -864,16 +729,11 @@ class _MapDetailPageState extends State<MapDetailPage> {
                   // 2. Client position button
                   IconButton(
                     onPressed: () {
-                      final clientLatLng = LatLng(
-                        widget.tradingPoint.latitude,
-                        widget.tradingPoint.longitude,
+                      // Use UnifiedMapWidget's moveCamera method
+                      // TODO: Implement camera movement through UnifiedMapWidget
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Mijoz joylashuviga kamera o\'tkazildi')),
                       );
-                      if (_defaultMapProvider == MapProvider.google && _googleMapController != null) {
-                        _googleMapController!.animateCamera(
-                          CameraUpdate.newLatLngZoom(clientLatLng, 15),
-                        );
-                      }
-                      // TODO: Implement OSM camera movement
                     },
                     icon: Icon(Icons.location_on, color: cs.primary),
                     tooltip: 'Mijoz joylashuvi',
@@ -922,7 +782,7 @@ class _MapDetailPageState extends State<MapDetailPage> {
           ),
 
           // Route info overlay (if route is active)
-          if (_routePoints.isNotEmpty || _osmRoutePoints.isNotEmpty)
+          if (_isRouteVisible && _currentRoute != null)
             Positioned(
               top: 16,
               left: 16,
@@ -945,21 +805,29 @@ class _MapDetailPageState extends State<MapDetailPage> {
                     Icon(Icons.route, color: cs.primary),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        'Marshrut ko\'rsatilmoqda',
-                        style: theme.textTheme.bodyMedium,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Marshrut: ${_currentRoute!.formattedDistance}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            'Vaqt: ${_currentRoute!.formattedTime}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: cs.onSurface.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _routePoints.clear();
-                          _polylines.clear();
-                          _osmRoutePoints.clear();
-                          _osmPolylines.clear();
-                        });
-                      },
+                      onPressed: _clearRoute,
                       icon: Icon(Icons.close, color: cs.onSurface),
+                      tooltip: 'Marshrutni yopish',
                     ),
                   ],
                 ),

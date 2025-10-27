@@ -1107,6 +1107,7 @@ class DataSyncService {
       await _dbService.saveMainReports([mainReport]);
       await _dbService.saveBusinessRegionReports(businessRegionReports);
       await _dbService.saveAKBByCategories(akbByCategories);
+      debugPrint('all report data saved successfully');
       final savedReports = await _dbService.getMainReports(userCode: userCode);
 
       final savedReport = savedReports.firstWhere(

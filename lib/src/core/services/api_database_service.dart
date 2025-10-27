@@ -2768,6 +2768,7 @@ class ApiDatabaseService {
     //
     // // Delete all existing reports
     batch.delete('main_reports');
+    debugPrint("MainReports deleted successfully");
     // clearMainReport();
     // Deduplicate reports by user_code, date_start, date_end to avoid UNIQUE constraint violations
     final uniqueReports = <String, MainReport>{};
@@ -2795,6 +2796,7 @@ class ApiDatabaseService {
 
     // Execute batch operation
     await batch.commit(noResult: true);
+    debugPrint("MainReports created successfully");
   }
 
   Future<List<MainReport>> getMainReports({String? userCode}) async {

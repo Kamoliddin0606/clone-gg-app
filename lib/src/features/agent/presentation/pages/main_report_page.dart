@@ -836,6 +836,7 @@ class _MainReportPageState extends State<MainReportPage>
     try {
       // Get user code from preferences
       final userCode = _prefs.getUserCode();
+      print("userCode: $userCode");
       if (userCode == null) {
         _showErrorSnackBar(context, 'Foydalanuvchi kodi topilmadi');
         return;
@@ -846,8 +847,9 @@ class _MainReportPageState extends State<MainReportPage>
       }
 
       // Step 1: Clear main report data
+      print('clear main report data started');
       await _dataSyncService.clearMainReportData();
-
+      print('clear main report data finished sucesfuly');
       // Step 2: Sync new report data
       final reportData = await _dataSyncService.syncReportByPeriod(
         userCode: userCode,

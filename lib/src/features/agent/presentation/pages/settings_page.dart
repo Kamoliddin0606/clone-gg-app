@@ -1950,9 +1950,11 @@ class _MapsTabState extends State<MapsTab> {
       switch (provider) {
         case MapProvider.google:
           final hasKey = await _apiKeyService.hasApiKey(ApiKeyService.googleMapsApiKey);
+          print('hasKey: $hasKey');
           return hasKey ? 'sozlangan' : 'sozlanmagan';
         case MapProvider.yandex:
           final hasKey = await _apiKeyService.hasApiKey(ApiKeyService.yandexMapsApiKey);
+          print('hasKey: $hasKey');
           return hasKey ? 'sozlangan' : 'sozlanmagan';
         case MapProvider.openStreetMap:
           return 'kalit_shart_emas'; // OSM doesn't require API key

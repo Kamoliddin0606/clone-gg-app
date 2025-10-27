@@ -297,7 +297,7 @@ class DataSyncService {
 
       // Sync map tokens
       try {
-        await syncMapTokens(userCode: userCode);
+        await syncMapTokens();
       } catch (e) {
         if (kDebugMode) {
           print('Error syncing map tokens during full data sync: $e');
@@ -445,7 +445,7 @@ class DataSyncService {
       // Step 17: Sync map tokens
       yield SyncStep.syncingMapTokens;
       try {
-        await syncMapTokens(userCode: userCode);
+        await syncMapTokens();
       } catch (e) {
         // Log error but don't fail the entire sync
         if (kDebugMode) {
@@ -1761,16 +1761,14 @@ class DataSyncService {
   /// Sync map tokens from server and save to shared preferences
   /// This method fetches Yandex and Google map tokens from the server
   /// and stores them in shared preferences for map services to use
-  Future<Map<String, String>> syncMapTokens({
-    required String userCode,
-  }) async {
+  Future<Map<String, String>> syncMapTokens() async {
     try {
       if (kDebugMode) {
-        print('DataSyncService: Starting map tokens sync for user: $userCode');
+       // print('DataSyncService: Starting map tokens sync for user: $userCode');
       }
 
       // Fetch tokens from server using SOAP API
-      final tokens = await _apiService.getMapTokens(userCode: userCode);
+      final tokens = await _apiService.getMapTokens();
 
       if (kDebugMode) {
         print('DataSyncService: Retrieved tokens from server - Yandex: ${tokens['yandexToken']?.isNotEmpty == true ? 'Present' : 'Empty'}, Google: ${tokens['googleToken']?.isNotEmpty == true ? 'Present' : 'Empty'}');

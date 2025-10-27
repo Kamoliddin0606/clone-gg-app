@@ -1381,15 +1381,13 @@ class SoapApiService {
   /// Get map tokens (Yandex and Google) from server
   /// Returns a map containing yandexToken and googleToken
   /// If tokens are not set on server, returns empty strings
-  Future<Map<String, String>> getMapTokens({
-    required String userCode,
-  }) async {
+  Future<Map<String, String>> getMapTokens() async {
     final soapEnvelope = '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
       <sam:getMapTokens>
-         <sam:CodeUser>$userCode</sam:CodeUser>
+         
       </sam:getMapTokens>
    </soap:Body>
 </soap:Envelope>
@@ -1397,7 +1395,7 @@ class SoapApiService {
 
     try {
       if (kDebugMode) {
-        print('SOAP API: Requesting map tokens for user: $userCode');
+        //print('SOAP API: Requesting map tokens for user: $userCode');
       }
 
       final response = await _dio.post(

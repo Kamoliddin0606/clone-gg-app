@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <uses-feature android:name="android.hardware.location.network" android:required="false" />
-
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
         android:label="gloria_marketing_flutter"
         android:name="${applicationName}"
@@ -17,10 +17,10 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDcAsWru_IG1IBm1n199EJoCyJtayWklrs"/>
-        <!-- Yandex MapKit API Key -->
-        <meta-data
-            android:name="com.yandex.maps.apikey"
-            android:value="bf2fb1fa-dd2f-4d56-8ea5-3f9d6350ea67"/>
+<!--        &lt;!&ndash; Yandex MapKit API Key &ndash;&gt;-->
+<!--        <meta-data-->
+<!--            android:name="com.yandex.maps.apikey"-->
+<!--            android:value="bf2fb1fa-dd2f-4d56-8ea5-3f9d6350ea67"/>-->
         <activity
             android:name=".MainActivity"
             android:exported="true"

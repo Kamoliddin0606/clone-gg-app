@@ -69,6 +69,7 @@ class ApiKeyService {
   Future<bool> hasApiKey(String keyType) async {
     try {
       final apiKey = await getApiKey(keyType);
+      print('Checking API key existence for $keyType: $apiKey'); // Debugging print'
       return apiKey != null && apiKey.isNotEmpty;
     } catch (e) {
       if (kDebugMode) {

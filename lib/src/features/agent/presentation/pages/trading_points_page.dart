@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:yandex_mapkit/yandex_mapkit.dart' as yandex;
+// import 'package:yandex_mapkit/yandex_mapkit.dart' as yandex;
 import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:latlong2/latlong.dart' as osm_latlong;
 import 'package:permission_handler/permission_handler.dart';
@@ -26,7 +26,7 @@ import '../widgets/trading_points_filters_panel.dart';
 import '../widgets/visit_indicators.dart';
 import 'orders_page.dart';
 import 'contracts_page.dart';
-
+import '../widgets/yandex_map_builder.dart';
 import 'dart:ui'; // blur uchun
 import 'dart:async';
 import 'dart:math' as math; // For pi constant and math operations
@@ -34,6 +34,17 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/services/location_service.dart';
 
+
+
+import 'package:yandex_maps_mapkit/init.dart' as ymk_init;
+
+// YandexMap vidjeti va MapWindow APIlari
+import 'package:yandex_maps_mapkit/yandex_map.dart';
+
+// MapKit core APIlari (MapKit, MapInputListener, UserLocationLayer, LocationManager, Point, CameraPosition, va h.k.)
+import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
+
+import 'package:yandex_maps_mapkit/mapkit_factory.dart' as mkf;
 /// Transliterate Cyrillic characters to Latin (Uzbek standard)
 String transliterateToLatin(String text) {
   const cyrillicToLatin = {
@@ -2417,127 +2428,13 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
         );
 
       case MapProvider.yandex:
-      // Yandex MapKit — API key AndroidManifest/iOS AppDelegate’da berilgan.
-      // Runtime’da hech narsa o‘qimaymiz; bevosita xaritani ko‘rsatamiz.
-        final yPoint = yandex.Point(
+        return YandexFullMapView(
           latitude: position.latitude,
           longitude: position.longitude,
+          markerId: markerId,
+          // initHook: ymk_init.initMapkit(apiKey: 'YOUR_REAL_YANDEX_API_KEY'),
         );
 
-        return yandex.YandexMap(
-          // Barcha gesture’lar yoqilgan
-          tiltGesturesEnabled: true,
-          rotateGesturesEnabled: true,
-          scrollGesturesEnabled: true,
-          zoomGesturesEnabled: true,
-
-          // Bitta marker (placemark)
-          mapObjects: [
-            yandex.PlacemarkMapObject(
-              mapId: yandex.MapObjectId(markerId),
-              point: yPoint,
-              opacity: 1.0,
-              icon: yandex.PlacemarkIcon.single(
-                yandex.PlacemarkIconStyle(
-                  // Aktiv asset bo‘lmasa default pin ham ishlaydi
-                  image: yandex.BitmapDescriptor.fromAssetImage(
-                    'assets/images/marker.png',
-                  ),
-                  // Marker aylanishsiz tik turadi
-                  rotationType: yandex.RotationType.noRotation,
-                  scale: 1.0,
-                  // anchor berish shart emas, lekin xohlasang:
-                  // anchor: const Offset(0.5, 1.0),
-                ),
-              ),
-            ),
-          ],
-
-          onMapCreated: (controller) async {
-            // Kamera joyini bir maromda ochamiz
-            await controller.moveCamera(
-              yandex.CameraUpdate.newCameraPosition(
-                yandex.CameraPosition(
-                  target: yPoint,
-                  zoom: 15,
-                  azimuth: 0,
-                  tilt: 0,
-                ),
-              ),
-            );
-
-            // (Kalit manifest/AppDelegate’da, shu sabab bu yerda setApiKey shart emas)
-          },
-
-          // onMapRendered: () {
-          //   // kerak bo‘lsa: birlamchi renderingdan keyin ishlar
-          //   // debugPrint('Yandex map rendered');
-          // },
-        );
-
-    // case MapProvider.google:
-      //   return GoogleMap(
-      //     initialCameraPosition: CameraPosition(
-      //       target: position,
-      //       zoom: 15,
-      //     ),
-      //     markers: {
-      //       Marker(
-      //         markerId: MarkerId(markerId),
-      //         position: position,
-      //         infoWindow: InfoWindow(title: title),
-      //         // Markers are naturally upright in Google Maps - no rotation needed
-      //       ),
-      //     },
-      //     onMapCreated: (controller) {
-      //       // Map controller can be managed here if needed
-      //       // No rotation tracking needed - markers are naturally upright
-      //     },
-      //   );
-      // case MapProvider.yandex:
-      //   // Implement Yandex Maps widget with yandex_mapkit and offline caching
-      //   try {
-      //     return yandex.YandexMap(
-      //       mapObjects: [
-      //         yandex.PlacemarkMapObject(
-      //           mapId: yandex.MapObjectId(markerId),
-      //           point: yandex.Point(
-      //             latitude: position.latitude,
-      //             longitude: position.longitude,
-      //           ),
-      //           icon: yandex.PlacemarkIcon.single(
-      //             yandex.PlacemarkIconStyle(
-      //               image: yandex.BitmapDescriptor.fromAssetImage('assets/images/marker.png'),
-      //               scale: 0.8,
-      //             ),
-      //           ),
-      //           // Markers are naturally upright in Yandex Maps - no direction needed
-      //           opacity: 1.0,
-      //         ),
-      //       ],
-      //       onMapCreated: (controller) {
-      //         // Yandex map controller setup
-      //         controller.moveCamera(
-      //           yandex.CameraUpdate.newCameraPosition(
-      //             yandex.CameraPosition(
-      //               target: yandex.Point(
-      //                 latitude: position.latitude,
-      //                 longitude: position.longitude,
-      //               ),
-      //               zoom: 15,
-      //             ),
-      //           ),
-      //         );
-      //
-      //         // No rotation tracking needed - markers are naturally upright
-      //       },
-      //     );
-      //   } catch (e) {
-      //     // Fallback if Yandex Maps fails
-      //     return const Center(
-      //       child: Text('Yandex Maps yuklanmadi. Google Maps ishlatiladi.'),
-      //     );
-      //   }
       case MapProvider.openStreetMap:
         // Implement OpenStreetMap widget with flutter_map and offline caching
         try {

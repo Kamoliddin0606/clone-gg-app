@@ -141,7 +141,7 @@ void main() {
       when(mockPrefsService.getCodeProject()).thenReturn('test_project');
       when(mockPrefsService.getWarehouseCode()).thenReturn('test_warehouse');
 
-      when(mockDataSyncService.syncAllUserDataWithProgress(
+      when(mockDataSyncService.WithProgress(
         userCode: 'test_user',
         password: 'test_pass',
         codeProject: 'test_project',
@@ -170,7 +170,7 @@ void main() {
 
       // Assert that sync was called
       verify(mockDataSyncService.validateUserWithDatabase()).called(1);
-      verify(mockDataSyncService.syncAllUserDataWithProgress(
+      verify(mockDataSyncService.WithProgress(
         userCode: 'test_user',
         password: 'test_pass',
         codeProject: 'test_project',

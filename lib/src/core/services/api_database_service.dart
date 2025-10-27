@@ -2809,7 +2809,7 @@ class ApiDatabaseService {
 
     final result = await db.rawQuery('''
       SELECT * FROM main_reports
-      $whereClause
+      
       ORDER BY date_start DESC
     ''', whereArgs);
 

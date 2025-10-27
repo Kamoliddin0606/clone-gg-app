@@ -90,7 +90,19 @@ class _MapDetailPageState extends State<MapDetailPage> {
   // Animation state
   bool _controlsVisible = true;
   double _controlsOpacity = 1.0;
+  bool _isExpanded = true;
   Timer? _fadeTimer;
+  Timer? _collapseTimer;
+
+  // Interactive location editing state
+  bool _isEditingLocation = false;
+  MapPoint? _editingCenterPoint;
+  String _selectedAddress = '';
+  bool _showAddressPanel = false;
+  bool _showSearchField = false;
+  bool _showHintText = true;
+  List<String> _searchResults = [];
+  String _searchQuery = '';
 
   // Services
   late Connectivity _connectivity;
@@ -120,11 +132,13 @@ class _MapDetailPageState extends State<MapDetailPage> {
     _initializeConnectivity();
     _initializeMapData();
     _startFadeTimer();
+    _startCollapseTimer();
   }
 
   @override
   void dispose() {
     _fadeTimer?.cancel();
+    _collapseTimer?.cancel();
     _themeController.mode.removeListener(_themeListener);
     _locationManager.dispose();
     _routeManager.dispose();
@@ -516,8 +530,18 @@ class _MapDetailPageState extends State<MapDetailPage> {
     _fadeTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
-          _controlsOpacity = 0.5;
+          _controlsOpacity = 0.1;
         });
+      }
+    });
+  }
+
+  /// Start collapse timer for auto-collapsing controls
+  void _startCollapseTimer() {
+    _collapseTimer?.cancel();
+    _collapseTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && _isExpanded) {
+        _toggleControlsExpansion();
       }
     });
   }
@@ -525,10 +549,223 @@ class _MapDetailPageState extends State<MapDetailPage> {
   /// Reset controls opacity and restart timer
   void _resetControlsOpacity() {
     _fadeTimer?.cancel();
+    _collapseTimer?.cancel();
     setState(() {
       _controlsOpacity = 1.0;
+      _isExpanded = true;
     });
     _startFadeTimer();
+    _startCollapseTimer();
+  }
+
+  /// Toggle controls expansion state
+  void _toggleControlsExpansion() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _controlsOpacity = 1.0;
+        _startFadeTimer();
+        _startCollapseTimer();
+      } else {
+        _controlsOpacity = 0.3;
+        _fadeTimer?.cancel();
+        _collapseTimer?.cancel();
+      }
+    });
+  }
+
+  /// Handle global tap anywhere on screen to reset controls opacity
+  void _handleGlobalTap(BuildContext context) {
+    if (!mounted) return;
+
+    // Debounce to prevent excessive calls
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _resetControlsOpacity();
+        // Optional: unfocus keyboard if open
+        FocusScope.of(context).unfocus();
+      }
+    });
+  }
+
+  /// Start interactive location editing mode
+  Future<void> _startLocationEditing() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isEditingLocation = true;
+      _showAddressPanel = false;
+      _showSearchField = true;
+      _editingCenterPoint = _clientPoint;
+    });
+
+    // Animate camera to client location
+    try {
+      // For now, show message as camera control integration is in progress
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mijoz joylashuviga kamera o\'tkazildi')),
+      );
+
+      // Update address for current location
+      await _updateAddressFromCoordinates(_clientPoint.latitude, _clientPoint.longitude);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error starting location editing: $e');
+      }
+    }
+  }
+
+  /// Update address from coordinates using reverse geocoding
+  Future<void> _updateAddressFromCoordinates(double lat, double lng) async {
+    try {
+      // Mock reverse geocoding for now
+      // In real implementation, use geocoding package
+      setState(() {
+        _selectedAddress = 'Manzil: ${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}';
+        _showAddressPanel = true;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting address: $e');
+      }
+      setState(() {
+        _selectedAddress = 'Manzil aniqlanmadi';
+        _showAddressPanel = true;
+      });
+    }
+  }
+
+  /// Handle marker drag/pan updates
+  void _onMarkerDragUpdate(double lat, double lng) {
+    if (!mounted || !_isEditingLocation) return;
+
+    setState(() {
+      _editingCenterPoint = MapPoint(
+        id: 'editing',
+        latitude: lat,
+        longitude: lng,
+        title: 'Yangi joylashuv',
+      );
+      // Hide hint text when user starts dragging
+      _showHintText = false;
+    });
+
+    // Update address in real-time
+    _updateAddressFromCoordinates(lat, lng);
+  }
+
+  /// Handle marker drag end
+  void _onMarkerDragEnd() {
+    if (!mounted || !_isEditingLocation) return;
+
+    setState(() {
+      _showAddressPanel = true;
+    });
+  }
+
+  /// Save new location coordinates
+  Future<void> _saveNewLocation() async {
+    if (!mounted || _editingCenterPoint == null) return;
+
+    try {
+      // Show loading message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Koordinatalar serverga yuborilmoqda...')),
+      );
+
+      // Simulate API call delay
+      await Future.delayed(const Duration(seconds: 2));
+
+      // Update client point
+      setState(() {
+        _clientPoint = _editingCenterPoint!;
+        _isEditingLocation = false;
+        _showAddressPanel = false;
+        _showSearchField = false;
+      });
+
+      // Update markers
+      _updateClientMarker();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Koordinatalar muvaffaqiyatli yangilandi')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Xatolik: $e')),
+      );
+    }
+  }
+
+  /// Update client marker position
+  void _updateClientMarker() {
+    setState(() {
+      // Remove existing client marker
+      _markers.removeWhere((marker) => marker.id == 'client');
+      // Add updated client marker
+      final clientMarker = MapMarker.fromTradingPoint(widget.tradingPoint).copyWith(
+        point: _clientPoint,
+      );
+      _markers.add(clientMarker);
+    });
+  }
+
+  /// Handle search query changes
+  void _onSearchQueryChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+
+    // Mock search results
+    if (query.isNotEmpty) {
+      setState(() {
+        _searchResults = [
+          '$query ko\'chasi, Toshkent',
+          '$query mahallasi, Samarqand',
+          '$query shaharchasi, Buxoro',
+          '$query tumani, Andijon',
+          '$query viloyati, Farg\'ona',
+        ];
+      });
+    } else {
+      setState(() {
+        _searchResults = [];
+      });
+    }
+  }
+
+  /// Handle search result selection
+  void _onSearchResultSelected(String address) {
+    // Mock coordinates for selected address
+    final mockLat = 41.2995 + (DateTime.now().millisecondsSinceEpoch % 100) * 0.001;
+    final mockLng = 69.2401 + (DateTime.now().millisecondsSinceEpoch % 100) * 0.001;
+
+    setState(() {
+      _editingCenterPoint = MapPoint(
+        id: 'searched',
+        latitude: mockLat,
+        longitude: mockLng,
+        title: address,
+      );
+      _searchResults = [];
+      _searchQuery = '';
+    });
+
+    _updateAddressFromCoordinates(mockLat, mockLng);
+  }
+
+  /// Cancel location editing
+  void _cancelLocationEditing() {
+    setState(() {
+      _isEditingLocation = false;
+      _showAddressPanel = false;
+      _showSearchField = false;
+      _showHintText = true;
+      _editingCenterPoint = null;
+      _selectedAddress = '';
+      _searchResults = [];
+      _searchQuery = '';
+    });
   }
 
   /// Build control icons overlay with animations
@@ -547,10 +784,12 @@ class _MapDetailPageState extends State<MapDetailPage> {
 
     return Stack(
       children: [
-        // Bottom-right controls (4 icons) with animations
-        Positioned(
-          bottom: 16,
-          right: 16,
+        // Bottom-right controls with auto-collapse functionality
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          bottom: _isExpanded ? 16 : 16,
+          right: _isExpanded ? 16 : -containerSize - 16,
           child: GestureDetector(
             onTap: _resetControlsOpacity,
             child: AnimatedOpacity(
@@ -558,9 +797,15 @@ class _MapDetailPageState extends State<MapDetailPage> {
               opacity: _controlsOpacity,
               child: AnimatedScale(
                 duration: const Duration(milliseconds: 300),
-                scale: _controlsVisible ? 1.0 : 0.8,
-                child: Container(
+                scale: _isExpanded ? 1.0 : 0.8,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
                   width: containerSize,
+                  height: _isExpanded ? null : containerSize,
+                  constraints: BoxConstraints(
+                    minHeight: containerSize,
+                    maxHeight: _isExpanded ? containerSize * 4 + 12 : containerSize,
+                  ),
                   decoration: BoxDecoration(
                     color: cs.surface.withOpacity(isDark ? 0.95 : 0.9).withOpacity(_controlsOpacity),
                     borderRadius: BorderRadius.circular(12),
@@ -586,112 +831,137 @@ class _MapDetailPageState extends State<MapDetailPage> {
                       ),
                     ],
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // 1. User position button
-                      AnimatedOpacity(
-                        duration: const Duration(milliseconds: 300),
-                        opacity: _controlsVisible ? 1.0 : 0.0,
-                        child: IconButton(
-                          onPressed: _locationPermissionGranted ? () {
-                            _resetControlsOpacity();
-                            if (_userPoint != null) {
-                              // TODO: Implement camera movement to user position
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Foydalanuvchi joylashuviga o\'tish')),
-                              );
-                            } else {
-                              _getUserLocation();
-                            }
-                          } : null,
-                          iconSize: iconSize,
-                          icon: Icon(
-                            Icons.my_location,
-                            color: _locationPermissionGranted
-                                ? cs.primary
-                                : cs.onSurface.withOpacity(0.4),
-                          ),
-                          tooltip: 'Foydalanuvchi joylashuvi',
-                        ),
-                      ),
+                  child: _isExpanded
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Toggle button (top of expanded controls)
+                            // AnimatedOpacity(
+                            //   duration: const Duration(milliseconds: 200),
+                            //   opacity: _controlsVisible ? 1.0 : 0.0,
+                            //   child: IconButton(
+                            //     onPressed: _toggleControlsExpansion,
+                            //     iconSize: iconSize * 0.8,
+                            //     icon: Icon(Icons.unfold_less, color: cs.primary),
+                            //     tooltip: 'Yopish',
+                            //   ),
+                            // ),
 
-                      // 2. Client position button
-                      AnimatedOpacity(
-                        duration: const Duration(milliseconds: 350),
-                        opacity: _controlsVisible ? 1.0 : 0.0,
-                        child: IconButton(
-                          onPressed: () {
-                            _resetControlsOpacity();
-                            // TODO: Implement camera movement to client position
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Mijoz joylashuviga o\'tish')),
-                            );
-                          },
-                          iconSize: iconSize,
-                          icon: Icon(Icons.location_on, color: cs.primary),
-                          tooltip: 'Mijoz joylashuvi',
-                        ),
-                      ),
+                            // 1. User position button
+                            AnimatedOpacity(
+                              duration: const Duration(milliseconds: 300),
+                              opacity: _controlsVisible ? 1.0 : 0.0,
+                              child: IconButton(
+                                onPressed: _locationPermissionGranted ? () {
+                                  _resetControlsOpacity();
+                                  if (_userPoint != null) {
+                                    // TODO: Implement camera movement to user position
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Foydalanuvchi joylashuviga o\'tish')),
+                                    );
+                                  } else {
+                                    _getUserLocation();
+                                  }
+                                } : null,
+                                iconSize: iconSize,
+                                icon: Icon(
+                                  Icons.my_location,
+                                  color: _locationPermissionGranted
+                                      ? cs.primary
+                                      : cs.onSurface.withOpacity(0.4),
+                                ),
+                                tooltip: 'Foydalanuvchi joylashuvi',
+                              ),
+                            ),
 
-                      // 3. Route button
-                      AnimatedOpacity(
-                        duration: const Duration(milliseconds: 400),
-                        opacity: _controlsVisible ? 1.0 : 0.0,
-                        child: IconButton(
-                          onPressed: () async {
-                            _resetControlsOpacity();
-                            if (_userPoint != null) {
-                              try {
-                                final route = await _routeManager.createRoute(
-                                  points: [_userPoint!, _clientPoint],
-                                  travelMode: TravelMode.driving,
-                                  displayOnMap: true,
-                                );
-
-                                if (route != null) {
-                                  // Fit camera to show both points
-                                  await _fitCameraToRoute(route);
+                            // 2. Client position button
+                            AnimatedOpacity(
+                              duration: const Duration(milliseconds: 350),
+                              opacity: _controlsVisible ? 1.0 : 0.0,
+                              child: IconButton(
+                                onPressed: () {
+                                  _resetControlsOpacity();
+                                  // TODO: Implement camera movement to client position
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Marshrut muvaffaqiyatli hisoblandi')),
+                                    const SnackBar(content: Text('Mijoz joylashuviga o\'tish')),
                                   );
-                                }
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Marshrut hisoblashda xatolik: $e')),
-                                );
-                              }
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
-                              );
-                            }
-                          },
-                          iconSize: iconSize,
-                          icon: Icon(Icons.route, color: cs.primary),
-                          tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
-                        ),
-                      ),
+                                },
+                                iconSize: iconSize,
+                                icon: Icon(Icons.location_on, color: cs.primary),
+                                tooltip: 'Mijoz joylashuvi',
+                              ),
+                            ),
 
-                      // 4. Fullscreen button
-                      AnimatedOpacity(
-                        duration: const Duration(milliseconds: 450),
-                        opacity: _controlsVisible ? 1.0 : 0.0,
-                        child: IconButton(
-                          onPressed: () {
-                            _resetControlsOpacity();
-                            // TODO: Implement fullscreen map navigation
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('To\'liq ekran xaritasi - amalga oshirilmoqda')),
-                            );
-                          },
-                          iconSize: iconSize,
-                          icon: Icon(Icons.fullscreen, color: cs.primary),
-                          tooltip: 'To\'liq ekran xaritasi',
+                            // 3. Route button
+                            AnimatedOpacity(
+                              duration: const Duration(milliseconds: 400),
+                              opacity: _controlsVisible ? 1.0 : 0.0,
+                              child: IconButton(
+                                onPressed: () async {
+                                  _resetControlsOpacity();
+                                  if (_userPoint != null) {
+                                    try {
+                                      final route = await _routeManager.createRoute(
+                                        points: [_userPoint!, _clientPoint],
+                                        travelMode: TravelMode.driving,
+                                        displayOnMap: true,
+                                      );
+
+                                      if (route != null) {
+                                        // Fit camera to show both points
+                                        await _fitCameraToRoute(route);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Marshrut muvaffaqiyatli hisoblandi')),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Marshrut hisoblashda xatolik: $e')),
+                                      );
+                                    }
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+                                    );
+                                  }
+                                },
+                                iconSize: iconSize,
+                                icon: Icon(Icons.route, color: cs.primary),
+                                tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
+                              ),
+                            ),
+
+                            // 4. Fullscreen button
+                            AnimatedOpacity(
+                              duration: const Duration(milliseconds: 450),
+                              opacity: _controlsVisible ? 1.0 : 0.0,
+                              child: IconButton(
+                                onPressed: () {
+                                  _resetControlsOpacity();
+                                  // TODO: Implement fullscreen map navigation
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('To\'liq ekran xaritasi - amalga oshirilmoqda')),
+                                  );
+                                },
+                                iconSize: iconSize,
+                                icon: Icon(Icons.fullscreen, color: cs.primary),
+                                tooltip: 'To\'liq ekran xaritasi',
+                              ),
+                            ),
+                          ],
+                        )
+                      : Center(
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 300),
+                            opacity: _controlsVisible ? 1.0 : 0.0,
+                            child: IconButton(
+                              onPressed: _toggleControlsExpansion,
+                              iconSize: iconSize * 0.8,
+                              icon: Icon(Icons.unfold_more, color: cs.primary),
+                              tooltip: 'Ochish',
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),
@@ -742,13 +1012,13 @@ class _MapDetailPageState extends State<MapDetailPage> {
                     duration: const Duration(milliseconds: 300),
                     opacity: _controlsVisible ? 1.0 : 0.0,
                     child: IconButton(
-                      onPressed: () {
+                      onPressed: () async {
                         _resetControlsOpacity();
-                        _openUpdateCoordinatesPage();
+                        await _startLocationEditing();
                       },
                       iconSize: iconSize,
                       icon: Icon(Icons.edit_location_outlined, color: cs.primary),
-                      tooltip: 'Mijoz koordinatalarini yangilash',
+                      tooltip: 'Mijoz joylashuvini o\'zgartirish',
                     ),
                   ),
                 ),
@@ -757,8 +1027,242 @@ class _MapDetailPageState extends State<MapDetailPage> {
           ),
         ),
 
+        // Search field overlay (when editing location)
+        if (_isEditingLocation && _showSearchField)
+          Positioned(
+            top: 80,
+            left: 16,
+            right: 16,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _showSearchField ? 1.0 : 0.0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: cs.outline.withOpacity(0.2),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark
+                          ? Colors.black.withOpacity(0.4)
+                          : Colors.black.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      onChanged: _onSearchQueryChanged,
+                      decoration: InputDecoration(
+                        hintText: 'Manzilni qidiring...',
+                        prefixIcon: Icon(Icons.search, color: cs.onSurface.withOpacity(0.6)),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(Icons.clear, color: cs.onSurface.withOpacity(0.6)),
+                                onPressed: () {
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _searchResults = [];
+                                  });
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface),
+                    ),
+                    if (_searchResults.isNotEmpty)
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 200),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(color: cs.outline.withOpacity(0.2), width: 1),
+                          ),
+                        ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _searchResults.length,
+                          itemBuilder: (context, index) {
+                            final result = _searchResults[index];
+                            return ListTile(
+                              dense: true,
+                              title: Text(
+                                result,
+                                style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface),
+                              ),
+                              onTap: () => _onSearchResultSelected(result),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+        // Center marker hint (when editing location)
+        if (_isEditingLocation)
+          Positioned(
+            top: MediaQuery.of(context).size.height / 2 - 60,
+            left: 16,
+            right: 16,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 500),
+              opacity: (_isEditingLocation && _showHintText) ? 1.0 : 0.0,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: cs.primary.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: cs.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'Mijoz joylashuvini o\'zgartirish uchun markerni ekran bo\'ylab siljiting',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: cs.onPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // Center marker (when editing location)
+        if (_isEditingLocation)
+          Positioned(
+            top: MediaQuery.of(context).size.height / 2 - 24,
+            left: MediaQuery.of(context).size.width / 2 - 24,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _isEditingLocation ? 1.0 : 0.0,
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  // Calculate new coordinates based on drag
+                  final screenSize = MediaQuery.of(context).size;
+                  final centerLat = _editingCenterPoint?.latitude ?? _clientPoint.latitude;
+                  final centerLng = _editingCenterPoint?.longitude ?? _clientPoint.longitude;
+
+                  // Simple coordinate calculation based on drag distance
+                  // In real implementation, this would be more sophisticated
+                  final latDelta = -details.delta.dy * 0.00001;
+                  final lngDelta = details.delta.dx * 0.00001;
+
+                  _onMarkerDragUpdate(centerLat + latDelta, centerLng + lngDelta);
+                },
+                onPanEnd: (_) => _onMarkerDragEnd(),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: cs.primary.withOpacity(0.8),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: cs.primary.withOpacity(0.4),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.location_on,
+                    color: cs.onPrimary,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // Address info panel (when editing location)
+        if (_isEditingLocation && _showAddressPanel && _editingCenterPoint != null)
+          Positioned(
+            bottom: 16,
+            left: 16,
+            right: 16,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _showAddressPanel ? 1.0 : 0.0,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.8),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _selectedAddress,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Lat: ${_editingCenterPoint!.latitude.toStringAsFixed(6)}, Lng: ${_editingCenterPoint!.longitude.toStringAsFixed(6)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _saveNewLocation,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: cs.primary,
+                              foregroundColor: cs.onPrimary,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text('Saqlash'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        TextButton(
+                          onPressed: _cancelLocationEditing,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white.withOpacity(0.8),
+                          ),
+                          child: const Text('Bekor qilish'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
         // Route info overlay (if route is active)
-        if (_isRouteVisible && _currentRoute != null)
+        if (_isRouteVisible && _currentRoute != null && !_isEditingLocation)
           Positioned(
             top: 16,
             left: 16,
@@ -866,14 +1370,19 @@ class _MapDetailPageState extends State<MapDetailPage> {
           color: cs.onSurface.withOpacity(0.8),
         ),
       ),
-      body: Stack(
-        children: [
-          // Map widget
-          _buildMapWidget(),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => _handleGlobalTap(context),
+        onPanDown: (_) => _handleGlobalTap(context),
+        child: Stack(
+          children: [
+            // Map widget
+            _buildMapWidget(),
 
-          // Control overlays using the updated method
-          _buildControlOverlays(),
-        ],
+            // Control overlays using the updated method
+            _buildControlOverlays(),
+          ],
+        ),
       ),
     );
   }

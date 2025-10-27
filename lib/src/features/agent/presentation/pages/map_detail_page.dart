@@ -87,6 +87,11 @@ class _MapDetailPageState extends State<MapDetailPage> {
   bool _locationPermissionGranted = false;
   bool _isRouteVisible = false;
 
+  // Animation state
+  bool _controlsVisible = true;
+  double _controlsOpacity = 1.0;
+  Timer? _fadeTimer;
+
   // Services
   late Connectivity _connectivity;
   bool _isOnline = true;
@@ -114,10 +119,12 @@ class _MapDetailPageState extends State<MapDetailPage> {
     _checkLocationPermission();
     _initializeConnectivity();
     _initializeMapData();
+    _startFadeTimer();
   }
 
   @override
   void dispose() {
+    _fadeTimer?.cancel();
     _themeController.mode.removeListener(_themeListener);
     _locationManager.dispose();
     _routeManager.dispose();
@@ -503,166 +510,249 @@ class _MapDetailPageState extends State<MapDetailPage> {
     );
   }
 
-  /// Build control icons overlay
+  /// Start fade-out timer for controls
+  void _startFadeTimer() {
+    _fadeTimer?.cancel();
+    _fadeTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _controlsOpacity = 0.5;
+        });
+      }
+    });
+  }
+
+  /// Reset controls opacity and restart timer
+  void _resetControlsOpacity() {
+    _fadeTimer?.cancel();
+    setState(() {
+      _controlsOpacity = 1.0;
+    });
+    _startFadeTimer();
+  }
+
+  /// Build control icons overlay with animations
   Widget _buildControlOverlays() {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final screenSize = MediaQuery.of(context).size;
 
     // Get theme extension for additional colors
     final themeExtension = theme.extension<AppThemeExtension>();
 
+    // Responsive icon size
+    final iconSize = screenSize.width > 600 ? 32.0 : 28.0;
+    final containerSize = screenSize.width > 600 ? 56.0 : 48.0;
+
     return Stack(
       children: [
-        // Bottom-right controls (4 icons)
+        // Bottom-right controls (4 icons) with animations
         Positioned(
           bottom: 16,
           right: 16,
-          child: Container(
-            decoration: BoxDecoration(
-              color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: cs.outline.withOpacity(0.2),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark
-                      ? Colors.black.withOpacity(0.4)
-                      : Colors.black.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                  spreadRadius: 1,
-                ),
-                BoxShadow(
-                  color: isDark
-                      ? themeExtension?.accentPrimary.withOpacity(0.1) ?? cs.primary.withOpacity(0.1)
-                      : Colors.white.withOpacity(0.8),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 1. User position button
-                IconButton(
-                  onPressed: _locationPermissionGranted ? () {
-                    if (_userPoint != null) {
-                      // TODO: Implement camera movement to user position
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Foydalanuvchi joylashuviga o\'tish')),
-                      );
-                    } else {
-                      _getUserLocation();
-                    }
-                  } : null,
-                  icon: Icon(
-                    Icons.my_location,
-                    color: _locationPermissionGranted
-                        ? cs.primary
-                        : cs.onSurface.withOpacity(0.4),
+          child: GestureDetector(
+            onTap: _resetControlsOpacity,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 400),
+              opacity: _controlsOpacity,
+              child: AnimatedScale(
+                duration: const Duration(milliseconds: 300),
+                scale: _controlsVisible ? 1.0 : 0.8,
+                child: Container(
+                  width: containerSize,
+                  decoration: BoxDecoration(
+                    color: cs.surface.withOpacity(isDark ? 0.95 : 0.9).withOpacity(_controlsOpacity),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: cs.outline.withOpacity(0.2 * _controlsOpacity),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.black.withOpacity(0.4 * _controlsOpacity)
+                            : Colors.black.withOpacity(0.15 * _controlsOpacity),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                        spreadRadius: 1,
+                      ),
+                      BoxShadow(
+                        color: isDark
+                            ? themeExtension?.accentPrimary.withOpacity(0.1 * _controlsOpacity) ?? cs.primary.withOpacity(0.1 * _controlsOpacity)
+                            : Colors.white.withOpacity(0.8 * _controlsOpacity),
+                        blurRadius: 4,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
                   ),
-                  tooltip: 'Foydalanuvchi joylashuvi',
-                ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // 1. User position button
+                      AnimatedOpacity(
+                        duration: const Duration(milliseconds: 300),
+                        opacity: _controlsVisible ? 1.0 : 0.0,
+                        child: IconButton(
+                          onPressed: _locationPermissionGranted ? () {
+                            _resetControlsOpacity();
+                            if (_userPoint != null) {
+                              // TODO: Implement camera movement to user position
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Foydalanuvchi joylashuviga o\'tish')),
+                              );
+                            } else {
+                              _getUserLocation();
+                            }
+                          } : null,
+                          iconSize: iconSize,
+                          icon: Icon(
+                            Icons.my_location,
+                            color: _locationPermissionGranted
+                                ? cs.primary
+                                : cs.onSurface.withOpacity(0.4),
+                          ),
+                          tooltip: 'Foydalanuvchi joylashuvi',
+                        ),
+                      ),
 
-                // 2. Client position button
-                IconButton(
-                  onPressed: () {
-                    // TODO: Implement camera movement to client position
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Mijoz joylashuviga o\'tish')),
-                    );
-                  },
-                  icon: Icon(Icons.location_on, color: cs.primary),
-                  tooltip: 'Mijoz joylashuvi',
-                ),
+                      // 2. Client position button
+                      AnimatedOpacity(
+                        duration: const Duration(milliseconds: 350),
+                        opacity: _controlsVisible ? 1.0 : 0.0,
+                        child: IconButton(
+                          onPressed: () {
+                            _resetControlsOpacity();
+                            // TODO: Implement camera movement to client position
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Mijoz joylashuviga o\'tish')),
+                            );
+                          },
+                          iconSize: iconSize,
+                          icon: Icon(Icons.location_on, color: cs.primary),
+                          tooltip: 'Mijoz joylashuvi',
+                        ),
+                      ),
 
-                // 3. Route button
-                IconButton(
-                  onPressed: () async {
-                    if (_userPoint != null) {
-                      try {
-                        final route = await _routeManager.createRoute(
-                          points: [_userPoint!, _clientPoint],
-                          travelMode: TravelMode.driving,
-                          displayOnMap: true,
-                        );
+                      // 3. Route button
+                      AnimatedOpacity(
+                        duration: const Duration(milliseconds: 400),
+                        opacity: _controlsVisible ? 1.0 : 0.0,
+                        child: IconButton(
+                          onPressed: () async {
+                            _resetControlsOpacity();
+                            if (_userPoint != null) {
+                              try {
+                                final route = await _routeManager.createRoute(
+                                  points: [_userPoint!, _clientPoint],
+                                  travelMode: TravelMode.driving,
+                                  displayOnMap: true,
+                                );
 
-                        if (route != null) {
-                          // Fit camera to show both points
-                          await _fitCameraToRoute(route);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Marshrut muvaffaqiyatli hisoblandi')),
-                          );
-                        }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Marshrut hisoblashda xatolik: $e')),
-                        );
-                      }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
-                      );
-                    }
-                  },
-                  icon: Icon(Icons.route, color: cs.primary),
-                  tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
-                ),
+                                if (route != null) {
+                                  // Fit camera to show both points
+                                  await _fitCameraToRoute(route);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Marshrut muvaffaqiyatli hisoblandi')),
+                                  );
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Marshrut hisoblashda xatolik: $e')),
+                                );
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+                              );
+                            }
+                          },
+                          iconSize: iconSize,
+                          icon: Icon(Icons.route, color: cs.primary),
+                          tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
+                        ),
+                      ),
 
-                // 4. Fullscreen button
-                IconButton(
-                  onPressed: () {
-                    // TODO: Implement fullscreen map navigation
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('To\'liq ekran xaritasi - amalga oshirilmoqda')),
-                    );
-                  },
-                  icon: Icon(Icons.fullscreen, color: cs.primary),
-                  tooltip: 'To\'liq ekran xaritasi',
+                      // 4. Fullscreen button
+                      AnimatedOpacity(
+                        duration: const Duration(milliseconds: 450),
+                        opacity: _controlsVisible ? 1.0 : 0.0,
+                        child: IconButton(
+                          onPressed: () {
+                            _resetControlsOpacity();
+                            // TODO: Implement fullscreen map navigation
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('To\'liq ekran xaritasi - amalga oshirilmoqda')),
+                            );
+                          },
+                          iconSize: iconSize,
+                          icon: Icon(Icons.fullscreen, color: cs.primary),
+                          tooltip: 'To\'liq ekran xaritasi',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
 
-        // Top-right control (1 icon)
+        // Top-right control (1 icon) with animations
         Positioned(
           top: 16,
           right: 16,
-          child: Container(
-            decoration: BoxDecoration(
-              color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: cs.outline.withOpacity(0.2),
-                width: 1,
+          child: GestureDetector(
+            onTap: _resetControlsOpacity,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 400),
+              opacity: _controlsOpacity,
+              child: AnimatedScale(
+                duration: const Duration(milliseconds: 300),
+                scale: _controlsVisible ? 1.0 : 0.8,
+                child: Container(
+                  width: containerSize,
+                  height: containerSize,
+                  decoration: BoxDecoration(
+                    color: cs.surface.withOpacity(isDark ? 0.95 : 0.9).withOpacity(_controlsOpacity),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: cs.outline.withOpacity(0.2 * _controlsOpacity),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.black.withOpacity(0.4 * _controlsOpacity)
+                            : Colors.black.withOpacity(0.15 * _controlsOpacity),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                        spreadRadius: 1,
+                      ),
+                      BoxShadow(
+                        color: isDark
+                            ? themeExtension?.accentPrimary.withOpacity(0.1 * _controlsOpacity) ?? cs.primary.withOpacity(0.1 * _controlsOpacity)
+                            : Colors.white.withOpacity(0.8 * _controlsOpacity),
+                        blurRadius: 4,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: _controlsVisible ? 1.0 : 0.0,
+                    child: IconButton(
+                      onPressed: () {
+                        _resetControlsOpacity();
+                        _openUpdateCoordinatesPage();
+                      },
+                      iconSize: iconSize,
+                      icon: Icon(Icons.edit_location_outlined, color: cs.primary),
+                      tooltip: 'Mijoz koordinatalarini yangilash',
+                    ),
+                  ),
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark
-                      ? Colors.black.withOpacity(0.4)
-                      : Colors.black.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                  spreadRadius: 1,
-                ),
-                BoxShadow(
-                  color: isDark
-                      ? themeExtension?.accentPrimary.withOpacity(0.1) ?? cs.primary.withOpacity(0.1)
-                      : Colors.white.withOpacity(0.8),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              onPressed: _openUpdateCoordinatesPage,
-              icon: Icon(Icons.edit_location, color: cs.primary),
-              tooltip: 'Mijoz koordinatalarini yangilash',
             ),
           ),
         ),

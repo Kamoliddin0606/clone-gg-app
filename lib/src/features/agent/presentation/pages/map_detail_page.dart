@@ -21,6 +21,8 @@ import 'package:gloria_marketing_flutter/src/core/maps/managers/route_manager.da
 import 'package:gloria_marketing_flutter/src/core/maps/managers/marker_manager.dart' as marker_manager;
 import 'package:gloria_marketing_flutter/src/core/maps/services/route_service.dart' as route_service;
 import 'package:gloria_marketing_flutter/src/core/maps/services/map_service.dart' as map_service;
+import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
+import 'package:gloria_marketing_flutter/src/theme/theme_schemes.dart';
 
 /// Map detail page for displaying client location with map controls
 /// This page shows the client's location on map with various control icons
@@ -89,6 +91,10 @@ class _MapDetailPageState extends State<MapDetailPage> {
   late Connectivity _connectivity;
   bool _isOnline = true;
 
+  // Theme management
+  late final ThemeController _themeController;
+  late VoidCallback _themeListener;
+
   // Legacy variables for backward compatibility (to be removed)
   geolocator.Position? _userPosition;
   List<google_maps.LatLng> _routePoints = [];
@@ -102,6 +108,7 @@ class _MapDetailPageState extends State<MapDetailPage> {
   @override
   void initState() {
     super.initState();
+    _initializeThemeController();
     _initializeServices();
     _loadDefaultMapProvider();
     _checkLocationPermission();
@@ -111,9 +118,21 @@ class _MapDetailPageState extends State<MapDetailPage> {
 
   @override
   void dispose() {
+    _themeController.mode.removeListener(_themeListener);
     _locationManager.dispose();
     _routeManager.dispose();
     super.dispose();
+  }
+
+  /// Initialize theme controller and set up theme mode listener
+  void _initializeThemeController() {
+    _themeController = ThemeController.I;
+    _themeListener = () {
+      if (mounted) {
+        setState(() {});
+      }
+    };
+    _themeController.mode.addListener(_themeListener);
   }
 
   /// Initialize core managers and services
@@ -486,6 +505,13 @@ class _MapDetailPageState extends State<MapDetailPage> {
 
   /// Build control icons overlay
   Widget _buildControlOverlays() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Get theme extension for additional colors
+    final themeExtension = theme.extension<AppThemeExtension>();
+
     return Stack(
       children: [
         // Bottom-right controls (4 icons)
@@ -494,13 +520,27 @@ class _MapDetailPageState extends State<MapDetailPage> {
           right: 16,
           child: Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(8),
+              color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: cs.outline.withOpacity(0.2),
+                width: 1,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: isDark
+                      ? Colors.black.withOpacity(0.4)
+                      : Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                  spreadRadius: 1,
+                ),
+                BoxShadow(
+                  color: isDark
+                      ? themeExtension?.accentPrimary.withOpacity(0.1) ?? cs.primary.withOpacity(0.1)
+                      : Colors.white.withOpacity(0.8),
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: const Offset(0, -2),
                 ),
               ],
             ),
@@ -522,8 +562,8 @@ class _MapDetailPageState extends State<MapDetailPage> {
                   icon: Icon(
                     Icons.my_location,
                     color: _locationPermissionGranted
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                        ? cs.primary
+                        : cs.onSurface.withOpacity(0.4),
                   ),
                   tooltip: 'Foydalanuvchi joylashuvi',
                 ),
@@ -536,7 +576,7 @@ class _MapDetailPageState extends State<MapDetailPage> {
                       const SnackBar(content: Text('Mijoz joylashuviga o\'tish')),
                     );
                   },
-                  icon: Icon(Icons.location_on, color: Theme.of(context).colorScheme.primary),
+                  icon: Icon(Icons.location_on, color: cs.primary),
                   tooltip: 'Mijoz joylashuvi',
                 ),
 
@@ -569,7 +609,7 @@ class _MapDetailPageState extends State<MapDetailPage> {
                       );
                     }
                   },
-                  icon: Icon(Icons.route, color: Theme.of(context).colorScheme.primary),
+                  icon: Icon(Icons.route, color: cs.primary),
                   tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
                 ),
 
@@ -581,7 +621,7 @@ class _MapDetailPageState extends State<MapDetailPage> {
                       const SnackBar(content: Text('To\'liq ekran xaritasi - amalga oshirilmoqda')),
                     );
                   },
-                  icon: Icon(Icons.fullscreen, color: Theme.of(context).colorScheme.primary),
+                  icon: Icon(Icons.fullscreen, color: cs.primary),
                   tooltip: 'To\'liq ekran xaritasi',
                 ),
               ],
@@ -595,19 +635,33 @@ class _MapDetailPageState extends State<MapDetailPage> {
           right: 16,
           child: Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(8),
+              color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: cs.outline.withOpacity(0.2),
+                width: 1,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: isDark
+                      ? Colors.black.withOpacity(0.4)
+                      : Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                  spreadRadius: 1,
+                ),
+                BoxShadow(
+                  color: isDark
+                      ? themeExtension?.accentPrimary.withOpacity(0.1) ?? cs.primary.withOpacity(0.1)
+                      : Colors.white.withOpacity(0.8),
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: const Offset(0, -2),
                 ),
               ],
             ),
             child: IconButton(
               onPressed: _openUpdateCoordinatesPage,
-              icon: Icon(Icons.edit_location, color: Theme.of(context).colorScheme.primary),
+              icon: Icon(Icons.edit_location, color: cs.primary),
               tooltip: 'Mijoz koordinatalarini yangilash',
             ),
           ),
@@ -620,22 +674,36 @@ class _MapDetailPageState extends State<MapDetailPage> {
             left: 16,
             right: 16,
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(8),
+                color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: cs.outline.withOpacity(0.2),
+                  width: 1,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: isDark
+                        ? Colors.black.withOpacity(0.4)
+                        : Colors.black.withOpacity(0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 1,
+                  ),
+                  BoxShadow(
+                    color: isDark
+                        ? themeExtension?.accentPrimary.withOpacity(0.1) ?? cs.primary.withOpacity(0.1)
+                        : Colors.white.withOpacity(0.8),
                     blurRadius: 4,
-                    offset: const Offset(0, 2),
+                    offset: const Offset(0, -2),
                   ),
                 ],
               ),
               child: Row(
                 children: [
-                  Icon(Icons.route, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 8),
+                  Icon(Icons.route, color: cs.primary),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -643,14 +711,16 @@ class _MapDetailPageState extends State<MapDetailPage> {
                       children: [
                         Text(
                           'Marshrut: ${_currentRoute!.formattedDistance}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface,
                           ),
                         ),
+                        const SizedBox(height: 4),
                         Text(
                           'Vaqt: ${_currentRoute!.formattedTime}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: cs.onSurface.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -658,8 +728,12 @@ class _MapDetailPageState extends State<MapDetailPage> {
                   ),
                   IconButton(
                     onPressed: _clearRoute,
-                    icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
+                    icon: Icon(Icons.close, color: cs.onSurface.withOpacity(0.7)),
                     tooltip: 'Marshrutni yopish',
+                    style: IconButton.styleFrom(
+                      backgroundColor: cs.surfaceVariant.withOpacity(0.5),
+                      foregroundColor: cs.onSurface,
+                    ),
                   ),
                 ],
               ),
@@ -674,165 +748,41 @@ class _MapDetailPageState extends State<MapDetailPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Get theme extension for additional colors
+    final themeExtension = theme.extension<AppThemeExtension>();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.tradingPoint.name),
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
+        title: Text(
+          widget.tradingPoint.name,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: cs.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
+        foregroundColor: cs.onSurface,
+        elevation: isDark ? 2 : 1,
+        shadowColor: isDark
+            ? Colors.black.withOpacity(0.2)
+            : Colors.black.withOpacity(0.08),
+        surfaceTintColor: cs.surfaceTint,
+        iconTheme: IconThemeData(
+          color: cs.onSurface.withOpacity(0.8),
+        ),
+        actionsIconTheme: IconThemeData(
+          color: cs.onSurface.withOpacity(0.8),
+        ),
       ),
       body: Stack(
         children: [
           // Map widget
           _buildMapWidget(),
 
-          // Control buttons overlay - Yandex Map style positioning
-          // Bottom-right controls (4 icons)
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: Container(
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 1. User position button (top in bottom-right group)
-                  IconButton(
-                    onPressed: _locationPermissionGranted ? () {
-                      if (_userPoint != null) {
-                        // Use UnifiedMapWidget's moveCamera method
-                        // TODO: Implement camera movement through UnifiedMapWidget
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Foydalanuvchi joylashuviga kamera o\'tkazildi')),
-                        );
-                      } else {
-                        _getUserLocation();
-                      }
-                    } : null,
-                    icon: Icon(
-                      Icons.my_location,
-                      color: _locationPermissionGranted ? cs.primary : cs.onSurface.withOpacity(0.3),
-                    ),
-                    tooltip: 'Foydalanuvchi joylashuvi',
-                  ),
-
-                  // 2. Client position button
-                  IconButton(
-                    onPressed: () {
-                      // Use UnifiedMapWidget's moveCamera method
-                      // TODO: Implement camera movement through UnifiedMapWidget
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Mijoz joylashuviga kamera o\'tkazildi')),
-                      );
-                    },
-                    icon: Icon(Icons.location_on, color: cs.primary),
-                    tooltip: 'Mijoz joylashuvi',
-                  ),
-
-                  // 3. Route button
-                  IconButton(
-                    onPressed: _calculateRoute,
-                    icon: Icon(Icons.route, color: cs.primary),
-                    tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
-                  ),
-
-                  // 4. Fullscreen button
-                  IconButton(
-                    onPressed: _openFullscreenMap,
-                    icon: Icon(Icons.fullscreen, color: cs.primary),
-                    tooltip: 'To\'liq ekran xaritasi',
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Top-right control (1 icon)
-          Positioned(
-            top: 16,
-            right: 16,
-            child: Container(
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                onPressed: _openUpdateCoordinatesPage,
-                icon: Icon(Icons.edit_location, color: cs.primary),
-                tooltip: 'Mijoz koordinatalarini yangilash',
-              ),
-            ),
-          ),
-
-          // Route info overlay (if route is active)
-          if (_isRouteVisible && _currentRoute != null)
-            Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: cs.surface.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.route, color: cs.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Marshrut: ${_currentRoute!.formattedDistance}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            'Vaqt: ${_currentRoute!.formattedTime}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: cs.onSurface.withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _clearRoute,
-                      icon: Icon(Icons.close, color: cs.onSurface),
-                      tooltip: 'Marshrutni yopish',
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          // Control overlays using the updated method
+          _buildControlOverlays(),
         ],
       ),
     );

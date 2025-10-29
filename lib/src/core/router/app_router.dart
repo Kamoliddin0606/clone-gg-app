@@ -3,6 +3,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/a
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/trading_points_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/map_detail_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/map_pages/map_detail_page_osm.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/map_pages/map_detail_page_yandex.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/map_pages/map_detail_page_google.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/warehouses_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/contracts_page.dart';
@@ -28,7 +31,10 @@ class AppRouter {
   static const String packerHomeRoute = '/packer-home';
   static const String warehouseManagerHomeRoute = '/warehouse-manager-home';
   static const String tradingPointsRoute = '/trading-points';
-  static const String mapDetailRoute = '/map-detail';
+  static const String mapDetailRoute = '/map-detail-osm';
+  static const String mapDetailOsmRoute = '/map-detail-osm-fullscreen';
+  static const String mapDetailYandexRoute = '/map-detail-yandex-fullscreen';
+  static const String mapDetailGoogleRoute = '/map-detail-google-fullscreen';
   static const String warehousesRoute = '/warehouses';
   static const String contractsRoute = '/contracts';
   static const String marketingRoute = '/marketing';
@@ -69,6 +75,48 @@ class AppRouter {
           builder: (_) => Scaffold(
             body: const Center(
               child: Text('Trading point data is required for map detail page'),
+            ),
+          ),
+        );
+      case mapDetailOsmRoute:
+        final tradingPoint = settings.arguments as model.TradingPoint?;
+        if (tradingPoint != null) {
+          return MaterialPageRoute(
+            builder: (_) => MapDetailPageOsm(tradingPoint: tradingPoint),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: const Center(
+              child: Text('Trading point data is required for OSM map detail page'),
+            ),
+          ),
+        );
+      case mapDetailYandexRoute:
+        final tradingPoint = settings.arguments as model.TradingPoint?;
+        if (tradingPoint != null) {
+          return MaterialPageRoute(
+            builder: (_) => MapDetailPageYandex(tradingPoint: tradingPoint),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: const Center(
+              child: Text('Trading point data is required for Yandex map detail page'),
+            ),
+          ),
+        );
+      case mapDetailGoogleRoute:
+        final tradingPoint = settings.arguments as model.TradingPoint?;
+        if (tradingPoint != null) {
+          return MaterialPageRoute(
+            builder: (_) => MapDetailPageGoogle(tradingPoint: tradingPoint),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: const Center(
+              child: Text('Trading point data is required for Google map detail page'),
             ),
           ),
         );

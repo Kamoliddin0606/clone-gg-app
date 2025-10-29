@@ -272,6 +272,44 @@ class MockSharedPreferencesService extends _i1.Mock
             returnValue: false,
           )
           as bool);
+
+  @override
+  _i5.Future<bool> saveMapTokens({
+    required String? yandexToken,
+    required String? googleToken,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveMapTokens, [], {
+              #yandexToken: yandexToken,
+              #googleToken: googleToken,
+            }),
+            returnValue: _i5.Future<bool>.value(false),
+          )
+          as _i5.Future<bool>);
+
+  @override
+  Map<String, String> getMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#getMapTokens, []),
+            returnValue: <String, String>{},
+          )
+          as Map<String, String>);
+
+  @override
+  bool hasValidMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasValidMapTokens, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i5.Future<bool> clearMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearMapTokens, []),
+            returnValue: _i5.Future<bool>.value(false),
+          )
+          as _i5.Future<bool>);
 }
 
 /// A class which mocks [AgentRepository].

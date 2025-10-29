@@ -1116,6 +1116,32 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
             ),
           )
           as _i8.Future<List<_i30.PlannedRoute>>);
+
+  @override
+  _i8.Future<Map<String, String>> syncMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#syncMapTokens, []),
+            returnValue: _i8.Future<Map<String, String>>.value(
+              <String, String>{},
+            ),
+          )
+          as _i8.Future<Map<String, String>>);
+
+  @override
+  Map<String, String> getCachedMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#getCachedMapTokens, []),
+            returnValue: <String, String>{},
+          )
+          as Map<String, String>);
+
+  @override
+  bool hasValidMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasValidMapTokens, []),
+            returnValue: false,
+          )
+          as bool);
 }
 
 /// A class which mocks [SharedPreferencesService].
@@ -1327,4 +1353,42 @@ class MockSharedPreferencesService extends _i1.Mock
             returnValue: false,
           )
           as bool);
+
+  @override
+  _i8.Future<bool> saveMapTokens({
+    required String? yandexToken,
+    required String? googleToken,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveMapTokens, [], {
+              #yandexToken: yandexToken,
+              #googleToken: googleToken,
+            }),
+            returnValue: _i8.Future<bool>.value(false),
+          )
+          as _i8.Future<bool>);
+
+  @override
+  Map<String, String> getMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#getMapTokens, []),
+            returnValue: <String, String>{},
+          )
+          as Map<String, String>);
+
+  @override
+  bool hasValidMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasValidMapTokens, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i8.Future<bool> clearMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearMapTokens, []),
+            returnValue: _i8.Future<bool>.value(false),
+          )
+          as _i8.Future<bool>);
 }

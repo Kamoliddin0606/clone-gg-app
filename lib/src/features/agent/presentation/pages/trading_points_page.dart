@@ -2458,12 +2458,28 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                       icon: const Icon(Icons.fullscreen, color: Colors.black),
                       onPressed: () {
                         // Navigate to fullscreen map detail page
-                        Navigator.pushNamed(
-                          context,
-                          '/map-detail',
-                          arguments: widget.tradingPoint,
-                        );
-                      },
+                        if (_defaultMapProvider == MapProvider.openStreetMap){
+                          Navigator.pushNamed(
+                            context,
+                            '/map-detail-osm-fullscreen',
+                            arguments: widget.tradingPoint,
+                          );
+                        }
+                        if (_defaultMapProvider == MapProvider.yandex){
+                          Navigator.pushNamed(
+                            context,
+                            '/map-detail-yandex-fullscreen',
+                            arguments: widget.tradingPoint,
+                            );
+                        }
+                        if (_defaultMapProvider == MapProvider.google){
+                          Navigator.pushNamed(
+                            context,
+                            '/map-detail-google-fullscreen',
+                            arguments: widget.tradingPoint,
+                          );
+                        }
+                        },
                       tooltip: 'Fullscreen',
                       iconSize: 24,
                     ),
@@ -2561,7 +2577,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                         // Navigate to fullscreen map detail page
                         Navigator.pushNamed(
                           context,
-                          '/map-detail',
+                          '/map-detail-yandex-fullscreen',
                           arguments: widget.tradingPoint,
                         );
                       },
@@ -2694,7 +2710,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                           // Navigate to fullscreen map detail page
                           Navigator.pushNamed(
                             context,
-                            '/map-detail',
+                            '/map-detail-osm-fullscreen',
                             arguments: widget.tradingPoint,
                           );
                         },

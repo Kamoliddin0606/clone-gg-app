@@ -344,6 +344,44 @@ class MockSharedPreferencesService extends _i1.Mock
             returnValue: false,
           )
           as bool);
+
+  @override
+  _i12.Future<bool> saveMapTokens({
+    required String? yandexToken,
+    required String? googleToken,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveMapTokens, [], {
+              #yandexToken: yandexToken,
+              #googleToken: googleToken,
+            }),
+            returnValue: _i12.Future<bool>.value(false),
+          )
+          as _i12.Future<bool>);
+
+  @override
+  Map<String, String> getMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#getMapTokens, []),
+            returnValue: <String, String>{},
+          )
+          as Map<String, String>);
+
+  @override
+  bool hasValidMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasValidMapTokens, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i12.Future<bool> clearMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearMapTokens, []),
+            returnValue: _i12.Future<bool>.value(false),
+          )
+          as _i12.Future<bool>);
 }
 
 /// A class which mocks [ApiDatabaseService].
@@ -1360,6 +1398,16 @@ class MockApiDatabaseService extends _i1.Mock
           as _i12.Future<List<_i31.PlannedRoute>>);
 
   @override
+  _i12.Future<List<_i31.PlannedRoute>> getAllPlannedRoutes() =>
+      (super.noSuchMethod(
+            Invocation.method(#getAllPlannedRoutes, []),
+            returnValue: _i12.Future<List<_i31.PlannedRoute>>.value(
+              <_i31.PlannedRoute>[],
+            ),
+          )
+          as _i12.Future<List<_i31.PlannedRoute>>);
+
+  @override
   _i12.Future<List<_i31.PlannedRoute>> getPlannedRoutesByWeekday(
     String? userCode,
     int? codeWeekday,
@@ -1727,6 +1775,16 @@ class MockSoapApiService extends _i1.Mock implements _i32.SoapApiService {
             ),
           )
           as _i12.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i12.Future<Map<String, String>> getMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#getMapTokens, []),
+            returnValue: _i12.Future<Map<String, String>>.value(
+              <String, String>{},
+            ),
+          )
+          as _i12.Future<Map<String, String>>);
 
   @override
   _i12.Future<_i5.OrderDetail> getOrderDetails({
@@ -2734,6 +2792,32 @@ class MockDataSyncService extends _i1.Mock implements _i33.DataSyncService {
             ),
           )
           as _i12.Future<List<_i31.PlannedRoute>>);
+
+  @override
+  _i12.Future<Map<String, String>> syncMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#syncMapTokens, []),
+            returnValue: _i12.Future<Map<String, String>>.value(
+              <String, String>{},
+            ),
+          )
+          as _i12.Future<Map<String, String>>);
+
+  @override
+  Map<String, String> getCachedMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#getCachedMapTokens, []),
+            returnValue: <String, String>{},
+          )
+          as Map<String, String>);
+
+  @override
+  bool hasValidMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasValidMapTokens, []),
+            returnValue: false,
+          )
+          as bool);
 }
 
 /// A class which mocks [ReportsSyncService].

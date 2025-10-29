@@ -311,6 +311,44 @@ class MockSharedPreferencesService extends _i1.Mock
             returnValue: false,
           )
           as bool);
+
+  @override
+  _i7.Future<bool> saveMapTokens({
+    required String? yandexToken,
+    required String? googleToken,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveMapTokens, [], {
+              #yandexToken: yandexToken,
+              #googleToken: googleToken,
+            }),
+            returnValue: _i7.Future<bool>.value(false),
+          )
+          as _i7.Future<bool>);
+
+  @override
+  Map<String, String> getMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#getMapTokens, []),
+            returnValue: <String, String>{},
+          )
+          as Map<String, String>);
+
+  @override
+  bool hasValidMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasValidMapTokens, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i7.Future<bool> clearMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearMapTokens, []),
+            returnValue: _i7.Future<bool>.value(false),
+          )
+          as _i7.Future<bool>);
 }
 
 /// A class which mocks [SoapApiService].
@@ -611,6 +649,16 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
             ),
           )
           as _i7.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i7.Future<Map<String, String>> getMapTokens() =>
+      (super.noSuchMethod(
+            Invocation.method(#getMapTokens, []),
+            returnValue: _i7.Future<Map<String, String>>.value(
+              <String, String>{},
+            ),
+          )
+          as _i7.Future<Map<String, String>>);
 
   @override
   _i7.Future<_i4.OrderDetail> getOrderDetails({
@@ -1642,6 +1690,16 @@ class MockApiDatabaseService extends _i1.Mock
   _i7.Future<List<_i32.PlannedRoute>> getPlannedRoutes(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getPlannedRoutes, [userCode]),
+            returnValue: _i7.Future<List<_i32.PlannedRoute>>.value(
+              <_i32.PlannedRoute>[],
+            ),
+          )
+          as _i7.Future<List<_i32.PlannedRoute>>);
+
+  @override
+  _i7.Future<List<_i32.PlannedRoute>> getAllPlannedRoutes() =>
+      (super.noSuchMethod(
+            Invocation.method(#getAllPlannedRoutes, []),
             returnValue: _i7.Future<List<_i32.PlannedRoute>>.value(
               <_i32.PlannedRoute>[],
             ),

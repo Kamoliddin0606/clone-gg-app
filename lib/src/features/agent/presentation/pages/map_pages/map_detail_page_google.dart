@@ -447,6 +447,7 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
         // Exit edit mode - reset any pending changes
         _newClientLocation = null;
         _isConfirmingLocation = false;
+        _isPreciseMode = false;
         _previewLocation = null;
       } else {
         // Enter edit mode - center camera on current client location
@@ -483,7 +484,7 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
 
   /// Handle camera move in edit mode - update preview location to camera center
   void _onCameraMove(google_maps.CameraPosition position) {
-    if (!_isEditMode) return;
+    if (!_isEditMode || _isPreciseMode) return; // Aniqlik rejimida kamera harakatini ignore qilish
 
     // Update preview location to camera center
     final centerPoint = position.target;
@@ -510,16 +511,18 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
     // Show tap feedback animation
     _showTapFeedbackAnimation(point);
 
+    // Aniqlik rejimiga o'tish va kamera harakatini to'xtatish
     setState(() {
+      _isPreciseMode = true;
       _newClientLocation = point;
       _isConfirmingLocation = true;
     });
 
-    // Update marker position
+    // Marker pozitsiyasini long press joyiga qo'yish
     _updateClientMarkerPosition(point);
 
     if (kDebugMode) {
-      print('Client marker moved via long press to: ${point.latitude}, ${point.longitude}');
+      print('Precise location selected via long press: ${point.latitude}, ${point.longitude}');
     }
   }
 
@@ -610,6 +613,7 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
   void _cancelLocationChange() {
     setState(() {
       _isEditMode = false;
+      _isPreciseMode = false;
       _newClientLocation = null;
       _isConfirmingLocation = false;
       _clientPoint = google_maps.LatLng(
@@ -631,16 +635,13 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
         const SnackBar(content: Text('Joylashuv yangilanmoqda...')),
       );
 
-      // TODO: Call API to update client coordinates
-      // For now, simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Update local database
+      // Update local database and call API
       await _updateClientCoordinatesInDatabase(_newClientLocation!);
 
       // Update UI state
       setState(() {
         _isEditMode = false;
+        _isPreciseMode = false;
         _isConfirmingLocation = false;
         _newClientLocation = null;
       });
@@ -1178,7 +1179,9 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
                         child: Text(
                           _isConfirmingLocation
                               ? 'Yangi joylashuvni tasdiqlang'
-                              : 'Xaritada yangi joylashuvni tanlang',
+                              : _isPreciseMode
+                                  ? 'Aniq joylashuv tanlandi - tasdiqlang'
+                                  : 'Kamerani siljiting yoki uzun bosing',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: cs.onSurface,

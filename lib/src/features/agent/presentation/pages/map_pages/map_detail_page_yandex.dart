@@ -54,6 +54,7 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
   bool _isRouteVisible = false;
   bool _isEditMode = false;
   bool _isConfirmingLocation = false;
+  bool _isPreciseMode = false; // Long press bilan aniq joylashuv tanlash rejimi
   mk.Point? _newClientLocation;
   mk.Point? _previewLocation;
   bool _showTapFeedback = false;
@@ -486,6 +487,7 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
         // Exit edit mode - reset any pending changes
         _newClientLocation = null;
         _isConfirmingLocation = false;
+        _isPreciseMode = false;
       } else {
         // Enter edit mode - center camera on client marker
         _moveCameraToPoint(_clientPoint, zoom: kRouteZoom);
@@ -527,16 +529,18 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
     // Show tap feedback animation
     _showTapFeedbackAnimation(point);
 
+    // Aniqlik rejimiga o'tish va kamera harakatini to'xtatish
     setState(() {
+      _isPreciseMode = true;
       _newClientLocation = point;
       _isConfirmingLocation = true;
     });
 
-    // Update marker position
+    // Marker pozitsiyasini long press joyiga qo'yish
     _updateClientMarkerPosition(point);
 
     if (kDebugMode) {
-      print('Client marker moved via long press to: ${point.latitude}, ${point.longitude}');
+      print('Precise location selected via long press: ${point.latitude}, ${point.longitude}');
     }
   }
 
@@ -617,6 +621,7 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
   void _cancelLocationChange() {
     setState(() {
       _isEditMode = false;
+      _isPreciseMode = false;
       _newClientLocation = null;
       _isConfirmingLocation = false;
       _clientPoint = mk.Point(
@@ -638,16 +643,13 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
         const SnackBar(content: Text('Joylashuv yangilanmoqda...')),
       );
 
-      // TODO: Call API to update client coordinates
-      // For now, simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Update local database
+      // Call API to update client coordinates
       await _updateClientCoordinatesInDatabase(_newClientLocation!);
 
       // Update UI state
       setState(() {
         _isEditMode = false;
+        _isPreciseMode = false;
         _isConfirmingLocation = false;
         _newClientLocation = null;
       });
@@ -1202,7 +1204,9 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
                         child: Text(
                           _isConfirmingLocation
                               ? 'Yangi joylashuvni tasdiqlang'
-                              : 'Xaritada yangi joylashuvni tanlang',
+                              : _isPreciseMode
+                                  ? 'Aniq joylashuv tanlandi - tasdiqlang'
+                                  : 'Kamerani siljiting yoki uzun bosing',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: cs.onSurface,

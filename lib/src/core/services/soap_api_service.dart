@@ -1462,18 +1462,18 @@ class SoapApiService {
     }
 
     final soapEnvelope = '''
-<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
-   <soap:Header/>
-   <soap:Body>
-      <sam:UpdateClientCoordinates>
-         <sam:UserCode>$userCode</sam:UserCode>
-         <sam:ClientCode>$clientCode</sam:ClientCode>
-         <sam:Latitude>$latitude</sam:Latitude>
-         <sam:Longitude>$longitude</sam:Longitude>
-      </sam:UpdateClientCoordinates>
-   </soap:Body>
-</soap:Envelope>
-''';
+        <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+           <soap:Header/>
+           <soap:Body>
+              <sam:UpdateClientCoordinates>
+                 <sam:UserCode>$userCode</sam:UserCode>
+                 <sam:ClientCode>$clientCode</sam:ClientCode>
+                 <sam:Latitude>$latitude</sam:Latitude>
+                 <sam:Longitude>$longitude</sam:Longitude>
+              </sam:UpdateClientCoordinates>
+           </soap:Body>
+        </soap:Envelope>
+        ''';
 
     try {
       if (kDebugMode) {

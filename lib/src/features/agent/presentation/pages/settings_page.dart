@@ -1125,6 +1125,8 @@ class _PermissionsTabState extends State<PermissionsTab> {
         return l10n.unplannedOrder;
       case 'plannedRoute':
         return l10n.plannedRoute;
+      case 'editClientCoordinates':
+        return 'Mijoz koordinatalarini tahrirlash'; // Uzbek translation for "Edit Client Coordinates"
       default:
         return key;
     }
@@ -1140,6 +1142,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
       case 'strictSequence':
       case 'unplannedOrder':
       case 'plannedRoute':
+      case 'editClientCoordinates':
         return AppLocalizations.of(context)!.visitManagement;
       default:
         return AppLocalizations.of(context)!.general;
@@ -1162,6 +1165,8 @@ class _PermissionsTabState extends State<PermissionsTab> {
         return Icons.add_shopping_cart;
       case 'plannedRoute':
         return Icons.route;
+      case 'editClientCoordinates':
+        return Icons.edit_location;
       default:
         return Icons.settings;
     }
@@ -1193,6 +1198,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
       'strictSequence',
       'unplannedOrder',
       'plannedRoute',
+      'editClientCoordinates',
     ];
 
     for (final key in mainPermissions) {
@@ -1220,6 +1226,8 @@ class _PermissionsTabState extends State<PermissionsTab> {
       case 'unplannedOrder':
         return _permissions!.unplannedOrder;
       case 'plannedRoute':
+        return _permissions!.plannedRoute;
+      case 'editClientCoordinates':
         return _permissions!.plannedRoute;
       default:
         return false;

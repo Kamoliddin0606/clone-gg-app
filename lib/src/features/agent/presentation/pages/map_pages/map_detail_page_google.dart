@@ -440,25 +440,57 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
 
   /// Toggle edit location mode
   /// When activated, marker stays at screen center and moves with camera
-  void _toggleEditLocationMode() {
-    setState(() {
-      _isEditMode = !_isEditMode;
-      if (!_isEditMode) {
-        // Exit edit mode - reset any pending changes
-        _newClientLocation = null;
-        _isConfirmingLocation = false;
-        _isPreciseMode = false;
-        _previewLocation = null;
-      } else {
-        // Enter edit mode - center camera on current client location
-        _moveCameraToPoint(_clientPoint, zoom: kRouteZoom);
-        // Set preview location to current client point
-        _previewLocation = _clientPoint;
+  /// Checks user permissions before allowing location editing
+  Future<void> _toggleEditLocationMode() async {
+    try {
+      // Check user permissions for editing client coordinates
+      final userCode = _prefs.getUserCode();
+      if (userCode == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foydalanuvchi ma\'lumotlari topilmadi')),
+        );
+        return;
       }
-    });
 
-    if (kDebugMode) {
-      print('Edit location mode: ${_isEditMode ? 'enabled' : 'disabled'}');
+      // Get user permissions from data sync service
+      final permissions = await _dataSyncService.getCachedSalesReqPermissions(userCode);
+      if (permissions == null || !permissions.editClientCoordinates) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sizda mijoz joylashuvini o\'zgartirish uchun ruxsat yo\'q'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+
+      // Permission granted - proceed with edit mode toggle
+      setState(() {
+        _isEditMode = !_isEditMode;
+        if (!_isEditMode) {
+          // Exit edit mode - reset any pending changes
+          _newClientLocation = null;
+          _isConfirmingLocation = false;
+          _isPreciseMode = false;
+          _previewLocation = null;
+        } else {
+          // Enter edit mode - center camera on current client location
+          _moveCameraToPoint(_clientPoint, zoom: kRouteZoom);
+          // Set preview location to current client point
+          _previewLocation = _clientPoint;
+        }
+      });
+
+      if (kDebugMode) {
+        print('Edit location mode: ${_isEditMode ? 'enabled' : 'disabled'}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking permissions for edit location mode: $e');
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ruxsatlarni tekshirishda xatolik: $e')),
+      );
     }
   }
 

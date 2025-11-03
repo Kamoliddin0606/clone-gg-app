@@ -21,6 +21,7 @@ void main() {
         strictSequence: false,
         unplannedOrder: true,
         plannedRoute: false,
+        editClientCoordinates: true,
         visitSteps: [
           VisitStep(
             stepCode: 1,

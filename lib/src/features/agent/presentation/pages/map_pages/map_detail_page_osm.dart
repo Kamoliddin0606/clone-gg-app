@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:latlong2/latlong.dart' as osm_latlong;
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
@@ -74,6 +75,11 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   bool _isCalculatingRoute = false;
   String _selectedTransportMode = 'driving-car'; // Default transport mode
   bool _showTransportModes = false; // Show/hide transport mode selection
+
+  // Route data from API
+  List<Map<String, dynamic>>? _routeInstructions; // Turn-by-turn instructions
+  osm_latlong.LatLng? _startMarkerPoint; // Start marker from way_points[0]
+  osm_latlong.LatLng? _endMarkerPoint; // End marker from way_points[18]
 
   // Services
   late Connectivity _connectivity;
@@ -321,22 +327,35 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       );
 
       if (routeData != null && routeData['coordinates'] != null) {
-        // Convert coordinates to LatLng points
-        final coordinates = routeData['coordinates'] as List;
-        final routePoints = coordinates.map((coord) {
-          final lng = coord[0] as double;
-          final lat = coord[1] as double;
-          return osm_latlong.LatLng(lat, lng);
-        }).toList();
+        // Use decoded coordinates directly
+        final routePoints = routeData['coordinates'] as List<osm_latlong.LatLng>;
+
+        // Extract way points for start/end markers
+        final wayPoints = routeData['way_points'] as List<osm_latlong.LatLng>? ?? [];
+        osm_latlong.LatLng? startPoint;
+        osm_latlong.LatLng? endPoint;
+
+        if (wayPoints.isNotEmpty) {
+          startPoint = wayPoints[0]; // way_points[0] - start marker
+          if (wayPoints.length > 1) {
+            endPoint = wayPoints.last; // Last way point - end marker
+          }
+        }
+
+        // Extract instructions
+        final instructions = routeData['instructions'] as List<Map<String, dynamic>>? ?? [];
 
         setState(() {
           _currentRoute = routePoints;
           _isRouteVisible = true;
           _isCalculatingRoute = false;
+          _startMarkerPoint = startPoint;
+          _endMarkerPoint = endPoint;
+          _routeInstructions = instructions;
         });
 
-        // Fit camera to show the route
-        _fitRouteBounds();
+        // Fit camera to API bbox instead of calculating bounds
+        _fitRouteBoundsFromApi(routeData['bbox']);
 
         // Calculate distance and time from API response
         final distanceKm = (routeData['summary']['distance'] as num?)?.toDouble() ?? 0.0;
@@ -350,7 +369,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         );
 
         if (kDebugMode) {
-          print('Route calculated successfully with ${routePoints.length} points');
+          print('Route calculated successfully with ${routePoints.length} points, ${instructions.length} instructions');
         }
       } else {
         // Fallback to straight line route if API fails
@@ -389,15 +408,18 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
   /// Get route from OpenRouteService API
   /// Makes HTTP request to OpenRouteService with proper error handling
-  /// Returns route coordinates and summary information
+  /// Returns route coordinates, summary information, instructions, and way points
   Future<Map<String, dynamic>?> _getRouteFromOpenRouteService({
     required osm_latlong.LatLng start,
     required osm_latlong.LatLng end,
     required String profile,
   }) async {
     try {
-      print("check profile______:${profile}");
-      final url = 'https://api.openrouteservice.org/v2/directions/$profile?';
+      if (kDebugMode) {
+        print("Requesting route with profile: $profile");
+      }
+
+      final url = 'https://api.openrouteservice.org/v2/directions/$profile/geojson';
       final apiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImNiNDlhOTk0OGRhOTQ5ZjRiMWQ5ZGVhYWJiMDVkODg3IiwiaCI6Im11cm11cjY0In0='; // Replace with actual API key
 
       final startCoords = [start.longitude, start.latitude];
@@ -413,29 +435,82 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         ),
         data: {
           'coordinates': [startCoords, endCoords],
-          'format': 'geojson',
-          'instructions': false,
-          'geometry_simplify': true,
+          // 'format': 'geojson',
+          'instructions': true, // Enable turn-by-turn instructions
+          'geometry_simplify': false, // More accurate geometry
+          // 'geometry_format': 'geojson', // GeoJSON format for geometry
         },
       );
 
       if (response.statusCode == 200) {
-
         final data = response.data;
-        print(response.data);
+
+        if (kDebugMode) {
+          print('OpenRouteService response received');
+        }
+        print(data);
         if (data['features'] != null && data['features'].isNotEmpty) {
           final feature = data['features'][0];
           final geometry = feature['geometry'];
           final properties = feature['properties'];
 
+          // Decode polyline using flutter_polyline_points
+          List<osm_latlong.LatLng> decodedPoints = [];
+          if (geometry['coordinates'] != null) {
+            final coordinates = geometry['coordinates'] as List;
+            decodedPoints = coordinates.map((coord) {
+              final lng = coord[0] as double;
+              final lat = coord[1] as double;
+              return osm_latlong.LatLng(lat, lng);
+            }).toList();
+          }
+
+          // Extract way points for start/end markers
+          List<osm_latlong.LatLng> wayPoints = [];
+          if (properties['way_points'] != null) {
+            final wayPointIndices = properties['way_points'] as List;
+            for (int index in wayPointIndices) {
+              if (index < decodedPoints.length) {
+                wayPoints.add(decodedPoints[index]);
+              }
+            }
+          }
+
+          // Extract turn-by-turn instructions
+          List<Map<String, dynamic>> instructions = [];
+          if (properties['segments'] != null && properties['segments'].isNotEmpty) {
+            final segments = properties['segments'] as List;
+            final segment = segments[0];
+            if (segment['steps'] != null) {
+              instructions = (segment['steps'] as List).map((step) {
+                return {
+                  'instruction': step['instruction'] ?? '',
+                  'type': step['type'] ?? 0,
+                  'distance': step['distance'] ?? 0.0,
+                  'duration': step['duration'] ?? 0.0,
+                  'way_points': step['way_points'] ?? [],
+                };
+              }).toList();
+            }
+          }
+          print("________________API dan olingan ma'lumotlar_____________________");
+          print(decodedPoints);
+          print(wayPoints);
+          print(instructions);
+          print(properties['bbox'] ?? data['bbox']);
+
           return {
-            'coordinates': geometry['coordinates'],
+            'coordinates': decodedPoints,
+            'way_points': wayPoints,
+            'bbox': properties['bbox'] ?? data['bbox'],
             'summary': properties['summary'] ?? {'distance': 0, 'duration': 0},
+            'instructions': instructions,
           };
         }
-      }
-      else{
-        print(response.statusCode);
+      } else {
+        if (kDebugMode) {
+          print('OpenRouteService API error: ${response.statusCode}');
+        }
       }
 
       return null;
@@ -459,7 +534,52 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     }
   }
 
-  /// Fit camera to show route bounds
+  /// Fit camera to show route bounds using API bbox
+  Future<void> _fitRouteBoundsFromApi(dynamic bbox) async {
+    if (bbox == null || _currentRoute == null || _currentRoute!.isEmpty) {
+      // Fallback to calculated bounds
+      _fitRouteBounds();
+      return;
+    }
+
+    try {
+      // bbox format: [minLng, minLat, maxLng, maxLat]
+      final bboxList = bbox as List;
+      if (bboxList.length >= 4) {
+        final minLng = bboxList[0] as double;
+        final minLat = bboxList[1] as double;
+        final maxLng = bboxList[2] as double;
+        final maxLat = bboxList[3] as double;
+
+        final centerLat = (minLat + maxLat) / 2;
+        final centerLng = (minLng + maxLng) / 2;
+
+        // Calculate zoom level based on bbox
+        final latDiff = maxLat - minLat;
+        final lngDiff = maxLng - minLng;
+        final maxDiff = max(latDiff.abs(), lngDiff.abs());
+        final zoom = max(0.0, 16.0 - log(maxDiff * 111000) / log(2));
+
+        // Move to center with calculated zoom
+        _osmController.move(osm_latlong.LatLng(centerLat, centerLng), zoom);
+
+        if (kDebugMode) {
+          print('Fitted camera to API bbox: [$minLng, $minLat, $maxLng, $maxLat]');
+        }
+      } else {
+        // Fallback to calculated bounds
+        _fitRouteBounds();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fitting route bounds from API bbox: $e');
+      }
+      // Fallback to calculated bounds
+      _fitRouteBounds();
+    }
+  }
+
+  /// Fit camera to show route bounds (fallback method)
   Future<void> _fitRouteBounds() async {
     if (_currentRoute == null || _currentRoute!.isEmpty) return;
 
@@ -491,7 +611,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       _osmController.move(osm_latlong.LatLng(centerLat, centerLng), zoom);
 
       if (kDebugMode) {
-        print('Fitted camera to route bounds: ${points.length} points');
+        print('Fitted camera to calculated route bounds: ${points.length} points');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -535,7 +655,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     setState(() {
       _currentRoute = null;
       _isRouteVisible = false;
-
+      _routeInstructions = null;
+      _startMarkerPoint = null;
+      _endMarkerPoint = null;
     });
 
     if (kDebugMode) {
@@ -654,6 +776,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       case 'foot-walking':
         return Icons.directions_walk;
       case 'cycling-regular':
+      case 'cycling-road':
+      case 'cycling-mountain':
+      case 'cycling-safe':
         return Icons.directions_bike;
       default:
         return Icons.directions_car;
@@ -669,6 +794,12 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         return 'Piyoda';
       case 'cycling-regular':
         return 'Velosiped';
+      case 'cycling-road':
+        return 'Velosiped (yo\'l)';
+      case 'cycling-mountain':
+        return 'Velosiped (tog\')';
+      case 'cycling-safe':
+        return 'Velosiped (xavfsiz)';
       default:
         return 'Mashina';
     }
@@ -1029,6 +1160,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
             ),
             osm.MarkerLayer(
               markers: [
+                // Client marker
                 osm.Marker(
                   width: 40.0,
                   height: 40.0,
@@ -1040,6 +1172,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                     size: 40,
                   ),
                 ),
+                // User location marker
                 if (_userPoint != null)
                   osm.Marker(
                     width: 30.0,
@@ -1050,6 +1183,44 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                       Icons.my_location,
                       color: Colors.blue,
                       size: 30,
+                    ),
+                  ),
+                // Start marker from way_points[0]
+                if (_startMarkerPoint != null)
+                  osm.Marker(
+                    width: 25.0,
+                    height: 25.0,
+                    alignment: Alignment.bottomCenter,
+                    point: _startMarkerPoint!,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                // End marker from way_points[last]
+                if (_endMarkerPoint != null)
+                  osm.Marker(
+                    width: 25.0,
+                    height: 25.0,
+                    alignment: Alignment.bottomCenter,
+                    point: _endMarkerPoint!,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.stop,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
                   ),
               ],
@@ -1257,6 +1428,35 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                               : Colors.transparent,
                         ),
                       ),
+
+                      // Additional bicycle modes (if needed)
+                      if (_selectedTransportMode.startsWith('cycling'))
+                        PopupMenuButton<String>(
+                          onSelected: _selectTransportMode,
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'cycling-regular',
+                              child: Text('Oddiy velosiped'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'cycling-road',
+                              child: Text('Yo\'l velosipedi'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'cycling-mountain',
+                              child: Text('Tog\' velosipedi'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'cycling-safe',
+                              child: Text('Xavfsiz velosiped'),
+                            ),
+                          ],
+                          child: Icon(
+                            Icons.more_vert,
+                            size: 16,
+                            color: cs.onSurface.withOpacity(0.6),
+                          ),
+                        ),
                     ],
                   ),
                 ],

@@ -396,8 +396,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     required String profile,
   }) async {
     try {
-      final url = 'https://api.openrouteservice.org/v2/directions/$profile';
-      final apiKey = '5b3ce3597851110001cf6248d5c6e4b6f4c40b8b9b8b4b8b8b8b8b8b'; // Replace with actual API key
+      print("check profile______:${profile}");
+      final url = 'https://api.openrouteservice.org/v2/directions/$profile?';
+      final apiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImNiNDlhOTk0OGRhOTQ5ZjRiMWQ5ZGVhYWJiMDVkODg3IiwiaCI6Im11cm11cjY0In0='; // Replace with actual API key
 
       final startCoords = [start.longitude, start.latitude];
       final endCoords = [end.longitude, end.latitude];
@@ -419,7 +420,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       );
 
       if (response.statusCode == 200) {
+
         final data = response.data;
+        print(response.data);
         if (data['features'] != null && data['features'].isNotEmpty) {
           final feature = data['features'][0];
           final geometry = feature['geometry'];
@@ -430,6 +433,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
             'summary': properties['summary'] ?? {'distance': 0, 'duration': 0},
           };
         }
+      }
+      else{
+        print(response.statusCode);
       }
 
       return null;
@@ -529,6 +535,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     setState(() {
       _currentRoute = null;
       _isRouteVisible = false;
+
     });
 
     if (kDebugMode) {
@@ -617,6 +624,10 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   void _toggleTransportModes() {
     setState(() {
       _showTransportModes = !_showTransportModes;
+      // Clear route when hiding transport modes
+      if (!_showTransportModes && !_isRouteVisible) {
+        _clearRoute();
+      }
     });
   }
 
@@ -625,7 +636,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   void _selectTransportMode(String mode) {
     setState(() {
       _selectedTransportMode = mode;
-      _showTransportModes = false;
+      // Keep transport modes visible after selection
+      // _showTransportModes = false;
     });
 
     // Recalculate route if one is currently visible
@@ -1131,6 +1143,127 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
           ),
         ),
 
+        // Bottom-left transport mode selection (when route is active or calculating)
+        if (_showTransportModes || _isRouteVisible || _isCalculatingRoute)
+          Positioned(
+            bottom: 16,
+            left: 16,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: cs.outline.withOpacity(0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.4)
+                        : Colors.black.withOpacity(0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Current transport mode indicator
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _getTransportModeIcon(_selectedTransportMode),
+                          size: 16,
+                          color: cs.onPrimaryContainer,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _getTransportModeName(_selectedTransportMode),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onPrimaryContainer,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Transport mode buttons
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Car mode
+                      IconButton(
+                        onPressed: () => _selectTransportMode('driving-car'),
+                        icon: Icon(
+                          Icons.directions_car,
+                          size: 20,
+                          color: _selectedTransportMode == 'driving-car'
+                              ? cs.primary
+                              : cs.onSurface.withOpacity(0.6),
+                        ),
+                        tooltip: 'Mashina',
+                        style: IconButton.styleFrom(
+                          backgroundColor: _selectedTransportMode == 'driving-car'
+                              ? cs.primary.withOpacity(0.1)
+                              : Colors.transparent,
+                        ),
+                      ),
+
+                      // Walking mode
+                      IconButton(
+                        onPressed: () => _selectTransportMode('foot-walking'),
+                        icon: Icon(
+                          Icons.directions_walk,
+                          size: 20,
+                          color: _selectedTransportMode == 'foot-walking'
+                              ? cs.primary
+                              : cs.onSurface.withOpacity(0.6),
+                        ),
+                        tooltip: 'Piyoda',
+                        style: IconButton.styleFrom(
+                          backgroundColor: _selectedTransportMode == 'foot-walking'
+                              ? cs.primary.withOpacity(0.1)
+                              : Colors.transparent,
+                        ),
+                      ),
+
+                      // Bicycle mode
+                      IconButton(
+                        onPressed: () => _selectTransportMode('cycling-regular'),
+                        icon: Icon(
+                          Icons.directions_bike,
+                          size: 20,
+                          color: _selectedTransportMode == 'cycling-regular'
+                              ? cs.primary
+                              : cs.onSurface.withOpacity(0.6),
+                        ),
+                        tooltip: 'Velosiped',
+                        style: IconButton.styleFrom(
+                          backgroundColor: _selectedTransportMode == 'cycling-regular'
+                              ? cs.primary.withOpacity(0.1)
+                              : Colors.transparent,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
         // Bottom-right controls
         Positioned(
           bottom: 16,
@@ -1256,7 +1389,16 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                               const SnackBar(content: Text('Marshrut hisoblanmoqda...')),
                             );
                           } else {
-                            await _calculateRoute();
+                            // Toggle transport modes when route button is pressed
+                            if (_isRouteVisible) {
+                              // If route is visible, hide transport modes and clear route
+                              _toggleTransportModes();
+                              _clearRoute();
+                            } else {
+                              // If no route, show transport modes and calculate route
+                              _toggleTransportModes();
+                              await _calculateRoute();
+                            }
                           }
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -1272,159 +1414,10 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Icon(Icons.route, color: cs.primary),
-                      tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
+                      tooltip: _isRouteVisible ? 'Marshrutni yopish' : 'Marshrut (foydalanuvchidan mijozgacha)',
                     ),
                   ),
 
-                  // Transport mode selection buttons (shown when route is active or calculating)
-                  if (_showTransportModes || _isRouteVisible || _isCalculatingRoute)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: cs.outline.withOpacity(0.2),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isDark
-                                ? Colors.black.withOpacity(0.4)
-                                : Colors.black.withOpacity(0.15),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Current transport mode indicator
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            margin: const EdgeInsets.only(bottom: 8),
-                            decoration: BoxDecoration(
-                              color: cs.primaryContainer,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _getTransportModeIcon(_selectedTransportMode),
-                                  size: 16,
-                                  color: cs.onPrimaryContainer,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _getTransportModeName(_selectedTransportMode),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: cs.onPrimaryContainer,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Transport mode buttons
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Car mode
-                              IconButton(
-                                onPressed: () => _selectTransportMode('driving-car'),
-                                icon: Icon(
-                                  Icons.directions_car,
-                                  size: 20,
-                                  color: _selectedTransportMode == 'driving-car'
-                                      ? cs.primary
-                                      : cs.onSurface.withOpacity(0.6),
-                                ),
-                                tooltip: 'Mashina',
-                                style: IconButton.styleFrom(
-                                  backgroundColor: _selectedTransportMode == 'driving-car'
-                                      ? cs.primary.withOpacity(0.1)
-                                      : Colors.transparent,
-                                ),
-                              ),
-
-                              // Walking mode
-                              IconButton(
-                                onPressed: () => _selectTransportMode('foot-walking'),
-                                icon: Icon(
-                                  Icons.directions_walk,
-                                  size: 20,
-                                  color: _selectedTransportMode == 'foot-walking'
-                                      ? cs.primary
-                                      : cs.onSurface.withOpacity(0.6),
-                                ),
-                                tooltip: 'Piyoda',
-                                style: IconButton.styleFrom(
-                                  backgroundColor: _selectedTransportMode == 'foot-walking'
-                                      ? cs.primary.withOpacity(0.1)
-                                      : Colors.transparent,
-                                ),
-                              ),
-
-                              // Bicycle mode
-                              IconButton(
-                                onPressed: () => _selectTransportMode('cycling-regular'),
-                                icon: Icon(
-                                  Icons.directions_bike,
-                                  size: 20,
-                                  color: _selectedTransportMode == 'cycling-regular'
-                                      ? cs.primary
-                                      : cs.onSurface.withOpacity(0.6),
-                                ),
-                                tooltip: 'Velosiped',
-                                style: IconButton.styleFrom(
-                                  backgroundColor: _selectedTransportMode == 'cycling-regular'
-                                      ? cs.primary.withOpacity(0.1)
-                                      : Colors.transparent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  // Toggle transport modes button (when route is not visible)
-                  if (!_showTransportModes && !_isRouteVisible && !_isCalculatingRoute)
-                    Container(
-                      width: 48,
-                      height: 48,
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: cs.outline.withOpacity(0.2),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isDark
-                                ? Colors.black.withOpacity(0.4)
-                                : Colors.black.withOpacity(0.15),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        onPressed: _toggleTransportModes,
-                        iconSize: iconSize,
-                        icon: Icon(Icons.more_vert, color: cs.primary),
-                        tooltip: 'Transport rejimini tanlash',
-                      ),
-                    ),
                 ],
               ),
 
@@ -1523,7 +1516,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                     ),
                   ),
                   IconButton(
-                    onPressed: _clearRoute,
+                    onPressed:_clearRoute,
                     icon: Icon(Icons.close, color: cs.onSurface.withOpacity(0.7)),
                     tooltip: 'Marshrutni yopish',
                     style: IconButton.styleFrom(

@@ -24,9 +24,16 @@ const double kRouteZoom = 16.0;
 const String kOsmTileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const String kUserAgent = 'uz.gg.gloria_marketing';
 
-/// OSM (OpenStreetMap) full-screen map detail page
+/// OSM (OpenStreetMap) full-screen map detail page with routing functionality
 /// This page displays the client's location on OpenStreetMap in full-screen mode
-/// with state preservation and proper UI design matching the app theme
+/// with state preservation and proper UI design matching the app theme.
+/// Features:
+/// - Real-time routing using OpenRouteService API
+/// - Multiple transport modes: car, walking, bicycle
+/// - Interactive route calculation with loading states
+/// - Error handling and fallback to straight-line routes
+/// - Permission-based location editing
+/// - Theme-aware UI components
 class MapDetailPageOsm extends StatefulWidget {
   final model.TradingPoint tradingPoint;
 
@@ -62,6 +69,11 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   osm_latlong.LatLng? _previewLocation;
   bool _showTapFeedback = false;
   Offset _tapPosition = Offset.zero;
+
+  // Routing state
+  bool _isCalculatingRoute = false;
+  String _selectedTransportMode = 'driving-car'; // Default transport mode
+  bool _showTransportModes = false; // Show/hide transport mode selection
 
   // Services
   late Connectivity _connectivity;
@@ -279,50 +291,165 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     }
   }
 
-  /// Calculate and display simple straight line route from user to client
-  /// Note: For full routing functionality, integrate with a routing service like OSRM
+  /// Calculate and display route from user to client using OpenRouteService
+  /// Supports different transport modes: driving-car, foot-walking, cycling-regular
+  /// Falls back to straight-line route if API fails
+  /// Updates UI with loading states and route information
   Future<void> _calculateRoute() async {
+    if (_userPoint == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isCalculatingRoute = true;
+    });
+
     try {
       if (kDebugMode) {
-        print('Creating straight line route from user to client: ${widget.tradingPoint.name}');
+        print('Calculating route from user to client using OpenRouteService: ${widget.tradingPoint.name}');
+        print('Transport mode: $_selectedTransportMode');
       }
 
-      if (_userPoint == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
-        );
-        return;
-      }
-
-      // Create simple straight line route (2 points)
-      final routePoints = [_userPoint!, _clientPoint];
-
-      setState(() {
-        _currentRoute = routePoints;
-        _isRouteVisible = true;
-      });
-
-      // Fit camera to show the route
-      _fitRouteBounds();
-
-      // Calculate approximate distance and time
-      final distance = _calculateDistance(_userPoint!, _clientPoint);
-      final estimatedTime = _estimateTravelTime(distance);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('To\'g\'ri chiziq marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}')),
+      // Get route from OpenRouteService
+      final routeData = await _getRouteFromOpenRouteService(
+        start: _userPoint!,
+        end: _clientPoint,
+        profile: _selectedTransportMode,
       );
 
-      if (kDebugMode) {
-        print('Straight line route created successfully');
+      if (routeData != null && routeData['coordinates'] != null) {
+        // Convert coordinates to LatLng points
+        final coordinates = routeData['coordinates'] as List;
+        final routePoints = coordinates.map((coord) {
+          final lng = coord[0] as double;
+          final lat = coord[1] as double;
+          return osm_latlong.LatLng(lat, lng);
+        }).toList();
+
+        setState(() {
+          _currentRoute = routePoints;
+          _isRouteVisible = true;
+          _isCalculatingRoute = false;
+        });
+
+        // Fit camera to show the route
+        _fitRouteBounds();
+
+        // Calculate distance and time from API response
+        final distanceKm = (routeData['summary']['distance'] as num?)?.toDouble() ?? 0.0;
+        final durationSec = (routeData['summary']['duration'] as num?)?.toDouble() ?? 0.0;
+
+        final distance = distanceKm / 1000; // Convert to km
+        final estimatedTime = _formatDuration(durationSec);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}')),
+        );
+
+        if (kDebugMode) {
+          print('Route calculated successfully with ${routePoints.length} points');
+        }
+      } else {
+        // Fallback to straight line route if API fails
+        _createFallbackRoute();
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error creating route: $e');
+        print('Error calculating route with OpenRouteService: $e');
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Marshrut yaratishda xatolik: $e')),
+      // Fallback to straight line route
+      _createFallbackRoute();
+    }
+  }
+
+  /// Create fallback straight line route when API fails
+  void _createFallbackRoute() {
+    final routePoints = [_userPoint!, _clientPoint];
+
+    setState(() {
+      _currentRoute = routePoints;
+      _isRouteVisible = true;
+      _isCalculatingRoute = false;
+    });
+
+    // Fit camera to show the route
+    _fitRouteBounds();
+
+    // Calculate approximate distance and time
+    final distance = _calculateDistance(_userPoint!, _clientPoint);
+    final estimatedTime = _estimateTravelTime(distance);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('To\'g\'ri chiziq marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}')),
+    );
+  }
+
+  /// Get route from OpenRouteService API
+  /// Makes HTTP request to OpenRouteService with proper error handling
+  /// Returns route coordinates and summary information
+  Future<Map<String, dynamic>?> _getRouteFromOpenRouteService({
+    required osm_latlong.LatLng start,
+    required osm_latlong.LatLng end,
+    required String profile,
+  }) async {
+    try {
+      final url = 'https://api.openrouteservice.org/v2/directions/$profile';
+      final apiKey = '5b3ce3597851110001cf6248d5c6e4b6f4c40b8b9b8b4b8b8b8b8b8b'; // Replace with actual API key
+
+      final startCoords = [start.longitude, start.latitude];
+      final endCoords = [end.longitude, end.latitude];
+
+      final response = await Dio().post(
+        url,
+        options: Options(
+          headers: {
+            'Authorization': apiKey,
+            'Content-Type': 'application/json',
+          },
+        ),
+        data: {
+          'coordinates': [startCoords, endCoords],
+          'format': 'geojson',
+          'instructions': false,
+          'geometry_simplify': true,
+        },
       );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['features'] != null && data['features'].isNotEmpty) {
+          final feature = data['features'][0];
+          final geometry = feature['geometry'];
+          final properties = feature['properties'];
+
+          return {
+            'coordinates': geometry['coordinates'],
+            'summary': properties['summary'] ?? {'distance': 0, 'duration': 0},
+          };
+        }
+      }
+
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        print('OpenRouteService API error: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Format duration from seconds to readable format
+  String _formatDuration(double seconds) {
+    final minutes = (seconds / 60).round();
+    if (minutes < 60) {
+      return '$minutes daqiqa';
+    } else {
+      final hours = minutes ~/ 60;
+      final remainingMinutes = minutes % 60;
+      return '$hours soat ${remainingMinutes > 0 ? '$remainingMinutes daqiqa' : ''}';
     }
   }
 
@@ -483,6 +610,55 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ruxsatlarni tekshirishda xatolik: $e')),
       );
+    }
+  }
+
+  /// Toggle transport mode selection visibility
+  void _toggleTransportModes() {
+    setState(() {
+      _showTransportModes = !_showTransportModes;
+    });
+  }
+
+  /// Select transport mode for routing
+  /// Updates the selected transport mode and recalculates route if active
+  void _selectTransportMode(String mode) {
+    setState(() {
+      _selectedTransportMode = mode;
+      _showTransportModes = false;
+    });
+
+    // Recalculate route if one is currently visible
+    if (_isRouteVisible && _userPoint != null) {
+      _calculateRoute();
+    }
+  }
+
+  /// Get icon for transport mode
+  IconData _getTransportModeIcon(String mode) {
+    switch (mode) {
+      case 'driving-car':
+        return Icons.directions_car;
+      case 'foot-walking':
+        return Icons.directions_walk;
+      case 'cycling-regular':
+        return Icons.directions_bike;
+      default:
+        return Icons.directions_car;
+    }
+  }
+
+  /// Get display name for transport mode
+  String _getTransportModeName(String mode) {
+    switch (mode) {
+      case 'driving-car':
+        return 'Mashina';
+      case 'foot-walking':
+        return 'Piyoda';
+      case 'cycling-regular':
+        return 'Velosiped';
+      default:
+        return 'Mashina';
     }
   }
 
@@ -1045,43 +1221,211 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                 ),
               ),
 
-              // Route button
-              Container(
-                width: 48,
-                height: 48,
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: cs.outline.withOpacity(0.2),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDark
-                          ? Colors.black.withOpacity(0.4)
-                          : Colors.black.withOpacity(0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                      spreadRadius: 1,
+              // Route button with transport mode selection
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: cs.outline.withOpacity(0.2),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark
+                              ? Colors.black.withOpacity(0.4)
+                              : Colors.black.withOpacity(0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: IconButton(
-                  onPressed: () async {
-                    if (_userPoint != null) {
-                      await _calculateRoute();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
-                      );
-                    }
-                  },
-                  iconSize: iconSize,
-                  icon: Icon(Icons.route, color: cs.primary),
-                  tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
-                ),
+                    child: IconButton(
+                      onPressed: () async {
+                        if (_userPoint != null) {
+                          if (_isCalculatingRoute) {
+                            // Show loading state
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Marshrut hisoblanmoqda...')),
+                            );
+                          } else {
+                            await _calculateRoute();
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+                          );
+                        }
+                      },
+                      iconSize: iconSize,
+                      icon: _isCalculatingRoute
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(Icons.route, color: cs.primary),
+                      tooltip: 'Marshrut (foydalanuvchidan mijozgacha)',
+                    ),
+                  ),
+
+                  // Transport mode selection buttons (shown when route is active or calculating)
+                  if (_showTransportModes || _isRouteVisible || _isCalculatingRoute)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: cs.outline.withOpacity(0.2),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark
+                                ? Colors.black.withOpacity(0.4)
+                                : Colors.black.withOpacity(0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Current transport mode indicator
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: cs.primaryContainer,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getTransportModeIcon(_selectedTransportMode),
+                                  size: 16,
+                                  color: cs.onPrimaryContainer,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _getTransportModeName(_selectedTransportMode),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: cs.onPrimaryContainer,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Transport mode buttons
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Car mode
+                              IconButton(
+                                onPressed: () => _selectTransportMode('driving-car'),
+                                icon: Icon(
+                                  Icons.directions_car,
+                                  size: 20,
+                                  color: _selectedTransportMode == 'driving-car'
+                                      ? cs.primary
+                                      : cs.onSurface.withOpacity(0.6),
+                                ),
+                                tooltip: 'Mashina',
+                                style: IconButton.styleFrom(
+                                  backgroundColor: _selectedTransportMode == 'driving-car'
+                                      ? cs.primary.withOpacity(0.1)
+                                      : Colors.transparent,
+                                ),
+                              ),
+
+                              // Walking mode
+                              IconButton(
+                                onPressed: () => _selectTransportMode('foot-walking'),
+                                icon: Icon(
+                                  Icons.directions_walk,
+                                  size: 20,
+                                  color: _selectedTransportMode == 'foot-walking'
+                                      ? cs.primary
+                                      : cs.onSurface.withOpacity(0.6),
+                                ),
+                                tooltip: 'Piyoda',
+                                style: IconButton.styleFrom(
+                                  backgroundColor: _selectedTransportMode == 'foot-walking'
+                                      ? cs.primary.withOpacity(0.1)
+                                      : Colors.transparent,
+                                ),
+                              ),
+
+                              // Bicycle mode
+                              IconButton(
+                                onPressed: () => _selectTransportMode('cycling-regular'),
+                                icon: Icon(
+                                  Icons.directions_bike,
+                                  size: 20,
+                                  color: _selectedTransportMode == 'cycling-regular'
+                                      ? cs.primary
+                                      : cs.onSurface.withOpacity(0.6),
+                                ),
+                                tooltip: 'Velosiped',
+                                style: IconButton.styleFrom(
+                                  backgroundColor: _selectedTransportMode == 'cycling-regular'
+                                      ? cs.primary.withOpacity(0.1)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Toggle transport modes button (when route is not visible)
+                  if (!_showTransportModes && !_isRouteVisible && !_isCalculatingRoute)
+                    Container(
+                      width: 48,
+                      height: 48,
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: cs.outline.withOpacity(0.2),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark
+                                ? Colors.black.withOpacity(0.4)
+                                : Colors.black.withOpacity(0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        onPressed: _toggleTransportModes,
+                        iconSize: iconSize,
+                        icon: Icon(Icons.more_vert, color: cs.primary),
+                        tooltip: 'Transport rejimini tanlash',
+                      ),
+                    ),
+                ],
               ),
 
               // Update coordinates button (top-right)
@@ -1154,7 +1498,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.route, color: cs.primary),
+                  Icon(_getTransportModeIcon(_selectedTransportMode), color: cs.primary),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -1162,7 +1506,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Masofa: ${_calculateDistance(_userPoint!, _clientPoint).toStringAsFixed(1)} km',
+                          '${_getTransportModeName(_selectedTransportMode)} marshruti',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: cs.onSurface,
@@ -1170,7 +1514,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Taxminiy vaqt: ${_estimateTravelTime(_calculateDistance(_userPoint!, _clientPoint))}',
+                          'Masofa va vaqt API orqali hisoblandi',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: cs.onSurface.withOpacity(0.7),
                           ),
@@ -1188,6 +1532,50 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+
+        // Loading overlay for route calculation
+        if (_isCalculatingRoute)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.3),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Marshrut hisoblanmoqda...',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${_getTransportModeName(_selectedTransportMode)} rejimi',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: cs.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

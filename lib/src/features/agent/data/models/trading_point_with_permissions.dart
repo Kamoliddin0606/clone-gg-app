@@ -58,6 +58,7 @@ class TradingPointWithPermissions {
         strictSequence: (map['strict_sequence'] as int?) == 1,
         unplannedOrder: (map['unplanned_order'] as int?) == 1,
         plannedRoute: (map['planned_route'] as int?) == 1,
+        editClientCoordinates: (map['edit_client_coordinates'] as int?) == 1,
         createdAt: DateTime.now(), // Default values since not in JOIN
         updatedAt: DateTime.now(),
         visitSteps: [], // Will be loaded separately if needed

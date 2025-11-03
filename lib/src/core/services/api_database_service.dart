@@ -4180,10 +4180,19 @@ class ApiDatabaseService {
           strict_sequence INTEGER NOT NULL DEFAULT 0,
           unplanned_order INTEGER NOT NULL DEFAULT 0,
           planned_route INTEGER NOT NULL DEFAULT 0,
+          edit_client_coordinates INTEGER NOT NULL DEFAULT 0,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         )
       ''');
+    } else {
+      // Check if edit_client_coordinates column exists, add it if not
+      final columns = await db.rawQuery("PRAGMA table_info(sales_req_permissions)");
+      final hasEditClientCoordinates = columns.any((col) => col['name'] == 'edit_client_coordinates');
+
+      if (!hasEditClientCoordinates) {
+        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN edit_client_coordinates INTEGER NOT NULL DEFAULT 0');
+      }
     }
 
     // Check if visit_steps table exists

@@ -1276,6 +1276,7 @@ class SoapApiService {
       final strictSequence = _getElementText(returnElement, 'm:StrictSequence')?.toLowerCase() == 'true';
       final unplannedOrder = _getElementText(returnElement, 'm:UnplannedOrder')?.toLowerCase() == 'true';
       final plannedRoute = _getElementText(returnElement, 'm:PlannedRoute')?.toLowerCase() == 'true';
+      final editClientCoordinates = _getElementText(returnElement, 'm:EditСlientСoordinates')?.toLowerCase() == 'true';
 
       // Parse visit steps
       final visitSteps = <Map<String, dynamic>>[];
@@ -1302,6 +1303,7 @@ class SoapApiService {
           'strictSequence': strictSequence,
           'unplannedOrder': unplannedOrder,
           'plannedRoute': plannedRoute,
+          'editClientCoordinates': editClientCoordinates,
         },
         'visitSteps': visitSteps,
       });
@@ -1315,6 +1317,7 @@ class SoapApiService {
           'strictSequence': strictSequence,
           'unplannedOrder': unplannedOrder,
           'plannedRoute': plannedRoute,
+          'editClientCoordinates': editClientCoordinates,
         },
         'visitSteps': visitSteps,
       };

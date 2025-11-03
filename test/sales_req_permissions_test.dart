@@ -32,6 +32,7 @@ void main() {
             strict_sequence INTEGER NOT NULL DEFAULT 0,
             unplanned_order INTEGER NOT NULL DEFAULT 0,
             planned_route INTEGER NOT NULL DEFAULT 0,
+            edit_client_coordinates INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
           )
@@ -75,6 +76,7 @@ void main() {
         strictSequence: false,
         unplannedOrder: true,
         plannedRoute: false,
+        editClientCoordinates: false,
         visitSteps: [
           VisitStep(
             stepCode: 1,
@@ -129,6 +131,7 @@ void main() {
         strictSequence: false,
         unplannedOrder: true,
         plannedRoute: false,
+        editClientCoordinates: false,
         visitSteps: [],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -143,6 +146,7 @@ void main() {
         strictSequence: true,
         unplannedOrder: false,
         plannedRoute: true,
+        editClientCoordinates: true,
         visitSteps: [],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -166,6 +170,7 @@ void main() {
         strictSequence: false,
         unplannedOrder: true,
         plannedRoute: false,
+        editClientCoordinates: false,
         visitSteps: [],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -195,6 +200,7 @@ void main() {
         strictSequence: false,
         unplannedOrder: true,
         plannedRoute: false,
+        editClientCoordinates: false,
         visitSteps: [
           VisitStep(
             stepCode: 1,

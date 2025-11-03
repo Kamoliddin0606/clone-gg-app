@@ -8,6 +8,7 @@ class SalesReqPermissions {
   final bool strictSequence;
   final bool unplannedOrder;
   final bool plannedRoute;
+  final bool editClientCoordinates;
   final List<VisitStep> visitSteps;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -22,6 +23,7 @@ class SalesReqPermissions {
     required this.strictSequence,
     required this.unplannedOrder,
     required this.plannedRoute,
+    required this.editClientCoordinates,
     required this.visitSteps,
     this.createdAt,
     this.updatedAt,
@@ -38,6 +40,7 @@ class SalesReqPermissions {
       strictSequence: (map['strict_sequence'] as int?) == 1,
       unplannedOrder: (map['unplanned_order'] as int?) == 1,
       plannedRoute: (map['planned_route'] as int?) == 1,
+      editClientCoordinates: (map['edit_client_coordinates'] as int?) == 1,
       visitSteps: [], // Will be populated separately
       createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'] as String) : null,
       updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : null,
@@ -55,6 +58,7 @@ class SalesReqPermissions {
       'strict_sequence': strictSequence ? 1 : 0,
       'unplanned_order': unplannedOrder ? 1 : 0,
       'planned_route': plannedRoute ? 1 : 0,
+      'edit_client_coordinates': editClientCoordinates ? 1 : 0,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
@@ -70,6 +74,7 @@ class SalesReqPermissions {
     bool? strictSequence,
     bool? unplannedOrder,
     bool? plannedRoute,
+    bool? editClientCoordinates,
     List<VisitStep>? visitSteps,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -84,6 +89,7 @@ class SalesReqPermissions {
       strictSequence: strictSequence ?? this.strictSequence,
       unplannedOrder: unplannedOrder ?? this.unplannedOrder,
       plannedRoute: plannedRoute ?? this.plannedRoute,
+      editClientCoordinates: editClientCoordinates ?? this.editClientCoordinates,
       visitSteps: visitSteps ?? this.visitSteps,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

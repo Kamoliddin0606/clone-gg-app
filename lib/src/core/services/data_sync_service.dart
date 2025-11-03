@@ -1605,6 +1605,7 @@ class DataSyncService {
         strictSequence: permissions['permissions']['strictSequence'] as bool? ?? false,
         unplannedOrder: permissions['permissions']['unplannedOrder'] as bool? ?? false,
         plannedRoute: permissions['permissions']['plannedRoute'] as bool? ?? false,
+        editClientCoordinates: permissions['permissions']['editClientCoordinates'] as bool? ?? false,
         visitSteps: (permissions['visitSteps'] as List<dynamic>? ?? []).map((step) => VisitStep(
           stepCode: step['stepCode'] as int,
           stepName: step['stepName'] as String,

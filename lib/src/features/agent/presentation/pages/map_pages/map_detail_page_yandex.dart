@@ -711,7 +711,10 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
           if (locality != null) {
             city = locality['LocalityName'] ?? '';
           }
-
+          print(metaData);
+          print(addressDetails);
+          print(country);
+          print(locality);
           return {
             'address': address,
             'city': city.isNotEmpty ? city : 'Aniqlanmadi',

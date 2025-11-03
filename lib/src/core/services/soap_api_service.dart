@@ -1441,6 +1441,7 @@ class SoapApiService {
   /// Update client coordinates
   /// This method sends updated coordinates to the server for a specific client
   /// Returns success message or throws exception on failure
+  /// Uses setClientLocation SOAP method with new parameter structure
   Future<String> updateClientCoordinates({
     required String userCode,
     required String clientCode,
@@ -1465,12 +1466,11 @@ class SoapApiService {
         <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
            <soap:Header/>
            <soap:Body>
-              <sam:UpdateClientCoordinates>
-                 <sam:UserCode>$userCode</sam:UserCode>
-                 <sam:ClientCode>$clientCode</sam:ClientCode>
-                 <sam:Latitude>$latitude</sam:Latitude>
+              <sam:setClientLocation>
+                 <sam:clientCode>$clientCode</sam:clientCode>
                  <sam:Longitude>$longitude</sam:Longitude>
-              </sam:UpdateClientCoordinates>
+                 <sam:Latitude>$latitude</sam:Latitude>
+              </sam:setClientLocation>
            </soap:Body>
         </soap:Envelope>
         ''';
@@ -1492,16 +1492,33 @@ class SoapApiService {
       );
 
       final document = XmlDocument.parse(response.data);
-      final resultElement = document.findAllElements('m:result').firstOrNull ??
-                           document.findAllElements('result').firstOrNull;
+      final returnElement = document.findAllElements('m:return').firstOrNull;
 
-      final result = resultElement?.innerText ?? 'Success';
-
-      if (kDebugMode) {
-        print('SOAP API: Client coordinates update result: $result');
+      // Check if return element is empty (client not found or write error)
+      if (returnElement == null || returnElement.children.isEmpty) {
+        if (kDebugMode) {
+          print('SOAP API: Client coordinates update failed - empty return element (client not found or write error)');
+        }
+        throw Exception('Mijoz topilmadi yoki koordinatalarni yozishda xatolik yuz berdi');
       }
 
-      return result;
+      // Parse successful response
+      final responseClientCode = _getElementText(returnElement, 'm:clientCode');
+      final responseLongitude = _getElementText(returnElement, 'm:Longitude');
+      final responseLatitude = _getElementText(returnElement, 'm:Latitude');
+
+      if (responseClientCode == null || responseLongitude == null || responseLatitude == null) {
+        if (kDebugMode) {
+          print('SOAP API: Client coordinates update failed - missing response data');
+        }
+        throw Exception('Server javobi to\'liq emas');
+      }
+
+      if (kDebugMode) {
+        print('SOAP API: Client coordinates update successful: client=$responseClientCode, lat=$responseLatitude, lng=$responseLongitude');
+      }
+
+      return 'Muvaffaqiyatli yangilandi';
     } catch (e) {
       if (kDebugMode) {
         print('SOAP API: Error updating client coordinates: $e');

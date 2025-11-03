@@ -4136,6 +4136,28 @@ class ApiDatabaseService {
     await db.delete('planned_routes');
   }
 
+  /// Update client coordinates in the database
+  /// This method updates the latitude and longitude of a specific client
+  Future<void> updateClientCoordinates(String clientCode, double latitude, double longitude) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'clients',
+      {
+        'latitude': latitude,
+        'longitude': longitude,
+        'updated_at': now,
+      },
+      where: 'code = ?',
+      whereArgs: [clientCode],
+    );
+
+    if (kDebugMode) {
+      print('Updated coordinates for client $clientCode: lat=$latitude, lng=$longitude');
+    }
+  }
+
   /// Ensure sales req permissions table exists (for migration issues)
   Future<void> ensureSalesReqPermissionsTableExists() async {
     final db = await database;

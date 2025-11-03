@@ -1760,6 +1760,56 @@ class DataSyncService {
   Future<List<PlannedRoute>> getCachedPlannedRoutesByClient(String userCode, String codeClient) =>
       _dbService.getPlannedRoutesByClient(userCode, codeClient);
 
+  /// Update client coordinates via API and database
+  /// This method updates client coordinates on the server and local database
+  /// Validates input parameters and handles errors gracefully
+  Future<void> updateClientCoordinates({
+    required String userCode,
+    required String clientCode,
+    required double latitude,
+    required double longitude,
+  }) async {
+    // Validate input parameters
+    if (userCode.isEmpty) {
+      throw ArgumentError('UserCode cannot be empty');
+    }
+    if (clientCode.isEmpty) {
+      throw ArgumentError('ClientCode cannot be empty');
+    }
+    if (latitude < -90 || latitude > 90) {
+      throw ArgumentError('Latitude must be between -90 and 90 degrees');
+    }
+    if (longitude < -180 || longitude > 180) {
+      throw ArgumentError('Longitude must be between -180 and 180 degrees');
+    }
+
+    try {
+      if (kDebugMode) {
+        print('DataSyncService: Updating client coordinates for client: $clientCode, lat: $latitude, lng: $longitude');
+      }
+
+      // Call API to update coordinates on server
+      await _apiService.updateClientCoordinates(
+        userCode: userCode,
+        clientCode: clientCode,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      // Update local database
+      await _dbService.updateClientCoordinates(clientCode, latitude, longitude);
+
+      if (kDebugMode) {
+        print('DataSyncService: Client coordinates updated successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: Error updating client coordinates: $e');
+      }
+      rethrow;
+    }
+  }
+
   /// Sync map tokens from server and save to shared preferences
   /// This method fetches Yandex and Google map tokens from the server
   /// and stores them in shared preferences for map services to use

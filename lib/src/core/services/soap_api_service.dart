@@ -1438,6 +1438,78 @@ class SoapApiService {
     }
   }
 
+  /// Update client coordinates
+  /// This method sends updated coordinates to the server for a specific client
+  /// Returns success message or throws exception on failure
+  Future<String> updateClientCoordinates({
+    required String userCode,
+    required String clientCode,
+    required double latitude,
+    required double longitude,
+  }) async {
+    // Validate input parameters
+    if (userCode.isEmpty) {
+      throw ArgumentError('UserCode cannot be empty');
+    }
+    if (clientCode.isEmpty) {
+      throw ArgumentError('ClientCode cannot be empty');
+    }
+    if (latitude < -90 || latitude > 90) {
+      throw ArgumentError('Latitude must be between -90 and 90 degrees');
+    }
+    if (longitude < -180 || longitude > 180) {
+      throw ArgumentError('Longitude must be between -180 and 180 degrees');
+    }
+
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:UpdateClientCoordinates>
+         <sam:UserCode>$userCode</sam:UserCode>
+         <sam:ClientCode>$clientCode</sam:ClientCode>
+         <sam:Latitude>$latitude</sam:Latitude>
+         <sam:Longitude>$longitude</sam:Longitude>
+      </sam:UpdateClientCoordinates>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      if (kDebugMode) {
+        print('SOAP API: Updating client coordinates for client $clientCode: lat=$latitude, lng=$longitude');
+      }
+
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final resultElement = document.findAllElements('m:result').firstOrNull ??
+                           document.findAllElements('result').firstOrNull;
+
+      final result = resultElement?.innerText ?? 'Success';
+
+      if (kDebugMode) {
+        print('SOAP API: Client coordinates update result: $result');
+      }
+
+      return result;
+    } catch (e) {
+      if (kDebugMode) {
+        print('SOAP API: Error updating client coordinates: $e');
+      }
+      throw Exception('Mijoz kordinatalarini yangilashda xatolik: $e');
+    }
+  }
+
   /// Get order details
   Future<OrderDetail> getOrderDetails({
     required String numberOrder,

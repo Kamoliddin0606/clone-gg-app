@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -9,6 +10,13 @@ import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:latlong2/latlong.dart' as osm_latlong;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
+import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
+import 'package:dio/dio.dart';
 
 // Constants for map configuration
 const double kDefaultZoom = 15.0;
@@ -47,10 +55,18 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   // UI state
   bool _locationPermissionGranted = false;
   bool _isRouteVisible = false;
+  bool _isEditMode = false;
+  bool _isConfirmingLocation = false;
+  osm_latlong.LatLng? _newClientLocation;
+  osm_latlong.LatLng? _previewLocation;
+  bool _showTapFeedback = false;
+  Offset _tapPosition = Offset.zero;
 
   // Services
   late Connectivity _connectivity;
   bool _isOnline = true;
+  late final SharedPreferencesService _prefs;
+  late final DataSyncService _dataSyncService;
 
   // Theme management
   late final ThemeController _themeController;
@@ -94,6 +110,17 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
       final result = await _connectivity.checkConnectivity();
       _isOnline = result != ConnectivityResult.none;
+
+      // Initialize shared preferences and data sync services
+      _prefs = await SharedPreferencesService.getInstance();
+      final serverService = ServerService(_prefs);
+      await serverService.restore();
+      _dataSyncService = DataSyncService(
+        prefs: _prefs,
+        apiService: SoapApiService(Dio(), serverService),
+        dbService: ApiDatabaseService(),
+        dbHelper: DatabaseHelper(),
+      );
 
       if (kDebugMode) {
         print('Services initialized successfully. Online status: $_isOnline');
@@ -405,26 +432,340 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     }
   }
 
-  /// Navigate to update client coordinates page
-  /// Currently shows a placeholder message as the feature is not yet implemented
-  void _openUpdateCoordinatesPage() {
-    try {
-      if (kDebugMode) {
-        print('Opening update coordinates page for client: ${widget.tradingPoint.name}');
+  /// Toggle edit location mode
+  /// When activated, allows user to drag the client marker to a new location
+  void _toggleEditLocationMode() {
+    setState(() {
+      _isEditMode = !_isEditMode;
+      if (!_isEditMode) {
+        // Exit edit mode - reset any pending changes
+        _newClientLocation = null;
+        _isConfirmingLocation = false;
+      } else {
+        // Enter edit mode - center camera on client marker
+        _moveCameraToPoint(_clientPoint, zoom: kRouteZoom);
       }
+    });
 
-      // TODO: Implement update coordinates page navigation
-      // This would typically navigate to a page where user can update trading point coordinates
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Koordinatalarni yangilash sahifasi - tez orada')),
+    if (kDebugMode) {
+      print('Edit location mode: ${_isEditMode ? 'enabled' : 'disabled'}');
+    }
+  }
+
+  /// Handle map tap in edit mode to move client marker
+  void _onMapTap(osm_latlong.LatLng point) {
+    if (!_isEditMode) return;
+
+    // Show tap feedback animation
+    _showTapFeedbackAnimation(point);
+
+    setState(() {
+      _newClientLocation = point;
+      _isConfirmingLocation = true;
+    });
+
+    // Update marker position
+    _updateClientMarkerPosition(point);
+
+    if (kDebugMode) {
+      print('Client marker moved to: ${point.latitude}, ${point.longitude}');
+    }
+  }
+
+  /// Handle long press on map for precise location selection
+  void _onMapLongPress(osm_latlong.LatLng point) {
+    if (!_isEditMode) return;
+
+    // Haptic feedback for long press
+    HapticFeedback.mediumImpact();
+
+    // Show tap feedback animation
+    _showTapFeedbackAnimation(point);
+
+    setState(() {
+      _newClientLocation = point;
+      _isConfirmingLocation = true;
+    });
+
+    // Update marker position
+    _updateClientMarkerPosition(point);
+
+    if (kDebugMode) {
+      print('Client marker moved via long press to: ${point.latitude}, ${point.longitude}');
+    }
+  }
+
+  /// Show tap feedback animation
+  void _showTapFeedbackAnimation(osm_latlong.LatLng point) {
+    // Convert lat/lng to screen coordinates (approximate)
+    // This is a simplified version - in production you'd use proper coordinate conversion
+    setState(() {
+      _showTapFeedback = true;
+      _tapPosition = const Offset(100, 100); // Placeholder - would need proper conversion
+    });
+
+    // Hide feedback after animation
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() => _showTapFeedback = false);
+      }
+    });
+  }
+
+  /// Update client marker position during edit mode
+  void _updateClientMarkerPosition(osm_latlong.LatLng point) {
+    setState(() {
+      _clientPoint = point;
+      // Update markers list
+      _markers = [
+        osm.Marker(
+          width: 40.0,
+          height: 40.0,
+          alignment: Alignment.bottomCenter,
+          point: point,
+          child: const Icon(
+            Icons.location_on,
+            color: Colors.red,
+            size: 40,
+          ),
+        ),
+      ];
+    });
+  }
+
+  /// Confirm the new location and show dialog with details
+  void _confirmNewLocation() async {
+    if (_newClientLocation == null) return;
+
+    // Get address information for the new location
+    final addressInfo = await _getAddressFromCoordinates(_newClientLocation!);
+
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Joylashuvni tasdiqlash'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Manzil: ${addressInfo['address'] ?? 'Aniqlanmadi'}'),
+            const SizedBox(height: 8),
+            Text('Uzunlik: ${_newClientLocation!.longitude.toStringAsFixed(6)}'),
+            Text('Kenglik: ${_newClientLocation!.latitude.toStringAsFixed(6)}'),
+            const SizedBox(height: 16),
+            Text(
+              'Eski joylashuvdan masofa: ${_calculateDistance(_clientPoint, _newClientLocation!).toStringAsFixed(2)} km',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _cancelLocationChange();
+            },
+            child: const Text('Bekor qilish'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _saveNewLocation();
+            },
+            child: const Text('Tasdiqlash'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Cancel location change and revert to original position
+  void _cancelLocationChange() {
+    setState(() {
+      _isEditMode = false;
+      _newClientLocation = null;
+      _isConfirmingLocation = false;
+      _clientPoint = osm_latlong.LatLng(
+        widget.tradingPoint.latitude ?? 41.2995,
+        widget.tradingPoint.longitude ?? 69.2401,
       );
+      // Reset marker to original position
+      _initializeMapData();
+    });
+  }
+
+  /// Save the new location by calling API and updating database
+  Future<void> _saveNewLocation() async {
+    if (_newClientLocation == null) return;
+
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Joylashuv yangilanmoqda...')),
+      );
+
+      // Call API to update client coordinates
+      await _updateClientCoordinatesInDatabase(_newClientLocation!);
+
+      // Update UI state
+      setState(() {
+        _isEditMode = false;
+        _isConfirmingLocation = false;
+        _newClientLocation = null;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mijoz joylashuvi muvaffaqiyatli yangilandi')),
+      );
+
+      if (kDebugMode) {
+        print('Client location updated successfully');
+      }
     } catch (e) {
       if (kDebugMode) {
-        print('Error opening update coordinates page: $e');
+        print('Error saving new location: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Xatolik: $e')),
+        SnackBar(content: Text('Joylashuvni yangilashda xatolik: $e')),
       );
+    }
+  }
+
+  /// Get address information from coordinates using Nominatim (OpenStreetMap) API
+  Future<Map<String, String>> _getAddressFromCoordinates(osm_latlong.LatLng point) async {
+    try {
+      // Nominatim API request (OpenStreetMap's geocoding service)
+      final url = 'https://nominatim.openstreetmap.org/reverse';
+      final response = await Dio().get(url, queryParameters: {
+        'format': 'json',
+        'lat': point.latitude,
+        'lon': point.longitude,
+        'addressdetails': 1,
+        'accept-language': 'uz',
+        'zoom': 18, // Higher zoom for more detailed address
+      });
+      debugPrint("Kordinatalar asosida manzil aniqlash so'rovi natijasi_______________:");
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final address = data['address'] ?? {};
+
+        // Extract city information
+        String city = address['city'] ??
+                     address['town'] ??
+                     address['village'] ??
+                     address['municipality'] ??
+                     '';
+
+        // Build full address
+        String fullAddress = data['display_name'] ?? 'Aniqlanmadi';
+
+        return {
+          'address': fullAddress,
+          'city': city.isNotEmpty ? city : 'Aniqlanmadi',
+          'country': address['country'] ?? 'O\'zbekiston',
+          'fullAddress': fullAddress,
+        };
+      }
+
+      print('No geocoding results found');
+      return _getFallbackAddress();
+
+    } catch (e) {
+      print('Nominatim Geocoding API error: $e');
+
+      // Try Google Geocoding API as fallback
+      try {
+        return await _getAddressFromGoogleAPI(point);
+      } catch (googleError) {
+        print('Google Geocoding API fallback also failed: $googleError');
+        return _getFallbackAddress();
+      }
+    }
+  }
+
+  /// Get address using Google Geocoding API (fallback)
+  Future<Map<String, String>> _getAddressFromGoogleAPI(osm_latlong.LatLng point) async {
+    try {
+      final apiKey = _prefs.getGoogleMapsToken();
+      if (apiKey == null || apiKey.isEmpty) {
+        return _getFallbackAddress();
+      }
+
+      final url = 'https://maps.googleapis.com/maps/api/geocode/json';
+      final response = await Dio().get(url, queryParameters: {
+        'latlng': '${point.latitude},${point.longitude}',
+        'key': apiKey,
+        'language': 'uz',
+      });
+
+      if (response.statusCode == 200 && response.data['status'] == 'OK') {
+        final result = response.data['results'][0];
+        final addressComponents = result['address_components'] as List;
+
+        String city = '';
+        String country = '';
+
+        for (var component in addressComponents) {
+          final types = component['types'] as List;
+          if (types.contains('locality')) {
+            city = component['long_name'];
+          } else if (types.contains('country')) {
+            country = component['long_name'];
+          }
+        }
+
+        return {
+          'address': result['formatted_address'] ?? 'Aniqlanmadi',
+          'city': city.isNotEmpty ? city : 'Aniqlanmadi',
+          'country': country.isNotEmpty ? country : 'O\'zbekiston',
+          'fullAddress': result['formatted_address'] ?? '',
+        };
+      }
+
+      return _getFallbackAddress();
+
+    } catch (e) {
+      print('Google Geocoding API error: $e');
+      return _getFallbackAddress();
+    }
+  }
+
+  /// Get fallback address when APIs fail
+  Map<String, String> _getFallbackAddress() {
+    return {
+      'address': 'Aniqlanmadi',
+      'city': 'Aniqlanmadi',
+      'country': 'O\'zbekiston',
+      'fullAddress': '',
+    };
+  }
+
+  /// Update client coordinates in database and via API
+  Future<void> _updateClientCoordinatesInDatabase(osm_latlong.LatLng newLocation) async {
+    try {
+      // Get user code from preferences
+      final userCode = _prefs.getUserCode();
+      if (userCode == null) {
+        throw Exception('User code not found in preferences');
+      }
+
+      // Call data sync service to update coordinates via API and database
+      await _dataSyncService.updateClientCoordinates(
+        userCode: userCode,
+        clientCode: widget.tradingPoint.id,
+        latitude: newLocation.latitude,
+        longitude: newLocation.longitude,
+      );
+
+      if (kDebugMode) {
+        print('Client coordinates updated successfully: ${newLocation.latitude}, ${newLocation.longitude}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating client coordinates: $e');
+      }
+      rethrow;
     }
   }
 
@@ -444,6 +785,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                 print('OSM map is ready for client: ${widget.tradingPoint.name}');
               }
             },
+            onTap: _isEditMode ? (tapPosition, point) => _onMapTap(point) : null,
+            onLongPress: _isEditMode ? (tapPosition, point) => _onMapLongPress(point) : null,
           ),
           children: [
             osm.TileLayer(
@@ -500,6 +843,27 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
         // Control overlays
         _buildControlOverlays(),
+
+        // Tap feedback overlay
+        if (_showTapFeedback)
+          Positioned(
+            left: _tapPosition.dx - 25,
+            top: _tapPosition.dy - 25,
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.green.withOpacity(0.3),
+                border: Border.all(color: Colors.green, width: 2),
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -705,10 +1069,19 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                   ],
                 ),
                 child: IconButton(
-                  onPressed: _openUpdateCoordinatesPage,
+                  onPressed: _isEditMode
+                      ? (_isConfirmingLocation ? _confirmNewLocation : null)
+                      : _toggleEditLocationMode,
                   iconSize: iconSize,
-                  icon: Icon(Icons.edit_location_outlined, color: cs.primary),
-                  tooltip: 'Mijoz joylashuvini o\'zgartirish',
+                  icon: Icon(
+                    _isEditMode
+                        ? (_isConfirmingLocation ? Icons.check : Icons.edit_location)
+                        : Icons.edit_location_outlined,
+                    color: _isEditMode ? Colors.green : cs.primary,
+                  ),
+                  tooltip: _isEditMode
+                      ? (_isConfirmingLocation ? 'Joylashuvni tasdiqlash' : 'Joylashuvni o\'zgartirish')
+                      : 'Mijoz joylashuvini o\'zgartirish',
                 ),
               ),
             ],
@@ -776,6 +1149,80 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                       foregroundColor: cs.onSurface,
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+
+        // Edit mode overlay (if edit mode is active)
+        if (_isEditMode)
+          Positioned(
+            top: 80,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cs.surface.withOpacity(isDark ? 0.95 : 0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.green.withOpacity(0.3),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.edit_location, color: Colors.green),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _isConfirmingLocation
+                              ? 'Yangi joylashuvni tasdiqlang'
+                              : 'Xaritada yangi joylashuvni tanlang',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _cancelLocationChange,
+                        icon: Icon(Icons.close, color: cs.onSurface.withOpacity(0.7)),
+                        tooltip: 'Tahrirlash rejimini yopish',
+                        style: IconButton.styleFrom(
+                          backgroundColor: cs.surfaceVariant.withOpacity(0.5),
+                          foregroundColor: cs.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_isConfirmingLocation && _newClientLocation != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'Uzunlik: ${_newClientLocation!.longitude.toStringAsFixed(6)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: cs.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    Text(
+                      'Kenglik: ${_newClientLocation!.latitude.toStringAsFixed(6)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: cs.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

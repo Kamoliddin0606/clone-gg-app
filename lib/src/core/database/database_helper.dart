@@ -244,6 +244,21 @@ class DatabaseHelper {
     await db.delete('users', where: 'code != ?', whereArgs: [code]);
   }
 
+  /// Update client coordinates in database
+  Future<void> updateClientCoordinates(String clientCode, double latitude, double longitude) async {
+    final db = await database;
+    await db.update(
+      'clients',
+      {
+        'latitude': latitude,
+        'longitude': longitude,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'code = ?',
+      whereArgs: [clientCode],
+    );
+  }
+
   static bool _isValidUrl(String url) {
     try {
       final uri = Uri.parse(url);

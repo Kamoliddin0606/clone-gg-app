@@ -9,6 +9,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:latlong2/latlong.dart' as osm_latlong;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
@@ -788,6 +789,62 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     }
   }
 
+  /// Open Google Maps with route from user to client
+  Future<void> _openGoogleMaps() async {
+    if (_userPoint == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+      );
+      return;
+    }
+
+    final origin = '${_userPoint!.latitude},${_userPoint!.longitude}';
+    final destination = '${_clientPoint.latitude},${_clientPoint.longitude}';
+    final url = 'https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&travelmode=driving';
+
+    try {
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Google Maps ochib bo\'lmadi')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Xatolik: $e')),
+      );
+    }
+  }
+
+  /// Open Yandex Maps with route from user to client
+  Future<void> _openYandexMaps() async {
+    if (_userPoint == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+      );
+      return;
+    }
+
+    final origin = '${_userPoint!.latitude},${_userPoint!.longitude}';
+    final destination = '${_clientPoint.latitude},${_clientPoint.longitude}';
+    final url = 'https://yandex.com/maps/?rtext=$origin~$destination&rtt=auto';
+    print(url);
+    try {
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Yandex Maps ochib bo\'lmadi')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Xatolik: $e')),
+      );
+    }
+  }
+
   /// Handle map tap in edit mode to move client marker
   void _onMapTap(osm_latlong.LatLng point) {
     if (!_isEditMode) return;
@@ -1409,6 +1466,34 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                           backgroundColor: _selectedTransportMode == 'cycling-regular'
                               ? cs.primary.withOpacity(0.1)
                               : Colors.transparent,
+                        ),
+                      ),
+
+                      // Google Maps button
+                      IconButton(
+                        onPressed: _openGoogleMaps,
+                        icon: Icon(
+                          Icons.map,
+                          size: 20,
+                          color: cs.onSurface.withOpacity(0.6),
+                        ),
+                        tooltip: 'Google Maps',
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                        ),
+                      ),
+
+                      // Yandex Maps button
+                      IconButton(
+                        onPressed: _openYandexMaps,
+                        icon: Icon(
+                          Icons.navigation,
+                          size: 20,
+                          color: cs.onSurface.withOpacity(0.6),
+                        ),
+                        tooltip: 'Yandex Maps',
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.transparent,
                         ),
                       ),
 

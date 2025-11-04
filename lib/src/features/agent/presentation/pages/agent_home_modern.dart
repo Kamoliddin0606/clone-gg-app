@@ -1961,18 +1961,18 @@ class _AppDrawer extends StatelessWidget {
 
           // Bottom section
           const Divider(),
-          _MenuItem(
-            icon: Icons.brightness_6,
-            title: AppLocalizations.of(context)!.darkMode,
-            trailing: SizedBox(
-              width: 80,
-              child: ThemeToggle(
-                mode: ThemeController.I.mode.value,
-                onChanged: ThemeController.I.set,
-              ),
-            ),
-            onTap: () => ThemeController.I.set(ThemeController.I.mode.value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark),
-          ),
+          // _MenuItem(
+          //   icon: Icons.brightness_6,
+          //   title: AppLocalizations.of(context)!.darkMode,
+          //   trailing: SizedBox(
+          //     width: 80,
+          //     child: ThemeToggle(
+          //       mode: ThemeController.I.mode.value,
+          //       onChanged: ThemeController.I.set,
+          //     ),
+          //   ),
+          //   onTap: () => ThemeController.I.set(ThemeController.I.mode.value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark),
+          // ),
           _MenuItem(
             icon: Icons.settings,
             title: AppLocalizations.of(context)!.settings,

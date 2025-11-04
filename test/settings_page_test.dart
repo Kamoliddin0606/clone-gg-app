@@ -105,10 +105,8 @@ void main() {
       );
 
       // Check if tabs are present
-      expect(find.text('Narxlar'), findsOneWidget);
-      expect(find.text('Skladlar'), findsOneWidget);
-      expect(find.text('Biznes rayonlari'), findsOneWidget);
       expect(find.text('Ruxsatlar'), findsOneWidget);
+      expect(find.text('Xaritalar'), findsOneWidget);
       expect(find.text('Interfeys sozlamalari'), findsOneWidget);
     });
 
@@ -126,15 +124,15 @@ void main() {
         ),
       );
 
-      // Initially should show first tab (Prices)
-      expect(find.byType(PricesTab), findsOneWidget);
+      // Initially should show first tab (Permissions)
+      expect(find.byType(PermissionsTab), findsOneWidget);
 
-      // Tap on Permissions tab
-      await tester.tap(find.text('Ruxsatlar'));
+      // Tap on Maps tab
+      await tester.tap(find.text('Xaritalar'));
       await tester.pumpAndSettle();
 
-      // Should now show Permissions tab
-      expect(find.byType(PermissionsTab), findsOneWidget);
+      // Should now show Maps tab
+      expect(find.byType(MapsTab), findsOneWidget);
     });
   });
 

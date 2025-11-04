@@ -33,6 +33,7 @@ import '../widgets/yandex_map_builder.dart';
 import 'map_pages/map_detail_page_google.dart';
 import 'map_pages/map_detail_page_osm.dart';
 import 'map_pages/map_detail_page_yandex.dart';
+import 'visit_steps_page.dart';
 import 'dart:ui'; // blur uchun
 import 'dart:async';
 import 'dart:math' as math; // For pi constant and math operations
@@ -780,44 +781,36 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
   Future<void> _informVisit(TradingPointWithPermissions tradingPointWithPermissions) async {
     final tradingPoint = tradingPointWithPermissions.tradingPoint;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Row(
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 16),
-            Text('Tashrif haqida xabar berilmoqda...'),
-          ],
-        ),
+
+    // Navigate to visit steps page instead of showing simple dialog
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VisitStepsPage(tradingPoint: tradingPointWithPermissions),
       ),
-    );
+    ).then((result) {
+      if (result == true && mounted) {
+        // Visit completed successfully, update the trading point status
+        setState(() {
+          final index = _allTradingPoints.indexWhere((tp) => tp.tradingPoint.id == tradingPoint.id);
+          if (index != -1) {
+            final updatedTradingPoint = tradingPoint.copyWith(isVisited: true);
+            _allTradingPoints[index] = TradingPointWithPermissions(
+              tradingPoint: updatedTradingPoint,
+              permissions: tradingPointWithPermissions.permissions,
+            );
+            _filterTradingPoints(_searchController.text);
+          }
+        });
 
-    // TODO: serverga yuborish (o‘zgarmagan mantiq)
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-    Navigator.of(context).pop();
-
-    setState(() {
-      final index = _allTradingPoints.indexWhere((tp) => tp.tradingPoint.id == tradingPoint.id);
-      if (index != -1) {
-        final updatedTradingPoint = tradingPoint.copyWith(isVisited: true);
-        _allTradingPoints[index] = TradingPointWithPermissions(
-          tradingPoint: updatedTradingPoint,
-          permissions: tradingPointWithPermissions.permissions,
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${tradingPoint.name} ga tashrif muvaffaqiyatli yakunlandi'),
+            backgroundColor: Colors.green,
+          ),
         );
-        _filterTradingPoints(_searchController.text);
       }
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${tradingPoint.name} ga tashrif haqida xabar berildi'),
-        backgroundColor: Colors.green,
-      ),
-    );
   }
 
   void _createOrder(TradingPointWithPermissions tradingPointWithPermissions) {
@@ -1483,7 +1476,7 @@ class TradingPointCard extends StatelessWidget {
       // Visit button - only enabled if user has visit permission
       if (permissions?.visit == true && tradingPoint.visitToday == true)
         FilledButton.icon(
-          onPressed:  onInformVisit,
+          onPressed: onInformVisit,
           icon: const Icon(Icons.storefront, size: 18),
           label: Text(l10n.visitClient),
           style: FilledButton.styleFrom(

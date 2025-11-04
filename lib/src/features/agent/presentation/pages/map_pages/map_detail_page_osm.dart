@@ -828,21 +828,31 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
     final origin = '${_userPoint!.latitude},${_userPoint!.longitude}';
     final destination = '${_clientPoint.latitude},${_clientPoint.longitude}';
-    final url = 'https://yandex.com/maps/?rtext=$origin~$destination&rtt=auto';
-    print(url);
-    try {
-      if (await canLaunchUrl(Uri.parse(url))) {
-        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Yandex Maps ochib bo\'lmadi')),
-        );
+
+    // Try different Yandex Maps URL schemes to force app opening
+    final urls = [
+      'yandexmaps://maps.yandex.ru/?rtext=$origin~$destination&rtt=auto', // App scheme
+      'yandexnavi://build_route_on_map?lat_from=${_userPoint!.latitude}&lon_from=${_userPoint!.longitude}&lat_to=${_clientPoint.latitude}&lon_to=${_clientPoint.longitude}', // Navigation app
+      'https://yandex.ru/maps/?rtext=$origin~$destination&rtt=auto', // Web fallback
+    ];
+
+    for (final url in urls) {
+      try {
+        final uri = Uri.parse(url);
+        //if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return; // Success, exit the loop
+        //}
+      } catch (e) {
+        // Continue to next URL
+        continue;
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Xatolik: $e')),
-      );
     }
+
+    // If all URLs failed
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Yandex Maps ochib bo\'lmadi')),
+    );
   }
 
   /// Handle map tap in edit mode to move client marker

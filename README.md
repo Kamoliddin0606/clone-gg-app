@@ -1,4 +1,4 @@
-# gloria_marketing_flutter
+# SelUp
 
 A new Flutter project.
 

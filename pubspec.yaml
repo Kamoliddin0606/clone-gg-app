@@ -73,6 +73,7 @@ dependencies:
   geolocator: ^14.0.2
   flutter_polyline_points: ^2.0.0
 dev_dependencies:
+  flutter_launcher_icons: ^0.13.1
   flutter_test:
     sdk: flutter
 
@@ -111,28 +112,25 @@ flutter:
     - assets/db/
     - assets/images/marker.png
     - assets/images/marker_user.png
-  # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/to/resolution-aware-images
+flutter_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: assets/icon/selup_icon.png
+    background_color: "#FFFFFF"
+    theme_color: "#3B82F6"
+  macos:
+    generate: true
+    image_path: assets/icon/selup_icon.png
+  windows:
+    generate: true
+    image_path: assets/icon/selup_icon.png
+  linux:
+    generate: true
+    image_path: assets/icon/selup_icon.png
 
-  # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/to/asset-from-package
-
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
+  image_path: assets/icon/selup_icon.png
+  adaptive_icon_background: "#FFFFFF"   # Android adaptiv fon
+  adaptive_icon_foreground: assets/icon/selup_icon.png
+  adaptive_icon_monochrome: assets/icon/selup_icon.png

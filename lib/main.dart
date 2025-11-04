@@ -185,7 +185,7 @@ class _AppState extends State<App> {
           return Consumer<LocaleProvider>(
             builder: (context, localeProvider, _) {
               return MaterialApp(
-                title: 'Gloria Marketing',
+                title: 'SelUp',
                 theme: appLight,
                 darkTheme: appDark,
                 themeMode: themeMode,

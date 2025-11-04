@@ -101,6 +101,18 @@ class UserProfileSection extends StatefulWidget {
 
 class _UserProfileSectionState extends State<UserProfileSection> with TickerProviderStateMixin {
   bool _isEditing = false;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  // User data from SharedPreferences
+  String? _userName;
+  String? _userCode;
+  String? _telegramID;
+  String? _chatID;
+  String? _topicID;
+  String? _warehouseCode;
+  String? _codeProject;
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -114,12 +126,40 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+    _loadUserData();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final prefs = context.read<SharedPreferencesService>();
+      _userName = prefs.getUserName();
+      _userCode = prefs.getUserCode();
+      _telegramID = prefs.getTelegramID();
+      _chatID = prefs.getChatID();
+      _topicID = prefs.getTopicID();
+      _warehouseCode = prefs.getWarehouseCode();
+      _codeProject = prefs.getCodeProject();
+
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Foydalanuvchi ma\'lumotlarini yuklashda xatolik: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   void _toggleEdit() {
@@ -137,6 +177,69 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    if (_isLoading) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.primaryContainer,
+              colorScheme.secondaryContainer,
+            ],
+          ),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(24),
+            bottomRight: Radius.circular(24),
+          ),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.primaryContainer,
+              colorScheme.secondaryContainer,
+            ],
+          ),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(24),
+            bottomRight: Radius.circular(24),
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                style: theme.textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadUserData,
+                child: Text(l10n.retry),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -161,7 +264,14 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
               CircleAvatar(
                 radius: 40,
                 backgroundColor: colorScheme.primary,
-                child: const Icon(Icons.person, size: 40, color: Colors.white),
+                child: Text(
+                  _userName?.isNotEmpty == true ? _userName![0].toUpperCase() : '?',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -169,7 +279,7 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'John Doe', // Replace with actual user name
+                      _userName ?? 'Noma\'lum foydalanuvchi',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         color: colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.bold,
@@ -177,18 +287,19 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Agent ID: 12345', // Replace with actual ID
+                      'Agent ID: ${_userCode ?? 'N/A'}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onPrimaryContainer.withOpacity(0.8),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'john.doe@example.com', // Replace with actual email
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onPrimaryContainer.withOpacity(0.7),
+                    if (_warehouseCode != null && _warehouseCode!.isNotEmpty)
+                      Text(
+                        'Sklad: $_warehouseCode',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onPrimaryContainer.withOpacity(0.7),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -213,35 +324,50 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
                         children: [
                           TextField(
                             decoration: InputDecoration(
-                              labelText: 'Ism',
+                              labelText: l10n.name,
                               filled: true,
                               fillColor: colorScheme.surface.withOpacity(0.9),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
+                            controller: TextEditingController(text: _userName),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             decoration: InputDecoration(
-                              labelText: 'Email',
+                              labelText: 'Telegram ID',
                               filled: true,
                               fillColor: colorScheme.surface.withOpacity(0.9),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
+                            controller: TextEditingController(text: _telegramID),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             decoration: InputDecoration(
-                              labelText: 'Telefon',
+                              labelText: 'Chat ID',
                               filled: true,
                               fillColor: colorScheme.surface.withOpacity(0.9),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
+                            controller: TextEditingController(text: _chatID),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            decoration: InputDecoration(
+                              labelText: 'Topic ID',
+                              filled: true,
+                              fillColor: colorScheme.surface.withOpacity(0.9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            controller: TextEditingController(text: _topicID),
                           ),
                         ],
                       ),

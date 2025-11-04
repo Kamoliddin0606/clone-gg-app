@@ -1142,8 +1142,9 @@ class _PermissionsTabState extends State<PermissionsTab> {
       case 'strictSequence':
       case 'unplannedOrder':
       case 'plannedRoute':
-      case 'editClientCoordinates':
         return AppLocalizations.of(context)!.visitManagement;
+      case 'editClientCoordinates':
+        return 'Malumotlarni tahrirlash';
       default:
         return AppLocalizations.of(context)!.general;
     }
@@ -1178,6 +1179,8 @@ class _PermissionsTabState extends State<PermissionsTab> {
         return colorScheme.primary;
       case 'visitManagement':
         return colorScheme.secondary;
+      case 'Malumotlarni tahrirlash':
+        return colorScheme.tertiary;
       default:
         return colorScheme.tertiary;
     }

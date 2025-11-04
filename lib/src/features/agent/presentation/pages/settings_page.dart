@@ -1228,7 +1228,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
       case 'plannedRoute':
         return _permissions!.plannedRoute;
       case 'editClientCoordinates':
-        return _permissions!.plannedRoute;
+        return _permissions!.editClientCoordinates;
       default:
         return false;
     }

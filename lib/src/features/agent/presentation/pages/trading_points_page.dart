@@ -30,6 +30,9 @@ import '../widgets/visit_indicators.dart';
 import 'orders_page.dart';
 import 'contracts_page.dart';
 import '../widgets/yandex_map_builder.dart';
+import 'map_pages/map_detail_page_google.dart';
+import 'map_pages/map_detail_page_osm.dart';
+import 'map_pages/map_detail_page_yandex.dart';
 import 'dart:ui'; // blur uchun
 import 'dart:async';
 import 'dart:math' as math; // For pi constant and math operations
@@ -1119,6 +1122,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                       regionNames: _regionNames,
                       locationService: _locationService,
                       permissions: tp.permissions,
+                      mapProvider: _defaultMapProvider,
                       expanded: _expandedIndex == index,
                       onExpand: (open) {
                         setState(() {
@@ -1279,6 +1283,7 @@ class TradingPointCard extends StatelessWidget {
   final Map<String, String> regionNames;
   final LocationService? locationService;
   final SalesReqPermissions? permissions;
+  final MapProvider mapProvider;
   const TradingPointCard({
     super.key,
     required this.tradingPoint,
@@ -1293,6 +1298,7 @@ class TradingPointCard extends StatelessWidget {
     required this.regionNames,
     this.locationService,
     this.permissions,
+    required this.mapProvider,
   });
 
   @override
@@ -1522,10 +1528,33 @@ class TradingPointCard extends StatelessWidget {
       // Route button
       OutlinedButton.icon(
         onPressed: () {
-          // TODO: Navigate to route page
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${tradingPoint.visitToday==null?"null":tradingPoint.visitToday}"} uchun marshrut')),
-          );
+          // Navigate to the appropriate map detail page based on selected map provider
+          switch (mapProvider) {
+            case MapProvider.google:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MapDetailPageGoogle(tradingPoint: tradingPoint),
+                ),
+              );
+              break;
+            case MapProvider.openStreetMap:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MapDetailPageOsm(tradingPoint: tradingPoint),
+                ),
+              );
+              break;
+            case MapProvider.yandex:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MapDetailPageYandex(tradingPoint: tradingPoint),
+                ),
+              );
+              break;
+          }
         },
         icon: const Icon(Icons.route, size: 18),
         label: Text(l10n.route),

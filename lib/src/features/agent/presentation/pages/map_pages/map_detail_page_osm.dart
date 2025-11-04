@@ -354,7 +354,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
           _routeInstructions = instructions;
         });
 
-        // Fit camera to API bbox instead of calculating bounds
+        // Always fit bounds after successful route calculation
         _fitRouteBoundsFromApi(routeData['bbox']);
 
         // Calculate distance and time from API response
@@ -394,7 +394,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       _isCalculatingRoute = false;
     });
 
-    // Fit camera to show the route
+    // Always fit bounds after successful route calculation
     _fitRouteBounds();
 
     // Calculate approximate distance and time
@@ -534,90 +534,73 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     }
   }
 
-  /// Fit camera to show route bounds using API bbox
-  Future<void> _fitRouteBoundsFromApi(dynamic bbox) async {
-    if (bbox == null || _currentRoute == null || _currentRoute!.isEmpty) {
-      // Fallback to calculated bounds
-      _fitRouteBounds();
+  /// Fit camera to show route bounds using flutter_map's built-in fitBounds
+  /// Ignores API bbox and uses actual route points for accurate fitting
+  void _fitBoundsToRoute(List<osm_latlong.LatLng> points) {
+    if (points.isEmpty) return;
+
+    // Handle single point case
+    if (points.length == 1) {
+      _osmController.move(points.first, 16.0);
+      _lastZoom = 16.0;
+      if (kDebugMode) {
+        print('Fitted camera to single point: ${points.first.latitude}, ${points.first.longitude} with zoom: 16.0');
+      }
       return;
     }
 
-    try {
-      // bbox format: [minLng, minLat, maxLng, maxLat]
-      final bboxList = bbox as List;
-      if (bboxList.length >= 4) {
-        final minLng = bboxList[0] as double;
-        final minLat = bboxList[1] as double;
-        final maxLng = bboxList[2] as double;
-        final maxLat = bboxList[3] as double;
+    final bounds = osm.LatLngBounds.fromPoints(points);
+    const padding = EdgeInsets.fromLTRB(16, 120, 16, 100); // Account for overlays
 
-        final centerLat = (minLat + maxLat) / 2;
-        final centerLng = (minLng + maxLng) / 2;
+    // Calculate center and zoom manually for compatibility
+    final centerLat = (bounds.north + bounds.south) / 2;
+    final centerLng = (bounds.east + bounds.west) / 2;
 
-        // Calculate zoom level based on bbox
-        final latDiff = maxLat - minLat;
-        final lngDiff = maxLng - minLng;
-        final maxDiff = max(latDiff.abs(), lngDiff.abs());
-        final zoom = max(0.0, 16.0 - log(maxDiff * 111000) / log(2));
+    // Calculate zoom level based on bounds and padding
+    final latDiff = bounds.north - bounds.south;
+    final lngDiff = bounds.east - bounds.west;
+    final maxDiff = max(latDiff.abs(), lngDiff.abs());
 
-        // Move to center with calculated zoom
-        _osmController.move(osm_latlong.LatLng(centerLat, centerLng), zoom);
+    // Adjust for padding (approximate)
+    final adjustedLatDiff = latDiff + (padding.top + padding.bottom) / 111000; // meters to degrees approx
+    final adjustedLngDiff = lngDiff + (padding.left + padding.right) / 111000;
+    final adjustedMaxDiff = max(adjustedLatDiff.abs(), adjustedLngDiff.abs());
 
-        if (kDebugMode) {
-          print('Fitted camera to API bbox: [$minLng, $minLat, $maxLng, $maxLat]');
-        }
-      } else {
-        // Fallback to calculated bounds
-        _fitRouteBounds();
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error fitting route bounds from API bbox: $e');
-      }
-      // Fallback to calculated bounds
-      _fitRouteBounds();
+    // Calculate zoom: smaller area = higher zoom
+    double zoom;
+    if (adjustedMaxDiff < 0.001) { // Very close points (< 100m approx)
+      zoom = 18.0;
+    } else if (adjustedMaxDiff < 0.01) { // Close points (< 1km approx)
+      zoom = 16.0;
+    } else if (adjustedMaxDiff < 0.1) { // Medium distance (< 10km approx)
+      zoom = 14.0;
+    } else if (adjustedMaxDiff < 1.0) { // Large distance (< 100km approx)
+      zoom = 12.0;
+    } else { // Very large distance
+      zoom = 10.0;
+    }
+
+    // Ensure zoom is within reasonable bounds
+    zoom = zoom.clamp(3.0, 19.0);
+
+    _osmController.move(osm_latlong.LatLng(centerLat, centerLng), zoom);
+    _lastZoom = zoom;
+
+    if (kDebugMode) {
+      print('Fitted bounds for ${points.length} points, zoom: $zoom, center: $centerLat, $centerLng');
     }
   }
 
-  /// Fit camera to show route bounds (fallback method)
+  /// Fit camera to show route bounds using API bbox (refactored to use helper)
+  Future<void> _fitRouteBoundsFromApi(dynamic bbox) async {
+    if (_currentRoute == null || _currentRoute!.isEmpty) return;
+    _fitBoundsToRoute(_currentRoute!);
+  }
+
+  /// Fit camera to show route bounds (refactored to use helper)
   Future<void> _fitRouteBounds() async {
     if (_currentRoute == null || _currentRoute!.isEmpty) return;
-
-    try {
-      // Calculate bounds from route points
-      final points = _currentRoute!;
-      double minLat = points.first.latitude;
-      double maxLat = points.first.latitude;
-      double minLng = points.first.longitude;
-      double maxLng = points.first.longitude;
-
-      for (final point in points) {
-        minLat = min(minLat, point.latitude);
-        maxLat = max(maxLat, point.latitude);
-        minLng = min(minLng, point.longitude);
-        maxLng = max(maxLng, point.longitude);
-      }
-
-      final centerLat = (minLat + maxLat) / 2;
-      final centerLng = (minLng + maxLng) / 2;
-
-      // Calculate zoom level based on bounds
-      final latDiff = maxLat - minLat;
-      final lngDiff = maxLng - minLng;
-      final maxDiff = max(latDiff.abs(), lngDiff.abs());
-      final zoom = max(0.0, 16.0 - log(maxDiff * 111000) / log(2));
-
-      // Move to center with calculated zoom
-      _osmController.move(osm_latlong.LatLng(centerLat, centerLng), zoom);
-
-      if (kDebugMode) {
-        print('Fitted camera to calculated route bounds: ${points.length} points');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error fitting route bounds: $e');
-      }
-    }
+    _fitBoundsToRoute(_currentRoute!);
   }
 
   /// Calculate distance between two points using Haversine formula
@@ -1496,11 +1479,12 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                 ),
                 child: IconButton(
                   onPressed: _locationPermissionGranted ? () async {
-                    if (_userPoint != null && _osmController != null) {
-                      _osmController!.move(
-                        osm_latlong.LatLng(_userPoint!.latitude, _userPoint!.longitude),
-                        16.0,
-                      );
+                    if (_userPoint != null) {
+                      _osmController.move(_userPoint!, 16.0);
+                      _lastZoom = 16.0;
+                      if (kDebugMode) {
+                        print('Moved to user location: ${_userPoint!.latitude}, ${_userPoint!.longitude} with zoom: 16.0');
+                      }
                     } else {
                       await _getUserLocation();
                     }
@@ -1541,11 +1525,10 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                 ),
                 child: IconButton(
                   onPressed: () async {
-                    if (_osmController != null) {
-                      _osmController!.move(
-                        osm_latlong.LatLng(_clientPoint.latitude, _clientPoint.longitude),
-                        16.0,
-                      );
+                    _osmController.move(_clientPoint, 16.0);
+                    _lastZoom = 16.0;
+                    if (kDebugMode) {
+                      print('Moved to client location: ${_clientPoint.latitude}, ${_clientPoint.longitude} with zoom: 16.0');
                     }
                   },
                   iconSize: iconSize,

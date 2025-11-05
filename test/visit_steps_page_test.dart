@@ -7,15 +7,19 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 
 // Mock classes
 class MockDataSyncService extends Mock implements DataSyncService {}
+class MockVisitDataRepository extends Mock implements VisitDataRepository {}
 
 void main() {
   late MockDataSyncService mockDataSyncService;
+  late MockVisitDataRepository mockVisitDataRepository;
 
   setUp(() {
     mockDataSyncService = MockDataSyncService();
+    mockVisitDataRepository = MockVisitDataRepository();
   });
 
   group('VisitStepsPage', () {
@@ -72,8 +76,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: BlocProvider(
-            create: (context) => VisitStepsBloc(dataSyncService: mockDataSyncService)
-              ..add(LoadVisitSteps(tradingPoint)),
+            create: (context) => VisitStepsBloc(
+              dataSyncService: mockDataSyncService,
+              visitDataRepository: mockVisitDataRepository,
+            )..add(LoadVisitSteps(tradingPoint)),
             child: VisitStepsPage(tradingPoint: tradingPoint),
           ),
         ),
@@ -141,8 +147,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: BlocProvider(
-            create: (context) => VisitStepsBloc(dataSyncService: mockDataSyncService)
-              ..add(LoadVisitSteps(tradingPoint)),
+            create: (context) => VisitStepsBloc(
+              dataSyncService: mockDataSyncService,
+              visitDataRepository: mockVisitDataRepository,
+            )..add(LoadVisitSteps(tradingPoint)),
             child: VisitStepsPage(tradingPoint: tradingPoint),
           ),
         ),
@@ -213,8 +221,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: BlocProvider(
-            create: (context) => VisitStepsBloc(dataSyncService: mockDataSyncService)
-              ..add(LoadVisitSteps(tradingPoint)),
+            create: (context) => VisitStepsBloc(
+              dataSyncService: mockDataSyncService,
+              visitDataRepository: mockVisitDataRepository,
+            )..add(LoadVisitSteps(tradingPoint)),
             child: VisitStepsPage(tradingPoint: tradingPoint),
           ),
         ),
@@ -290,8 +300,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: BlocProvider(
-            create: (context) => VisitStepsBloc(dataSyncService: mockDataSyncService)
-              ..add(LoadVisitSteps(tradingPoint)),
+            create: (context) => VisitStepsBloc(
+              dataSyncService: mockDataSyncService,
+              visitDataRepository: mockVisitDataRepository,
+            )..add(LoadVisitSteps(tradingPoint)),
             child: VisitStepsPage(tradingPoint: tradingPoint),
           ),
         ),

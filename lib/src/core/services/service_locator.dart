@@ -19,6 +19,8 @@ import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/aut
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
 
 import '../network/server_service.dart';
 
@@ -120,6 +122,12 @@ Future<void> setupServiceLocator() async {
     sl.registerLazySingleton<AgentRepository>(() => AgentRepository(
       dataSyncService: sl<DataSyncService>(),
     ));
+  }
+  if (!sl.isRegistered<VisitDataRepository>()) {
+    sl.registerLazySingleton<VisitDataRepository>(() => VisitDataRepository(sl<ApiDatabaseService>()));
+  }
+  if (!sl.isRegistered<VisitStepDataService>()) {
+    sl.registerLazySingleton<VisitStepDataService>(() => VisitStepDataService(sl<VisitDataRepository>()));
   }
 
   // Blocs

@@ -1,12 +1,21 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/photo_facing_before_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/shelf_audit_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/competitor_audit_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/create_order_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/photo_facing_after_page.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations_en.dart';
 
@@ -147,10 +156,16 @@ enum VisitStepStatus {
 
 /// Visit Steps BLoC
 class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
-  // final DataSyncService _dataSyncService;
+  final DataSyncService _dataSyncService;
+  final VisitDataRepository _visitDataRepository;
+  late String _visitId; // Unique identifier for this visit session
 
-  VisitStepsBloc({required DataSyncService dataSyncService})
-      : super(VisitStepsInitial()) {
+  VisitStepsBloc({
+    required DataSyncService dataSyncService,
+    required VisitDataRepository visitDataRepository,
+  }) : _dataSyncService = dataSyncService,
+       _visitDataRepository = visitDataRepository,
+       super(VisitStepsInitial()) {
     on<LoadVisitSteps>(_onLoadVisitSteps);
     on<CompleteStep>(_onCompleteStep);
     on<SkipStep>(_onSkipStep);
@@ -193,13 +208,15 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
       debugPrint('Successfully loaded ${permissions.visitSteps.length} visit steps for user $userCode');
 
-      // Initialize step progress using database visit steps
-      final stepProgress = permissions.visitSteps.map((step) {
-        return VisitStepProgress(
-          step: step,
-          status: VisitStepStatus.pending,
-        );
-      }).toList();
+      // Generate consistent visit ID for this trading point and date
+      // This ensures that visits can be restored when navigating back to the page
+      final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD format
+      _visitId = 'visit_${userCode ?? "unknown"}_${tradingPoint.tradingPoint.id}_$today';
+
+      debugPrint('Using visit ID: $_visitId');
+
+      // Load existing step progress from persistent storage
+      final stepProgress = await _loadStepProgressFromStorage(permissions.visitSteps, tradingPoint.tradingPoint.name);
 
       // Determine current step based on strict sequence
       final isStrictSequence = permissions.strictSequence;
@@ -254,11 +271,24 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
     final currentState = state as VisitStepsLoaded;
     final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
+    final step = updatedProgress[event.stepIndex].step;
 
     updatedProgress[event.stepIndex] = updatedProgress[event.stepIndex].copyWith(
       status: VisitStepStatus.completed,
       notes: event.notes,
       completedAt: DateTime.now(),
+    );
+
+    // Save step completion data to persistent storage
+    await _saveStepDataToStorage(
+      stepCode: step.stepCode,
+      stepName: step.stepName,
+      dataType: 'completion',
+      dataContent: {
+        'notes': event.notes,
+        'completedAt': DateTime.now().toIso8601String(),
+        'status': 'completed',
+      },
     );
 
     final newCurrentStepIndex = _getCurrentStepIndex(updatedProgress, currentState.isStrictSequence);
@@ -364,6 +394,84 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     return currentStep.status == VisitStepStatus.completed ||
            (!currentStep.step.stepRequired && currentStep.status == VisitStepStatus.pending);
   }
+
+  /// Load step progress from persistent storage
+  Future<List<VisitStepProgress>> _loadStepProgressFromStorage(List<VisitStep> visitSteps, String clientCode) async {
+    try {
+      // Get existing visit data for this visit session
+      final existingData = await _visitDataRepository.getVisitStepDataByVisitId(_visitId);
+
+      // Create a map of step code to existing data for quick lookup
+      final existingDataMap = <int, VisitData>{};
+      for (final data in existingData) {
+        if (data.dataType == 'completion') {
+          existingDataMap[data.stepCode] = data;
+        }
+      }
+
+      // Initialize step progress based on existing data
+      final stepProgress = <VisitStepProgress>[];
+
+      for (final step in visitSteps) {
+        final existingCompletion = existingDataMap[step.stepCode];
+
+        if (existingCompletion != null) {
+          // Step was previously completed
+          final parsedData = existingCompletion.parsedDataContent;
+          final completedAt = parsedData['completedAt'] != null
+              ? DateTime.parse(parsedData['completedAt'])
+              : null;
+
+          stepProgress.add(VisitStepProgress(
+            step: step,
+            status: VisitStepStatus.completed,
+            notes: parsedData['notes'],
+            completedAt: completedAt,
+          ));
+        } else {
+          // Step is pending
+          stepProgress.add(VisitStepProgress(
+            step: step,
+            status: VisitStepStatus.pending,
+          ));
+        }
+      }
+
+      return stepProgress;
+    } catch (e) {
+      debugPrint('Error loading step progress from storage: $e');
+      // Fallback to default initialization
+      return visitSteps.map((step) => VisitStepProgress(
+        step: step,
+        status: VisitStepStatus.pending,
+      )).toList();
+    }
+  }
+
+  /// Save step data to persistent storage
+  Future<void> _saveStepDataToStorage({
+    required int stepCode,
+    required String stepName,
+    required String dataType,
+    required Map<String, dynamic> dataContent,
+  }) async {
+    try {
+      final visitData = VisitData(
+        visitId: _visitId,
+        clientCode: (state as VisitStepsLoaded).tradingPoint.tradingPoint.name,
+        stepCode: stepCode,
+        stepName: stepName,
+        dataType: dataType,
+        dataContent: jsonEncode(dataContent),
+        timestamp: DateTime.now(),
+      );
+
+      await _visitDataRepository.saveVisitStepData(visitData);
+    } catch (e) {
+      debugPrint('Error saving step data to storage: $e');
+      // Don't throw - we don't want to break the UI flow
+    }
+  }
 }
 
 /// Visit Steps Page Widget
@@ -380,6 +488,7 @@ class VisitStepsPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => VisitStepsBloc(
         dataSyncService: sl<DataSyncService>(),
+        visitDataRepository: VisitDataRepository(sl<ApiDatabaseService>()),
       )..add(LoadVisitSteps(tradingPoint)),
       child: VisitStepsView(tradingPoint: tradingPoint),
     );
@@ -661,6 +770,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           isCurrentStep: isCurrentStep,
           canInteract: canInteract,
           isStrictSequence: state.isStrictSequence,
+          tradingPoint: state.tradingPoint,
+          visitId: (context.read<VisitStepsBloc>() as VisitStepsBloc)._visitId,
           onComplete: (notes) {
             context.read<VisitStepsBloc>().add(CompleteStep(index, notes));
           },
@@ -775,6 +886,8 @@ class _VisitStepCard extends StatefulWidget {
   final bool isCurrentStep;
   final bool canInteract;
   final bool isStrictSequence;
+  final TradingPointWithPermissions tradingPoint;
+  final String visitId;
   final Function(String) onComplete;
   final Function(String) onSkip;
 
@@ -783,6 +896,8 @@ class _VisitStepCard extends StatefulWidget {
     required this.isCurrentStep,
     required this.canInteract,
     required this.isStrictSequence,
+    required this.tradingPoint,
+    required this.visitId,
     required this.onComplete,
     required this.onSkip,
   });
@@ -835,87 +950,94 @@ class _VisitStepCardState extends State<_VisitStepCard> {
         statusIcon = Icons.radio_button_unchecked;
     }
 
-    return Card(
-      elevation: widget.isCurrentStep ? 4 : 1,
-      margin: const EdgeInsets.only(bottom: 12),
-      color: cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: borderColor,
-          width: widget.isCurrentStep ? 2 : 1,
+    return InkWell(
+      onTap: () => _navigateToStepDetail(context, step),
+      child: Card(
+        elevation: widget.isCurrentStep ? 4 : 1,
+        margin: const EdgeInsets.only(bottom: 12),
+        color: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: borderColor,
+            width: widget.isCurrentStep ? 2 : 1,
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Step Header
-            Row(
-              children: [
-                Icon(
-                  statusIcon,
-                  color: borderColor,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        step.stepName,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: step.stepRequired
-                                  ? theme.colorScheme.errorContainer
-                                  : theme.colorScheme.surfaceVariant,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              step.stepRequired ? (l10n?.mandatory ?? 'Mandatory') : (l10n?.optional ?? 'Optional'),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: step.stepRequired
-                                    ? theme.colorScheme.onErrorContainer
-                                    : theme.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Step Header
+              Row(
+                children: [
+                  Icon(
+                    statusIcon,
+                    color: borderColor,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          step.stepName,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
                           ),
-                          if (widget.isCurrentStep) ...[
-                            const SizedBox(width: 8),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary,
+                                color: step.stepRequired
+                                    ? theme.colorScheme.errorContainer
+                                    : theme.colorScheme.surfaceVariant,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                l10n?.current ?? 'Current',
+                                step.stepRequired ? (l10n?.mandatory ?? 'Mandatory') : (l10n?.optional ?? 'Optional'),
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onPrimary,
+                                  color: step.stepRequired
+                                      ? theme.colorScheme.onErrorContainer
+                                      : theme.colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
+                            if (widget.isCurrentStep) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  l10n?.current ?? 'Current',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onPrimary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
 
             // Status-specific content
             if (status == VisitStepStatus.completed) ...[
@@ -1057,6 +1179,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -1140,5 +1263,151 @@ class _VisitStepCardState extends State<_VisitStepCard> {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')} ${dateTime.day}.${dateTime.month}';
+  }
+
+  /// Navigates to the step detail page based on step status and permissions
+  /// Navigation rules:
+  /// - Completed steps: allow navigation with readOnly=true (view-only mode)
+  /// - Current step: allow navigation with readOnly=false (editable mode)
+  /// - Pending steps (not current): block navigation with error message
+  ///
+  /// This ensures data integrity by preventing access to steps that haven't been
+  /// reached yet in strict sequence mode, while allowing review of completed steps.
+  void _navigateToStepDetail(BuildContext context, VisitStep step) {
+    // Retrieve current state to determine step accessibility
+    final currentState = context.read<VisitStepsBloc>().state as VisitStepsLoaded;
+
+    // Find the progress status for the target step
+    final stepProgress = currentState.stepProgress
+        .firstWhere((progress) => progress.step.stepCode == step.stepCode);
+
+    // Determine step accessibility based on completion and current position
+    final isCompleted = stepProgress.status == VisitStepStatus.completed;
+    final isCurrentStep = currentState.currentStepIndex ==
+        currentState.stepProgress.indexOf(stepProgress);
+
+    // Enforce navigation restrictions for non-accessible steps
+    if (!isCompleted && !isCurrentStep) {
+      // Display user-friendly error message for blocked navigation
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Bu step hozirda mavjud emas. Avval oldingi steplarni yakunlang'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // Set readOnly mode: completed steps are view-only, current step is editable
+    final readOnly = isCompleted;
+
+    Widget? page;
+
+    // Navigate based on step name with readOnly parameter
+    switch (step.stepName.toLowerCase()) {
+      case 'фото до (facing correction)':
+        page = PhotoFacingBeforePage(
+          tradingPoint: widget.tradingPoint,
+          visitId: widget.visitId,
+          stepCode: step.stepCode,
+          stepName: step.stepName,
+          readOnly: readOnly,
+        );
+        break;
+      case 'аудит полки (остатки)':
+        page = ShelfAuditPage(
+          tradingPoint: widget.tradingPoint,
+          visitId: widget.visitId,
+          stepCode: step.stepCode,
+          stepName: step.stepName,
+          readOnly: readOnly,
+        );
+        break;
+      case 'аудит конкурентов':
+        page = CompetitorAuditPage(
+          tradingPoint: widget.tradingPoint,
+          visitId: widget.visitId,
+          stepCode: step.stepCode,
+          stepName: step.stepName,
+          readOnly: readOnly,
+        );
+        break;
+      case 'создать заказ':
+        page = CreateOrderPage(
+          tradingPoint: widget.tradingPoint,
+          visitId: widget.visitId,
+          stepCode: step.stepCode,
+          stepName: step.stepName,
+          readOnly: readOnly,
+        );
+        break;
+      case 'фото после (facing correction)':
+        page = PhotoFacingAfterPage(
+          tradingPoint: widget.tradingPoint,
+          visitId: widget.visitId,
+          stepCode: step.stepCode,
+          stepName: step.stepName,
+          readOnly: readOnly,
+        );
+        break;
+      default:
+        // For unknown step types, show a placeholder with readOnly state
+        page = Scaffold(
+          appBar: AppBar(
+            title: Text(step.stepName),
+            centerTitle: true,
+            actions: readOnly ? [
+              const Icon(Icons.visibility, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text(
+                'Faqat ko\'rish',
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              const SizedBox(width: 16),
+            ] : null,
+          ),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.construction,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Sahifa ishlab chiqilmoqda',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  readOnly
+                      ? 'Bu step yakunlangan. Faqat ko\'rish rejimida.'
+                      : 'Bu step turi uchun sahifa hali yaratilmagan',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back),
+                  label: Text(AppLocalizations.of(context)?.back ?? 'Orqaga'),
+                ),
+              ],
+            ),
+          ),
+        );
+    }
+
+    if (page != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => page!),
+      );
+    }
   }
 }

@@ -24,6 +24,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_st
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
@@ -45,7 +46,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 13,
+      version: 14,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -53,6 +54,33 @@ class ApiDatabaseService {
 
   Future<void> _onCreate(Database db, int version) async {
     await _createTables(db);
+
+    // Ensure visit_steps_data table exists for fresh installations
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS visit_steps_data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        visit_id TEXT NOT NULL,
+        client_code TEXT NOT NULL,
+        step_code INTEGER NOT NULL,
+        step_name TEXT NOT NULL,
+        data_type TEXT NOT NULL,
+        data_content TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        is_synced INTEGER NOT NULL DEFAULT 0,
+        synced_at TEXT,
+        sync_error TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create indexes for visit_steps_data table
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -558,6 +586,33 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)');
+    } else if (oldVersion < 14) {
+      // Add visit_steps_data table for version 14
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS visit_steps_data (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          visit_id TEXT NOT NULL,
+          client_code TEXT NOT NULL,
+          step_code INTEGER NOT NULL,
+          step_name TEXT NOT NULL,
+          data_type TEXT NOT NULL,
+          data_content TEXT NOT NULL,
+          timestamp TEXT NOT NULL,
+          is_synced INTEGER NOT NULL DEFAULT 0,
+          synced_at TEXT,
+          sync_error TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      // Create indexes for visit_steps_data table
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)');
     }
   }
 
@@ -3098,6 +3153,7 @@ class ApiDatabaseService {
     // Clear sales req permissions and visit steps tables
     await db.delete('sales_req_permissions');
     await db.delete('visit_steps');
+    await db.delete('visit_steps_data');
 
     await db.delete('kpi_data');
     await db.delete('clients');
@@ -4151,6 +4207,181 @@ class ApiDatabaseService {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
+  /// Visit Steps Data CRUD methods
+
+  /// Save visit step data
+  Future<void> saveVisitStepData(VisitData visitData) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert(
+      'visit_steps_data',
+      {
+        'visit_id': visitData.visitId,
+        'client_code': visitData.clientCode,
+        'step_code': visitData.stepCode,
+        'step_name': visitData.stepName,
+        'data_type': visitData.dataType,
+        'data_content': visitData.dataContent,
+        'timestamp': visitData.timestamp.toIso8601String(),
+        'is_synced': visitData.isSynced ? 1 : 0,
+        'synced_at': visitData.syncedAt?.toIso8601String(),
+        'sync_error': visitData.syncError,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Save multiple visit step data entries
+  Future<void> saveVisitStepDataBatch(List<VisitData> visitDataList) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    final batch = db.batch();
+    for (final visitData in visitDataList) {
+      batch.insert(
+        'visit_steps_data',
+        {
+          'visit_id': visitData.visitId,
+          'client_code': visitData.clientCode,
+          'step_code': visitData.stepCode,
+          'step_name': visitData.stepName,
+          'data_type': visitData.dataType,
+          'data_content': visitData.dataContent,
+          'timestamp': visitData.timestamp.toIso8601String(),
+          'is_synced': visitData.isSynced ? 1 : 0,
+          'synced_at': visitData.syncedAt?.toIso8601String(),
+          'sync_error': visitData.syncError,
+          'created_at': now,
+          'updated_at': now,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    await batch.commit(noResult: true);
+  }
+
+  /// Get visit step data by visit ID
+  Future<List<VisitData>> getVisitStepDataByVisitId(String visitId) async {
+    final db = await database;
+    final result = await db.query(
+      'visit_steps_data',
+      where: 'visit_id = ?',
+      whereArgs: [visitId],
+      orderBy: 'timestamp ASC',
+    );
+
+    return result.map((row) => VisitData.fromMap(row)).toList();
+  }
+
+  /// Get visit step data by user (across all visits)
+  Future<List<VisitData>> getVisitStepDataByUser(String userCode) async {
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT vsd.* FROM visit_steps_data vsd
+      INNER JOIN clients c ON vsd.client_code = c.code
+      WHERE c.owner_name = ? OR c.responsible_person = ?
+      ORDER BY vsd.timestamp DESC
+    ''', [userCode, userCode]);
+
+    return result.map((row) => VisitData.fromMap(row)).toList();
+  }
+
+  /// Get visit step data by client code
+  Future<List<VisitData>> getVisitStepDataByClient(String clientCode) async {
+    final db = await database;
+    final result = await db.query(
+      'visit_steps_data',
+      where: 'client_code = ?',
+      whereArgs: [clientCode],
+      orderBy: 'timestamp DESC',
+    );
+
+    return result.map((row) => VisitData.fromMap(row)).toList();
+  }
+
+  /// Get pending sync visit step data
+  Future<List<VisitData>> getPendingSyncVisitStepData() async {
+    final db = await database;
+    final result = await db.query(
+      'visit_steps_data',
+      where: 'is_synced = 0',
+      orderBy: 'timestamp ASC',
+    );
+
+    return result.map((row) => VisitData.fromMap(row)).toList();
+  }
+
+  /// Update visit step data sync status
+  Future<void> updateVisitStepDataSyncStatus(int id, bool isSynced, {String? syncError}) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'visit_steps_data',
+      {
+        'is_synced': isSynced ? 1 : 0,
+        'synced_at': isSynced ? now : null,
+        'sync_error': syncError,
+        'updated_at': now,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Get visit step data statistics
+  Future<Map<String, dynamic>> getVisitStepDataStats() async {
+    final db = await database;
+
+    final totalResult = await db.rawQuery('SELECT COUNT(*) as total FROM visit_steps_data');
+    final syncedResult = await db.rawQuery('SELECT COUNT(*) as synced FROM visit_steps_data WHERE is_synced = 1');
+    final pendingResult = await db.rawQuery('SELECT COUNT(*) as pending FROM visit_steps_data WHERE is_synced = 0');
+    final errorResult = await db.rawQuery('SELECT COUNT(*) as errors FROM visit_steps_data WHERE sync_error IS NOT NULL');
+
+    return {
+      'total': Sqflite.firstIntValue(totalResult) ?? 0,
+      'synced': Sqflite.firstIntValue(syncedResult) ?? 0,
+      'pending': Sqflite.firstIntValue(pendingResult) ?? 0,
+      'errors': Sqflite.firstIntValue(errorResult) ?? 0,
+    };
+  }
+
+  /// Delete old visit step data (cleanup)
+  Future<void> deleteOldVisitStepData({Duration olderThan = const Duration(days: 30)}) async {
+    final db = await database;
+    final cutoffDate = DateTime.now().subtract(olderThan).toIso8601String();
+
+    await db.delete(
+      'visit_steps_data',
+      where: 'created_at < ? AND is_synced = 1',
+      whereArgs: [cutoffDate],
+    );
+  }
+
+  /// Delete visit step data by visit ID
+  Future<void> deleteVisitStepDataByVisitId(String visitId) async {
+    final db = await database;
+    await db.delete(
+      'visit_steps_data',
+      where: 'visit_id = ?',
+      whereArgs: [visitId],
+    );
+  }
+
+  /// Delete visit step data by client code
+  Future<void> deleteVisitStepDataByClient(String clientCode) async {
+    final db = await database;
+    await db.delete(
+      'visit_steps_data',
+      where: 'client_code = ?',
+      whereArgs: [clientCode],
+    );
+  }
+
   /// Save planned routes data
   Future<void> savePlannedRoutes(List<PlannedRoute> routes) async {
     final db = await database;
@@ -4342,6 +4573,32 @@ class ApiDatabaseService {
       ''');
     }
 
+    // Check if visit_steps_data table exists
+    final visitStepsDataTable = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='visit_steps_data'"
+    );
+
+    if (visitStepsDataTable.isEmpty) {
+      // Create visit_steps_data table
+      await db.execute('''
+        CREATE TABLE visit_steps_data (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          visit_id TEXT NOT NULL,
+          client_code TEXT NOT NULL,
+          step_code INTEGER NOT NULL,
+          step_name TEXT NOT NULL,
+          data_type TEXT NOT NULL,
+          data_content TEXT NOT NULL,
+          timestamp TEXT NOT NULL,
+          is_synced INTEGER NOT NULL DEFAULT 0,
+          synced_at TEXT,
+          sync_error TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+    }
+
     // Check if planned_routes table exists
     final plannedRoutesTable = await db.rawQuery(
       "SELECT name FROM sqlite_master WHERE type='table' AND name='planned_routes'"
@@ -4369,6 +4626,12 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_user_code ON planned_routes(user_code)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_weekday ON planned_routes(code_weekday)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)');

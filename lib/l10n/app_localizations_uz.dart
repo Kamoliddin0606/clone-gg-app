@@ -336,7 +336,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get packed => 'Qadoqlangan';
 
   @override
-  String get completed => 'Bajarilgan';
+  String get completed => 'Bajarildi';
 
   @override
   String get toPack => 'Qadoqlash kerak';
@@ -1105,4 +1105,91 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get mapConfiguration => 'Xarita konfiguratsiyasi';
+
+  @override
+  String get visitProgress => 'Tashrif jarayoni';
+
+  @override
+  String get visitStepNumber => 'Tashrif tartibi';
+
+  @override
+  String get skipped => 'O\'tkazib yuborildi';
+
+  @override
+  String get current => 'Joriy';
+
+  @override
+  String get mandatory => 'Majburiy';
+
+  @override
+  String get completedAt => 'Bajarilgan vaqti';
+
+  @override
+  String get skippedAt => 'O\'tkazib yuborilgan vaqti';
+
+  @override
+  String get notes => 'Izoh';
+
+  @override
+  String get reason => 'Sabab';
+
+  @override
+  String get previousStepsRequired => 'Oldingi qadamlar bajarilishi kerak';
+
+  @override
+  String get completeStep => 'Qadamni bajarish';
+
+  @override
+  String get skipStep => 'Qadamni o\'tkazib yuborish';
+
+  @override
+  String get confirmCompletion => 'Bajarilganligini tasdiqlang';
+
+  @override
+  String get stepCompletedSuccessfully => 'Qadam muvaffaqiyatli bajarildi';
+
+  @override
+  String get stepSkippedSuccessfully => 'Qadam muvaffaqiyatli o\'tkazib yuborildi';
+
+  @override
+  String get visitCompletedSuccessfully => 'Tashrif muvaffaqiyatli yakunlandi!';
+
+  @override
+  String get finishVisit => 'Tashrifni yakunlash';
+
+  @override
+  String get allRequiredStepsMustBeCompleted => 'Barcha majburiy qadamlar bajarilishi kerak';
+
+  @override
+  String get visitInfo => 'Tashrif haqida ma\'lumot';
+
+  @override
+  String get client => 'Mijoz';
+
+  @override
+  String get totalSteps => 'Jami qadamlar';
+
+  @override
+  String get requiredSteps => 'Majburiy qadamlar';
+
+  @override
+  String get unknownState => 'Noma\'lum holat';
+
+  @override
+  String get cancelCompletion => 'Bekor qilish';
+
+  @override
+  String get confirmSkip => 'O\'tkazib yuborishni tasdiqlash';
+
+  @override
+  String get enterNotesOptional => 'Izoh kiriting (ixtiyoriy)';
+
+  @override
+  String get enterSkipReason => 'O\'tkazib yuborish sababini kiriting';
+
+  @override
+  String get stepCannotBeSkipped => 'Bu qadamni o\'tkazib bo\'lmaydi';
+
+  @override
+  String get allRequiredStepsCompleted => 'Barcha majburiy qadamlar bajarildi';
 }

@@ -846,7 +846,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mandatoryExecution => 'Обязательное выполнение';
 
   @override
-  String get optional => 'Необязательно';
+  String get optional => 'Необязательный';
 
   @override
   String get permissionsDataNotAvailable => 'Данные разрешений недоступны';
@@ -1105,4 +1105,91 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mapConfiguration => 'Конфигурация карт';
+
+  @override
+  String get visitProgress => 'Процесс посещения';
+
+  @override
+  String get visitStepNumber => 'Шаг посещения';
+
+  @override
+  String get skipped => 'Пропущено';
+
+  @override
+  String get current => 'Текущий';
+
+  @override
+  String get mandatory => 'Обязательный';
+
+  @override
+  String get completedAt => 'Завершено в';
+
+  @override
+  String get skippedAt => 'Пропущено в';
+
+  @override
+  String get notes => 'Заметки';
+
+  @override
+  String get reason => 'Причина';
+
+  @override
+  String get previousStepsRequired => 'Необходимо завершить предыдущие шаги';
+
+  @override
+  String get completeStep => 'Завершить шаг';
+
+  @override
+  String get skipStep => 'Пропустить шаг';
+
+  @override
+  String get confirmCompletion => 'Подтвердить завершение';
+
+  @override
+  String get stepCompletedSuccessfully => 'Шаг успешно завершен';
+
+  @override
+  String get stepSkippedSuccessfully => 'Шаг успешно пропущен';
+
+  @override
+  String get visitCompletedSuccessfully => 'Посещение успешно завершено!';
+
+  @override
+  String get finishVisit => 'Завершить посещение';
+
+  @override
+  String get allRequiredStepsMustBeCompleted => 'Все обязательные шаги должны быть завершены';
+
+  @override
+  String get visitInfo => 'Информация о посещении';
+
+  @override
+  String get client => 'Клиент';
+
+  @override
+  String get totalSteps => 'Всего шагов';
+
+  @override
+  String get requiredSteps => 'Обязательные шаги';
+
+  @override
+  String get unknownState => 'Неизвестное состояние';
+
+  @override
+  String get cancelCompletion => 'Отменить завершение';
+
+  @override
+  String get confirmSkip => 'Подтвердить пропуск';
+
+  @override
+  String get enterNotesOptional => 'Введите заметки (необязательно)';
+
+  @override
+  String get enterSkipReason => 'Введите причину пропуска';
+
+  @override
+  String get stepCannotBeSkipped => 'Этот шаг нельзя пропустить';
+
+  @override
+  String get allRequiredStepsCompleted => 'Все обязательные шаги завершены';
 }

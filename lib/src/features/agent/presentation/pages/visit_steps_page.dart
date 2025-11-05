@@ -8,6 +8,7 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations_en.dart';
 
 /// Visit Steps Page - BLoC State Management
 abstract class VisitStepsState extends Equatable {
@@ -171,7 +172,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       final userCode = await _getCurrentUserCode();
 
       if (userCode == null) {
-        emit(const VisitStepsError('Foydalanuvchi kodi topilmadi'));
+        emit(VisitStepsError(AppLocalizationsEn().userCodeNotFound));
         return;
       }
 
@@ -180,13 +181,13 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       final permissions = await dataSyncService.getCachedSalesReqPermissions(userCode);
 
       if (permissions == null) {
-        emit(const VisitStepsError('Ruxsatlar ma\'lumotlari mavjud emas'));
+        emit(VisitStepsError(AppLocalizationsEn().permissionsDataNotAvailable));
         return;
       }
 
       // Check if visit steps are available in the permissions
       if (permissions.visitSteps.isEmpty) {
-        emit(const VisitStepsError('Tashrif qadamlar mavjud emas'));
+        emit(VisitStepsError(AppLocalizationsEn().visitSteps));
         return;
       }
 
@@ -216,7 +217,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       // Log error for debugging with stack trace
       debugPrint('Error loading visit steps: $e');
       debugPrint('Stack trace: $stackTrace');
-      emit(VisitStepsError('Tashrif qadamlarini yuklashda xatolik yuz berdi: $e'));
+      emit(VisitStepsError(AppLocalizationsEn().errorLoadingPermissions));
     }
   }
 
@@ -283,7 +284,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
     // Only allow skipping if step is not required
     if (step.stepRequired) {
-      emit(VisitStepsError('Bu qadam majburiy va o\'tkazib bo\'lmaydi'));
+      emit(VisitStepsError(AppLocalizationsEn().stepCannotBeSkipped));
       return;
     }
 
@@ -320,7 +321,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         progress.step.stepRequired && progress.status != VisitStepStatus.completed);
 
     if (hasIncompleteRequiredSteps) {
-      emit(VisitStepsError('Barcha majburiy qadamlar bajarilishi kerak'));
+      emit(VisitStepsError(AppLocalizationsEn().allRequiredStepsMustBeCompleted));
       return;
     }
 
@@ -403,7 +404,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
 
     // Ensure AppLocalizations is available, fallback to default if null
     if (l10n == null) {
-      return const Center(child: Text('Localization not available'));
+      return Center(child: Text(AppLocalizationsEn().error));
     }
 
     return Scaffold(
@@ -419,7 +420,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                     _showVisitInfoDialog(context, state);
                   },
                   icon: const Icon(Icons.info_outline),
-                  tooltip: 'Tashrif haqida',
+                  tooltip: l10n.visitInfo,
                 );
               }
               return const SizedBox.shrink();
@@ -439,7 +440,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           } else if (state is VisitStepsCompleted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('Tashrif muvaffaqiyatli yakunlandi!'),
+                content: Text(l10n.visitCompletedSuccessfully),
                 backgroundColor: Colors.green,
               ),
             );
@@ -472,14 +473,14 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                     onPressed: () {
                       context.read<VisitStepsBloc>().add(LoadVisitSteps(widget.tradingPoint));
                     },
-                    child: const Text('Qayta urinish'),
+                    child: Text(l10n.retry),
                   ),
                 ],
               ),
             );
           }
 
-          return const Center(child: Text('Noma\'lum holat'));
+          return Center(child: Text(l10n.unknownState));
         },
       ),
     );
@@ -523,6 +524,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   }
 
   Widget _buildClientHeader(BuildContext context, VisitStepsLoaded state, ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -586,7 +588,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Tashrif tartibi: ${state.tradingPoint.visitStepNumber}',
+                      '${l10n?.visitStepNumber ?? 'Visit Step'}: ${state.tradingPoint.visitStepNumber}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w500,
@@ -603,6 +605,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   }
 
   Widget _buildProgressIndicator(BuildContext context, VisitStepsLoaded state, ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     final completedSteps = state.stepProgress.where((p) => p.status == VisitStepStatus.completed).length;
     final totalSteps = state.stepProgress.length;
     final progress = totalSteps > 0 ? completedSteps / totalSteps : 0.0;
@@ -615,7 +618,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Tashrif jarayoni',
+                l10n?.visitProgress ?? 'Visit Progress',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -702,7 +705,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
               child: OutlinedButton.icon(
                 onPressed: () => Navigator.of(context).pop(false),
                 icon: const Icon(Icons.close),
-                label: Text(l10n.cancel ?? 'Bekor qilish'),
+                label: Text(l10n.cancel ?? 'Cancel'),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -715,7 +718,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                     ? () => context.read<VisitStepsBloc>().add(FinishVisit())
                     : null,
                 icon: const Icon(Icons.check_circle),
-                label: const Text('Tashrifni yakunlash'),
+                label: Text(l10n.finishVisit ?? 'Finish Visit'),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -735,29 +738,30 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   }
 
   void _showVisitInfoDialog(BuildContext context, VisitStepsLoaded state) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Tashrif haqida ma\'lumot'),
+        title: Text(l10n?.visitInfo ?? 'Visit Information'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Mijoz: ${state.tradingPoint.tradingPoint.name}'),
+            Text('${l10n?.client ?? 'Client'}: ${state.tradingPoint.tradingPoint.name}'),
             const SizedBox(height: 8),
-            Text('Qat\'iy ketma-ketlik: ${state.isStrictSequence ? 'Ha' : 'Yo\'q'}'),
+            Text('${l10n?.strictSequence ?? 'Strict Sequence'}: ${state.isStrictSequence ? (l10n?.yes ?? 'Yes') : (l10n?.no ?? 'No')}'),
             const SizedBox(height: 8),
-            Text('Tashrif tartibi: ${state.tradingPoint.visitStepNumber}'),
+            Text('${l10n?.visitStepNumber ?? 'Visit Step'}: ${state.tradingPoint.visitStepNumber}'),
             const SizedBox(height: 8),
-            Text('Jami qadamlar: ${state.stepProgress.length}'),
+            Text('${l10n?.totalSteps ?? 'Total Steps'}: ${state.stepProgress.length}'),
             const SizedBox(height: 8),
-            Text('Majburiy qadamlar: ${state.stepProgress.where((p) => p.step.stepRequired).length}'),
+            Text('${l10n?.requiredSteps ?? 'Required Steps'}: ${state.stepProgress.where((p) => p.step.stepRequired).length}'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Yopish'),
+            child: Text(l10n?.close ?? 'Close'),
           ),
         ],
       ),
@@ -801,6 +805,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final step = widget.stepProgress.step;
     final status = widget.stepProgress.status;
 
@@ -878,7 +883,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              step.stepRequired ? 'Majburiy' : 'Ixtiyoriy',
+                              step.stepRequired ? (l10n?.mandatory ?? 'Mandatory') : (l10n?.optional ?? 'Optional'),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: step.stepRequired
                                     ? theme.colorScheme.onErrorContainer
@@ -896,7 +901,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                'Joriy',
+                                l10n?.current ?? 'Current',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onPrimary,
                                   fontWeight: FontWeight.w500,
@@ -930,7 +935,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Bajarildi',
+                      l10n?.completed ?? 'Completed',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w500,
@@ -951,7 +956,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               if (widget.stepProgress.notes?.isNotEmpty == true) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Izoh: ${widget.stepProgress.notes}',
+                  '${l10n?.notes ?? 'Notes'}: ${widget.stepProgress.notes}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -974,7 +979,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'O\'tkazib yuborildi',
+                      l10n?.skipped ?? 'Skipped',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
@@ -986,7 +991,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               if (widget.stepProgress.skipReason?.isNotEmpty == true) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Sabab: ${widget.stepProgress.skipReason}',
+                  '${l10n?.reason ?? 'Reason'}: ${widget.stepProgress.skipReason}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -1002,7 +1007,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                       child: OutlinedButton.icon(
                         onPressed: () => _showSkipDialog(context),
                         icon: const Icon(Icons.skip_next, size: 18),
-                        label: const Text('O\'tkazib yuborish'),
+                        label: Text(l10n?.skipStep ?? 'Skip Step'),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
@@ -1015,7 +1020,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                     child: FilledButton.icon(
                       onPressed: () => _showCompleteDialog(context),
                       icon: const Icon(Icons.check, size: 18),
-                      label: const Text('Bajarildi'),
+                      label: Text(l10n?.completeStep ?? 'Complete Step'),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                       ),
@@ -1040,7 +1045,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Oldingi qadamlar bajarilishi kerak',
+                      l10n?.previousStepsRequired ?? 'Previous steps must be completed',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -1056,20 +1061,21 @@ class _VisitStepCardState extends State<_VisitStepCard> {
   }
 
   void _showCompleteDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${widget.stepProgress.step.stepName} bajarildi'),
+        title: Text('${widget.stepProgress.step.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Qadam bajarilganligini tasdiqlang va izoh qoldiring (ixtiyoriy):'),
+            Text(l10n?.confirmCompletion ?? 'Confirm completion'),
             const SizedBox(height: 12),
             TextField(
               controller: _notesController,
-              decoration: const InputDecoration(
-                hintText: 'Izoh...',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: l10n?.enterNotesOptional ?? 'Enter notes (optional)',
+                border: const OutlineInputBorder(),
               ),
               maxLines: 3,
             ),
@@ -1078,7 +1084,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(l10n?.cancelCompletion ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () {
@@ -1086,7 +1092,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               _notesController.clear();
               Navigator.of(context).pop();
             },
-            child: const Text('Tasdiqlash'),
+            child: Text(l10n?.confirmCompletion ?? 'Confirm'),
           ),
         ],
       ),
@@ -1094,20 +1100,21 @@ class _VisitStepCardState extends State<_VisitStepCard> {
   }
 
   void _showSkipDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${widget.stepProgress.step.stepName} o\'tkazib yuborish'),
+        title: Text('${widget.stepProgress.step.stepName} ${l10n?.skipStep?.toLowerCase() ?? 'skip'}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Bu qadamni o\'tkazib yuborish sababini kiriting:'),
+            Text(l10n?.enterSkipReason ?? 'Enter skip reason'),
             const SizedBox(height: 12),
             TextField(
               controller: _skipReasonController,
-              decoration: const InputDecoration(
-                hintText: 'Sabab...',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: l10n?.reason ?? 'Reason',
+                border: const OutlineInputBorder(),
               ),
               maxLines: 3,
             ),
@@ -1116,7 +1123,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(l10n?.cancel ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () {
@@ -1124,7 +1131,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               _skipReasonController.clear();
               Navigator.of(context).pop();
             },
-            child: const Text('O\'tkazib yuborish'),
+            child: Text(l10n?.confirmSkip ?? 'Confirm Skip'),
           ),
         ],
       ),

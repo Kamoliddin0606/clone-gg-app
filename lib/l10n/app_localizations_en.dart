@@ -1105,4 +1105,91 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mapConfiguration => 'Map Configuration';
+
+  @override
+  String get visitProgress => 'Visit Progress';
+
+  @override
+  String get visitStepNumber => 'Visit Step';
+
+  @override
+  String get skipped => 'Skipped';
+
+  @override
+  String get current => 'Current';
+
+  @override
+  String get mandatory => 'Mandatory';
+
+  @override
+  String get completedAt => 'Completed at';
+
+  @override
+  String get skippedAt => 'Skipped at';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get reason => 'Reason';
+
+  @override
+  String get previousStepsRequired => 'Previous steps must be completed';
+
+  @override
+  String get completeStep => 'Complete Step';
+
+  @override
+  String get skipStep => 'Skip Step';
+
+  @override
+  String get confirmCompletion => 'Confirm completion';
+
+  @override
+  String get stepCompletedSuccessfully => 'Step completed successfully';
+
+  @override
+  String get stepSkippedSuccessfully => 'Step skipped successfully';
+
+  @override
+  String get visitCompletedSuccessfully => 'Visit completed successfully!';
+
+  @override
+  String get finishVisit => 'Finish Visit';
+
+  @override
+  String get allRequiredStepsMustBeCompleted => 'All required steps must be completed';
+
+  @override
+  String get visitInfo => 'Visit Information';
+
+  @override
+  String get client => 'Client';
+
+  @override
+  String get totalSteps => 'Total Steps';
+
+  @override
+  String get requiredSteps => 'Required Steps';
+
+  @override
+  String get unknownState => 'Unknown state';
+
+  @override
+  String get cancelCompletion => 'Cancel Completion';
+
+  @override
+  String get confirmSkip => 'Confirm Skip';
+
+  @override
+  String get enterNotesOptional => 'Enter notes (optional)';
+
+  @override
+  String get enterSkipReason => 'Enter skip reason';
+
+  @override
+  String get stepCannotBeSkipped => 'This step cannot be skipped';
+
+  @override
+  String get allRequiredStepsCompleted => 'All required steps completed';
 }

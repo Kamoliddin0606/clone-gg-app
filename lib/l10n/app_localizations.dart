@@ -2292,6 +2292,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Map Configuration'**
   String get mapConfiguration;
+
+  /// No description provided for @visitProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Progress'**
+  String get visitProgress;
+
+  /// No description provided for @visitStepNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Step'**
+  String get visitStepNumber;
+
+  /// No description provided for @skipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get skipped;
+
+  /// No description provided for @current.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get current;
+
+  /// No description provided for @mandatory.
+  ///
+  /// In en, this message translates to:
+  /// **'Mandatory'**
+  String get mandatory;
+
+  /// No description provided for @completedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed at'**
+  String get completedAt;
+
+  /// No description provided for @skippedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped at'**
+  String get skippedAt;
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get reason;
+
+  /// No description provided for @previousStepsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous steps must be completed'**
+  String get previousStepsRequired;
+
+  /// No description provided for @completeStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Step'**
+  String get completeStep;
+
+  /// No description provided for @skipStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Step'**
+  String get skipStep;
+
+  /// No description provided for @confirmCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm completion'**
+  String get confirmCompletion;
+
+  /// No description provided for @stepCompletedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Step completed successfully'**
+  String get stepCompletedSuccessfully;
+
+  /// No description provided for @stepSkippedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Step skipped successfully'**
+  String get stepSkippedSuccessfully;
+
+  /// No description provided for @visitCompletedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit completed successfully!'**
+  String get visitCompletedSuccessfully;
+
+  /// No description provided for @finishVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish Visit'**
+  String get finishVisit;
+
+  /// No description provided for @allRequiredStepsMustBeCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'All required steps must be completed'**
+  String get allRequiredStepsMustBeCompleted;
+
+  /// No description provided for @visitInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Information'**
+  String get visitInfo;
+
+  /// No description provided for @client.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get client;
+
+  /// No description provided for @totalSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Steps'**
+  String get totalSteps;
+
+  /// No description provided for @requiredSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Required Steps'**
+  String get requiredSteps;
+
+  /// No description provided for @unknownState.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown state'**
+  String get unknownState;
+
+  /// No description provided for @cancelCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Completion'**
+  String get cancelCompletion;
+
+  /// No description provided for @confirmSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Skip'**
+  String get confirmSkip;
+
+  /// No description provided for @enterNotesOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter notes (optional)'**
+  String get enterNotesOptional;
+
+  /// No description provided for @enterSkipReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter skip reason'**
+  String get enterSkipReason;
+
+  /// No description provided for @stepCannotBeSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'This step cannot be skipped'**
+  String get stepCannotBeSkipped;
+
+  /// No description provided for @allRequiredStepsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'All required steps completed'**
+  String get allRequiredStepsCompleted;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

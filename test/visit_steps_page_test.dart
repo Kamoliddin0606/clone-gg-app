@@ -85,7 +85,7 @@ void main() {
       // Verify that the page renders correctly
       expect(find.text('Test Client'), findsOneWidget);
       expect(find.text('Test Address'), findsOneWidget);
-      expect(find.text('Tashrif tartibi: 1'), findsOneWidget);
+      expect(find.text('Visit Step: 1'), findsOneWidget);
       expect(find.text('Step 1'), findsOneWidget);
       expect(find.text('Step 2'), findsOneWidget);
     });
@@ -155,9 +155,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify strict sequence information is shown
-      expect(find.text('Qat\'iy ketma-ketlik: Ha'), findsOneWidget);
-      expect(find.text('Jami qadamlar: 1'), findsOneWidget);
-      expect(find.text('Majburiy qadamlar: 1'), findsOneWidget);
+      expect(find.text('Strict Sequence: Yes'), findsOneWidget);
+      expect(find.text('Total Steps: 1'), findsOneWidget);
+      expect(find.text('Required Steps: 1'), findsOneWidget);
     });
 
     testWidgets('should handle step completion', (WidgetTester tester) async {
@@ -223,20 +223,20 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap the complete button
-      await tester.tap(find.text('Bajarildi'));
+      await tester.tap(find.text('Complete Step'));
       await tester.pumpAndSettle();
 
       // Verify completion dialog appears
-      expect(find.text('Step 1 bajarildi'), findsOneWidget);
-      expect(find.text('Qadam bajarilganligini tasdiqlang va izoh qoldiring (ixtiyoriy):'), findsOneWidget);
+      expect(find.text('Step 1 completed'), findsOneWidget);
+      expect(find.text('Confirm completion'), findsOneWidget);
 
       // Enter notes and confirm
       await tester.enterText(find.byType(TextField), 'Test notes');
-      await tester.tap(find.text('Tasdiqlash'));
+      await tester.tap(find.text('Confirm'));
       await tester.pumpAndSettle();
 
       // Verify step is marked as completed
-      expect(find.text('Bajarildi'), findsOneWidget);
+      expect(find.text('Completed'), findsOneWidget);
     });
 
     testWidgets('should handle visit completion', (WidgetTester tester) async {
@@ -300,20 +300,20 @@ void main() {
       await tester.pumpAndSettle();
 
       // Complete the step first
-      await tester.tap(find.text('Bajarildi'));
+      await tester.tap(find.text('Complete Step'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Tasdiqlash'));
+      await tester.tap(find.text('Confirm'));
       await tester.pumpAndSettle();
 
       // Now the finish visit button should be enabled
-      expect(find.text('Tashrifni yakunlash'), findsOneWidget);
+      expect(find.text('Finish Visit'), findsOneWidget);
 
       // Tap finish visit
-      await tester.tap(find.text('Tashrifni yakunlash'));
+      await tester.tap(find.text('Finish Visit'));
       await tester.pumpAndSettle();
 
       // Verify success message appears
-      expect(find.text('Tashrif muvaffaqiyatli yakunlandi!'), findsOneWidget);
+      expect(find.text('Visit completed successfully!'), findsOneWidget);
     });
   });
 }

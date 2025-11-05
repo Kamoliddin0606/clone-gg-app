@@ -472,12 +472,12 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
   int _getCurrentStepIndex(List<VisitStepProgress> progress, bool isStrictSequence) {
     if (!isStrictSequence) {
-      // In non-strict mode, find first pending step
-      return progress.indexWhere((p) => p.status == VisitStepStatus.pending);
+      // In non-strict mode, find first pending or in-progress step
+      return progress.indexWhere((p) => p.status == VisitStepStatus.pending || p.status == VisitStepStatus.inProgress);
     } else {
-      // In strict mode, find first pending step that can be accessed
+      // In strict mode, find first pending or in-progress step that can be accessed
       for (int i = 0; i < progress.length; i++) {
-        if (progress[i].status == VisitStepStatus.pending) {
+        if (progress[i].status == VisitStepStatus.pending || progress[i].status == VisitStepStatus.inProgress) {
           // Check if all previous required steps are completed
           bool canAccess = true;
           for (int j = 0; j < i; j++) {

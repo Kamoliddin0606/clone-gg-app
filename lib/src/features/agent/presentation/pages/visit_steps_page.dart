@@ -11,11 +11,11 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/photo_facing_before_page.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/shelf_audit_page.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/competitor_audit_page.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/create_order_page.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/photo_facing_after_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/photo_facing_before_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/shelf_audit_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/competitor_audit_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/create_order_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/photo_facing_after_page.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations_en.dart';
 
@@ -113,6 +113,15 @@ class SkipStep extends VisitStepsEvent {
   List<Object?> get props => [stepIndex, reason];
 }
 
+class PreviousStep extends VisitStepsEvent {
+  final int currentStepIndex;
+
+  const PreviousStep(this.currentStepIndex);
+
+  @override
+  List<Object?> get props => [currentStepIndex];
+}
+
 class FinishVisit extends VisitStepsEvent {}
 
 /// Visit Step Progress Model
@@ -169,6 +178,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     on<LoadVisitSteps>(_onLoadVisitSteps);
     on<CompleteStep>(_onCompleteStep);
     on<SkipStep>(_onSkipStep);
+    on<PreviousStep>(_onPreviousStep);
     on<FinishVisit>(_onFinishVisit);
   }
 
@@ -338,6 +348,63 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     ));
   }
 
+  Future<void> _onPreviousStep(
+    PreviousStep event,
+    Emitter<VisitStepsState> emit,
+  ) async {
+    if (state is! VisitStepsLoaded) return;
+
+    final currentState = state as VisitStepsLoaded;
+
+    // Calculate previous step index
+    final previousStepIndex = event.currentStepIndex - 1;
+
+    // Ensure we don't go below 0
+    if (previousStepIndex < 0) return;
+
+    // Clear data for the current step from database
+    final currentStep = currentState.stepProgress[event.currentStepIndex].step;
+    await _clearStepDataFromStorage(currentStep.stepCode);
+
+    // Update step progress: clear current step and set previous step to in-progress
+    final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
+
+    // Clear current step (reset to pending and clear all data)
+    updatedProgress[event.currentStepIndex] = updatedProgress[event.currentStepIndex].copyWith(
+      status: VisitStepStatus.pending,
+      notes: null,
+      skipReason: null,
+      completedAt: null,
+    );
+
+    // Set previous step to in-progress status and update its data in database
+    final previousStep = updatedProgress[previousStepIndex].step;
+    updatedProgress[previousStepIndex] = updatedProgress[previousStepIndex].copyWith(
+      status: VisitStepStatus.inProgress,
+      completedAt: null, // Clear completion time since it's now in progress
+    );
+
+    // Save the in-progress status for the previous step to database
+    await _saveStepDataToStorage(
+      stepCode: previousStep.stepCode,
+      stepName: previousStep.stepName,
+      dataType: 'progress',
+      dataContent: {
+        'status': 'inProgress',
+        'updatedAt': DateTime.now().toIso8601String(),
+      },
+    );
+
+    emit(VisitStepsLoaded(
+      tradingPoint: currentState.tradingPoint,
+      permissions: currentState.permissions,
+      stepProgress: updatedProgress,
+      currentStepIndex: previousStepIndex,
+      isStrictSequence: currentState.isStrictSequence,
+      canProceedToNext: _canProceedToNext(updatedProgress, previousStepIndex, currentState.isStrictSequence),
+    ));
+  }
+
   Future<void> _onFinishVisit(
     FinishVisit event,
     Emitter<VisitStepsState> emit,
@@ -469,6 +536,16 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       await _visitDataRepository.saveVisitStepData(visitData);
     } catch (e) {
       debugPrint('Error saving step data to storage: $e');
+      // Don't throw - we don't want to break the UI flow
+    }
+  }
+
+  /// Clear step data from persistent storage
+  Future<void> _clearStepDataFromStorage(int stepCode) async {
+    try {
+      await _visitDataRepository.deleteVisitStepDataByStepCode(_visitId, stepCode);
+    } catch (e) {
+      debugPrint('Error clearing step data from storage: $e');
       // Don't throw - we don't want to break the UI flow
     }
   }
@@ -772,11 +849,15 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           isStrictSequence: state.isStrictSequence,
           tradingPoint: state.tradingPoint,
           visitId: (context.read<VisitStepsBloc>() as VisitStepsBloc)._visitId,
+          currentStepIndex: state.currentStepIndex,
           onComplete: (notes) {
             context.read<VisitStepsBloc>().add(CompleteStep(index, notes));
           },
           onSkip: (reason) {
             context.read<VisitStepsBloc>().add(SkipStep(index, reason));
+          },
+          onPrevious: () {
+            context.read<VisitStepsBloc>().add(PreviousStep(state.currentStepIndex));
           },
         );
       },
@@ -888,8 +969,10 @@ class _VisitStepCard extends StatefulWidget {
   final bool isStrictSequence;
   final TradingPointWithPermissions tradingPoint;
   final String visitId;
+  final int currentStepIndex;
   final Function(String) onComplete;
   final Function(String) onSkip;
+  final Function() onPrevious;
 
   const _VisitStepCard({
     required this.stepProgress,
@@ -898,8 +981,10 @@ class _VisitStepCard extends StatefulWidget {
     required this.isStrictSequence,
     required this.tradingPoint,
     required this.visitId,
+    required this.currentStepIndex,
     required this.onComplete,
     required this.onSkip,
+    required this.onPrevious,
   });
 
   @override
@@ -1124,6 +1209,19 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               // Action buttons for pending/in-progress steps
               Row(
                 children: [
+                  if (widget.currentStepIndex > 0) ...[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: widget.onPrevious,
+                        icon: const Icon(Icons.skip_previous, size: 18),
+                        label: Text(l10n?.previous ?? 'Previous'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   if (!step.stepRequired) ...[
                     Expanded(
                       child: OutlinedButton.icon(
@@ -1137,17 +1235,19 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                     ),
                     const SizedBox(width: 8),
                   ],
-                  Expanded(
-                    flex: step.stepRequired ? 1 : 1,
-                    child: FilledButton.icon(
-                      onPressed: () => _showCompleteDialog(context),
-                      icon: const Icon(Icons.check, size: 18),
-                      label: Text(l10n?.completeStep ?? 'Complete Step'),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                  if (!widget.isCurrentStep) ...[
+                    Expanded(
+                      flex: step.stepRequired ? 1 : 1,
+                      child: FilledButton.icon(
+                        onPressed: () => _showCompleteDialog(context),
+                        icon: const Icon(Icons.check, size: 18),
+                        label: Text(l10n?.completeStep ?? 'Complete Step'),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ] else if (widget.isStrictSequence && status == VisitStepStatus.pending) ...[
@@ -1273,7 +1373,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
   ///
   /// This ensures data integrity by preventing access to steps that haven't been
   /// reached yet in strict sequence mode, while allowing review of completed steps.
-  void _navigateToStepDetail(BuildContext context, VisitStep step) {
+  void _navigateToStepDetail(BuildContext context, VisitStep step) async {
     // Retrieve current state to determine step accessibility
     final currentState = context.read<VisitStepsBloc>().state as VisitStepsLoaded;
 
@@ -1405,9 +1505,17 @@ class _VisitStepCardState extends State<_VisitStepCard> {
     }
 
     if (page != null) {
-      Navigator.of(context).push(
+      // Navigate and wait for result
+      final result = await Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => page!),
       );
+
+      // Handle the result if step was completed
+      if (result != null && result is Map<String, dynamic> && result['completed'] == true) {
+        final notes = result['notes'] as String? ?? '';
+        final stepIndex = currentState.stepProgress.indexOf(stepProgress);
+        context.read<VisitStepsBloc>().add(CompleteStep(stepIndex, notes));
+      }
     }
   }
 }

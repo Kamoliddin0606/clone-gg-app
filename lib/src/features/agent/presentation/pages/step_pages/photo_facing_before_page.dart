@@ -90,12 +90,14 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage> {
           ),
           if (!widget.readOnly) ...[
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12 ),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                  // bottomLeft: Radius.circular(20),
+                  // bottomRight: Radius.circular(20),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -111,7 +113,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage> {
                   icon: const Icon(Icons.check),
                   label: Text(l10n?.completeStep ?? 'Complete Step'),
                   style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                   ),
                 ),
               ),

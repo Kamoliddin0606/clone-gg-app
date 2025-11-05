@@ -4382,6 +4382,16 @@ class ApiDatabaseService {
     );
   }
 
+  /// Delete visit step data by visit ID and step code
+  Future<void> deleteVisitStepDataByStepCode(String visitId, int stepCode) async {
+    final db = await database;
+    await db.delete(
+      'visit_steps_data',
+      where: 'visit_id = ? AND step_code = ?',
+      whereArgs: [visitId, stepCode],
+    );
+  }
+
   /// Save planned routes data
   Future<void> savePlannedRoutes(List<PlannedRoute> routes) async {
     final db = await database;

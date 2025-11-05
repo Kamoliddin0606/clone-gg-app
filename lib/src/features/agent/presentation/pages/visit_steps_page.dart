@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
@@ -163,14 +164,35 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
     try {
       final tradingPoint = event.tradingPoint;
-      final permissions = tradingPoint.permissions;
 
-      if (permissions == null) {
-        emit(const VisitStepsError('Ruxsatlar mavjud emas'));
+      // Fetch visit steps from database instead of using tradingPoint.permissions
+      // This ensures we get the latest visit steps configured for the current user
+      final dataSyncService = sl<DataSyncService>();
+      final userCode = await _getCurrentUserCode();
+
+      if (userCode == null) {
+        emit(const VisitStepsError('Foydalanuvchi kodi topilmadi'));
         return;
       }
 
-      // Initialize step progress
+      // Get sales req permissions with visit steps from database
+      // This method retrieves cached permissions that include visit steps configuration
+      final permissions = await dataSyncService.getCachedSalesReqPermissions(userCode);
+
+      if (permissions == null) {
+        emit(const VisitStepsError('Ruxsatlar ma\'lumotlari mavjud emas'));
+        return;
+      }
+
+      // Check if visit steps are available in the permissions
+      if (permissions.visitSteps.isEmpty) {
+        emit(const VisitStepsError('Tashrif qadamlar mavjud emas'));
+        return;
+      }
+
+      debugPrint('Successfully loaded ${permissions.visitSteps.length} visit steps for user $userCode');
+
+      // Initialize step progress using database visit steps
       final stepProgress = permissions.visitSteps.map((step) {
         return VisitStepProgress(
           step: step,
@@ -190,8 +212,36 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         isStrictSequence: isStrictSequence,
         canProceedToNext: _canProceedToNext(stepProgress, currentStepIndex, isStrictSequence),
       ));
-    } catch (e) {
-      emit(VisitStepsError('Xatolik: $e'));
+    } catch (e, stackTrace) {
+      // Log error for debugging with stack trace
+      debugPrint('Error loading visit steps: $e');
+      debugPrint('Stack trace: $stackTrace');
+      emit(VisitStepsError('Tashrif qadamlarini yuklashda xatolik yuz berdi: $e'));
+    }
+  }
+
+  /// Helper method to get current user code from preferences
+  /// This method retrieves the user code from shared preferences
+  /// Returns null if user code is not available or an error occurs
+  /// Used to fetch user-specific visit steps from database
+  Future<String?> _getCurrentUserCode() async {
+    try {
+      // Ensure SharedPreferencesService is ready before accessing
+      await sl.isReady<SharedPreferencesService>();
+      final prefs = sl<SharedPreferencesService>();
+      final userCode = prefs.getUserCode();
+
+      if (userCode == null || userCode.isEmpty) {
+        debugPrint('User code not found in preferences - cannot load visit steps');
+        return null;
+      }
+
+      debugPrint('Retrieved user code for visit steps: $userCode');
+      return userCode;
+    } catch (e, stackTrace) {
+      debugPrint('Error getting user code from preferences: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return null;
     }
   }
 
@@ -349,7 +399,12 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
+
+    // Ensure AppLocalizations is available, fallback to default if null
+    if (l10n == null) {
+      return const Center(child: Text('Localization not available'));
+    }
 
     return Scaffold(
       appBar: AppBar(

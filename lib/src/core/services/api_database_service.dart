@@ -3980,8 +3980,10 @@ class ApiDatabaseService {
     return permissions;
   }
 
-  /// Save visit steps
-  Future<void> saveVisitSteps(List<VisitStep> visitSteps) async {
+  /// Save visit steps (legacy method - kept for backward compatibility)
+  /// Note: This method is deprecated. Use saveVisitSteps(List<VisitStep> visitSteps, int salesReqPermissionsId) instead.
+  @deprecated
+  Future<void> saveVisitStepsLegacy(List<VisitStep> visitSteps) async {
     final db = await database;
     final batch = db.batch();
 
@@ -3994,18 +3996,6 @@ class ApiDatabaseService {
     }
 
     await batch.commit(noResult: true);
-  }
-
-  /// Get visit steps by sales req permissions id
-  Future<List<VisitStep>> getVisitSteps(int salesReqPermissionsId) async {
-    final db = await database;
-    final maps = await db.query(
-      'visit_steps',
-      where: 'sales_req_permissions_id = ?',
-      whereArgs: [salesReqPermissionsId],
-    );
-
-    return maps.map((map) => VisitStep.fromMap(map)).toList();
   }
 
   /// Delete sales req permissions by user code
@@ -4023,6 +4013,142 @@ class ApiDatabaseService {
     final db = await database;
     await db.delete('visit_steps');
     await db.delete('sales_req_permissions');
+  }
+
+  /// Visit Steps CRUD methods
+
+  /// Save visit steps for a specific sales req permissions
+  Future<void> saveVisitSteps(List<VisitStep> visitSteps, int salesReqPermissionsId) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete existing visit steps for this permissions
+    batch.delete('visit_steps', where: 'sales_req_permissions_id = ?', whereArgs: [salesReqPermissionsId]);
+
+    // Deduplicate visit steps by step_code to avoid UNIQUE constraint violations
+    final uniqueVisitSteps = <int, VisitStep>{};
+    for (final visitStep in visitSteps) {
+      uniqueVisitSteps[visitStep.stepCode] = visitStep;
+    }
+
+    // Add all inserts to batch
+    for (final visitStep in uniqueVisitSteps.values) {
+      batch.insert('visit_steps', {
+        'sales_req_permissions_id': salesReqPermissionsId,
+        'step_code': visitStep.stepCode,
+        'step_name': visitStep.stepName,
+        'step_required': visitStep.stepRequired ? 1 : 0,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  /// Get visit steps by sales req permissions id
+  Future<List<VisitStep>> getVisitSteps(int salesReqPermissionsId) async {
+    final db = await database;
+    final result = await db.query(
+      'visit_steps',
+      where: 'sales_req_permissions_id = ?',
+      whereArgs: [salesReqPermissionsId],
+      orderBy: 'step_code ASC',
+    );
+
+    return result.map((row) => VisitStep(
+      id: row['id'] as int?,
+      salesReqPermissionsId: row['sales_req_permissions_id'] as int?,
+      stepCode: row['step_code'] as int,
+      stepName: row['step_name'] as String,
+      stepRequired: (row['step_required'] as int?) == 1,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    )).toList();
+  }
+
+  /// Get visit step by id
+  Future<VisitStep?> getVisitStepById(int id) async {
+    final db = await database;
+    final result = await db.query(
+      'visit_steps',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return VisitStep(
+      id: row['id'] as int?,
+      salesReqPermissionsId: row['sales_req_permissions_id'] as int?,
+      stepCode: row['step_code'] as int,
+      stepName: row['step_name'] as String,
+      stepRequired: (row['step_required'] as int?) == 1,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    );
+  }
+
+  /// Update visit step
+  Future<void> updateVisitStep(int id, VisitStep visitStep) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'visit_steps',
+      {
+        'step_code': visitStep.stepCode,
+        'step_name': visitStep.stepName,
+        'step_required': visitStep.stepRequired ? 1 : 0,
+        'updated_at': now,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Delete visit step by id
+  Future<void> deleteVisitStep(int id) async {
+    final db = await database;
+    await db.delete('visit_steps', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Delete all visit steps for a specific sales req permissions
+  Future<void> deleteVisitStepsByPermissionsId(int salesReqPermissionsId) async {
+    final db = await database;
+    await db.delete('visit_steps', where: 'sales_req_permissions_id = ?', whereArgs: [salesReqPermissionsId]);
+  }
+
+  /// Get all visit steps (for admin/debug purposes)
+  Future<List<VisitStep>> getAllVisitSteps() async {
+    final db = await database;
+    final result = await db.query('visit_steps', orderBy: 'sales_req_permissions_id ASC, step_code ASC');
+
+    return result.map((row) => VisitStep(
+      id: row['id'] as int?,
+      salesReqPermissionsId: row['sales_req_permissions_id'] as int?,
+      stepCode: row['step_code'] as int,
+      stepName: row['step_name'] as String,
+      stepRequired: (row['step_required'] as int?) == 1,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    )).toList();
+  }
+
+  /// Get visit steps count for a specific permissions
+  Future<int> getVisitStepsCount(int salesReqPermissionsId) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM visit_steps WHERE sales_req_permissions_id = ?',
+      [salesReqPermissionsId],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 
   /// Save planned routes data

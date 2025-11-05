@@ -1637,7 +1637,7 @@ class DataSyncService {
             step.copyWith(salesReqPermissionsId: savedPermission.id)
           ).toList();
 
-          await _dbService.saveVisitSteps(visitStepsWithId);
+          await _dbService.saveVisitStepsLegacy(visitStepsWithId);
 
           if (kDebugMode) {
             print('Successfully saved ${visitStepsWithId.length} visit steps for user: $userCode');
@@ -1867,6 +1867,83 @@ class DataSyncService {
   /// Get last time map tokens were updated
   DateTime? getMapTokensLastUpdated() {
     return _prefs.getMapTokensLastUpdated();
+  }
+
+  /// Sync visit steps data
+  Future<List<VisitStep>> syncVisitSteps({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getSalesReqPermissions(userCode);
+      if (cached != null && cached.visitSteps.isNotEmpty) {
+        return cached.visitSteps;
+      }
+    }
+
+    return await _syncVisitSteps(userCode);
+  }
+
+  Future<List<VisitStep>> _syncVisitSteps(String userCode) async {
+    try {
+      // First sync sales req permissions to ensure we have the permissions data
+      final permissions = await syncSalesReqPermissions(userCode: userCode, forceRefresh: true);
+
+      if (permissions == null) {
+        if (kDebugMode) {
+          print('WARNING: No sales req permissions found for user: $userCode');
+        }
+        return [];
+      }
+
+      // Visit steps are already included in the permissions object
+      // No additional API call needed as visit steps come with permissions
+      if (kDebugMode) {
+        print('Visit steps synced for user: $userCode, count: ${permissions.visitSteps.length}');
+      }
+
+      return permissions.visitSteps;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error syncing visit steps for user $userCode: $e');
+      }
+      // Return cached data if sync fails
+      final cached = await _dbService.getSalesReqPermissions(userCode);
+      return cached?.visitSteps ?? [];
+    }
+  }
+
+  /// Get cached visit steps for a user
+  Future<List<VisitStep>> getCachedVisitSteps(String userCode) async {
+    final permissions = await _dbService.getSalesReqPermissions(userCode);
+    return permissions?.visitSteps ?? [];
+  }
+
+  /// Save visit steps for a user (local update)
+  Future<void> saveVisitSteps(String userCode, List<VisitStep> visitSteps) async {
+    final permissions = await _dbService.getSalesReqPermissions(userCode);
+    if (permissions == null) {
+      throw Exception('Sales req permissions not found for user: $userCode');
+    }
+
+    await _dbService.saveVisitStepsLegacy(visitSteps);
+  }
+
+  /// Update visit step for a user
+  Future<void> updateVisitStep(String userCode, int visitStepId, VisitStep visitStep) async {
+    await _dbService.updateVisitStep(visitStepId, visitStep);
+  }
+
+  /// Delete visit step for a user
+  Future<void> deleteVisitStep(String userCode, int visitStepId) async {
+    await _dbService.deleteVisitStep(visitStepId);
+  }
+
+  /// Get visit steps count for a user
+  Future<int> getVisitStepsCount(String userCode) async {
+    final permissions = await _dbService.getSalesReqPermissions(userCode);
+    if (permissions == null) return 0;
+    return await _dbService.getVisitStepsCount(permissions.id!);
   }
 }
 

@@ -963,8 +963,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                   final shouldCancel = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text('Cancel Visit'),
-                      content: Text('Are you sure you want to cancel this visit? All progress will be lost.'),
+                      title: Text(l10n?.cancelVisit ?? 'Cancel Visit'),
+                      content: Text(l10n?.cancelVisitConfirmation ?? 'Are you sure you want to cancel this visit? All progress will be lost.'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(false),
@@ -1469,6 +1469,8 @@ class _VisitStepCardState extends State<_VisitStepCard> {
   /// This ensures data integrity by preventing access to steps that haven't been
   /// reached yet in strict sequence mode, while allowing review of completed steps.
   void _navigateToStepDetail(BuildContext context, VisitStep step) async {
+    final l10n = AppLocalizations.of(context);
+
     // Retrieve current state to determine step accessibility
     final currentState = context.read<VisitStepsBloc>().state as VisitStepsLoaded;
 
@@ -1486,7 +1488,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
       // Display user-friendly error message for blocked navigation
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Bu step hozirda mavjud emas. Avval oldingi steplarni yakunlang'),
+          content: Text(l10n?.previousStepsRequired ?? 'Previous steps must be completed'),
           backgroundColor: Colors.orange,
           duration: const Duration(seconds: 3),
         ),

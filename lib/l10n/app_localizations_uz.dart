@@ -1192,4 +1192,10 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get allRequiredStepsCompleted => 'Barcha majburiy qadamlar bajarildi';
+
+  @override
+  String get cancelVisit => 'Tashrifni bekor qilish';
+
+  @override
+  String get cancelVisitConfirmation => 'Haqiqatan ham bu tashrifni bekor qilmoqchimisiz? Barcha progress yo\'qoladi.';
 }

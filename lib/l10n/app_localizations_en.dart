@@ -1192,4 +1192,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get allRequiredStepsCompleted => 'All required steps completed';
+
+  @override
+  String get cancelVisit => 'Cancel Visit';
+
+  @override
+  String get cancelVisitConfirmation => 'Are you sure you want to cancel this visit? All progress will be lost.';
 }

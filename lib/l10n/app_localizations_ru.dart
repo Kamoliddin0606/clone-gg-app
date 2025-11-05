@@ -1192,4 +1192,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get allRequiredStepsCompleted => 'Все обязательные шаги завершены';
+
+  @override
+  String get cancelVisit => 'Отменить посещение';
+
+  @override
+  String get cancelVisitConfirmation => 'Вы уверены, что хотите отменить это посещение? Весь прогресс будет потерян.';
 }

@@ -469,32 +469,53 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       final existingData = await _visitDataRepository.getVisitStepDataByVisitId(_visitId);
 
       // Create a map of step code to existing data for quick lookup
-      final existingDataMap = <int, VisitData>{};
+      final existingDataMap = <int, Map<String, VisitData>>{};
       for (final data in existingData) {
-        if (data.dataType == 'completion') {
-          existingDataMap[data.stepCode] = data;
+        if (!existingDataMap.containsKey(data.stepCode)) {
+          existingDataMap[data.stepCode] = {};
         }
+        existingDataMap[data.stepCode]![data.dataType] = data;
       }
 
       // Initialize step progress based on existing data
       final stepProgress = <VisitStepProgress>[];
 
       for (final step in visitSteps) {
-        final existingCompletion = existingDataMap[step.stepCode];
+        final existingDataForStep = existingDataMap[step.stepCode];
 
-        if (existingCompletion != null) {
-          // Step was previously completed
-          final parsedData = existingCompletion.parsedDataContent;
-          final completedAt = parsedData['completedAt'] != null
-              ? DateTime.parse(parsedData['completedAt'])
-              : null;
+        if (existingDataForStep != null) {
+          // Check for progress data first (takes precedence over completion)
+          final progressData = existingDataForStep['progress'];
+          final completionData = existingDataForStep['completion'];
 
-          stepProgress.add(VisitStepProgress(
-            step: step,
-            status: VisitStepStatus.completed,
-            notes: parsedData['notes'],
-            completedAt: completedAt,
-          ));
+          if (progressData != null) {
+            // Step is in progress
+            final parsedData = progressData.parsedDataContent;
+            stepProgress.add(VisitStepProgress(
+              step: step,
+              status: VisitStepStatus.inProgress,
+              notes: parsedData['notes'], // Keep any existing notes
+            ));
+          } else if (completionData != null) {
+            // Step was previously completed
+            final parsedData = completionData.parsedDataContent;
+            final completedAt = parsedData['completedAt'] != null
+                ? DateTime.parse(parsedData['completedAt'])
+                : null;
+
+            stepProgress.add(VisitStepProgress(
+              step: step,
+              status: VisitStepStatus.completed,
+              notes: parsedData['notes'],
+              completedAt: completedAt,
+            ));
+          } else {
+            // Step is pending
+            stepProgress.add(VisitStepProgress(
+              step: step,
+              status: VisitStepStatus.pending,
+            ));
+          }
         } else {
           // Step is pending
           stepProgress.add(VisitStepProgress(

@@ -124,6 +124,8 @@ class PreviousStep extends VisitStepsEvent {
 
 class FinishVisit extends VisitStepsEvent {}
 
+class CancelVisit extends VisitStepsEvent {}
+
 /// Visit Step Progress Model
 class VisitStepProgress {
   final VisitStep step;
@@ -180,6 +182,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     on<SkipStep>(_onSkipStep);
     on<PreviousStep>(_onPreviousStep);
     on<FinishVisit>(_onFinishVisit);
+    on<CancelVisit>(_onCancelVisit);
   }
 
   Future<void> _onLoadVisitSteps(
@@ -426,6 +429,45 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     // await _saveVisitData(currentState);
 
     emit(VisitStepsCompleted(currentState.tradingPoint));
+  }
+
+  Future<void> _onCancelVisit(
+    CancelVisit event,
+    Emitter<VisitStepsState> emit,
+  ) async {
+    if (state is! VisitStepsLoaded) return;
+
+    try {
+      // Clear all visit data from database
+      await _clearAllVisitData();
+
+      // Clear any cached data in memory
+      // Note: BLoC state will be cleared when widget is disposed
+
+      debugPrint('Visit cancelled and all data cleared for visit ID: $_visitId');
+    } catch (e) {
+      debugPrint('Error clearing visit data during cancel: $e');
+      // Don't block navigation even if cleanup fails
+    }
+
+    // Navigate back without returning success (indicates cancellation)
+    // The navigation will be handled by the UI layer
+  }
+
+  /// Clear all visit data from database and storage
+  Future<void> _clearAllVisitData() async {
+    try {
+      // Delete all visit step data for this visit ID
+      await _visitDataRepository.deleteVisitStepDataByVisitId(_visitId);
+
+      // Clear any cached data in services if needed
+      // Note: Individual step data is already cleared via _clearStepDataFromStorage
+
+      debugPrint('All visit data cleared for visit ID: $_visitId');
+    } catch (e) {
+      debugPrint('Error clearing all visit data: $e');
+      // Don't throw - we want to allow cancellation even if cleanup partially fails
+    }
   }
 
   int _getCurrentStepIndex(List<VisitStepProgress> progress, bool isStrictSequence) {
@@ -916,7 +958,39 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () async {
+                  // Show confirmation dialog before canceling
+                  final shouldCancel = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Cancel Visit'),
+                      content: Text('Are you sure you want to cancel this visit? All progress will be lost.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(l10n?.no ?? 'No'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          child: Text(l10n?.yes ?? 'Yes'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (shouldCancel == true) {
+                    // Trigger cancel event to clear all data
+                    context.read<VisitStepsBloc>().add(CancelVisit());
+                    // Navigate back after a brief delay to allow cleanup
+                    await Future.delayed(const Duration(milliseconds: 100));
+                    if (context.mounted) {
+                      Navigator.of(context).pop(false); // Return false to indicate cancellation
+                    }
+                  }
+                },
                 icon: const Icon(Icons.close),
                 label: Text(l10n.cancel ?? 'Cancel'),
                 style: OutlinedButton.styleFrom(

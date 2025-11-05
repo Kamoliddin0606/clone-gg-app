@@ -1425,18 +1425,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
         title: Text('${widget.stepProgress.step.stepName} ${l10n?.skipStep?.toLowerCase() ?? 'skip'}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n?.enterSkipReason ?? 'Enter skip reason'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _skipReasonController,
-              decoration: InputDecoration(
-                hintText: l10n?.reason ?? 'Reason',
-                border: const OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
+
         ),
         actions: [
           TextButton(

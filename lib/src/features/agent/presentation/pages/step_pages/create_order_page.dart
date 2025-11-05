@@ -128,21 +128,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('${widget.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n?.confirmCompletion ?? 'Confirm completion'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _notesController,
-              decoration: InputDecoration(
-                hintText: l10n?.enterNotesOptional ?? 'Enter notes (optional)',
-                border: const OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
+
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

@@ -111,21 +111,22 @@ class VisitStepErrorRecoveryService {
     print('Scheduling retry for operation $operationId in ${delay.inSeconds}s (attempt ${currentAttempts + 1})');
 
     _retryTimers[operationId]?.cancel();
-    _retryTimers[operationId] = Timer(delay, () async {
-      try {
-        final success = await retryOperation.timeout(config.timeout);
-        if (success) {
-          print('Retry successful for operation $operationId');
-          await _clearError(operationId);
-          _retryCounts.remove(operationId);
-        } else {
-          // Try again if still failing
-          await _attemptRetry(operationId, config, retryOperation);
-        }
-      } catch (e) {
-        print('Retry failed for operation $operationId: $e');
-        await _attemptRetry(operationId, config, retryOperation);
-      }
+    _retryTimers[operationId] = Timer(delay, () {
+      retryOperation().timeout(config.timeout)
+        .then((success) {
+          if (success) {
+            print('Retry successful for operation $operationId');
+            _clearError(operationId).then((_) {
+              _retryCounts.remove(operationId);
+            });
+          } else {
+            _attemptRetry(operationId, config, retryOperation);
+          }
+        })
+        .catchError((e) {
+          print('Retry failed for operation $operationId: $e');
+          _attemptRetry(operationId, config, retryOperation);
+        });
     });
 
     return false; // Not successful yet
@@ -185,7 +186,7 @@ class VisitStepErrorRecoveryService {
     try {
       // Attempt to fix common validation issues
       final fixedData = await _autoFixValidationErrors(errorData);
-      await _visitDataRepository.saveFixedData(operationId, fixedData);
+      await _visitDataRepository.saveWithAlternativeMethod(operationId, fixedData);
       return true;
     } catch (e) {
       return false;
@@ -199,7 +200,7 @@ class VisitStepErrorRecoveryService {
     final failedOperation = {
       'operationId': operationId,
       'error': error.toString(),
-      'errorData': errorData,
+      'errorData': errorData?.toString(),
       'timestamp': DateTime.now().toIso8601String(),
       'requiresManualIntervention': true,
     };
@@ -277,19 +278,19 @@ class VisitStepErrorRecoveryService {
       existingLogs.removeRange(0, existingLogs.length - 100);
     }
 
-    await _prefs.setString('visit_step_error_logs', jsonEncode(existingLogs));
+    await _prefs.preferences.setString('visit_step_error_logs', jsonEncode(existingLogs));
   }
 
   /// Clear error from logs
   Future<void> _clearError(String operationId) async {
     final logs = await _getErrorLogs();
     logs.removeWhere((log) => log['operationId'] == operationId);
-    await _prefs.setString('visit_step_error_logs', jsonEncode(logs));
+    await _prefs.preferences.setString('visit_step_error_logs', jsonEncode(logs));
   }
 
   /// Get error logs
   Future<List<Map<String, dynamic>>> _getErrorLogs() async {
-    final logsJson = await _prefs.getString('visit_step_error_logs') ?? '[]';
+    final logsJson = _prefs.preferences.getString('visit_step_error_logs') ?? '[]';
     final logs = jsonDecode(logsJson) as List;
     return logs.map((log) => log as Map<String, dynamic>).toList();
   }
@@ -298,12 +299,12 @@ class VisitStepErrorRecoveryService {
   Future<void> _storeFailedOperation(Map<String, dynamic> operation) async {
     final failedOps = await _getFailedOperations();
     failedOps.add(operation);
-    await _prefs.setString(_failedOperationsKey, jsonEncode(failedOps));
+    await _prefs.preferences.setString(_failedOperationsKey, jsonEncode(failedOps));
   }
 
   /// Get failed operations
   Future<List<Map<String, dynamic>>> _getFailedOperations() async {
-    final opsJson = await _prefs.getString(_failedOperationsKey) ?? '[]';
+    final opsJson = _prefs.preferences.getString(_failedOperationsKey) ?? '[]';
     final ops = jsonDecode(opsJson) as List;
     return ops.map((op) => op as Map<String, dynamic>).toList();
   }
@@ -334,8 +335,8 @@ class VisitStepErrorRecoveryService {
 
   /// Clear all recovery data (for testing or reset)
   Future<void> clearRecoveryData() async {
-    await _prefs.setString(_failedOperationsKey, '[]');
-    await _prefs.setString('visit_step_error_logs', '[]');
+    await _prefs.preferences.setString(_failedOperationsKey, '[]');
+    await _prefs.preferences.setString('visit_step_error_logs', '[]');
 
     for (final timer in _retryTimers.values) {
       timer.cancel();

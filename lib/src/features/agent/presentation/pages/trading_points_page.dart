@@ -2389,17 +2389,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   }
 
   Future<void> _checkLocationPermission() async {
-    final status = await Permission.location.status;
-    if (status.isGranted) {
-      setState(() {
-        _locationPermissionGranted = true;
-      });
-    } else {
-      final result = await Permission.location.request();
-      setState(() {
-        _locationPermissionGranted = result.isGranted;
-      });
-    }
+    final permissionManager = sl<PermissionManager>();
+    final status = await permissionManager.checkLocationPermission();
+    setState(() {
+      _locationPermissionGranted = status == AppPermissionStatus.granted;
+    });
   }
 
   /// Load default map provider from settings
@@ -3039,17 +3033,11 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
   }
 
   Future<void> _checkLocationPermission() async {
-    final status = await Permission.location.status;
-    if (status.isGranted) {
-      setState(() {
-        _locationPermissionGranted = true;
-      });
-    } else {
-      final result = await Permission.location.request();
-      setState(() {
-        _locationPermissionGranted = result.isGranted;
-      });
-    }
+    final permissionManager = sl<PermissionManager>();
+    final status = await permissionManager.checkLocationPermission();
+    setState(() {
+      _locationPermissionGranted = status == AppPermissionStatus.granted;
+    });
   }
   Future<void> confirmAndCall(BuildContext context, String rawPhone) async {
     // tel: URI uchun raqamni tozalaymiz

@@ -18,6 +18,8 @@ import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:dio/dio.dart';
 
 // Constants for map configuration
@@ -190,18 +192,19 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         print('Checking location permission...');
       }
 
-      final status = await Permission.location.status;
-      if (status.isGranted) {
+      final permissionManager = sl<PermissionManager>();
+      final status = await permissionManager.checkLocationPermission();
+      if (status == AppPermissionStatus.granted) {
         setState(() {
           _locationPermissionGranted = true;
         });
         _getUserLocation();
       } else {
-        final result = await Permission.location.request();
+        final result = await permissionManager.requestLocationPermission();
         setState(() {
-          _locationPermissionGranted = result.isGranted;
+          _locationPermissionGranted = result == AppPermissionStatus.granted;
         });
-        if (result.isGranted) {
+        if (result == AppPermissionStatus.granted) {
           _getUserLocation();
         } else {
           if (kDebugMode) {

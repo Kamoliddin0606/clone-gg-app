@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
+import 'package:image/image.dart' as img;
 
 /// Performance monitoring for visit steps
 class VisitStepPerformanceMonitor {

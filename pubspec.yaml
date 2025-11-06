@@ -36,7 +36,7 @@ dependencies:
 
   # Maps & Permissions
   google_maps_flutter: ^2.6.0
-  yandex_mapkit: ^4.0.0
+#  yandex_mapkit: ^4.0.0
   yandex_maps_mapkit: ^4.25.0-beta # :contentReference[oaicite:6]{index=6}
   flutter_map: ^8.2.2
   latlong2: ^0.9.1

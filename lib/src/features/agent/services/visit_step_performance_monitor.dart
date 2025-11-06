@@ -6,6 +6,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:image/image.dart' as img;
 
+import '../data/models/visit_data.dart';
+
 /// Performance monitoring for visit steps
 class VisitStepPerformanceMonitor {
   static final VisitStepPerformanceMonitor _instance = VisitStepPerformanceMonitor._internal();

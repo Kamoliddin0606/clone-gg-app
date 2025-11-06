@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/visit_steps_page.dart';
 
+import '../../data/models/trading_point_with_permissions.dart';
+
 /// Data Persistence Status Widget
 class DataPersistenceIndicator extends StatelessWidget {
   final bool isSaving;

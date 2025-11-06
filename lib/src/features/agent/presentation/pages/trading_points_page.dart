@@ -713,7 +713,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     if (hasPermission && _locationService != null) {
       await _locationService!.ensureTrackingStarted();
     }
-
+    print("has permissions: $hasPermission");
     return hasPermission;
   }
 

@@ -20,14 +20,14 @@ class PermissionManager {
 
   /// Check location permission status
   Future<AppPermissionStatus> checkLocationPermission() async {
-    final status = await Permission.location.status;
-    return _mapToAppStatus(status);
+    final permission = await Geolocator.checkPermission();
+    return _mapGeolocatorToAppStatus(permission);
   }
 
   /// Request location permission
   Future<AppPermissionStatus> requestLocationPermission() async {
-    final status = await Permission.location.request();
-    return _mapToAppStatus(status);
+    final permission = await Geolocator.requestPermission();
+    return _mapGeolocatorToAppStatus(permission);
   }
 
   /// Open app settings
@@ -40,13 +40,14 @@ class PermissionManager {
     // First check if location services are enabled
     final serviceEnabled = await isLocationServiceEnabled();
     if (!serviceEnabled) {
+      print('servis enabled');
       return await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (context) => const LocationServiceDialog(),
       ) ?? false;
     }
-
+    print('servis not enabled');
     // Services are enabled, show permission dialog
     return await _showPermissionDialog(context);
   }
@@ -84,9 +85,18 @@ class PermissionManager {
       return await Geolocator.isLocationServiceEnabled();
     } catch (e) {
       if (kDebugMode) {
-        print('Error checking location service status: $e');
+        print('Error checking location service status with Geolocator: $e');
       }
-      return false;
+      // Fallback to permission_handler
+      try {
+        final serviceStatus = await Permission.location.serviceStatus;
+        return serviceStatus.isEnabled;
+      } catch (e2) {
+        if (kDebugMode) {
+          print('Error checking location service status with permission_handler: $e2');
+        }
+        return false;
+      }
     }
   }
 
@@ -139,6 +149,21 @@ class PermissionManager {
         return AppPermissionStatus.unknown;
     }
   }
+
+  AppPermissionStatus _mapGeolocatorToAppStatus(LocationPermission permission) {
+    switch (permission) {
+      case LocationPermission.denied:
+        return AppPermissionStatus.denied;
+      case LocationPermission.deniedForever:
+        return AppPermissionStatus.permanentlyDenied;
+      case LocationPermission.whileInUse:
+      case LocationPermission.always:
+        return AppPermissionStatus.granted;
+      case LocationPermission.unableToDetermine:
+      default:
+        return AppPermissionStatus.unknown;
+    }
+  }
 }
 
 /// Location permission request dialog
@@ -166,8 +191,8 @@ class LocationPermissionDialog extends StatelessWidget {
         FilledButton(
           onPressed: () async {
             // Request permission directly from OS
-            final status = await Permission.location.request();
-            final appStatus = PermissionManager()._mapToAppStatus(status);
+            final permission = await Geolocator.requestPermission();
+            final appStatus = PermissionManager()._mapGeolocatorToAppStatus(permission);
             Navigator.of(context).pop(appStatus == AppPermissionStatus.granted);
           },
           child: const Text('Ruxsat berish'),

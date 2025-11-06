@@ -709,6 +709,11 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       });
     }
 
+    // If permission granted, ensure location tracking is started
+    if (hasPermission && _locationService != null) {
+      await _locationService!.ensureTrackingStarted();
+    }
+
     return hasPermission;
   }
 
@@ -743,6 +748,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     if (_locationService == null) return; // Safety check
 
     try {
+      // Ensure tracking is started
+      await _locationService!.ensureTrackingStarted();
+
       final userLocation = _locationService!.getStoredLocation();
       if (userLocation == null || !_locationService!.isLocationRecent()) {
         // Try to get fresh location
@@ -750,7 +758,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           print('Getting fresh location for distance sorting');
         }
         // LocationService handles background updates, but we can wait a bit
-        await Future.delayed(const Duration(seconds: 2));
+        await Future.delayed(const Duration(seconds: 3)); // Increased wait time
       }
     } catch (e) {
       if (kDebugMode) {

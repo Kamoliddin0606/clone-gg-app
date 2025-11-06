@@ -273,6 +273,16 @@ class LocationService {
     }
   }
 
+  /// Ensure location tracking is started if permission is granted
+  Future<void> ensureTrackingStarted() async {
+    if (_locationTimer == null || !_locationTimer!.isActive) {
+      final hasPermission = await ensureLocationPermission();
+      if (hasPermission) {
+        await _startLocationTracking();
+      }
+    }
+  }
+
   /// Dispose of resources
   void dispose() {
     _locationTimer?.cancel();

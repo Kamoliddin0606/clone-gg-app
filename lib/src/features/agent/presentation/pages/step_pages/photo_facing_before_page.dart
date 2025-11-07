@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
@@ -62,8 +63,22 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
   void dispose() {
     _notesController.dispose();
     _fabAnimationController.dispose();
-    _cameraController?.dispose();
+    _disposeCamera();
     super.dispose();
+  }
+
+  /// Dispose camera resources properly
+  Future<void> _disposeCamera() async {
+    try {
+      if (_cameraController != null) {
+        _cameraController!.removeListener(_onCameraError);
+        await _cameraController!.dispose();
+        _cameraController = null;
+      }
+      _isCameraInitialized = false;
+    } catch (e) {
+      debugPrint('Camera disposal error: $e');
+    }
   }
 
   /// Initialize page data and camera
@@ -74,10 +89,8 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
       // Load existing photos
       await _loadPhotos();
 
-      // Initialize cameras for camera functionality
-      if (!widget.readOnly) {
-        await _initializeCameras();
-      }
+      // Initialize cameras for camera functionality only when needed
+      // Camera will be initialized when add_a_photo button is pressed
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -109,12 +122,28 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
   /// Initialize available cameras
   Future<void> _initializeCameras() async {
     try {
+      // Request camera permission first
+      final status = await Permission.camera.request();
+      if (status != PermissionStatus.granted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kamera ruxsati berilmadi')),
+          );
+        }
+        return;
+      }
+
       _cameras = await availableCameras();
       if (_cameras != null && _cameras!.isNotEmpty) {
         await _initializeCameraController(_cameras!.first);
       }
     } catch (e) {
       debugPrint('Camera initialization error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kamera ishga tushirishda xatolik: $e')),
+        );
+      }
     }
   }
 
@@ -125,14 +154,87 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
         camera,
         ResolutionPreset.high,
         enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
       );
 
       await _cameraController!.initialize();
+
+      // Check if initialization was successful
+      if (_cameraController!.value.hasError) {
+        throw Exception('Camera initialization failed: ${_cameraController!.value.errorDescription}');
+      }
+
+      // Add error listener for camera errors
+      _cameraController!.addListener(_onCameraError);
+
       if (mounted) {
         setState(() => _isCameraInitialized = true);
       }
     } catch (e) {
       debugPrint('Camera controller initialization error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kamera ishga tushirishda xatolik: $e')),
+        );
+      }
+    }
+  }
+
+  /// Handle camera errors
+  void _onCameraError() {
+    if (_cameraController?.value.hasError ?? false) {
+      final error = _cameraController!.value.errorDescription;
+      debugPrint('Camera error: $error');
+
+      if (mounted) {
+        // Check if it's an eviction error (code 3)
+        if (error?.contains('code 3') ?? false) {
+          _handleCameraEviction();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Kamera xatoligi: $error')),
+          );
+
+          // Try to reinitialize camera if possible
+          _reinitializeCamera();
+        }
+      }
+    }
+  }
+
+  /// Reinitialize camera after error
+  Future<void> _reinitializeCamera() async {
+    try {
+      await _disposeCamera();
+
+      // Wait a bit before reinitializing
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (_cameras != null && _cameras!.isNotEmpty) {
+        await _initializeCameraController(_cameras!.first);
+      }
+    } catch (e) {
+      debugPrint('Camera reinitialization error: $e');
+    }
+  }
+
+  /// Handle camera eviction and reconnection
+  void _handleCameraEviction() {
+    if (mounted) {
+      setState(() => _isCameraInitialized = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kamera boshqa ilova tomonidan ishlatilmoqda. Qayta ulanishga harakat qilinmoqda...'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      // Try to reconnect after a delay
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          _reinitializeCamera();
+        }
+      });
     }
   }
 
@@ -237,11 +339,26 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
     }
   }
 
+
   /// Open camera page
-  void _openCameraPage() {
+  void _openCameraPage() async {
+    // Initialize camera only when button is pressed
     if (_cameraController == null || !_isCameraInitialized) {
+      await _initializeCameras();
+      if (_cameraController == null || !_isCameraInitialized) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kamera tayyor emas')),
+        );
+        return;
+      }
+    }
+
+    // Check if camera is still available and properly initialized
+    if (_cameraController!.value.isRecordingVideo ||
+        !_cameraController!.value.isInitialized ||
+        _cameraController!.value.hasError) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kamera tayyor emas')),
+        const SnackBar(content: Text('Kamera mavjud emas yoki ishlamayapti')),
       );
       return;
     }
@@ -393,11 +510,13 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            Image.file(
-              File(photo['thumbnailPath'] ?? photo['imagePath']),
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: 200,
+            AspectRatio(
+              aspectRatio: 1.0, // 1:1 aspect ratio
+              child: Image.file(
+                File(photo['thumbnailPath'] ?? photo['imagePath']),
+                fit: BoxFit.cover,
+                width: double.infinity,
+              ),
             ),
             if (!widget.readOnly)
               Positioned(
@@ -727,18 +846,63 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
   late PageController _photoSliderController;
   bool _isCapturing = false;
   late List<String> _localCapturedPhotos;
+  bool _isCameraAvailable = true;
 
   @override
   void initState() {
     super.initState();
     _photoSliderController = PageController();
     _localCapturedPhotos = List.from(widget.capturedPhotos);
+
+    // Listen for camera errors
+    widget.cameraController.addListener(_onCameraError);
   }
 
   @override
   void dispose() {
     _photoSliderController.dispose();
+    widget.cameraController.removeListener(_onCameraError);
     super.dispose();
+  }
+
+  /// Handle camera errors in capture page
+  void _onCameraError() {
+    if (widget.cameraController.value.hasError) {
+      final error = widget.cameraController.value.errorDescription;
+      debugPrint('Camera error in capture page: $error');
+
+      if (mounted) {
+        setState(() => _isCameraAvailable = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kamera xatoligi: $error')),
+        );
+
+        // Try to reinitialize camera after error
+        _tryReinitializeCamera();
+      }
+    }
+  }
+
+  /// Try to reinitialize camera after error
+  Future<void> _tryReinitializeCamera() async {
+    try {
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted && widget.cameraController.value.hasError) {
+        // Dispose and try to reinitialize
+        await widget.cameraController.dispose();
+        // Note: Full reinitialization would require access to camera list
+        // For now, just mark as unavailable
+      }
+    } catch (e) {
+      debugPrint('Camera reinitialization failed: $e');
+    }
+  }
+
+  /// Delete photo from camera slider
+  void _deletePhotoFromCameraSlider(int index) {
+    setState(() {
+      _localCapturedPhotos.removeAt(index);
+    });
   }
 
   @override
@@ -815,64 +979,96 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
             ),
           ),
 
-          // Captured photos slider at top
-           if (_localCapturedPhotos.isNotEmpty)
-             Positioned(
-               top: MediaQuery.of(context).padding.top + 80,
-               left: 0,
-               right: 0,
-               height: 80,
-               child: Container(
-                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                 decoration: BoxDecoration(
-                   borderRadius: BorderRadius.circular(12),
-                   boxShadow: [
-                     BoxShadow(
-                       color: Colors.black.withOpacity(0.3),
-                       blurRadius: 8,
-                       offset: const Offset(0, 2),
-                     ),
-                   ],
-                 ),
-                 child: PageView.builder(
-                   controller: _photoSliderController,
-                   scrollDirection: Axis.horizontal,
-                   itemCount: _localCapturedPhotos.length,
-                   itemBuilder: (context, index) {
-                     return Container(
-                       margin: const EdgeInsets.all(4),
-                       decoration: BoxDecoration(
-                         borderRadius: BorderRadius.circular(8),
-                         image: DecorationImage(
-                           image: FileImage(File(_localCapturedPhotos[index])),
-                           fit: BoxFit.cover,
-                         ),
-                       ),
-                     );
-                   },
-                 ),
-               ),
-             ),
+          // Captured photos slider below capture button
+          if (_localCapturedPhotos.isNotEmpty)
+            Positioned(
+              bottom: 110,
+              left: 0,
+              right: 0,
+              height: 100,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: PageView.builder(
+                  controller: _photoSliderController,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _localCapturedPhotos.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      margin: const EdgeInsets.all(4),
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: DecorationImage(
+                          image: FileImage(File(_localCapturedPhotos[index])),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () => _deletePhotoFromCameraSlider(index),
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.8),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
 
           // Capture button at bottom center
           Positioned(
-            bottom: 120,
+            bottom: 20,
             left: 0,
             right: 0,
             child: Center(
               child: GestureDetector(
-                onTap: _isCapturing ? null : _capturePhoto,
+                onTap: (_isCapturing || !_isCameraAvailable) ? null : _capturePhoto,
                 child: Container(
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 4),
-                    color: _isCapturing ? Colors.grey : Colors.transparent,
+                    color: _isCapturing
+                        ? Colors.grey
+                        : !_isCameraAvailable
+                            ? Colors.red.withOpacity(0.5)
+                            : Colors.transparent,
                   ),
                   child: _isCapturing
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : Container(), // Empty circle with white border
+                      : !_isCameraAvailable
+                          ? const Icon(Icons.error, color: Colors.white)
+                          : Container(), // Empty circle with white border
                 ),
               ),
             ),
@@ -904,11 +1100,18 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
 
   /// Capture photo from camera
   Future<void> _capturePhoto() async {
-    if (_isCapturing) return;
+    if (_isCapturing || !_isCameraAvailable) return;
 
     setState(() => _isCapturing = true);
 
     try {
+      // Check camera state before capturing
+      if (!widget.cameraController.value.isInitialized ||
+          widget.cameraController.value.isRecordingVideo ||
+          widget.cameraController.value.hasError) {
+        throw Exception('Kamera tayyor emas');
+      }
+
       final image = await widget.cameraController.takePicture();
       final imageFile = File(image.path);
 
@@ -916,9 +1119,11 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       final savedPath = await widget.onPhotoCaptured(imageFile);
 
       // Add to local list for immediate UI update
-      setState(() {
-        _localCapturedPhotos.add(savedPath);
-      });
+      if (mounted) {
+        setState(() {
+          _localCapturedPhotos.add(savedPath);
+        });
+      }
 
       // Show success feedback
       if (mounted) {
@@ -930,7 +1135,9 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         );
       }
     } catch (e) {
+      debugPrint('Photo capture error: $e');
       if (mounted) {
+        setState(() => _isCameraAvailable = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Rasm olishda xatolik: $e')),
         );

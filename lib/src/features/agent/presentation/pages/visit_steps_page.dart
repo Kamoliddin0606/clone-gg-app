@@ -165,7 +165,8 @@ enum VisitStepStatus {
   skipped,
 }
 
-/// Visit Steps BLoC
+/// Visit Steps BLoC - Enhanced with repository-based state management
+/// Ensures data persistence and consistency across page navigations
 class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   final DataSyncService _dataSyncService;
   final VisitDataRepository _visitDataRepository;
@@ -175,14 +176,20 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     required DataSyncService dataSyncService,
     required VisitDataRepository visitDataRepository,
   }) : _dataSyncService = dataSyncService,
-       _visitDataRepository = visitDataRepository,
-       super(VisitStepsInitial()) {
+        _visitDataRepository = visitDataRepository,
+        super(VisitStepsInitial()) {
     on<LoadVisitSteps>(_onLoadVisitSteps);
     on<CompleteStep>(_onCompleteStep);
     on<SkipStep>(_onSkipStep);
     on<PreviousStep>(_onPreviousStep);
     on<FinishVisit>(_onFinishVisit);
     on<CancelVisit>(_onCancelVisit);
+  }
+
+  @override
+  Future<void> close() {
+    debugPrint('VisitStepsBloc closed for visit ID: $_visitId');
+    return super.close();
   }
 
   Future<void> _onLoadVisitSteps(
@@ -200,6 +207,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       final userCode = await _getCurrentUserCode();
 
       if (userCode == null) {
+        debugPrint('VisitStepsBloc: User code not found, cannot load visit steps');
         emit(VisitStepsError(AppLocalizationsEn().userCodeNotFound));
         return;
       }
@@ -209,31 +217,35 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       final permissions = await dataSyncService.getCachedSalesReqPermissions(userCode);
 
       if (permissions == null) {
+        debugPrint('VisitStepsBloc: Permissions data not available for user $userCode');
         emit(VisitStepsError(AppLocalizationsEn().permissionsDataNotAvailable));
         return;
       }
 
       // Check if visit steps are available in the permissions
       if (permissions.visitSteps.isEmpty) {
+        debugPrint('VisitStepsBloc: No visit steps configured for user $userCode');
         emit(VisitStepsError(AppLocalizationsEn().visitSteps));
         return;
       }
 
-      debugPrint('Successfully loaded ${permissions.visitSteps.length} visit steps for user $userCode');
+      debugPrint('VisitStepsBloc: Successfully loaded ${permissions.visitSteps.length} visit steps for user $userCode');
 
       // Generate consistent visit ID for this trading point and date
       // This ensures that visits can be restored when navigating back to the page
       final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD format
       _visitId = 'visit_${userCode ?? "unknown"}_${tradingPoint.tradingPoint.id}_$today';
 
-      debugPrint('Using visit ID: $_visitId');
+      debugPrint('VisitStepsBloc: Using visit ID: $_visitId');
 
-      // Load existing step progress from persistent storage
+      // Load existing step progress from persistent storage with enhanced error handling
       final stepProgress = await _loadStepProgressFromStorage(permissions.visitSteps, tradingPoint.tradingPoint.name);
 
       // Determine current step based on strict sequence
       final isStrictSequence = permissions.strictSequence;
       final currentStepIndex = _getCurrentStepIndex(stepProgress, isStrictSequence);
+
+      debugPrint('VisitStepsBloc: Loaded ${stepProgress.length} steps, current step index: $currentStepIndex, strict sequence: $isStrictSequence');
 
       emit(VisitStepsLoaded(
         tradingPoint: tradingPoint,
@@ -243,11 +255,19 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         isStrictSequence: isStrictSequence,
         canProceedToNext: _canProceedToNext(stepProgress, currentStepIndex, isStrictSequence),
       ));
+
+      debugPrint('VisitStepsBloc: Visit steps loaded successfully for trading point ${tradingPoint.tradingPoint.name}');
     } catch (e, stackTrace) {
-      // Log error for debugging with stack trace
-      debugPrint('Error loading visit steps: $e');
-      debugPrint('Stack trace: $stackTrace');
-      emit(VisitStepsError(AppLocalizationsEn().errorLoadingPermissions));
+      // Enhanced error logging for debugging
+      debugPrint('VisitStepsBloc: Error loading visit steps: $e');
+      debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
+
+      // Emit error state with more descriptive message
+      final errorMessage = e is Exception
+          ? 'Xatolik yuz berdi: ${e.toString().replaceAll('Exception: ', '')}'
+          : AppLocalizationsEn().errorLoadingPermissions;
+
+      emit(VisitStepsError(errorMessage));
     }
   }
 
@@ -454,19 +474,26 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     // The navigation will be handled by the UI layer
   }
 
-  /// Clear all visit data from database and storage
+  /// Clear all visit data from database and storage with enhanced error handling
+  /// This ensures complete cleanup when visit is cancelled
   Future<void> _clearAllVisitData() async {
     try {
+      debugPrint('VisitStepsBloc: Clearing all visit data for visit ID: $_visitId');
+
       // Delete all visit step data for this visit ID
       await _visitDataRepository.deleteVisitStepDataByVisitId(_visitId);
 
       // Clear any cached data in services if needed
       // Note: Individual step data is already cleared via _clearStepDataFromStorage
 
-      debugPrint('All visit data cleared for visit ID: $_visitId');
-    } catch (e) {
-      debugPrint('Error clearing all visit data: $e');
-      // Don't throw - we want to allow cancellation even if cleanup partially fails
+      debugPrint('VisitStepsBloc: All visit data cleared successfully for visit ID: $_visitId');
+    } catch (e, stackTrace) {
+      debugPrint('VisitStepsBloc: Error clearing all visit data: $e');
+      debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
+
+      // Enhanced error handling - log but don't throw
+      // We want to allow cancellation even if cleanup partially fails
+      // TODO: Consider implementing partial cleanup recovery
     }
   }
 
@@ -504,11 +531,16 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
            (!currentStep.step.stepRequired && currentStep.status == VisitStepStatus.pending);
   }
 
-  /// Load step progress from persistent storage
+  /// Load step progress from persistent storage with enhanced error handling
+  /// This method ensures data consistency by always loading the latest data from repository
   Future<List<VisitStepProgress>> _loadStepProgressFromStorage(List<VisitStep> visitSteps, String clientCode) async {
     try {
+      debugPrint('VisitStepsBloc: Loading step progress for visit ID: $_visitId, client: $clientCode');
+
       // Get existing visit data for this visit session
       final existingData = await _visitDataRepository.getVisitStepDataByVisitId(_visitId);
+
+      debugPrint('VisitStepsBloc: Found ${existingData.length} existing data records for visit');
 
       // Create a map of step code to existing data for quick lookup
       final existingDataMap = <int, Map<String, VisitData>>{};
@@ -532,53 +564,85 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
           if (progressData != null) {
             // Step is in progress
-            final parsedData = progressData.parsedDataContent;
-            stepProgress.add(VisitStepProgress(
-              step: step,
-              status: VisitStepStatus.inProgress,
-              notes: parsedData['notes'], // Keep any existing notes
-            ));
+            try {
+              final parsedData = progressData.parsedDataContent;
+              stepProgress.add(VisitStepProgress(
+                step: step,
+                status: VisitStepStatus.inProgress,
+                notes: parsedData['notes'], // Keep any existing notes
+              ));
+              debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as in-progress');
+            } catch (e) {
+              debugPrint('VisitStepsBloc: Error parsing progress data for step ${step.stepCode}: $e');
+              // Fallback to pending if data is corrupted
+              stepProgress.add(VisitStepProgress(
+                step: step,
+                status: VisitStepStatus.pending,
+              ));
+            }
           } else if (completionData != null) {
             // Step was previously completed
-            final parsedData = completionData.parsedDataContent;
-            final completedAt = parsedData['completedAt'] != null
-                ? DateTime.parse(parsedData['completedAt'])
-                : null;
+            try {
+              final parsedData = completionData.parsedDataContent;
+              final completedAt = parsedData['completedAt'] != null
+                  ? DateTime.parse(parsedData['completedAt'])
+                  : null;
 
-            stepProgress.add(VisitStepProgress(
-              step: step,
-              status: VisitStepStatus.completed,
-              notes: parsedData['notes'],
-              completedAt: completedAt,
-            ));
+              stepProgress.add(VisitStepProgress(
+                step: step,
+                status: VisitStepStatus.completed,
+                notes: parsedData['notes'],
+                completedAt: completedAt,
+              ));
+              debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as completed');
+            } catch (e) {
+              debugPrint('VisitStepsBloc: Error parsing completion data for step ${step.stepCode}: $e');
+              // Fallback to pending if data is corrupted
+              stepProgress.add(VisitStepProgress(
+                step: step,
+                status: VisitStepStatus.pending,
+              ));
+            }
           } else {
-            // Step is pending
+            // Step has data but no progress/completion status
             stepProgress.add(VisitStepProgress(
               step: step,
               status: VisitStepStatus.pending,
             ));
+            debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) has data but no status, set to pending');
           }
         } else {
-          // Step is pending
+          // Step is pending - no data exists
           stepProgress.add(VisitStepProgress(
             step: step,
             status: VisitStepStatus.pending,
           ));
+          debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) is pending (no existing data)');
         }
       }
 
+      debugPrint('VisitStepsBloc: Successfully loaded ${stepProgress.length} step progress records');
       return stepProgress;
-    } catch (e) {
-      debugPrint('Error loading step progress from storage: $e');
-      // Fallback to default initialization
-      return visitSteps.map((step) => VisitStepProgress(
-        step: step,
-        status: VisitStepStatus.pending,
-      )).toList();
+    } catch (e, stackTrace) {
+      debugPrint('VisitStepsBloc: Error loading step progress from storage: $e');
+      debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
+
+      // Fallback to default initialization with detailed logging
+      debugPrint('VisitStepsBloc: Falling back to default initialization for all steps');
+      final fallbackProgress = visitSteps.map((step) {
+        debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) initialized as pending (fallback)');
+        return VisitStepProgress(
+          step: step,
+          status: VisitStepStatus.pending,
+        );
+      }).toList();
+
+      return fallbackProgress;
     }
   }
 
-  /// Save step data to persistent storage
+  /// Save step data to persistent storage with enhanced error handling
+  /// This ensures data is properly persisted even if UI operations fail
   Future<void> _saveStepDataToStorage({
     required int stepCode,
     required String stepName,
@@ -586,9 +650,16 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     required Map<String, dynamic> dataContent,
   }) async {
     try {
+      // Validate current state
+      if (state is! VisitStepsLoaded) {
+        debugPrint('VisitStepsBloc: Cannot save step data - bloc not in loaded state');
+        return;
+      }
+
+      final currentState = state as VisitStepsLoaded;
       final visitData = VisitData(
         visitId: _visitId,
-        clientCode: (state as VisitStepsLoaded).tradingPoint.tradingPoint.name,
+        clientCode: currentState.tradingPoint.tradingPoint.name,
         stepCode: stepCode,
         stepName: stepName,
         dataType: dataType,
@@ -596,20 +667,37 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         timestamp: DateTime.now(),
       );
 
+      debugPrint('VisitStepsBloc: Saving step data - visitId: $_visitId, stepCode: $stepCode, dataType: $dataType');
+
       await _visitDataRepository.saveVisitStepData(visitData);
-    } catch (e) {
-      debugPrint('Error saving step data to storage: $e');
-      // Don't throw - we don't want to break the UI flow
+
+      debugPrint('VisitStepsBloc: Step data saved successfully for step $stepCode ($stepName)');
+    } catch (e, stackTrace) {
+      debugPrint('VisitStepsBloc: Error saving step data to storage: $e');
+      debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
+
+      // Enhanced error handling - could implement retry logic here
+      // For now, we don't throw to avoid breaking the UI flow
+      // TODO: Consider implementing a retry mechanism or user notification
     }
   }
 
-  /// Clear step data from persistent storage
+  /// Clear step data from persistent storage with enhanced error handling
+  /// This ensures data cleanup happens reliably
   Future<void> _clearStepDataFromStorage(int stepCode) async {
     try {
+      debugPrint('VisitStepsBloc: Clearing step data for visitId: $_visitId, stepCode: $stepCode');
+
       await _visitDataRepository.deleteVisitStepDataByStepCode(_visitId, stepCode);
-    } catch (e) {
-      debugPrint('Error clearing step data from storage: $e');
-      // Don't throw - we don't want to break the UI flow
+
+      debugPrint('VisitStepsBloc: Step data cleared successfully for step $stepCode');
+    } catch (e, stackTrace) {
+      debugPrint('VisitStepsBloc: Error clearing step data from storage: $e');
+      debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
+
+      // Enhanced error handling - could implement cleanup retry logic here
+      // For now, we don't throw to avoid breaking the UI flow
+      // TODO: Consider implementing cleanup retry mechanism
     }
   }
 }

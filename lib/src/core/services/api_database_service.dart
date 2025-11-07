@@ -4392,6 +4392,16 @@ class ApiDatabaseService {
     );
   }
 
+  /// Delete a specific visit step data record by ID
+  Future<void> deleteVisitStepData(int id) async {
+    final db = await database;
+    await db.delete(
+      'visit_steps_data',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   /// Save planned routes data
   Future<void> savePlannedRoutes(List<PlannedRoute> routes) async {
     final db = await database;

@@ -50,8 +50,8 @@ class VisitStepDataService {
       orElse: () => throw Exception('Photo not found'),
     );
 
-    // Delete from database
-    await _visitDataRepository.deleteVisitStepDataByVisitId(visitId);
+    // Delete from database - only this specific photo record
+    await _visitDataRepository.deleteVisitStepData(photoToDelete.id!);
 
     // Delete physical files if they exist
     try {

@@ -363,7 +363,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
       return;
     }
 
-    Navigator.of(context).push(
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => CameraCapturePage(
           cameraController: _cameraController!,
@@ -372,6 +372,9 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
         ),
       ),
     );
+
+    // Reload photos when camera page is closed
+    await _loadPhotos();
   }
 
   /// Open full screen image viewer
@@ -661,21 +664,21 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
       context: context,
       builder: (context) => AlertDialog(
         title: Text('${widget.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('${_photos.length} ta rasm saqlandi'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Izoh (ixtiyoriy)',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
+        // content: Column(
+        //   mainAxisSize: MainAxisSize.min,
+        //   children: [
+        //     Text('${_photos.length} ta rasm saqlandi'),
+        //     const SizedBox(height: 16),
+        //     TextField(
+        //       controller: _notesController,
+        //       decoration: const InputDecoration(
+        //         labelText: 'Izoh (ixtiyoriy)',
+        //         border: OutlineInputBorder(),
+        //       ),
+        //       maxLines: 3,
+        //     ),
+        //   ],
+        // ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -777,6 +780,122 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
             minScale: PhotoViewComputedScale.contained,
             maxScale: PhotoViewComputedScale.covered * 2,
             heroAttributes: PhotoViewHeroAttributes(tag: photo['id']),
+          );
+        },
+        itemCount: widget.photos.length,
+        loadingBuilder: (context, event) => const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+        pageController: _pageController,
+        onPageChanged: (index) {
+          setState(() => _currentIndex = index);
+        },
+      ),
+    );
+  }
+
+  /// Show delete confirmation
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rasmni o\'chirish'),
+        content: const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              widget.onDeletePhoto?.call(_currentIndex);
+              if (widget.photos.length == 1) {
+                Navigator.of(context).pop(); // Close viewer if no photos left
+              } else {
+                // Adjust current index if needed
+                if (_currentIndex >= widget.photos.length - 1) {
+                  _currentIndex = widget.photos.length - 2;
+                  _pageController.jumpToPage(_currentIndex);
+                }
+                setState(() {});
+              }
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('O\'chirish'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Full screen image viewer for camera captured photos
+class CameraFullScreenImageViewer extends StatefulWidget {
+  final List<String> photos;
+  final int initialIndex;
+  final Function(int)? onDeletePhoto;
+
+  const CameraFullScreenImageViewer({
+    super.key,
+    required this.photos,
+    required this.initialIndex,
+    this.onDeletePhoto,
+  });
+
+  @override
+  State<CameraFullScreenImageViewer> createState() => _CameraFullScreenImageViewerState();
+}
+
+class _CameraFullScreenImageViewerState extends State<CameraFullScreenImageViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black.withOpacity(0.7),
+        foregroundColor: Colors.white,
+        title: Text('${_currentIndex + 1} / ${widget.photos.length}'),
+        actions: widget.onDeletePhoto != null
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: _showDeleteConfirmation,
+                  tooltip: l10n?.delete ?? 'Delete',
+                ),
+              ]
+            : null,
+      ),
+      body: PhotoViewGallery.builder(
+        scrollPhysics: const BouncingScrollPhysics(),
+        builder: (BuildContext context, int index) {
+          return PhotoViewGalleryPageOptions(
+            imageProvider: FileImage(File(widget.photos[index])),
+            initialScale: PhotoViewComputedScale.contained,
+            minScale: PhotoViewComputedScale.contained,
+            maxScale: PhotoViewComputedScale.covered * 2,
+            heroAttributes: PhotoViewHeroAttributes(tag: widget.photos[index]),
           );
         },
         itemCount: widget.photos.length,
@@ -1069,40 +1188,43 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                   scrollDirection: Axis.horizontal,
                   itemCount: _localCapturedPhotos.length,
                   itemBuilder: (context, index) {
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        image: DecorationImage(
-                          image: FileImage(File(_localCapturedPhotos[index])),
-                          fit: BoxFit.cover,
+                    return GestureDetector(
+                      onTap: () => _openFullScreenViewer(index),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          image: DecorationImage(
+                            image: FileImage(File(_localCapturedPhotos[index])),
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ),
-                      child: Stack(
-                        children: [
-                          // Positioned(
-                          //   top: 4,
-                          //   right: 4,
-                          //   child: GestureDetector(
-                          //     onTap: () => _showDeleteConfirmationForCameraSlider(index),
-                          //     child: Container(
-                          //       width: 24,
-                          //       height: 24,
-                          //       decoration: BoxDecoration(
-                          //         color: Colors.red.withOpacity(0.8),
-                          //         shape: BoxShape.circle,
-                          //       ),
-                          //       child: const Icon(
-                          //         Icons.close,
-                          //         color: Colors.white,
-                          //         size: 16,
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
-                        ],
+                        child: Stack(
+                          children: [
+                            // Positioned(
+                            //   top: 4,
+                            //   right: 4,
+                            //   child: GestureDetector(
+                            //     onTap: () => _showDeleteConfirmationForCameraSlider(index),
+                            //     child: Container(
+                            //       width: 24,
+                            //       height: 24,
+                            //       decoration: BoxDecoration(
+                            //         color: Colors.red.withOpacity(0.8),
+                            //         shape: BoxShape.circle,
+                            //       ),
+                            //       child: const Icon(
+                            //         Icons.close,
+                            //         color: Colors.white,
+                            //         size: 16,
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -1173,6 +1295,19 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Open full screen image viewer for camera slider
+  void _openFullScreenViewer(int initialIndex) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CameraFullScreenImageViewer(
+          photos: _localCapturedPhotos,
+          initialIndex: initialIndex,
+          onDeletePhoto: _deletePhotoFromCameraSlider,
+        ),
       ),
     );
   }

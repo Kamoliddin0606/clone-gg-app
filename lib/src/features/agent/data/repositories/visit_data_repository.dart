@@ -68,6 +68,11 @@ class VisitDataRepository {
     await _dbService.deleteVisitStepDataByStepCode(visitId, stepCode);
   }
 
+  /// Delete a specific visit step data record by ID
+  Future<void> deleteVisitStepData(int id) async {
+    await _dbService.deleteVisitStepData(id);
+  }
+
   /// Create visit step data for a specific step
   Future<VisitData> createVisitStepData({
     required String visitId,

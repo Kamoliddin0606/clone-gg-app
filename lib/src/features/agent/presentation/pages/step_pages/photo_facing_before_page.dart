@@ -872,6 +872,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       debugPrint('Camera error in capture page: $error');
 
       if (mounted) {
+
         setState(() => _isCameraAvailable = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Kamera xatoligi: $error')),
@@ -916,65 +917,52 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
             child: CameraPreview(widget.cameraController),
           ),
 
-          // Top bar with captured photos count and finish button
+          // Bottom spacing for safe area (moved to bottom of stack)
           Positioned(
-            top: 0,
+            bottom: 0,
             left: 0,
             right: 0,
+            height: 100,
             child: Container(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 16,
-                left: 16,
-                right: 16,
-                bottom: 16,
-              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
                   colors: [
                     Colors.black.withOpacity(0.7),
                     Colors.transparent,
                   ],
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Close button
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
+            ),
+          ),
 
-                  // Photos count and finish button
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          '${_localCapturedPhotos.length} ta rasm',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton.icon(
-                        onPressed: _localCapturedPhotos.isNotEmpty
-                            ? () => Navigator.of(context).pop()
-                            : null,
-                        icon: const Icon(Icons.check),
-                        label: const Text('Yakunlash'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.green,
-                        ),
-                      ),
-                    ],
+          // Capture button at bottom center (moved up in stack order)
+          Positioned(
+            bottom: 20,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: (_isCapturing || !_isCameraAvailable) ? null : _capturePhoto,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 4),
+                    color: _isCapturing
+                        ? Colors.grey
+                        : !_isCameraAvailable
+                            ? Colors.red.withOpacity(0.5)
+                            : Colors.transparent,
                   ),
-                ],
+                  child: _isCapturing
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : !_isCameraAvailable
+                          ? const Icon(Icons.error, color: Colors.white)
+                          : Container(), // Empty circle with white border
+                ),
               ),
             ),
           ),
@@ -1044,52 +1032,65 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
               ),
             ),
 
-          // Capture button at bottom center
+          // Top bar with captured photos count and finish button
           Positioned(
-            bottom: 20,
+            top: 0,
             left: 0,
             right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: (_isCapturing || !_isCameraAvailable) ? null : _capturePhoto,
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    color: _isCapturing
-                        ? Colors.grey
-                        : !_isCameraAvailable
-                            ? Colors.red.withOpacity(0.5)
-                            : Colors.transparent,
-                  ),
-                  child: _isCapturing
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : !_isCameraAvailable
-                          ? const Icon(Icons.error, color: Colors.white)
-                          : Container(), // Empty circle with white border
-                ),
-              ),
-            ),
-          ),
-
-          // Bottom spacing for safe area
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 100,
             child: Container(
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 16,
+                left: 16,
+                right: 16,
+                bottom: 16,
+              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                   colors: [
                     Colors.black.withOpacity(0.7),
                     Colors.transparent,
                   ],
                 ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Close button
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+
+                  // Photos count and finish button
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          '${_localCapturedPhotos.length} ta rasm',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        onPressed: _localCapturedPhotos.isNotEmpty
+                            ? () => Navigator.of(context).pop()
+                            : null,
+                        icon: const Icon(Icons.check),
+                        label: const Text('Yakunlash'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
@@ -1100,6 +1101,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
 
   /// Capture photo from camera
   Future<void> _capturePhoto() async {
+    print("Rasmga olinyapti yoki kamera mavjud emas: ${_isCapturing} ${_isCameraAvailable}");
     if (_isCapturing || !_isCameraAvailable) return;
 
     setState(() => _isCapturing = true);

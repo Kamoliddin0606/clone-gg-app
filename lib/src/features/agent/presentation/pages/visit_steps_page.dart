@@ -354,9 +354,22 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
 
     updatedProgress[event.stepIndex] = updatedProgress[event.stepIndex].copyWith(
-      status: VisitStepStatus.skipped,
-      skipReason: event.reason,
+      status: VisitStepStatus.completed,
+      notes: event.reason,
       completedAt: DateTime.now(),
+    );
+
+    // Save step completion data to persistent storage
+    await _saveStepDataToStorage(
+      stepCode: step.stepCode,
+      stepName: step.stepName,
+      dataType: 'completion',
+      dataContent: {
+        'notes': event.reason,
+        'completedAt': DateTime.now().toIso8601String(),
+        'status': 'completed',
+        'skipped': true,
+      },
     );
 
     final newCurrentStepIndex = _getCurrentStepIndex(updatedProgress, currentState.isStrictSequence);
@@ -1510,10 +1523,21 @@ class _VisitStepCardState extends State<_VisitStepCard> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${widget.stepProgress.step.stepName} ${l10n?.skipStep?.toLowerCase() ?? 'skip'}'),
+        title: Text('${widget.stepProgress.step.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-
+          children: [
+            Text(l10n?.confirmCompletion ?? 'Confirm completion'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _skipReasonController,
+              decoration: InputDecoration(
+                hintText: l10n?.enterNotesOptional ?? 'Enter notes (optional)',
+                border: const OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -1526,7 +1550,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               _skipReasonController.clear();
               Navigator.of(context).pop();
             },
-            child: Text(l10n?.confirmSkip ?? 'Confirm Skip'),
+            child: Text(l10n?.confirmCompletion ?? 'Confirm Completion'),
           ),
         ],
       ),

@@ -594,6 +594,10 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
 
   /// Build bottom bar with complete button
   Widget _buildBottomBar(ThemeData theme, AppLocalizations? l10n) {
+    if (widget.readOnly) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -843,7 +847,7 @@ class CameraCapturePage extends StatefulWidget {
 }
 
 class _CameraCapturePageState extends State<CameraCapturePage> {
-  late PageController _photoSliderController;
+  final PhotoStorageService _photoStorageService = sl<PhotoStorageService>();
   bool _isCapturing = false;
   late List<String> _localCapturedPhotos;
   bool _isCameraAvailable = true;
@@ -851,7 +855,6 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
   @override
   void initState() {
     super.initState();
-    _photoSliderController = PageController();
     _localCapturedPhotos = List.from(widget.capturedPhotos);
 
     // Listen for camera errors
@@ -860,7 +863,6 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
 
   @override
   void dispose() {
-    _photoSliderController.dispose();
     widget.cameraController.removeListener(_onCameraError);
     super.dispose();
   }
@@ -899,11 +901,88 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     }
   }
 
+  /// Show delete confirmation for camera slider photo
+  void _showDeleteConfirmationForCameraSlider(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rasmni o\'chirish'),
+        content: const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _deletePhotoFromCameraSlider(index);
+
+              // Also remove from main photos list if it exists there
+              // This will be handled by the parent widget when we return
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('O\'chirish'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Delete photo from camera slider
-  void _deletePhotoFromCameraSlider(int index) {
-    setState(() {
-      _localCapturedPhotos.removeAt(index);
-    });
+  Future<void> _deletePhotoFromCameraSlider(int index) async {
+    try {
+      final photoPath = _localCapturedPhotos[index];
+
+      // Delete the actual file from storage
+      final file = File(photoPath);
+      if (await file.exists()) {
+        await file.delete();
+      }
+
+      // Try to delete from photo storage service if it's a saved photo
+      try {
+        await _photoStorageService.deletePhoto(
+          '', // visitId - empty since we're in camera mode
+          0,  // stepCode - 0 since we're in camera mode
+          photoPath,
+        );
+      } catch (e) {
+        // Ignore errors if photo wasn't saved to service yet
+        debugPrint('Photo not found in service storage, continuing with file deletion: $e');
+      }
+
+      // Clear image cache for this specific image
+      final imageProvider = FileImage(file);
+      imageProvider.evict();
+
+      // Clear all image cache to ensure complete cleanup
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+
+      // Remove from local list
+      setState(() {
+        _localCapturedPhotos.removeAt(index);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Rasm o\'chirildi'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error deleting photo from camera slider: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Rasm o\'chirishda xatolik: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -986,13 +1065,12 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                     ),
                   ],
                 ),
-                child: PageView.builder(
-                  controller: _photoSliderController,
+                child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: _localCapturedPhotos.length,
                   itemBuilder: (context, index) {
                     return Container(
-                      margin: const EdgeInsets.all(4),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
@@ -1004,26 +1082,26 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                       ),
                       child: Stack(
                         children: [
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: GestureDetector(
-                              onTap: () => _deletePhotoFromCameraSlider(index),
-                              child: Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: Colors.red.withOpacity(0.8),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                          ),
+                          // Positioned(
+                          //   top: 4,
+                          //   right: 4,
+                          //   child: GestureDetector(
+                          //     onTap: () => _showDeleteConfirmationForCameraSlider(index),
+                          //     child: Container(
+                          //       width: 24,
+                          //       height: 24,
+                          //       decoration: BoxDecoration(
+                          //         color: Colors.red.withOpacity(0.8),
+                          //         shape: BoxShape.circle,
+                          //       ),
+                          //       child: const Icon(
+                          //         Icons.close,
+                          //         color: Colors.white,
+                          //         size: 16,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                     );

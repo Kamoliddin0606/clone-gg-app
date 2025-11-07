@@ -203,6 +203,12 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
     }
   }
 
+  /// Save captured photo and return path for camera page
+  Future<String> _saveCapturedPhotoAndReturnPath(File imageFile) async {
+    await _saveCapturedPhoto(imageFile);
+    return imageFile.path;
+  }
+
   /// Delete photo
   Future<void> _deletePhoto(int index) async {
     try {
@@ -244,7 +250,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
       MaterialPageRoute(
         builder: (context) => CameraCapturePage(
           cameraController: _cameraController!,
-          onPhotoCaptured: _saveCapturedPhoto,
+          onPhotoCaptured: _saveCapturedPhotoAndReturnPath,
           capturedPhotos: _photos.map((p) => p['imagePath'] as String).toList(),
         ),
       ),
@@ -720,11 +726,13 @@ class CameraCapturePage extends StatefulWidget {
 class _CameraCapturePageState extends State<CameraCapturePage> {
   late PageController _photoSliderController;
   bool _isCapturing = false;
+  late List<String> _localCapturedPhotos;
 
   @override
   void initState() {
     super.initState();
     _photoSliderController = PageController();
+    _localCapturedPhotos = List.from(widget.capturedPhotos);
   }
 
   @override
@@ -785,13 +793,13 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          '${widget.capturedPhotos.length} ta rasm',
+                          '${_localCapturedPhotos.length} ta rasm',
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
                       const SizedBox(width: 8),
                       FilledButton.icon(
-                        onPressed: widget.capturedPhotos.isNotEmpty
+                        onPressed: _localCapturedPhotos.isNotEmpty
                             ? () => Navigator.of(context).pop()
                             : null,
                         icon: const Icon(Icons.check),
@@ -808,43 +816,43 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
           ),
 
           // Captured photos slider at top
-          if (widget.capturedPhotos.isNotEmpty)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 80,
-              left: 0,
-              right: 0,
-              height: 80,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: PageView.builder(
-                  controller: _photoSliderController,
-                  scrollDirection: Axis.horizontal,
-                  itemCount: widget.capturedPhotos.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      margin: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        image: DecorationImage(
-                          image: FileImage(File(widget.capturedPhotos[index])),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
+           if (_localCapturedPhotos.isNotEmpty)
+             Positioned(
+               top: MediaQuery.of(context).padding.top + 80,
+               left: 0,
+               right: 0,
+               height: 80,
+               child: Container(
+                 margin: const EdgeInsets.symmetric(horizontal: 16),
+                 decoration: BoxDecoration(
+                   borderRadius: BorderRadius.circular(12),
+                   boxShadow: [
+                     BoxShadow(
+                       color: Colors.black.withOpacity(0.3),
+                       blurRadius: 8,
+                       offset: const Offset(0, 2),
+                     ),
+                   ],
+                 ),
+                 child: PageView.builder(
+                   controller: _photoSliderController,
+                   scrollDirection: Axis.horizontal,
+                   itemCount: _localCapturedPhotos.length,
+                   itemBuilder: (context, index) {
+                     return Container(
+                       margin: const EdgeInsets.all(4),
+                       decoration: BoxDecoration(
+                         borderRadius: BorderRadius.circular(8),
+                         image: DecorationImage(
+                           image: FileImage(File(_localCapturedPhotos[index])),
+                           fit: BoxFit.cover,
+                         ),
+                       ),
+                     );
+                   },
+                 ),
+               ),
+             ),
 
           // Capture button at bottom center
           Positioned(
@@ -904,11 +912,13 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       final image = await widget.cameraController.takePicture();
       final imageFile = File(image.path);
 
-      // Call the callback to save the photo
-      await widget.onPhotoCaptured(imageFile);
+      // Call the callback to save the photo and get the path
+      final savedPath = await widget.onPhotoCaptured(imageFile);
 
-      // Update UI
-      setState(() {});
+      // Add to local list for immediate UI update
+      setState(() {
+        _localCapturedPhotos.add(savedPath);
+      });
 
       // Show success feedback
       if (mounted) {

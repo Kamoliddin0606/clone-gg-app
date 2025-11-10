@@ -411,49 +411,10 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                     unselectedLabelColor: colorScheme.onSurfaceVariant,
                     indicatorColor: colorScheme.primary,
                   ),
-                  // Enhanced collapsible search bar
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    height: _isSearchVisible ? 80 : 56,
-                    child: Container(
-                      color: colorScheme.surface,
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            _isSearchVisible = !_isSearchVisible;
-                            if (!_isSearchVisible) {
-                              _searchController.clear();
-                            }
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            transitionBuilder: (Widget child, Animation<double> animation) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(0, 0.2),
-                                    end: Offset.zero,
-                                  ).animate(animation),
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: _isSearchVisible
-                                ? _buildExpandedSearchBar(colorScheme)
-                                : _buildCollapsedSearchBar(colorScheme),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+
                 ],
               ),
-              isSearchVisible: _isSearchVisible,
+              // isSearchVisible: _isSearchVisible,
             ),
           ),
 
@@ -633,168 +594,168 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
     return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 
-  Widget _buildCollapsedSearchBar(ColorScheme colorScheme) {
-    return Container(
-      key: const ValueKey('collapsed'),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.search,
-            color: colorScheme.onSurfaceVariant,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Mahsulotlarni qidirish',
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Icon(
-            Icons.keyboard_arrow_down,
-            color: colorScheme.onSurfaceVariant,
-            size: 20,
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildCollapsedSearchBar(ColorScheme colorScheme) {
+  //   return Container(
+  //     key: const ValueKey('collapsed'),
+  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  //     decoration: BoxDecoration(
+  //       color: colorScheme.surfaceContainerHighest.withOpacity(0.1),
+  //       borderRadius: BorderRadius.circular(16),
+  //       border: Border.all(
+  //         color: colorScheme.outline.withOpacity(0.2),
+  //         width: 1,
+  //       ),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Icon(
+  //           Icons.search,
+  //           color: colorScheme.onSurfaceVariant,
+  //           size: 20,
+  //         ),
+  //         const SizedBox(width: 12),
+  //         Expanded(
+  //           child: Text(
+  //             'Mahsulotlarni qidirish',
+  //             style: TextStyle(
+  //               color: colorScheme.onSurfaceVariant,
+  //               fontSize: 16,
+  //               fontWeight: FontWeight.w500,
+  //             ),
+  //           ),
+  //         ),
+  //         Icon(
+  //           Icons.keyboard_arrow_down,
+  //           color: colorScheme.onSurfaceVariant,
+  //           size: 20,
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  Widget _buildExpandedSearchBar(ColorScheme colorScheme) {
-    return Container(
-      key: const ValueKey('expanded'),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.search,
-                color: colorScheme.primary,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Qidiruv',
-                  style: TextStyle(
-                    color: colorScheme.primary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _isSearchVisible = false;
-                    _searchController.clear();
-                  });
-                },
-                icon: Icon(
-                  Icons.close,
-                  color: colorScheme.onSurfaceVariant,
-                  size: 20,
-                ),
-                tooltip: 'Qidiruvni yopish',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _searchController,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: 'Mahsulot nomini yoki kodini kiriting...',
-              hintStyle: TextStyle(
-                color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-              ),
-              prefixIcon: Icon(
-                Icons.search,
-                color: colorScheme.onSurfaceVariant,
-                size: 20,
-              ),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(
-                        Icons.clear,
-                        color: colorScheme.onSurfaceVariant,
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                      },
-                      tooltip: 'Tozalash',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: colorScheme.outline.withOpacity(0.3),
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: colorScheme.outline.withOpacity(0.3),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: colorScheme.primary,
-                  width: 2,
-                ),
-              ),
-              filled: true,
-              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.1),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-            ),
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildExpandedSearchBar(ColorScheme colorScheme) {
+  //   return Container(
+  //     key: const ValueKey('expanded'),
+  //     padding: const EdgeInsets.all(16),
+  //     decoration: BoxDecoration(
+  //       color: colorScheme.surface,
+  //       borderRadius: BorderRadius.circular(16),
+  //       border: Border.all(
+  //         color: colorScheme.outline.withOpacity(0.3),
+  //         width: 1,
+  //       ),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: colorScheme.shadow.withOpacity(0.1),
+  //           blurRadius: 8,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Row(
+  //           children: [
+  //             Icon(
+  //               Icons.search,
+  //               color: colorScheme.primary,
+  //               size: 20,
+  //             ),
+  //             const SizedBox(width: 12),
+  //             Expanded(
+  //               child: Text(
+  //                 'Qidiruv',
+  //                 style: TextStyle(
+  //                   color: colorScheme.primary,
+  //                   fontSize: 16,
+  //                   fontWeight: FontWeight.w600,
+  //                 ),
+  //               ),
+  //             ),
+  //             IconButton(
+  //               onPressed: () {
+  //                 setState(() {
+  //                   _isSearchVisible = false;
+  //                   _searchController.clear();
+  //                 });
+  //               },
+  //               icon: Icon(
+  //                 Icons.close,
+  //                 color: colorScheme.onSurfaceVariant,
+  //                 size: 20,
+  //               ),
+  //               tooltip: 'Qidiruvni yopish',
+  //               padding: EdgeInsets.zero,
+  //               constraints: const BoxConstraints(),
+  //             ),
+  //           ],
+  //         ),
+  //         const SizedBox(height: 12),
+  //         TextField(
+  //           controller: _searchController,
+  //           autofocus: true,
+  //           decoration: InputDecoration(
+  //             hintText: 'Mahsulot nomini yoki kodini kiriting...',
+  //             hintStyle: TextStyle(
+  //               color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+  //             ),
+  //             prefixIcon: Icon(
+  //               Icons.search,
+  //               color: colorScheme.onSurfaceVariant,
+  //               size: 20,
+  //             ),
+  //             suffixIcon: _searchController.text.isNotEmpty
+  //                 ? IconButton(
+  //                     icon: Icon(
+  //                       Icons.clear,
+  //                       color: colorScheme.onSurfaceVariant,
+  //                       size: 20,
+  //                     ),
+  //                     onPressed: () {
+  //                       _searchController.clear();
+  //                     },
+  //                     tooltip: 'Tozalash',
+  //                     padding: EdgeInsets.zero,
+  //                     constraints: const BoxConstraints(),
+  //                   )
+  //                 : null,
+  //             border: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(12),
+  //               borderSide: BorderSide(
+  //                 color: colorScheme.outline.withOpacity(0.3),
+  //               ),
+  //             ),
+  //             enabledBorder: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(12),
+  //               borderSide: BorderSide(
+  //                 color: colorScheme.outline.withOpacity(0.3),
+  //               ),
+  //             ),
+  //             focusedBorder: OutlineInputBorder(
+  //               borderRadius: BorderRadius.circular(12),
+  //               borderSide: BorderSide(
+  //                 color: colorScheme.primary,
+  //                 width: 2,
+  //               ),
+  //             ),
+  //             filled: true,
+  //             fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.1),
+  //             contentPadding: const EdgeInsets.symmetric(
+  //               horizontal: 16,
+  //               vertical: 12,
+  //             ),
+  //           ),
+  //           style: TextStyle(
+  //             color: colorScheme.onSurface,
+  //             fontSize: 16,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
 }
 

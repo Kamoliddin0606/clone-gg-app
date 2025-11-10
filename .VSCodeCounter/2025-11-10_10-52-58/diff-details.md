@@ -1,8 +1,8 @@
 # Diff Details
 
-Date : 2025-10-09 12:12:09
+Date : 2025-11-10 10:52:58
 
-Directory d:\\programming\\github\\clone-gg-app\\lib
+Directory c:\\Users\\Kamoliddin\\Documents\\GitHub\\clone-gg-app\\lib
 
 Total : 0 files,  0 codes, 0 comments, 0 blanks, all 0 lines
 

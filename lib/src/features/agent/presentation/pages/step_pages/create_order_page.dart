@@ -5,11 +5,12 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/formatters.dart';
 
@@ -67,6 +68,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   final VisitStepDataService _dataService = sl<VisitStepDataService>();
   final DataSyncService _syncService = sl<DataSyncService>();
   final ApiDatabaseService _dbService = sl<ApiDatabaseService>();
+  final SharedPreferencesService _prefs = sl<SharedPreferencesService>();
   final TextEditingController _notesController = TextEditingController();
 
   // UI state
@@ -78,7 +80,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   ViewMode _currentViewMode = ViewMode.list;
 
   // Settings data
-  List<BusinessRegion> _organizations = [];
+  List<UserOrganization> _organizations = [];
   List<UserWarehouse> _warehouses = [];
   List<PriceType> _priceTypes = [];
 
@@ -166,11 +168,23 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     }
   }
 
-  /// Load business regions/organizations from cache
+  /// Load user organizations from cache or database
+  /// If data is not in cache, loads from database and caches it
   Future<void> _loadOrganizations() async {
     try {
       debugPrint('CreateOrderPage: Loading organizations...');
-      _organizations = await _syncService.getCachedBusinessRegions();
+
+      // Get current user code from preferences
+      final userCode = _prefs.getUserCode();
+      if (userCode == null) {
+        debugPrint('CreateOrderPage: No user code found, cannot load organizations');
+        _organizations = [];
+        if (mounted) setState(() {});
+        return;
+      }
+
+      // Load organizations using sync service (cache-first approach)
+      _organizations = await _syncService.syncUserOrganizations(userCode: userCode);
       debugPrint('CreateOrderPage: Loaded ${_organizations.length} organizations');
       if (mounted) setState(() {});
     } catch (e, stackTrace) {

@@ -31,6 +31,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_st
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
@@ -290,6 +292,9 @@ class DataSyncService {
       // Sync planned routes
       await _syncPlannedRoutes(userCode);
 
+      // Sync user organizations
+      await _syncUserOrganizations(userCode);
+
       // Sync promotions
       if ( isAvonServerSelected() || isEvyapServerSelected() ) {
         await _syncPromotions(null); // No auth token needed for now
@@ -428,6 +433,10 @@ class DataSyncService {
       // Step 15: Sync planned routes
       yield SyncStep.syncingPlannedRoutes;
       await _syncPlannedRoutes(userCode);
+
+      // Step 16: Sync user organizations
+      yield SyncStep.syncingUserOrganizations;
+      await _syncUserOrganizations(userCode);
 
       if( isAvonServerSelected() || isEvyapServerSelected() ) {
         // Step 16: Sync promotions
@@ -1869,6 +1878,30 @@ class DataSyncService {
     return _prefs.getMapTokensLastUpdated();
   }
 
+  /// Sync user organizations data
+  Future<List<UserOrganization>> syncUserOrganizations({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getUserOrganizations(userCode);
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+    }
+
+    return await _syncUserOrganizations(userCode);
+  }
+
+  Future<List<UserOrganization>> _syncUserOrganizations(String userCode) async {
+    final organizations = await _apiService.getOrganizationsByUserCode(userCode: userCode);
+    if (kDebugMode) {
+      print('Foydalanuvchi tashkilotlari ma\'lumotlari yuklandi: ${organizations.length} ta tashkilot');
+    }
+    await _dbService.saveUserOrganizations(userCode, organizations);
+    return organizations;
+  }
+
   /// Sync visit steps data
   Future<List<VisitStep>> syncVisitSteps({
     required String userCode,
@@ -1944,6 +1977,76 @@ class DataSyncService {
     final permissions = await _dbService.getSalesReqPermissions(userCode);
     if (permissions == null) return 0;
     return await _dbService.getVisitStepsCount(permissions.id!);
+  }
+
+  /// Sync create orders to server
+  /// This method sends unsynced create orders to the server via SetOrder API
+  Future<List<Map<String, dynamic>>> syncCreateOrders() async {
+    try {
+      if (kDebugMode) {
+        print('DataSyncService: Starting create orders sync');
+      }
+
+      // Get all unsynced create orders
+      final unsyncedOrders = await _dbService.getUnsyncedCreateOrders();
+
+      if (unsyncedOrders.isEmpty) {
+        if (kDebugMode) {
+          print('DataSyncService: No unsynced create orders found');
+        }
+        return [];
+      }
+
+      final syncResults = <Map<String, dynamic>>[];
+
+      for (final order in unsyncedOrders) {
+        try {
+          if (kDebugMode) {
+            print('DataSyncService: Syncing create order ${order.id}');
+          }
+
+          // Send order to server
+          final result = await _apiService.setOrder(order: order);
+
+          // Update sync status
+          await _dbService.updateCreateOrderSyncStatus(order.id!, true);
+
+          syncResults.add({
+            'orderId': order.id,
+            'success': true,
+            'result': result,
+          });
+
+          if (kDebugMode) {
+            print('DataSyncService: Successfully synced create order ${order.id}');
+          }
+        } catch (e) {
+          // Update sync status with error
+          await _dbService.updateCreateOrderSyncStatus(order.id!, false, syncError: e.toString());
+
+          syncResults.add({
+            'orderId': order.id,
+            'success': false,
+            'error': e.toString(),
+          });
+
+          if (kDebugMode) {
+            print('DataSyncService: Failed to sync create order ${order.id}: $e');
+          }
+        }
+      }
+
+      if (kDebugMode) {
+        print('DataSyncService: Create orders sync completed. Results: $syncResults');
+      }
+
+      return syncResults;
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: Error during create orders sync: $e');
+      }
+      rethrow;
+    }
   }
 }
 

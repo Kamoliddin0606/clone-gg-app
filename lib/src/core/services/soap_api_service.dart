@@ -18,6 +18,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_c
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
@@ -1629,6 +1631,197 @@ class SoapApiService {
       );
     } catch (e) {
       throw Exception('Buyurtma tafsilotlarini olishda xatolik: $e');
+    }
+  }
+
+
+  /// Send create order to server via SetOrder API
+  /// This method sends a local order to the server for processing
+  Future<Map<String, dynamic>> setOrder({
+    required CreateOrder order,
+  }) async {
+    // Build the SOAP envelope based on the provided XML structure
+    final productsXml = order.products.map((product) => '''
+      <sam:Rows>
+         <sam:CodeSklad>${product.codeSklad}</sam:CodeSklad>
+         <sam:CodeProduct>${product.codeProduct}</sam:CodeProduct>
+         <sam:Amount>${product.amount}</sam:Amount>
+         <sam:Price>${product.price}</sam:Price>
+         <sam:Total>${product.total}</sam:Total>
+         <sam:Weight>${product.weight}</sam:Weight>
+         <sam:Capacity>${product.capacity}</sam:Capacity>
+         <sam:PaymentType>${product.paymentType}</sam:PaymentType>
+         <sam:DiscountSum>${product.discountSum}</sam:DiscountSum>
+         <sam:DiscountRate>${product.discountRate}</sam:DiscountRate>
+         <sam:GiftAmount>${product.giftAmount}</sam:GiftAmount>
+      </sam:Rows>
+    ''').join();
+
+    final competitiveIntelligenceXml = order.competitiveIntelligence.map((ci) => '''
+      <sam:Rows>
+         <sam:Competitor>${ci.competitor}</sam:Competitor>
+         <sam:Product>${ci.product}</sam:Product>
+         <sam:Price>${ci.price}</sam:Price>
+      </sam:Rows>
+    ''').join();
+
+    final creditDetailsXml = order.creditDetails.map((cd) => '''
+      <sam:Rows>
+         <sam:DateOfPayment>${cd.dateOfPayment.toIso8601String().split('T')[0]}</sam:DateOfPayment>
+         <sam:Total>${cd.total}</sam:Total>
+      </sam:Rows>
+    ''').join();
+
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:SetOrder>
+         <sam:CodeAgent>${order.codeAgent}</sam:CodeAgent>
+         <sam:CodeClient>${order.codeClient}</sam:CodeClient>
+         <sam:CodePrice>${order.codePrice}</sam:CodePrice>
+         <sam:Payment>${order.payment}</sam:Payment>
+         <sam:ProductsList>
+            $productsXml
+         </sam:ProductsList>
+         <sam:ShippingDate>${order.shippingDate.toIso8601String().split('T')[0]}</sam:ShippingDate>
+         <sam:CommentSupervisor>${order.commentSupervisor ?? ''}</sam:CommentSupervisor>
+         <sam:CommentForwarder>${order.commentForwarder ?? ''}</sam:CommentForwarder>
+         <sam:Comment>${order.comment ?? ''}</sam:Comment>
+         <sam:CompetitiveIintelligenceList>
+            $competitiveIntelligenceXml
+         </sam:CompetitiveIintelligenceList>
+         <sam:CreateDate>${order.createDate.toIso8601String().split('T')[0]}</sam:CreateDate>
+         <sam:Longitude>${order.longitude}</sam:Longitude>
+         <sam:Latitude>${order.latitude}</sam:Latitude>
+         <sam:Weight>${order.weight}</sam:Weight>
+         <sam:Capacity>${order.capacity}</sam:Capacity>
+         <sam:Credit>${order.credit ? 'true' : 'false'}</sam:Credit>
+         <sam:CodeProject>${order.codeProject}</sam:CodeProject>
+         <sam:CreditDetails>
+            $creditDetailsXml
+         </sam:CreditDetails>
+         <sam:OrderType>${order.orderType}</sam:OrderType>
+         <sam:CodeOrg>${order.codeOrg}</sam:CodeOrg>
+         <sam:CodeSklad>${order.codeSklad}</sam:CodeSklad>
+         <sam:CodeContract>${order.codeContract ?? ''}</sam:CodeContract>
+      </sam:SetOrder>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      if (kDebugMode) {
+        print('SOAP API: Sending SetOrder request for order ${order.id}');
+      }
+
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final returnElement = document.findAllElements('m:return').firstOrNull;
+
+      if (returnElement == null) {
+        throw Exception('Server javobi bo\'sh');
+      }
+
+      // Parse response - assuming success if no error elements
+      final result = _getElementText(returnElement, 'm:result') ?? 'Success';
+
+      if (kDebugMode) {
+        print('SOAP API: SetOrder request completed successfully');
+      }
+
+      return {
+        'success': true,
+        'result': result,
+        'orderId': order.id,
+      };
+    } catch (e) {
+      if (kDebugMode) {
+        print('SOAP API: Error sending SetOrder request: $e');
+      }
+      throw Exception('Buyurtmani serverga yuborishda xatolik: $e');
+    }
+  }
+
+  /// Get organizations by user code
+  /// This method retrieves organizations associated with a specific user code
+  /// Returns a list of UserOrganization objects
+  Future<List<UserOrganization>> getOrganizationsByUserCode({
+    required String userCode,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:GetOrganizationByUserCode>
+         <sam:CodeUser>$userCode</sam:CodeUser>
+      </sam:GetOrganizationByUserCode>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      if (kDebugMode) {
+        print('SOAP API: Requesting organizations for user: $userCode');
+      }
+
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      if (kDebugMode) {
+        print('SOAP API: Organizations response received');
+      }
+
+      final document = XmlDocument.parse(response.data);
+      final returnElement = document.findAllElements('m:return').first;
+
+      // Parse organizations from response
+      final organizationElements = returnElement.findAllElements('m:Organizations');
+      final organizations = <UserOrganization>[];
+
+      for (final orgElement in organizationElements) {
+        final code = _getElementText(orgElement, 'm:Code');
+        final name = _getElementText(orgElement, 'm:Name');
+
+        if (code != null && code.isNotEmpty && name != null && name.isNotEmpty) {
+          organizations.add(UserOrganization(
+            code: code,
+            name: name,
+            userCode: userCode,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ));
+        }
+      }
+
+      if (kDebugMode) {
+        print('SOAP API: Successfully parsed ${organizations.length} organizations for user $userCode');
+      }
+
+      return organizations;
+    } catch (e) {
+      if (kDebugMode) {
+        print('SOAP API: Error retrieving organizations for user $userCode: $e');
+      }
+      throw Exception('Foydalanuvchi tashkilotlarini olishda xatolik: $e');
     }
   }
 }

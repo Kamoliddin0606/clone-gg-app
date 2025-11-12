@@ -18,6 +18,7 @@ enum SyncStep {
   syncingOrders('Buyurtmalar yuklanmoqda...', Icons.shopping_cart),
   syncingSalesReqPermissions('Agent ruxsatlari yuklanmoqda...', Icons.security),
   syncingPlannedRoutes('Rejalashtirilgan marshrutlar yuklanmoqda...', Icons.route),
+  syncingUserOrganizations('Foydalanuvchi tashkilotlari yuklanmoqda...', Icons.business),
   syncingPromotions('Aksiyalar yuklanmoqda...', Icons.local_offer),
   syncingMapTokens('Xarita tokenlari yuklanmoqda...', Icons.map),
   syncingReports('Hisobotlar yuklanmoqda...', Icons.analytics),

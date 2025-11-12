@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
@@ -25,6 +26,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_de
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class ApiDatabaseService {
@@ -46,7 +48,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 14,
+      version: 16,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -613,6 +615,111 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)');
+    } else if (oldVersion < 15) {
+      // Add create_order tables for version 15
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS create_order (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code_agent TEXT NOT NULL,
+          code_client TEXT NOT NULL,
+          code_price TEXT NOT NULL,
+          payment TEXT NOT NULL,
+          shipping_date TEXT NOT NULL,
+          comment_supervisor TEXT,
+          comment_forwarder TEXT,
+          comment TEXT,
+          create_date TEXT NOT NULL,
+          longitude REAL NOT NULL,
+          latitude REAL NOT NULL,
+          weight REAL NOT NULL,
+          capacity REAL NOT NULL,
+          credit INTEGER NOT NULL DEFAULT 0,
+          code_project TEXT NOT NULL,
+          order_type INTEGER NOT NULL DEFAULT 0,
+          code_org TEXT NOT NULL,
+          code_sklad TEXT NOT NULL,
+          code_contract TEXT,
+          has_promo INTEGER NOT NULL DEFAULT 0,
+          is_synced INTEGER NOT NULL DEFAULT 0,
+          synced_at TEXT,
+          sync_error TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS create_order_products (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          create_order_id INTEGER NOT NULL,
+          code_sklad TEXT NOT NULL,
+          code_product TEXT NOT NULL,
+          amount INTEGER NOT NULL,
+          price REAL NOT NULL,
+          total REAL NOT NULL,
+          weight REAL NOT NULL,
+          capacity REAL NOT NULL,
+          payment_type INTEGER NOT NULL,
+          discount_sum REAL NOT NULL DEFAULT 0.0,
+          discount_rate REAL NOT NULL DEFAULT 0.0,
+          gift_amount INTEGER NOT NULL DEFAULT 0,
+          promo INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS competitive_intelligence (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          create_order_id INTEGER NOT NULL,
+          competitor TEXT NOT NULL,
+          product TEXT NOT NULL,
+          price REAL NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS credit_details (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          create_order_id INTEGER NOT NULL,
+          date_of_payment TEXT NOT NULL,
+          total REAL NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create indexes for new tables
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_code_agent ON create_order(code_agent)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_code_client ON create_order(code_client)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_is_synced ON create_order(is_synced)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_create_date ON create_order(create_date)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_products_create_order_id ON create_order_products(create_order_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_products_code_product ON create_order_products(code_product)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_competitive_intelligence_create_order_id ON competitive_intelligence(create_order_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_credit_details_create_order_id ON credit_details(create_order_id)');
+    } else if (oldVersion < 16) {
+      // Add user_organizations table for version 16
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS user_organizations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code TEXT UNIQUE NOT NULL,
+          name TEXT NOT NULL,
+          user_code TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      // Create indexes for user_organizations table
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_code ON user_organizations(code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_user_code ON user_organizations(user_code)');
     }
   }
 
@@ -1067,6 +1174,98 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX idx_orders_type_price_code ON orders(type_price_code)');
     await db.execute('CREATE INDEX idx_orders_main_status ON orders(main_status)');
     await db.execute('CREATE INDEX idx_order_statuses_message ON order_statuses(message)');
+
+    // Create create_order table for local order creation
+    await db.execute('''
+      CREATE TABLE create_order (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code_agent TEXT NOT NULL,
+        code_client TEXT NOT NULL,
+        code_price TEXT NOT NULL,
+        payment TEXT NOT NULL,
+        shipping_date TEXT NOT NULL,
+        comment_supervisor TEXT,
+        comment_forwarder TEXT,
+        comment TEXT,
+        create_date TEXT NOT NULL,
+        longitude REAL NOT NULL,
+        latitude REAL NOT NULL,
+        weight REAL NOT NULL,
+        capacity REAL NOT NULL,
+        credit INTEGER NOT NULL DEFAULT 0,
+        code_project TEXT NOT NULL,
+        order_type INTEGER NOT NULL DEFAULT 0,
+        code_org TEXT NOT NULL,
+        code_sklad TEXT NOT NULL,
+        code_contract TEXT,
+        has_promo INTEGER NOT NULL DEFAULT 0,
+        is_synced INTEGER NOT NULL DEFAULT 0,
+        synced_at TEXT,
+        sync_error TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create create_order_products table
+    await db.execute('''
+      CREATE TABLE create_order_products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        create_order_id INTEGER NOT NULL,
+        code_sklad TEXT NOT NULL,
+        code_product TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        price REAL NOT NULL,
+        total REAL NOT NULL,
+        weight REAL NOT NULL,
+        capacity REAL NOT NULL,
+        payment_type INTEGER NOT NULL,
+        discount_sum REAL NOT NULL DEFAULT 0.0,
+        discount_rate REAL NOT NULL DEFAULT 0.0,
+        gift_amount INTEGER NOT NULL DEFAULT 0,
+        promo INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Create competitive_intelligence table
+    await db.execute('''
+      CREATE TABLE competitive_intelligence (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        create_order_id INTEGER NOT NULL,
+        competitor TEXT NOT NULL,
+        product TEXT NOT NULL,
+        price REAL NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Create credit_details table
+    await db.execute('''
+      CREATE TABLE credit_details (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        create_order_id INTEGER NOT NULL,
+        date_of_payment TEXT NOT NULL,
+        total REAL NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Create indexes for new tables
+    await db.execute('CREATE INDEX idx_create_order_code_agent ON create_order(code_agent)');
+    await db.execute('CREATE INDEX idx_create_order_code_client ON create_order(code_client)');
+    await db.execute('CREATE INDEX idx_create_order_is_synced ON create_order(is_synced)');
+    await db.execute('CREATE INDEX idx_create_order_create_date ON create_order(create_date)');
+    await db.execute('CREATE INDEX idx_create_order_products_create_order_id ON create_order_products(create_order_id)');
+    await db.execute('CREATE INDEX idx_create_order_products_code_product ON create_order_products(code_product)');
+    await db.execute('CREATE INDEX idx_competitive_intelligence_create_order_id ON competitive_intelligence(create_order_id)');
+    await db.execute('CREATE INDEX idx_credit_details_create_order_id ON credit_details(create_order_id)');
 
     print('API cache database tables created successfully');
   }
@@ -4513,6 +4712,354 @@ class ApiDatabaseService {
     await db.delete('planned_routes');
   }
 
+  // ===== CREATE ORDER CRUD METHODS =====
+
+  /// Save create order with related data
+  Future<void> saveCreateOrder(CreateOrder order) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use transaction for atomicity
+    await db.transaction((txn) async {
+      try {
+        // Insert main order
+        final orderId = await txn.insert('create_order', {
+          'code_agent': order.codeAgent,
+          'code_client': order.codeClient,
+          'code_price': order.codePrice,
+          'payment': order.payment,
+          'shipping_date': order.shippingDate.toIso8601String(),
+          'comment_supervisor': order.commentSupervisor,
+          'comment_forwarder': order.commentForwarder,
+          'comment': order.comment,
+          'create_date': order.createDate.toIso8601String(),
+          'longitude': order.longitude,
+          'latitude': order.latitude,
+          'weight': order.weight,
+          'capacity': order.capacity,
+          'credit': order.credit ? 1 : 0,
+          'code_project': order.codeProject,
+          'order_type': order.orderType,
+          'code_org': order.codeOrg,
+          'code_sklad': order.codeSklad,
+          'code_contract': order.codeContract,
+          'has_promo': order.hasPromo ? 1 : 0,
+          'is_synced': order.isSynced ? 1 : 0,
+          'synced_at': order.syncedAt?.toIso8601String(),
+          'sync_error': order.syncError,
+          'created_at': now,
+          'updated_at': now,
+        });
+
+        // Insert products
+        for (final product in order.products) {
+          await txn.insert('create_order_products', {
+            'create_order_id': orderId,
+            'code_sklad': product.codeSklad,
+            'code_product': product.codeProduct,
+            'amount': product.amount,
+            'price': product.price,
+            'total': product.total,
+            'weight': product.weight,
+            'capacity': product.capacity,
+            'payment_type': product.paymentType,
+            'discount_sum': product.discountSum,
+            'discount_rate': product.discountRate,
+            'gift_amount': product.giftAmount,
+            'promo': product.promo ? 1 : 0,
+            'created_at': now,
+            'updated_at': now,
+          });
+        }
+
+        // Insert competitive intelligence
+        for (final ci in order.competitiveIntelligence) {
+          await txn.insert('competitive_intelligence', {
+            'create_order_id': orderId,
+            'competitor': ci.competitor,
+            'product': ci.product,
+            'price': ci.price,
+            'created_at': now,
+            'updated_at': now,
+          });
+        }
+
+        // Insert credit details
+        for (final cd in order.creditDetails) {
+          await txn.insert('credit_details', {
+            'create_order_id': orderId,
+            'date_of_payment': cd.dateOfPayment.toIso8601String(),
+            'total': cd.total,
+            'created_at': now,
+            'updated_at': now,
+          });
+        }
+      } catch (e) {
+        print('Error saving create order: $e');
+        rethrow;
+      }
+    });
+  }
+
+  /// Get create orders by agent code
+  Future<List<CreateOrder>> getCreateOrders(String codeAgent, {bool? isSynced}) async {
+    final db = await database;
+    String whereClause = 'WHERE code_agent = ?';
+    List<dynamic> whereArgs = [codeAgent];
+
+    if (isSynced != null) {
+      whereClause += ' AND is_synced = ?';
+      whereArgs.add(isSynced ? 1 : 0);
+    }
+
+    final orderResults = await db.rawQuery('''
+      SELECT * FROM create_order
+      $whereClause
+      ORDER BY create_date DESC
+    ''', whereArgs);
+
+    final orders = <CreateOrder>[];
+
+    for (final orderRow in orderResults) {
+      final orderId = orderRow['id'] as int;
+
+      // Get products
+      final productResults = await db.query(
+        'create_order_products',
+        where: 'create_order_id = ?',
+        whereArgs: [orderId],
+      );
+
+      // Get competitive intelligence
+      final ciResults = await db.query(
+        'competitive_intelligence',
+        where: 'create_order_id = ?',
+        whereArgs: [orderId],
+      );
+
+      // Get credit details
+      final cdResults = await db.query(
+        'credit_details',
+        where: 'create_order_id = ?',
+        whereArgs: [orderId],
+      );
+
+      final products = productResults.map((row) => CreateOrderProduct(
+        id: row['id'] as int?,
+        createOrderId: row['create_order_id'] as int?,
+        codeSklad: row['code_sklad'] as String,
+        codeProduct: row['code_product'] as String,
+        amount: row['amount'] as int,
+        price: (row['price'] as num?)?.toDouble() ?? 0.0,
+        total: (row['total'] as num?)?.toDouble() ?? 0.0,
+        weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
+        capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
+        paymentType: row['payment_type'] as int,
+        discountSum: (row['discount_sum'] as num?)?.toDouble() ?? 0.0,
+        discountRate: (row['discount_rate'] as num?)?.toDouble() ?? 0.0,
+        giftAmount: row['gift_amount'] as int,
+        promo: (row['promo'] as int?) == 1,
+      )).toList();
+
+      final competitiveIntelligence = ciResults.map((row) => CompetitiveIntelligence(
+        id: row['id'] as int?,
+        createOrderId: row['create_order_id'] as int?,
+        competitor: row['competitor'] as String,
+        product: row['product'] as String,
+        price: (row['price'] as num?)?.toDouble() ?? 0.0,
+      )).toList();
+
+      final creditDetails = cdResults.map((row) => CreditDetail(
+        id: row['id'] as int?,
+        createOrderId: row['create_order_id'] as int?,
+        dateOfPayment: DateTime.parse(row['date_of_payment'] as String),
+        total: (row['total'] as num?)?.toDouble() ?? 0.0,
+      )).toList();
+
+      orders.add(CreateOrder(
+        id: orderRow['id'] as int?,
+        codeAgent: orderRow['code_agent'] as String,
+        codeClient: orderRow['code_client'] as String,
+        codePrice: orderRow['code_price'] as String,
+        payment: orderRow['payment'] as String,
+        shippingDate: DateTime.parse(orderRow['shipping_date'] as String),
+        commentSupervisor: orderRow['comment_supervisor'] as String?,
+        commentForwarder: orderRow['comment_forwarder'] as String?,
+        comment: orderRow['comment'] as String?,
+        createDate: DateTime.parse(orderRow['create_date'] as String),
+        longitude: (orderRow['longitude'] as num?)?.toDouble() ?? 0.0,
+        latitude: (orderRow['latitude'] as num?)?.toDouble() ?? 0.0,
+        weight: (orderRow['weight'] as num?)?.toDouble() ?? 0.0,
+        capacity: (orderRow['capacity'] as num?)?.toDouble() ?? 0.0,
+        credit: (orderRow['credit'] as int?) == 1,
+        codeProject: orderRow['code_project'] as String,
+        orderType: orderRow['order_type'] as int,
+        codeOrg: orderRow['code_org'] as String,
+        codeSklad: orderRow['code_sklad'] as String,
+        codeContract: orderRow['code_contract'] as String?,
+        hasPromo: (orderRow['has_promo'] as int?) == 1,
+        isSynced: (orderRow['is_synced'] as int?) == 1,
+        syncedAt: orderRow['synced_at'] != null ? DateTime.parse(orderRow['synced_at'] as String) : null,
+        syncError: orderRow['sync_error'] as String?,
+        products: products,
+        competitiveIntelligence: competitiveIntelligence,
+        creditDetails: creditDetails,
+      ));
+    }
+
+    return orders;
+  }
+
+  /// Get create order by ID
+  Future<CreateOrder?> getCreateOrderById(int id) async {
+    final db = await database;
+    final orderResults = await db.query(
+      'create_order',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (orderResults.isEmpty) return null;
+
+    final orders = await getCreateOrders('', isSynced: null); // Get all and filter
+    return orders.firstWhere((order) => order.id == id);
+  }
+
+  /// Update create order sync status
+  Future<void> updateCreateOrderSyncStatus(int id, bool isSynced, {String? syncError}) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'create_order',
+      {
+        'is_synced': isSynced ? 1 : 0,
+        'synced_at': isSynced ? now : null,
+        'sync_error': syncError,
+        'updated_at': now,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Delete create order
+  Future<void> deleteCreateOrder(int id) async {
+    final db = await database;
+    await db.delete('create_order', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Get unsynced create orders
+  Future<List<CreateOrder>> getUnsyncedCreateOrders() async {
+    final db = await database;
+    final orderResults = await db.query(
+      'create_order',
+      where: 'is_synced = 0',
+      orderBy: 'create_date ASC',
+    );
+
+    final orders = <CreateOrder>[];
+
+    for (final orderRow in orderResults) {
+      final orderId = orderRow['id'] as int;
+
+      // Get products
+      final productResults = await db.query(
+        'create_order_products',
+        where: 'create_order_id = ?',
+        whereArgs: [orderId],
+      );
+
+      // Get competitive intelligence
+      final ciResults = await db.query(
+        'competitive_intelligence',
+        where: 'create_order_id = ?',
+        whereArgs: [orderId],
+      );
+
+      // Get credit details
+      final cdResults = await db.query(
+        'credit_details',
+        where: 'create_order_id = ?',
+        whereArgs: [orderId],
+      );
+
+      final products = productResults.map((row) => CreateOrderProduct(
+        id: row['id'] as int?,
+        createOrderId: row['create_order_id'] as int?,
+        codeSklad: row['code_sklad'] as String,
+        codeProduct: row['code_product'] as String,
+        amount: row['amount'] as int,
+        price: (row['price'] as num?)?.toDouble() ?? 0.0,
+        total: (row['total'] as num?)?.toDouble() ?? 0.0,
+        weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
+        capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
+        paymentType: row['payment_type'] as int,
+        discountSum: (row['discount_sum'] as num?)?.toDouble() ?? 0.0,
+        discountRate: (row['discount_rate'] as num?)?.toDouble() ?? 0.0,
+        giftAmount: row['gift_amount'] as int,
+        promo: (row['promo'] as int?) == 1,
+      )).toList();
+
+      final competitiveIntelligence = ciResults.map((row) => CompetitiveIntelligence(
+        id: row['id'] as int?,
+        createOrderId: row['create_order_id'] as int?,
+        competitor: row['competitor'] as String,
+        product: row['product'] as String,
+        price: (row['price'] as num?)?.toDouble() ?? 0.0,
+      )).toList();
+
+      final creditDetails = cdResults.map((row) => CreditDetail(
+        id: row['id'] as int?,
+        createOrderId: row['create_order_id'] as int?,
+        dateOfPayment: DateTime.parse(row['date_of_payment'] as String),
+        total: (row['total'] as num?)?.toDouble() ?? 0.0,
+      )).toList();
+
+      orders.add(CreateOrder(
+        id: orderRow['id'] as int?,
+        codeAgent: orderRow['code_agent'] as String,
+        codeClient: orderRow['code_client'] as String,
+        codePrice: orderRow['code_price'] as String,
+        payment: orderRow['payment'] as String,
+        shippingDate: DateTime.parse(orderRow['shipping_date'] as String),
+        commentSupervisor: orderRow['comment_supervisor'] as String?,
+        commentForwarder: orderRow['comment_forwarder'] as String?,
+        comment: orderRow['comment'] as String?,
+        createDate: DateTime.parse(orderRow['create_date'] as String),
+        longitude: (orderRow['longitude'] as num?)?.toDouble() ?? 0.0,
+        latitude: (orderRow['latitude'] as num?)?.toDouble() ?? 0.0,
+        weight: (orderRow['weight'] as num?)?.toDouble() ?? 0.0,
+        capacity: (orderRow['capacity'] as num?)?.toDouble() ?? 0.0,
+        credit: (orderRow['credit'] as int?) == 1,
+        codeProject: orderRow['code_project'] as String,
+        orderType: orderRow['order_type'] as int,
+        codeOrg: orderRow['code_org'] as String,
+        codeSklad: orderRow['code_sklad'] as String,
+        codeContract: orderRow['code_contract'] as String?,
+        hasPromo: (orderRow['has_promo'] as int?) == 1,
+        isSynced: (orderRow['is_synced'] as int?) == 1,
+        syncedAt: orderRow['synced_at'] != null ? DateTime.parse(orderRow['synced_at'] as String) : null,
+        syncError: orderRow['sync_error'] as String?,
+        products: products,
+        competitiveIntelligence: competitiveIntelligence,
+        creditDetails: creditDetails,
+      ));
+    }
+
+    return orders;
+  }
+
+  /// Clear all create order data
+  Future<void> clearCreateOrderData() async {
+    final db = await database;
+    await db.delete('create_order');
+    await db.delete('create_order_products');
+    await db.delete('competitive_intelligence');
+    await db.delete('credit_details');
+  }
+
   /// Update client coordinates in the database
   /// This method updates the latitude and longitude of a specific client
   Future<void> updateClientCoordinates(String clientCode, double latitude, double longitude) async {
@@ -4659,5 +5206,154 @@ class ApiDatabaseService {
       // Indexes might already exist, ignore error
       print('Warning: Could not create indexes, they might already exist: $e');
     }
+  }
+
+  // ===== USER ORGANIZATIONS CRUD METHODS =====
+
+  /// Save user organizations data
+  /// This method saves organizations associated with a specific user
+  Future<void> saveUserOrganizations(String userCode, List<UserOrganization> organizations) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Use batch operations for much better performance
+    final batch = db.batch();
+
+    // Delete all existing organizations for this user
+    batch.delete('user_organizations', where: 'user_code = ?', whereArgs: [userCode]);
+
+    // Deduplicate organizations by code to avoid UNIQUE constraint violations
+    final uniqueOrganizations = <String, UserOrganization>{};
+    for (final organization in organizations) {
+      uniqueOrganizations[organization.code] = organization;
+    }
+
+    // Add all inserts to batch
+    for (final organization in uniqueOrganizations.values) {
+      batch.insert('user_organizations', {
+        'code': organization.code,
+        'name': organization.name,
+        'user_code': userCode,
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
+
+    // Execute batch operation
+    await batch.commit(noResult: true);
+  }
+
+  /// Get user organizations for a specific user
+  Future<List<UserOrganization>> getUserOrganizations(String userCode) async {
+    final db = await database;
+    final result = await db.query(
+      'user_organizations',
+      where: 'user_code = ?',
+      whereArgs: [userCode],
+      orderBy: 'name ASC',
+    );
+
+    return result.map((row) => UserOrganization(
+      id: row['id'] as int?,
+      code: row['code'] as String,
+      name: row['name'] as String,
+      userCode: row['user_code'] as String,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    )).toList();
+  }
+
+  /// Get user organization by code
+  Future<UserOrganization?> getUserOrganizationByCode(String code) async {
+    final db = await database;
+    final result = await db.query(
+      'user_organizations',
+      where: 'code = ?',
+      whereArgs: [code],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return UserOrganization(
+      id: row['id'] as int?,
+      code: row['code'] as String,
+      name: row['name'] as String,
+      userCode: row['user_code'] as String,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    );
+  }
+
+  /// Save single user organization
+  Future<void> saveUserOrganization(UserOrganization organization) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert(
+      'user_organizations',
+      {
+        'code': organization.code,
+        'name': organization.name,
+        'user_code': organization.userCode,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Update user organization
+  Future<void> updateUserOrganization(String code, UserOrganization organization) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'user_organizations',
+      {
+        'name': organization.name,
+        'updated_at': now,
+      },
+      where: 'code = ?',
+      whereArgs: [code],
+    );
+  }
+
+  /// Delete user organization by code
+  Future<void> deleteUserOrganization(String code) async {
+    final db = await database;
+    await db.delete('user_organizations', where: 'code = ?', whereArgs: [code]);
+  }
+
+  /// Delete all user organizations for a specific user
+  Future<void> deleteUserOrganizationsByUserCode(String userCode) async {
+    final db = await database;
+    await db.delete('user_organizations', where: 'user_code = ?', whereArgs: [userCode]);
+  }
+
+  /// Get all user organizations (for admin/debug purposes)
+  Future<List<UserOrganization>> getAllUserOrganizations() async {
+    final db = await database;
+    final result = await db.query('user_organizations', orderBy: 'user_code ASC, name ASC');
+
+    return result.map((row) => UserOrganization(
+      id: row['id'] as int?,
+      code: row['code'] as String,
+      name: row['name'] as String,
+      userCode: row['user_code'] as String,
+      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
+      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+    )).toList();
+  }
+
+  /// Get user organizations count for a specific user
+  Future<int> getUserOrganizationsCount(String userCode) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM user_organizations WHERE user_code = ?',
+      [userCode],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 }

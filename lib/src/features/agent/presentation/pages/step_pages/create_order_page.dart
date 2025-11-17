@@ -643,7 +643,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   Widget _buildProductCard(ThemeData theme, CreateOrderProduct product) {
     return Dismissible(
       key: Key(product.codeProduct),
-      direction: DismissDirection.horizontal,
+      direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.only(left: 20),

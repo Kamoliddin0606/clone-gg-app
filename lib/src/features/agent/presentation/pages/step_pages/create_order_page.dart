@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
@@ -298,6 +299,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       final orderProduct = CreateOrderProduct(
         codeSklad: _selectedWarehouse ?? '',
         codeProduct: product.productCode,
+        vendorCode: product.vendorCode,
         amount: 1,
         price: product.price,
         total: product.price,
@@ -366,6 +368,115 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       ),
     );
     return product.productName;
+  }
+
+  int _getProductStock(String codeProduct) {
+    final product = _availableProducts.firstWhere(
+      (p) => p.productCode == codeProduct,
+      orElse: () => ProductWithPrice(
+        productCode: codeProduct,
+        productName: codeProduct,
+        unit: '',
+        quantity: 0,
+        reserved: 0,
+        available: 0,
+        category: '',
+        barcode: '',
+        have: 0,
+        warehouseCode: '',
+        warehouseName: '',
+        weight: 0,
+        capacity: 0,
+        vendorCode: '',
+        productBrand: '',
+        productSeries: '',
+        codeProject: '',
+        priceTypeCode: '',
+        priceTypeName: '',
+        price: 0,
+        currency: '',
+        validFrom: '',
+        validTo: '',
+        stock: 0,
+      ),
+    );
+    return product.stock;
+  }
+
+  void _showQuantityInputDialog(String codeProduct, int currentAmount) {
+    final stock = _getProductStock(codeProduct);
+    final controller = TextEditingController(text: currentAmount.toString());
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Miqdorni kiriting',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Miqdor',
+                hintText: '0 dan ${stock} gacha',
+                border: OutlineInputBorder(),
+              ),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              autofocus: true,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Maksimal mavjud: $stock dona',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Bekor'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () {
+                      final value = int.tryParse(controller.text);
+                      if (value != null && value > 0 && value <= stock) {
+                        _updateProductQuantity(codeProduct, value);
+                        Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Miqdor 1 dan $stock gacha bo\'lishi kerak'),
+                            backgroundColor: Theme.of(context).colorScheme.error,
+                          ),
+                        );
+                      }
+                    },
+                    child: Text('Saqlash'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -695,7 +806,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     ),
                   ),
                   Text(
-                    'Art: ${product.codeProduct}',
+                    'Art: ${product.vendorCode}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -703,6 +814,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 ],
               ),
               const SizedBox(height: 8),
+
+              // Stock display
+              Text(
+                'Mavjud: ${_getProductStock(product.codeProduct)} dona',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 4),
 
               // Price and quantity controls
               Row(
@@ -722,15 +842,19 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     icon: const Icon(Icons.remove),
                     onPressed: () => _updateProductQuantity(product.codeProduct, product.amount - 1),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${product.amount}',
-                      style: theme.textTheme.bodyLarge,
+                  InkWell(
+                    onTap: () => _showQuantityInputDialog(product.codeProduct, product.amount),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.dividerColor),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${product.amount}',
+                        style: theme.textTheme.bodyLarge,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -820,6 +944,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   }
 
   void _showProductSelectionDialog() {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -837,7 +962,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
                     return ListTile(
                       title: Text(product.productName),
-                      subtitle: Text('Art: ${product.productCode} • ${uzsFormat.format(product.price)}'),
+                      subtitle: Text(
+                        'Art: ${product.vendorCode} • Mavjud: ${product.stock} • ${uzsFormat.format(product.price)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
                       trailing: isSelected
                           ? const Icon(Icons.check, color: Colors.green)
                           : const Icon(Icons.add),

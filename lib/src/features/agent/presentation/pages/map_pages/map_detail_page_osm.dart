@@ -946,7 +946,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     if (_newClientLocation == null) return;
 
     // Get address information for the new location
-    final addressInfo = await _getAddressFromCoordinates(_newClientLocation!);
+    // final addressInfo = await _getAddressFromCoordinates(_newClientLocation!);
+    final addressInfo = [];
 
     // Show confirmation dialog
     showDialog(
@@ -957,7 +958,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Manzil: ${addressInfo['address'] ?? 'Aniqlanmadi'}'),
+            //Text('Manzil: ${addressInfo['address'] ?? 'Aniqlanmadi'}'),
             const SizedBox(height: 8),
             Text('Uzunlik: ${_newClientLocation!.longitude.toStringAsFixed(6)}'),
             Text('Kenglik: ${_newClientLocation!.latitude.toStringAsFixed(6)}'),

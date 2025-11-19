@@ -279,6 +279,7 @@ class CreateOrderProduct {
   final double discountRate;
   final int giftAmount;
   final bool promo;
+  final String vendorCode;
 
   const CreateOrderProduct({
     this.id,
@@ -295,6 +296,7 @@ class CreateOrderProduct {
     required this.discountRate,
     required this.giftAmount,
     required this.promo,
+    required this.vendorCode,
   });
 
   factory CreateOrderProduct.fromJson(Map<String, dynamic> json) {
@@ -303,6 +305,7 @@ class CreateOrderProduct {
       createOrderId: json['createOrderId'] as int?,
       codeSklad: json['codeSklad']?.toString() ?? '',
       codeProduct: json['codeProduct']?.toString() ?? '',
+      vendorCode: json['vendorCode']?.toString() ?? '',
       amount: (json['amount'] as num?)?.toInt() ?? 0,
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       total: (json['total'] as num?)?.toDouble() ?? 0.0,
@@ -322,6 +325,7 @@ class CreateOrderProduct {
       'createOrderId': createOrderId,
       'codeSklad': codeSklad,
       'codeProduct': codeProduct,
+      'vendorCode': vendorCode,
       'amount': amount,
       'price': price,
       'total': total,
@@ -340,6 +344,7 @@ class CreateOrderProduct {
     int? createOrderId,
     String? codeSklad,
     String? codeProduct,
+    String? vendorCode,
     int? amount,
     double? price,
     double? total,
@@ -356,6 +361,7 @@ class CreateOrderProduct {
       createOrderId: createOrderId ?? this.createOrderId,
       codeSklad: codeSklad ?? this.codeSklad,
       codeProduct: codeProduct ?? this.codeProduct,
+      vendorCode: vendorCode ?? this.vendorCode,
       amount: amount ?? this.amount,
       price: price ?? this.price,
       total: total ?? this.total,
@@ -377,6 +383,7 @@ class CreateOrderProduct {
         other.createOrderId == createOrderId &&
         other.codeSklad == codeSklad &&
         other.codeProduct == codeProduct &&
+        other.vendorCode == vendorCode &&
         other.amount == amount &&
         other.price == price &&
         other.total == total &&
@@ -396,6 +403,7 @@ class CreateOrderProduct {
       createOrderId,
       codeSklad,
       codeProduct,
+      vendorCode,
       amount,
       price,
       total,
@@ -411,7 +419,7 @@ class CreateOrderProduct {
 
   @override
   String toString() {
-    return 'CreateOrderProduct(id: $id, createOrderId: $createOrderId, codeSklad: $codeSklad, codeProduct: $codeProduct, amount: $amount, price: $price, total: $total, weight: $weight, capacity: $capacity, paymentType: $paymentType, discountSum: $discountSum, discountRate: $discountRate, giftAmount: $giftAmount, promo: $promo)';
+    return 'CreateOrderProduct(id: $id, createOrderId: $createOrderId, codeSklad: $codeSklad, codeProduct: $codeProduct, vendorCode: $vendorCode, amount: $amount, price: $price, total: $total, weight: $weight, capacity: $capacity, paymentType: $paymentType, discountSum: $discountSum, discountRate: $discountRate, giftAmount: $giftAmount, promo: $promo)';
   }
 }
 

@@ -74,8 +74,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
   // UI state
   bool _isSettingsPanelVisible = false;
+  bool _isSummaryVisible = false;
+  bool _isViewModeToggleVisible = false;
+  double _dragStartY = 0;
   late AnimationController _settingsAnimationController;
   late Animation<double> _settingsAnimation;
+  late AnimationController _summaryAnimationController;
+  late Animation<Offset> _summaryAnimation;
+  late AnimationController _viewModeToggleAnimationController;
+  late Animation<double> _viewModeToggleAnimation;
 
   // View modes
   ViewMode _currentViewMode = ViewMode.list;
@@ -110,6 +117,24 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     _settingsAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _settingsAnimationController, curve: Curves.easeInOut),
     );
+    _summaryAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _summaryAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _summaryAnimationController,
+      curve: Curves.easeInOut,
+    ));
+    _viewModeToggleAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _viewModeToggleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _viewModeToggleAnimationController, curve: Curves.easeInOut),
+    );
     _loadInitialData();
   }
 
@@ -117,7 +142,37 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   void dispose() {
     _notesController.dispose();
     _settingsAnimationController.dispose();
+    _summaryAnimationController.dispose();
+    _viewModeToggleAnimationController.dispose();
     super.dispose();
+  }
+
+  void _showSummary() {
+    if (!_isSummaryVisible) {
+      setState(() => _isSummaryVisible = true);
+      _summaryAnimationController.forward();
+    }
+  }
+
+  void _hideSummary() {
+    if (_isSummaryVisible) {
+      setState(() => _isSummaryVisible = false);
+      _summaryAnimationController.reverse();
+    }
+  }
+
+  void _showViewModeToggle() {
+    if (!_isViewModeToggleVisible) {
+      setState(() => _isViewModeToggleVisible = true);
+      _viewModeToggleAnimationController.forward();
+    }
+  }
+
+  void _hideViewModeToggle() {
+    if (_isViewModeToggleVisible) {
+      setState(() => _isViewModeToggleVisible = false);
+      _viewModeToggleAnimationController.reverse();
+    }
   }
 
   /// Initial data loading - loads organizations, warehouses, price types and products
@@ -512,6 +567,21 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             ],
           ),
 
+          // Invisible gesture detector overlay for view mode toggle
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onVerticalDragEnd: (details) {
+                final velocity = details.velocity.pixelsPerSecond.dy;
+                if (velocity > 150) { // dragging down - lower threshold
+                  _showViewModeToggle();
+                } else if (velocity < -150) { // dragging up - lower threshold
+                  _hideViewModeToggle();
+                }
+              },
+            ),
+          ),
+
           // Floating Action Button
           Positioned(
             bottom: 100,
@@ -653,8 +723,17 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   Widget _buildContentArea(ThemeData theme) {
     return Column(
       children: [
-        // View mode toggle
-        _buildViewModeToggle(theme),
+        // View mode toggle with animation
+        AnimatedBuilder(
+          animation: _viewModeToggleAnimation,
+          builder: (context, child) {
+            return SizeTransition(
+              sizeFactor: _viewModeToggleAnimation,
+              axisAlignment: -1.0,
+              child: _isViewModeToggleVisible ? _buildViewModeToggle(theme) : const SizedBox.shrink(),
+            );
+          },
+        ),
 
         // Products list/grid
         Expanded(
@@ -667,6 +746,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       ],
     );
   }
+
 
   Widget _buildViewModeToggle(ThemeData theme) {
     return Container(
@@ -740,18 +820,66 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     );
   }
 
+  /// Builds the products display based on the current view mode
+  /// Switches between list, grid, and large image views for optimal user experience
   Widget _buildProductsList(ThemeData theme) {
+    switch (_currentViewMode) {
+      case ViewMode.list:
+        return _buildListView(theme);
+      case ViewMode.grid:
+        return _buildGridView(theme);
+      case ViewMode.largeImage:
+        return _buildLargeImageView(theme);
+    }
+  }
+
+  /// Builds the list view for products - detailed vertical layout
+  /// Provides comprehensive product information in a scrollable list
+  Widget _buildListView(ThemeData theme) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _selectedProducts.length,
       itemBuilder: (context, index) {
         final product = _selectedProducts[index];
-        return _buildProductCard(theme, product);
+        return _buildListProductCard(theme, product);
       },
     );
   }
 
-  Widget _buildProductCard(ThemeData theme, CreateOrderProduct product) {
+  /// Builds the grid view for products - compact horizontal layout
+  /// Optimizes space usage for quick product overview and selection
+  Widget _buildGridView(ThemeData theme) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2, // Two columns for balanced layout
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.8, // Slightly taller for content
+      ),
+      itemCount: _selectedProducts.length,
+      itemBuilder: (context, index) {
+        final product = _selectedProducts[index];
+        return _buildGridProductCard(theme, product);
+      },
+    );
+  }
+
+  /// Builds the large image view for products - full-screen detailed layout
+  /// Focuses on individual product details with immersive presentation
+  Widget _buildLargeImageView(ThemeData theme) {
+    return PageView.builder(
+      itemCount: _selectedProducts.length,
+      itemBuilder: (context, index) {
+        final product = _selectedProducts[index];
+        return _buildLargeImageProductCard(theme, product);
+      },
+    );
+  }
+
+  /// Builds a detailed product card for list view
+  /// Displays comprehensive product information including name, stock, price, and quantity controls
+  Widget _buildListProductCard(ThemeData theme, CreateOrderProduct product) {
     return Dismissible(
       key: Key(product.codeProduct),
       direction: DismissDirection.endToStart,
@@ -882,41 +1010,308 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     );
   }
 
-  Widget _buildBottomSummary(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: theme.dividerColor),
-        ),
-      ),
-      child: SafeArea(
-        child: Column(
-          children: [
-            // Summary info
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildSummaryItem(theme, 'Mahsulotlar', '$_totalItems ta'),
-                _buildSummaryItem(theme, 'Jami qiymat', uzsFormat.format(_totalValue)),
-                _buildSummaryItem(theme, 'Og\'irlik', '${_totalWeight.toStringAsFixed(2)} kg'),
-                _buildSummaryItem(theme, 'Hajm', '${_totalVolume.toStringAsFixed(2)} m³'),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Complete button
-            if (!widget.readOnly)
-              FilledButton.icon(
-                onPressed: _selectedProducts.isEmpty ? null : () => _showCompleteDialog(context),
-                icon: const Icon(Icons.check),
-                label: Text(AppLocalizations.of(context)?.completeStep ?? 'Complete Step'),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48),
+  /// Builds a compact product card for grid view
+  /// Optimized for space efficiency with essential information and controls
+  Widget _buildGridProductCard(ThemeData theme, CreateOrderProduct product) {
+    return Card(
+      margin: EdgeInsets.zero, // GridView handles spacing
+      child: InkWell(
+        //onTap: () => _showQuantityInputDialog(product.codeProduct, product.amount),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Product name - truncated if too long
+              Expanded(
+                child: Text(
+                  _getProductName(product.codeProduct),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-          ],
+              const SizedBox(height: 4),
+
+              // Article number
+              Text(
+                'Art: ${product.vendorCode}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Price
+              Text(
+                uzsFormat.format(product.price),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              const Spacer(),
+
+              // Quantity controls - simplified for grid
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove, size: 20),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () => _updateProductQuantity(product.codeProduct, product.amount - 1),
+                  ),
+                  // Text(
+                  //   '${product.amount}',
+                  //   style: theme.textTheme.bodyLarge?.copyWith(
+                  //     fontWeight: FontWeight.w500,
+                  //   ),
+                  // ),
+                  InkWell(
+                    onTap: () => _showQuantityInputDialog(product.codeProduct, product.amount),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.dividerColor),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${product.amount}',
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 20),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () => _updateProductQuantity(product.codeProduct, product.amount + 1),
+                  ),
+                ],
+              ),
+
+              // Total
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  uzsFormat.format(product.total),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Builds a full-screen detailed product card for large image view
+  /// Provides immersive product details with enhanced visual hierarchy
+  Widget _buildLargeImageProductCard(ThemeData theme, CreateOrderProduct product) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Placeholder for product image (since no images available)
+          Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.3),
+              ),
+            ),
+            child: Icon(
+              Icons.image_outlined,
+              size: 80,
+              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Product name
+          Text(
+            _getProductName(product.codeProduct),
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+
+          // Article and stock info
+          Text(
+            'Art: ${product.vendorCode} • Mavjud: ${_getProductStock(product.codeProduct)} dona',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Price display
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              uzsFormat.format(product.price),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Quantity controls - enhanced for full-screen
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove, size: 32),
+                onPressed: () => _updateProductQuantity(product.codeProduct, product.amount - 1),
+                style: IconButton.styleFrom(
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  padding: const EdgeInsets.all(16),
+                ),
+              ),
+              const SizedBox(width: 24),
+              InkWell(
+                onTap: () => _showQuantityInputDialog(product.codeProduct, product.amount),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: theme.colorScheme.outline),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${product.amount}',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 24),
+              IconButton(
+                icon: const Icon(Icons.add, size: 32),
+                onPressed: () => _updateProductQuantity(product.codeProduct, product.amount + 1),
+                style: IconButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  padding: const EdgeInsets.all(16),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Tap to edit quantity hint
+          Text(
+            'Miqdorni o\'zgartirish uchun raqamga bosing',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Total
+          Text(
+            'Jami: ${uzsFormat.format(product.total)}',
+            style: theme.textTheme.headlineMedium?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          // Swipe hint for navigation
+          const Spacer(),
+          Text(
+            'Chapga/o\'nga suring - keyingi mahsulot',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomSummary(ThemeData theme) {
+    return GestureDetector(
+      onVerticalDragStart: (details) {
+        _dragStartY = details.globalPosition.dy;
+      },
+      onVerticalDragEnd: (details) {
+        final velocity = details.velocity.pixelsPerSecond.dy;
+        if (velocity < -300) { // dragging up
+          _showSummary();
+        } else if (velocity > 300) { // dragging down
+          _hideSummary();
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border(
+            top: BorderSide(color: theme.dividerColor),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Summary info
+              Visibility(
+                visible: _isSummaryVisible,
+                child: SlideTransition(
+                  position: _summaryAnimation,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildSummaryItem(theme, 'Mahsulotlar', '$_totalItems ta'),
+                      _buildSummaryItem(theme, 'Jami qiymat', uzsFormat.format(_totalValue)),
+                      _buildSummaryItem(theme, 'Og\'irlik', '${_totalWeight.toStringAsFixed(2)} kg'),
+                      _buildSummaryItem(theme, 'Hajm', '${_totalVolume.toStringAsFixed(2)} m³'),
+                    ],
+                  ),
+                ),
+              ),
+              if (_isSummaryVisible) const SizedBox(height: 16),
+
+              // Complete button
+              if (!widget.readOnly)
+                FilledButton.icon(
+                  onPressed: _selectedProducts.isEmpty ? null : () => _showCompleteDialog(context),
+                  icon: const Icon(Icons.check),
+                  label: Text(AppLocalizations.of(context)?.completeStep ?? 'Complete Step'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

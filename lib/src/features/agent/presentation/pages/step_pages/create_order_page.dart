@@ -1184,138 +1184,192 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Builds a full-screen detailed product card for large image view
   /// Provides immersive product details with enhanced visual hierarchy
   Widget _buildLargeImageProductCard(ThemeData theme, CreateOrderProduct product) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Placeholder for product image (since no images available)
-          Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: theme.colorScheme.outline.withOpacity(0.3),
-              ),
-            ),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Background image covering the entire container
+        Image.asset(
+          'assets/images/pruduct/default_product.png',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: theme.colorScheme.surfaceContainerHighest,
             child: Icon(
               Icons.image_outlined,
               size: 80,
               color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Product name
-          Text(
+        ),
+        // Gradient overlay for better text readability
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withOpacity(0.2),
+                Colors.black.withOpacity(0.6),
+              ],
+            ),
+          ),
+        ),
+        // Product name at top
+        Positioned(
+          top: 48,
+          left: 24,
+          right: 24,
+          child: Text(
             _getProductName(product.codeProduct),
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  offset: Offset(1, 1),
+                  blurRadius: 3,
+                  color: Colors.black.withOpacity(0.7),
+                ),
+              ],
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 8),
-
-          // Article and stock info
-          Text(
-            'Art: ${product.vendorCode} • Mavjud: ${_getProductStock(product.codeProduct)} dona',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // Price display
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              uzsFormat.format(product.price),
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // Quantity controls - enhanced for full-screen
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        ),
+        // Bottom section with details
+        Positioned(
+          bottom: 48,
+          left: 24,
+          right: 24,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              IconButton(
-                icon: const Icon(Icons.remove, size: 32),
-                onPressed: () => _updateProductQuantity(product.codeProduct, product.amount - 1),
-                style: IconButton.styleFrom(
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  padding: const EdgeInsets.all(16),
+              // Article and stock info
+              Text(
+                'Art: ${product.vendorCode} • Mavjud: ${_getProductStock(product.codeProduct)} dona',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(1, 1),
+                      blurRadius: 2,
+                      color: Colors.black.withOpacity(0.7),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              // Price display
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  uzsFormat.format(product.price),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              const SizedBox(width: 24),
-              InkWell(
-                onTap: () => _showQuantityInputDialog(product.codeProduct, product.amount),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: theme.colorScheme.outline),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${product.amount}',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+              const SizedBox(height: 24),
+              // Quantity controls
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove, size: 32, color: Colors.white),
+                    onPressed: () => _updateProductQuantity(product.codeProduct, product.amount - 1),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.2),
+                      padding: const EdgeInsets.all(16),
                     ),
                   ),
+                  const SizedBox(width: 24),
+                  InkWell(
+                    onTap: () => _showQuantityInputDialog(product.codeProduct, product.amount),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${product.amount}',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 32, color: Colors.white),
+                    onPressed: () => _updateProductQuantity(product.codeProduct, product.amount + 1),
+                    style: IconButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary.withOpacity(0.8),
+                      padding: const EdgeInsets.all(16),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Tap hint
+              Text(
+                'Miqdorni o\'zgartirish uchun raqamga bosing',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(1, 1),
+                      blurRadius: 2,
+                      color: Colors.black.withOpacity(0.7),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              // Total
+              Text(
+                'Jami: ${uzsFormat.format(product.total)}',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(1, 1),
+                      blurRadius: 2,
+                      color: Colors.black.withOpacity(0.7),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 24),
-              IconButton(
-                icon: const Icon(Icons.add, size: 32),
-                onPressed: () => _updateProductQuantity(product.codeProduct, product.amount + 1),
-                style: IconButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  padding: const EdgeInsets.all(16),
+              const SizedBox(height: 16),
+              // Swipe hint
+              Text(
+                'Chapga/o\'nga suring - keyingi mahsulot',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withOpacity(0.8),
+                  shadows: [
+                    Shadow(
+                      offset: Offset(1, 1),
+                      blurRadius: 2,
+                      color: Colors.black.withOpacity(0.7),
+                    ),
+                  ],
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // Tap to edit quantity hint
-          Text(
-            'Miqdorni o\'zgartirish uchun raqamga bosing',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // Total
-          Text(
-            'Jami: ${uzsFormat.format(product.total)}',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          // Swipe hint for navigation
-          const Spacer(),
-          Text(
-            'Chapga/o\'nga suring - keyingi mahsulot',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

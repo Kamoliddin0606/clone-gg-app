@@ -116,6 +116,7 @@ flutter:
     - assets/db/
     - assets/images/marker.png
     - assets/images/marker_user.png
+    - assets/images/pruduct/
 flutter_icons:
   android: true
   ios: true

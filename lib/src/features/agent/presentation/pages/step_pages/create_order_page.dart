@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
@@ -532,6 +533,17 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         ),
       ),
     );
+  void _showFullScreenImage(String imagePath) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: InteractiveViewer(
+          child: Image.asset(imagePath),
+        ),
+      ),
+    );
+  }
   }
 
   @override
@@ -567,20 +579,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             ],
           ),
 
-          // Invisible gesture detector overlay for view mode toggle
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onVerticalDragEnd: (details) {
-                final velocity = details.velocity.pixelsPerSecond.dy;
-                if (velocity > 150) { // dragging down - lower threshold
-                  _showViewModeToggle();
-                } else if (velocity < -150) { // dragging up - lower threshold
-                  _hideViewModeToggle();
-                }
-              },
-            ),
-          ),
 
           // Floating Action Button
           Positioned(
@@ -599,7 +597,17 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
   PreferredSizeWidget _buildAppBar(ThemeData theme, AppLocalizations? l10n) {
     return AppBar(
-      title: Text(widget.stepName),
+      title: GestureDetector(
+        onVerticalDragEnd: (details) {
+          final velocity = details.velocity.pixelsPerSecond.dy;
+          if (velocity < -100) { // dragging up on title
+            _hideViewModeToggle();
+          } else if (velocity > 100) { // dragging down on title
+            _showViewModeToggle();
+          }
+        },
+        child: Text(widget.stepName),
+      ),
       centerTitle: true,
       actions: [
         // Suggested order icon
@@ -855,7 +863,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         crossAxisCount: 2, // Two columns for balanced layout
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.8, // Slightly taller for content
+        childAspectRatio: 0.65, // Increased to prevent overflow and provide more space
       ),
       itemCount: _selectedProducts.length,
       itemBuilder: (context, index) {
@@ -1023,17 +1031,38 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product name - truncated if too long
-              Expanded(
-                child: Text(
-                  _getProductName(product.codeProduct),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              // Product image - using default image for now, replace with actual product image when available
+              Container(
+                width: double.infinity,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    'assets/images/pruduct/default_product.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                      Icons.image_outlined,
+                      size: 30,
+                      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Product name - limited to 2 lines to prevent overflow
+              Text(
+                _getProductName(product.codeProduct),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
 
@@ -1042,7 +1071,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 'Art: ${product.vendorCode}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 12,
+                  fontSize: 14,
                 ),
               ),
               const SizedBox(height: 8),
@@ -1106,7 +1135,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                    fontSize: 16,
                   ),
                 ),
               ),
@@ -1369,7 +1398,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                       onTap: () {
                         if (!isSelected) {
                           _addProductToOrder(product);
-                          Navigator.of(context).pop();
+                          // Navigator.of(context).pop();
                         }
                       },
                     );

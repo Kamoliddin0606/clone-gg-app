@@ -860,10 +860,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, // Two columns for balanced layout
+        crossAxisCount: 1, // Two columns for balanced layout
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.65, // Increased to prevent overflow and provide more space
+        childAspectRatio: 0.75, // Adjusted for taller image with overlaid text
       ),
       itemCount: _selectedProducts.length,
       itemBuilder: (context, index) {
@@ -1031,61 +1031,96 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product image - using default image for now, replace with actual product image when available
-              Container(
-                width: double.infinity,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    'assets/images/pruduct/default_product.png',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Icon(
-                      Icons.image_outlined,
-                      size: 30,
-                      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+              // Product image with overlaid text - fills remaining space
+              Expanded(
+                child: Stack(
+                  children: [
+                    // Background image
+                    Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/images/pruduct/default_product.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.image_outlined,
+                            size: 40,
+                            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    // Overlaid text at bottom
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      right: 8,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Product name
+                          Text(
+                            _getProductName(product.codeProduct),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.black.withOpacity(0.7),
+                                ),
+                              ],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          // Article number
+                          Text(
+                            'Art: ${product.vendorCode}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white,
+                              fontSize: 12,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.black.withOpacity(0.7),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          // Price
+                          Text(
+                            uzsFormat.format(product.price),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.black.withOpacity(0.7),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-
-              // Product name - limited to 2 lines to prevent overflow
-              Text(
-                _getProductName(product.codeProduct),
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-
-              // Article number
-              Text(
-                'Art: ${product.vendorCode}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Price
-              Text(
-                uzsFormat.format(product.price),
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-              const Spacer(),
 
               // Quantity controls - simplified for grid
               Row(

@@ -1232,34 +1232,21 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               ],
             ),
             textAlign: TextAlign.center,
-            maxLines: 2,
+            maxLines: 4,
             overflow: TextOverflow.ellipsis,
           ),
         ),
         // Bottom section with details
         Positioned(
-          bottom: 48,
+          bottom: 10,
           left: 24,
           right: 24,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Article and stock info
-              Text(
-                'Art: ${product.vendorCode} • Mavjud: ${_getProductStock(product.codeProduct)} dona',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                      offset: Offset(1, 1),
-                      blurRadius: 2,
-                      color: Colors.black.withOpacity(0.7),
-                    ),
-                  ],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 8),
               // Price display
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -1269,26 +1256,26 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 ),
                 child: Text(
                   uzsFormat.format(product.price),
-                  style: theme.textTheme.headlineSmall?.copyWith(
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
               // Quantity controls
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.remove, size: 32, color: Colors.white),
+                    icon: const Icon(Icons.remove, size: 14, color: Colors.white),
                     onPressed: () => _updateProductQuantity(product.codeProduct, product.amount - 1),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withOpacity(0.2),
                       padding: const EdgeInsets.all(16),
                     ),
                   ),
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 12),
                   InkWell(
                     onTap: () => _showQuantityInputDialog(product.codeProduct, product.amount),
                     borderRadius: BorderRadius.circular(12),
@@ -1300,16 +1287,16 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                       ),
                       child: Text(
                         '${product.amount}',
-                        style: theme.textTheme.headlineSmall?.copyWith(
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: theme.colorScheme.primary,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 12),
                   IconButton(
-                    icon: const Icon(Icons.add, size: 32, color: Colors.white),
+                    icon: const Icon(Icons.add, size: 14, color: Colors.white),
                     onPressed: () => _updateProductQuantity(product.codeProduct, product.amount + 1),
                     style: IconButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary.withOpacity(0.8),
@@ -1319,26 +1306,26 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 ],
               ),
               const SizedBox(height: 8),
-              // Tap hint
-              Text(
-                'Miqdorni o\'zgartirish uchun raqamga bosing',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                      offset: Offset(1, 1),
-                      blurRadius: 2,
-                      color: Colors.black.withOpacity(0.7),
-                    ),
-                  ],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
+              // // Tap hint
+              // Text(
+              //   'Miqdorni o\'zgartirish uchun raqamga bosing',
+              //   style: theme.textTheme.bodyMedium?.copyWith(
+              //     color: Colors.white,
+              //     shadows: [
+              //       Shadow(
+              //         offset: Offset(1, 1),
+              //         blurRadius: 2,
+              //         color: Colors.black.withOpacity(0.7),
+              //       ),
+              //     ],
+              //   ),
+              //   textAlign: TextAlign.center,
+              // ),
+              const SizedBox(height: 8),
               // Total
               Text(
                 'Jami: ${uzsFormat.format(product.total)}',
-                style: theme.textTheme.headlineSmall?.copyWith(
+                style: theme.textTheme.labelMedium?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   shadows: [
@@ -1350,12 +1337,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              // Swipe hint
+
+              const SizedBox(height: 8),
+
               Text(
-                'Chapga/o\'nga suring - keyingi mahsulot',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withOpacity(0.8),
+                'Art: ${product.vendorCode} • Mavjud: ${_getProductStock(product.codeProduct)} dona',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: Colors.white,
                   shadows: [
                     Shadow(
                       offset: Offset(1, 1),
@@ -1366,6 +1354,21 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 ),
                 textAlign: TextAlign.center,
               ),
+              // // Swipe hint
+              // Text(
+              //   'Chapga/o\'nga suring - keyingi mahsulot',
+              //   style: theme.textTheme.bodySmall?.copyWith(
+              //     color: Colors.white.withOpacity(0.8),
+              //     shadows: [
+              //       Shadow(
+              //         offset: Offset(1, 1),
+              //         blurRadius: 2,
+              //         color: Colors.black.withOpacity(0.7),
+              //       ),
+              //     ],
+              //   ),
+              //   textAlign: TextAlign.center,
+              // ),
             ],
           ),
         ),

@@ -15,6 +15,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_war
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/formatters.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/product_selection_page.dart';
 
 /// View modes for product display in the order creation interface
 enum ViewMode {
@@ -1938,6 +1939,61 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     }
   }
 
+  /// Navigate to product selection page
+  /// Opens a new page for selecting products with quantity controls
+  void _navigateToProductSelection() async {
+    try {
+      debugPrint('CreateOrderPage: Navigating to product selection page');
+
+      final result = await Navigator.of(context).push<List<CreateOrderProduct>>(
+        MaterialPageRoute(
+          builder: (context) => ProductSelectionPage(
+            selectedOrganization: _selectedOrganization ?? '',
+            selectedWarehouse: _selectedWarehouse ?? '',
+            selectedPriceType: _selectedPriceType ?? '',
+            availableProducts: _availableProducts,
+            selectedProducts: List.from(_selectedProducts), // Pass a copy
+          ),
+        ),
+      );
+
+      // Handle the result from the product selection page
+      if (result != null && result.isNotEmpty) {
+        debugPrint('CreateOrderPage: Received ${result.length} products from selection page');
+        setState(() {
+          _selectedProducts = result;
+          _updateAddButtonStates();
+        });
+        _markAsChanged();
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${result.length} ta mahsulot tanlandi'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        debugPrint('CreateOrderPage: No products selected or operation cancelled');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error navigating to product selection: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Mahsulot tanlash sahifasiga o\'tishda xatolik yuz berdi'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
   void _showProductSelectionDialog() {
     final theme = Theme.of(context);
     showDialog(
@@ -2184,7 +2240,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               bottom: 100,
               right: 16,
               child: FloatingActionButton(
-                onPressed: _showProductSelectionDialog,
+                onPressed: _navigateToProductSelection,
                 child: const Icon(Icons.add),
                 tooltip: 'Mahsulot qo\'shish',
               ),

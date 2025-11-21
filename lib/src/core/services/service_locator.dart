@@ -22,6 +22,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/ag
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/photo_storage_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/order_draft_service.dart';
 
 import '../network/server_service.dart';
 
@@ -132,6 +133,9 @@ Future<void> setupServiceLocator() async {
   }
   if (!sl.isRegistered<PhotoStorageService>()) {
     sl.registerLazySingleton<PhotoStorageService>(() => PhotoStorageService(sl<VisitStepDataService>()));
+  }
+  if (!sl.isRegistered<OrderDraftService>()) {
+    sl.registerLazySingleton<OrderDraftService>(() => OrderDraftService(sl<ApiDatabaseService>()));
   }
 
   // Blocs

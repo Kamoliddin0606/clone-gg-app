@@ -4,6 +4,6 @@
 4. Vazifalarni malumotlar bilan ishlashda yuqorida tilga olingan fayllarda joylashgan tayyor metodlardan foydalan.
 5. Kod yozishda kommenting(izohlash qoidalariga qatiy amal qil. Bu keyinchalik kodni tahlil qilish o'rganish yangilash kengaytirish qayta qo'sllashda yordam berishi kerak. Kiritilayotgan barcha kod o‘zgarishlari ishlayotgan ilovani izdan chiqarmasligiga ishonch hosil qiling. Kodni toza kod prinsiplari, xatoliklarni qayta ishlash (try–catch), loglash va eng yaxshi amaliyotlarga qat’iy rioya qilgan holda yozing.
 
-6. Vazifani bajarishdan avval loyiha bo‘yicha tegishli va zarur barcha ma’lumotlarni puxta o‘rganing va aniqlang. To‘liq yo‘l xaritasini (roadmap) ishlab chiqing va aynan shu asosda ish yuriting.
+6. Vazifani bajarishdan avval loyiha bo‘yicha tegishli va zarur barcha ma’lumotlarni puxta o‘rganing va aniqlang. To‘liq yo‘l xaritasini (roadmap) ishlab chiqing va aynan shu asosda  yaratilgan stage lar ketma ketligida ishlang.
 
 7. Vazifa yakunlangach, chuqur tahlil o‘tkazing, testlar yozing va funksionallikni tekshiring.

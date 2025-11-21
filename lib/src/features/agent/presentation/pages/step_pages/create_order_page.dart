@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/order_draft_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
@@ -66,6 +68,7 @@ class CreateOrderPage extends StatefulWidget {
 
 class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderStateMixin {
   final VisitStepDataService _dataService = sl<VisitStepDataService>();
+  final OrderDraftService _draftService = sl<OrderDraftService>();
   final DataSyncService _syncService = sl<DataSyncService>();
   final ApiDatabaseService _dbService = sl<ApiDatabaseService>();
   final SharedPreferencesService _prefs = sl<SharedPreferencesService>();
@@ -102,6 +105,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
   // Quantity control state
   Set<String> _disabledAddProducts = {};
+
+  // Draft save functionality
+  bool _hasUnsavedChanges = false;
+  DateTime? _lastSaveTime;
+  String? _lastSaveError;
+  bool _isAutoSaveEnabled = false;
 
   // Summary data
   int get _totalItems => _selectedProducts.fold(0, (sum, product) => sum + product.amount);
@@ -140,8 +149,151 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     _loadInitialData();
   }
 
+  /// Save order draft data using OrderDraftService
+  /// Saves current order state including products, settings, and notes
+  Future<void> _saveOrderDraft() async {
+    try {
+      debugPrint('CreateOrderPage: Saving order draft for visit ${widget.visitId}, step ${widget.stepCode}');
+
+      await _draftService.saveOrderDraft(
+        visitId: widget.visitId,
+        clientCode: widget.tradingPoint.tradingPoint.id,
+        stepCode: widget.stepCode,
+        stepName: widget.stepName,
+        selectedOrganization: _selectedOrganization ?? '',
+        selectedWarehouse: _selectedWarehouse ?? '',
+        selectedPriceType: _selectedPriceType ?? '',
+        products: _selectedProducts,
+        notes: _notesController.text.trim(),
+      );
+
+      _hasUnsavedChanges = false;
+      _updateSaveStatus();
+      debugPrint('CreateOrderPage: Order draft saved successfully');
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Failed to save order draft: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+
+      // Update error status
+      _lastSaveError = e.toString();
+      _updateSaveStatus();
+
+      // Show user notification but don't interrupt workflow
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ma\'lumotlarni saqlashda xatolik yuz berdi'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Mark data as changed and trigger immediate save
+  /// Should be called whenever order data is modified
+  void _markAsChanged() {
+    _hasUnsavedChanges = true;
+    // Trigger immediate save instead of timer-based save
+    _saveOrderDraft();
+  }
+
+  /// Enable automatic saving for the current order draft
+  void _enableAutoSave() {
+    if (!_isAutoSaveEnabled) {
+      _draftService.enableAutoSave(
+        visitId: widget.visitId,
+        stepCode: widget.stepCode,
+        products: _selectedProducts,
+        selectedOrganization: _selectedOrganization ?? '',
+        selectedWarehouse: _selectedWarehouse ?? '',
+        selectedPriceType: _selectedPriceType ?? '',
+        notes: _notesController.text.trim(),
+        stepName: widget.stepName,
+      );
+      _isAutoSaveEnabled = true;
+      debugPrint('CreateOrderPage: Auto-save enabled for visit ${widget.visitId}, step ${widget.stepCode}');
+    }
+  }
+
+  /// Disable automatic saving
+  void _disableAutoSave() {
+    if (_isAutoSaveEnabled) {
+      _draftService.disableAutoSave();
+      _isAutoSaveEnabled = false;
+      debugPrint('CreateOrderPage: Auto-save disabled');
+    }
+  }
+
+  /// Update save status from the draft service
+  void _updateSaveStatus() {
+    final status = _draftService.getSaveStatus();
+    setState(() {
+      _lastSaveTime = status['lastSaveTime'];
+      _lastSaveError = status['lastSaveError'];
+    });
+  }
+
+  /// Get formatted save status text for UI display
+  String _getSaveStatusText() {
+    if (_lastSaveError != null) {
+      return 'Saqlashda xatolik: $_lastSaveError';
+    } else if (_lastSaveTime != null) {
+      final now = DateTime.now();
+      final diff = now.difference(_lastSaveTime!);
+      if (diff.inMinutes < 1) {
+        return 'Hozir saqlandi';
+      } else if (diff.inHours < 1) {
+        return '${diff.inMinutes} daqiqa oldin saqlandi';
+      } else {
+        return '${diff.inHours} soat oldin saqlandi';
+      }
+    } else {
+      return 'Saqlanmagan';
+    }
+  }
+
+  /// Load previously saved order draft data using OrderDraftService
+  /// Called during initialization to restore previous session state
+  Future<void> _loadSavedOrderData() async {
+    try {
+      debugPrint('CreateOrderPage: Loading saved order draft for visit ${widget.visitId}, step ${widget.stepCode}');
+
+      final draftData = await _draftService.loadOrderDraft(widget.visitId, widget.stepCode);
+      if (draftData != null) {
+        // Restore selections
+        _selectedOrganization = draftData['selectedOrganization'] as String?;
+        _selectedWarehouse = draftData['selectedWarehouse'] as String?;
+        _selectedPriceType = draftData['selectedPriceType'] as String?;
+
+        // Restore products
+        final productsJson = draftData['products'] as List<dynamic>?;
+        if (productsJson != null) {
+          _selectedProducts = productsJson
+              .map((p) => CreateOrderProduct.fromJson(p as Map<String, dynamic>))
+              .toList();
+          _updateAddButtonStates(); // Update disabled states
+        }
+
+        // Restore notes
+        _notesController.text = draftData['notes'] as String? ?? '';
+
+        debugPrint('CreateOrderPage: Successfully loaded saved order draft with ${_selectedProducts.length} products');
+      } else {
+        debugPrint('CreateOrderPage: No saved order draft found');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error loading saved order draft: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+
+      // Continue with empty state - don't crash the app
+    }
+  }
+
   @override
   void dispose() {
+    _disableAutoSave();
     _notesController.dispose();
     _settingsAnimationController.dispose();
     _summaryAnimationController.dispose();
@@ -177,7 +329,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     }
   }
 
-  /// Initial data loading - loads organizations, warehouses, price types and products
+  /// Initial data loading - loads organizations, warehouses, price types, products and saved order data
   /// This method is called when the widget is first created
   Future<void> _loadInitialData() async {
     try {
@@ -190,16 +342,19 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         _loadPriceTypes(),
       ]);
 
-      // Set default selections based on loaded data
-      if (_organizations.isNotEmpty) {
+      // Load saved order data first to restore previous selections
+      await _loadSavedOrderData();
+
+      // Set default selections based on loaded data (only if no saved data)
+      if (_selectedOrganization == null && _organizations.isNotEmpty) {
         _selectedOrganization = _organizations.first.code;
         debugPrint('CreateOrderPage: Default organization set to: $_selectedOrganization');
       }
-      if (_warehouses.isNotEmpty) {
+      if (_selectedWarehouse == null && _warehouses.isNotEmpty) {
         _selectedWarehouse = _warehouses.first.code;
         debugPrint('CreateOrderPage: Default warehouse set to: $_selectedWarehouse');
       }
-      if (_priceTypes.isNotEmpty) {
+      if (_selectedPriceType == null && _priceTypes.isNotEmpty) {
         _selectedPriceType = _priceTypes.first.code;
         debugPrint('CreateOrderPage: Default price type set to: $_selectedPriceType');
       }
@@ -208,6 +363,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (_selectedPriceType != null && _selectedWarehouse != null) {
         await _loadProducts();
       }
+
+      // Enable auto-save after initial data is loaded
+      _enableAutoSave();
 
       debugPrint('CreateOrderPage: Initial data loading completed successfully');
     } catch (e, stackTrace) {
@@ -368,6 +526,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       await _loadProducts();
       _updateSelectedProductsPrices();
       debugPrint('CreateOrderPage: Selected products prices updated successfully');
+      _markAsChanged();
     } catch (e, stackTrace) {
       debugPrint('CreateOrderPage: Error updating settings: $e');
       debugPrint('CreateOrderPage: Stack trace: $stackTrace');
@@ -491,6 +650,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       _selectedProducts.add(orderProduct);
     }
     setState(() {});
+    _markAsChanged();
   }
 
   void _updateProductQuantity(String codeProduct, int newAmount) {
@@ -510,6 +670,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       setState(() {});
       // Update disabled states after quantity change
       _updateAddButtonStates();
+      _markAsChanged();
     }
   }
 
@@ -703,6 +864,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         ),
       ),
     );
+  }
+
   void _showFullScreenImage(String imagePath) {
     showDialog(
       context: context,
@@ -711,56 +874,6 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         child: InteractiveViewer(
           child: Image.asset(imagePath),
         ),
-      ),
-    );
-  }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
-
-    return Scaffold(
-      appBar: _buildAppBar(theme, l10n),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              // Settings panel (animated)
-              AnimatedBuilder(
-                animation: _settingsAnimation,
-                builder: (context, child) {
-                  return SizeTransition(
-                    sizeFactor: _settingsAnimation,
-                    axisAlignment: -1.0,
-                    child: _buildSettingsPanel(theme),
-                  );
-                },
-              ),
-
-              // Content area
-              Expanded(
-                child: _buildContentArea(theme),
-              ),
-
-              // Bottom summary
-              _buildBottomSummary(theme),
-            ],
-          ),
-
-
-          // Floating Action Button
-          Positioned(
-            bottom: 100,
-            right: 16,
-            child: FloatingActionButton(
-              onPressed: _showProductSelectionDialog,
-              child: const Icon(Icons.add),
-              tooltip: 'Mahsulot qo\'shish',
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -776,10 +889,37 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             _showViewModeToggle();
           }
         },
-        child: Text(widget.stepName),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.stepName),
+            // Save status indicator
+            if (_isAutoSaveEnabled)
+              Text(
+                _getSaveStatusText(),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: _lastSaveError != null
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.onSurfaceVariant,
+                  fontSize: 10,
+                ),
+              ),
+          ],
+        ),
       ),
       centerTitle: true,
       actions: [
+        // Manual save button
+        if (!widget.readOnly && _isAutoSaveEnabled)
+          IconButton(
+            icon: Icon(
+              _lastSaveError != null ? Icons.warning : Icons.save,
+              color: _lastSaveError != null ? theme.colorScheme.error : theme.colorScheme.primary,
+            ),
+            onPressed: () => _saveOrderDraft(),
+            tooltip: 'Saqlash',
+          ),
+
         // Clear order data icon
         if (!widget.readOnly)
           IconButton(
@@ -1821,6 +1961,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
       debugPrint('CreateOrderPage: Order data cleared successfully');
 
+      // Mark as changed to trigger auto-save of empty state
+      _markAsChanged();
+
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1904,6 +2047,63 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             child: Text(l10n?.confirmCompletion ?? 'Confirm'),
           ),
         ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return WillPopScope(
+      onWillPop: () async {
+        // Save draft data before leaving the page
+        if (_hasUnsavedChanges) {
+          await _saveOrderDraft();
+        }
+        return true;
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(theme, l10n),
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                // Settings panel (animated)
+                AnimatedBuilder(
+                  animation: _settingsAnimation,
+                  builder: (context, child) {
+                    return SizeTransition(
+                      sizeFactor: _settingsAnimation,
+                      axisAlignment: -1.0,
+                      child: _buildSettingsPanel(theme),
+                    );
+                  },
+                ),
+
+                // Content area
+                Expanded(
+                  child: _buildContentArea(theme),
+                ),
+
+                // Bottom summary
+                _buildBottomSummary(theme),
+              ],
+            ),
+
+            // Floating Action Button
+            Positioned(
+              bottom: 100,
+              right: 16,
+              child: FloatingActionButton(
+                onPressed: _showProductSelectionDialog,
+                child: const Icon(Icons.add),
+                tooltip: 'Mahsulot qo\'shish',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

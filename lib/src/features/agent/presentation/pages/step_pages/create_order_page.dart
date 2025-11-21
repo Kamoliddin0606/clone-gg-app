@@ -331,8 +331,101 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     });
   }
 
-  void _onSettingsChanged() {
-    _loadProducts();
+  /// Handles settings changes - reloads products and updates selected products' prices
+  /// When price type changes, all selected products' prices and totals are recalculated
+  /// If any product has zero or null price, its quantity is set to zero
+  void _onSettingsChanged() async {
+    try {
+      debugPrint('CreateOrderPage: Settings changed, reloading products...');
+      await _loadProducts();
+      _updateSelectedProductsPrices();
+      debugPrint('CreateOrderPage: Selected products prices updated successfully');
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error updating settings: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+
+      // Show error to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sozlamalarni yangilashda xatolik: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Updates prices and totals for all selected products based on current available products
+  /// If a product's price is zero or null, sets its quantity to zero
+  /// This ensures all data is synchronized when price type changes
+  void _updateSelectedProductsPrices() {
+    try {
+      debugPrint('CreateOrderPage: Updating selected products prices...');
+
+      for (int i = 0; i < _selectedProducts.length; i++) {
+        final selectedProduct = _selectedProducts[i];
+        final availableProduct = _availableProducts.firstWhere(
+          (p) => p.productCode == selectedProduct.codeProduct,
+          orElse: () => ProductWithPrice(
+            productCode: selectedProduct.codeProduct,
+            productName: '',
+            unit: '',
+            quantity: 0,
+            reserved: 0,
+            available: 0,
+            category: '',
+            barcode: '',
+            have: 0,
+            warehouseCode: '',
+            warehouseName: '',
+            weight: 0,
+            capacity: 0,
+            vendorCode: '',
+            productBrand: '',
+            productSeries: '',
+            codeProject: '',
+            priceTypeCode: '',
+            priceTypeName: '',
+            price: 0, // Default to 0 if not found
+            currency: '',
+            validFrom: '',
+            validTo: '',
+            stock: 0,
+          ),
+        );
+
+        final newPrice = availableProduct.price ?? 0.0;
+
+        // If price is zero or null, set quantity to zero
+        if (newPrice <= 0) {
+          debugPrint('CreateOrderPage: Product ${selectedProduct.codeProduct} has zero price, setting quantity to 0');
+          _selectedProducts[i] = selectedProduct.copyWith(
+            price: newPrice,
+            amount: 0,
+            total: 0.0,
+          );
+        } else {
+          // Update price and recalculate total
+          final newTotal = selectedProduct.amount * newPrice;
+          _selectedProducts[i] = selectedProduct.copyWith(
+            price: newPrice,
+            total: newTotal,
+          );
+          debugPrint('CreateOrderPage: Updated product ${selectedProduct.codeProduct} price to $newPrice, total: $newTotal');
+        }
+      }
+
+      // Trigger UI update
+      if (mounted) setState(() {});
+
+      debugPrint('CreateOrderPage: Selected products prices updated successfully');
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error updating selected products prices: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+
+      // Continue with existing data - don't crash the app
+    }
   }
 
   void _addProductToOrder(ProductWithPrice product) {
@@ -663,12 +756,17 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           const SizedBox(height: 16),
           Column(
             children: [
-              // Organization dropdown
+              // Organization dropdown - disabled when products are selected
               DropdownButtonFormField<String>(
                 value: _selectedOrganization,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Tashkilot',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  // Visual indication when disabled
+                  filled: _selectedProducts.isNotEmpty,
+                  fillColor: _selectedProducts.isNotEmpty
+                      ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                      : null,
                 ),
                 items: _organizations.map((org) {
                   return DropdownMenuItem(
@@ -676,19 +774,26 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     child: Text(org.name),
                   );
                 }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedOrganization = value);
-                  _onSettingsChanged();
-                },
+                onChanged: _selectedProducts.isNotEmpty
+                    ? null // Disable when products are selected
+                    : (value) {
+                        setState(() => _selectedOrganization = value);
+                        _onSettingsChanged();
+                      },
               ),
               const SizedBox(height: 16),
 
-              // Warehouse dropdown
+              // Warehouse dropdown - disabled when products are selected
               DropdownButtonFormField<String>(
                 value: _selectedWarehouse,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Ombor',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  // Visual indication when disabled
+                  filled: _selectedProducts.isNotEmpty,
+                  fillColor: _selectedProducts.isNotEmpty
+                      ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                      : null,
                 ),
                 items: _warehouses.map((warehouse) {
                   return DropdownMenuItem(
@@ -696,10 +801,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     child: Text(warehouse.name),
                   );
                 }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedWarehouse = value);
-                  _onSettingsChanged();
-                },
+                onChanged: _selectedProducts.isNotEmpty
+                    ? null // Disable when products are selected
+                    : (value) {
+                        setState(() => _selectedWarehouse = value);
+                        _onSettingsChanged();
+                      },
               ),
               const SizedBox(height: 16),
 
@@ -1215,12 +1322,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         ),
         // Product name at top
         Positioned(
-          top: 48,
+          top: 20,
           left: 24,
           right: 24,
           child: Text(
             _getProductName(product.codeProduct),
-            style: theme.textTheme.headlineMedium?.copyWith(
+            style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
               color: Colors.white,
               shadows: [
@@ -1251,13 +1358,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   uzsFormat.format(product.price),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.primary,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1268,7 +1375,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.remove, size: 14, color: Colors.white),
+                    icon: const Icon(Icons.remove, size: 22, color: Colors.white),
                     onPressed: () => _updateProductQuantity(product.codeProduct, product.amount - 1),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withOpacity(0.2),
@@ -1296,10 +1403,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   ),
                   const SizedBox(width: 12),
                   IconButton(
-                    icon: const Icon(Icons.add, size: 14, color: Colors.white),
+                    icon: const Icon(Icons.add, size: 22, color: Colors.white),
                     onPressed: () => _updateProductQuantity(product.codeProduct, product.amount + 1),
                     style: IconButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary.withOpacity(0.8),
+                      backgroundColor: Colors.white.withOpacity(0.2),
                       padding: const EdgeInsets.all(16),
                     ),
                   ),

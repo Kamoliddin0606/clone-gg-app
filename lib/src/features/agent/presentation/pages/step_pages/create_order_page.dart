@@ -285,7 +285,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           _selectedProducts = productsJson
               .map((p) => CreateOrderProduct.fromJson(p as Map<String, dynamic>))
               .toList();
+          debugPrint('CreateOrderPage: Restored ${_selectedProducts.length} products from draft');
+          debugPrint('CreateOrderPage: Available products count: ${_availableProducts.length}');
           _updateAddButtonStates(); // Update disabled states
+          debugPrint('CreateOrderPage: Updated add button states after loading draft');
         }
 
         // Restore notes
@@ -500,6 +503,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       );
       _availableProducts = products;
       debugPrint('CreateOrderPage: Loaded ${_availableProducts.length} products');
+      // Update add button states after products are loaded
+      _updateAddButtonStates();
+      debugPrint('CreateOrderPage: Updated add button states after loading products');
     } catch (e, stackTrace) {
       debugPrint('CreateOrderPage: Error loading products: $e');
       debugPrint('CreateOrderPage: Stack trace: $stackTrace');
@@ -538,6 +544,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       debugPrint('CreateOrderPage: Settings changed, reloading products...');
       await _loadProducts();
       _updateSelectedProductsPrices();
+      _updateAddButtonStates(); // Update disabled states based on new stock levels
       debugPrint('CreateOrderPage: Selected products prices updated successfully');
       _markAsChanged();
     } catch (e, stackTrace) {
@@ -709,6 +716,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Updates the disabled state of add buttons based on current quantities and stock
   /// Should be called after any quantity change to ensure UI consistency
   void _updateAddButtonStates() {
+    debugPrint('CreateOrderPage: Updating add button states. Selected products: ${_selectedProducts.length}, Available products: ${_availableProducts.length}');
     final toEnable = <String>{};
     final toDisable = <String>{};
 
@@ -717,6 +725,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       final isAtMax = product.amount >= stock;
       final isDisabled = _disabledAddProducts.contains(product.codeProduct);
 
+      debugPrint('CreateOrderPage: Product ${product.codeProduct}: amount=${product.amount}, stock=$stock, isAtMax=$isAtMax, isDisabled=$isDisabled');
+
       if (isAtMax && !isDisabled) {
         toDisable.add(product.codeProduct);
       } else if (!isAtMax && isDisabled) {
@@ -724,11 +734,16 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       }
     }
 
+    debugPrint('CreateOrderPage: To disable: $toDisable, To enable: $toEnable');
+
     if (toEnable.isNotEmpty || toDisable.isNotEmpty) {
       setState(() {
         _disabledAddProducts.addAll(toDisable);
         _disabledAddProducts.removeAll(toEnable);
       });
+      debugPrint('CreateOrderPage: Disabled products after update: $_disabledAddProducts');
+    } else {
+      debugPrint('CreateOrderPage: No changes to disabled states');
     }
   }
 

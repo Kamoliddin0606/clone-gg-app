@@ -1644,7 +1644,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildSummaryItem(theme, 'Mahsulotlar', '$_totalItems ta'),
-                      _buildSummaryItem(theme, 'Jami qiymat', _formatTotalValue(_totalValue)),
+                      _buildSummaryItem(theme, 'Jami qiymat', _totalValue),
                       _buildSummaryItem(theme, 'Og\'irlik', '${_totalWeight.toStringAsFixed(2)} kg'),
                       _buildSummaryItem(theme, 'Hajm', '${_totalVolume.toStringAsFixed(2)} m³'),
                     ],
@@ -1670,8 +1670,18 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     );
   }
 
-  Widget _buildSummaryItem(ThemeData theme, String label, String value) {
-    return Column(
+  Widget _buildSummaryItem(ThemeData theme, String label, dynamic value) {
+    String displayValue;
+    String? tooltipMessage;
+
+    if (label == 'Jami qiymat' && value is double) {
+      displayValue = _formatTotalValue(value);
+      tooltipMessage = uzsFormat.format(value);
+    } else {
+      displayValue = value.toString();
+    }
+
+    final column = Column(
       children: [
         Text(
           label,
@@ -1681,7 +1691,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         ),
         const SizedBox(height: 4),
         Text(
-          value,
+          displayValue,
           style: theme.textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.primary,
@@ -1689,6 +1699,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         ),
       ],
     );
+
+    if (tooltipMessage != null) {
+      return Tooltip(
+        message: tooltipMessage,
+        child: column,
+      );
+    } else {
+      return column;
+    }
   }
 
   void _showProductSelectionDialog() {

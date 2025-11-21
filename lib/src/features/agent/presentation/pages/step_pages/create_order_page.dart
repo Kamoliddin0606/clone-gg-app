@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
@@ -101,6 +99,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   List<ProductWithPrice> _availableProducts = [];
   List<CreateOrderProduct> _selectedProducts = [];
   bool _isLoadingProducts = false;
+
+  // Quantity control state
+  Set<String> _disabledAddProducts = {};
 
   // Summary data
   int get _totalItems => _selectedProducts.fold(0, (sum, product) => sum + product.amount);
@@ -470,6 +471,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     if (index >= 0) {
       if (newAmount <= 0) {
         _selectedProducts.removeAt(index);
+        // Remove from disabled set if product is removed
+        _disabledAddProducts.remove(codeProduct);
       } else {
         final product = _selectedProducts[index];
         _selectedProducts[index] = product.copyWith(
@@ -478,6 +481,53 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         );
       }
       setState(() {});
+      // Update disabled states after quantity change
+      _updateAddButtonStates();
+    }
+  }
+
+  /// Handles adding product quantity with stock validation
+  /// Only increments if sufficient stock is available, otherwise disables add button and shows message
+  void _handleAddProduct(String codeProduct, int currentAmount) {
+    final stock = _getProductStock(codeProduct);
+    if (currentAmount + 1 <= stock) {
+      _updateProductQuantity(codeProduct, currentAmount + 1);
+    } else {
+      if (!_disabledAddProducts.contains(codeProduct)) {
+        setState(() => _disabledAddProducts.add(codeProduct));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Maksimal miqdor: $stock dona'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Updates the disabled state of add buttons based on current quantities and stock
+  /// Should be called after any quantity change to ensure UI consistency
+  void _updateAddButtonStates() {
+    final toEnable = <String>{};
+    final toDisable = <String>{};
+
+    for (final product in _selectedProducts) {
+      final stock = _getProductStock(product.codeProduct);
+      final isAtMax = product.amount >= stock;
+      final isDisabled = _disabledAddProducts.contains(product.codeProduct);
+
+      if (isAtMax && !isDisabled) {
+        toDisable.add(product.codeProduct);
+      } else if (!isAtMax && isDisabled) {
+        toEnable.add(product.codeProduct);
+      }
+    }
+
+    if (toEnable.isNotEmpty || toDisable.isNotEmpty) {
+      setState(() {
+        _disabledAddProducts.addAll(toDisable);
+        _disabledAddProducts.removeAll(toEnable);
+      });
     }
   }
 
@@ -1101,8 +1151,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () => _updateProductQuantity(product.codeProduct, product.amount + 1),
+                    icon: Icon(
+                      Icons.add,
+                      color: _disabledAddProducts.contains(product.codeProduct)
+                          ? theme.disabledColor
+                          : null,
+                    ),
+                    onPressed: _disabledAddProducts.contains(product.codeProduct)
+                        ? null
+                        : () => _handleAddProduct(product.codeProduct, product.amount),
                   ),
                 ],
               ),
@@ -1261,10 +1318,18 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.add, size: 20),
+                    icon: Icon(
+                      Icons.add,
+                      size: 20,
+                      color: _disabledAddProducts.contains(product.codeProduct)
+                          ? theme.disabledColor
+                          : null,
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    onPressed: () => _updateProductQuantity(product.codeProduct, product.amount + 1),
+                    onPressed: _disabledAddProducts.contains(product.codeProduct)
+                        ? null
+                        : () => _handleAddProduct(product.codeProduct, product.amount),
                   ),
                 ],
               ),
@@ -1403,8 +1468,16 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   ),
                   const SizedBox(width: 12),
                   IconButton(
-                    icon: const Icon(Icons.add, size: 22, color: Colors.white),
-                    onPressed: () => _updateProductQuantity(product.codeProduct, product.amount + 1),
+                    icon: Icon(
+                      Icons.add,
+                      size: 22,
+                      color: _disabledAddProducts.contains(product.codeProduct)
+                          ? Colors.grey
+                          : Colors.white,
+                    ),
+                    onPressed: _disabledAddProducts.contains(product.codeProduct)
+                        ? null
+                        : () => _handleAddProduct(product.codeProduct, product.amount),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withOpacity(0.2),
                       padding: const EdgeInsets.all(16),

@@ -124,6 +124,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
    late AnimationController _viewModeToggleAnimationController;
    late Animation<double> _viewModeToggleAnimation;
 
+   /// UI state for full screen mode
+   bool _isFullScreen = false;
+
    /// Search and filter state
    final TextEditingController _searchController = TextEditingController();
    late AnimationController _filterAnimationController;
@@ -673,6 +676,13 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       setState(() => _isViewModeToggleVisible = false);
       _viewModeToggleAnimationController.reverse();
     }
+  }
+
+  /// Toggle full screen mode
+  void _toggleFullScreen() {
+    setState(() {
+      _isFullScreen = !_isFullScreen;
+    });
   }
 
   /// Confirm selection and return to previous page
@@ -1398,6 +1408,24 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    if (_isFullScreen) {
+      return Scaffold(
+        body: Stack(
+          children: [
+            _buildLargeImageView(theme),
+            Positioned(
+              top: 20,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.fullscreen_exit, color: Colors.white),
+                onPressed: _toggleFullScreen,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: _buildAppBar(theme),
       body: _errorMessage != null
@@ -1752,6 +1780,12 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       ),
       centerTitle: true,
       actions: [
+        //if (_currentViewMode == ViewMode.largeImage)
+          IconButton(
+            icon: Icon(_isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen),
+            onPressed: _toggleFullScreen,
+            tooltip: _isFullScreen ? 'Chiqish' : 'To\'liq ekran',
+          ),
         IconButton(
           icon: Icon(
             Icons.filter_list,

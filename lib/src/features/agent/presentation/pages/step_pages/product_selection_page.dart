@@ -1409,19 +1409,25 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
     final theme = Theme.of(context);
 
     if (_isFullScreen) {
-      return Scaffold(
-        body: Stack(
-          children: [
-            _buildLargeImageView(theme),
-            Positioned(
-              top: 20,
-              right: 20,
-              child: IconButton(
-                icon: const Icon(Icons.fullscreen_exit, color: Colors.white),
-                onPressed: _toggleFullScreen,
+      return WillPopScope(
+        onWillPop: () async {
+          _toggleFullScreen();
+          return false;
+        },
+        child: Scaffold(
+          body: Stack(
+            children: [
+              _buildLargeImageView(theme),
+              Positioned(
+                top: 20,
+                right: 20,
+                child: IconButton(
+                  icon: const Icon(Icons.fullscreen_exit, color: Colors.white),
+                  onPressed: _toggleFullScreen,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
@@ -1780,12 +1786,11 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       ),
       centerTitle: true,
       actions: [
-        //if (_currentViewMode == ViewMode.largeImage)
-          IconButton(
-            icon: Icon(_isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen),
-            onPressed: _toggleFullScreen,
-            tooltip: _isFullScreen ? 'Chiqish' : 'To\'liq ekran',
-          ),
+        IconButton(
+          icon: Icon(_isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen),
+          onPressed: _toggleFullScreen,
+          tooltip: _isFullScreen ? 'Chiqish' : 'To\'liq ekran',
+        ),
         IconButton(
           icon: Icon(
             Icons.filter_list,

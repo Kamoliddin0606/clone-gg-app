@@ -1703,6 +1703,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     if (tooltipMessage != null) {
       return Tooltip(
         message: tooltipMessage,
+        preferBelow: false, // Show tooltip above the widget
         child: column,
       );
     } else {

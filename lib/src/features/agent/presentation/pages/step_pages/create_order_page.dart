@@ -86,6 +86,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   late AnimationController _viewModeToggleAnimationController;
   late Animation<double> _viewModeToggleAnimation;
 
+  // Tune mode for icon spreading
+  bool _isTuneMode = false;
+  late AnimationController _tuneAnimationController;
+  late Animation<double> _tuneAnimation;
+
   // View modes
   ViewMode _currentViewMode = ViewMode.list;
 
@@ -145,6 +150,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     );
     _viewModeToggleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _viewModeToggleAnimationController, curve: Curves.easeInOut),
+    );
+    _tuneAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _tuneAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _tuneAnimationController, curve: Curves.easeInOut),
     );
     _loadInitialData();
   }
@@ -298,6 +310,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     _settingsAnimationController.dispose();
     _summaryAnimationController.dispose();
     _viewModeToggleAnimationController.dispose();
+    _tuneAnimationController.dispose();
     super.dispose();
   }
 
@@ -908,57 +921,116 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         ),
       ),
       centerTitle: true,
-      actions: [
-        // Manual save button
-        if (!widget.readOnly && _isAutoSaveEnabled)
-          IconButton(
-            icon: Icon(
-              _lastSaveError != null ? Icons.warning : Icons.save,
-              color: _lastSaveError != null ? theme.colorScheme.error : theme.colorScheme.primary,
+      actions: [_buildAppBarActions(theme, l10n)],
+    );
+  }
+
+  Widget _buildAppBarActions(ThemeData theme, AppLocalizations? l10n) {
+    return AnimatedBuilder(
+      animation: _tuneAnimation,
+      builder: (context, child) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Other icons - visible only when in tune mode
+            if (_isTuneMode) ...[
+              // Manual save button
+              if (!widget.readOnly && _isAutoSaveEnabled)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 48 + (_tuneAnimation.value * 20),
+                  child: IconButton(
+                    icon: Icon(
+                      _lastSaveError != null ? Icons.warning : Icons.save,
+                      color: _lastSaveError != null
+                          ? theme.colorScheme.error
+                          : Colors.blue,
+                    ),
+                    onPressed: () => _saveOrderDraft(),
+                    tooltip: 'Saqlash',
+                  ),
+                ),
+
+              // Clear order data icon
+              if (!widget.readOnly)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 48 + (_tuneAnimation.value * 20),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.delete,
+                      color: Colors.redAccent,
+                    ),
+                    onPressed: _selectedProducts.isEmpty ? null : _showClearConfirmationDialog,
+                    tooltip: 'Buyurtmani tozalash',
+                  ),
+                ),
+
+              // Suggested order icon
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 48 + (_tuneAnimation.value * 20),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.lightbulb_outline,
+                    color: Colors.yellow,
+                  ),
+                  onPressed: () {
+                    // TODO: Show suggested orders
+                  },
+                  tooltip: 'Taklif qilingan buyurtmalar',
+                ),
+              ),
+
+              // Settings icon with visual indicator
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 48 + (_tuneAnimation.value * 20),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.settings,
+                    color: _isSettingsPanelVisible
+                        ? theme.colorScheme.primary
+                        : Colors.green,
+                  ),
+                  onPressed: _toggleSettingsPanel,
+                  tooltip: 'Sozlamalar',
+                ),
+              ),
+            ],
+
+            // Tune icon - always visible
+            IconButton(
+              icon: Icon(
+                Icons.tune,
+                color: _isTuneMode ? theme.colorScheme.primary : null,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isTuneMode = !_isTuneMode;
+                  if (_isTuneMode) {
+                    _tuneAnimationController.forward();
+                  } else {
+                    _tuneAnimationController.reverse();
+                  }
+                });
+              },
+              tooltip: 'Tune mode',
             ),
-            onPressed: () => _saveOrderDraft(),
-            tooltip: 'Saqlash',
-          ),
 
-        // Clear order data icon
-        if (!widget.readOnly)
-          IconButton(
-            icon: const Icon(Icons.delete),
-            color: Colors.red,
-            onPressed: _selectedProducts.isEmpty ? null : _showClearConfirmationDialog,
-            tooltip: 'Buyurtmani tozalash',
-          ),
-        // Suggested order icon
-        IconButton(
-          icon: const Icon(Icons.lightbulb_outline),
-          onPressed: () {
-            // TODO: Show suggested orders
-          },
-          tooltip: 'Taklif qilingan buyurtmalar',
-        ),
-
-        // Settings icon with visual indicator
-        IconButton(
-          icon: Icon(
-            Icons.settings,
-            color: _isSettingsPanelVisible ? theme.colorScheme.primary : null,
-          ),
-          onPressed: _toggleSettingsPanel,
-          tooltip: 'Sozlamalar',
-        ),
-
-
-
-        if (widget.readOnly) ...[
-          const Icon(Icons.visibility, color: Colors.grey),
-          const SizedBox(width: 8),
-          const Text(
-            'Faqat ko\'rish',
-            style: TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ],
+            // Read-only indicators
+            if (widget.readOnly) ...[
+              const Icon(Icons.visibility, color: Colors.grey),
+              const SizedBox(width: 8),
+              const Text(
+                'Faqat ko\'rish',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              const SizedBox(width: 16),
+            ],
+          ],
+        );
+      },
     );
   }
 

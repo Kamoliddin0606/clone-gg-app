@@ -753,6 +753,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       ),
       centerTitle: true,
       actions: [
+        // Clear order data icon
+        if (!widget.readOnly)
+          IconButton(
+            icon: const Icon(Icons.delete),
+            color: Colors.red,
+            onPressed: _selectedProducts.isEmpty ? null : _showClearConfirmationDialog,
+            tooltip: 'Buyurtmani tozalash',
+          ),
         // Suggested order icon
         IconButton(
           icon: const Icon(Icons.lightbulb_outline),
@@ -771,6 +779,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           onPressed: _toggleSettingsPanel,
           tooltip: 'Sozlamalar',
         ),
+
+
 
         if (widget.readOnly) ...[
           const Icon(Icons.visibility, color: Colors.grey),
@@ -1263,6 +1273,21 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                             ),
                           ),
                           const SizedBox(height: 2),
+                          Text(
+                            'Mavjud: ${_getProductStock(product.codeProduct)} dona',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white,
+                              fontSize: 12,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.black.withOpacity(0.7),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 2),
                           // Price
                           Text(
                             uzsFormat.format(product.price),
@@ -1685,6 +1710,93 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         ],
       ),
     );
+  }
+
+  /// Clears all selected products and related order data while preserving settings selections
+  /// Shows confirmation dialog before clearing
+  void _showClearConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Buyurtmani tozalash'),
+        content: const Text(
+          'Tanlangan barcha mahsulotlar va ular bilan bog\'liq ma\'lumotlar o\'chiriladi. '
+          'Sozlamalar tanlovlari saqlanib qolinadi. Davom etishni xohlaysizmi?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _clearOrderData();
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Tozalash'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Clears selected products and resets UI state while keeping settings
+  void _clearOrderData() {
+    try {
+      debugPrint('CreateOrderPage: Clearing order data...');
+
+      // Clear selected products and related data
+      setState(() {
+        _selectedProducts = [];
+        _disabledAddProducts = {};
+        _notesController.clear();
+
+        // Reset UI states
+        _isSettingsPanelVisible = false;
+        _isSummaryVisible = false;
+        _isViewModeToggleVisible = false;
+        _currentViewMode = ViewMode.list;
+
+        // Hide animations if visible
+        if (_settingsAnimationController.isCompleted) {
+          _settingsAnimationController.reverse();
+        }
+        if (_summaryAnimationController.isCompleted) {
+          _summaryAnimationController.reverse();
+        }
+        if (_viewModeToggleAnimationController.isCompleted) {
+          _viewModeToggleAnimationController.reverse();
+        }
+      });
+
+      debugPrint('CreateOrderPage: Order data cleared successfully');
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Buyurtma ma\'lumotlari tozalandi'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error clearing order data: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ma\'lumotlarni tozalashda xatolik: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 
   void _showCompleteDialog(BuildContext context) {

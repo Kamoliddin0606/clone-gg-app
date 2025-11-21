@@ -982,23 +982,25 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   ),
                 ),
 
-              // Suggested order icon
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 48 + (_tuneAnimation.value * 20),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.lightbulb_outline,
-                    color: Colors.yellow,
+              // Suggested order icon - only show when not readOnly
+              if (!widget.readOnly)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 48 + (_tuneAnimation.value * 20),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.lightbulb_outline,
+                      color: Colors.yellow,
+                    ),
+                    onPressed: () {
+                      // TODO: Show suggested orders
+                    },
+                    tooltip: 'Taklif qilingan buyurtmalar',
                   ),
-                  onPressed: () {
-                    // TODO: Show suggested orders
-                  },
-                  tooltip: 'Taklif qilingan buyurtmalar',
                 ),
-              ),
 
-              // Settings icon with visual indicator
+              // Settings icon with visual indicator - always show in tune mode
+              if (!widget.readOnly)
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 width: 48 + (_tuneAnimation.value * 20),
@@ -1016,6 +1018,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             ],
 
             // Tune icon - always visible
+            if (!widget.readOnly)
             IconButton(
               icon: Icon(
                 Icons.tune,
@@ -1398,10 +1401,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   // Quantity controls
                   IconButton(
                     icon: const Icon(Icons.remove),
-                    onPressed: () => _updateProductQuantity(product.codeProduct, product.amount - 1),
+                    onPressed: widget.readOnly ? null : () => _updateProductQuantity(product.codeProduct, product.amount - 1),
                   ),
                   InkWell(
-                    onTap: () => _showQuantityInputDialog(product.codeProduct, product.amount),
+                    onTap: widget.readOnly ? null : () => _showQuantityInputDialog(product.codeProduct, product.amount),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1418,11 +1421,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   IconButton(
                     icon: Icon(
                       Icons.add,
-                      color: _disabledAddProducts.contains(product.codeProduct)
+                      color: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
                           ? theme.disabledColor
                           : null,
                     ),
-                    onPressed: _disabledAddProducts.contains(product.codeProduct)
+                    onPressed: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
                         ? null
                         : () => _handleAddProduct(product.codeProduct, product.amount),
                   ),
@@ -1574,7 +1577,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     icon: const Icon(Icons.remove, size: 20),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    onPressed: () => _updateProductQuantity(product.codeProduct, product.amount - 1),
+                    onPressed: widget.readOnly ? null : () => _updateProductQuantity(product.codeProduct, product.amount - 1),
                   ),
                   // Text(
                   //   '${product.amount}',
@@ -1583,7 +1586,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   //   ),
                   // ),
                   InkWell(
-                    onTap: () => _showQuantityInputDialog(product.codeProduct, product.amount),
+                    onTap: widget.readOnly ? null : () => _showQuantityInputDialog(product.codeProduct, product.amount),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1601,13 +1604,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     icon: Icon(
                       Icons.add,
                       size: 20,
-                      color: _disabledAddProducts.contains(product.codeProduct)
+                      color: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
                           ? theme.disabledColor
                           : null,
                     ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    onPressed: _disabledAddProducts.contains(product.codeProduct)
+                    onPressed: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
                         ? null
                         : () => _handleAddProduct(product.codeProduct, product.amount),
                   ),
@@ -1721,7 +1724,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 children: [
                   IconButton(
                     icon: const Icon(Icons.remove, size: 22, color: Colors.white),
-                    onPressed: () => _updateProductQuantity(product.codeProduct, product.amount - 1),
+                    onPressed: widget.readOnly ? null : () => _updateProductQuantity(product.codeProduct, product.amount - 1),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withOpacity(0.2),
                       padding: const EdgeInsets.all(16),
@@ -1729,7 +1732,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   ),
                   const SizedBox(width: 12),
                   InkWell(
-                    onTap: () => _showQuantityInputDialog(product.codeProduct, product.amount),
+                    onTap: widget.readOnly ? null : () => _showQuantityInputDialog(product.codeProduct, product.amount),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -1751,11 +1754,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     icon: Icon(
                       Icons.add,
                       size: 22,
-                      color: _disabledAddProducts.contains(product.codeProduct)
+                      color: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
                           ? Colors.grey
                           : Colors.white,
                     ),
-                    onPressed: _disabledAddProducts.contains(product.codeProduct)
+                    onPressed: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
                         ? null
                         : () => _handleAddProduct(product.codeProduct, product.amount),
                     style: IconButton.styleFrom(
@@ -2235,16 +2238,17 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               ],
             ),
 
-            // Floating Action Button
-            Positioned(
-              bottom: 100,
-              right: 16,
-              child: FloatingActionButton(
-                onPressed: _navigateToProductSelection,
-                child: const Icon(Icons.add),
-                tooltip: 'Mahsulot qo\'shish',
+            // Floating Action Button - only show when not readOnly
+            if (!widget.readOnly)
+              Positioned(
+                bottom: 100,
+                right: 16,
+                child: FloatingActionButton(
+                  onPressed: _navigateToProductSelection,
+                  child: const Icon(Icons.add),
+                  tooltip: 'Mahsulot qo\'shish',
+                ),
               ),
-            ),
           ],
         ),
       ),

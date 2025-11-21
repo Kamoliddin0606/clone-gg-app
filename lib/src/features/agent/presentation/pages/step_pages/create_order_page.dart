@@ -1038,10 +1038,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             if (widget.readOnly) ...[
               const Icon(Icons.visibility, color: Colors.grey),
               const SizedBox(width: 8),
-              const Text(
-                'Faqat ko\'rish',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
+              // const Text(
+              //   'Faqat ko\'rish',
+              //   style: TextStyle(color: Colors.grey, fontSize: 12),
+              // ),
               const SizedBox(width: 16),
             ],
           ],

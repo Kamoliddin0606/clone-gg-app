@@ -286,6 +286,33 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     }
   }
 
+  /// Formats the total value with millions abbreviation for large amounts
+  /// If value >= 100,000, displays as X.X mln UZS, otherwise uses standard UZS format
+  /// Handles edge cases like negative values or NaN
+  String _formatTotalValue(double value) {
+    try {
+      // Handle invalid values
+      if (value.isNaN || value.isInfinite) {
+        return '0 UZS';
+      }
+
+      // For values >= 100,000, format as millions
+      if (value >= 100000) {
+        final millions = value / 1000000;
+        // Round to 1 decimal place
+        final roundedMillions = (millions * 10).round() / 10;
+        return '${roundedMillions.toStringAsFixed(1)} mln UZS';
+      } else {
+        // Use standard currency formatting for smaller values
+        return uzsFormat.format(value);
+      }
+    } catch (e) {
+      debugPrint('CreateOrderPage: Error formatting total value: $e');
+      // Fallback to standard formatting
+      return uzsFormat.format(value);
+    }
+  }
+
   /// Load products with prices based on selected price type and warehouse
   Future<void> _loadProducts() async {
     if (_selectedPriceType == null || _selectedWarehouse == null) {
@@ -1617,7 +1644,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildSummaryItem(theme, 'Mahsulotlar', '$_totalItems ta'),
-                      _buildSummaryItem(theme, 'Jami qiymat', uzsFormat.format(_totalValue)),
+                      _buildSummaryItem(theme, 'Jami qiymat', _formatTotalValue(_totalValue)),
                       _buildSummaryItem(theme, 'Og\'irlik', '${_totalWeight.toStringAsFixed(2)} kg'),
                       _buildSummaryItem(theme, 'Hajm', '${_totalVolume.toStringAsFixed(2)} m³'),
                     ],

@@ -62,6 +62,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           numberOrder: widget.order.numOrder,
           orderDate1: orderDate1,
           orderDate2: orderDate2,
+          forceRefresh: true,
         );
 
         // Convert and merge with existing order data

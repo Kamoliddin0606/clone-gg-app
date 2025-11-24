@@ -571,29 +571,11 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         final existingDataForStep = existingDataMap[step.stepCode];
 
         if (existingDataForStep != null) {
-          // Check for progress data first (takes precedence over completion)
+          // Check for completion data first (takes precedence over progress)
           final progressData = existingDataForStep['progress'];
           final completionData = existingDataForStep['completion'];
 
-          if (progressData != null) {
-            // Step is in progress
-            try {
-              final parsedData = progressData.parsedDataContent;
-              stepProgress.add(VisitStepProgress(
-                step: step,
-                status: VisitStepStatus.inProgress,
-                notes: parsedData['notes'], // Keep any existing notes
-              ));
-              debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as in-progress');
-            } catch (e) {
-              debugPrint('VisitStepsBloc: Error parsing progress data for step ${step.stepCode}: $e');
-              // Fallback to pending if data is corrupted
-              stepProgress.add(VisitStepProgress(
-                step: step,
-                status: VisitStepStatus.pending,
-              ));
-            }
-          } else if (completionData != null) {
+          if (completionData != null) {
             // Step was previously completed
             try {
               final parsedData = completionData.parsedDataContent;
@@ -610,6 +592,24 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
               debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as completed');
             } catch (e) {
               debugPrint('VisitStepsBloc: Error parsing completion data for step ${step.stepCode}: $e');
+              // Fallback to pending if data is corrupted
+              stepProgress.add(VisitStepProgress(
+                step: step,
+                status: VisitStepStatus.pending,
+              ));
+            }
+          } else if (progressData != null) {
+            // Step is in progress
+            try {
+              final parsedData = progressData.parsedDataContent;
+              stepProgress.add(VisitStepProgress(
+                step: step,
+                status: VisitStepStatus.inProgress,
+                notes: parsedData['notes'], // Keep any existing notes
+              ));
+              debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as in-progress');
+            } catch (e) {
+              debugPrint('VisitStepsBloc: Error parsing progress data for step ${step.stepCode}: $e');
               // Fallback to pending if data is corrupted
               stepProgress.add(VisitStepProgress(
                 step: step,

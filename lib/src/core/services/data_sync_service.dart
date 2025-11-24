@@ -1414,7 +1414,8 @@ class DataSyncService {
       print('Buyurtma statuslari ma\'lumotlari yuklandi: ${statuses.length} ta status');
     }
     await _dbService.saveOrderStatuses(statuses);
-    return statuses;
+    // Return saved statuses with auto-generated IDs from database
+    return await _dbService.getOrderStatuses();
   }
 
   /// Sync orders data

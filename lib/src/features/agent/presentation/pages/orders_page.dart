@@ -35,35 +35,42 @@ class OrdersPage extends StatefulWidget {
 }
 
 class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
-  final TextEditingController _search = TextEditingController();
-  bool _showFilters = false;  // AppBar filter panel
-  bool _showTuneRow = false;  // the count + list/grid row under search
-  bool _isGrid = false;
+   final TextEditingController _search = TextEditingController();
+   bool _showFilters = false;  // AppBar filter panel
+   bool _showTuneRow = false;  // the count + list/grid row under search
+   bool _isGrid = false;
 
-  // Dynamic status data
-  List<String> _statusTabs = ['Barchasi'];
-  Map<String,int?> _statusMap = {'Barchasi': null};
-  List<OrderStatus> _orderStatuses = [];
+   // Dynamic status data
+   List<String> _statusTabs = ['Barchasi'];
+   Map<String,int?> _statusMap = {'Barchasi': null};
+   List<OrderStatus> _orderStatuses = [];
 
-  int _currentTabIndex = 0;
-  DateTimeRange? _pickedRange;
-  final OrdersFilterState _filters = OrdersFilterState();
+   int _currentTabIndex = 0;
+   DateTimeRange? _pickedRange;
+   final OrdersFilterState _filters = OrdersFilterState();
 
-  late List<Order> _allOrders;      // original orders from server
-  late List<OrderModel> _all;      // original presentation models
-  late List<OrderModel> _filtered; // view
+   late List<Order> _allOrders;      // original orders from server
+   late List<OrderModel> _all;      // original presentation models
+   late List<OrderModel> _filtered; // view
 
-  bool _isLoading = true;
-  String? _error;
+   bool _isLoading = true;
+   String? _error;
+
+   ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _search.addListener(_applyAllFilters);
+    _scrollController.addListener(() {
+      if (_showFilters) {
+        setState(() => _showFilters = false);
+      }
+    });
     _loadOrderStatusesAndOrders();
     // Initial filter endi _loadOrderStatusesAndOrders() ichida qo'llanadi
   }
-  @override void dispose(){ _search.dispose(); super.dispose(); }
+  @override void dispose(){ _search.dispose(); _scrollController.dispose(); super.dispose(); }
 
   void _toggleFilters(){ setState(()=>_showFilters = !_showFilters); }
   void _toggleTune(){ setState(()=>_showTuneRow = !_showTuneRow); }
@@ -401,6 +408,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
           // Content
           Expanded(child: AnimatedSwitcher(duration: const Duration(milliseconds: 300), child: _isGrid
               ? Padding(key: const ValueKey('grid'), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), child: GridView.builder(
+            controller: _scrollController,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 12,
@@ -410,7 +418,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
             itemCount: _filtered.length,
             itemBuilder: (_, i){ final o = _filtered[i]; return OrderCardGrid(order: o, onTap: ()=>_openBottomSheet(context, o), onDoubleTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>OrderDetailsPage(order: o)))); },
           ))
-              : ListView.builder(key: const ValueKey('list'), itemCount: _filtered.length, itemBuilder: (_, i){ final o = _filtered[i]; return OrderCard(order: o, onTap: ()=>_openBottomSheet(context, o), onDoubleTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>OrderDetailsPage(order: o)))); }),
+              : ListView.builder(key: const ValueKey('list'), controller: _scrollController, itemCount: _filtered.length, itemBuilder: (_, i){ final o = _filtered[i]; return OrderCard(order: o, onTap: ()=>_openBottomSheet(context, o), onDoubleTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (_)=>OrderDetailsPage(order: o)))); }),
           )),
         ]),
       ),

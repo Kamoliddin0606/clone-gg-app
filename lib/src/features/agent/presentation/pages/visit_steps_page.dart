@@ -306,13 +306,14 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
     final step = updatedProgress[event.stepIndex].step;
 
+    // 1. Update current step status locally
     updatedProgress[event.stepIndex] = updatedProgress[event.stepIndex].copyWith(
       status: VisitStepStatus.completed,
       notes: event.notes,
       completedAt: DateTime.now(),
     );
 
-    // Save step completion data to persistent storage
+    // 2. Save completion data to persistent storage
     await _saveStepDataToStorage(
       stepCode: step.stepCode,
       stepName: step.stepName,
@@ -324,6 +325,11 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       },
     );
 
+    // 3. Clear any "in progress" data for this step to prevent conflicts on reload
+    // This ensures that _loadStepProgressFromStorage won't prioritize old progress data over this new completion
+    await _removeStepProgressData(step.stepCode);
+
+    // 4. Determine next step and update state
     final newCurrentStepIndex = _getCurrentStepIndex(updatedProgress, currentState.isStrictSequence);
 
     emit(VisitStepsLoaded(
@@ -353,13 +359,15 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
     final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
 
+    // 1. Update status to completed (skipped)
     updatedProgress[event.stepIndex] = updatedProgress[event.stepIndex].copyWith(
-      status: VisitStepStatus.completed,
+      status: VisitStepStatus.completed, // Skipped is a form of completion
       notes: event.reason,
+      skipReason: event.reason,
       completedAt: DateTime.now(),
     );
 
-    // Save step completion data to persistent storage
+    // 2. Save skip data to persistent storage
     await _saveStepDataToStorage(
       stepCode: step.stepCode,
       stepName: step.stepName,
@@ -372,6 +380,10 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       },
     );
 
+    // 3. Clear any "in progress" data for this step to prevent conflicts on reload
+    await _removeStepProgressData(step.stepCode);
+
+    // 4. Determine next step and update state
     final newCurrentStepIndex = _getCurrentStepIndex(updatedProgress, currentState.isStrictSequence);
 
     emit(VisitStepsLoaded(
@@ -391,43 +403,42 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     if (state is! VisitStepsLoaded) return;
 
     final currentState = state as VisitStepsLoaded;
+    final currentStepIndex = event.currentStepIndex;
+    final previousStepIndex = currentStepIndex - 1;
 
-    // Calculate previous step index
-    final previousStepIndex = event.currentStepIndex - 1;
-
-    // Ensure we don't go below 0
     if (previousStepIndex < 0) return;
 
-    debugPrint('VisitStepsBloc: PreviousStep - currentStepIndex: ${event.currentStepIndex}, previousStepIndex: $previousStepIndex');
+    debugPrint('VisitStepsBloc: PreviousStep - currentStepIndex: $currentStepIndex, previousStepIndex: $previousStepIndex');
 
-    // Clear data for the current step from database
-    final currentStep = currentState.stepProgress[event.currentStepIndex].step;
-    debugPrint('VisitStepsBloc: Clearing data for current step ${currentStep.stepCode} (${currentStep.stepName})');
+    // 1. Clear ALL data for the CURRENT step (Reset)
+    final currentStep = currentState.stepProgress[currentStepIndex].step;
+    debugPrint('VisitStepsBloc: Clearing all data for current step ${currentStep.stepCode}');
     await _clearStepDataFromStorage(currentStep.stepCode);
 
-    // Update step progress: clear current step and set previous step to in-progress
+    // 2. Update CURRENT step status to pending locally
     final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
-
-    // Clear current step (reset to pending and clear all data)
-    debugPrint('VisitStepsBloc: Resetting current step ${currentStep.stepCode} to pending');
-    updatedProgress[event.currentStepIndex] = updatedProgress[event.currentStepIndex].copyWith(
+    updatedProgress[currentStepIndex] = updatedProgress[currentStepIndex].copyWith(
       status: VisitStepStatus.pending,
       notes: null,
       skipReason: null,
       completedAt: null,
     );
 
-    // Set previous step to in-progress status and update its data in database
+    // 3. Reactivate PREVIOUS step
+    // We need to remove the 'completion' record for the previous step to make it active again.
     final previousStep = updatedProgress[previousStepIndex].step;
-    debugPrint('VisitStepsBloc: Setting previous step ${previousStep.stepCode} (${previousStep.stepName}) to inProgress');
-    debugPrint('VisitStepsBloc: Previous step was ${updatedProgress[previousStepIndex].status} with notes: ${updatedProgress[previousStepIndex].notes}');
+    debugPrint('VisitStepsBloc: Reactivating previous step ${previousStep.stepCode}');
+    
+    // Remove completion data for previous step to "un-complete" it
+    await _removeStepCompletionData(previousStep.stepCode);
+
+    // Update previous step status to inProgress locally
     updatedProgress[previousStepIndex] = updatedProgress[previousStepIndex].copyWith(
       status: VisitStepStatus.inProgress,
-      completedAt: null, // Clear completion time since it's now in progress
+      completedAt: null,
     );
 
-    // Save the in-progress status for the previous step to database
-    debugPrint('VisitStepsBloc: Saving inProgress data for previous step ${previousStep.stepCode}');
+    // Save 'progress' marker to ensure it stays active if app restarts
     await _saveStepDataToStorage(
       stepCode: previousStep.stepCode,
       stepName: previousStep.stepName,
@@ -438,7 +449,6 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       },
     );
 
-    debugPrint('VisitStepsBloc: Emitting new state with currentStepIndex: $previousStepIndex');
     emit(VisitStepsLoaded(
       tradingPoint: currentState.tradingPoint,
       permissions: currentState.permissions,
@@ -519,26 +529,13 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   }
 
   int _getCurrentStepIndex(List<VisitStepProgress> progress, bool isStrictSequence) {
-    if (!isStrictSequence) {
-      // In non-strict mode, find first pending or in-progress step
-      return progress.indexWhere((p) => p.status == VisitStepStatus.pending || p.status == VisitStepStatus.inProgress);
-    } else {
-      // In strict mode, find first pending or in-progress step that can be accessed
-      for (int i = 0; i < progress.length; i++) {
-        if (progress[i].status == VisitStepStatus.pending || progress[i].status == VisitStepStatus.inProgress) {
-          // Check if all previous required steps are completed
-          bool canAccess = true;
-          for (int j = 0; j < i; j++) {
-            if (progress[j].step.stepRequired && progress[j].status != VisitStepStatus.completed) {
-              canAccess = false;
-              break;
-            }
-          }
-          if (canAccess) return i;
-        }
-      }
-      return -1; // All steps completed
-    }
+    // Find the first step that is NOT completed.
+    // This logic applies to both strict and non-strict for determining the "Active" step.
+    // In strict mode, this is the ONLY accessible step (plus completed ones for review).
+    // In non-strict mode, this is just the default "next" step.
+    
+    final index = progress.indexWhere((p) => p.status != VisitStepStatus.completed);
+    return index; // Returns -1 if all are completed
   }
 
   bool _canProceedToNext(List<VisitStepProgress> progress, int currentStepIndex, bool isStrictSequence) {
@@ -722,10 +719,58 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     } catch (e, stackTrace) {
       debugPrint('VisitStepsBloc: Error clearing step data from storage: $e');
       debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
+    }
+  }
 
-      // Enhanced error handling - could implement cleanup retry logic here
-      // For now, we don't throw to avoid breaking the UI flow
-      // TODO: Consider implementing cleanup retry mechanism
+  /// Remove specifically the completion data for a step
+  /// Used when navigating back to a previous step to "un-complete" it
+  Future<void> _removeStepCompletionData(int stepCode) async {
+    try {
+      debugPrint('VisitStepsBloc: Removing completion data for visitId: $_visitId, stepCode: $stepCode');
+      
+      // Get all data for this step
+      final stepData = await _visitDataRepository.getVisitStepDataByStep(_visitId, stepCode);
+      
+      // Find completion records
+      final completionRecords = stepData.where((d) => d.dataType == 'completion');
+      
+      // Delete them
+      for (final record in completionRecords) {
+        if (record.id != null) {
+          await _visitDataRepository.deleteVisitStepData(record.id!);
+        }
+      }
+      
+      debugPrint('VisitStepsBloc: Completion data removed for step $stepCode');
+    } catch (e, stackTrace) {
+      debugPrint('VisitStepsBloc: Error removing completion data: $e');
+      debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
+    }
+  }
+
+  /// Remove specifically the progress data for a step
+  /// Used when completing/skipping a step to ensure it doesn't load as "in progress" next time
+  Future<void> _removeStepProgressData(int stepCode) async {
+    try {
+      debugPrint('VisitStepsBloc: Removing progress data for visitId: $_visitId, stepCode: $stepCode');
+      
+      // Get all data for this step
+      final stepData = await _visitDataRepository.getVisitStepDataByStep(_visitId, stepCode);
+      
+      // Find progress records
+      final progressRecords = stepData.where((d) => d.dataType == 'progress');
+      
+      // Delete them
+      for (final record in progressRecords) {
+        if (record.id != null) {
+          await _visitDataRepository.deleteVisitStepData(record.id!);
+        }
+      }
+      
+      debugPrint('VisitStepsBloc: Progress data removed for step $stepCode');
+    } catch (e, stackTrace) {
+      debugPrint('VisitStepsBloc: Error removing progress data: $e');
+      debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
     }
   }
 }

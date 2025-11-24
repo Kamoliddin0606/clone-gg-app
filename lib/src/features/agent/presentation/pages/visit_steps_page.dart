@@ -398,14 +398,18 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     // Ensure we don't go below 0
     if (previousStepIndex < 0) return;
 
+    debugPrint('VisitStepsBloc: PreviousStep - currentStepIndex: ${event.currentStepIndex}, previousStepIndex: $previousStepIndex');
+
     // Clear data for the current step from database
     final currentStep = currentState.stepProgress[event.currentStepIndex].step;
+    debugPrint('VisitStepsBloc: Clearing data for current step ${currentStep.stepCode} (${currentStep.stepName})');
     await _clearStepDataFromStorage(currentStep.stepCode);
 
     // Update step progress: clear current step and set previous step to in-progress
     final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
 
     // Clear current step (reset to pending and clear all data)
+    debugPrint('VisitStepsBloc: Resetting current step ${currentStep.stepCode} to pending');
     updatedProgress[event.currentStepIndex] = updatedProgress[event.currentStepIndex].copyWith(
       status: VisitStepStatus.pending,
       notes: null,
@@ -415,12 +419,15 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
     // Set previous step to in-progress status and update its data in database
     final previousStep = updatedProgress[previousStepIndex].step;
+    debugPrint('VisitStepsBloc: Setting previous step ${previousStep.stepCode} (${previousStep.stepName}) to inProgress');
+    debugPrint('VisitStepsBloc: Previous step was ${updatedProgress[previousStepIndex].status} with notes: ${updatedProgress[previousStepIndex].notes}');
     updatedProgress[previousStepIndex] = updatedProgress[previousStepIndex].copyWith(
       status: VisitStepStatus.inProgress,
       completedAt: null, // Clear completion time since it's now in progress
     );
 
     // Save the in-progress status for the previous step to database
+    debugPrint('VisitStepsBloc: Saving inProgress data for previous step ${previousStep.stepCode}');
     await _saveStepDataToStorage(
       stepCode: previousStep.stepCode,
       stepName: previousStep.stepName,
@@ -431,6 +438,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       },
     );
 
+    debugPrint('VisitStepsBloc: Emitting new state with currentStepIndex: $previousStepIndex');
     emit(VisitStepsLoaded(
       tradingPoint: currentState.tradingPoint,
       permissions: currentState.permissions,
@@ -570,13 +578,37 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       for (final step in visitSteps) {
         final existingDataForStep = existingDataMap[step.stepCode];
 
+        debugPrint('VisitStepsBloc: Processing step ${step.stepCode} (${step.stepName})');
+
         if (existingDataForStep != null) {
+          debugPrint('VisitStepsBloc: Found existing data for step ${step.stepCode}: ${existingDataForStep.keys}');
           // Check for completion data first (takes precedence over progress)
           final progressData = existingDataForStep['progress'];
           final completionData = existingDataForStep['completion'];
 
-          if (completionData != null) {
+          // Prioritize progress data over completion data to handle going back correctly
+          if (progressData != null) {
+            // Step is in progress (takes precedence over completion)
+            debugPrint('VisitStepsBloc: Step ${step.stepCode} has progress data: ${progressData.dataContent}');
+            try {
+              final parsedData = progressData.parsedDataContent;
+              stepProgress.add(VisitStepProgress(
+                step: step,
+                status: VisitStepStatus.inProgress,
+                notes: parsedData['notes'], // Keep any existing notes
+              ));
+              debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as in-progress with notes: ${parsedData['notes']}');
+            } catch (e) {
+              debugPrint('VisitStepsBloc: Error parsing progress data for step ${step.stepCode}: $e');
+              // Fallback to pending if data is corrupted
+              stepProgress.add(VisitStepProgress(
+                step: step,
+                status: VisitStepStatus.pending,
+              ));
+            }
+          } else if (completionData != null) {
             // Step was previously completed
+            debugPrint('VisitStepsBloc: Step ${step.stepCode} has completion data: ${completionData.dataContent}');
             try {
               final parsedData = completionData.parsedDataContent;
               final completedAt = parsedData['completedAt'] != null
@@ -589,7 +621,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
                 notes: parsedData['notes'],
                 completedAt: completedAt,
               ));
-              debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as completed');
+              debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as completed with notes: ${parsedData['notes']}');
             } catch (e) {
               debugPrint('VisitStepsBloc: Error parsing completion data for step ${step.stepCode}: $e');
               // Fallback to pending if data is corrupted
@@ -598,26 +630,9 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
                 status: VisitStepStatus.pending,
               ));
             }
-          } else if (progressData != null) {
-            // Step is in progress
-            try {
-              final parsedData = progressData.parsedDataContent;
-              stepProgress.add(VisitStepProgress(
-                step: step,
-                status: VisitStepStatus.inProgress,
-                notes: parsedData['notes'], // Keep any existing notes
-              ));
-              debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as in-progress');
-            } catch (e) {
-              debugPrint('VisitStepsBloc: Error parsing progress data for step ${step.stepCode}: $e');
-              // Fallback to pending if data is corrupted
-              stepProgress.add(VisitStepProgress(
-                step: step,
-                status: VisitStepStatus.pending,
-              ));
-            }
           } else {
             // Step has data but no progress/completion status
+            debugPrint('VisitStepsBloc: Step ${step.stepCode} has data but no progress/completion status');
             stepProgress.add(VisitStepProgress(
               step: step,
               status: VisitStepStatus.pending,
@@ -1408,7 +1423,10 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                   if (widget.currentStepIndex > 0) ...[
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: widget.onPrevious,
+                        onPressed: () {
+                          debugPrint('VisitStepCard: Previous button pressed for step ${widget.stepProgress.step.stepCode}, currentStepIndex: ${widget.currentStepIndex}');
+                          widget.onPrevious();
+                        },
                         icon: const Icon(Icons.skip_previous, size: 18),
                         label: Text(l10n?.previous ?? 'Previous'),
                         style: OutlinedButton.styleFrom(
@@ -1584,8 +1602,13 @@ class _VisitStepCardState extends State<_VisitStepCard> {
     final isCurrentStep = currentState.currentStepIndex ==
         currentState.stepProgress.indexOf(stepProgress);
 
+    debugPrint('VisitStepsPage: Navigating to step ${step.stepCode} (${step.stepName})');
+    debugPrint('VisitStepsPage: Step status: ${stepProgress.status}, isCompleted: $isCompleted, isCurrentStep: $isCurrentStep');
+    debugPrint('VisitStepsPage: Step notes: ${stepProgress.notes}, completedAt: ${stepProgress.completedAt}');
+
     // Enforce navigation restrictions for non-accessible steps
     if (!isCompleted && !isCurrentStep) {
+      debugPrint('VisitStepsPage: Navigation blocked - step not accessible');
       // Display user-friendly error message for blocked navigation
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1599,6 +1622,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
 
     // Set readOnly mode: completed steps are view-only, current step is editable
     final readOnly = isCompleted;
+    debugPrint('VisitStepsPage: Setting readOnly=$readOnly for step ${step.stepCode}');
 
     Widget? page;
 

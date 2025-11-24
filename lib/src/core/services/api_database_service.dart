@@ -3747,6 +3747,9 @@ class ApiDatabaseService {
 
   // Order Details methods
   Future<void> saveOrderDetails(List<OrderDetail> orderDetails) async {
+    // Ensure order_details tables exist before performing operations
+    await ensureOrderDetailsTablesExist();
+    
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -3881,6 +3884,9 @@ class ApiDatabaseService {
   }
 
   Future<List<OrderDetail>> getOrderDetails({String? numOrder}) async {
+    // Ensure order_details tables exist before performing operations
+    await ensureOrderDetailsTablesExist();
+    
     final db = await database;
     String whereClause = '';
     List<dynamic> whereArgs = [];
@@ -3962,11 +3968,17 @@ class ApiDatabaseService {
   }
 
   Future<OrderDetail?> getOrderDetailByNumOrder(String numOrder) async {
+    // Ensure order_details tables exist before performing operations
+    await ensureOrderDetailsTablesExist();
+    
     final orderDetails = await getOrderDetails(numOrder: numOrder);
     return orderDetails.isNotEmpty ? orderDetails.first : null;
   }
 
   Future<void> saveOrderDetail(OrderDetail orderDetail) async {
+    // Ensure order_details tables exist before performing operations
+    await ensureOrderDetailsTablesExist();
+    
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -4065,6 +4077,9 @@ class ApiDatabaseService {
   }
 
   Future<void> updateOrderDetail(String numOrder, OrderDetail orderDetail) async {
+    // Ensure order_details tables exist before performing operations
+    await ensureOrderDetailsTablesExist();
+    
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -4186,6 +4201,9 @@ class ApiDatabaseService {
   }
 
   Future<void> deleteOrderDetail(String numOrder) async {
+    // Ensure order_details tables exist before performing operations
+    await ensureOrderDetailsTablesExist();
+    
     final db = await database;
 
     // Validate input
@@ -6210,6 +6228,43 @@ class ApiDatabaseService {
     final tableInfo = getTableCreationSql()['user_organizations'];
     if (tableInfo != null) {
       await ensureTableExists('user_organizations', tableInfo['sql'] as String, tableInfo['indexes'] as List<String>);
+    }
+  }
+
+  /// Ensure order_details related tables exist (for migration issues)
+  /// This method checks if the tables exist and creates them if not
+  Future<void> ensureOrderDetailsTablesExist() async {
+    try {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Ensuring order_details tables exist');
+      }
+
+      // Ensure order_details table
+      final orderDetailsInfo = getTableCreationSql()['order_details'];
+      if (orderDetailsInfo != null) {
+        await ensureTableExists('order_details', orderDetailsInfo['sql'] as String, orderDetailsInfo['indexes'] as List<String>);
+      }
+
+      // Ensure order_detail_products table
+      final orderDetailProductsInfo = getTableCreationSql()['order_detail_products'];
+      if (orderDetailProductsInfo != null) {
+        await ensureTableExists('order_detail_products', orderDetailProductsInfo['sql'] as String, orderDetailProductsInfo['indexes'] as List<String>);
+      }
+
+      // Ensure order_payments table
+      final orderPaymentsInfo = getTableCreationSql()['order_payments'];
+      if (orderPaymentsInfo != null) {
+        await ensureTableExists('order_payments', orderPaymentsInfo['sql'] as String, orderPaymentsInfo['indexes'] as List<String>);
+      }
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Order_details tables ensured successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error ensuring order_details tables exist: $e');
+      }
+      rethrow;
     }
   }
 }

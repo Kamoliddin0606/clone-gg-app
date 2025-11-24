@@ -83,6 +83,22 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)');
+
+    // Ensure user_organizations table exists for fresh installations
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS user_organizations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        user_code TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create indexes for user_organizations table
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_code ON user_organizations(code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_user_code ON user_organizations(user_code)');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -1271,27 +1287,51 @@ class ApiDatabaseService {
   }
 
   // KPI Data methods
+  /// Save KPI data for a specific user
+  /// Ensures kpi_data table exists before operations and handles errors gracefully
+  /// This method replaces all existing KPI data for the user with new data
   Future<void> saveKpiData(String userCode, KpiData kpiData) async {
-    final db = await database;
-    final now = DateTime.now().toIso8601String();
+    try {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Saving KPI data for user: $userCode');
+      }
 
-    await db.delete('kpi_data', where: 'user_code = ?', whereArgs: [userCode]);
+      // Ensure table exists before performing operations
+      final tableInfo = getTableCreationSql()['kpi_data'];
+      if (tableInfo != null) {
+        await ensureTableExists('kpi_data', tableInfo['sql'] as String, tableInfo['indexes'] as List<String>);
+      }
 
-    await db.insert('kpi_data', {
-      'user_code': userCode,
-      'plan': kpiData.plan,
-      'fact': kpiData.fact,
-      'total_percent': kpiData.totalPercent,
-      'total_forecast': kpiData.totalForecast,
-      'total_percent_forecast_fact': kpiData.totalPercentForecastFact,
-      'akb_plan': kpiData.akbPlan,
-      'akb_fact': kpiData.akbFact,
-      'akb_percent': kpiData.akbPercent,
-      'okb': kpiData.okb,
-      'update_date': kpiData.updateDate,
-      'created_at': now,
-    });
+      final db = await database;
+      final now = DateTime.now().toIso8601String();
 
+      await db.delete('kpi_data', where: 'user_code = ?', whereArgs: [userCode]);
+
+      await db.insert('kpi_data', {
+        'user_code': userCode,
+        'plan': kpiData.plan,
+        'fact': kpiData.fact,
+        'total_percent': kpiData.totalPercent,
+        'total_forecast': kpiData.totalForecast,
+        'total_percent_forecast_fact': kpiData.totalPercentForecastFact,
+        'akb_plan': kpiData.akbPlan,
+        'akb_fact': kpiData.akbFact,
+        'akb_percent': kpiData.akbPercent,
+        'okb': kpiData.okb,
+        'update_date': kpiData.updateDate,
+        'created_at': now,
+      });
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Successfully saved KPI data for user: $userCode');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error saving KPI data for user $userCode: $e');
+      }
+      // Re-throw to allow caller to handle the error
+      rethrow;
+    }
   }
 
   Future<KpiData?> getKpiData(String userCode) async {
@@ -5214,39 +5254,62 @@ class ApiDatabaseService {
 
   /// Save user organizations data
   /// This method saves organizations associated with a specific user
+  /// Ensures table exists before operations and handles errors gracefully
   Future<void> saveUserOrganizations(String userCode, List<UserOrganization> organizations) async {
-    final db = await database;
-    final now = DateTime.now().toIso8601String();
+    try {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Saving ${organizations.length} user organizations for user: $userCode');
+      }
 
-    // Use batch operations for much better performance
-    final batch = db.batch();
+      // Ensure table exists before performing operations
+      await ensureUserOrganizationsTableExists();
 
-    // Delete all existing organizations for this user
-    batch.delete('user_organizations', where: 'user_code = ?', whereArgs: [userCode]);
+      final db = await database;
+      final now = DateTime.now().toIso8601String();
 
-    // Deduplicate organizations by code to avoid UNIQUE constraint violations
-    final uniqueOrganizations = <String, UserOrganization>{};
-    for (final organization in organizations) {
-      uniqueOrganizations[organization.code] = organization;
+      // Use batch operations for much better performance
+      final batch = db.batch();
+
+      // Delete all existing organizations for this user
+      batch.delete('user_organizations', where: 'user_code = ?', whereArgs: [userCode]);
+
+      // Deduplicate organizations by code to avoid UNIQUE constraint violations
+      final uniqueOrganizations = <String, UserOrganization>{};
+      for (final organization in organizations) {
+        uniqueOrganizations[organization.code] = organization;
+      }
+
+      // Add all inserts to batch
+      for (final organization in uniqueOrganizations.values) {
+        batch.insert('user_organizations', {
+          'code': organization.code,
+          'name': organization.name,
+          'user_code': userCode,
+          'created_at': now,
+          'updated_at': now,
+        });
+      }
+
+      // Execute batch operation
+      await batch.commit(noResult: true);
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Successfully saved ${uniqueOrganizations.length} user organizations');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error saving user organizations: $e');
+      }
+      // Re-throw to allow caller to handle the error
+      rethrow;
     }
-
-    // Add all inserts to batch
-    for (final organization in uniqueOrganizations.values) {
-      batch.insert('user_organizations', {
-        'code': organization.code,
-        'name': organization.name,
-        'user_code': userCode,
-        'created_at': now,
-        'updated_at': now,
-      });
-    }
-
-    // Execute batch operation
-    await batch.commit(noResult: true);
   }
 
   /// Get user organizations for a specific user
   Future<List<UserOrganization>> getUserOrganizations(String userCode) async {
+    // Ensure table exists before performing operations
+    await ensureUserOrganizationsTableExists();
+
     final db = await database;
     final result = await db.query(
       'user_organizations',
@@ -5267,6 +5330,9 @@ class ApiDatabaseService {
 
   /// Get user organization by code
   Future<UserOrganization?> getUserOrganizationByCode(String code) async {
+    // Ensure table exists before performing operations
+    await ensureUserOrganizationsTableExists();
+
     final db = await database;
     final result = await db.query(
       'user_organizations',
@@ -5290,6 +5356,9 @@ class ApiDatabaseService {
 
   /// Save single user organization
   Future<void> saveUserOrganization(UserOrganization organization) async {
+    // Ensure table exists before performing operations
+    await ensureUserOrganizationsTableExists();
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -5308,6 +5377,9 @@ class ApiDatabaseService {
 
   /// Update user organization
   Future<void> updateUserOrganization(String code, UserOrganization organization) async {
+    // Ensure table exists before performing operations
+    await ensureUserOrganizationsTableExists();
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -5324,18 +5396,27 @@ class ApiDatabaseService {
 
   /// Delete user organization by code
   Future<void> deleteUserOrganization(String code) async {
+    // Ensure table exists before performing operations
+    await ensureUserOrganizationsTableExists();
+
     final db = await database;
     await db.delete('user_organizations', where: 'code = ?', whereArgs: [code]);
   }
 
   /// Delete all user organizations for a specific user
   Future<void> deleteUserOrganizationsByUserCode(String userCode) async {
+    // Ensure table exists before performing operations
+    await ensureUserOrganizationsTableExists();
+
     final db = await database;
     await db.delete('user_organizations', where: 'user_code = ?', whereArgs: [userCode]);
   }
 
   /// Get all user organizations (for admin/debug purposes)
   Future<List<UserOrganization>> getAllUserOrganizations() async {
+    // Ensure table exists before performing operations
+    await ensureUserOrganizationsTableExists();
+
     final db = await database;
     final result = await db.query('user_organizations', orderBy: 'user_code ASC, name ASC');
 
@@ -5351,11 +5432,784 @@ class ApiDatabaseService {
 
   /// Get user organizations count for a specific user
   Future<int> getUserOrganizationsCount(String userCode) async {
+    // Ensure table exists before performing operations
+    await ensureUserOrganizationsTableExists();
+
     final db = await database;
     final result = await db.rawQuery(
       'SELECT COUNT(*) as count FROM user_organizations WHERE user_code = ?',
       [userCode],
     );
     return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  /// Generic method to ensure a table exists
+  /// This method checks if the table exists and creates it if not
+  Future<void> ensureTableExists(String tableName, String createTableSql, [List<String>? indexSqls]) async {
+    final db = await database;
+
+    // Check if table exists
+    final tableExists = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='$tableName'"
+    );
+
+    if (tableExists.isEmpty) {
+      // Create table
+      await db.execute(createTableSql);
+
+      // Create indexes if provided
+      if (indexSqls != null) {
+        for (final indexSql in indexSqls) {
+          await db.execute(indexSql);
+        }
+      }
+
+      if (kDebugMode) {
+        print('Created $tableName table');
+      }
+    }
+  }
+
+  /// Get table creation SQL for all tables
+  /// This method returns a map of table names to their creation SQL and indexes
+  Map<String, Map<String, dynamic>> getTableCreationSql() {
+    return {
+      'kpi_data': {
+        'sql': '''
+          CREATE TABLE kpi_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_code TEXT NOT NULL,
+            plan TEXT NOT NULL,
+            fact TEXT NOT NULL,
+            total_percent TEXT NOT NULL,
+            total_forecast TEXT NOT NULL,
+            total_percent_forecast_fact TEXT NOT NULL,
+            akb_plan TEXT NOT NULL,
+            akb_fact TEXT NOT NULL,
+            akb_percent TEXT NOT NULL,
+            okb TEXT NOT NULL,
+            update_date TEXT NOT NULL,
+            created_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': <String>[],
+      },
+      'business_regions': {
+        'sql': '''
+          CREATE TABLE business_regions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': <String>[],
+      },
+      'user_warehouses': {
+        'sql': '''
+          CREATE TABLE user_warehouses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            organization TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': <String>[],
+      },
+      'product_brands': {
+        'sql': '''
+          CREATE TABLE product_brands (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': <String>[],
+      },
+      'product_series': {
+        'sql': '''
+          CREATE TABLE product_series (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            brand_name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (brand_name) REFERENCES product_brands (name) ON DELETE CASCADE,
+            UNIQUE(name, brand_name)
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_product_series_brand_name ON product_series(brand_name)'],
+      },
+      'product_balances': {
+        'sql': '''
+          CREATE TABLE product_balances (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code_sklad TEXT NOT NULL,
+            code_product TEXT NOT NULL,
+            name_product TEXT NOT NULL,
+            have INTEGER NOT NULL,
+            reserved INTEGER NOT NULL,
+            available INTEGER NOT NULL,
+            weight REAL NOT NULL,
+            capacity REAL NOT NULL,
+            code_project TEXT NOT NULL,
+            vendor_code TEXT NOT NULL,
+            product_brand TEXT NOT NULL,
+            product_series TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (code_sklad) REFERENCES user_warehouses (code) ON DELETE CASCADE,
+            FOREIGN KEY (code_product) REFERENCES products (code) ON DELETE CASCADE,
+            FOREIGN KEY (product_brand) REFERENCES product_brands (name) ON DELETE CASCADE,
+            UNIQUE(code_sklad, code_product)
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_product_balances_code_sklad ON product_balances(code_sklad)',
+          'CREATE INDEX idx_product_balances_code_product ON product_balances(code_product)',
+          'CREATE INDEX idx_product_balances_product_brand ON product_balances(product_brand)',
+          'CREATE INDEX idx_product_balances_product_series ON product_balances(product_series)',
+        ],
+      },
+      'clients': {
+        'sql': '''
+          CREATE TABLE clients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            address TEXT NOT NULL,
+            phone TEXT,
+            inn TEXT,
+            contact_person TEXT,
+            latitude REAL DEFAULT 0.0,
+            longitude REAL DEFAULT 0.0,
+            region TEXT,
+            district TEXT,
+            status TEXT DEFAULT 'active',
+            last_visit_date TEXT,
+            has_orders INTEGER DEFAULT 0,
+            has_contracts INTEGER DEFAULT 0,
+            is_visited INTEGER DEFAULT 0,
+            has_contract INTEGER DEFAULT 0,
+            owner_name TEXT,
+            signboard TEXT,
+            reference_point TEXT,
+            responsible_person TEXT,
+            responsible_person_phone TEXT,
+            trade_point_type TEXT,
+            credit_limit REAL DEFAULT 0.0,
+            accumulated_credit REAL DEFAULT 0.0,
+            code_region TEXT REFERENCES business_regions(code) ON DELETE SET NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_clients_code_region ON clients(code_region)'],
+      },
+      'client_contracts': {
+        'sql': '''
+          CREATE TABLE client_contracts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code_contract TEXT UNIQUE NOT NULL,
+            date_of_contract TEXT,
+            sum_of_contract REAL NOT NULL,
+            term_of_contract TEXT,
+            type_contract TEXT,
+            numb_reference TEXT,
+            numb_certificate TEXT,
+            term_reference TEXT,
+            term_certificate TEXT,
+            numb_passport TEXT,
+            term_passport TEXT,
+            certificate_unlimited INTEGER NOT NULL,
+            code_district TEXT,
+            name_district TEXT,
+            code_project TEXT,
+            code_client TEXT NOT NULL,
+            active INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (code_client) REFERENCES clients (code) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_client_contracts_code_contract ON client_contracts(code_contract)',
+          'CREATE INDEX idx_client_contracts_code_client ON client_contracts(code_client)',
+          'CREATE INDEX idx_client_contracts_active ON client_contracts(active)',
+          'CREATE INDEX idx_client_contracts_status ON client_contracts(status)',
+        ],
+      },
+      'products': {
+        'sql': '''
+          CREATE TABLE products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            unit TEXT NOT NULL,
+            quantity REAL DEFAULT 0.0,
+            reserved REAL DEFAULT 0.0,
+            available REAL DEFAULT 0.0,
+            category TEXT,
+            barcode TEXT,
+            have INTEGER DEFAULT 0,
+            warehouse_code TEXT,
+            weight REAL DEFAULT 0.0,
+            capacity REAL DEFAULT 0.0,
+            vendor_code TEXT,
+            product_brand TEXT,
+            product_series TEXT,
+            code_project TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_products_warehouse_code ON products(warehouse_code)',
+          'CREATE INDEX idx_products_code_project ON products(code_project)',
+        ],
+      },
+      'price_types': {
+        'sql': '''
+          CREATE TABLE price_types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            is_default INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': <String>[],
+      },
+      'product_prices': {
+        'sql': '''
+          CREATE TABLE product_prices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_code TEXT NOT NULL,
+            price_type_code TEXT NOT NULL,
+            price REAL NOT NULL,
+            currency TEXT DEFAULT 'UZS',
+            valid_from TEXT,
+            valid_to TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (product_code) REFERENCES products (code) ON DELETE CASCADE,
+            FOREIGN KEY (price_type_code) REFERENCES price_types (code) ON DELETE CASCADE,
+            UNIQUE(product_code, price_type_code)
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_product_prices_price_type_code ON product_prices(price_type_code)',
+          'CREATE INDEX idx_product_prices_product_code ON product_prices(product_code)',
+        ],
+      },
+      'promotions': {
+        'sql': '''
+          CREATE TABLE promotions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            type TEXT NOT NULL,
+            min_promo_product_count INTEGER NOT NULL,
+            bonus_count INTEGER NOT NULL,
+            date_start TEXT NOT NULL,
+            date_end TEXT NOT NULL,
+            last_synced TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_promotions_code ON promotions(code)',
+          'CREATE INDEX idx_promotions_active ON promotions(is_active)',
+          'CREATE INDEX idx_promotions_date_range ON promotions(date_start, date_end)',
+        ],
+      },
+      'promotion_product_list': {
+        'sql': '''
+          CREATE TABLE promotion_product_list (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            promotion_code TEXT NOT NULL,
+            product_code TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (promotion_code) REFERENCES promotions (code) ON DELETE CASCADE,
+            UNIQUE(promotion_code, product_code)
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)'],
+      },
+      'promotion_bonus_list': {
+        'sql': '''
+          CREATE TABLE promotion_bonus_list (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            promotion_code TEXT NOT NULL,
+            product_code TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (promotion_code) REFERENCES promotions (code) ON DELETE CASCADE,
+            UNIQUE(promotion_code, product_code)
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)'],
+      },
+      'promotion_class_list': {
+        'sql': '''
+          CREATE TABLE promotion_class_list (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            promotion_code TEXT NOT NULL,
+            class_code TEXT NOT NULL,
+            class_name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (promotion_code) REFERENCES promotions (code) ON DELETE CASCADE,
+            UNIQUE(promotion_code, class_code)
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)'],
+      },
+      'main_reports': {
+        'sql': '''
+          CREATE TABLE main_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_code TEXT NOT NULL,
+            date_start TEXT NOT NULL,
+            date_end TEXT NOT NULL,
+            count_akb INTEGER NOT NULL,
+            count_okb INTEGER NOT NULL,
+            cash REAL NOT NULL,
+            transfer REAL NOT NULL,
+            sum REAL NOT NULL,
+            count_visited INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_main_reports_user_code ON main_reports(user_code)',
+          'CREATE INDEX idx_main_reports_date_range ON main_reports(date_start, date_end)',
+        ],
+      },
+      'business_region_reports': {
+        'sql': '''
+          CREATE TABLE business_region_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            main_report_id INTEGER NOT NULL,
+            code TEXT NOT NULL,
+            name TEXT NOT NULL,
+            akb INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_business_region_reports_main_report_id ON business_region_reports(main_report_id)'],
+      },
+      'akb_by_categories': {
+        'sql': '''
+          CREATE TABLE akb_by_categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            main_report_id INTEGER NOT NULL,
+            code TEXT NOT NULL,
+            name TEXT NOT NULL,
+            akb INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_akb_by_categories_main_report_id ON akb_by_categories(main_report_id)'],
+      },
+      'visit_plans': {
+        'sql': '''
+          CREATE TABLE visit_plans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            main_report_id INTEGER NOT NULL,
+            client_code TEXT NOT NULL,
+            client_name TEXT NOT NULL,
+            planned_date TEXT NOT NULL,
+            actual_visit_date TEXT,
+            is_completed INTEGER DEFAULT 0,
+            notes TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_visit_plans_main_report_id ON visit_plans(main_report_id)',
+          'CREATE INDEX idx_visit_plans_client_code ON visit_plans(client_code)',
+        ],
+      },
+      'visit_plan_lists': {
+        'sql': '''
+          CREATE TABLE visit_plan_lists (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            visit_plan_id INTEGER NOT NULL,
+            product_code TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            planned_quantity INTEGER NOT NULL,
+            actual_quantity INTEGER,
+            notes TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (visit_plan_id) REFERENCES visit_plans (id) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)'],
+      },
+      'order_statuses': {
+        'sql': '''
+          CREATE TABLE order_statuses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            message TEXT UNIQUE NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_order_statuses_message ON order_statuses(message)'],
+      },
+      'couriers': {
+        'sql': '''
+          CREATE TABLE couriers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            car TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_couriers_name ON couriers(name)'],
+      },
+      'courier_cars': {
+        'sql': '''
+          CREATE TABLE courier_cars (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            car TEXT UNIQUE NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_courier_cars_car ON courier_cars(car)'],
+      },
+      'order_couriers': {
+        'sql': '''
+          CREATE TABLE order_couriers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_num TEXT NOT NULL,
+            courier_name TEXT,
+            courier_car TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (order_num) REFERENCES orders (num_order) ON DELETE CASCADE,
+            FOREIGN KEY (courier_name) REFERENCES couriers (name) ON DELETE SET NULL,
+            FOREIGN KEY (courier_car) REFERENCES courier_cars (car) ON DELETE SET NULL,
+            UNIQUE(order_num)
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_order_couriers_order_num ON order_couriers(order_num)'],
+      },
+      'orders': {
+        'sql': '''
+          CREATE TABLE orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            num_order TEXT UNIQUE NOT NULL,
+            date_order TEXT NOT NULL,
+            caption_order TEXT NOT NULL,
+            type_price_code TEXT NOT NULL,
+            status INTEGER NOT NULL,
+            comment_supervisor TEXT,
+            comment_forwarder TEXT,
+            comment_agent TEXT,
+            total REAL NOT NULL,
+            client_code TEXT NOT NULL,
+            client_name TEXT NOT NULL,
+            code_org TEXT NOT NULL,
+            main_status TEXT NOT NULL,
+            courier_name TEXT,
+            courier_car TEXT,
+            server INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (type_price_code) REFERENCES price_types (code) ON DELETE CASCADE,
+            FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE,
+            FOREIGN KEY (main_status) REFERENCES order_statuses (message) ON DELETE SET NULL,
+            FOREIGN KEY (courier_name) REFERENCES couriers (name) ON DELETE SET NULL,
+            FOREIGN KEY (courier_car) REFERENCES courier_cars (car) ON DELETE SET NULL
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_orders_num_order ON orders(num_order)',
+          'CREATE INDEX idx_orders_client_code ON orders(client_code)',
+          'CREATE INDEX idx_orders_type_price_code ON orders(type_price_code)',
+          'CREATE INDEX idx_orders_main_status ON orders(main_status)',
+        ],
+      },
+      'order_details': {
+        'sql': '''
+          CREATE TABLE order_details (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            num_order TEXT UNIQUE NOT NULL,
+            credit INTEGER NOT NULL DEFAULT 0,
+            code_price TEXT NOT NULL,
+            date_order TEXT NOT NULL,
+            code_sklad TEXT NOT NULL,
+            comment_supervisor TEXT,
+            comment_forwarder TEXT,
+            comment_agent TEXT,
+            shipping_date TEXT NOT NULL,
+            order_type INTEGER NOT NULL DEFAULT 0,
+            code_org TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (num_order) REFERENCES orders (num_order) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_order_details_num_order ON order_details(num_order)'],
+      },
+      'order_detail_products': {
+        'sql': '''
+          CREATE TABLE order_detail_products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_detail_id INTEGER NOT NULL,
+            code_product TEXT NOT NULL,
+            name_product TEXT NOT NULL,
+            amount INTEGER NOT NULL,
+            price REAL NOT NULL,
+            total REAL NOT NULL,
+            discount_rate REAL NOT NULL DEFAULT 0.0,
+            weight REAL NOT NULL DEFAULT 0.0,
+            capacity REAL NOT NULL DEFAULT 0.0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (order_detail_id) REFERENCES order_details (id) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_order_detail_products_order_detail_id ON order_detail_products(order_detail_id)'],
+      },
+      'order_payments': {
+        'sql': '''
+          CREATE TABLE order_payments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_detail_id INTEGER NOT NULL,
+            date_of_payment TEXT NOT NULL,
+            total REAL NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (order_detail_id) REFERENCES order_details (id) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_order_payments_order_detail_id ON order_payments(order_detail_id)'],
+      },
+      'sales_req_permissions': {
+        'sql': '''
+          CREATE TABLE sales_req_permissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_code TEXT UNIQUE NOT NULL,
+            skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
+            allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
+            allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
+            visit INTEGER NOT NULL DEFAULT 0,
+            strict_sequence INTEGER NOT NULL DEFAULT 0,
+            unplanned_order INTEGER NOT NULL DEFAULT 0,
+            planned_route INTEGER NOT NULL DEFAULT 0,
+            edit_client_coordinates INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)'],
+      },
+      'visit_steps': {
+        'sql': '''
+          CREATE TABLE visit_steps (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sales_req_permissions_id INTEGER NOT NULL,
+            step_code INTEGER NOT NULL,
+            step_name TEXT NOT NULL,
+            step_required INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (sales_req_permissions_id) REFERENCES sales_req_permissions (id) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)',
+          'CREATE INDEX idx_visit_steps_step_code ON visit_steps(step_code)',
+        ],
+      },
+      'visit_steps_data': {
+        'sql': '''
+          CREATE TABLE visit_steps_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            visit_id TEXT NOT NULL,
+            client_code TEXT NOT NULL,
+            step_code INTEGER NOT NULL,
+            step_name TEXT NOT NULL,
+            data_type TEXT NOT NULL,
+            data_content TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            synced_at TEXT,
+            sync_error TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)',
+          'CREATE INDEX idx_visit_steps_data_client_code ON visit_steps_data(client_code)',
+          'CREATE INDEX idx_visit_steps_data_step_code ON visit_steps_data(step_code)',
+          'CREATE INDEX idx_visit_steps_data_data_type ON visit_steps_data(data_type)',
+          'CREATE INDEX idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)',
+          'CREATE INDEX idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)',
+        ],
+      },
+      'planned_routes': {
+        'sql': '''
+          CREATE TABLE planned_routes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_code TEXT NOT NULL,
+            code_weekday INTEGER NOT NULL,
+            week_day TEXT NOT NULL,
+            code_client TEXT NOT NULL,
+            client_name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(user_code, code_weekday, code_client)
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_planned_routes_user_code ON planned_routes(user_code)',
+          'CREATE INDEX idx_planned_routes_code_weekday ON planned_routes(code_weekday)',
+          'CREATE INDEX idx_planned_routes_code_client ON planned_routes(code_client)',
+        ],
+      },
+      'create_order': {
+        'sql': '''
+          CREATE TABLE create_order (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code_agent TEXT NOT NULL,
+            code_client TEXT NOT NULL,
+            code_price TEXT NOT NULL,
+            payment TEXT NOT NULL,
+            shipping_date TEXT NOT NULL,
+            comment_supervisor TEXT,
+            comment_forwarder TEXT,
+            comment TEXT,
+            create_date TEXT NOT NULL,
+            longitude REAL NOT NULL,
+            latitude REAL NOT NULL,
+            weight REAL NOT NULL,
+            capacity REAL NOT NULL,
+            credit INTEGER NOT NULL DEFAULT 0,
+            code_project TEXT NOT NULL,
+            order_type INTEGER NOT NULL DEFAULT 0,
+            code_org TEXT NOT NULL,
+            code_sklad TEXT NOT NULL,
+            code_contract TEXT,
+            has_promo INTEGER NOT NULL DEFAULT 0,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            synced_at TEXT,
+            sync_error TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_create_order_code_agent ON create_order(code_agent)',
+          'CREATE INDEX idx_create_order_code_client ON create_order(code_client)',
+          'CREATE INDEX idx_create_order_is_synced ON create_order(is_synced)',
+          'CREATE INDEX idx_create_order_create_date ON create_order(create_date)',
+        ],
+      },
+      'create_order_products': {
+        'sql': '''
+          CREATE TABLE create_order_products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            create_order_id INTEGER NOT NULL,
+            code_sklad TEXT NOT NULL,
+            code_product TEXT NOT NULL,
+            amount INTEGER NOT NULL,
+            price REAL NOT NULL,
+            total REAL NOT NULL,
+            weight REAL NOT NULL,
+            capacity REAL NOT NULL,
+            payment_type INTEGER NOT NULL,
+            discount_sum REAL NOT NULL DEFAULT 0.0,
+            discount_rate REAL NOT NULL DEFAULT 0.0,
+            gift_amount INTEGER NOT NULL DEFAULT 0,
+            promo INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_create_order_products_create_order_id ON create_order_products(create_order_id)',
+          'CREATE INDEX idx_create_order_products_code_product ON create_order_products(code_product)',
+        ],
+      },
+      'competitive_intelligence': {
+        'sql': '''
+          CREATE TABLE competitive_intelligence (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            create_order_id INTEGER NOT NULL,
+            competitor TEXT NOT NULL,
+            product TEXT NOT NULL,
+            price REAL NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_competitive_intelligence_create_order_id ON competitive_intelligence(create_order_id)'],
+      },
+      'credit_details': {
+        'sql': '''
+          CREATE TABLE credit_details (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            create_order_id INTEGER NOT NULL,
+            date_of_payment TEXT NOT NULL,
+            total REAL NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': ['CREATE INDEX idx_credit_details_create_order_id ON credit_details(create_order_id)'],
+      },
+      'user_organizations': {
+        'sql': '''
+          CREATE TABLE user_organizations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            user_code TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_user_organizations_code ON user_organizations(code)',
+          'CREATE INDEX idx_user_organizations_user_code ON user_organizations(user_code)',
+        ],
+      },
+    };
+  }
+
+  /// Ensure user_organizations table exists (for migration issues)
+  /// This method checks if the table exists and creates it if not
+  Future<void> ensureUserOrganizationsTableExists() async {
+    final tableInfo = getTableCreationSql()['user_organizations'];
+    if (tableInfo != null) {
+      await ensureTableExists('user_organizations', tableInfo['sql'] as String, tableInfo['indexes'] as List<String>);
+    }
   }
 }

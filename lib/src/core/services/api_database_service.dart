@@ -1283,6 +1283,86 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX idx_competitive_intelligence_create_order_id ON competitive_intelligence(create_order_id)');
     await db.execute('CREATE INDEX idx_credit_details_create_order_id ON credit_details(create_order_id)');
 
+    // Create sales_req_permissions table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS sales_req_permissions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_code TEXT UNIQUE NOT NULL,
+        skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
+        allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
+        allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
+        visit INTEGER NOT NULL DEFAULT 0,
+        strict_sequence INTEGER NOT NULL DEFAULT 0,
+        unplanned_order INTEGER NOT NULL DEFAULT 0,
+        planned_route INTEGER NOT NULL DEFAULT 0,
+        edit_client_coordinates INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create visit_steps table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS visit_steps (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sales_req_permissions_id INTEGER NOT NULL,
+        step_code INTEGER NOT NULL,
+        step_name TEXT NOT NULL,
+        step_required INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+        updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+        FOREIGN KEY (sales_req_permissions_id) REFERENCES sales_req_permissions (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Create visit_steps_data table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS visit_steps_data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        visit_id TEXT NOT NULL,
+        client_code TEXT NOT NULL,
+        step_code INTEGER NOT NULL,
+        step_name TEXT NOT NULL,
+        data_type TEXT NOT NULL,
+        data_content TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        is_synced INTEGER NOT NULL DEFAULT 0,
+        synced_at TEXT,
+        sync_error TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Create planned_routes table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS planned_routes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_code TEXT NOT NULL,
+        code_weekday INTEGER NOT NULL,
+        week_day TEXT NOT NULL,
+        code_client TEXT NOT NULL,
+        client_name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE(user_code, code_weekday, code_client)
+      )
+    ''');
+
+    // Create indexes for new tables
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_user_code ON planned_routes(user_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_weekday ON planned_routes(code_weekday)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)');
+
     print('API cache database tables created successfully');
   }
 
@@ -2623,6 +2703,9 @@ class ApiDatabaseService {
   /// Get cached trading points with permissions and visit data using optimized JOIN query
   Future<List<TradingPointWithPermissions>> getTradingPointsWithPermissions(String userCode) async {
     try {
+      // Ensure tables exist before query to prevent "no such table" errors
+      await ensureSalesReqPermissionsTableExists();
+
       final db = await database;
 
       // Joriy hafta kunini aniqlash
@@ -4232,6 +4315,9 @@ class ApiDatabaseService {
 
   /// Save sales req permissions
   Future<void> saveSalesReqPermissions(List<SalesReqPermissions> permissions) async {
+    // Ensure tables exist before saving
+    await ensureSalesReqPermissionsTableExists();
+
     final db = await database;
     final batch = db.batch();
 
@@ -4332,6 +4418,9 @@ class ApiDatabaseService {
 
   /// Save visit steps for a specific sales req permissions
   Future<void> saveVisitSteps(List<VisitStep> visitSteps, int salesReqPermissionsId) async {
+    // Ensure tables exist before saving
+    await ensureSalesReqPermissionsTableExists();
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -4468,6 +4557,9 @@ class ApiDatabaseService {
 
   /// Save visit step data
   Future<void> saveVisitStepData(VisitData visitData) async {
+    // Ensure tables exist before saving
+    await ensureSalesReqPermissionsTableExists();
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -4493,6 +4585,9 @@ class ApiDatabaseService {
 
   /// Save multiple visit step data entries
   Future<void> saveVisitStepDataBatch(List<VisitData> visitDataList) async {
+    // Ensure tables exist before saving
+    await ensureSalesReqPermissionsTableExists();
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -4661,6 +4756,9 @@ class ApiDatabaseService {
 
   /// Save planned routes data
   Future<void> savePlannedRoutes(List<PlannedRoute> routes) async {
+    // Ensure tables exist before saving
+    await ensureSalesReqPermissionsTableExists();
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 

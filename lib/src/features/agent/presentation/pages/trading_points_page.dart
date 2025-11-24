@@ -1102,68 +1102,84 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                   : _filteredTradingPoints.isEmpty
                   ? const _EmptyState()
                   : (_viewMode == _ViewMode.list
-                  ? RefreshIndicator(
-                onRefresh: _loadUserData,
-                child: ListView.separated(
-                  key: const PageStorageKey<String>('tp_list_scroll'),
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                  itemCount: _filteredTradingPoints.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final tp = _filteredTradingPoints[index];
-                    // LIST: eski ExpansionTile kartamiz, lekin leading – foto
-                    return TradingPointCard(
-                      tradingPoint: tp.tradingPoint,
-                      onCall: () => _makeCall(tp.tradingPoint.phone),
-                      onInformVisit: () => _informVisit(tp),
-                      onCreateOrder: () => _createOrder(tp),
-                      onViewContracts: () => _viewContracts(tp),
-                      onRefusal: () => _showRefusalDialog(tp),
-                      onOpenDetails: () => _openTpDetails(tp),
-                      regionNames: _regionNames,
-                      locationService: _locationService,
-                      permissions: tp.permissions,
-                      mapProvider: _defaultMapProvider,
-                      expanded: _expandedIndex == index,
-                      onExpand: (open) {
-                        setState(() {
-                          _expandedIndex = open ? index : null; // faqat bittasi ochiq bo‘ladi
-                        });
-                      },
-                    );
-                  },
-                ),
-              )
-                  : RefreshIndicator(
-                onRefresh: _loadUserData,
-                child: GridView.builder(
-                  key: const PageStorageKey<String>('tp_grid_scroll'),
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 0.60,
-                    // mainAxisExtent: 300,
-                  ),
-                  itemCount: _filteredTradingPoints.length,
-                  itemBuilder: (context, index) {
-                    final tp = _filteredTradingPoints[index];
-                    // GRID: foto yuqorida, qolgan ma’lumotlar bitta ustunda pastda
-                    return _TradingPointGridTile(
-                      tp: tp.tradingPoint,
-                      onCall: () => _makeCall(tp.tradingPoint.phone),
-                      onInformVisit: () => _informVisit(tp),
-                      onCreateOrder: () => _createOrder(tp),
-                      onViewContracts: () => _viewContracts(tp),
-                      onRefusal: () => _showRefusalDialog(tp),
-                      onOpenDetails: () => _openTpDetails(tp),
-                      locationService: _locationService,
-                      permissions: tp.permissions,
-                    );
-                  },
-                ),
-              )),
+                  ? NotificationListener<ScrollStartNotification>(
+                    onNotification: (notification) {
+                      if (_showFilters) {
+                        setState(() => _showFilters = false);
+                      }
+                      return false;
+                    },
+                    child: RefreshIndicator(
+                      onRefresh: _loadUserData,
+                      child: ListView.separated(
+                        key: const PageStorageKey<String>('tp_list_scroll'),
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                        itemCount: _filteredTradingPoints.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final tp = _filteredTradingPoints[index];
+                          // LIST: eski ExpansionTile kartamiz, lekin leading – foto
+                          return TradingPointCard(
+                            tradingPoint: tp.tradingPoint,
+                            onCall: () => _makeCall(tp.tradingPoint.phone),
+                            onInformVisit: () => _informVisit(tp),
+                            onCreateOrder: () => _createOrder(tp),
+                            onViewContracts: () => _viewContracts(tp),
+                            onRefusal: () => _showRefusalDialog(tp),
+                            onOpenDetails: () => _openTpDetails(tp),
+                            regionNames: _regionNames,
+                            locationService: _locationService,
+                            permissions: tp.permissions,
+                            mapProvider: _defaultMapProvider,
+                            expanded: _expandedIndex == index,
+                            onExpand: (open) {
+                              setState(() {
+                                _expandedIndex = open ? index : null; // faqat bittasi ochiq bo‘ladi
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                  : NotificationListener<ScrollStartNotification>(
+                    onNotification: (notification) {
+                      if (_showFilters) {
+                        setState(() => _showFilters = false);
+                      }
+                      return false;
+                    },
+                    child: RefreshIndicator(
+                      onRefresh: _loadUserData,
+                      child: GridView.builder(
+                        key: const PageStorageKey<String>('tp_grid_scroll'),
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 0.60,
+                          // mainAxisExtent: 300,
+                        ),
+                        itemCount: _filteredTradingPoints.length,
+                        itemBuilder: (context, index) {
+                          final tp = _filteredTradingPoints[index];
+                          // GRID: foto yuqorida, qolgan ma’lumotlar bitta ustunda pastda
+                          return _TradingPointGridTile(
+                            tp: tp.tradingPoint,
+                            onCall: () => _makeCall(tp.tradingPoint.phone),
+                            onInformVisit: () => _informVisit(tp),
+                            onCreateOrder: () => _createOrder(tp),
+                            onViewContracts: () => _viewContracts(tp),
+                            onRefusal: () => _showRefusalDialog(tp),
+                            onOpenDetails: () => _openTpDetails(tp),
+                            locationService: _locationService,
+                            permissions: tp.permissions,
+                          );
+                        },
+                      ),
+                    ),
+                  )),
             )
           ],
         ),

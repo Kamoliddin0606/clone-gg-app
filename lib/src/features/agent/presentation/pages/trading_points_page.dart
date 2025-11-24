@@ -951,7 +951,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
               onPressed: _toggleFilters,
               icon: Icon(
                 Icons.filter_alt_rounded,
-                color: (_filters.tradePointTypes.isNotEmpty || _filters.businessRegions.isNotEmpty)
+                color: _showFilters
                     ? theme.colorScheme.primary
                     : null,
               ),

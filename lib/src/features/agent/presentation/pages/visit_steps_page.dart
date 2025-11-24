@@ -1064,9 +1064,14 @@ class _VisitStepsViewState extends State<VisitStepsView> {
       itemBuilder: (context, index) {
         final stepProgress = state.stepProgress[index];
         final isCurrentStep = index == state.currentStepIndex;
+        
+        // Determine if this specific card should be interactive
+        // It should be interactive if it's the current step OR if strict sequence is off
+        // But we also need to consider if it's completed/skipped
         final canInteract = _canInteractWithStep(stepProgress, index, state);
 
         return _VisitStepCard(
+          key: ValueKey('${stepProgress.step.stepCode}_${stepProgress.status}_$isCurrentStep'), // Force rebuild on state change
           stepProgress: stepProgress,
           isCurrentStep: isCurrentStep,
           canInteract: canInteract,
@@ -1179,10 +1184,18 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   }
 
   bool _canInteractWithStep(VisitStepProgress stepProgress, int index, VisitStepsLoaded state) {
+    // If strict sequence is disabled, user can interact with any step
     if (!state.isStrictSequence) return true;
 
-    // In strict sequence, can only interact with current step
-    return index == state.currentStepIndex;
+    // In strict sequence:
+    // 1. Can interact with the CURRENT active step
+    if (index == state.currentStepIndex) return true;
+    
+    // 2. Can view/edit COMPLETED steps (read-only or edit depending on logic, but card is interactive)
+    if (stepProgress.status == VisitStepStatus.completed || stepProgress.status == VisitStepStatus.skipped) return true;
+
+    // 3. Cannot interact with future steps
+    return false;
   }
 
   void _showVisitInfoDialog(BuildContext context, VisitStepsLoaded state) {
@@ -1231,6 +1244,7 @@ class _VisitStepCard extends StatefulWidget {
   final Function() onPrevious;
 
   const _VisitStepCard({
+    super.key,
     required this.stepProgress,
     required this.isCurrentStep,
     required this.canInteract,
@@ -1269,26 +1283,35 @@ class _VisitStepCardState extends State<_VisitStepCard> {
     Color borderColor;
     IconData statusIcon;
 
-    switch (status) {
-      case VisitStepStatus.completed:
-        cardColor = theme.colorScheme.primaryContainer.withOpacity(0.3);
-        borderColor = theme.colorScheme.primary;
-        statusIcon = Icons.check_circle;
-        break;
-      case VisitStepStatus.skipped:
-        cardColor = theme.colorScheme.surfaceVariant.withOpacity(0.3);
-        borderColor = theme.colorScheme.outline;
-        statusIcon = Icons.skip_next;
-        break;
-      case VisitStepStatus.inProgress:
-        cardColor = theme.colorScheme.secondaryContainer.withOpacity(0.3);
-        borderColor = theme.colorScheme.secondary;
-        statusIcon = Icons.play_circle;
-        break;
-      default:
-        cardColor = theme.colorScheme.surface;
-        borderColor = widget.isCurrentStep ? theme.colorScheme.primary : theme.colorScheme.outlineVariant;
-        statusIcon = Icons.radio_button_unchecked;
+    // Determine card appearance based on status AND current step
+    if (widget.isCurrentStep) {
+      // Active step styling takes precedence
+      cardColor = theme.colorScheme.surface;
+      borderColor = theme.colorScheme.primary;
+      statusIcon = Icons.play_circle_filled; // Distinct icon for current step
+    } else {
+      switch (status) {
+        case VisitStepStatus.completed:
+          cardColor = theme.colorScheme.primaryContainer.withOpacity(0.3);
+          borderColor = theme.colorScheme.primary.withOpacity(0.5);
+          statusIcon = Icons.check_circle;
+          break;
+        case VisitStepStatus.skipped:
+          cardColor = theme.colorScheme.surfaceVariant.withOpacity(0.3);
+          borderColor = theme.colorScheme.outline;
+          statusIcon = Icons.skip_next;
+          break;
+        case VisitStepStatus.inProgress:
+          // Should rarely happen for non-current steps in strict mode, but possible
+          cardColor = theme.colorScheme.secondaryContainer.withOpacity(0.3);
+          borderColor = theme.colorScheme.secondary;
+          statusIcon = Icons.play_circle_outline;
+          break;
+        default: // Pending
+          cardColor = theme.colorScheme.surface;
+          borderColor = theme.colorScheme.outlineVariant;
+          statusIcon = Icons.radio_button_unchecked;
+      }
     }
 
     return InkWell(
@@ -1381,7 +1404,50 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               ),
 
             // Status-specific content
-            if (status == VisitStepStatus.completed) ...[
+            // If it's the current step, show action buttons regardless of previous status (unless it was just reset)
+            if (widget.isCurrentStep) ...[
+               const SizedBox(height: 16),
+              // Action buttons for current active step
+              Row(
+                children: [
+                  // Previous button (only if not the first step)
+                  if (widget.currentStepIndex > 0) ...[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          debugPrint('VisitStepCard: Previous button pressed for step ${widget.stepProgress.step.stepCode}, currentStepIndex: ${widget.currentStepIndex}');
+                          widget.onPrevious();
+                        },
+                        icon: const Icon(Icons.arrow_back, size: 18),
+                        label: Text(l10n?.previous ?? 'Previous'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  
+                  // Skip button (only if optional)
+                  if (!step.stepRequired) ...[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showSkipDialog(context),
+                        icon: const Icon(Icons.skip_next, size: 18),
+                        label: Text(l10n?.skipStep ?? 'Skip'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  
+                  // Complete button removed as per requirements
+                  // Steps are completed by navigating into them and finishing the task
+                ],
+              ),
+            ] else if (status == VisitStepStatus.completed) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -1460,55 +1526,6 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                   ),
                 ),
               ],
-            ] else if (widget.canInteract) ...[
-              const SizedBox(height: 16),
-              // Action buttons for pending/in-progress steps
-              Row(
-                children: [
-                  if (widget.currentStepIndex > 0) ...[
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          debugPrint('VisitStepCard: Previous button pressed for step ${widget.stepProgress.step.stepCode}, currentStepIndex: ${widget.currentStepIndex}');
-                          widget.onPrevious();
-                        },
-                        icon: const Icon(Icons.skip_previous, size: 18),
-                        label: Text(l10n?.previous ?? 'Previous'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  if (!step.stepRequired) ...[
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _showSkipDialog(context),
-                        icon: const Icon(Icons.skip_next, size: 18),
-                        label: Text(l10n?.skipStep ?? 'Skip Step'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  if (!widget.isCurrentStep) ...[
-                    Expanded(
-                      flex: step.stepRequired ? 1 : 1,
-                      child: FilledButton.icon(
-                        onPressed: () => _showCompleteDialog(context),
-                        icon: const Icon(Icons.check, size: 18),
-                        label: Text(l10n?.completeStep ?? 'Complete Step'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
             ] else if (widget.isStrictSequence && status == VisitStepStatus.pending) ...[
               const SizedBox(height: 12),
               Container(

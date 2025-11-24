@@ -315,10 +315,12 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
         appBar: AppBar(
           title: const Text('Buyurtmalar'),
           centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.maybePop(context)
-          ),
+          leading: (ModalRoute.of(context)?.canPop ?? false)
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.maybePop(context)
+                )
+              : null,
         ),
         body: const Center(
           child: CircularProgressIndicator(),
@@ -331,10 +333,12 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
         appBar: AppBar(
           title: const Text('Buyurtmalar'),
           centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.maybePop(context)
-          ),
+          leading: (ModalRoute.of(context)?.canPop ?? false)
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.maybePop(context)
+                )
+              : null,
         ),
         body: Center(
           child: Column(
@@ -360,7 +364,9 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Buyurtmalar'), centerTitle: true,
-          leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: ()=>Navigator.maybePop(context)),
+          leading: (ModalRoute.of(context)?.canPop ?? false)
+              ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: ()=>Navigator.maybePop(context))
+              : null,
           actions: [IconButton(icon: const Icon(Icons.filter_alt_rounded), onPressed: _toggleFilters)],
         ),
         body: Column(children:[

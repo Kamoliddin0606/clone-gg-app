@@ -1969,6 +1969,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         });
         _markAsChanged();
 
+        // Re-enable auto-save with updated products to prevent old data overwrite
+        _disableAutoSave();
+        _enableAutoSave();
+
         // Show success message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

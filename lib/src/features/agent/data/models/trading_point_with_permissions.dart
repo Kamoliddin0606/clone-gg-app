@@ -59,6 +59,9 @@ class TradingPointWithPermissions {
         unplannedOrder: (map['unplanned_order'] as int?) == 1,
         plannedRoute: (map['planned_route'] as int?) == 1,
         editClientCoordinates: (map['edit_client_coordinates'] as int?) == 1,
+        // Yangi qo'shilgan maydonlar: mijoz zona kirish va joylashuv yangilanish intervali
+        clientZoneAccess: (map['client_zone_access'] as int?) ?? 0,
+        locationUpdateInterval: (map['location_update_interval'] as int?) ?? 0,
         createdAt: DateTime.now(), // Default values since not in JOIN
         updatedAt: DateTime.now(),
         visitSteps: [], // Will be loaded separately if needed

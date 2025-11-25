@@ -205,6 +205,13 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _courierCars = _safeCast<Map<String, dynamic>>(results[22]);
         _promotions = _safeCast<PromotionModel>(results[23]);
         _salesReqPermissions = _safeCast<SalesReqPermissions>(results[24]);
+        if (kDebugMode) {
+          print('DEBUG: Loaded ${_salesReqPermissions.length} SalesReqPermissions');
+          if (_salesReqPermissions.isNotEmpty) {
+            final sample = _salesReqPermissions.first;
+            print('DEBUG: Sample SalesReqPermissions - userCode: ${sample.userCode}, clientZoneAccess: ${sample.clientZoneAccess}, locationUpdateInterval: ${sample.locationUpdateInterval}');
+          }
+        }
         _visitSteps = _safeCast<VisitStep>(results[25]);
         _plannedRoutes = _safeCast<PlannedRoute>(results[26]);
         _isLoading = false;
@@ -723,6 +730,9 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.isActive.toString())),
       ]);
     } else if (item is SalesReqPermissions) {
+      if (kDebugMode) {
+        print('DEBUG: Building SalesReqPermissions row for user: ${item.userCode}, clientZoneAccess: ${item.clientZoneAccess}, locationUpdateInterval: ${item.locationUpdateInterval}');
+      }
       cells.addAll([
         DataCell(Text(item.id?.toString() ?? '')),
         DataCell(Text(item.userCode)),
@@ -734,6 +744,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.unplannedOrder.toString())),
         DataCell(Text(item.editClientCoordinates.toString())),
         DataCell(Text(item.plannedRoute.toString())),
+        DataCell(Text(item.clientZoneAccess.toString())),
+        DataCell(Text(item.locationUpdateInterval.toString())),
         DataCell(Text(item.visitSteps.length.toString())),
         DataCell(Text(item.createdAt?.toString() ?? '')),
         DataCell(Text(item.updatedAt?.toString() ?? '')),
@@ -1031,6 +1043,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         const DataColumn(label: Text('Unplanned Order')),
         const DataColumn(label: Text('Edit Client Coordinates')),
         const DataColumn(label: Text('Planned Route')),
+        const DataColumn(label: Text('Client Zone Access')),
+        const DataColumn(label: Text('Location Update Interval')),
         const DataColumn(label: Text('Visit Steps Count')),
         const DataColumn(label: Text('Created At')),
         const DataColumn(label: Text('Updated At')),

@@ -787,6 +787,80 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     }
   }
 
+  /// Handle visit client with distance validation
+  Future<void> _handleVisitClient(BuildContext context, TradingPointWithPermissions tradingPointWithPermissions) async {
+    try {
+      // Check if visitToday is true
+      if (!tradingPointWithPermissions.visitToday) {
+        // Should not happen as button is only shown when visitToday is true, but safety check
+        if (kDebugMode) {
+          print('Visit client called but visitToday is false for ${tradingPointWithPermissions.tradingPoint.name}');
+        }
+        return;
+      }
+
+      // Get current distance in meters
+      final distanceKm = _locationService?.getDistanceToTradingPoint(
+        tradingPointWithPermissions.tradingPoint.latitude,
+        tradingPointWithPermissions.tradingPoint.longitude,
+      );
+
+      if (distanceKm == null) {
+        // No location available
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Joylashuv ma\'lumotlari mavjud emas. Tashrifni amalga oshirib bo\'lmaydi.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      final distanceMeters = (distanceKm * 1000).round();
+      final clientZoneAccess = tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
+
+      if (kDebugMode) {
+        print('Distance check: ${distanceMeters}m vs clientZoneAccess: ${clientZoneAccess}m for ${tradingPointWithPermissions.tradingPoint.name}');
+      }
+
+      if (distanceMeters <= clientZoneAccess) {
+        // Distance requirement met, proceed with visit
+        await _informVisit(tradingPointWithPermissions);
+      } else {
+        // Distance requirement not met, show dialog
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) => DistanceValidationDialog(
+              tradingPointWithPermissions: tradingPointWithPermissions,
+              locationService: _locationService,
+              onConditionsMet: () async {
+                // Close dialog and proceed with visit
+                Navigator.of(dialogContext).pop();
+                if (mounted) {
+                  await _informVisit(tradingPointWithPermissions);
+                }
+              },
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error in _handleVisitClient: $e');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Xatolik yuz berdi: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _informVisit(TradingPointWithPermissions tradingPointWithPermissions) async {
     final tradingPoint = tradingPointWithPermissions.tradingPoint;
 
@@ -922,7 +996,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
               tradingPoint: tp.tradingPoint,
               scrollController: scrollCtrl,
               onCall: () => _makeCall(tp.tradingPoint.phone),
-              onInformVisit: () => _informVisit(tp),
+              onInformVisit: () => _handleVisitClient(context, tp),
               onCreateOrder: () => _createOrder(tp),
               onViewContracts: () => _viewContracts(tp),
               onRefusal: () => _showRefusalDialog(tp),
@@ -1122,7 +1196,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                           return TradingPointCard(
                             tradingPoint: tp.tradingPoint,
                             onCall: () => _makeCall(tp.tradingPoint.phone),
-                            onInformVisit: () => _informVisit(tp),
+                            onInformVisit: () => _handleVisitClient(context, tp),
                             onCreateOrder: () => _createOrder(tp),
                             onViewContracts: () => _viewContracts(tp),
                             onRefusal: () => _showRefusalDialog(tp),
@@ -1168,7 +1242,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                           return _TradingPointGridTile(
                             tp: tp.tradingPoint,
                             onCall: () => _makeCall(tp.tradingPoint.phone),
-                            onInformVisit: () => _informVisit(tp),
+                            onInformVisit: () => _handleVisitClient(context, tp),
                             onCreateOrder: () => _createOrder(tp),
                             onViewContracts: () => _viewContracts(tp),
                             onRefusal: () => _showRefusalDialog(tp),
@@ -1497,7 +1571,7 @@ class TradingPointCard extends StatelessWidget {
     }
 
     return [
-      // Visit button - only enabled if user has visit permission
+      // Visit button - only enabled if user has visit permission and meets distance requirements
       if (permissions?.visit == true && tradingPoint.visitToday == true)
         FilledButton.icon(
           onPressed: onInformVisit,
@@ -2988,6 +3062,244 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
         ],
       ),
     );
+  }
+}
+
+/// Dialog for distance validation before allowing visit client
+class DistanceValidationDialog extends StatefulWidget {
+  final TradingPointWithPermissions tradingPointWithPermissions;
+  final LocationService? locationService;
+  final VoidCallback onConditionsMet;
+
+  const DistanceValidationDialog({
+    super.key,
+    required this.tradingPointWithPermissions,
+    required this.locationService,
+    required this.onConditionsMet,
+  });
+
+  @override
+  State<DistanceValidationDialog> createState() => _DistanceValidationDialogState();
+}
+
+class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
+  Timer? _updateTimer;
+  double? _currentDistanceKm;
+  double? _currentAccuracy;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateDistanceAndAccuracy();
+    // Update every 2 seconds as required
+    _updateTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (mounted) {
+        _updateDistanceAndAccuracy();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _updateTimer?.cancel();
+    super.dispose();
+  }
+
+  void _updateDistanceAndAccuracy() {
+    if (widget.locationService == null) return;
+
+    final distance = widget.locationService!.getDistanceToTradingPoint(
+      widget.tradingPointWithPermissions.tradingPoint.latitude,
+      widget.tradingPointWithPermissions.tradingPoint.longitude,
+    );
+
+    final locationData = widget.locationService!.getStoredLocation();
+    final accuracy = locationData?['accuracy'] as double?;
+
+    setState(() {
+      _currentDistanceKm = distance;
+      _currentAccuracy = accuracy;
+    });
+
+    // Check if conditions are now met
+    if (_areConditionsMet()) {
+      widget.onConditionsMet();
+    }
+  }
+
+  bool _areConditionsMet() {
+    if (_currentDistanceKm == null) return false;
+    final distanceMeters = (_currentDistanceKm! * 1000).round();
+    final clientZoneAccess = widget.tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
+    return distanceMeters <= clientZoneAccess;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    final clientZoneAccess = widget.tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
+    final distanceMeters = _currentDistanceKm != null ? (_currentDistanceKm! * 1000).round() : null;
+    final isCompliant = distanceMeters != null && distanceMeters <= clientZoneAccess;
+
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(
+            isCompliant ? Icons.check_circle : Icons.location_off,
+            color: isCompliant ? Colors.green : Colors.orange,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Masofa tekshiruvi',
+              style: theme.textTheme.titleMedium,
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${widget.tradingPointWithPermissions.tradingPoint.name} ga tashrif uchun masofa talabiga javob berishingiz kerak.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+
+          // Distance requirement
+          Row(
+            children: [
+              Icon(Icons.location_on, size: 20, color: cs.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Talab qilingan masofa: ${clientZoneAccess}m',
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Current distance
+          Row(
+            children: [
+              Icon(
+                Icons.gps_fixed,
+                size: 20,
+                color: isCompliant ? Colors.green : Colors.red,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Joriy masofa: ${distanceMeters != null ? '${distanceMeters}m' : 'Noma\'lum'}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: isCompliant ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // GPS accuracy
+          Row(
+            children: [
+              Icon(Icons.gps_not_fixed, size: 20, color: cs.secondary),
+              const SizedBox(width: 8),
+              Text(
+                'GPS aniqligi: ${_currentAccuracy != null ? '${_currentAccuracy!.toStringAsFixed(1)}m' : 'Noma\'lum'}',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Progress bar for distance compliance
+          if (distanceMeters != null)
+            DistanceComplianceProgressBar(
+              currentDistance: distanceMeters,
+              requiredDistance: clientZoneAccess,
+              tradingPointId: widget.tradingPointWithPermissions.tradingPoint.id,
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Bekor qilish'),
+        ),
+        if (isCompliant)
+          FilledButton(
+            onPressed: widget.onConditionsMet,
+            child: const Text('Davom etish'),
+          ),
+      ],
+    );
+  }
+}
+
+/// Progress bar widget to visualize distance compliance
+class DistanceComplianceProgressBar extends StatelessWidget {
+  final int currentDistance;
+  final int requiredDistance;
+  final String tradingPointId;
+
+  const DistanceComplianceProgressBar({
+    super.key,
+    required this.currentDistance,
+    required this.requiredDistance,
+    required this.tradingPointId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    // Calculate progress (0.0 to 1.0)
+    // If current > required, progress is 0 (not compliant)
+    // If current <= required, progress is 1 (compliant)
+    final isCompliant = currentDistance <= requiredDistance;
+    final progress = isCompliant ? 1.0 : 0.0;
+
+    // Generate color based on trading point UID
+    final color = _getColorFromUid(tradingPointId);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Masofa mosligi',
+          style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(
+          value: progress,
+          backgroundColor: Colors.grey.shade300,
+          valueColor: AlwaysStoppedAnimation<Color>(
+            isCompliant ? color : Colors.red,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          isCompliant
+              ? 'Masofa talabiga javob beradi'
+              : 'Masofa talabiga javob bermaydi',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: isCompliant ? color : Colors.red,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Generate color based on trading point UID hash
+  Color _getColorFromUid(String uid) {
+    final hash = uid.hashCode;
+    final hue = (hash % 360).toDouble(); // Hue from 0-360
+    return HSVColor.fromAHSV(1.0, hue, 0.7, 0.8).toColor();
   }
 }
 

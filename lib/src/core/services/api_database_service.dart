@@ -2779,6 +2779,9 @@ class ApiDatabaseService {
           srp.strict_sequence,
           srp.unplanned_order,
           srp.planned_route,
+          srp.edit_client_coordinates,
+          srp.client_zone_access,
+          srp.location_update_interval,
           CASE WHEN pr.code_client IS NOT NULL THEN 1 ELSE 0 END as visit_today,
           COALESCE(pr.visit_order, 0) as visit_step_number,
           pr.week_day as planned_week_day

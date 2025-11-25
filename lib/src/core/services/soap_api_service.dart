@@ -1279,6 +1279,8 @@ class SoapApiService {
       final unplannedOrder = _getElementText(returnElement, 'm:UnplannedOrder')?.toLowerCase() == 'true';
       final plannedRoute = _getElementText(returnElement, 'm:PlannedRoute')?.toLowerCase() == 'true';
       final editClientCoordinates = _getElementText(returnElement, 'm:EditСlientСoordinates')?.toLowerCase() == 'true';
+      final clientZoneAccess = int.tryParse(_getElementText(returnElement, 'm:ClientZoneAccess') ?? '0') ?? 0;
+      final locationUpdateInterval = int.tryParse(_getElementText(returnElement, 'm:LocationUpdateInterval') ?? '0') ?? 0;
 
       // Parse visit steps
       final visitSteps = <Map<String, dynamic>>[];
@@ -1306,6 +1308,8 @@ class SoapApiService {
           'unplannedOrder': unplannedOrder,
           'plannedRoute': plannedRoute,
           'editClientCoordinates': editClientCoordinates,
+          'clientZoneAccess': clientZoneAccess,
+          'locationUpdateInterval': locationUpdateInterval,
         },
         'visitSteps': visitSteps,
       });
@@ -1320,6 +1324,8 @@ class SoapApiService {
           'unplannedOrder': unplannedOrder,
           'plannedRoute': plannedRoute,
           'editClientCoordinates': editClientCoordinates,
+          'clientZoneAccess': clientZoneAccess,
+          'locationUpdateInterval': locationUpdateInterval,
         },
         'visitSteps': visitSteps,
       };

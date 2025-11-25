@@ -48,7 +48,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 16,
+      version: 19,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -736,6 +736,55 @@ class ApiDatabaseService {
       // Create indexes for user_organizations table
       await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_code ON user_organizations(code)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_user_code ON user_organizations(user_code)');
+    } else if (oldVersion < 17) {
+      // Add new fields to sales_req_permissions table for version 17
+      await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0');
+      await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0');
+    } else if (oldVersion < 18) {
+      // Add new fields to sales_req_permissions table for version 18
+      // Check if columns exist before adding to avoid errors
+      final columns = await db.rawQuery("PRAGMA table_info(sales_req_permissions)");
+      final hasClientZoneAccess = columns.any((col) => col['name'] == 'client_zone_access');
+      if (!hasClientZoneAccess) {
+        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0');
+      }
+
+      final hasLocationUpdateInterval = columns.any((col) => col['name'] == 'location_update_interval');
+      if (!hasLocationUpdateInterval) {
+        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0');
+      }
+    } else if (oldVersion < 19) {
+      // Ensure sales_req_permissions table exists with new fields for version 19
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS sales_req_permissions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_code TEXT UNIQUE NOT NULL,
+          skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
+          allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
+          allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
+          visit INTEGER NOT NULL DEFAULT 0,
+          strict_sequence INTEGER NOT NULL DEFAULT 0,
+          unplanned_order INTEGER NOT NULL DEFAULT 0,
+          planned_route INTEGER NOT NULL DEFAULT 0,
+          edit_client_coordinates INTEGER NOT NULL DEFAULT 0,
+          client_zone_access INTEGER NOT NULL DEFAULT 0,
+          location_update_interval INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      // Check if columns exist before adding to avoid errors
+      final columns = await db.rawQuery("PRAGMA table_info(sales_req_permissions)");
+      final hasClientZoneAccess = columns.any((col) => col['name'] == 'client_zone_access');
+      if (!hasClientZoneAccess) {
+        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0');
+      }
+
+      final hasLocationUpdateInterval = columns.any((col) => col['name'] == 'location_update_interval');
+      if (!hasLocationUpdateInterval) {
+        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0');
+      }
     }
   }
 
@@ -1296,6 +1345,8 @@ class ApiDatabaseService {
         unplanned_order INTEGER NOT NULL DEFAULT 0,
         planned_route INTEGER NOT NULL DEFAULT 0,
         edit_client_coordinates INTEGER NOT NULL DEFAULT 0,
+        client_zone_access INTEGER NOT NULL DEFAULT 0,
+        location_update_interval INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
@@ -4319,17 +4370,19 @@ class ApiDatabaseService {
     await ensureSalesReqPermissionsTableExists();
 
     final db = await database;
-    final batch = db.batch();
 
     for (final permission in permissions) {
-      batch.insert(
+      final id = await db.insert(
         'sales_req_permissions',
         permission.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-    }
 
-    await batch.commit(noResult: true);
+      // Save visit steps if any
+      if (permission.visitSteps.isNotEmpty) {
+        await saveVisitSteps(permission.visitSteps, id);
+      }
+    }
   }
 
   /// Get sales req permissions by user code
@@ -5263,6 +5316,8 @@ class ApiDatabaseService {
           unplanned_order INTEGER NOT NULL DEFAULT 0,
           planned_route INTEGER NOT NULL DEFAULT 0,
           edit_client_coordinates INTEGER NOT NULL DEFAULT 0,
+          client_zone_access INTEGER NOT NULL DEFAULT 0,
+          location_update_interval INTEGER NOT NULL DEFAULT 0,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         )
@@ -5274,6 +5329,18 @@ class ApiDatabaseService {
 
       if (!hasEditClientCoordinates) {
         await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN edit_client_coordinates INTEGER NOT NULL DEFAULT 0');
+      }
+
+      // Check if client_zone_access column exists, add it if not
+      final hasClientZoneAccess = columns.any((col) => col['name'] == 'client_zone_access');
+      if (!hasClientZoneAccess) {
+        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0');
+      }
+
+      // Check if location_update_interval column exists, add it if not
+      final hasLocationUpdateInterval = columns.any((col) => col['name'] == 'location_update_interval');
+      if (!hasLocationUpdateInterval) {
+        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0');
       }
     }
 
@@ -6136,6 +6203,8 @@ class ApiDatabaseService {
             unplanned_order INTEGER NOT NULL DEFAULT 0,
             planned_route INTEGER NOT NULL DEFAULT 0,
             edit_client_coordinates INTEGER NOT NULL DEFAULT 0,
+            client_zone_access INTEGER NOT NULL DEFAULT 0,
+            location_update_interval INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
           )

@@ -1631,6 +1631,7 @@ class DataSyncService {
       print(salesReqPermissions.visitSteps);
 
       // Save sales req permissions first to get the ID
+      await _dbService.clearSalesReqPermissions();
       await _dbService.saveSalesReqPermissions([salesReqPermissions]);
       final savedPermission = await _dbService.getSalesReqPermissions(userCode);
 
@@ -1645,14 +1646,11 @@ class DataSyncService {
       // print('salesReqPermissions.visitSteps.isNotEmpty: ${salesReqPermissions[0].visitSteps.isNotEmpty}');
       if (salesReqPermissions.visitSteps.isNotEmpty) {
         try {
-          final visitStepsWithId = salesReqPermissions.visitSteps.map((step) =>
-            step.copyWith(salesReqPermissionsId: savedPermission.id)
-          ).toList();
 
-          await _dbService.saveVisitStepsLegacy(visitStepsWithId);
+          await _dbService.saveVisitSteps(salesReqPermissions.visitSteps, savedPermission.id!);
 
           if (kDebugMode) {
-            print('Successfully saved ${visitStepsWithId.length} visit steps for user: $userCode');
+            print('Successfully saved ${salesReqPermissions.visitSteps.length} visit steps for user: $userCode');
           }
         } catch (e) {
           if (kDebugMode) {

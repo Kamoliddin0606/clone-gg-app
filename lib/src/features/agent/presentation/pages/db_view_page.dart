@@ -24,6 +24,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_st
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 class DbViewPage extends StatefulWidget {
@@ -66,6 +67,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   List<Map<String, dynamic>> _courierCars = [];
   List<SalesReqPermissions> _salesReqPermissions = [];
   List<VisitStep> _visitSteps = [];
+  List<VisitData> _visitStepsData = [];
   List<PlannedRoute> _plannedRoutes = [];
 
   bool _isLoading = true;
@@ -115,6 +117,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     'Promotions',
     'Sales Req Permissions',
     'Visit Steps',
+    'Visit Steps Data',
     'Planned Routes',
   ];
 
@@ -170,6 +173,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _safeLoadData(() => _dbService.getPromotions(), 'Promotions'),
         _safeLoadData(() => _dbService.getAllSalesReqPermissions(), 'Sales Req Permissions'),
         _safeLoadData(() => _loadVisitSteps(), 'Visit Steps'),
+        _safeLoadData(() => _loadVisitStepsData(), 'Visit Steps Data'),
         _safeLoadData(() => _dbService.getAllPlannedRoutes(), 'Planned Routes'),
       ];
 
@@ -213,7 +217,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
           }
         }
         _visitSteps = _safeCast<VisitStep>(results[25]);
-        _plannedRoutes = _safeCast<PlannedRoute>(results[26]);
+        _visitStepsData = _safeCast<VisitData>(results[26]);
+        _plannedRoutes = _safeCast<PlannedRoute>(results[27]);
         _isLoading = false;
       });
 
@@ -342,6 +347,23 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     }
   }
 
+  /// Load visit steps data from database
+  /// This method fetches all visit step data records from the visit_steps_data table
+  /// and converts them to VisitData model objects for display in the UI.
+  /// Returns an empty list if an error occurs during loading.
+  Future<List<VisitData>> _loadVisitStepsData() async {
+    try {
+      final db = await _dbService.database;
+      final results = await db.query('visit_steps_data');
+      return results.map((row) => VisitData.fromMap(row)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading visit steps data: $e');
+      }
+      return [];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -410,6 +432,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
                     _buildDataTable(_promotions, _getPromotionsColumns()),
                     _buildDataTable(_salesReqPermissions, _getSalesReqPermissionsColumns()),
                     _buildDataTable(_visitSteps, _getVisitStepsColumns()),
+                    _buildDataTable(_visitStepsData, _getVisitStepsDataColumns()),
                     _buildDataTable(_plannedRoutes, _getPlannedRoutesColumns()),
                   ],
                 ),
@@ -760,6 +783,26 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.createdAt?.toString() ?? '')),
         DataCell(Text(item.updatedAt?.toString() ?? '')),
       ]);
+    } else if (item is VisitData) {
+      // Handle VisitData records from visit_steps_data table
+      // Truncate data_content if it's too long for display
+      final truncatedContent = item.dataContent.length > 50
+          ? '${item.dataContent.substring(0, 50)}...'
+          : item.dataContent;
+
+      cells.addAll([
+        DataCell(Text(item.id?.toString() ?? '')), // Primary key
+        DataCell(Text(item.visitId)), // Visit session identifier
+        DataCell(Text(item.clientCode)), // Client being visited
+        DataCell(Text(item.stepCode.toString())), // Step identifier
+        DataCell(Text(item.stepName)), // Step name for reference
+        DataCell(Text(item.dataType)), // Type of data (photo, form, order, audit, note)
+        DataCell(Text(truncatedContent)), // JSON data content (truncated for display)
+        DataCell(Text(item.timestamp.toString())), // Creation timestamp
+        DataCell(Text(item.isSynced.toString())), // Sync status
+        DataCell(Text(item.syncedAt?.toString() ?? '')), // Last sync timestamp
+        DataCell(Text(item.syncError ?? '')), // Sync error message if any
+      ]);
     } else if (item is PlannedRoute) {
       cells.addAll([
         DataCell(Text(item.id.toString())),
@@ -1051,14 +1094,30 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
       ];
 
   List<DataColumn> _getVisitStepsColumns() => [
-        const DataColumn(label: Text('ID')),
-        const DataColumn(label: Text('Permissions ID')),
-        const DataColumn(label: Text('Step Code')),
-        const DataColumn(label: Text('Step Name')),
-        const DataColumn(label: Text('Required')),
-        const DataColumn(label: Text('Created At')),
-        const DataColumn(label: Text('Updated At')),
-      ];
+         const DataColumn(label: Text('ID')),
+         const DataColumn(label: Text('Permissions ID')),
+         const DataColumn(label: Text('Step Code')),
+         const DataColumn(label: Text('Step Name')),
+         const DataColumn(label: Text('Required')),
+         const DataColumn(label: Text('Created At')),
+         const DataColumn(label: Text('Updated At')),
+       ];
+
+  /// Define column headers for the Visit Steps Data table
+  /// Displays all relevant fields from the visit_steps_data database table
+  List<DataColumn> _getVisitStepsDataColumns() => [
+         const DataColumn(label: Text('ID')), // Primary key
+         const DataColumn(label: Text('Visit ID')), // Visit session identifier
+         const DataColumn(label: Text('Client Code')), // Client being visited
+         const DataColumn(label: Text('Step Code')), // Step identifier
+         const DataColumn(label: Text('Step Name')), // Step name for reference
+         const DataColumn(label: Text('Data Type')), // Type of data stored
+         const DataColumn(label: Text('Data Content')), // JSON data content
+         const DataColumn(label: Text('Timestamp')), // Creation timestamp
+         const DataColumn(label: Text('Is Synced')), // Synchronization status
+         const DataColumn(label: Text('Synced At')), // Last sync timestamp
+         const DataColumn(label: Text('Sync Error')), // Error message if sync failed
+       ];
 
   List<DataColumn> _getPlannedRoutesColumns() => [
         const DataColumn(label: Text('ID')),

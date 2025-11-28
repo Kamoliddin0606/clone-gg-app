@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -2139,66 +2140,192 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     }
   }
 
-  void _showCompleteDialog(BuildContext context) {
+  /// Buyurtma yetkazilish sanasini tanlash dialog oynasini ko'rsatish
+  /// Foydalanuvchidan buyurtma yetkazilish sanasini kiritishni so'raydi
+  Future<DateTime?> _showDeliveryDateDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-    showDialog(
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1)); // Ertangi sana sukut bo'yicha
+
+    return await showDatePicker(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('${widget.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Jami mahsulotlar: $_totalItems ta'),
-            Text('Jami qiymat: ${uzsFormat.format(_totalValue)}'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Izohlar',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
+      initialDate: selectedDate,
+      firstDate: DateTime.now(), // Bugungi sanadan boshlab
+      lastDate: DateTime.now().add(const Duration(days: 365)), // 1 yilgacha
+      helpText: 'Buyurtma yetkazilish sanasini tanlang',
+      cancelText: l10n?.cancelCompletion ?? 'Bekor qilish',
+      confirmText: l10n?.confirmCompletion ?? 'Tasdiqlash',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: Theme.of(context).colorScheme.primary,
+              onPrimary: Theme.of(context).colorScheme.onPrimary,
+              surface: Theme.of(context).colorScheme.surface,
+              onSurface: Theme.of(context).colorScheme.onSurface,
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n?.cancelCompletion ?? 'Cancel'),
           ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop({
-                'completed': true,
-                'notes': _notesController.text.trim(),
-                'order': CreateOrder(
-                  codeAgent: '', // TODO: Get from user data
-                  codeClient: widget.tradingPoint.tradingPoint.id,
-                  codePrice: _selectedPriceType ?? '',
-                  payment: 'cash', // TODO: Make configurable
-                  shippingDate: DateTime.now().add(const Duration(days: 1)),
-                  createDate: DateTime.now(),
-                  longitude: 0.0, // TODO: Get location
-                  latitude: 0.0,
-                  weight: _totalWeight,
-                  capacity: _totalVolume,
-                  credit: false,
-                  codeProject: '', // TODO: Get from settings
-                  orderType: 0,
-                  codeOrg: _selectedOrganization ?? '',
-                  codeSklad: _selectedWarehouse ?? '',
-                  hasPromo: false,
-                  products: _selectedProducts,
-                ),
-              });
-            },
-            child: Text(l10n?.confirmCompletion ?? 'Confirm'),
-          ),
-        ],
-      ),
+          child: child!,
+        );
+      },
     );
+  }
+
+  /// Buyurtmani yakunlash dialog oynasini ko'rsatish
+  /// Yetkazilish sanasini tanlash va buyurtmani yaratish jarayonini boshqaradi
+  void _showCompleteDialog(BuildContext context) async {
+    try {
+      debugPrint('CreateOrderPage: Starting order completion process');
+
+      // 1. Yetkazilish sanasini tanlash dialogini ko'rsatish
+      final deliveryDate = await _showDeliveryDateDialog(context);
+      if (deliveryDate == null) {
+        debugPrint('CreateOrderPage: User cancelled delivery date selection');
+        return; // Foydalanuvchi bekor qildi
+      }
+
+      debugPrint('CreateOrderPage: Selected delivery date: $deliveryDate');
+
+      // 2. Buyurtma ma'lumotlarini yig'ish
+      final orderData = await _collectOrderData(deliveryDate);
+      if (orderData == null) {
+        debugPrint('CreateOrderPage: Failed to collect order data');
+        return;
+      }
+
+      // 3. Buyurtmani yaratish va saqlash
+      await _createAndSaveOrder(orderData);
+
+      debugPrint('CreateOrderPage: Order completion process finished successfully');
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error in order completion process: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+
+      // Xatolik haqida foydalanuvchiga xabar berish
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Buyurtmani yakunlashda xatolik yuz berdi: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Buyurtma ma'lumotlarini yig'ish
+  /// Sahifa holatidan va visit_steps_data jadvalidan ma'lumotlarni to'plash
+  Future<CreateOrder?> _collectOrderData(DateTime deliveryDate) async {
+    try {
+      debugPrint('CreateOrderPage: Collecting order data from page state and visit_steps_data');
+
+      // visit_steps_data jadvalidan order_draft ma'lumotlarini olish
+      final draftData = await _dbService.getVisitStepDataByVisitId(widget.visitId);
+      final orderDraftData = draftData.where((data) =>
+        data.dataType == 'order_draft' &&
+        data.clientCode == widget.tradingPoint.tradingPoint.id
+      ).toList();
+
+      debugPrint('CreateOrderPage: Found ${orderDraftData.length} order draft records');
+
+      // Agar order_draft ma'lumotlari topilmasa, sahifa holatidan foydalanish
+      List<CreateOrderProduct> products = [];
+      if (orderDraftData.isNotEmpty) {
+        // Eng yangi draft ma'lumotlardan foydalanish
+        orderDraftData.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        final latestDraft = orderDraftData.first;
+
+        final parsedData = jsonDecode(latestDraft.dataContent) as Map<String, dynamic>;
+        final draftProducts = parsedData['products'] as List<dynamic>?;
+
+        if (draftProducts != null) {
+          products = draftProducts.map((p) => CreateOrderProduct.fromJson(p as Map<String, dynamic>)).toList();
+          debugPrint('CreateOrderPage: Collected ${products.length} products from visit_steps_data');
+        }
+      } else {
+        // Sahifa holatidan mahsulotlarni olish
+        products = List.from(_selectedProducts);
+        debugPrint('CreateOrderPage: Collected ${products.length} products from page state');
+      }
+
+      // Foydalanuvchi ma'lumotlarini olish
+      final userCode = _prefs.getUserCode();
+      if (userCode == null) {
+        throw Exception('Foydalanuvchi kodi topilmadi');
+      }
+
+      // Buyurtma obyektini yaratish
+      final order = CreateOrder(
+        codeAgent: userCode,
+        codeClient: widget.tradingPoint.tradingPoint.id,
+        codePrice: _selectedPriceType ?? '',
+        payment: 'cash', // Sukut bo'yicha naqd pul
+        shippingDate: deliveryDate,
+        commentSupervisor: null,
+        commentForwarder: null,
+        comment: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+        createDate: DateTime.now(),
+        longitude: 0.0, // TODO: GPS koordinatalarini qo'shish
+        latitude: 0.0,
+        weight: products.fold(0.0, (sum, p) => sum + (p.weight * p.amount)),
+        capacity: products.fold(0.0, (sum, p) => sum + (p.capacity * p.amount)),
+        credit: false, // Sukut bo'yicha kredit yo'q
+        codeProject: '', // TODO: Loyihadan olish
+        orderType: 0, // Oddiy buyurtma
+        codeOrg: _selectedOrganization ?? '',
+        codeSklad: _selectedWarehouse ?? '',
+        codeContract: null, // Shartnoma yo'q
+        hasPromo: false, // Sukut bo'yicha promo yo'q
+        products: products,
+        competitiveIntelligence: [], // Raqobatchi ma'lumotlari yo'q
+        creditDetails: [], // Kredit tafsilotlari yo'q
+      );
+
+      debugPrint('CreateOrderPage: Order data collected successfully');
+      return order;
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error collecting order data: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Buyurtmani yaratish va saqlash
+  /// Yig'ilgan ma'lumotlarni create_order jadvaliga yozish
+  Future<void> _createAndSaveOrder(CreateOrder order) async {
+    try {
+      debugPrint('CreateOrderPage: Creating and saving order');
+
+      // Buyurtmani ma'lumotlar bazasiga saqlash
+      await _dbService.saveCreateOrder(order);
+
+      // Muvaffaqiyatli saqlangandan keyin draft ma'lumotlarini tozalash
+      await _draftService.deleteOrderDraft(widget.visitId, widget.stepCode);
+
+      debugPrint('CreateOrderPage: Order saved successfully, draft data cleaned up');
+
+      // Foydalanuvchiga muvaffaqiyat haqida xabar berish
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Buyurtma muvaffaqiyatli yaratildi!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+
+        // Sahifadan chiqish va muvaffaqiyat holatini qaytarish
+        Navigator.of(context).pop({
+          'completed': true,
+          'notes': _notesController.text.trim(),
+          'order': order,
+        });
+      }
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error creating and saving order: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 
   @override

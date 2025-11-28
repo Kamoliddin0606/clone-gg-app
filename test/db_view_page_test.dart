@@ -68,6 +68,7 @@ void main() {
       // Check if some tabs are present (we can't check all due to scrolling)
       expect(find.text('KPI Data'), findsOneWidget);
       expect(find.text('Clients'), findsOneWidget);
+      expect(find.text('Order Draft Data'), findsOneWidget);
     });
   });
 }

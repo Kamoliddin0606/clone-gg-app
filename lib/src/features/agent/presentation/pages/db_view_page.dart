@@ -26,6 +26,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_re
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'package:path_provider/path_provider.dart';
 
 class DbViewPage extends StatefulWidget {
   const DbViewPage({super.key});
@@ -68,6 +71,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   List<SalesReqPermissions> _salesReqPermissions = [];
   List<VisitStep> _visitSteps = [];
   List<VisitData> _visitStepsData = [];
+  List<VisitData> _orderDraftData = [];
   List<PlannedRoute> _plannedRoutes = [];
 
   bool _isLoading = true;
@@ -118,6 +122,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     'Sales Req Permissions',
     'Visit Steps',
     'Visit Steps Data',
+    'Order Draft Data',
     'Planned Routes',
   ];
 
@@ -174,6 +179,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _safeLoadData(() => _dbService.getAllSalesReqPermissions(), 'Sales Req Permissions'),
         _safeLoadData(() => _loadVisitSteps(), 'Visit Steps'),
         _safeLoadData(() => _loadVisitStepsData(), 'Visit Steps Data'),
+        _safeLoadData(() => _loadOrderDraftData(), 'Order Draft Data'),
         _safeLoadData(() => _dbService.getAllPlannedRoutes(), 'Planned Routes'),
       ];
 
@@ -218,7 +224,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         }
         _visitSteps = _safeCast<VisitStep>(results[25]);
         _visitStepsData = _safeCast<VisitData>(results[26]);
-        _plannedRoutes = _safeCast<PlannedRoute>(results[27]);
+        _orderDraftData = _safeCast<VisitData>(results[27]);
+        _plannedRoutes = _safeCast<PlannedRoute>(results[28]);
         _isLoading = false;
       });
 
@@ -364,6 +371,27 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     }
   }
 
+  /// Load order draft data from database
+  /// This method fetches visit step data records from the visit_steps_data table
+  /// where data_type is 'order_draft' and converts them to VisitData model objects
+  /// for display in the UI. Returns an empty list if an error occurs during loading.
+  Future<List<VisitData>> _loadOrderDraftData() async {
+    try {
+      final db = await _dbService.database;
+      final results = await db.query(
+        'visit_steps_data',
+        where: 'data_type = ?',
+        whereArgs: ['order_draft'],
+      );
+      return results.map((row) => VisitData.fromMap(row)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading order draft data: $e');
+      }
+      return [];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -382,6 +410,28 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
             icon: const Icon(Icons.refresh),
             onPressed: _loadAllData,
             tooltip: l10n.refresh,
+          ),
+          IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: () async {
+              try {
+                final file = File('/storage/emulated/0/Download/orderdraft.txt');
+                final jsonData = jsonEncode(_orderDraftData.map((e) => e.parsedDataContent).toList());
+                await file.writeAsString(jsonData);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Order draft data saved to /storage/emulated/0/Download/orderdraft.txt')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error saving order draft: $e')),
+                  );
+                }
+              }
+            },
+            tooltip: 'Save Order Draft',
           ),
         ],
       ),
@@ -433,6 +483,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
                     _buildDataTable(_salesReqPermissions, _getSalesReqPermissionsColumns()),
                     _buildDataTable(_visitSteps, _getVisitStepsColumns()),
                     _buildDataTable(_visitStepsData, _getVisitStepsDataColumns()),
+                    _buildDataTable(_orderDraftData, _getOrderDraftDataColumns()),
                     _buildDataTable(_plannedRoutes, _getPlannedRoutesColumns()),
                   ],
                 ),
@@ -784,25 +835,70 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.updatedAt?.toString() ?? '')),
       ]);
     } else if (item is VisitData) {
-      // Handle VisitData records from visit_steps_data table
-      // Truncate data_content if it's too long for display
-      final truncatedContent = item.dataContent.length > 50
-          ? '${item.dataContent.substring(0, 50)}...'
-          : item.dataContent;
+      if (columns.length == 13) {
+        // Order Draft Data table - parse JSON content for specific fields
+        try {
+          final parsedData = item.parsedDataContent;
+          final products = parsedData['products'] as List<dynamic>? ?? [];
+          final notes = parsedData['notes']?.toString() ?? '';
 
-      cells.addAll([
-        DataCell(Text(item.id?.toString() ?? '')), // Primary key
-        DataCell(Text(item.visitId)), // Visit session identifier
-        DataCell(Text(item.clientCode)), // Client being visited
-        DataCell(Text(item.stepCode.toString())), // Step identifier
-        DataCell(Text(item.stepName)), // Step name for reference
-        DataCell(Text(item.dataType)), // Type of data (photo, form, order, audit, note)
-        DataCell(Text(truncatedContent)), // JSON data content (truncated for display)
-        DataCell(Text(item.timestamp.toString())), // Creation timestamp
-        DataCell(Text(item.isSynced.toString())), // Sync status
-        DataCell(Text(item.syncedAt?.toString() ?? '')), // Last sync timestamp
-        DataCell(Text(item.syncError ?? '')), // Sync error message if any
-      ]);
+          cells.addAll([
+            DataCell(Text(item.id?.toString() ?? '')), // Primary key
+            DataCell(Text(item.visitId)), // Visit session identifier
+            DataCell(Text(item.clientCode)), // Client being visited
+            DataCell(Text(item.stepName)), // Step name for reference
+            DataCell(Text(parsedData['selectedOrganization']?.toString() ?? '')), // Organization
+            DataCell(Text(parsedData['selectedWarehouse']?.toString() ?? '')), // Warehouse
+            DataCell(Text(parsedData['selectedPriceType']?.toString() ?? '')), // Price Type
+            DataCell(Text(products.length.toString())), // Products Count
+            DataCell(Text(parsedData['weight']?.toString() ?? '')), // Total Weight
+            DataCell(Text(parsedData['capacity']?.toString() ?? '')), // Total Capacity
+            DataCell(Text(notes.length > 50 ? '${notes.substring(0, 50)}...' : notes)), // Notes (truncated)
+            DataCell(Text(item.timestamp.toString())), // Creation timestamp
+            DataCell(Text(item.isSynced.toString())), // Sync status
+          ]);
+        } catch (e) {
+          // Fallback if parsing fails
+          if (kDebugMode) {
+            print('DEBUG: Error parsing order draft data: $e');
+          }
+          cells.addAll([
+            DataCell(Text(item.id?.toString() ?? '')),
+            DataCell(Text(item.visitId)),
+            DataCell(Text(item.clientCode)),
+            DataCell(Text(item.stepName)),
+            DataCell(const Text('Parse Error')),
+            DataCell(const Text('Parse Error')),
+            DataCell(const Text('Parse Error')),
+            DataCell(const Text('Parse Error')),
+            DataCell(const Text('Parse Error')),
+            DataCell(const Text('Parse Error')),
+            DataCell(const Text('Parse Error')),
+            DataCell(Text(item.timestamp.toString())),
+            DataCell(Text(item.isSynced.toString())),
+          ]);
+        }
+      } else {
+        // General Visit Steps Data table
+        // Truncate data_content if it's too long for display
+        final truncatedContent = item.dataContent.length > 50
+            ? '${item.dataContent.substring(0, 50)}...'
+            : item.dataContent;
+
+        cells.addAll([
+          DataCell(Text(item.id?.toString() ?? '')), // Primary key
+          DataCell(Text(item.visitId)), // Visit session identifier
+          DataCell(Text(item.clientCode)), // Client being visited
+          DataCell(Text(item.stepCode.toString())), // Step identifier
+          DataCell(Text(item.stepName)), // Step name for reference
+          DataCell(Text(item.dataType)), // Type of data (photo, form, order, audit, note)
+          DataCell(Text(truncatedContent)), // JSON data content (truncated for display)
+          DataCell(Text(item.timestamp.toString())), // Creation timestamp
+          DataCell(Text(item.isSynced.toString())), // Sync status
+          DataCell(Text(item.syncedAt?.toString() ?? '')), // Last sync timestamp
+          DataCell(Text(item.syncError ?? '')), // Sync error message if any
+        ]);
+      }
     } else if (item is PlannedRoute) {
       cells.addAll([
         DataCell(Text(item.id.toString())),
@@ -1106,18 +1202,36 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   /// Define column headers for the Visit Steps Data table
   /// Displays all relevant fields from the visit_steps_data database table
   List<DataColumn> _getVisitStepsDataColumns() => [
-         const DataColumn(label: Text('ID')), // Primary key
-         const DataColumn(label: Text('Visit ID')), // Visit session identifier
-         const DataColumn(label: Text('Client Code')), // Client being visited
-         const DataColumn(label: Text('Step Code')), // Step identifier
-         const DataColumn(label: Text('Step Name')), // Step name for reference
-         const DataColumn(label: Text('Data Type')), // Type of data stored
-         const DataColumn(label: Text('Data Content')), // JSON data content
-         const DataColumn(label: Text('Timestamp')), // Creation timestamp
-         const DataColumn(label: Text('Is Synced')), // Synchronization status
-         const DataColumn(label: Text('Synced At')), // Last sync timestamp
-         const DataColumn(label: Text('Sync Error')), // Error message if sync failed
-       ];
+          const DataColumn(label: Text('ID')), // Primary key
+          const DataColumn(label: Text('Visit ID')), // Visit session identifier
+          const DataColumn(label: Text('Client Code')), // Client being visited
+          const DataColumn(label: Text('Step Code')), // Step identifier
+          const DataColumn(label: Text('Step Name')), // Step name for reference
+          const DataColumn(label: Text('Data Type')), // Type of data stored
+          const DataColumn(label: Text('Data Content')), // JSON data content
+          const DataColumn(label: Text('Timestamp')), // Creation timestamp
+          const DataColumn(label: Text('Is Synced')), // Synchronization status
+          const DataColumn(label: Text('Synced At')), // Last sync timestamp
+          const DataColumn(label: Text('Sync Error')), // Error message if sync failed
+        ];
+
+  /// Define column headers for the Order Draft Data table
+  /// Displays order draft specific fields from the visit_steps_data table where data_type = 'order_draft'
+  List<DataColumn> _getOrderDraftDataColumns() => [
+          const DataColumn(label: Text('ID')), // Primary key
+          const DataColumn(label: Text('Visit ID')), // Visit session identifier
+          const DataColumn(label: Text('Client Code')), // Client being visited
+          const DataColumn(label: Text('Step Name')), // Step name for reference
+          const DataColumn(label: Text('Organization')), // Selected organization display name
+          const DataColumn(label: Text('Warehouse')), // Selected warehouse display name
+          const DataColumn(label: Text('Price Type')), // Selected price type display name
+          const DataColumn(label: Text('Products Count')), // Number of products in the order
+          const DataColumn(label: Text('Total Weight')), // Calculated total weight
+          const DataColumn(label: Text('Total Capacity')), // Calculated total capacity
+          const DataColumn(label: Text('Notes')), // Additional notes
+          const DataColumn(label: Text('Timestamp')), // Creation timestamp
+          const DataColumn(label: Text('Is Synced')), // Synchronization status
+        ];
 
   List<DataColumn> _getPlannedRoutesColumns() => [
         const DataColumn(label: Text('ID')),

@@ -823,8 +823,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         print('Distance check: ${distanceMeters}m vs clientZoneAccess: ${clientZoneAccess}m for ${tradingPointWithPermissions.tradingPoint.name}');
       }
 
-      if (distanceMeters <= clientZoneAccess) {
-        // Distance requirement met, proceed with visit
+      // If clientZoneAccess is 0, skip distance check and proceed directly
+      if (clientZoneAccess == 0 || distanceMeters <= clientZoneAccess) {
+        // Distance requirement met or no check required, proceed with visit
         await _informVisit(tradingPointWithPermissions);
       } else {
         // Distance requirement not met, show dialog
@@ -3142,6 +3143,7 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
     final clientZoneAccess = widget.tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
     final distanceMeters = _currentDistanceKm != null ? (_currentDistanceKm! * 1000).round() : null;
     final isCompliant = distanceMeters != null && distanceMeters <= clientZoneAccess;
+    // final isCompliant = distanceMeters != null && distanceMeters <= clientZoneAccess && clientZoneAccess!=0;
 
     return AlertDialog(
       title: Row(

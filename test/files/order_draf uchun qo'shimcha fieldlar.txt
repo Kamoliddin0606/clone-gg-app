@@ -1,0 +1,13 @@
+codeAgent – buyurtma tuzgan agent kodi.	Joriy user kodi	barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+payment – to‘lov turi / sharti (naqd, kechiktirilgan, karta va h.k.).		barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+commentSupervisor – rahbar tomonidan yozilgan kommentariya.		barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+commentForwarder – ekspeditor / logistik kommentari.		barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+longitude – buyurtma bo‘yicha GPS uzunlik koordinatasi.	location_service.dart  orqali yangilanib getStoredLocation orqali olinadi	barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+latitude – buyurtma bo‘yicha GPS kenglik koordinatasi.	location_service.dart  orqali yangilanib getStoredLocation orqali olinadi	barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+weight – buyurtmaning umumiy og‘irligi (productlardan hisoblab yoziladigan yakuniy qiymat).	umumiy og'irlik tanlangan productlarning umumiy og'irigini hisoblab olinadi	barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+capacity – umumiy hajm/sig‘im (xuddi shunday yakuniy qiymat).	umumiy og'irlik tanlangan productlarning umumiy hajmi hisoblab olinadi	barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+credit – buyurtma kredit asosida berilgan-berilmaganligi (0/1).		barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+codeProject – buyurtma bog‘langan loyiha kodi.	userning _preferences  tabledagi malumotlaridan olinadi.	barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+orderType – buyurtma turi (raqamli kod, masalan, standart, qayta buyurtma va h.k.).	defaultda bo'shqoldiramiz.	barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+codeContract – tegishli shartnoma kodi.		barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.
+hasPromo – butun buyurtma bo‘yicha promo bor-yo‘qligi (Draft’da alohida flag yo‘q, faqat productlar ichidan chiqarib olish mumkin).	butun buyurtma bo‘yicha promo bor-yo‘qligi tekshirish asosida olinadi	barcha fileldlarda  malumot turidan kelib chiqib default qiymat bo'lsin.

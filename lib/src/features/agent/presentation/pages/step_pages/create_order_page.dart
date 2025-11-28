@@ -8,6 +8,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/services/order_draft
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
@@ -73,6 +74,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   final DataSyncService _syncService = sl<DataSyncService>();
   final ApiDatabaseService _dbService = sl<ApiDatabaseService>();
   final SharedPreferencesService _prefs = sl<SharedPreferencesService>();
+  final LocationService _locationService = sl<LocationService>();
   final TextEditingController _notesController = TextEditingController();
 
   // UI state
@@ -103,6 +105,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   String? _selectedOrganization;
   String? _selectedWarehouse;
   String? _selectedPriceType;
+  String? _selectedOrganizationcode;
+  String? _selectedWarehousecode;
+  String? _selectedPriceTypecode;
+  DateTime? _shippingDate;
 
   // Products data
   List<ProductWithPrice> _availableProducts = [];
@@ -176,6 +182,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         selectedOrganization: _selectedOrganization ?? '',
         selectedWarehouse: _selectedWarehouse ?? '',
         selectedPriceType: _selectedPriceType ?? '',
+        selectedOrganizationcode: _selectedOrganizationcode ?? '',
+        selectedWarehousecode: _selectedWarehousecode ?? '',
+        selectedPriceTypecode: _selectedPriceTypecode ?? '',
+        shippingDate: _shippingDate ?? DateTime.now(),
         products: _selectedProducts,
         notes: _notesController.text.trim(),
       );
@@ -224,6 +234,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         selectedPriceType: _selectedPriceType ?? '',
         notes: _notesController.text.trim(),
         stepName: widget.stepName,
+        selectedOrganizationcode: _selectedOrganizationcode ?? '',
+        selectedWarehousecode: _selectedWarehousecode ?? '',
+        selectedPriceTypecode: _selectedPriceTypecode ?? '',
+        shippingDate: _shippingDate ?? DateTime.now(),
       );
       _isAutoSaveEnabled = true;
       debugPrint('CreateOrderPage: Auto-save enabled for visit ${widget.visitId}, step ${widget.stepCode}');
@@ -279,6 +293,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         _selectedOrganization = draftData['selectedOrganization'] as String?;
         _selectedWarehouse = draftData['selectedWarehouse'] as String?;
         _selectedPriceType = draftData['selectedPriceType'] as String?;
+        _selectedOrganizationcode = draftData['selectedOrganizationcode'] as String?;
+        _selectedWarehousecode = draftData['selectedWarehousecode'] as String?;
+        _selectedPriceTypecode = draftData['selectedPriceTypecode'] as String?;
+        _shippingDate = draftData['shippingDate'] != null
+            ? DateTime.parse(draftData['shippingDate'] as String)
+            : null;
 
         // Restore products
         final productsJson = draftData['products'] as List<dynamic>?;
@@ -1095,7 +1115,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 onChanged: _selectedProducts.isNotEmpty
                     ? null // Disable when products are selected
                     : (value) {
-                        setState(() => _selectedOrganization = value);
+                        setState(() {
+                          _selectedOrganization = value;
+                          _selectedOrganizationcode = value; // Store the code
+                        });
                         _onSettingsChanged();
                       },
               ),
@@ -1122,7 +1145,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 onChanged: _selectedProducts.isNotEmpty
                     ? null // Disable when products are selected
                     : (value) {
-                        setState(() => _selectedWarehouse = value);
+                        setState(() {
+                          _selectedWarehouse = value;
+                          _selectedWarehousecode = value; // Store the code
+                        });
                         _onSettingsChanged();
                       },
               ),
@@ -1142,7 +1168,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   );
                 }).toList(),
                 onChanged: (value) {
-                  setState(() => _selectedPriceType = value);
+                  setState(() {
+                    _selectedPriceType = value;
+                    _selectedPriceTypecode = value; // Store the code
+                  });
                   _onSettingsChanged();
                 },
               ),
@@ -2141,62 +2170,133 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
   void _showCompleteDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // Initialize shipping date to today if not set
+    _shippingDate ??= DateTime.now();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('${widget.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Jami mahsulotlar: $_totalItems ta'),
-            Text('Jami qiymat: ${uzsFormat.format(_totalValue)}'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Izohlar',
-                border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('${widget.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Jami mahsulotlar: $_totalItems ta'),
+              Text('Jami qiymat: ${uzsFormat.format(_totalValue)}'),
+              const SizedBox(height: 16),
+              // Shipping Date Picker
+              InkWell(
+                onTap: () async {
+                  final pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: _shippingDate ?? DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (pickedDate != null) {
+                    setState(() => _shippingDate = pickedDate);
+                  }
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Yetkazib berish sanasi',
+                    border: OutlineInputBorder(),
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  child: Text(
+                    _shippingDate != null
+                        ? '${_shippingDate!.day}.${_shippingDate!.month}.${_shippingDate!.year}'
+                        : 'Bugun',
+                  ),
+                ),
               ),
-              maxLines: 3,
+              const SizedBox(height: 16),
+              TextField(
+                controller: _notesController,
+                decoration: const InputDecoration(
+                  labelText: 'Izohlar',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n?.cancelCompletion ?? 'Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                try {
+                  // Get current user code for codeAgent
+                  final codeAgent = _prefs.getUserCode() ?? '';
+
+                  // Get location data
+                  double longitude = 0.0;
+                  double latitude = 0.0;
+                  try {
+                    final locationData = _locationService.getStoredLocation();
+                    if (locationData != null) {
+                      longitude = (locationData['longitude'] as num?)?.toDouble() ?? 0.0;
+                      latitude = (locationData['latitude'] as num?)?.toDouble() ?? 0.0;
+                    }
+                  } catch (e) {
+                    debugPrint('CreateOrderPage: Error getting location data: $e');
+                    // Continue with default values
+                  }
+
+                  // Get codeProject from user preferences
+                  final codeProject = _prefs.getCodeProject() ?? '';
+
+                  // Calculate hasPromo from selected products
+                  final hasPromo = _selectedProducts.any((product) => product.promo);
+
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop({
+                    'completed': true,
+                    'notes': _notesController.text.trim(),
+                    'order': CreateOrder(
+                      codeAgent: codeAgent,
+                      codeClient: widget.tradingPoint.tradingPoint.id,
+                      codePrice: _selectedPriceTypecode ?? '',
+                      payment: '', // Default empty as per requirements
+                      shippingDate: _shippingDate ?? DateTime.now(),
+                      commentSupervisor: '', // Default empty
+                      commentForwarder: '', // Default empty
+                      createDate: DateTime.now(),
+                      longitude: longitude,
+                      latitude: latitude,
+                      weight: _totalWeight,
+                      capacity: _totalVolume,
+                      credit: false, // Default false (0)
+                      codeProject: codeProject,
+                      orderType: 0, // Default 0 as per requirements
+                      codeOrg: _selectedOrganizationcode ?? '',
+                      codeSklad: _selectedWarehousecode ?? '',
+                      codeContract: '', // Default empty
+                      hasPromo: hasPromo,
+                      products: _selectedProducts,
+                    ),
+                  });
+                } catch (e) {
+                  debugPrint('CreateOrderPage: Error creating order: $e');
+                  // Show error message
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Buyurtma yaratishda xatolik: ${e.toString()}'),
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Text(l10n?.confirmCompletion ?? 'Confirm'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n?.cancelCompletion ?? 'Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop({
-                'completed': true,
-                'notes': _notesController.text.trim(),
-                'order': CreateOrder(
-                  codeAgent: '', // TODO: Get from user data
-                  codeClient: widget.tradingPoint.tradingPoint.id,
-                  codePrice: _selectedPriceType ?? '',
-                  payment: 'cash', // TODO: Make configurable
-                  shippingDate: DateTime.now().add(const Duration(days: 1)),
-                  createDate: DateTime.now(),
-                  longitude: 0.0, // TODO: Get location
-                  latitude: 0.0,
-                  weight: _totalWeight,
-                  capacity: _totalVolume,
-                  credit: false,
-                  codeProject: '', // TODO: Get from settings
-                  orderType: 0,
-                  codeOrg: _selectedOrganization ?? '',
-                  codeSklad: _selectedWarehouse ?? '',
-                  hasPromo: false,
-                  products: _selectedProducts,
-                ),
-              });
-            },
-            child: Text(l10n?.confirmCompletion ?? 'Confirm'),
-          ),
-        ],
       ),
     );
   }

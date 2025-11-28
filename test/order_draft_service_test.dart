@@ -63,6 +63,10 @@ void main() {
         selectedPriceType: 'PRICE001',
         notes: 'Test notes',
         stepName: 'Create Order',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
       );
 
       final status = draftService.getSaveStatus();
@@ -79,6 +83,10 @@ void main() {
         selectedPriceType: 'PRICE001',
         notes: '',
         stepName: 'Create Order',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
       );
 
       draftService.disableAutoSave();
@@ -88,8 +96,7 @@ void main() {
     });
 
     test('should save order draft and update status', () async {
-      when(mockDbService.saveVisitStepData(argThat(isA<VisitData>())))
-          .thenAnswer((_) async {});
+      when(mockDbService.saveVisitStepData(any)).thenAnswer((invocation) async {});
 
       await draftService.saveOrderDraft(
         visitId: 'VISIT001',
@@ -99,6 +106,10 @@ void main() {
         selectedOrganization: 'ORG001',
         selectedWarehouse: 'WH001',
         selectedPriceType: 'PRICE001',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
         products: [],
         notes: 'Test draft',
       );
@@ -120,6 +131,10 @@ void main() {
         selectedOrganization: 'ORG001',
         selectedWarehouse: 'WH001',
         selectedPriceType: 'PRICE001',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
         products: [],
         notes: 'Test draft',
       );
@@ -207,6 +222,10 @@ void main() {
         selectedPriceType: 'PRICE001',
         notes: '',
         stepName: 'Create Order',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
       );
 
       // First save should start
@@ -240,7 +259,7 @@ void main() {
         )
       ];
 
-      when(mockDbService.saveVisitStepData(any, any, any, any))
+      when(mockDbService.saveVisitStepData(any))
           .thenAnswer((_) async => 1);
 
       await draftService.saveOrderDraft(
@@ -251,6 +270,10 @@ void main() {
         selectedOrganization: 'ORG001',
         selectedWarehouse: 'WH001',
         selectedPriceType: 'PRICE001',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
         products: validProducts,
         notes: 'Valid draft',
       );
@@ -286,7 +309,7 @@ void main() {
 
   group('OrderDraftService - Data Validation', () {
     test('should handle empty product list', () async {
-      when(mockDbService.saveVisitStepData(any, any, any, any))
+      when(mockDbService.saveVisitStepData(any))
           .thenAnswer((_) async => 1);
 
       await draftService.saveOrderDraft(
@@ -297,6 +320,10 @@ void main() {
         selectedOrganization: 'ORG001',
         selectedWarehouse: 'WH001',
         selectedPriceType: 'PRICE001',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
         products: [],
         notes: '',
       );
@@ -306,7 +333,7 @@ void main() {
     });
 
     test('should handle null notes', () async {
-      when(mockDbService.saveVisitStepData(any, any, any, any))
+      when(mockDbService.saveVisitStepData(any))
           .thenAnswer((_) async => 1);
 
       await draftService.saveOrderDraft(
@@ -317,8 +344,12 @@ void main() {
         selectedOrganization: 'ORG001',
         selectedWarehouse: 'WH001',
         selectedPriceType: 'PRICE001',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
         products: [],
-        notes: null,
+        notes: '',
       );
 
       final status = draftService.getSaveStatus();
@@ -337,6 +368,10 @@ void main() {
         selectedOrganization: 'ORG001',
         selectedWarehouse: 'WH001',
         selectedPriceType: 'PRICE001',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
         products: [],
         notes: 'Special chars: àáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ',
       );

@@ -1711,6 +1711,7 @@ class SoapApiService {
          <sam:CodeOrg>${order.codeOrg}</sam:CodeOrg>
          <sam:CodeSklad>${order.codeSklad}</sam:CodeSklad>
          <sam:CodeContract>${order.codeContract ?? ''}</sam:CodeContract>
+         <sam:HasPromo>${order.hasPromo ? 'true' : 'false'}</sam:HasPromo>
       </sam:SetOrder>
    </soap:Body>
 </soap:Envelope>

@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:crypto/crypto.dart';
@@ -55,6 +58,10 @@ class OrderDraftService {
     required String selectedPriceType,
     required String notes,
     required String stepName,
+    required String selectedOrganizationcode,
+    required String selectedWarehousecode,
+    required String selectedPriceTypecode,
+    required DateTime shippingDate,
   }) {
     _isAutoSaveEnabled = true;
 
@@ -73,6 +80,10 @@ class OrderDraftService {
           selectedPriceType: selectedPriceType,
           notes: notes,
           stepName: stepName,
+          selectedOrganizationcode: selectedOrganizationcode,
+          selectedWarehousecode: selectedWarehousecode,
+          selectedPriceTypecode: selectedPriceTypecode,
+          shippingDate: shippingDate,
         );
       }
     });
@@ -98,6 +109,10 @@ class OrderDraftService {
     required String selectedPriceType,
     required String notes,
     required String stepName,
+    required String selectedOrganizationcode,
+    required String selectedWarehousecode,
+    required String selectedPriceTypecode,
+    required DateTime shippingDate,
   }) async {
     if (_isSaving) {
       debugPrint('OrderDraftService: Auto-save skipped - already saving');
@@ -116,6 +131,10 @@ class OrderDraftService {
         selectedOrganization: selectedOrganization,
         selectedWarehouse: selectedWarehouse,
         selectedPriceType: selectedPriceType,
+        selectedOrganizationcode: selectedOrganizationcode,
+        selectedWarehousecode: selectedWarehousecode,
+        selectedPriceTypecode: selectedPriceTypecode,
+        shippingDate: shippingDate,
         products: products,
         notes: notes,
       );
@@ -174,11 +193,57 @@ class OrderDraftService {
     required String selectedPriceType,
     required List<CreateOrderProduct> products,
     required String notes,
+    required String selectedOrganizationcode,
+    required String selectedWarehousecode,
+    required String selectedPriceTypecode,
+    required DateTime shippingDate,
   }) async {
     try {
       debugPrint('OrderDraftService: Saving order draft for visit $visitId, step $stepCode');
 
-      // Create draft order data
+      // Calculate additional fields with error handling
+      String codeAgent = '';
+      double longitude = 0.0;
+      double latitude = 0.0;
+      String codeProject = '';
+      bool hasPromo = false;
+
+      try {
+        // Get current user code for codeAgent
+        final SharedPreferencesService prefs = sl<SharedPreferencesService>();
+        codeAgent = prefs.getUserCode() ?? '';
+      } catch (e) {
+        debugPrint('OrderDraftService: Error getting user code: $e');
+      }
+
+      try {
+        // Get location data
+        final LocationService locationService = sl<LocationService>();
+        final locationData = locationService.getStoredLocation();
+        if (locationData != null) {
+          longitude = (locationData['longitude'] as num?)?.toDouble() ?? 0.0;
+          latitude = (locationData['latitude'] as num?)?.toDouble() ?? 0.0;
+        }
+      } catch (e) {
+        debugPrint('OrderDraftService: Error getting location data: $e');
+      }
+
+      try {
+        // Get codeProject from user preferences
+        final SharedPreferencesService prefs = sl<SharedPreferencesService>();
+        codeProject = prefs.getCodeProject() ?? '';
+      } catch (e) {
+        debugPrint('OrderDraftService: Error getting codeProject: $e');
+      }
+
+      // Calculate hasPromo from selected products
+      hasPromo = products.any((product) => product.promo);
+
+      // Calculate weight and capacity from products
+      double totalWeight = products.fold(0.0, (sum, product) => sum + (product.weight * product.amount));
+      double totalCapacity = products.fold(0.0, (sum, product) => sum + (product.capacity * product.amount));
+
+      // Create draft order data with new fields
       final draftData = {
         'visitId': visitId,
         'clientCode': clientCode,
@@ -187,10 +252,22 @@ class OrderDraftService {
         'selectedOrganization': selectedOrganization,
         'selectedWarehouse': selectedWarehouse,
         'selectedPriceType': selectedPriceType,
+        'selectedOrganizationcode': selectedOrganizationcode,
+        'selectedWarehousecode': selectedWarehousecode,
+        'selectedPriceTypecode': selectedPriceTypecode,
+        'shippingDate': shippingDate.toIso8601String(),
         'products': products.map((p) => p.toJson()).toList(),
         'notes': notes,
         'timestamp': DateTime.now().toIso8601String(),
         'version': 1, // For future migration support
+        // New fields as per requirements
+        'codeAgent': codeAgent,
+        'longitude': longitude,
+        'latitude': latitude,
+        'weight': totalWeight,
+        'capacity': totalCapacity,
+        'codeProject': codeProject,
+        'hasPromo': hasPromo,
       };
 
       // Create VisitData object
@@ -208,7 +285,7 @@ class OrderDraftService {
       // Save to database using visit_steps_data table
       await _dbService.saveVisitStepData(visitData);
 
-      debugPrint('OrderDraftService: Order draft saved successfully');
+      debugPrint('OrderDraftService: Order draft saved successfully with new fields');
     } catch (e, stackTrace) {
       debugPrint('OrderDraftService: Failed to save order draft: $e');
       debugPrint('OrderDraftService: Stack trace: $stackTrace');
@@ -289,6 +366,10 @@ class OrderDraftService {
           !data.containsKey('selectedOrganization') ||
           !data.containsKey('selectedWarehouse') ||
           !data.containsKey('selectedPriceType') ||
+          !data.containsKey('selectedOrganizationcode') ||
+          !data.containsKey('selectedWarehousecode') ||
+          !data.containsKey('selectedPriceTypecode') ||
+          !data.containsKey('shippingDate') ||
           !data.containsKey('products') ||
           !data.containsKey('notes')) {
         return false;
@@ -337,6 +418,10 @@ class OrderDraftService {
         'selectedOrganization': oldData['selectedOrganization'] ?? '',
         'selectedWarehouse': oldData['selectedWarehouse'] ?? '',
         'selectedPriceType': oldData['selectedPriceType'] ?? '',
+        'selectedOrganizationcode': oldData['selectedOrganizationcode'] ?? '',
+        'selectedWarehousecode': oldData['selectedWarehousecode'] ?? '',
+        'selectedPriceTypecode': oldData['selectedPriceTypecode'] ?? '',
+        'shippingDate': oldData['shippingDate'] ?? DateTime.now().toIso8601String(),
         'products': oldData['products'] ?? [],
         'notes': oldData['notes'] ?? '',
         'timestamp': oldData['timestamp'] ?? DateTime.now().toIso8601String(),
@@ -377,6 +462,10 @@ class _DraftLifecycleObserver extends WidgetsBindingObserver {
     required String selectedPriceType,
     required String notes,
     required String stepName,
+    required String selectedOrganizationcode,
+    required String selectedWarehousecode,
+    required String selectedPriceTypecode,
+    required DateTime shippingDate,
   }) onSave;
   final VoidCallback onDispose;
 

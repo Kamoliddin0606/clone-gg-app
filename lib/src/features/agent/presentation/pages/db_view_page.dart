@@ -29,6 +29,8 @@ import 'package:gloria_marketing_flutter/src/features/marketing/data/models/prom
 import 'dart:io';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:open_file/open_file.dart';
 
 class DbViewPage extends StatefulWidget {
   const DbViewPage({super.key});
@@ -42,6 +44,10 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   final ApiDatabaseService _dbService = sl<ApiDatabaseService>();
   final SharedPreferencesService _prefsService = sl<SharedPreferencesService>();
   final DatabaseHelper _dbHelper = sl<DatabaseHelper>();
+
+  // Permission state variables
+  bool _isCheckingPermission = false;
+  bool _hasStoragePermission = false;
 
   // Data holders for each table
   List<KpiData> _kpiData = [];
@@ -94,6 +100,256 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     return [];
   }
 
+  /// Initialize storage permissions
+  /// Check if storage permission is granted and request if needed
+  Future<void> _initializePermissions() async {
+    try {
+      if (kDebugMode) {
+        print('DEBUG: Initializing storage permissions');
+      }
+
+      setState(() => _isCheckingPermission = true);
+
+      // Check current permission status
+      final status = await Permission.storage.status;
+
+      if (status.isGranted) {
+        _hasStoragePermission = true;
+        if (kDebugMode) {
+          print('DEBUG: Storage permission already granted');
+        }
+      } else if (status.isDenied) {
+        // Request permission
+        if (kDebugMode) {
+          print('DEBUG: Storage permission denied, requesting...');
+        }
+        final result = await Permission.storage.request();
+        _hasStoragePermission = result.isGranted;
+
+        if (result.isPermanentlyDenied) {
+          // Show settings dialog if permanently denied
+          if (mounted) {
+            await _showPermissionSettingsDialog();
+          }
+        }
+      } else if (status.isPermanentlyDenied) {
+        // Show settings dialog
+        if (mounted) {
+          await _showPermissionSettingsDialog();
+        }
+      }
+
+      if (kDebugMode) {
+        print('DEBUG: Storage permission status: $_hasStoragePermission');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error initializing permissions: $e');
+      }
+      _hasStoragePermission = false;
+    } finally {
+      if (mounted) {
+        setState(() => _isCheckingPermission = false);
+      }
+    }
+  }
+
+  /// Show dialog to guide user to app settings for permission
+  Future<void> _showPermissionSettingsDialog() async {
+    if (!mounted) return;
+
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Fayl saqlash uchun ruxsat kerak'),
+        content: const Text(
+          'Buyurtma ma\'lumotlarini lokal papkaga saqlash uchun fayl tizimiga kirish ruxsati zarur. '
+          'Iltimos, ilova sozlamalaridan fayl kirish ruxsatini bering.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Keyinroq'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await openAppSettings();
+            },
+            child: const Text('Sozlamalarga o\'tish'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Check storage permission before file operations
+  /// Returns true if permission is granted, false otherwise
+  Future<bool> _checkStoragePermission() async {
+    if (_hasStoragePermission) {
+      return true;
+    }
+
+    // Re-check permission status
+    final status = await Permission.storage.status;
+    if (status.isGranted) {
+      _hasStoragePermission = true;
+      return true;
+    }
+
+    // Request permission if denied
+    if (status.isDenied) {
+      final result = await Permission.storage.request();
+      _hasStoragePermission = result.isGranted;
+      return _hasStoragePermission;
+    }
+
+    // Show settings dialog if permanently denied
+    if (status.isPermanentlyDenied) {
+      await _showPermissionSettingsDialog();
+      return false;
+    }
+
+    return false;
+  }
+
+  /// Save order draft data to file with permission checking
+  /// Uses path_provider to get appropriate directory and checks permissions
+  Future<void> _saveOrderDraftToFile() async {
+    try {
+      if (kDebugMode) {
+        print('DEBUG: Starting order draft save process');
+      }
+
+      // Check storage permission first
+      final hasPermission = await _checkStoragePermission();
+      if (!hasPermission) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Fayl saqlash uchun ruxsat berilmadi'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Get appropriate directory
+      Directory? directory;
+      String fileName;
+      String filePath;
+
+      if (Platform.isAndroid) {
+        // For Android, use Downloads directory
+        directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          // Fallback to app documents directory
+          directory = await getApplicationDocumentsDirectory();
+        }
+        fileName = 'orderdraft_${DateTime.now().millisecondsSinceEpoch}.txt';
+        filePath = '${directory.path}/$fileName';
+      } else if (Platform.isIOS) {
+        // For iOS, use documents directory
+        directory = await getApplicationDocumentsDirectory();
+        fileName = 'orderdraft_${DateTime.now().millisecondsSinceEpoch}.txt';
+        filePath = '${directory.path}/$fileName';
+      } else {
+        // For other platforms, use documents directory
+        directory = await getApplicationDocumentsDirectory();
+        fileName = 'orderdraft_${DateTime.now().millisecondsSinceEpoch}.txt';
+        filePath = '${directory.path}/$fileName';
+      }
+
+      if (kDebugMode) {
+        print('DEBUG: Saving to directory: ${directory.path}');
+        print('DEBUG: File path: $filePath');
+      }
+
+      // Create JSON data
+      final jsonData = jsonEncode(_orderDraftData.map((e) => e.parsedDataContent).toList());
+
+      // Write file
+      final file = File(filePath);
+      await file.writeAsString(jsonData);
+
+      if (kDebugMode) {
+        print('DEBUG: File saved successfully');
+      }
+
+      // Show success message with file info
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Buyurtma ma\'lumotlari saqlandi:\n$fileName'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Ochish',
+              textColor: Colors.white,
+              onPressed: () => _openSavedFile(filePath),
+            ),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('DEBUG: Error saving order draft: $e');
+        print('DEBUG: Stack trace: $stackTrace');
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fayl saqlashda xatolik: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Open the saved file using open_file package
+  Future<void> _openSavedFile(String filePath) async {
+    try {
+      if (kDebugMode) {
+        print('DEBUG: Opening file: $filePath');
+      }
+
+      final result = await OpenFile.open(filePath);
+
+      if (result.type != ResultType.done) {
+        if (kDebugMode) {
+          print('DEBUG: Failed to open file: ${result.message}');
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Faylni ochib bo\'lmadi: ${result.message}'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error opening file: $e');
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Faylni ochishda xatolik: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   final List<String> _tableNames = [
     'Users',
     'Preferences',
@@ -123,6 +379,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     'Visit Steps',
     'Visit Steps Data',
     'Order Draft Data',
+    'Order Draft Products',
     'Planned Routes',
   ];
 
@@ -130,6 +387,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: _tableNames.length, vsync: this);
+    _initializePermissions();
     _loadAllData();
   }
 
@@ -372,25 +630,61 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   }
 
   /// Load order draft data from database
-  /// This method fetches visit step data records from the visit_steps_data table
-  /// where data_type is 'order_draft' and converts them to VisitData model objects
-  /// for display in the UI. Returns an empty list if an error occurs during loading.
-  Future<List<VisitData>> _loadOrderDraftData() async {
-    try {
-      final db = await _dbService.database;
-      final results = await db.query(
-        'visit_steps_data',
-        where: 'data_type = ?',
-        whereArgs: ['order_draft'],
-      );
-      return results.map((row) => VisitData.fromMap(row)).toList();
-    } catch (e) {
-      if (kDebugMode) {
-        print('DEBUG: Error loading order draft data: $e');
-      }
-      return [];
-    }
-  }
+   /// This method fetches visit step data records from the visit_steps_data table
+   /// where data_type is 'order_draft' and converts them to VisitData model objects
+   /// for display in the UI. Returns an empty list if an error occurs during loading.
+   Future<List<VisitData>> _loadOrderDraftData() async {
+     try {
+       final db = await _dbService.database;
+       final results = await db.query(
+         'visit_steps_data',
+         where: 'data_type = ?',
+         whereArgs: ['order_draft'],
+       );
+       return results.map((row) => VisitData.fromMap(row)).toList();
+     } catch (e) {
+       if (kDebugMode) {
+         print('DEBUG: Error loading order draft data: $e');
+       }
+       return [];
+     }
+   }
+
+   /// Extract order draft products from order draft data
+   /// This method parses the JSON content of order draft VisitData objects
+   /// and extracts the products array for display in a separate tab.
+   /// Returns a list of maps representing the products with error handling.
+   List<Map<String, dynamic>> _extractOrderDraftProducts() {
+     final List<Map<String, dynamic>> products = [];
+
+     try {
+       for (final draft in _orderDraftData) {
+         final parsedData = draft.parsedDataContent;
+         final draftProducts = parsedData['products'] as List<dynamic>? ?? [];
+
+         for (final product in draftProducts) {
+           if (product is Map<String, dynamic>) {
+             // Add draft metadata to each product for context
+             final productWithContext = Map<String, dynamic>.from(product);
+             productWithContext['draft_visit_id'] = draft.visitId;
+             productWithContext['draft_client_code'] = draft.clientCode;
+             productWithContext['draft_timestamp'] = draft.timestamp.toIso8601String();
+             products.add(productWithContext);
+           }
+         }
+       }
+
+       if (kDebugMode) {
+         print('DEBUG: Extracted ${products.length} products from ${_orderDraftData.length} order drafts');
+       }
+     } catch (e) {
+       if (kDebugMode) {
+         print('DEBUG: Error extracting order draft products: $e');
+       }
+     }
+
+     return products;
+   }
 
   @override
   Widget build(BuildContext context) {
@@ -413,29 +707,12 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
           ),
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: () async {
-              try {
-                final file = File('/storage/emulated/0/Download/orderdraft.txt');
-                final jsonData = jsonEncode(_orderDraftData.map((e) => e.parsedDataContent).toList());
-                await file.writeAsString(jsonData);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Order draft data saved to /storage/emulated/0/Download/orderdraft.txt')),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error saving order draft: $e')),
-                  );
-                }
-              }
-            },
+            onPressed: _isCheckingPermission ? null : () => _saveOrderDraftToFile(),
             tooltip: 'Save Order Draft',
           ),
         ],
       ),
-      body: _isLoading
+      body: _isLoading || _isCheckingPermission
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
               ? Center(
@@ -484,6 +761,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
                     _buildDataTable(_visitSteps, _getVisitStepsColumns()),
                     _buildDataTable(_visitStepsData, _getVisitStepsDataColumns()),
                     _buildDataTable(_orderDraftData, _getOrderDraftDataColumns()),
+                    _buildDataTable(_extractOrderDraftProducts(), _getOrderDraftProductsColumns()),
                     _buildDataTable(_plannedRoutes, _getPlannedRoutesColumns()),
                   ],
                 ),
@@ -507,7 +785,10 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   }
 
   Widget _buildPreferencesTable() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) {
+      return const Center(child: Text('Localization not available'));
+    }
     final preferencesList = _preferences.entries.map((entry) => {'key': entry.key, 'value': entry.value}).toList();
 
     return SingleChildScrollView(
@@ -772,6 +1053,25 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
           DataCell(Text(item['created_at']?.toString() ?? '')),
           DataCell(Text(item['updated_at']?.toString() ?? '')),
         ]);
+      } else if (item.containsKey('draft_visit_id')) {
+        // Handle order draft products table (extracted from order draft JSON)
+        cells.addAll([
+          DataCell(Text(item['draft_visit_id']?.toString() ?? '')), // Draft Visit ID
+          DataCell(Text(item['draft_client_code']?.toString() ?? '')), // Client Code
+          DataCell(Text(item['codeProduct']?.toString() ?? '')), // Product Code
+          DataCell(Text(item['vendorCode']?.toString() ?? '')), // Vendor Code
+          DataCell(Text(item['amount']?.toString() ?? '')), // Amount
+          DataCell(Text(item['price']?.toString() ?? '')), // Price
+          DataCell(Text(item['total']?.toString() ?? '')), // Total
+          DataCell(Text(item['weight']?.toString() ?? '')), // Weight
+          DataCell(Text(item['capacity']?.toString() ?? '')), // Capacity
+          DataCell(Text(item['paymentType']?.toString() ?? '')), // Payment Type
+          DataCell(Text(item['discountSum']?.toString() ?? '')), // Discount Sum
+          DataCell(Text(item['discountRate']?.toString() ?? '')), // Discount Rate
+          DataCell(Text(item['giftAmount']?.toString() ?? '')), // Gift Amount
+          DataCell(Text(item['promo']?.toString() ?? '')), // Promo
+          DataCell(Text(item['draft_timestamp']?.toString() ?? '')), // Draft Timestamp
+        ]);
       } else {
         // Handle users table (Map<String, dynamic>)
         cells.addAll([
@@ -835,7 +1135,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.updatedAt?.toString() ?? '')),
       ]);
     } else if (item is VisitData) {
-      if (columns.length == 13) {
+      if (columns.length == 18) {
         // Order Draft Data table - parse JSON content for specific fields
         try {
           final parsedData = item.parsedDataContent;
@@ -854,6 +1154,11 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
             DataCell(Text(parsedData['weight']?.toString() ?? '')), // Total Weight
             DataCell(Text(parsedData['capacity']?.toString() ?? '')), // Total Capacity
             DataCell(Text(notes.length > 50 ? '${notes.substring(0, 50)}...' : notes)), // Notes (truncated)
+            DataCell(Text(parsedData['codeAgent']?.toString() ?? '')), // Agent Code
+            DataCell(Text(parsedData['longitude']?.toString() ?? '')), // Longitude
+            DataCell(Text(parsedData['latitude']?.toString() ?? '')), // Latitude
+            DataCell(Text(parsedData['codeProject']?.toString() ?? '')), // Project Code
+            DataCell(Text(parsedData['hasPromo']?.toString() ?? '')), // Has Promo
             DataCell(Text(item.timestamp.toString())), // Creation timestamp
             DataCell(Text(item.isSynced.toString())), // Sync status
           ]);
@@ -867,6 +1172,11 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
             DataCell(Text(item.visitId)),
             DataCell(Text(item.clientCode)),
             DataCell(Text(item.stepName)),
+            DataCell(const Text('Parse Error')),
+            DataCell(const Text('Parse Error')),
+            DataCell(const Text('Parse Error')),
+            DataCell(const Text('Parse Error')),
+            DataCell(const Text('Parse Error')),
             DataCell(const Text('Parse Error')),
             DataCell(const Text('Parse Error')),
             DataCell(const Text('Parse Error')),
@@ -916,60 +1226,60 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   }
 
   List<DataColumn> _getUsersColumns() => [
-        DataColumn(label: Text(AppLocalizations.of(context)!.id)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.code)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.username)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.password)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.name)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.role)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.warehouseCode)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.codeProject)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.baseUrl)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.telegramId)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.chatId)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.topicId)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.createdAt)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.updatedAt)),
+        DataColumn(label: Text(AppLocalizations.of(context)?.id ?? 'ID')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.code ?? 'Code')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.username ?? 'Username')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.password ?? 'Password')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.name ?? 'Name')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.role ?? 'Role')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.warehouseCode ?? 'Warehouse Code')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.codeProject ?? 'Code Project')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.baseUrl ?? 'Base URL')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.telegramId ?? 'Telegram ID')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.chatId ?? 'Chat ID')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.topicId ?? 'Topic ID')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.createdAt ?? 'Created At')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.updatedAt ?? 'Updated At')),
       ];
 
   List<DataColumn> _getKpiColumns() => [
-        DataColumn(label: Text(AppLocalizations.of(context)!.plan)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.fact)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.totalPercent)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.forecast)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.forecastPercent)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.okb)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.akbPlan)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.akbFact)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.akbPercent)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.updateDate)),
+        DataColumn(label: Text(AppLocalizations.of(context)?.plan ?? 'Plan')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.fact ?? 'Fact')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.totalPercent ?? 'Total Percent')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.forecast ?? 'Forecast')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.forecastPercent ?? 'Forecast Percent')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.okb ?? 'OKB')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.akbPlan ?? 'AKB Plan')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.akbFact ?? 'AKB Fact')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.akbPercent ?? 'AKB Percent')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.updateDate ?? 'Update Date')),
       ];
 
   List<DataColumn> _getClientsColumns() => [
-        DataColumn(label: Text(AppLocalizations.of(context)!.id)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.name)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.address)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.phone)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.ownerName)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.contactPerson)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.inn)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.status)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.lastVisitDate)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.hasOrders)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.hasContracts)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.isVisited)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.hasContract)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.coordinates)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.region)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.district)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.signboard)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.referencePoint)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.responsiblePerson)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.responsiblePersonPhone)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.tradePointType)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.creditLimit)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.accumulatedCredit)),
-        DataColumn(label: Text(AppLocalizations.of(context)!.codeRegion)),
+        DataColumn(label: Text(AppLocalizations.of(context)?.id ?? 'ID')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.name ?? 'Name')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.address ?? 'Address')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.phone ?? 'Phone')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.ownerName ?? 'Owner Name')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.contactPerson ?? 'Contact Person')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.inn ?? 'INN')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.status ?? 'Status')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.lastVisitDate ?? 'Last Visit Date')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.hasOrders ?? 'Has Orders')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.hasContracts ?? 'Has Contracts')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.isVisited ?? 'Is Visited')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.hasContract ?? 'Has Contract')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.coordinates ?? 'Coordinates')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.region ?? 'Region')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.district ?? 'District')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.signboard ?? 'Signboard')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.referencePoint ?? 'Reference Point')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.responsiblePerson ?? 'Responsible Person')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.responsiblePersonPhone ?? 'Responsible Person Phone')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.tradePointType ?? 'Trade Point Type')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.creditLimit ?? 'Credit Limit')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.accumulatedCredit ?? 'Accumulated Credit')),
+        DataColumn(label: Text(AppLocalizations.of(context)?.codeRegion ?? 'Code Region')),
       ];
 
   List<DataColumn> _getProductsColumns() => [
@@ -1216,22 +1526,47 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         ];
 
   /// Define column headers for the Order Draft Data table
-  /// Displays order draft specific fields from the visit_steps_data table where data_type = 'order_draft'
-  List<DataColumn> _getOrderDraftDataColumns() => [
-          const DataColumn(label: Text('ID')), // Primary key
-          const DataColumn(label: Text('Visit ID')), // Visit session identifier
-          const DataColumn(label: Text('Client Code')), // Client being visited
-          const DataColumn(label: Text('Step Name')), // Step name for reference
-          const DataColumn(label: Text('Organization')), // Selected organization display name
-          const DataColumn(label: Text('Warehouse')), // Selected warehouse display name
-          const DataColumn(label: Text('Price Type')), // Selected price type display name
-          const DataColumn(label: Text('Products Count')), // Number of products in the order
-          const DataColumn(label: Text('Total Weight')), // Calculated total weight
-          const DataColumn(label: Text('Total Capacity')), // Calculated total capacity
-          const DataColumn(label: Text('Notes')), // Additional notes
-          const DataColumn(label: Text('Timestamp')), // Creation timestamp
-          const DataColumn(label: Text('Is Synced')), // Synchronization status
-        ];
+   /// Displays order draft specific fields from the visit_steps_data table where data_type = 'order_draft'
+   List<DataColumn> _getOrderDraftDataColumns() => [
+           const DataColumn(label: Text('ID')), // Primary key
+           const DataColumn(label: Text('Visit ID')), // Visit session identifier
+           const DataColumn(label: Text('Client Code')), // Client being visited
+           const DataColumn(label: Text('Step Name')), // Step name for reference
+           const DataColumn(label: Text('Organization')), // Selected organization display name
+           const DataColumn(label: Text('Warehouse')), // Selected warehouse display name
+           const DataColumn(label: Text('Price Type')), // Selected price type display name
+           const DataColumn(label: Text('Products Count')), // Number of products in the order
+           const DataColumn(label: Text('Total Weight')), // Calculated total weight
+           const DataColumn(label: Text('Total Capacity')), // Calculated total capacity
+           const DataColumn(label: Text('Notes')), // Additional notes
+           const DataColumn(label: Text('Agent Code')), // Agent who created the draft
+           const DataColumn(label: Text('Longitude')), // GPS longitude coordinate
+           const DataColumn(label: Text('Latitude')), // GPS latitude coordinate
+           const DataColumn(label: Text('Project Code')), // Project code
+           const DataColumn(label: Text('Has Promo')), // Whether order has promotional items
+           const DataColumn(label: Text('Timestamp')), // Creation timestamp
+           const DataColumn(label: Text('Is Synced')), // Synchronization status
+         ];
+
+   /// Define column headers for the Order Draft Products table
+   /// Displays product details extracted from order draft JSON data
+   List<DataColumn> _getOrderDraftProductsColumns() => [
+           const DataColumn(label: Text('Draft Visit ID')), // Visit ID from parent draft
+           const DataColumn(label: Text('Client Code')), // Client code from parent draft
+           const DataColumn(label: Text('Product Code')), // Product code
+           const DataColumn(label: Text('Vendor Code')), // Vendor/supplier code
+           const DataColumn(label: Text('Amount')), // Quantity
+           const DataColumn(label: Text('Price')), // Unit price
+           const DataColumn(label: Text('Total')), // Total price (price × amount)
+           const DataColumn(label: Text('Weight')), // Product weight
+           const DataColumn(label: Text('Capacity')), // Product capacity/volume
+           const DataColumn(label: Text('Payment Type')), // Payment type code
+           const DataColumn(label: Text('Discount Sum')), // Fixed discount amount
+           const DataColumn(label: Text('Discount Rate')), // Discount percentage
+           const DataColumn(label: Text('Gift Amount')), // Number of gift items
+           const DataColumn(label: Text('Promo')), // Whether product is promotional
+           const DataColumn(label: Text('Draft Timestamp')), // When the draft was created
+         ];
 
   List<DataColumn> _getPlannedRoutesColumns() => [
         const DataColumn(label: Text('ID')),

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -376,6 +377,249 @@ void main() {
         notes: 'Special chars: àáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ',
       );
 
+      final status = draftService.getSaveStatus();
+      expect(status['lastSaveError'], isNull);
+    });
+
+    test('should save new draft when no existing draft exists', () async {
+      // Mock no existing draft
+      when(mockDbService.getVisitStepDataByVisitId('VISIT001'))
+          .thenAnswer((_) async => []);
+
+      final products = [
+        CreateOrderProduct(
+          codeSklad: 'SKL001',
+          codeProduct: 'PRD001',
+          vendorCode: 'VC001',
+          amount: 5,
+          price: 10000.0,
+          total: 50000.0,
+          weight: 1.0,
+          capacity: 0.5,
+          paymentType: 0,
+          discountSum: 0.0,
+          discountRate: 0.0,
+          giftAmount: 0,
+          promo: false,
+        )
+      ];
+
+      await draftService.saveOrderDraft(
+        visitId: 'VISIT001',
+        clientCode: 'CLIENT001',
+        stepCode: 1,
+        stepName: 'Create Order',
+        selectedOrganization: 'ORG001',
+        selectedWarehouse: 'WH001',
+        selectedPriceType: 'PRICE001',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
+        products: products,
+        notes: 'New draft',
+      );
+
+      // Test passes if no exception is thrown
+      final status = draftService.getSaveStatus();
+      expect(status['lastSaveError'], isNull);
+    });
+
+    test('should merge products when existing draft exists', () async {
+      // Mock existing draft with one product
+      final existingVisitData = VisitData(
+        visitId: 'VISIT001',
+        clientCode: 'CLIENT001',
+        stepCode: 1,
+        stepName: 'Create Order',
+        dataType: 'order_draft',
+        dataContent: '{"visitId":"VISIT001","clientCode":"CLIENT001","stepCode":1,"stepName":"Create Order","selectedOrganization":"ORG001","selectedWarehouse":"WH001","selectedPriceType":"PRICE001","selectedOrganizationcode":"ORG001","selectedWarehousecode":"WH001","selectedPriceTypecode":"PRICE001","shippingDate":"2024-01-01T00:00:00.000","products":[{"codeSklad":"SKL001","codeProduct":"PRD001","vendorCode":"VC001","amount":2,"price":10000.0,"total":20000.0,"weight":1.0,"capacity":0.5,"paymentType":0,"discountSum":0.0,"discountRate":0.0,"giftAmount":0,"promo":false}],"notes":"Existing draft","timestamp":"2024-01-01T00:00:00.000","version":1}',
+        timestamp: DateTime.now(),
+      );
+
+      when(mockDbService.getVisitStepDataByVisitId('VISIT001'))
+          .thenAnswer((_) async => [existingVisitData]);
+
+      when(mockDbService.saveVisitStepData(any))
+          .thenAnswer((_) async {});
+
+      when(mockDbService.deleteVisitStepDataByStepCode('VISIT001', 1))
+          .thenAnswer((_) async {});
+
+      // New products: update existing PRD001 and add new PRD002
+      final newProducts = [
+        CreateOrderProduct(
+          codeSklad: 'SKL001',
+          codeProduct: 'PRD001', // Existing product, should be updated
+          vendorCode: 'VC001',
+          amount: 5, // Changed from 2 to 5
+          price: 10000.0,
+          total: 50000.0,
+          weight: 1.0,
+          capacity: 0.5,
+          paymentType: 0,
+          discountSum: 0.0,
+          discountRate: 0.0,
+          giftAmount: 0,
+          promo: false,
+        ),
+        CreateOrderProduct(
+          codeSklad: 'SKL001',
+          codeProduct: 'PRD002', // New product, should be added
+          vendorCode: 'VC002',
+          amount: 3,
+          price: 15000.0,
+          total: 45000.0,
+          weight: 1.5,
+          capacity: 0.8,
+          paymentType: 0,
+          discountSum: 0.0,
+          discountRate: 0.0,
+          giftAmount: 0,
+          promo: false,
+        )
+      ];
+
+      await draftService.saveOrderDraft(
+        visitId: 'VISIT001',
+        clientCode: 'CLIENT001',
+        stepCode: 1,
+        stepName: 'Create Order',
+        selectedOrganization: 'ORG001',
+        selectedWarehouse: 'WH001',
+        selectedPriceType: 'PRICE001',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
+        products: newProducts,
+        notes: 'Updated draft',
+      );
+
+      // Verify delete was called for existing draft
+      verify(mockDbService.deleteVisitStepDataByStepCode('VISIT001', 1)).called(1);
+
+      // Verify save was called once with merged data
+      verify(mockDbService.saveVisitStepData(any)).called(1);
+
+      // Verify the saved data contains both products
+      final capturedVisitData = verify(mockDbService.saveVisitStepData(captureAny))
+          .captured.single as VisitData;
+
+      final savedData = jsonDecode(capturedVisitData.dataContent) as Map<String, dynamic>;
+      final savedProducts = savedData['products'] as List<dynamic>;
+
+      expect(savedProducts.length, 2);
+
+      // Check PRD001 was updated
+      final prd001 = savedProducts.firstWhere((p) => p['codeProduct'] == 'PRD001');
+      expect(prd001['amount'], 5);
+
+      // Check PRD002 was added
+      final prd002 = savedProducts.firstWhere((p) => p['codeProduct'] == 'PRD002');
+      expect(prd002['amount'], 3);
+    });
+
+    test('should ensure only one draft per client per day', () async {
+      // Mock existing draft
+      final existingVisitData = VisitData(
+        visitId: 'VISIT001',
+        clientCode: 'CLIENT001',
+        stepCode: 1,
+        stepName: 'Create Order',
+        dataType: 'order_draft',
+        dataContent: '{"visitId":"VISIT001","clientCode":"CLIENT001","stepCode":1,"stepName":"Create Order","selectedOrganization":"ORG001","selectedWarehouse":"WH001","selectedPriceType":"PRICE001","selectedOrganizationcode":"ORG001","selectedWarehousecode":"WH001","selectedPriceTypecode":"PRICE001","shippingDate":"2024-01-01T00:00:00.000","products":[],"notes":"Existing draft","timestamp":"2024-01-01T00:00:00.000","version":1}',
+        timestamp: DateTime.now(),
+      );
+
+      when(mockDbService.getVisitStepDataByVisitId('VISIT001'))
+          .thenAnswer((_) async => [existingVisitData]);
+
+      when(mockDbService.saveVisitStepData(any))
+          .thenAnswer((_) async {});
+
+      when(mockDbService.deleteVisitStepDataByStepCode('VISIT001', 1))
+          .thenAnswer((_) async {});
+
+      // Save new draft
+      await draftService.saveOrderDraft(
+        visitId: 'VISIT001',
+        clientCode: 'CLIENT001',
+        stepCode: 1,
+        stepName: 'Create Order',
+        selectedOrganization: 'ORG001',
+        selectedWarehouse: 'WH001',
+        selectedPriceType: 'PRICE001',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
+        products: [],
+        notes: 'New draft',
+      );
+
+      // Verify existing draft was deleted before saving new one
+      verify(mockDbService.deleteVisitStepDataByStepCode('VISIT001', 1)).called(1);
+      verify(mockDbService.saveVisitStepData(any)).called(1);
+    });
+
+    test('should handle merge when existing draft has invalid data', () async {
+      // Mock existing draft with invalid products data
+      final existingVisitData = VisitData(
+        visitId: 'VISIT001',
+        clientCode: 'CLIENT001',
+        stepCode: 1,
+        stepName: 'Create Order',
+        dataType: 'order_draft',
+        dataContent: '{"visitId":"VISIT001","clientCode":"CLIENT001","stepCode":1,"stepName":"Create Order","selectedOrganization":"ORG001","selectedWarehouse":"WH001","selectedPriceType":"PRICE001","selectedOrganizationcode":"ORG001","selectedWarehousecode":"WH001","selectedPriceTypecode":"PRICE001","shippingDate":"2024-01-01T00:00:00.000","products":[{"invalid":"data"}],"notes":"Existing draft","timestamp":"2024-01-01T00:00:00.000","version":1}',
+        timestamp: DateTime.now(),
+      );
+
+      when(mockDbService.getVisitStepDataByVisitId('VISIT001'))
+          .thenAnswer((_) async => [existingVisitData]);
+
+      when(mockDbService.saveVisitStepData(any))
+          .thenAnswer((_) async {});
+
+      when(mockDbService.deleteVisitStepDataByStepCode('VISIT001', 1))
+          .thenAnswer((_) async {});
+
+      final newProducts = [
+        CreateOrderProduct(
+          codeSklad: 'SKL001',
+          codeProduct: 'PRD001',
+          vendorCode: 'VC001',
+          amount: 1,
+          price: 10000.0,
+          total: 10000.0,
+          weight: 1.0,
+          capacity: 0.5,
+          paymentType: 0,
+          discountSum: 0.0,
+          discountRate: 0.0,
+          giftAmount: 0,
+          promo: false,
+        )
+      ];
+
+      await draftService.saveOrderDraft(
+        visitId: 'VISIT001',
+        clientCode: 'CLIENT001',
+        stepCode: 1,
+        stepName: 'Create Order',
+        selectedOrganization: 'ORG001',
+        selectedWarehouse: 'WH001',
+        selectedPriceType: 'PRICE001',
+        selectedOrganizationcode: 'ORG001',
+        selectedWarehousecode: 'WH001',
+        selectedPriceTypecode: 'PRICE001',
+        shippingDate: DateTime.now(),
+        products: newProducts,
+        notes: 'New draft',
+      );
+
+      // Should still save successfully despite invalid existing data
+      verify(mockDbService.saveVisitStepData(any)).called(1);
       final status = draftService.getSaveStatus();
       expect(status['lastSaveError'], isNull);
     });

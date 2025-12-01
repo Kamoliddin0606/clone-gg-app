@@ -183,6 +183,7 @@ class OrderDraftService {
 
   /// Save order draft data with immediate persistence
   /// Creates or updates a draft order in the database
+  /// Ensures only one draft per client per day by checking for existing drafts and merging data
   Future<void> saveOrderDraft({
     required String visitId,
     required String clientCode,
@@ -200,6 +201,19 @@ class OrderDraftService {
   }) async {
     try {
       debugPrint('OrderDraftService: Saving order draft for visit $visitId, step $stepCode');
+
+      // Check if draft already exists for this visit and step
+      final draftExists = await hasOrderDraft(visitId, stepCode);
+      Map<String, dynamic>? existingDraft;
+
+      if (draftExists) {
+        // Load existing draft data to merge with new data
+        debugPrint('OrderDraftService: Existing draft found, loading for merge');
+        existingDraft = await loadOrderDraft(visitId, stepCode);
+        if (existingDraft == null) {
+          debugPrint('OrderDraftService: Failed to load existing draft, proceeding with new save');
+        }
+      }
 
       // Calculate additional fields with error handling
       String codeAgent = '';
@@ -243,7 +257,44 @@ class OrderDraftService {
       double totalWeight = products.fold(0.0, (sum, product) => sum + (product.weight * product.amount));
       double totalCapacity = products.fold(0.0, (sum, product) => sum + (product.capacity * product.amount));
 
-      // Create draft order data with new fields
+      // Prepare new products data
+      List<Map<String, dynamic>> newProductsJson = products.map((p) => p.toJson()).toList();
+
+      // If existing draft exists, merge products data
+      if (existingDraft != null) {
+        debugPrint('OrderDraftService: Merging products with existing draft');
+        final existingProducts = existingDraft['products'] as List<dynamic>? ?? [];
+        final mergedProducts = <Map<String, dynamic>>[];
+
+        // Start with existing products
+        for (final existingProduct in existingProducts) {
+          if (existingProduct is Map<String, dynamic>) {
+            mergedProducts.add(Map<String, dynamic>.from(existingProduct));
+          }
+        }
+
+        // Merge/update with new products
+        for (final newProduct in newProductsJson) {
+          final codeProduct = newProduct['codeProduct'] as String?;
+          if (codeProduct != null) {
+            final existingIndex = mergedProducts.indexWhere((p) => p['codeProduct'] == codeProduct);
+            if (existingIndex >= 0) {
+              // Update existing product with new data
+              mergedProducts[existingIndex] = Map<String, dynamic>.from(newProduct);
+              debugPrint('OrderDraftService: Updated existing product $codeProduct');
+            } else {
+              // Add new product
+              mergedProducts.add(Map<String, dynamic>.from(newProduct));
+              debugPrint('OrderDraftService: Added new product $codeProduct');
+            }
+          }
+        }
+
+        newProductsJson = mergedProducts;
+        debugPrint('OrderDraftService: Products merged, total products: ${newProductsJson.length}');
+      }
+
+      // Create draft order data with merged/new fields
       final draftData = {
         'visitId': visitId,
         'clientCode': clientCode,
@@ -256,7 +307,7 @@ class OrderDraftService {
         'selectedWarehousecode': selectedWarehousecode,
         'selectedPriceTypecode': selectedPriceTypecode,
         'shippingDate': shippingDate.toIso8601String(),
-        'products': products.map((p) => p.toJson()).toList(),
+        'products': newProductsJson,
         'notes': notes,
         'timestamp': DateTime.now().toIso8601String(),
         'version': 1, // For future migration support
@@ -269,6 +320,12 @@ class OrderDraftService {
         'codeProject': codeProject,
         'hasPromo': hasPromo,
       };
+
+      // If draft exists, delete it first to ensure only one draft per client per day
+      if (draftExists) {
+        debugPrint('OrderDraftService: Deleting existing draft before saving merged data');
+        await deleteOrderDraft(visitId, stepCode);
+      }
 
       // Create VisitData object
       final visitData = VisitData(
@@ -285,7 +342,7 @@ class OrderDraftService {
       // Save to database using visit_steps_data table
       await _dbService.saveVisitStepData(visitData);
 
-      debugPrint('OrderDraftService: Order draft saved successfully with new fields');
+      debugPrint('OrderDraftService: Order draft saved successfully with merged data (ensuring only one draft per client per day)');
     } catch (e, stackTrace) {
       debugPrint('OrderDraftService: Failed to save order draft: $e');
       debugPrint('OrderDraftService: Stack trace: $stackTrace');

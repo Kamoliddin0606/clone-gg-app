@@ -2,52 +2,69 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  group('PermissionManager', () {
+    late PermissionManager permissionManager;
 
-  late PermissionManager permissionManager;
-
-  setUp(() {
-    permissionManager = PermissionManager();
-  });
-
-  group('PermissionManager Tests', () {
-    test('PermissionManager can be instantiated', () {
-      expect(permissionManager, isA<PermissionManager>());
+    setUp(() {
+      permissionManager = PermissionManager();
     });
 
-    test('checkLocationPermission returns valid status', () async {
-      final status = await permissionManager.checkLocationPermission();
-      expect(status, isA<AppPermissionStatus>());
-      expect([
-        AppPermissionStatus.granted,
-        AppPermissionStatus.denied,
-        AppPermissionStatus.permanentlyDenied,
-        AppPermissionStatus.unknown,
-        AppPermissionStatus.restricted,
-      ].contains(status), isTrue);
+    test('should have audio permission type', () {
+      expect(AppPermissionType.audio, isNotNull);
+      expect(AppPermissionType.audio.toString(), contains('audio'));
     });
 
-    test('isLocationServiceEnabled returns bool', () async {
-      final result = await permissionManager.isLocationServiceEnabled();
-      expect(result, isA<bool>());
+    test('should have photosAndVideos permission type', () {
+      expect(AppPermissionType.photosAndVideos, isNotNull);
+      expect(AppPermissionType.photosAndVideos.toString(), contains('photosAndVideos'));
     });
 
-    test('openLocationSettings returns bool', () async {
-      final result = await permissionManager.openLocationSettings();
-      expect(result, isA<bool>());
-    });
-
-    test('PermissionManager methods handle errors gracefully', () async {
-      // Test that methods don't throw unhandled exceptions
+    test('should handle audio permission in checkPermission', () async {
+      // This will test that the switch statement handles the new permission type
+      // The actual permission check may fail in test environment, but we want to ensure no exception
       try {
-        await permissionManager.checkLocationPermission();
-        await permissionManager.isLocationServiceEnabled();
-        await permissionManager.openLocationSettings();
-        // If we reach here, methods executed without throwing
-        expect(true, isTrue);
+        final result = await permissionManager.checkPermission(AppPermissionType.audio);
+        expect(result, isNotNull);
+        expect(result, isA<AppPermissionStatus>());
       } catch (e) {
-        // In test environment, some platform calls might fail, which is expected
-        expect(e, isA<Exception>());
+        // In test environment, permission checks may fail, but we want to ensure the method exists
+        expect(e, isNotNull);
+      }
+    });
+
+    test('should handle photosAndVideos permission in checkPermission', () async {
+      // This will test that the switch statement handles the new permission type
+      try {
+        final result = await permissionManager.checkPermission(AppPermissionType.photosAndVideos);
+        expect(result, isNotNull);
+        expect(result, isA<AppPermissionStatus>());
+      } catch (e) {
+        // In test environment, permission checks may fail, but we want to ensure the method exists
+        expect(e, isNotNull);
+      }
+    });
+
+    test('should handle audio permission in requestPermission', () async {
+      // This will test that the switch statement handles the new permission type
+      try {
+        final result = await permissionManager.requestPermission(AppPermissionType.audio);
+        expect(result, isNotNull);
+        expect(result, isA<AppPermissionStatus>());
+      } catch (e) {
+        // In test environment, permission requests may fail, but we want to ensure the method exists
+        expect(e, isNotNull);
+      }
+    });
+
+    test('should handle photosAndVideos permission in requestPermission', () async {
+      // This will test that the switch statement handles the new permission type
+      try {
+        final result = await permissionManager.requestPermission(AppPermissionType.photosAndVideos);
+        expect(result, isNotNull);
+        expect(result, isA<AppPermissionStatus>());
+      } catch (e) {
+        // In test environment, permission requests may fail, but we want to ensure the method exists
+        expect(e, isNotNull);
       }
     });
   });

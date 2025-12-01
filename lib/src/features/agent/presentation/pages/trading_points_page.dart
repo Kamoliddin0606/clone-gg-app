@@ -125,7 +125,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     Map<String, String> _regionNames = {};   // Business region code to name mapping
 
     // Permissions service
-    late PermissionsService _permissionsService;
+    PermissionsService? _permissionsService;
 
     // Sorting related
     bool _isAlphabeticalSort = true; // true = A-Z, false = Z-A
@@ -152,7 +152,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     // Map rotation tracking removed - markers are naturally upright in all map providers
 
     // Offline caching
-    late MapCacheService _mapCacheService;
+    MapCacheService? _mapCacheService;
     late Connectivity _connectivity;
     bool _isOnline = true;
 
@@ -268,16 +268,17 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
       // Initialize map cache service
       _mapCacheService = MapCacheService();
-      await _mapCacheService.initialize();
+      await _mapCacheService!.initialize();
 
       if (kDebugMode) {
-        print('Offline support initialized. Online: $_isOnline');
+        print('Offline support initialized. Online: $_isOnline, MapCacheService initialized: ${_mapCacheService != null}');
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error initializing offline support: $e');
       }
       _isOnline = true; // Default to online if initialization fails
+      _mapCacheService = null; // Ensure it's null if initialization fails
     }
   }
 
@@ -365,8 +366,11 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _searchController.dispose();
     _locationCheckTimer?.cancel();
     _locationService?.dispose();
-    _permissionsService.dispose();
-    _mapCacheService.dispose();
+    if (kDebugMode) {
+      print('Disposing TradingPointsPage, _permissionsService is null: ${_permissionsService == null}, _mapCacheService is null: ${_mapCacheService == null}');
+    }
+    _permissionsService?.dispose();
+    _mapCacheService?.dispose();
     super.dispose();
   }
 

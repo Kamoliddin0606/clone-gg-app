@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_dialog.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'dart:io';
 
 /// Page that handles permission checking on app startup
 class PermissionCheckPage extends StatefulWidget {
@@ -161,6 +163,8 @@ class PermissionWarningDialog extends StatelessWidget {
           _buildPermissionItem('Kamera', 'Rasmga olish'),
           _buildPermissionItem('Mikrofon', 'Ovoz yozish'),
           _buildPermissionItem('Bildirishnomalar', 'Xabarlarni ko\'rsatish'),
+          _buildPermissionItem('Musiqa va audio', 'Audio fayllar bilan ishlash'),
+          _buildPermissionItem('Rasmlar va videolar', 'Media fayllar bilan ishlash'),
           const SizedBox(height: 12),
           Text(
             'Ruxsatlarsiz ilova cheklangan rejimda ishlaydi.',
@@ -226,56 +230,95 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
   int _currentPermissionIndex = 0;
   bool _isLoading = false;
 
-  // Define all required permissions in order
-  final List<RequiredPermission> _requiredPermissions = const [
-    RequiredPermission(
-      type: AppPermissionType.storage,
-      title: 'Fayl saqlash ruxsati',
-      description: 'Ilova ma\'lumotlarini saqlash va yuklash uchun',
-      purpose: 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash',
-      isRequired: true,
-    ),
-    RequiredPermission(
-      type: AppPermissionType.location,
-      title: 'Joylashuv ruxsati',
-      description: 'Savdo nuqtalarini masofaga ko\'ra tartiblash uchun',
-      purpose: 'Xaritada joylashuvni ko\'rsatish va masofa hisoblash',
-      isRequired: true,
-    ),
-    RequiredPermission(
-      type: AppPermissionType.locationAlways,
-      title: 'Doimiy joylashuv ruxsati',
-      description: 'Ilova fon rejimida ishlaganda joylashuvni aniqlash uchun',
-      purpose: 'Fon rejimida xizmat ko\'rsatish va bildirishnomalar',
-      isRequired: true,
-    ),
-    RequiredPermission(
-      type: AppPermissionType.camera,
-      title: 'Kamera ruxsati',
-      description: 'Rasmga olish va shtrix-kod skanerlash uchun',
-      purpose: 'Mahsulotlar va savdo nuqtalarini rasmga olish',
-      isRequired: true,
-    ),
-    RequiredPermission(
-      type: AppPermissionType.microphone,
-      title: 'Mikrofon ruxsati',
-      description: 'Ovoz yozish va audio xabarlar uchun',
-      purpose: 'Ovozli eslatmalar va audio qaydlar',
-      isRequired: true,
-    ),
-    RequiredPermission(
-      type: AppPermissionType.notification,
-      title: 'Bildirishnoma ruxsati',
-      description: 'Muhim xabarlarni ko\'rsatish uchun',
-      purpose: 'Eslatmalar, yangiliklar va bildirishnomalar',
-      isRequired: true,
-    ),
-  ];
+  List<RequiredPermission> _requiredPermissions = [];
+
+  Future<void> _loadPermissions() async {
+    final isAndroid13OrHigher = Platform.isAndroid ? await _isAndroid13OrHigher() : false;
+
+    _requiredPermissions = [
+      RequiredPermission(
+        type: AppPermissionType.storage,
+        title: 'Fayl saqlash ruxsati',
+        description: isAndroid13OrHigher
+            ? 'Ilova ma\'lumotlarini saqlash uchun papka tanlash'
+            : 'Ilova ma\'lumotlarini saqlash va yuklash uchun',
+        purpose: isAndroid13OrHigher
+            ? 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash uchun papka tanlang'
+            : 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash',
+        isRequired: true,
+      ),
+      RequiredPermission(
+        type: AppPermissionType.location,
+        title: 'Joylashuv ruxsati',
+        description: 'Savdo nuqtalarini masofaga ko\'ra tartiblash uchun',
+        purpose: 'Xaritada joylashuvni ko\'rsatish va masofa hisoblash',
+        isRequired: true,
+      ),
+      RequiredPermission(
+        type: AppPermissionType.locationAlways,
+        title: 'Doimiy joylashuv ruxsati',
+        description: 'Ilova fon rejimida ishlaganda joylashuvni aniqlash uchun',
+        purpose: 'Fon rejimida xizmat ko\'rsatish va bildirishnomalar',
+        isRequired: true,
+      ),
+      RequiredPermission(
+        type: AppPermissionType.camera,
+        title: 'Kamera ruxsati',
+        description: 'Rasmga olish va shtrix-kod skanerlash uchun',
+        purpose: 'Mahsulotlar va savdo nuqtalarini rasmga olish',
+        isRequired: true,
+      ),
+      RequiredPermission(
+        type: AppPermissionType.microphone,
+        title: 'Mikrofon ruxsati',
+        description: 'Ovoz yozish va audio xabarlar uchun',
+        purpose: 'Ovozli eslatmalar va audio qaydlar',
+        isRequired: true,
+      ),
+      RequiredPermission(
+        type: AppPermissionType.notification,
+        title: 'Bildirishnoma ruxsati',
+        description: 'Muhim xabarlarni ko\'rsatish uchun',
+        purpose: 'Eslatmalar, yangiliklar va bildirishnomalar',
+        isRequired: true,
+      ),
+      RequiredPermission(
+        type: AppPermissionType.audio,
+        title: 'Musiqa va audio ruxsati',
+        description: 'Audio fayllar bilan ishlash uchun',
+        purpose: 'Musiqa, audio xabarlar va ovozli fayllar bilan ishlash',
+        isRequired: true,
+      ),
+      RequiredPermission(
+        type: AppPermissionType.photosAndVideos,
+        title: 'Rasmlar va videolar ruxsati',
+        description: 'Media fayllar bilan ishlash uchun',
+        purpose: 'Rasmlar, videolar va media fayllar bilan ishlash',
+        isRequired: true,
+      ),
+    ];
+  }
+
+  Future<bool> _isAndroid13OrHigher() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      final androidInfo = await deviceInfo.androidInfo;
+      return androidInfo.version.sdkInt >= 33;
+    } catch (e) {
+      return false;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _checkCurrentPermission();
+    _loadPermissions().then((_) {
+      if (mounted) {
+        setState(() {});
+        _checkCurrentPermission();
+      }
+    });
   }
 
   Future<void> _checkCurrentPermission() async {

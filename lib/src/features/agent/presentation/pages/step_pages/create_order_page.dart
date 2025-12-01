@@ -329,6 +329,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
   @override
   void dispose() {
+    debugPrint('CreateOrderPage: dispose() called - widget being disposed');
     _disableAutoSave();
     _notesController.dispose();
     _settingsAnimationController.dispose();
@@ -1961,9 +1962,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     );
 
     if (tooltipMessage != null) {
+      debugPrint('CreateOrderPage: Creating tooltip for $label with message: $tooltipMessage');
       return Tooltip(
         message: tooltipMessage,
         preferBelow: false, // Show tooltip above the widget
+        onTriggered: () => debugPrint('CreateOrderPage: Tooltip triggered for $label'),
         child: column,
       );
     } else {
@@ -1975,7 +1978,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Opens a new page for selecting products with quantity controls
   void _navigateToProductSelection() async {
     try {
-      debugPrint('CreateOrderPage: Navigating to product selection page');
+      debugPrint('CreateOrderPage: Navigating to product selection page, mounted: $mounted');
 
       final result = await Navigator.of(context).push<List<CreateOrderProduct>>(
         MaterialPageRoute(
@@ -1988,6 +1991,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           ),
         ),
       );
+
+      debugPrint('CreateOrderPage: Navigation completed, mounted: $mounted, result: ${result?.length ?? 0}');
 
       // Handle the result from the product selection page
       if (result != null && result.isNotEmpty) {
@@ -2003,6 +2008,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         _enableAutoSave();
 
         // Show success message
+        debugPrint('CreateOrderPage: About to show success snackbar, mounted: $mounted');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -2010,6 +2016,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               backgroundColor: Colors.green,
             ),
           );
+          debugPrint('CreateOrderPage: Success snackbar shown');
+        } else {
+          debugPrint('CreateOrderPage: Widget not mounted, skipping success snackbar');
         }
       } else {
         debugPrint('CreateOrderPage: No products selected or operation cancelled');
@@ -2017,15 +2026,23 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     } catch (e, stackTrace) {
       debugPrint('CreateOrderPage: Error navigating to product selection: $e');
       debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+      debugPrint('CreateOrderPage: About to show error snackbar, mounted: $mounted');
 
       // Show error message
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Mahsulot tanlash sahifasiga o\'tishda xatolik yuz berdi'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        try {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Mahsulot tanlash sahifasiga o\'tishda xatolik yuz berdi'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+          debugPrint('CreateOrderPage: Error snackbar shown successfully');
+        } catch (snackbarError) {
+          debugPrint('CreateOrderPage: Error showing snackbar: $snackbarError');
+        }
+      } else {
+        debugPrint('CreateOrderPage: Widget not mounted, skipping error snackbar');
       }
     }
   }
@@ -2303,6 +2320,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('CreateOrderPage: build() called, mounted: $mounted');
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 

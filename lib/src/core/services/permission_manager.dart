@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 /// Custom permission status enum
 enum AppPermissionStatus {
@@ -20,6 +23,8 @@ enum AppPermissionType {
   camera,
   microphone,
   notification,
+  audio,
+  photosAndVideos,
 }
 
 /// Centralized permission manager for the application
@@ -27,6 +32,21 @@ class PermissionManager {
   static final PermissionManager _instance = PermissionManager._internal();
   factory PermissionManager() => _instance;
   PermissionManager._internal();
+
+  /// Check if device is Android 13 or higher
+  Future<bool> _isAndroid13OrHigher() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      final androidInfo = await deviceInfo.androidInfo;
+      return androidInfo.version.sdkInt >= 33;
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error checking Android version: $e');
+      }
+      return false;
+    }
+  }
 
   /// Check location permission status
   Future<AppPermissionStatus> checkLocationPermission() async {
@@ -48,11 +68,21 @@ class PermissionManager {
   /// Check storage permission status
   Future<AppPermissionStatus> checkStoragePermission() async {
     try {
-      final status = await Permission.storage.status;
-      if (kDebugMode) {
-        print('PermissionManager: Storage permission status: $status');
+      final isAndroid13OrHigher = await _isAndroid13OrHigher();
+      if (isAndroid13OrHigher) {
+        // For Android 13+, storage permission is not needed, SAF is used
+        if (kDebugMode) {
+          print('PermissionManager: Android 13+ detected, storage permission not required');
+        }
+        return AppPermissionStatus.granted;
+      } else {
+        // For Android < 13, use legacy storage permission
+        final status = await Permission.storage.status;
+        if (kDebugMode) {
+          print('PermissionManager: Storage permission status: $status');
+        }
+        return _mapToAppStatus(status);
       }
-      return _mapToAppStatus(status);
     } catch (e) {
       if (kDebugMode) {
         print('PermissionManager: Error checking storage permission: $e');
@@ -64,11 +94,32 @@ class PermissionManager {
   /// Request storage permission
   Future<AppPermissionStatus> requestStoragePermission() async {
     try {
-      final status = await Permission.storage.request();
-      if (kDebugMode) {
-        print('PermissionManager: Storage permission request result: $status');
+      final isAndroid13OrHigher = await _isAndroid13OrHigher();
+      if (isAndroid13OrHigher) {
+        // For Android 13+, use SAF directory picker
+        if (kDebugMode) {
+          print('PermissionManager: Android 13+ detected, using SAF directory picker');
+        }
+        final selectedDirectory = await FilePicker.platform.getDirectoryPath();
+        if (selectedDirectory != null) {
+          if (kDebugMode) {
+            print('PermissionManager: Directory selected: $selectedDirectory');
+          }
+          return AppPermissionStatus.granted;
+        } else {
+          if (kDebugMode) {
+            print('PermissionManager: Directory selection cancelled');
+          }
+          return AppPermissionStatus.denied;
+        }
+      } else {
+        // For Android < 13, use legacy storage permission
+        final status = await Permission.storage.request();
+        if (kDebugMode) {
+          print('PermissionManager: Storage permission request result: $status');
+        }
+        return _mapToAppStatus(status);
       }
-      return _mapToAppStatus(status);
     } catch (e) {
       if (kDebugMode) {
         print('PermissionManager: Error requesting storage permission: $e');
@@ -173,6 +224,108 @@ class PermissionManager {
     }
   }
 
+  /// Check audio permission status
+  Future<AppPermissionStatus> checkAudioPermission() async {
+    try {
+      final status = await Permission.audio.status;
+      if (kDebugMode) {
+        print('PermissionManager: Audio permission status: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error checking audio permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Request audio permission
+  Future<AppPermissionStatus> requestAudioPermission() async {
+    try {
+      final status = await Permission.audio.request();
+      if (kDebugMode) {
+        print('PermissionManager: Audio permission request result: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error requesting audio permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Check photos and videos permission status
+  Future<AppPermissionStatus> checkPhotosAndVideosPermission() async {
+    try {
+      final isAndroid13OrHigher = await _isAndroid13OrHigher();
+      PermissionStatus status;
+
+      if (Platform.isAndroid && isAndroid13OrHigher) {
+        // For Android 13+, use videos permission for photos and videos access
+        status = await Permission.videos.status;
+        if (kDebugMode) {
+          print('PermissionManager: Android 13+ videos permission status: $status');
+        }
+      } else if (Platform.isIOS) {
+        // For iOS, use photos permission
+        status = await Permission.photos.status;
+        if (kDebugMode) {
+          print('PermissionManager: iOS photos permission status: $status');
+        }
+      } else {
+        // For other platforms or older Android versions, consider as granted
+        if (kDebugMode) {
+          print('PermissionManager: Photos/videos permission not required for this platform');
+        }
+        return AppPermissionStatus.granted;
+      }
+
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error checking photos/videos permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Request photos and videos permission
+  Future<AppPermissionStatus> requestPhotosAndVideosPermission() async {
+    try {
+      final isAndroid13OrHigher = await _isAndroid13OrHigher();
+      PermissionStatus status;
+
+      if (Platform.isAndroid && isAndroid13OrHigher) {
+        // For Android 13+, request videos permission for photos and videos access
+        status = await Permission.videos.request();
+        if (kDebugMode) {
+          print('PermissionManager: Android 13+ videos permission request result: $status');
+        }
+      } else if (Platform.isIOS) {
+        // For iOS, request photos permission
+        status = await Permission.photos.request();
+        if (kDebugMode) {
+          print('PermissionManager: iOS photos permission request result: $status');
+        }
+      } else {
+        // For other platforms or older Android versions, consider as granted
+        if (kDebugMode) {
+          print('PermissionManager: Photos/videos permission not required for this platform');
+        }
+        return AppPermissionStatus.granted;
+      }
+
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error requesting photos/videos permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
   /// Check background location permission status
   Future<AppPermissionStatus> checkBackgroundLocationPermission() async {
     try {
@@ -224,6 +377,10 @@ class PermissionManager {
           return await checkMicrophonePermission();
         case AppPermissionType.notification:
           return await checkNotificationPermission();
+        case AppPermissionType.audio:
+          return await checkAudioPermission();
+        case AppPermissionType.photosAndVideos:
+          return await checkPhotosAndVideosPermission();
       }
     } catch (e) {
       if (kDebugMode) {
@@ -252,6 +409,10 @@ class PermissionManager {
           return await requestMicrophonePermission();
         case AppPermissionType.notification:
           return await requestNotificationPermission();
+        case AppPermissionType.audio:
+          return await requestAudioPermission();
+        case AppPermissionType.photosAndVideos:
+          return await requestPhotosAndVideosPermission();
       }
     } catch (e) {
       if (kDebugMode) {

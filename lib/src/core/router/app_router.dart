@@ -20,8 +20,10 @@ import 'package:gloria_marketing_flutter/src/features/packer/presentation/pages/
 import 'package:gloria_marketing_flutter/src/features/marketing/presentation/pages/marketing_page.dart';
 import 'package:gloria_marketing_flutter/src/features/warehouse_manager/presentation/pages/warehouse_manager_home_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/main_agent_screen.dart';
+import 'package:gloria_marketing_flutter/src/core/widgets/permission_check_page.dart';
 
 class AppRouter {
+  static const String permissionCheckRoute = '/permission-check';
   static const String loginRoute = '/';
   static const String agentHomeRoute = '/agent-home';
   static const String mainAgentScreenRoute = '/main-agent'; // New main screen route
@@ -45,6 +47,8 @@ class AppRouter {
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case permissionCheckRoute:
+        return MaterialPageRoute(builder: (_) => const PermissionCheckPage());
       case loginRoute:
         return MaterialPageRoute(builder: (_) => const LoginPage());
       case agentHomeRoute:

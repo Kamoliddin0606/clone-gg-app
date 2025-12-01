@@ -8,6 +8,7 @@ import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
+import 'package:gloria_marketing_flutter/src/core/widgets/permission_dialog.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_schemes.dart';
@@ -191,7 +192,7 @@ class _AppState extends State<App> {
                 themeMode: themeMode,
                 locale: localeProvider.locale,
                 onGenerateRoute: AppRouter.generateRoute,
-                initialRoute: AppRouter.loginRoute,
+                initialRoute: AppRouter.permissionCheckRoute,
                 localizationsDelegates: AppLocalizations.localizationsDelegates,
                 supportedLocales: AppLocalizations.supportedLocales,
               );

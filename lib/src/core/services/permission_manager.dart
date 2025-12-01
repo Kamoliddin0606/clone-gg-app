@@ -12,6 +12,16 @@ enum AppPermissionStatus {
   unknown
 }
 
+/// Permission types for the app
+enum AppPermissionType {
+  storage,
+  location,
+  locationAlways,
+  camera,
+  microphone,
+  notification,
+}
+
 /// Centralized permission manager for the application
 class PermissionManager {
   static final PermissionManager _instance = PermissionManager._internal();
@@ -33,6 +43,222 @@ class PermissionManager {
   /// Open app settings
   Future<bool> openAppSettings() async {
     return await openAppSettings();
+  }
+
+  /// Check storage permission status
+  Future<AppPermissionStatus> checkStoragePermission() async {
+    try {
+      final status = await Permission.storage.status;
+      if (kDebugMode) {
+        print('PermissionManager: Storage permission status: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error checking storage permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Request storage permission
+  Future<AppPermissionStatus> requestStoragePermission() async {
+    try {
+      final status = await Permission.storage.request();
+      if (kDebugMode) {
+        print('PermissionManager: Storage permission request result: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error requesting storage permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Check camera permission status
+  Future<AppPermissionStatus> checkCameraPermission() async {
+    try {
+      final status = await Permission.camera.status;
+      if (kDebugMode) {
+        print('PermissionManager: Camera permission status: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error checking camera permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Request camera permission
+  Future<AppPermissionStatus> requestCameraPermission() async {
+    try {
+      final status = await Permission.camera.request();
+      if (kDebugMode) {
+        print('PermissionManager: Camera permission request result: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error requesting camera permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Check microphone permission status
+  Future<AppPermissionStatus> checkMicrophonePermission() async {
+    try {
+      final status = await Permission.microphone.status;
+      if (kDebugMode) {
+        print('PermissionManager: Microphone permission status: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error checking microphone permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Request microphone permission
+  Future<AppPermissionStatus> requestMicrophonePermission() async {
+    try {
+      final status = await Permission.microphone.request();
+      if (kDebugMode) {
+        print('PermissionManager: Microphone permission request result: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error requesting microphone permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Check notification permission status
+  Future<AppPermissionStatus> checkNotificationPermission() async {
+    try {
+      final status = await Permission.notification.status;
+      if (kDebugMode) {
+        print('PermissionManager: Notification permission status: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error checking notification permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Request notification permission
+  Future<AppPermissionStatus> requestNotificationPermission() async {
+    try {
+      final status = await Permission.notification.request();
+      if (kDebugMode) {
+        print('PermissionManager: Notification permission request result: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error requesting notification permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Check background location permission status
+  Future<AppPermissionStatus> checkBackgroundLocationPermission() async {
+    try {
+      final status = await Permission.locationAlways.status;
+      if (kDebugMode) {
+        print('PermissionManager: Background location permission status: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error checking background location permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Request background location permission
+  Future<AppPermissionStatus> requestBackgroundLocationPermission() async {
+    try {
+      final status = await Permission.locationAlways.request();
+      if (kDebugMode) {
+        print('PermissionManager: Background location permission request result: $status');
+      }
+      return _mapToAppStatus(status);
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error requesting background location permission: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Check permission status for a specific type
+  Future<AppPermissionStatus> checkPermission(AppPermissionType type) async {
+    try {
+      if (kDebugMode) {
+        print('PermissionManager: Checking permission for type: $type');
+      }
+      switch (type) {
+        case AppPermissionType.storage:
+          return await checkStoragePermission();
+        case AppPermissionType.location:
+          return await checkLocationPermission();
+        case AppPermissionType.locationAlways:
+          return await checkBackgroundLocationPermission();
+        case AppPermissionType.camera:
+          return await checkCameraPermission();
+        case AppPermissionType.microphone:
+          return await checkMicrophonePermission();
+        case AppPermissionType.notification:
+          return await checkNotificationPermission();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error checking permission for type $type: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
+  }
+
+  /// Request permission for a specific type
+  Future<AppPermissionStatus> requestPermission(AppPermissionType type) async {
+    try {
+      if (kDebugMode) {
+        print('PermissionManager: Requesting permission for type: $type');
+      }
+      switch (type) {
+        case AppPermissionType.storage:
+          return await requestStoragePermission();
+        case AppPermissionType.location:
+          return await requestLocationPermission();
+        case AppPermissionType.locationAlways:
+          return await requestBackgroundLocationPermission();
+        case AppPermissionType.camera:
+          return await requestCameraPermission();
+        case AppPermissionType.microphone:
+          return await requestMicrophonePermission();
+        case AppPermissionType.notification:
+          return await requestNotificationPermission();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error requesting permission for type $type: $e');
+      }
+      return AppPermissionStatus.unknown;
+    }
   }
 
   /// Show location permission dialog with service check

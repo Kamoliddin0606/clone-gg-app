@@ -1662,26 +1662,34 @@ class TradingPointCard extends StatelessWidget {
     ];
   }
 
+  /// Builds the distance display widget for list view items.
+  /// Shows distance in meters for distances less than 1km, otherwise in kilometers.
+  /// Example: 0.9km displays as "900m", 1.5km displays as "1.5km"
   Widget _buildDistanceDisplayForList(BuildContext context, TradingPoint tp, LocationService locationService) {
+    // Debug logging for distance calculation
     print("tp.latitude: ${tp.latitude}, tp.longitude: ${tp.longitude} ${tp.name}");
     final distance = locationService.getDistanceToTradingPoint(tp.latitude, tp.longitude);
     print('Trading points distance ${distance}');
+
+    // Return empty widget if distance cannot be calculated
     if (distance == null) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    // Format distance as specified: "2.1km" format
+    // Format distance: show in meters for <1km, km for >=1km
     String distanceText;
     if (distance < 1.0) {
-      // For distances under 1km, show in meters but format as km with decimal
-      distanceText = '${distance.toStringAsFixed(1)}km';
-    } else if (distance < 10.0) {
-      distanceText = '${distance.toStringAsFixed(1)}km';
+      // Convert km to meters and round to nearest integer for better readability
+      final meters = (distance * 1000).round();
+      distanceText = '${meters}m';
     } else {
+      // Show distance in kilometers with one decimal place
       distanceText = '${distance.toStringAsFixed(1)}km';
     }
+
     print('distanceText: $distanceText');
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -2281,18 +2289,21 @@ class _TradingPointGridTile extends StatelessWidget {
     );
   }
 
-  /// Build distance overlay for image bottom-right corner
+  /// Builds distance overlay widget for grid view image bottom-right corner.
+  /// Shows distance in meters for distances less than 1km, otherwise in kilometers.
+  /// Example: 0.9km displays as "900m", 1.5km displays as "1.5km"
   Widget _buildDistanceOverlay(TradingPoint tp, LocationService locationService) {
     final distance = locationService.getDistanceToTradingPoint(tp.latitude, tp.longitude);
     if (distance == null) return const SizedBox.shrink();
 
-    // Format distance as specified: "2.1km" format
+    // Format distance: show in meters for <1km, km for >=1km
     String distanceText;
     if (distance < 1.0) {
-      distanceText = '${distance.toStringAsFixed(1)}km';
-    } else if (distance < 10.0) {
-      distanceText = '${distance.toStringAsFixed(1)}km';
+      // Convert km to meters and round to nearest integer for better readability
+      final meters = (distance * 1000).round();
+      distanceText = '${meters}m';
     } else {
+      // Show distance in kilometers with one decimal place
       distanceText = '${distance.toStringAsFixed(1)}km';
     }
 

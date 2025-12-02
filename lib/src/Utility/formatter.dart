@@ -70,3 +70,19 @@ bool matchesSearch(String text, String query) {
   final queries = normalizedQuery.split('|');
   return queries.any((q) => normalizedText.contains(q));
 }
+
+/// Formats distance for display in UI.
+/// Shows distance in meters for distances less than 1km, otherwise in kilometers.
+/// Example: 0.9km displays as "900m", 1.5km displays as "1.5km"
+String formatDistance(double? distanceKm) {
+  if (distanceKm == null) return '';
+
+  if (distanceKm < 1.0) {
+    // Convert km to meters and round to nearest integer
+    final meters = (distanceKm * 1000).round();
+    return '${meters}m';
+  } else {
+    // Show distance in kilometers with one decimal place
+    return '${distanceKm.toStringAsFixed(1)}km';
+  }
+}

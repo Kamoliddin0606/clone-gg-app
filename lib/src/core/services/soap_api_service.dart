@@ -1183,6 +1183,62 @@ class SoapApiService {
     }
   }
 
+  /// Generate SOAP request XML for setOrder method (for debugging/display purposes)
+  String generateSetOrderSoapRequest(CreateOrder order) {
+    final productsXml = order.products.map((product) {
+      return '''
+      <m:Product>
+        <m:CodeProduct>${product.codeProduct}</m:CodeProduct>
+        <m:NameProduct></m:NameProduct>
+        <m:Amount>${product.amount}</m:Amount>
+        <m:Price>${product.price}</m:Price>
+        <m:Total>${product.total}</m:Total>
+        <m:Weight>${product.weight}</m:Weight>
+        <m:Capacity>${product.capacity}</m:Capacity>
+        <m:PaymentType>${product.paymentType}</m:PaymentType>
+        <m:DiscountSum>${product.discountSum}</m:DiscountSum>
+        <m:DiscountRate>${product.discountRate}</m:DiscountRate>
+        <m:GiftAmount>${product.giftAmount}</m:GiftAmount>
+        <m:Promo>${product.promo}</m:Promo>
+        <m:VendorCode>${product.vendorCode}</m:VendorCode>
+      </m:Product>''';
+    }).join('\n');
+
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+  <soap:Header/>
+  <soap:Body>
+    <sam:setOrder>
+      <sam:CodeAgent>${order.codeAgent}</sam:CodeAgent>
+      <sam:CodeClient>${order.codeClient}</sam:CodeClient>
+      <sam:CodePrice>${order.codePrice}</sam:CodePrice>
+      <sam:Payment>${order.payment}</sam:Payment>
+      <sam:ShippingDate>${order.shippingDate.toIso8601String()}</sam:ShippingDate>
+      <sam:CommentSupervisor>${order.commentSupervisor ?? ''}</sam:CommentSupervisor>
+      <sam:CommentForwarder>${order.commentForwarder ?? ''}</sam:CommentForwarder>
+      <sam:Comment>${order.comment ?? ''}</sam:Comment>
+      <sam:CreateDate>${order.createDate.toIso8601String()}</sam:CreateDate>
+      <sam:Longitude>${order.longitude}</sam:Longitude>
+      <sam:Latitude>${order.latitude}</sam:Latitude>
+      <sam:Weight>${order.weight}</sam:Weight>
+      <sam:Capacity>${order.capacity}</sam:Capacity>
+      <sam:Credit>${order.credit ? 1 : 0}</sam:Credit>
+      <sam:CodeProject>${order.codeProject}</sam:CodeProject>
+      <sam:OrderType>${order.orderType}</sam:OrderType>
+      <sam:CodeOrg>${order.codeOrg}</sam:CodeOrg>
+      <sam:CodeSklad>${order.codeSklad}</sam:CodeSklad>
+      <sam:CodeContract>${order.codeContract ?? ''}</sam:CodeContract>
+      <sam:HasPromo>${order.hasPromo}</sam:HasPromo>
+      <sam:Products>
+        $productsXml
+      </sam:Products>
+    </sam:setOrder>
+  </soap:Body>
+</soap:Envelope>''';
+
+    return soapEnvelope.trim();
+  }
+
   /// Get order list
   Future<List<Order>> getOrderList({
     required String userCode,
@@ -1740,16 +1796,22 @@ class SoapApiService {
         throw Exception('Server javobi bo\'sh');
       }
 
-      // Parse response - assuming success if no error elements
-      final result = _getElementText(returnElement, 'm:result') ?? 'Success';
+      // Parse response fields as per API specification
+      final code = int.tryParse(_getElementText(returnElement, 'm:Code') ?? '0') ?? 0;
+      final message = _getElementText(returnElement, 'm:Message') ?? '';
+      final codeOrder = _getElementText(returnElement, 'm:CodeOrder') ?? '';
+      final rows = _getElementText(returnElement, 'm:Rows') ?? '';
 
       if (kDebugMode) {
-        print('SOAP API: SetOrder request completed successfully');
+        print('SOAP API: SetOrder response - Code: $code, Message: $message, CodeOrder: $codeOrder');
       }
 
       return {
-        'success': true,
-        'result': result,
+        'success': code == 0, // Code 0 indicates success
+        'code': code,
+        'message': message,
+        'codeOrder': codeOrder,
+        'rows': rows,
         'orderId': order.id,
       };
     } catch (e) {

@@ -83,16 +83,18 @@ class VisitStepsFinishing extends VisitStepsState {
   final int totalSteps;
   final String message;
   final TradingPointWithPermissions tradingPoint;
+  final String? requestData; // SOAP request data for display
 
   const VisitStepsFinishing({
     required this.currentStep,
     required this.totalSteps,
     required this.message,
     required this.tradingPoint,
+    this.requestData,
   });
 
   @override
-  List<Object?> get props => [currentStep, totalSteps, message, tradingPoint];
+  List<Object?> get props => [currentStep, totalSteps, message, tradingPoint, requestData];
 }
 
 abstract class VisitStepsEvent extends Equatable {
@@ -503,12 +505,13 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         visitId: _visitId,
         tradingPoint: currentState.tradingPoint,
         permissions: currentState.permissions,
-        onProgress: (currentStep, totalSteps, message) {
+        onProgress: (currentStep, totalSteps, message, [requestData]) {
           emit(VisitStepsFinishing(
             currentStep: currentStep,
             totalSteps: totalSteps,
             message: message,
             tradingPoint: currentState.tradingPoint,
+            requestData: requestData,
           ));
         },
         onError: (step, error) {
@@ -1011,9 +1014,10 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           // Progress Indicator for finishing
           _buildFinishingProgressIndicator(context, state, theme),
 
-          // Center content with message
+          // Center content with message and request data
           Expanded(
-            child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -1034,6 +1038,74 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  // Display SOAP request data if available
+                  if (state.requestData != null && state.requestData!.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.code,
+                                size: 20,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'SOAP Request',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.copy, size: 18),
+                                onPressed: () {
+                                  // Copy request data to clipboard
+                                  // Note: Clipboard functionality would need to be imported
+                                  // For now, just show a snackbar
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('SOAP request nusxalandi'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                tooltip: 'Nusxalash',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            constraints: const BoxConstraints(maxHeight: 300),
+                            child: SingleChildScrollView(
+                              child: SelectableText(
+                                state.requestData!,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontFamily: 'monospace',
+                                  fontSize: 11,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

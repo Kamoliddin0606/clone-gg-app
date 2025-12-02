@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 
 /// Service for handling visit completion process
@@ -22,7 +25,7 @@ class VisitFinishService {
   /// - visitId: Unique identifier for the visit session
   /// - tradingPoint: Trading point information
   /// - permissions: Sales requirements permissions containing visit steps
-  /// - onProgress: Callback for progress updates (stepIndex, totalSteps, message)
+  /// - onProgress: Callback for progress updates (stepIndex, totalSteps, message, requestData)
   /// - onError: Callback for error notifications (step, error)
   ///
   /// Returns: true if all steps completed successfully, false otherwise
@@ -30,7 +33,7 @@ class VisitFinishService {
     required String visitId,
     required TradingPointWithPermissions tradingPoint,
     required SalesReqPermissions permissions,
-    required Function(int currentStep, int totalSteps, String message) onProgress,
+    required Function(int currentStep, int totalSteps, String message, [String? requestData]) onProgress,
     required Function(VisitStep step, String error) onError,
   }) async {
     try {
@@ -86,7 +89,7 @@ class VisitFinishService {
             visitId: visitId,
             step: orderStep,
             tradingPoint: tradingPoint,
-            onProgress: (message) => onProgress(1, totalSteps, message),
+            onProgress: (message, [requestData]) => onProgress(1, totalSteps, message, requestData),
           );
 
           if (!success) {
@@ -136,7 +139,7 @@ class VisitFinishService {
             visitId: visitId,
             step: step,
             tradingPoint: tradingPoint,
-            onProgress: (message) => onProgress(stepCounter, totalSteps, message),
+            onProgress: (message, [requestData]) => onProgress(stepCounter, totalSteps, message, requestData),
           );
 
           if (!success) {
@@ -203,7 +206,7 @@ class VisitFinishService {
     required String visitId,
     required VisitStep step,
     required TradingPointWithPermissions tradingPoint,
-    required Function(String message) onProgress,
+    required Function(String message, [String? requestData]) onProgress,
   }) async {
     try {
       debugPrint('VisitFinishService: Processing step ${step.stepCode} (${step.stepName})');
@@ -342,23 +345,100 @@ class VisitFinishService {
   }
 
   /// Processes create order step
-  /// Placeholder implementation - actual server call to be added
+  /// Parses order data from VisitData and sends to server via SoapApiService.setOrder
+  /// Handles server response with Code, Message, CodeOrder, Rows validation
   Future<bool> _processCreateOrderStep({
     required String visitId,
     required VisitStep step,
     required VisitData data,
     required TradingPointWithPermissions tradingPoint,
-    required Function(String message) onProgress,
+    required Function(String message, [String? requestData]) onProgress,
   }) async {
-    onProgress('Buyurtmani serverga yuborish...');
+    try {
+      debugPrint('VisitFinishService: Starting order creation process for visitId: $visitId');
 
-    // TODO: Implement actual server call for order creation
-    // Example: await apiService.sendOrderData(data.dataContent);
+      onProgress('Buyurtma ma\'lumotlarini tayyorlash...');
 
-    await Future.delayed(const Duration(milliseconds: 500));
+      // Parse VisitData.dataContent into CreateOrder
+      final orderData = jsonDecode(data.dataContent) as Map<String, dynamic>;
+      debugPrint('VisitFinishService: Parsed order data keys: ${orderData.keys.toList()}');
 
-    onProgress('Buyurtma muvaffaqiyatli yuborildi');
-    return true;
+      // Extract order details from parsed data
+      final order = CreateOrder(
+        codeAgent: orderData['codeAgent'] ?? '',
+        codeClient: orderData['codeClient'] ?? '',
+        codePrice: orderData['codePrice'] ?? '',
+        payment: orderData['payment'] ?? '',
+        shippingDate: DateTime.parse(orderData['shippingDate'] ?? DateTime.now().toIso8601String()),
+        commentSupervisor: orderData['commentSupervisor'],
+        commentForwarder: orderData['commentForwarder'],
+        comment: orderData['comment'],
+        createDate: DateTime.parse(orderData['createDate'] ?? DateTime.now().toIso8601String()),
+        longitude: (orderData['longitude'] as num?)?.toDouble() ?? 0.0,
+        latitude: (orderData['latitude'] as num?)?.toDouble() ?? 0.0,
+        weight: (orderData['weight'] as num?)?.toDouble() ?? 0.0,
+        capacity: (orderData['capacity'] as num?)?.toDouble() ?? 0.0,
+        credit: orderData['credit'] ?? false,
+        codeProject: orderData['codeProject'] ?? '',
+        orderType: (orderData['orderType'] as num?)?.toInt() ?? 0,
+        codeOrg: orderData['codeOrg'] ?? '',
+        codeSklad: orderData['codeSklad'] ?? '',
+        codeContract: orderData['codeContract'],
+        hasPromo: orderData['hasPromo'] ?? false,
+        products: (orderData['products'] as List<dynamic>?)
+            ?.map((p) => CreateOrderProduct.fromJson(p as Map<String, dynamic>))
+            .toList() ?? [],
+        competitiveIntelligence: (orderData['competitiveIntelligence'] as List<dynamic>?)
+            ?.map((ci) => CompetitiveIntelligence.fromJson(ci as Map<String, dynamic>))
+            .toList() ?? [],
+        creditDetails: (orderData['creditDetails'] as List<dynamic>?)
+            ?.map((cd) => CreditDetail.fromJson(cd as Map<String, dynamic>))
+            .toList() ?? [],
+      );
+
+      debugPrint('VisitFinishService: Created order with ${order.products.length} products, total weight: ${order.weight}, capacity: ${order.capacity}');
+
+      // Get SoapApiService instance from service locator
+      final soapApiService = sl<SoapApiService>();
+      debugPrint('VisitFinishService: Obtained SoapApiService instance');
+
+      // Generate SOAP request XML for display
+      final soapRequest = soapApiService.generateSetOrderSoapRequest(order);
+      debugPrint('VisitFinishService: Generated SOAP request for display');
+
+      // Send progress update with request data
+      onProgress('Buyurtmani serverga yuborish...', soapRequest);
+
+      // Send order to server
+      final response = await soapApiService.setOrder(order: order);
+      debugPrint('VisitFinishService: Received response from setOrder: $response');
+
+      // Handle server response
+      final code = response['code'] as int;
+      final message = response['message'] as String;
+      final codeOrder = response['codeOrder'] as String;
+      final rows = response['rows'] as String;
+
+      debugPrint('VisitFinishService: Server response - Code: $code, Message: $message, CodeOrder: $codeOrder');
+
+      if (code == 0) {
+        // Success
+        debugPrint('VisitFinishService: Order creation successful - CodeOrder: $codeOrder');
+        onProgress('Buyurtma muvaffaqiyatli yaratildi (raqam: $codeOrder)');
+        return true;
+      } else {
+        // Error
+        debugPrint('VisitFinishService: Order creation failed - Code: $code, Message: $message');
+        onProgress('Buyurtma yaratishda xatolik: $message');
+        return false;
+      }
+
+    } catch (e, stackTrace) {
+      debugPrint('VisitFinishService: Error in _processCreateOrderStep: $e');
+      debugPrint('VisitFinishService: Stack trace: $stackTrace');
+      onProgress('Buyurtma yuborishda xatolik yuz berdi');
+      return false;
+    }
   }
 
   /// Processes photo facing after step

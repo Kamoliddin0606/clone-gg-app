@@ -11,6 +11,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/visit_finish_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/photo_facing_before_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/shelf_audit_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/competitor_audit_page.dart';
@@ -75,6 +76,23 @@ class VisitStepsCompleted extends VisitStepsState {
 
   @override
   List<Object?> get props => [tradingPoint];
+}
+
+class VisitStepsFinishing extends VisitStepsState {
+  final int currentStep;
+  final int totalSteps;
+  final String message;
+  final TradingPointWithPermissions tradingPoint;
+
+  const VisitStepsFinishing({
+    required this.currentStep,
+    required this.totalSteps,
+    required this.message,
+    required this.tradingPoint,
+  });
+
+  @override
+  List<Object?> get props => [currentStep, totalSteps, message, tradingPoint];
 }
 
 abstract class VisitStepsEvent extends Equatable {
@@ -170,13 +188,16 @@ enum VisitStepStatus {
 class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   final DataSyncService _dataSyncService;
   final VisitDataRepository _visitDataRepository;
+  final VisitFinishService _visitFinishService;
   late String _visitId; // Unique identifier for this visit session
 
   VisitStepsBloc({
     required DataSyncService dataSyncService,
     required VisitDataRepository visitDataRepository,
+    required VisitFinishService visitFinishService,
   }) : _dataSyncService = dataSyncService,
         _visitDataRepository = visitDataRepository,
+        _visitFinishService = visitFinishService,
         super(VisitStepsInitial()) {
     on<LoadVisitSteps>(_onLoadVisitSteps);
     on<CompleteStep>(_onCompleteStep);
@@ -476,10 +497,35 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       return;
     }
 
-    // TODO: Save visit data to database/server
-    // await _saveVisitData(currentState);
+    // Start finishing process with progress updates
+    try {
+      final success = await _visitFinishService.finishVisit(
+        visitId: _visitId,
+        tradingPoint: currentState.tradingPoint,
+        permissions: currentState.permissions,
+        onProgress: (currentStep, totalSteps, message) {
+          emit(VisitStepsFinishing(
+            currentStep: currentStep,
+            totalSteps: totalSteps,
+            message: message,
+            tradingPoint: currentState.tradingPoint,
+          ));
+        },
+        onError: (step, error) {
+          emit(VisitStepsError('Bosqichda xatolik: ${step.stepName} - $error'));
+        },
+      );
 
-    emit(VisitStepsCompleted(currentState.tradingPoint));
+      if (success) {
+        emit(VisitStepsCompleted(currentState.tradingPoint));
+      }
+      // Error already emitted by onError callback
+
+    } catch (e, stackTrace) {
+      debugPrint('VisitStepsBloc: Error finishing visit: $e');
+      debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
+      emit(VisitStepsError('Tashrifni yakunlashda xatolik yuz berdi: ${e.toString()}'));
+    }
   }
 
   Future<void> _onCancelVisit(
@@ -790,6 +836,7 @@ class VisitStepsPage extends StatelessWidget {
       create: (context) => VisitStepsBloc(
         dataSyncService: sl<DataSyncService>(),
         visitDataRepository: VisitDataRepository(sl<ApiDatabaseService>()),
+        visitFinishService: VisitFinishService(VisitDataRepository(sl<ApiDatabaseService>())),
       )..add(LoadVisitSteps(tradingPoint)),
       child: VisitStepsView(tradingPoint: tradingPoint),
     );
@@ -858,40 +905,44 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           }
         },
         builder: (context, state) {
-          if (state is VisitStepsLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+           if (state is VisitStepsLoading) {
+             return const Center(child: CircularProgressIndicator());
+           }
 
-          if (state is VisitStepsLoaded) {
-            return _buildLoadedView(context, state, theme, l10n);
-          }
+           if (state is VisitStepsLoaded) {
+             return _buildLoadedView(context, state, theme, l10n);
+           }
 
-          if (state is VisitStepsError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    state.message,
-                    style: theme.textTheme.titleMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () {
-                      context.read<VisitStepsBloc>().add(LoadVisitSteps(widget.tradingPoint));
-                    },
-                    child: Text(l10n.retry),
-                  ),
-                ],
-              ),
-            );
-          }
+           if (state is VisitStepsFinishing) {
+             return _buildFinishingView(context, state, theme, l10n);
+           }
 
-          return Center(child: Text(l10n.unknownState));
-        },
+           if (state is VisitStepsError) {
+             return Center(
+               child: Column(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: [
+                   const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                   const SizedBox(height: 16),
+                   Text(
+                     state.message,
+                     style: theme.textTheme.titleMedium,
+                     textAlign: TextAlign.center,
+                   ),
+                   const SizedBox(height: 16),
+                   FilledButton(
+                     onPressed: () {
+                       context.read<VisitStepsBloc>().add(LoadVisitSteps(widget.tradingPoint));
+                     },
+                     child: Text(l10n.retry),
+                   ),
+                 ],
+               ),
+             );
+           }
+
+           return Center(child: Text(l10n.unknownState));
+         },
       ),
     );
   }
@@ -928,6 +979,65 @@ class _VisitStepsViewState extends State<VisitStepsView> {
 
           // Action Buttons
           _buildActionButtons(context, state, theme, l10n),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFinishingView(
+    BuildContext context,
+    VisitStepsFinishing state,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    final progress = state.totalSteps > 0 ? state.currentStep / state.totalSteps : 0.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary.withOpacity(0.08),
+            theme.colorScheme.primaryContainer.withOpacity(0.06),
+          ],
+        ),
+      ),
+      child: Column(
+        children: [
+          // Client Header
+          _buildClientHeaderFinishing(context, state, theme),
+
+          // Progress Indicator for finishing
+          _buildFinishingProgressIndicator(context, state, theme),
+
+          // Center content with message
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 24),
+                  Text(
+                    state.message,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '${state.currentStep} / ${state.totalSteps} bosqich',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1008,6 +1118,102 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClientHeaderFinishing(BuildContext context, VisitStepsFinishing state, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: theme.colorScheme.primaryContainer,
+            child: Text(
+              state.tradingPoint.tradingPoint.name.isNotEmpty
+                  ? state.tradingPoint.tradingPoint.name.characters.first.toUpperCase()
+                  : '?',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  state.tradingPoint.tradingPoint.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tashrif yakunlanmoqda...',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFinishingProgressIndicator(BuildContext context, VisitStepsFinishing state, ThemeData theme) {
+    final progress = state.totalSteps > 0 ? state.currentStep / state.totalSteps : 0.0;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Tashrifni yakunlash',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                '${state.currentStep} / ${state.totalSteps}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: progress,
+            backgroundColor: theme.colorScheme.outlineVariant,
+            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
           ),
         ],
       ),

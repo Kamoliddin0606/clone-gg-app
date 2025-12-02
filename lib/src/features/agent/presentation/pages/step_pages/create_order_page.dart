@@ -238,9 +238,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         selectedWarehousecode: _selectedWarehousecode ?? '',
         selectedPriceTypecode: _selectedPriceTypecode ?? '',
         shippingDate: _shippingDate ?? DateTime.now(),
+        clientCode: widget.tradingPoint.tradingPoint.id,
       );
       _isAutoSaveEnabled = true;
-      debugPrint('CreateOrderPage: Auto-save enabled for visit ${widget.visitId}, step ${widget.stepCode}');
+      debugPrint('CreateOrderPage: Auto-save enabled for visit ${widget.visitId}, step ${widget.stepCode} with clientCode: ${widget.tradingPoint.tradingPoint.id}');
     }
   }
 

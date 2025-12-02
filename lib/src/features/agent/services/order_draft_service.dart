@@ -19,6 +19,7 @@ class OrderDraftService {
   static const Duration _autoSaveInterval = Duration(seconds: 30);
   Timer? _autoSaveTimer;
   bool _isAutoSaveEnabled = false;
+  String? _autoSaveClientCode;
 
   // App lifecycle management
   WidgetsBindingObserver? _lifecycleObserver;
@@ -62,8 +63,10 @@ class OrderDraftService {
     required String selectedWarehousecode,
     required String selectedPriceTypecode,
     required DateTime shippingDate,
+    required String clientCode,
   }) {
     _isAutoSaveEnabled = true;
+    _autoSaveClientCode = clientCode;
 
     // Cancel existing timer
     _autoSaveTimer?.cancel();
@@ -88,7 +91,7 @@ class OrderDraftService {
       }
     });
 
-    debugPrint('OrderDraftService: Auto-save enabled for visit $visitId, step $stepCode');
+    debugPrint('OrderDraftService: Auto-save enabled for visit $visitId, step $stepCode with clientCode: $clientCode');
   }
 
   /// Disable automatic saving
@@ -123,9 +126,13 @@ class OrderDraftService {
       _isSaving = true;
       debugPrint('OrderDraftService: Performing auto-save...');
 
+      // Get clientCode from stored auto-save data
+      final clientCode = _autoSaveClientCode ?? '';
+      debugPrint('OrderDraftService: Auto-save using clientCode: "$clientCode"');
+
       await saveOrderDraft(
         visitId: visitId,
-        clientCode: '', // Will be determined from context
+        clientCode: clientCode,
         stepCode: stepCode,
         stepName: stepName,
         selectedOrganization: selectedOrganization,

@@ -68,6 +68,7 @@ void main() {
         selectedWarehousecode: 'WH001',
         selectedPriceTypecode: 'PRICE001',
         shippingDate: DateTime.now(),
+        clientCode: 'CLIENT001',
       );
 
       final status = draftService.getSaveStatus();
@@ -88,6 +89,7 @@ void main() {
         selectedWarehousecode: 'WH001',
         selectedPriceTypecode: 'PRICE001',
         shippingDate: DateTime.now(),
+        clientCode: 'CLIENT001',
       );
 
       draftService.disableAutoSave();
@@ -227,6 +229,7 @@ void main() {
         selectedWarehousecode: 'WH001',
         selectedPriceTypecode: 'PRICE001',
         shippingDate: DateTime.now(),
+        clientCode: 'CLIENT001',
       );
 
       // First save should start

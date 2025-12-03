@@ -11,8 +11,3 @@
 6. Yakunlash va test: Vazifa yakunlangach, chuqur tahlil o'tkazib, kodning ishlashini tekshir. Unit testlar va integration testlar yozib, funksionallikni (masalan, bosqichlar ketma-ketligi, progress bar, error handling) tekshir. Agar kerak bo'lsa, edge case'lar (masalan, network xatoliklar, bo'sh ma'lumotlar) uchun testlar qo'sh.
 
 
-soap_api_service.dart order_creation_service.dart
-visit_finish_service.dart
-order_draft_service.dart
-visit_steps_page.dart
-create_order_page.dart  fayllarni chuqur tahlil qil.  setOrder orqali yuboriladigan xml shablonda CreateDate va ShippingDate malumotlari string da bo'lishi va 2025-12-03T19:11:10.360367 shu ko'rinishdagi sanani 20251203 ko'rinishda yuborish va malumot turi  string.

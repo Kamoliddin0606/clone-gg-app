@@ -1145,6 +1145,17 @@ class SoapApiService {
     }
   }
 
+  /// Helper method to format DateTime to YYYYMMDD string format
+  /// This method converts a DateTime object to a string in the format required by the server API
+  /// Format: YYYYMMDD (e.g., "20251203" for December 3, 2025)
+  /// Used for CreateDate and ShippingDate fields in setOrder XML requests
+  String _formatDateForApi(DateTime dateTime) {
+    final year = dateTime.year.toString();
+    final month = dateTime.month.toString().padLeft(2, '0');
+    final day = dateTime.day.toString().padLeft(2, '0');
+    return '$year$month$day';
+  }
+
   /// Get order status list
   Future<List<OrderStatus>> getOrderStatusList({
     required String userCode,
@@ -1211,11 +1222,13 @@ class SoapApiService {
       <sam:CodeClient>${order.codeClient}</sam:CodeClient>
       <sam:CodePrice>${order.codePrice}</sam:CodePrice>
       <sam:Payment>${order.payment}</sam:Payment>
-      <sam:ShippingDate>${order.shippingDate.toIso8601String()}</sam:ShippingDate>
+      <!-- ShippingDate formatted as YYYYMMDD string (e.g., "20251203") as required by server API -->
+      <sam:ShippingDate>${_formatDateForApi(order.shippingDate)}</sam:ShippingDate>
       <sam:CommentSupervisor>${order.commentSupervisor ?? ''}</sam:CommentSupervisor>
       <sam:CommentForwarder>${order.commentForwarder ?? ''}</sam:CommentForwarder>
       <sam:Comment>${order.comment ?? ''}</sam:Comment>
-      <sam:CreateDate>${order.createDate.toIso8601String()}</sam:CreateDate>
+      <!-- CreateDate formatted as YYYYMMDD string (e.g., "20251203") as required by server API -->
+      <sam:CreateDate>${_formatDateForApi(order.createDate)}</sam:CreateDate>
       <sam:Longitude>${order.longitude}</sam:Longitude>
       <sam:Latitude>${order.latitude}</sam:Latitude>
       <sam:Weight>${order.weight}</sam:Weight>
@@ -1725,9 +1738,12 @@ class SoapApiService {
       </sam:Rows>
     ''').join();
 
+    // Generate XML for credit details with dates formatted as YYYYMMDD strings
+    // DateOfPayment is formatted using _formatDateForApi to match server API requirements
     final creditDetailsXml = order.creditDetails.map((cd) => '''
       <sam:Rows>
-         <sam:DateOfPayment>${cd.dateOfPayment.toIso8601String().split('T')[0]}</sam:DateOfPayment>
+         <!-- DateOfPayment formatted as YYYYMMDD string (e.g., "20251203") as required by server API -->
+         <sam:DateOfPayment>${_formatDateForApi(cd.dateOfPayment)}</sam:DateOfPayment>
          <sam:Total>${cd.total}</sam:Total>
       </sam:Rows>
     ''').join();
@@ -1744,14 +1760,14 @@ class SoapApiService {
          <sam:ProductsList>
             $productsXml
          </sam:ProductsList>
-         <sam:ShippingDate>${order.shippingDate.toIso8601String().split('T')[0]}</sam:ShippingDate>
+         <sam:ShippingDate>${_formatDateForApi(order.shippingDate)}</sam:ShippingDate>
          <sam:CommentSupervisor>${order.commentSupervisor ?? ''}</sam:CommentSupervisor>
          <sam:CommentForwarder>${order.commentForwarder ?? ''}</sam:CommentForwarder>
          <sam:Comment>${order.comment ?? ''}</sam:Comment>
          <sam:CompetitiveIintelligenceList>
             $competitiveIntelligenceXml
          </sam:CompetitiveIintelligenceList>
-         <sam:CreateDate>${order.createDate.toIso8601String().split('T')[0]}</sam:CreateDate>
+         <sam:CreateDate>${_formatDateForApi(order.createDate)}</sam:CreateDate>
          <sam:Longitude>${order.longitude}</sam:Longitude>
          <sam:Latitude>${order.latitude}</sam:Latitude>
          <sam:Weight>${order.weight}</sam:Weight>

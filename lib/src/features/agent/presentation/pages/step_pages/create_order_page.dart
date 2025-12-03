@@ -387,14 +387,17 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       // Set default selections based on loaded data (only if no saved data)
       if (_selectedOrganization == null && _organizations.isNotEmpty) {
         _selectedOrganization = _organizations.first.code;
+        _selectedOrganizationcode = _organizations.first.code; // Set default organization code
         debugPrint('CreateOrderPage: Default organization set to: $_selectedOrganization');
       }
       if (_selectedWarehouse == null && _warehouses.isNotEmpty) {
         _selectedWarehouse = _warehouses.first.code;
+        _selectedWarehousecode = _warehouses.first.code; // Set default warehouse code
         debugPrint('CreateOrderPage: Default warehouse set to: $_selectedWarehouse');
       }
       if (_selectedPriceType == null && _priceTypes.isNotEmpty) {
         _selectedPriceType = _priceTypes.first.code;
+        _selectedPriceTypecode = _priceTypes.first.code; // Set default price type code
         debugPrint('CreateOrderPage: Default price type set to: $_selectedPriceType');
       }
 

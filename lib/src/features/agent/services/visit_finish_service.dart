@@ -396,7 +396,7 @@ class VisitFinishService {
 
       debugPrint('VisitFinishService: Server response - Code: $code, Message: $message, CodeOrder: $codeOrder');
 
-      if (code == 0) {
+      if (code == 1) {
         // Success
         debugPrint('VisitFinishService: Order creation successful - CodeOrder: $codeOrder');
         onProgress('Buyurtma muvaffaqiyatli yaratildi (raqam: $codeOrder)');

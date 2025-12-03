@@ -173,7 +173,7 @@ class OrderCreationService {
         codeAgent: codeAgent,
         codeClient: tradingPoint.tradingPoint.id,
         codePrice: data['selectedPriceTypecode'] ?? data['codePrice'] ?? '',
-        payment: data['payment'] ?? '',
+        payment: data['payment'] ?? "0",
         shippingDate: shippingDate,
         commentSupervisor: data['commentSupervisor'],
         commentForwarder: data['commentForwarder'],

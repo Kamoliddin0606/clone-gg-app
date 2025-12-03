@@ -8,6 +8,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_re
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/order_creation_service.dart';
 
 /// Service for handling visit completion process
 /// Manages step-by-step server synchronization with progress tracking and error handling
@@ -345,7 +346,7 @@ class VisitFinishService {
   }
 
   /// Processes create order step
-  /// Parses order data from VisitData and sends to server via SoapApiService.setOrder
+  /// Uses OrderCreationService to build CreateOrder from visit data and sends to server
   /// Handles server response with Code, Message, CodeOrder, Rows validation
   Future<bool> _processCreateOrderStep({
     required String visitId,
@@ -359,41 +360,15 @@ class VisitFinishService {
 
       onProgress('Buyurtma ma\'lumotlarini tayyorlash...');
 
-      // Parse VisitData.dataContent into CreateOrder
-      final orderData = jsonDecode(data.dataContent) as Map<String, dynamic>;
-      debugPrint('VisitFinishService: Parsed order data keys: ${orderData.keys.toList()}');
+      // Get OrderCreationService instance from service locator
+      final orderCreationService = sl<OrderCreationService>();
+      debugPrint('VisitFinishService: Obtained OrderCreationService instance');
 
-      // Extract order details from parsed data
-      final order = CreateOrder(
-        codeAgent: orderData['codeAgent'] ?? '',
-        codeClient: orderData['codeClient'] ?? '',
-        codePrice: orderData['codePrice'] ?? '',
-        payment: orderData['payment'] ?? '',
-        shippingDate: DateTime.parse(orderData['shippingDate'] ?? DateTime.now().toIso8601String()),
-        commentSupervisor: orderData['commentSupervisor'],
-        commentForwarder: orderData['commentForwarder'],
-        comment: orderData['comment'],
-        createDate: DateTime.parse(orderData['createDate'] ?? DateTime.now().toIso8601String()),
-        longitude: (orderData['longitude'] as num?)?.toDouble() ?? 0.0,
-        latitude: (orderData['latitude'] as num?)?.toDouble() ?? 0.0,
-        weight: (orderData['weight'] as num?)?.toDouble() ?? 0.0,
-        capacity: (orderData['capacity'] as num?)?.toDouble() ?? 0.0,
-        credit: orderData['credit'] ?? false,
-        codeProject: orderData['codeProject'] ?? '',
-        orderType: (orderData['orderType'] as num?)?.toInt() ?? 0,
-        codeOrg: orderData['codeOrg'] ?? '',
-        codeSklad: orderData['codeSklad'] ?? '',
-        codeContract: orderData['codeContract'],
-        hasPromo: orderData['hasPromo'] ?? false,
-        products: (orderData['products'] as List<dynamic>?)
-            ?.map((p) => CreateOrderProduct.fromJson(p as Map<String, dynamic>))
-            .toList() ?? [],
-        competitiveIntelligence: (orderData['competitiveIntelligence'] as List<dynamic>?)
-            ?.map((ci) => CompetitiveIntelligence.fromJson(ci as Map<String, dynamic>))
-            .toList() ?? [],
-        creditDetails: (orderData['creditDetails'] as List<dynamic>?)
-            ?.map((cd) => CreditDetail.fromJson(cd as Map<String, dynamic>))
-            .toList() ?? [],
+      // Build CreateOrder object using the service
+      final order = await orderCreationService.buildCreateOrder(
+        visitId: visitId,
+        stepCode: step.stepCode,
+        tradingPoint: tradingPoint,
       );
 
       debugPrint('VisitFinishService: Created order with ${order.products.length} products, total weight: ${order.weight}, capacity: ${order.capacity}');

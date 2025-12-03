@@ -2250,6 +2250,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 try {
                   // Get current user code for codeAgent
                   final codeAgent = _prefs.getUserCode() ?? '';
+                  debugPrint('CreateOrderPage: codeAgent: "$codeAgent"');
 
                   // Get location data
                   double longitude = 0.0;
@@ -2264,12 +2265,20 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     debugPrint('CreateOrderPage: Error getting location data: $e');
                     // Continue with default values
                   }
+                  debugPrint('CreateOrderPage: location - longitude: $longitude, latitude: $latitude');
 
                   // Get codeProject from user preferences
                   final codeProject = _prefs.getCodeProject() ?? '';
+                  debugPrint('CreateOrderPage: codeProject: "$codeProject"');
 
                   // Calculate hasPromo from selected products
                   final hasPromo = _selectedProducts.any((product) => product.promo);
+                  debugPrint('CreateOrderPage: hasPromo: $hasPromo');
+
+                  debugPrint('CreateOrderPage: _selectedPriceTypecode: "${_selectedPriceTypecode ?? ''}"');
+                  debugPrint('CreateOrderPage: _selectedOrganizationcode: "${_selectedOrganizationcode ?? ''}"');
+                  debugPrint('CreateOrderPage: _selectedWarehousecode: "${_selectedWarehousecode ?? ''}"');
+                  debugPrint('CreateOrderPage: widget.tradingPoint.tradingPoint.id: "${widget.tradingPoint.tradingPoint.id}"');
 
                   Navigator.of(context).pop(); // Close dialog
                   Navigator.of(context).pop({

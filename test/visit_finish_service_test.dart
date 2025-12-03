@@ -109,7 +109,7 @@ void main() {
         visitId: visitId,
         tradingPoint: tradingPoint,
         permissions: permissions,
-        onProgress: (current, total, message) {
+        onProgress: (current, total, message, [requestData]) {
           progressUpdates.add('$current/$total: $message');
         },
         onError: (step, error) {
@@ -199,7 +199,7 @@ void main() {
         visitId: visitId,
         tradingPoint: tradingPoint,
         permissions: permissions,
-        onProgress: (current, total, message) {
+        onProgress: (current, total, message, [requestData]) {
           progressUpdates.add('$current/$total: $message');
         },
         onError: (step, error) {
@@ -284,7 +284,7 @@ void main() {
         visitId: visitId,
         tradingPoint: tradingPoint,
         permissions: permissions,
-        onProgress: (current, total, message) {
+        onProgress: (current, total, message, [requestData]) {
           progressUpdates.add('$current/$total: $message');
         },
         onError: (step, error) {

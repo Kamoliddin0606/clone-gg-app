@@ -1187,28 +1187,26 @@ class SoapApiService {
   String generateSetOrderSoapRequest(CreateOrder order) {
     final productsXml = order.products.map((product) {
       return '''
-      <m:Product>
-        <m:CodeProduct>${product.codeProduct}</m:CodeProduct>
-        <m:NameProduct></m:NameProduct>
-        <m:Amount>${product.amount}</m:Amount>
-        <m:Price>${product.price}</m:Price>
-        <m:Total>${product.total}</m:Total>
-        <m:Weight>${product.weight}</m:Weight>
-        <m:Capacity>${product.capacity}</m:Capacity>
-        <m:PaymentType>${product.paymentType}</m:PaymentType>
-        <m:DiscountSum>${product.discountSum}</m:DiscountSum>
-        <m:DiscountRate>${product.discountRate}</m:DiscountRate>
-        <m:GiftAmount>${product.giftAmount}</m:GiftAmount>
-        <m:Promo>${product.promo}</m:Promo>
-        <m:VendorCode>${product.vendorCode}</m:VendorCode>
-      </m:Product>''';
+      <sam:Rows>
+        <sam:CodeSklad>${order.codeSklad}</sam:CodeSklad>
+        <sam:CodeProduct>${product.codeProduct}</sam:CodeProduct>       
+        <sam:Amount>${product.amount}</sam:Amount>
+        <sam:Price>${product.price}</sam:Price>
+        <sam:Total>${product.total}</sam:Total>
+        <sam:Weight>${product.weight}</sam:Weight>
+        <sam:Capacity>${product.capacity}</sam:Capacity>
+        <sam:PaymentType>${product.paymentType}</sam:PaymentType>
+        <sam:DiscountSum>${product.discountSum}</sam:DiscountSum>
+        <sam:DiscountRate>${product.discountRate}</sam:DiscountRate>
+        <sam:GiftAmount>${product.giftAmount}</sam:GiftAmount>
+      </sam:Rows>''';
     }).join('\n');
 
     final soapEnvelope = '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
   <soap:Header/>
   <soap:Body>
-    <sam:setOrder>
+    <sam:SetOrder>
       <sam:CodeAgent>${order.codeAgent}</sam:CodeAgent>
       <sam:CodeClient>${order.codeClient}</sam:CodeClient>
       <sam:CodePrice>${order.codePrice}</sam:CodePrice>
@@ -1228,11 +1226,11 @@ class SoapApiService {
       <sam:CodeOrg>${order.codeOrg}</sam:CodeOrg>
       <sam:CodeSklad>${order.codeSklad}</sam:CodeSklad>
       <sam:CodeContract>${order.codeContract ?? ''}</sam:CodeContract>
-      <sam:HasPromo>${order.hasPromo}</sam:HasPromo>
-      <sam:Products>
+      
+      <sam:ProductsList>
         $productsXml
-      </sam:Products>
-    </sam:setOrder>
+      </sam:ProductsList>
+    </sam:SetOrder>
   </soap:Body>
 </soap:Envelope>''';
 
@@ -1767,7 +1765,7 @@ class SoapApiService {
          <sam:CodeOrg>${order.codeOrg}</sam:CodeOrg>
          <sam:CodeSklad>${order.codeSklad}</sam:CodeSklad>
          <sam:CodeContract>${order.codeContract ?? ''}</sam:CodeContract>
-         <sam:HasPromo>${order.hasPromo ? 'true' : 'false'}</sam:HasPromo>
+
       </sam:SetOrder>
    </soap:Body>
 </soap:Envelope>
@@ -1776,6 +1774,18 @@ class SoapApiService {
     try {
       if (kDebugMode) {
         print('SOAP API: Sending SetOrder request for order ${order.id}');
+        print('SOAP API: SetOrder field values:');
+        print('  codeAgent: "${order.codeAgent}" (length: ${order.codeAgent.length})');
+        print('  codeClient: "${order.codeClient}" (length: ${order.codeClient.length})');
+        print('  codePrice: "${order.codePrice}" (length: ${order.codePrice.length})');
+        print('  payment: "${order.payment}" (length: ${order.payment.length})');
+        print('  codeProject: "${order.codeProject}" (length: ${order.codeProject.length})');
+        print('  orderType: ${order.orderType}');
+        print('  codeOrg: "${order.codeOrg}" (length: ${order.codeOrg.length})');
+        print('  codeSklad: "${order.codeSklad}" (length: ${order.codeSklad.length})');
+        print('  codeContract: "${order.codeContract ?? ''}" (length: ${(order.codeContract ?? '').length})');
+        print('  hasPromo: ${order.hasPromo}');
+        print('  products count: ${order.products.length}');
       }
 
       final response = await _dio.post(

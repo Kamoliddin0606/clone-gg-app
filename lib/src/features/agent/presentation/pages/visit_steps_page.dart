@@ -19,6 +19,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/s
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/photo_facing_after_page.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations_en.dart';
+import 'package:flutter/services.dart';
 
 /// Visit Steps Page - BLoC State Management
 abstract class VisitStepsState extends Equatable {
@@ -1071,16 +1072,16 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                               const Spacer(),
                               IconButton(
                                 icon: const Icon(Icons.copy, size: 18),
-                                onPressed: () {
-                                  // Copy request data to clipboard
-                                  // Note: Clipboard functionality would need to be imported
-                                  // For now, just show a snackbar
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('SOAP request nusxalandi'),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
+                                onPressed: () async {
+                                  if (state.requestData != null && state.requestData!.isNotEmpty) {
+                                    await Clipboard.setData(ClipboardData(text: state.requestData!));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('SOAP request nusxalandi'),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
                                 },
                                 tooltip: 'Nusxalash',
                                 padding: EdgeInsets.zero,

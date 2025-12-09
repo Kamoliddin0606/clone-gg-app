@@ -114,14 +114,17 @@ class LoadVisitSteps extends VisitStepsEvent {
   List<Object?> get props => [tradingPoint];
 }
 
+/// Event for completing a visit step
+/// Modified to accept flexible data instead of just notes to support
+/// complex step completion data like order information with shipping dates
 class CompleteStep extends VisitStepsEvent {
   final int stepIndex;
-  final String notes;
+  final Map<String, dynamic> data;
 
-  const CompleteStep(this.stepIndex, this.notes);
+  const CompleteStep(this.stepIndex, this.data);
 
   @override
-  List<Object?> get props => [stepIndex, notes];
+  List<Object?> get props => [stepIndex, data];
 }
 
 class SkipStep extends VisitStepsEvent {
@@ -320,6 +323,9 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     }
   }
 
+  /// Handles step completion event
+  /// Updated to process flexible data structure instead of just notes
+  /// This allows complex step data (like order information with shipping dates) to be saved
   Future<void> _onCompleteStep(
     CompleteStep event,
     Emitter<VisitStepsState> emit,
@@ -330,23 +336,31 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
     final step = updatedProgress[event.stepIndex].step;
 
+    // Extract notes from data, defaulting to empty string if not provided
+    // This maintains backward compatibility with simple note-only completions
+    final notes = event.data['notes'] as String? ?? '';
+
     // 1. Update current step status locally
     updatedProgress[event.stepIndex] = updatedProgress[event.stepIndex].copyWith(
       status: VisitStepStatus.completed,
-      notes: event.notes,
+      notes: notes,
       completedAt: DateTime.now(),
     );
 
     // 2. Save completion data to persistent storage
+    // Include all data from the event, plus completion metadata
+    // This ensures that complex data like order details with shipping dates are preserved
+    final completionData = Map<String, dynamic>.from(event.data);
+    completionData.addAll({
+      'completedAt': DateTime.now().toIso8601String(),
+      'status': 'completed',
+    });
+
     await _saveStepDataToStorage(
       stepCode: step.stepCode,
       stepName: step.stepName,
       dataType: 'completion',
-      dataContent: {
-        'notes': event.notes,
-        'completedAt': DateTime.now().toIso8601String(),
-        'status': 'completed',
-      },
+      dataContent: completionData,
     );
 
     // 3. Clear any "in progress" data for this step to prevent conflicts on reload
@@ -1358,8 +1372,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           tradingPoint: state.tradingPoint,
           visitId: (context.read<VisitStepsBloc>() as VisitStepsBloc)._visitId,
           currentStepIndex: state.currentStepIndex,
-          onComplete: (notes) {
-            context.read<VisitStepsBloc>().add(CompleteStep(index, notes));
+          onComplete: (data) {
+            context.read<VisitStepsBloc>().add(CompleteStep(index, data));
           },
           onSkip: (reason) {
             context.read<VisitStepsBloc>().add(SkipStep(index, reason));
@@ -1518,7 +1532,7 @@ class _VisitStepCard extends StatefulWidget {
   final TradingPointWithPermissions tradingPoint;
   final String visitId;
   final int currentStepIndex;
-  final Function(String) onComplete;
+  final Function(Map<String, dynamic>) onComplete; // Updated to accept flexible data for complex completions
   final Function(String) onSkip;
   final Function() onPrevious;
 
@@ -1866,7 +1880,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
           ),
           FilledButton(
             onPressed: () {
-              widget.onComplete(_notesController.text.trim());
+              widget.onComplete({'notes': _notesController.text.trim()});
               _notesController.clear();
               Navigator.of(context).pop();
             },
@@ -2075,9 +2089,12 @@ class _VisitStepCardState extends State<_VisitStepCard> {
 
       // Handle the result if step was completed
       if (result != null && result is Map<String, dynamic> && result['completed'] == true) {
-        final notes = result['notes'] as String? ?? '';
         final stepIndex = currentState.stepProgress.indexOf(stepProgress);
-        context.read<VisitStepsBloc>().add(CompleteStep(stepIndex, notes));
+        // Pass the full result data (including order and shipping date) to completion
+        // This ensures that complex step data like order information is preserved in the completion record
+        final completionData = Map<String, dynamic>.from(result);
+        completionData.remove('completed'); // Remove the completion flag as it's not part of the data to save
+        context.read<VisitStepsBloc>().add(CompleteStep(stepIndex, completionData));
       }
     }
   }

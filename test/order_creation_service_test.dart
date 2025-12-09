@@ -656,5 +656,127 @@ void main() {
       expect(result.capacity, 5.2); // (2*0.8) + (3*1.2)
       expect(result.hasPromo, true); // One product has promo
     });
+
+    test('should prioritize shipping date from completion order data over draft data', () async {
+      // Mock visit data with order object containing shipping date
+      final testShippingDate = DateTime(2025, 12, 15);
+      final visitData = VisitData(
+        visitId: 'VISIT001',
+        clientCode: 'CLIENT001',
+        stepCode: 1,
+        stepName: 'Create Order',
+        dataType: 'completion',
+        dataContent: jsonEncode({
+          'notes': 'Order completed',
+          'order': {
+            'codeAgent': 'USER001',
+            'codeClient': 'CLIENT001',
+            'codePrice': 'PRICE001',
+            'payment': '',
+            'shippingDate': testShippingDate.toIso8601String(),
+            'commentSupervisor': '',
+            'commentForwarder': '',
+            'comment': '',
+            'createDate': DateTime.now().toIso8601String(),
+            'longitude': 69.2401,
+            'latitude': 41.2995,
+            'weight': 5.0,
+            'capacity': 2.5,
+            'credit': false,
+            'codeProject': 'PROJ001',
+            'orderType': 0,
+            'codeOrg': 'ORG001',
+            'codeSklad': 'WH001',
+            'codeContract': '',
+            'hasPromo': false,
+            'products': [
+              {
+                'codeSklad': 'WH001',
+                'codeProduct': 'PRD001',
+                'vendorCode': 'VC001',
+                'amount': 1,
+                'price': 10000.0,
+                'total': 10000.0,
+                'weight': 1.0,
+                'capacity': 0.5,
+                'paymentType': 0,
+                'discountSum': 0.0,
+                'discountRate': 0.0,
+                'giftAmount': 0,
+                'promo': false,
+              }
+            ],
+          },
+        }),
+        timestamp: DateTime.now(),
+      );
+
+      when(mockVisitDataRepository.getVisitStepDataByStep('VISIT001', 1))
+          .thenAnswer((_) async => [visitData]);
+
+      // Mock draft data with different shipping date (should be ignored)
+      final draftShippingDate = DateTime(2025, 12, 10);
+      final draftData = {
+        'selectedOrganizationcode': 'ORG001',
+        'selectedWarehousecode': 'WH001',
+        'selectedPriceTypecode': 'PRICE001',
+        'shippingDate': draftShippingDate.toIso8601String(), // Different date
+        'products': [
+          {
+            'codeSklad': 'WH001',
+            'codeProduct': 'PRD001',
+            'vendorCode': 'VC001',
+            'amount': 1,
+            'price': 10000.0,
+            'total': 10000.0,
+            'weight': 1.0,
+            'capacity': 0.5,
+            'paymentType': 0,
+            'discountSum': 0.0,
+            'discountRate': 0.0,
+            'giftAmount': 0,
+            'promo': false,
+          }
+        ],
+        'notes': 'Draft notes',
+      };
+
+      when(mockOrderDraftService.loadOrderDraft('VISIT001', 1))
+          .thenAnswer((_) async => draftData);
+
+      when(mockPrefs.getUserCode()).thenReturn('USER001');
+      when(mockPrefs.getCodeProject()).thenReturn('PROJ001');
+
+      when(mockLocationService.getStoredLocation())
+          .thenReturn({'longitude': 69.2401, 'latitude': 41.2995});
+
+      final tradingPoint = TradingPointWithPermissions(
+        tradingPoint: TradingPoint(
+          id: 'CLIENT001',
+          name: 'Test Client',
+          address: 'Test Address',
+          latitude: 41.2995,
+          longitude: 69.2401,
+          tradePointType: 'retail',
+          region: 'Tashkent',
+          district: 'Yunusabad',
+        ),
+        permissions: SalesReqPermissions(
+          userCode: 'USER001',
+          visitSteps: [],
+        ),
+      );
+
+      final result = await orderCreationService.buildCreateOrder(
+        visitId: 'VISIT001',
+        stepCode: 1,
+        tradingPoint: tradingPoint,
+      );
+
+      expect(result, isA<CreateOrder>());
+      // Verify that the shipping date from completion order data is used, not from draft
+      expect(result.shippingDate, testShippingDate);
+      expect(result.shippingDate, isNot(draftShippingDate));
+    });
   });
 }

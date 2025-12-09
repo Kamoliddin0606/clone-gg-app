@@ -165,7 +165,20 @@ class OrderCreationService {
 
       // Build competitive intelligence and credit details
       final competitiveIntelligence = _buildCompetitiveIntelligenceList(data['competitiveIntelligence']);
-      final shippingDate = _parseDateTime(data['shippingDate']) ?? DateTime.now();
+
+      // Extract shipping date - prioritize completion data from createOrder step dialog
+      // This ensures the shipping date selected by the user in the dialog is used
+      // instead of potentially outdated draft data
+      DateTime shippingDate = DateTime.now();
+      if (data['order'] is Map<String, dynamic>) {
+        final orderData = data['order'] as Map<String, dynamic>;
+        shippingDate = _parseDateTime(orderData['shippingDate']) ?? shippingDate;
+        debugPrint('OrderCreationService: Using shipping date from completion order data: $shippingDate');
+      } else {
+        shippingDate = _parseDateTime(data['shippingDate']) ?? shippingDate;
+        debugPrint('OrderCreationService: Using shipping date from merged data: $shippingDate');
+      }
+
       final creditDetails = _buildCreditDetailsList(data['creditDetails'], totalValue, shippingDate);
 
       // Create CreateOrder object with all mapped fields

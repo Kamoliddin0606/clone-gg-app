@@ -9,6 +9,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_da
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_creation_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/order_draft_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 
 /// Service for handling visit completion process
 /// Manages step-by-step server synchronization with progress tracking and error handling
@@ -86,16 +88,22 @@ class VisitFinishService {
         onProgress(1, totalSteps, 'Boshlanmoqda: ${orderStep.stepName}');
 
         try {
-          final success = await _processStep(
+          final result = await _processStep(
             visitId: visitId,
             step: orderStep,
             tradingPoint: tradingPoint,
             onProgress: (message, [requestData]) => onProgress(1, totalSteps, message, requestData),
           );
 
-          if (!success) {
+          if (!result['success']) {
             debugPrint('VisitFinishService: Order step failed, canceling processed steps');
-            onError(orderStep, 'Buyurtma bosqichi bajarilmadi: ${orderStep.stepName}');
+            String errorMessage = 'Buyurtma bosqichi bajarilmadi: ${orderStep.stepName}';
+            final serverMessage = result['message'] as String?;
+            if (serverMessage != null && serverMessage.isNotEmpty) {
+              errorMessage = '$errorMessage - $serverMessage';
+            }
+
+            onError(orderStep, errorMessage);
 
             await _cancelProcessedSteps(
               visitId: visitId,
@@ -136,14 +144,14 @@ class VisitFinishService {
         onProgress(stepCounter, totalSteps, 'Boshlanmoqda: ${step.stepName}');
 
         try {
-          final success = await _processStep(
+          final result = await _processStep(
             visitId: visitId,
             step: step,
             tradingPoint: tradingPoint,
             onProgress: (message, [requestData]) => onProgress(stepCounter, totalSteps, message, requestData),
           );
 
-          if (!success) {
+          if (!result['success']) {
             debugPrint('VisitFinishService: Step ${step.stepCode} failed, canceling processed steps');
             onError(step, 'Bosqich bajarilmadi: ${step.stepName}');
 
@@ -209,8 +217,8 @@ class VisitFinishService {
   /// - tradingPoint: Trading point context
   /// - onProgress: Callback for step-specific progress updates
   ///
-  /// Returns: true if step processed successfully, false otherwise
-  Future<bool> _processStep({
+  /// Returns: Map with 'success': bool and 'message': String? (server message for order step)
+  Future<Map<String, dynamic>> _processStep({
     required String visitId,
     required VisitStep step,
     required TradingPointWithPermissions tradingPoint,
@@ -225,7 +233,7 @@ class VisitFinishService {
 
       if (completionData.isEmpty) {
         debugPrint('VisitFinishService: No completion data found for step ${step.stepCode}');
-        return false;
+        return {'success': false, 'message': 'Completion data not found'};
       }
 
       final latestData = completionData.reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
@@ -281,19 +289,19 @@ class VisitFinishService {
           // For unknown steps, mark as successful (placeholder)
           onProgress('Noma\'lum bosqich: ${step.stepName}');
           debugPrint('VisitFinishService: Unknown step type: ${step.stepName}, marking as successful');
-          return true;
+          return {'success': true, 'message': null};
       }
 
     } catch (e, stackTrace) {
       debugPrint('VisitFinishService: Error processing step ${step.stepCode}: $e');
       debugPrint('VisitFinishService: Stack trace: $stackTrace');
-      return false;
+      return {'success': false, 'message': e.toString()};
     }
   }
 
   /// Processes photo facing before step
   /// Placeholder implementation - actual server call to be added
-  Future<bool> _processPhotoFacingBeforeStep({
+  Future<Map<String, dynamic>> _processPhotoFacingBeforeStep({
     required String visitId,
     required VisitStep step,
     required VisitData data,
@@ -309,12 +317,12 @@ class VisitFinishService {
     await Future.delayed(const Duration(milliseconds: 500));
 
     onProgress('Foto oldingi holati muvaffaqiyatli yuborildi');
-    return true;
+    return {'success': true, 'message': null};
   }
 
   /// Processes shelf audit step
   /// Placeholder implementation - actual server call to be added
-  Future<bool> _processShelfAuditStep({
+  Future<Map<String, dynamic>> _processShelfAuditStep({
     required String visitId,
     required VisitStep step,
     required VisitData data,
@@ -329,12 +337,12 @@ class VisitFinishService {
     await Future.delayed(const Duration(milliseconds: 500));
 
     onProgress('Polka auditi muvaffaqiyatli yuborildi');
-    return true;
+    return {'success': true, 'message': null};
   }
 
   /// Processes competitor audit step
   /// Placeholder implementation - actual server call to be added
-  Future<bool> _processCompetitorAuditStep({
+  Future<Map<String, dynamic>> _processCompetitorAuditStep({
     required String visitId,
     required VisitStep step,
     required VisitData data,
@@ -349,13 +357,15 @@ class VisitFinishService {
     await Future.delayed(const Duration(milliseconds: 500));
 
     onProgress('Konkurentlar auditi muvaffaqiyatli yuborildi');
-    return true;
+    return {'success': true, 'message': null};
   }
 
   /// Processes create order step
   /// Uses OrderCreationService to build CreateOrder from visit data and sends to server
   /// Handles server response with Code, Message, CodeOrder, Rows validation
-  Future<bool> _processCreateOrderStep({
+  /// Code == 1 indicates success, any other code indicates failure
+  /// Returns success status and server message
+  Future<Map<String, dynamic>> _processCreateOrderStep({
     required String visitId,
     required VisitStep step,
     required VisitData data,
@@ -404,28 +414,67 @@ class VisitFinishService {
       debugPrint('VisitFinishService: Server response - Code: $code, Message: $message, CodeOrder: $codeOrder');
 
       if (code == 1) {
-        // Success
+        // Success - Code 1 indicates successful order creation
         debugPrint('VisitFinishService: Order creation successful - CodeOrder: $codeOrder');
-        onProgress('Buyurtma muvaffaqiyatli yaratildi (raqam: $codeOrder)');
-        return true;
+
+        // Store server message in completion data for potential display
+        final completionData = Map<String, dynamic>.from(data.parsedDataContent);
+        completionData['serverMessage'] = message;
+        completionData['serverCode'] = code;
+        completionData['codeOrder'] = codeOrder;
+
+        // Update the completion data with server response
+        await _visitDataRepository.saveVisitStepData(VisitData(
+          visitId: visitId,
+          clientCode: data.clientCode,
+          stepCode: step.stepCode,
+          stepName: step.stepName,
+          dataType: 'completion',
+          dataContent: jsonEncode(completionData),
+          timestamp: DateTime.now(),
+          isSynced: true,
+        ));
+
+        // Display success message with server response
+        onProgress('$message (raqam: $codeOrder)');
+        return {'success': true, 'message': message};
       } else {
-        // Error
+        // Error - Any code other than 1 indicates failure
         debugPrint('VisitFinishService: Order creation failed - Code: $code, Message: $message');
-        onProgress('Buyurtma yaratishda xatolik: $message');
-        return false;
+
+        // Store server message in completion data for error display
+        final completionData = Map<String, dynamic>.from(data.parsedDataContent);
+        completionData['serverMessage'] = message;
+        completionData['serverCode'] = code;
+        completionData['error'] = true;
+
+        // Update the completion data with server response
+        await _visitDataRepository.saveVisitStepData(VisitData(
+          visitId: visitId,
+          clientCode: data.clientCode,
+          stepCode: step.stepCode,
+          stepName: step.stepName,
+          dataType: 'completion',
+          dataContent: jsonEncode(completionData),
+          timestamp: DateTime.now(),
+          isSynced: true,
+        ));
+
+        onProgress('Buyurtma yaratishda xatolik: $message (kod: $code)');
+        return {'success': false, 'message': message};
       }
 
     } catch (e, stackTrace) {
       debugPrint('VisitFinishService: Error in _processCreateOrderStep: $e');
       debugPrint('VisitFinishService: Stack trace: $stackTrace');
-      onProgress('Buyurtma yuborishda xatolik yuz berdi');
-      return false;
+      onProgress('Buyurtma yuborishda xatolik yuz berdi: ${e.toString()}');
+      return {'success': false, 'message': e.toString()};
     }
   }
 
   /// Processes photo facing after step
   /// Placeholder implementation - actual server call to be added
-  Future<bool> _processPhotoFacingAfterStep({
+  Future<Map<String, dynamic>> _processPhotoFacingAfterStep({
     required String visitId,
     required VisitStep step,
     required VisitData data,
@@ -440,7 +489,7 @@ class VisitFinishService {
     await Future.delayed(const Duration(milliseconds: 500));
 
     onProgress('Foto keyingi holati muvaffaqiyatli yuborildi');
-    return true;
+    return {'success': true, 'message': null};
   }
 
   /// Processes the initial visit data step
@@ -559,6 +608,55 @@ class VisitFinishService {
       debugPrint('VisitFinishService: Stack trace: $stackTrace');
       onProgress('Bosqichlarni bekor qilishda xatolik yuz berdi');
       // Don't throw - cancellation failure shouldn't prevent error reporting
+    }
+  }
+
+  /// Cancels all steps in the visit process
+  /// Comprehensive cleanup method that clears all visit-related data from tables
+  /// Similar to visit cancellation but more thorough - removes all step data, order drafts, etc.
+  /// Uses time.sleep for demonstration as requested
+  ///
+  /// Parameters:
+  /// - visitId: Unique identifier for the visit session to cancel
+  ///
+  /// Returns: Future that completes when all cleanup is done
+  Future<void> cancelAllSteps({
+    required String visitId,
+  }) async {
+    try {
+      debugPrint('VisitFinishService: Starting comprehensive cleanup for visitId: $visitId');
+
+      // Clear all visit step data from database
+      await _visitDataRepository.deleteVisitStepDataByVisitId(visitId);
+      debugPrint('VisitFinishService: Cleared visit step data');
+
+      // Clear order draft data if exists
+      // Note: Order draft service handles its own cleanup, but we ensure it's cleared
+      try {
+        final orderDraftService = sl<OrderDraftService>();
+        await orderDraftService.clearVisitDrafts(visitId);
+        debugPrint('VisitFinishService: Cleared order draft data');
+      } catch (e) {
+        debugPrint('VisitFinishService: OrderDraftService not available or clearVisitDrafts failed: $e');
+      }
+
+      // Clear any cached data in services
+      try {
+        final apiDatabaseService = sl<ApiDatabaseService>();
+        await apiDatabaseService.clearCreateOrderData();
+        debugPrint('VisitFinishService: Cleared create order data');
+      } catch (e) {
+        debugPrint('VisitFinishService: ApiDatabaseService not available or clearCreateOrderData failed: $e');
+      }
+
+      // Simulate processing time as requested
+      await Future.delayed(const Duration(seconds: 1));
+      debugPrint('VisitFinishService: cancelAllSteps completed with time.sleep simulation');
+
+    } catch (e, stackTrace) {
+      debugPrint('VisitFinishService: Error in cancelAllSteps: $e');
+      debugPrint('VisitFinishService: Stack trace: $stackTrace');
+      // Don't throw - cleanup should be best effort
     }
   }
 

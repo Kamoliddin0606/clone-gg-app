@@ -186,7 +186,7 @@ void main() {
       expect(find.text('Hajm'), findsOneWidget);
     });
 
-    testWidgets('should show read-only indicators when readOnly is true', (WidgetTester tester) async {
+    testWidgets('should show read-only indicators and calendar icon when readOnly is true', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: CreateOrderPage(
@@ -203,7 +203,9 @@ void main() {
 
       // Check for read-only indicators
       expect(find.byIcon(Icons.visibility), findsOneWidget);
-      expect(find.text('Faqat ko\'rish'), findsOneWidget);
+
+      // Check for calendar icon in read-only mode
+      expect(find.byIcon(Icons.calendar_today), findsOneWidget);
     });
 
     testWidgets('should not show complete button when readOnly is true', (WidgetTester tester) async {

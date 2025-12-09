@@ -18,6 +18,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/s
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/create_order_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/photo_facing_after_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/visit_completion_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/order_models.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/order_details_page.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations_en.dart';
 import 'package:flutter/services.dart';
@@ -73,11 +75,14 @@ class VisitStepsError extends VisitStepsState {
 
 class VisitStepsCompleted extends VisitStepsState {
   final TradingPointWithPermissions tradingPoint;
+  final List<VisitStepProgress> completedSteps;
+  final String? orderCode; // Order code if an order was created
+  final String? orderServerMessage; // Server message for order creation
 
-  const VisitStepsCompleted(this.tradingPoint);
+  const VisitStepsCompleted(this.tradingPoint, this.completedSteps, {this.orderCode, this.orderServerMessage});
 
   @override
-  List<Object?> get props => [tradingPoint];
+  List<Object?> get props => [tradingPoint, completedSteps, orderCode, orderServerMessage];
 }
 
 class VisitStepsFinishing extends VisitStepsState {
@@ -536,7 +541,44 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       );
 
       if (success) {
-        emit(VisitStepsCompleted(currentState.tradingPoint));
+        // Clear all visit data after successful completion (like canceling visit)
+        await _visitFinishService.cancelAllSteps(visitId: _visitId);
+
+        // Get completed steps for display
+        final completedSteps = currentState.stepProgress.where((p) => p.status == VisitStepStatus.completed).toList();
+
+        // Extract order code and server message if an order was created
+        String? orderCode;
+        String? orderServerMessage;
+        final orderStep = completedSteps.firstWhere(
+          (step) => step.step.stepName.toLowerCase() == 'создать заказ',
+          orElse: () => VisitStepProgress(step: VisitStep(stepCode: -1, stepName: '', stepRequired: false), status: VisitStepStatus.pending),
+        );
+        if (orderStep.step.stepCode != -1) {
+          // Get completion data to extract server message and order code
+          try {
+            final stepData = await _visitDataRepository.getVisitStepDataByStep(_visitId, orderStep.step.stepCode);
+            final completionData = stepData.where((d) => d.dataType == 'completion').toList();
+            if (completionData.isNotEmpty) {
+              final latestData = completionData.reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
+              final parsedData = jsonDecode(latestData.dataContent) as Map<String, dynamic>;
+              orderServerMessage = parsedData['serverMessage'] as String?;
+              final codeOrder = parsedData['codeOrder'] as String?;
+              if (codeOrder != null && codeOrder.isNotEmpty) {
+                orderCode = codeOrder;
+              }
+            }
+          } catch (e) {
+            debugPrint('VisitStepsBloc: Error extracting order data: $e');
+          }
+
+          // Fallback to notes if no codeOrder in completion data
+          if (orderCode == null && orderStep.notes != null && orderStep.notes!.isNotEmpty) {
+            orderCode = orderStep.notes;
+          }
+        }
+
+        emit(VisitStepsCompleted(currentState.tradingPoint, completedSteps, orderCode: orderCode, orderServerMessage: orderServerMessage));
       }
       // Error already emitted by onError callback
 
@@ -913,20 +955,14 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                 backgroundColor: Colors.red,
               ),
             );
-          } else if (state is VisitStepsCompleted) {
-            // Navigate to completion screen instead of just showing snackbar and popping
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => VisitCompletionPage(
-                  tradingPoint: state.tradingPoint,
-                  permissions: (context.read<VisitStepsBloc>().state as VisitStepsLoaded).permissions,
-                  completedSteps: (context.read<VisitStepsBloc>().state as VisitStepsLoaded).stepProgress
-                      .where((step) => step.status == VisitStepStatus.completed)
-                      .toList(),
-                ),
-              ),
-            );
+            // Close the visit page on error after a delay
+            Future.delayed(const Duration(seconds: 2), () {
+              if (context.mounted) {
+                Navigator.of(context).pop(false); // Return failure
+              }
+            });
           }
+          // VisitStepsCompleted is now handled by the UI builder, not the listener
         },
         builder: (context, state) {
            if (state is VisitStepsLoading) {
@@ -935,6 +971,10 @@ class _VisitStepsViewState extends State<VisitStepsView> {
 
            if (state is VisitStepsLoaded) {
              return _buildLoadedView(context, state, theme, l10n);
+           }
+
+           if (state is VisitStepsCompleted) {
+             return _buildCompletedView(context, state, theme, l10n);
            }
 
            if (state is VisitStepsFinishing) {
@@ -1134,6 +1174,287 @@ class _VisitStepsViewState extends State<VisitStepsView> {
         ],
       ),
     );
+  }
+
+  Widget _buildCompletedView(
+    BuildContext context,
+    VisitStepsCompleted state,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary.withOpacity(0.08),
+            theme.colorScheme.primaryContainer.withOpacity(0.06),
+          ],
+        ),
+      ),
+      child: Column(
+        children: [
+          // Success Header
+          _buildCompletionHeader(context, state, theme),
+
+          // Completed Steps List
+          Expanded(
+            child: _buildCompletedStepsList(context, state, theme, l10n),
+          ),
+
+          // Action Buttons
+          _buildCompletionActionButtons(context, state, theme, l10n),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletionHeader(BuildContext context, VisitStepsCompleted state, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.check_circle,
+            size: 64,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Tashrif muvaffaqiyatli yakunlandi!',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            state.tradingPoint.tradingPoint.name,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (state.orderCode != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Buyurtma raqami: ${state.orderCode}',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+          if (state.orderServerMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              state.orderServerMessage!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletedStepsList(
+    BuildContext context,
+    VisitStepsCompleted state,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: state.completedSteps.length,
+      itemBuilder: (context, index) {
+        final stepProgress = state.completedSteps[index];
+        final isOrderStep = stepProgress.step.stepName.toLowerCase() == 'создать заказ';
+
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: InkWell(
+            onTap: isOrderStep && state.orderCode != null ? () => _navigateToOrderDetails(context, state.orderCode!) : null,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      isOrderStep ? Icons.receipt_long : Icons.check_circle,
+                      color: theme.colorScheme.onPrimaryContainer,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          stepProgress.step.stepName,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        if (stepProgress.notes != null && stepProgress.notes!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            stepProgress.notes!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                        if (stepProgress.completedAt != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Yakunlandi: ${stepProgress.completedAt!.toLocal().toString().split('.')[0]}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (isOrderStep) ...[
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCompletionActionButtons(
+    BuildContext context,
+    VisitStepsCompleted state,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: FilledButton.icon(
+          onPressed: () => Navigator.of(context).pop(true), // Return success
+          icon: const Icon(Icons.done),
+          label: Text('Tashrifni yakunlash'),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToOrderDetails(BuildContext context, String orderCode) async {
+    try {
+      // Fetch the order from database
+      final dataSyncService = sl<DataSyncService>();
+      final order = await dataSyncService.getCachedOrderByNumOrder(orderCode);
+
+      if (order != null) {
+        // Convert to OrderModel for OrderDetailsPage
+        final orderModel = OrderModel(
+          id: order.id,
+          numOrder: order.numOrder,
+          dateOrder: order.dateOrder,
+          captionOrder: order.captionOrder,
+          typePriceCode: order.typePriceCode,
+          status: order.status,
+          commentSupervisor: order.commentSupervisor,
+          commentForwarder: order.commentForwarder,
+          commentAgent: order.commentAgent,
+          total: order.total,
+          clientCode: order.clientCode,
+          clientName: order.clientName,
+          codeOrg: order.codeOrg,
+          mainStatus: order.mainStatus,
+          courierName: order.courierName,
+          courierCar: order.courierCar,
+          courierPlate: order.courierCar, // Assuming courierCar contains plate info
+          items: const [], // Items will be loaded separately if needed
+        );
+
+        // Navigate to order details page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrderDetailsPage(order: orderModel),
+          ),
+        );
+      } else {
+        // Order not found, show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Buyurtma topilmadi'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error navigating to order details: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Buyurtma tafsilotlariga o\'tishda xatolik: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildClientHeader(BuildContext context, VisitStepsLoaded state, ThemeData theme) {

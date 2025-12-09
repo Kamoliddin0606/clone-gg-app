@@ -497,6 +497,37 @@ class OrderDraftService {
     }
   }
 
+  /// Clear all order drafts for a specific visit
+  /// Used when visit is completed or cancelled to clean up draft data
+  Future<void> clearVisitDrafts(String visitId) async {
+    try {
+      debugPrint('OrderDraftService: Clearing all order drafts for visit $visitId');
+
+      // Get all visit step data for this visit
+      final allVisitData = await _dbService.getVisitStepDataByVisitId(visitId);
+
+      // Filter for order draft data
+      final draftData = allVisitData.where((data) => data.dataType == 'order_draft').toList();
+
+      if (draftData.isEmpty) {
+        debugPrint('OrderDraftService: No order drafts found for visit $visitId');
+        return;
+      }
+
+      // Delete each draft
+      for (final draft in draftData) {
+        await _dbService.deleteVisitStepData(draft.id!);
+        debugPrint('OrderDraftService: Deleted order draft with id ${draft.id}');
+      }
+
+      debugPrint('OrderDraftService: Successfully cleared ${draftData.length} order drafts for visit $visitId');
+    } catch (e, stackTrace) {
+      debugPrint('OrderDraftService: Error clearing visit drafts: $e');
+      debugPrint('OrderDraftService: Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
   /// Get draft statistics for debugging
   Future<Map<String, dynamic>> getDraftStats() async {
     try {

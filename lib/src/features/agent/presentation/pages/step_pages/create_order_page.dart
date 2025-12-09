@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -14,6 +15,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/formatters.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/product_selection_page.dart';
@@ -69,13 +72,14 @@ class CreateOrderPage extends StatefulWidget {
 }
 
 class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderStateMixin {
-  final VisitStepDataService _dataService = sl<VisitStepDataService>();
-  final OrderDraftService _draftService = sl<OrderDraftService>();
-  final DataSyncService _syncService = sl<DataSyncService>();
-  final ApiDatabaseService _dbService = sl<ApiDatabaseService>();
-  final SharedPreferencesService _prefs = sl<SharedPreferencesService>();
-  final LocationService _locationService = sl<LocationService>();
-  final TextEditingController _notesController = TextEditingController();
+   final VisitStepDataService _dataService = sl<VisitStepDataService>();
+   final OrderDraftService _draftService = sl<OrderDraftService>();
+   final DataSyncService _syncService = sl<DataSyncService>();
+   final ApiDatabaseService _dbService = sl<ApiDatabaseService>();
+   final SharedPreferencesService _prefs = sl<SharedPreferencesService>();
+   final LocationService _locationService = sl<LocationService>();
+   final VisitDataRepository _visitDataRepository = VisitDataRepository(sl<ApiDatabaseService>());
+   final TextEditingController _notesController = TextEditingController();
 
   // UI state
   bool _isSettingsPanelVisible = false;
@@ -282,12 +286,80 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     }
   }
 
-  /// Load previously saved order draft data using OrderDraftService
+  /// Load previously saved order data
+  /// In read-only mode, loads from completion data; otherwise loads from draft
   /// Called during initialization to restore previous session state
   Future<void> _loadSavedOrderData() async {
     try {
-      debugPrint('CreateOrderPage: Loading saved order draft for visit ${widget.visitId}, step ${widget.stepCode}');
+      if (widget.readOnly) {
+        // In read-only mode, load order data from visit step completion data
+        debugPrint('CreateOrderPage: Loading order data from completion for visit ${widget.visitId}, step ${widget.stepCode}');
+        await _loadOrderFromCompletionData();
+      } else {
+        // In edit mode, load from draft
+        debugPrint('CreateOrderPage: Loading saved order draft for visit ${widget.visitId}, step ${widget.stepCode}');
+        await _loadOrderFromDraft();
+      }
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error loading saved order data: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+      // Continue with empty state - don't crash the app
+    }
+  }
 
+  /// Load order data from visit step completion data (for read-only mode)
+  Future<void> _loadOrderFromCompletionData() async {
+    try {
+      final stepData = await _visitDataRepository.getVisitStepDataByStep(widget.visitId, widget.stepCode);
+      final completionData = stepData.where((d) => d.dataType == 'completion').toList();
+
+      if (completionData.isEmpty) {
+        debugPrint('CreateOrderPage: No completion data found for step ${widget.stepCode}');
+        return;
+      }
+
+      // Get the most recent completion data
+      completionData.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      final latestCompletion = completionData.first;
+
+      final parsedData = jsonDecode(latestCompletion.dataContent) as Map<String, dynamic>;
+
+      // Extract order data from completion data
+      final orderData = parsedData['order'] as Map<String, dynamic>?;
+      if (orderData == null) {
+        debugPrint('CreateOrderPage: No order data found in completion data');
+        return;
+      }
+
+      // Restore shipping date
+      _shippingDate = orderData['shippingDate'] != null
+          ? DateTime.parse(orderData['shippingDate'] as String)
+          : null;
+
+      // Restore products
+      final productsJson = orderData['products'] as List<dynamic>?;
+      if (productsJson != null) {
+        _selectedProducts = productsJson
+            .map((p) => CreateOrderProduct.fromJson(p as Map<String, dynamic>))
+            .toList();
+        debugPrint('CreateOrderPage: Restored ${_selectedProducts.length} products from completion data');
+        _updateAddButtonStates();
+      }
+
+      // Restore notes
+      _notesController.text = parsedData['notes'] as String? ?? '';
+
+      debugPrint('CreateOrderPage: Successfully loaded order data from completion');
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error loading order from completion data: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Load order data from draft (for edit mode)
+  Future<void> _loadOrderFromDraft() async {
+    try {
       final draftData = await _draftService.loadOrderDraft(widget.visitId, widget.stepCode);
       if (draftData != null) {
         // Restore selections
@@ -321,10 +393,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         debugPrint('CreateOrderPage: No saved order draft found');
       }
     } catch (e, stackTrace) {
-      debugPrint('CreateOrderPage: Error loading saved order draft: $e');
+      debugPrint('CreateOrderPage: Error loading order from draft: $e');
       debugPrint('CreateOrderPage: Stack trace: $stackTrace');
-
-      // Continue with empty state - don't crash the app
+      rethrow;
     }
   }
 
@@ -1066,11 +1137,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             if (widget.readOnly) ...[
               const Icon(Icons.visibility, color: Colors.grey),
               const SizedBox(width: 8),
-              // const Text(
-              //   'Faqat ko\'rish',
-              //   style: TextStyle(color: Colors.grey, fontSize: 12),
-              // ),
-              const SizedBox(width: 16),
+              // Calendar icon for changing shipping date in read-only mode
+              IconButton(
+                icon: const Icon(Icons.calendar_today, color: Colors.blue),
+                onPressed: _showShippingDateChangeDialog,
+                tooltip: 'Yetkazib berish sanasini o\'zgartirish',
+              ),
+              const SizedBox(width: 8),
             ],
           ],
         );
@@ -2329,6 +2402,112 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         ),
       ),
     );
+  }
+
+  /// Dialog for changing shipping date in read-only mode
+  /// Allows updating the shipping date of a completed order
+  void _showShippingDateChangeDialog() async {
+    try {
+      debugPrint('CreateOrderPage: Showing shipping date change dialog for read-only mode');
+
+      // Get current shipping date, default to today if not set
+      DateTime currentDate = _shippingDate ?? DateTime.now();
+
+      final pickedDate = await showDatePicker(
+        context: context,
+        initialDate: currentDate,
+        firstDate: DateTime.now(),
+        lastDate: DateTime.now().add(const Duration(days: 365)),
+      );
+
+      if (pickedDate != null && pickedDate != currentDate) {
+        // Update the shipping date
+        setState(() => _shippingDate = pickedDate);
+
+        // Save the updated shipping date to completion data
+        await _updateShippingDateInCompletionData(pickedDate);
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Yetkazib berish sanasi muvaffaqiyatli o\'zgartirildi'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+
+        debugPrint('CreateOrderPage: Shipping date updated to ${pickedDate.toIso8601String()}');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error changing shipping date: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sana o\'zgartirishda xatolik: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Update shipping date in the visit step completion data
+  /// This ensures the change persists and is reflected in the visit history
+  Future<void> _updateShippingDateInCompletionData(DateTime newShippingDate) async {
+    try {
+      debugPrint('CreateOrderPage: Updating shipping date in completion data for visit ${widget.visitId}, step ${widget.stepCode}');
+
+      // Get existing completion data
+      final stepData = await _visitDataRepository.getVisitStepDataByStep(widget.visitId, widget.stepCode);
+      final completionData = stepData.where((d) => d.dataType == 'completion').toList();
+
+      if (completionData.isEmpty) {
+        debugPrint('CreateOrderPage: No completion data found to update');
+        return;
+      }
+
+      // Get the most recent completion data
+      completionData.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      final latestCompletion = completionData.first;
+
+      // Parse existing data
+      final parsedData = jsonDecode(latestCompletion.dataContent) as Map<String, dynamic>;
+
+      // Update the order's shipping date
+      final orderData = parsedData['order'] as Map<String, dynamic>?;
+      if (orderData != null) {
+        orderData['shippingDate'] = newShippingDate.toIso8601String();
+        parsedData['order'] = orderData;
+
+        // Create updated VisitData
+        final updatedVisitData = VisitData(
+          id: latestCompletion.id,
+          visitId: latestCompletion.visitId,
+          clientCode: latestCompletion.clientCode,
+          stepCode: latestCompletion.stepCode,
+          stepName: latestCompletion.stepName,
+          dataType: latestCompletion.dataType,
+          dataContent: jsonEncode(parsedData),
+          timestamp: DateTime.now(), // Update timestamp
+          isSynced: false, // Mark as needing sync
+        );
+
+        // Save updated data
+        await _visitDataRepository.saveVisitStepData(updatedVisitData);
+
+        debugPrint('CreateOrderPage: Shipping date updated in completion data successfully');
+      } else {
+        debugPrint('CreateOrderPage: No order data found in completion data');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('CreateOrderPage: Error updating shipping date in completion data: $e');
+      debugPrint('CreateOrderPage: Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 
   @override

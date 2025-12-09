@@ -17,6 +17,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/s
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/competitor_audit_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/create_order_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/photo_facing_after_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/visit_completion_page.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations_en.dart';
 import 'package:flutter/services.dart';
@@ -913,13 +914,18 @@ class _VisitStepsViewState extends State<VisitStepsView> {
               ),
             );
           } else if (state is VisitStepsCompleted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.visitCompletedSuccessfully),
-                backgroundColor: Colors.green,
+            // Navigate to completion screen instead of just showing snackbar and popping
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => VisitCompletionPage(
+                  tradingPoint: state.tradingPoint,
+                  permissions: (context.read<VisitStepsBloc>().state as VisitStepsLoaded).permissions,
+                  completedSteps: (context.read<VisitStepsBloc>().state as VisitStepsLoaded).stepProgress
+                      .where((step) => step.status == VisitStepStatus.completed)
+                      .toList(),
+                ),
               ),
             );
-            Navigator.of(context).pop(true); // Return success
           }
         },
         builder: (context, state) {

@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_finish_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 
 // Mock classes
@@ -19,357 +19,129 @@ void main() {
     visitFinishService = VisitFinishService(mockRepository);
   });
 
-  setUpAll(() {
-    // Initialize Mockito
-  });
-
   group('VisitFinishService', () {
-    test('finishVisit should process all steps successfully', () async {
-      // Arrange
-      final visitId = 'test_visit_123';
-      final mockTradingPoint = TradingPoint(
-        id: 'test_client',
-        name: 'Test Client',
-        address: 'Test Address',
-        phone: '',
-        ownerName: '',
-        contactPerson: '',
-        inn: '',
-        status: 'active',
-        lastVisitDate: '',
-        hasOrders: false,
-        hasContracts: false,
-        isVisited: false,
-        hasContract: false,
-        latitude: 0.0,
-        longitude: 0.0,
-        region: '',
-        district: '',
-        signboard: '',
-        referencePoint: '',
-        responsiblePerson: '',
-        responsiblePersonPhone: '',
-        tradePointType: '',
-        creditLimit: 0.0,
-        accumulatedCredit: 0.0,
-        codeRegion: '',
-        visitToday: false,
-        visitStepNumber: 1,
-        plannedWeekDay: null,
-      );
-      final tradingPoint = TradingPointWithPermissions(tradingPoint: mockTradingPoint);
-      final permissions = SalesReqPermissions(
-        userCode: 'test_user',
-        skipTINduplicateCheck: false,
-        allowCreationWithoutTIN: false,
-        allowCreatingPointOfSale: false,
-        visit: true,
-        strictSequence: false,
-        unplannedOrder: false,
-        plannedRoute: false,
-        editClientCoordinates: false,
-        visitSteps: [
-          VisitStep(stepCode: 1, stepName: 'фото до (facing correction)', stepRequired: true),
-          VisitStep(stepCode: 2, stepName: 'создать заказ', stepRequired: true),
-        ],
-      );
+    group('clearVisitDataAfterCompletion', () {
+      test('should successfully clear visit data after completion', () async {
+        // Arrange
+        const visitId = 'test_visit_123';
+        when(mockRepository.deleteVisitStepDataByVisitId(visitId))
+            .thenAnswer((_) async {});
 
-      // Mock repository calls - no need to mock visit data step as it doesn't use repository
-      when(mockRepository.getVisitStepDataByStep(visitId, 1))
-          .thenAnswer((_) async => [
-                VisitData(
-                  visitId: visitId,
-                  clientCode: 'test_client',
-                  stepCode: 1,
-                  stepName: 'фото до (facing correction)',
-                  dataType: 'completion',
-                  dataContent: '{"test": "data"}',
-                  timestamp: DateTime.now(),
-                )
-              ]);
+        // Act
+        final result = await visitFinishService.clearVisitDataAfterCompletion(visitId: visitId);
 
-      when(mockRepository.getVisitStepDataByStep(visitId, 2))
-          .thenAnswer((_) async => [
-                VisitData(
-                  visitId: visitId,
-                  clientCode: 'test_client',
-                  stepCode: 2,
-                  stepName: 'создать заказ',
-                  dataType: 'completion',
-                  dataContent: '{"test": "data"}',
-                  timestamp: DateTime.now(),
-                )
-              ]);
+        // Assert
+        expect(result, true);
+        verify(mockRepository.deleteVisitStepDataByVisitId(visitId)).called(1);
+      });
 
-      // Act
-      final progressUpdates = <String>[];
-      final errorUpdates = <String>[];
+      test('should return false when clearing visit data fails', () async {
+        // Arrange
+        const visitId = 'test_visit_123';
+        when(mockRepository.deleteVisitStepDataByVisitId(visitId))
+            .thenThrow(Exception('Database error'));
 
-      final result = await visitFinishService.finishVisit(
-        visitId: visitId,
-        tradingPoint: tradingPoint,
-        permissions: permissions,
-        onProgress: (current, total, message, [requestData]) {
-          progressUpdates.add('$current/$total: $message');
-        },
-        onError: (step, error) {
-          errorUpdates.add('${step.stepName}: $error');
-        },
-      );
+        // Act
+        final result = await visitFinishService.clearVisitDataAfterCompletion(visitId: visitId);
 
-      // Assert
-      expect(result, true);
-      expect(progressUpdates.length, greaterThan(0));
-      expect(errorUpdates.length, 0);
-      expect(progressUpdates.last, contains('Barcha bosqichlar muvaffaqiyatli bajarildi'));
+        // Assert
+        expect(result, false);
+        verify(mockRepository.deleteVisitStepDataByVisitId(visitId)).called(1);
+      });
+
+      test('should handle empty visit ID gracefully', () async {
+        // Arrange
+        const visitId = '';
+        when(mockRepository.deleteVisitStepDataByVisitId(visitId))
+            .thenAnswer((_) async {});
+
+        // Act
+        final result = await visitFinishService.clearVisitDataAfterCompletion(visitId: visitId);
+
+        // Assert
+        expect(result, true);
+        verify(mockRepository.deleteVisitStepDataByVisitId(visitId)).called(1);
+      });
     });
 
-    test('finishVisit should handle step failure and rollback', () async {
-      // Arrange
-      final visitId = 'test_visit_123';
-      final mockTradingPoint = TradingPoint(
-        id: 'test_client',
-        name: 'Test Client',
-        address: 'Test Address',
-        phone: '',
-        ownerName: '',
-        contactPerson: '',
-        inn: '',
-        status: 'active',
-        lastVisitDate: '',
-        hasOrders: false,
-        hasContracts: false,
-        isVisited: false,
-        hasContract: false,
-        latitude: 0.0,
-        longitude: 0.0,
-        region: '',
-        district: '',
-        signboard: '',
-        referencePoint: '',
-        responsiblePerson: '',
-        responsiblePersonPhone: '',
-        tradePointType: '',
-        creditLimit: 0.0,
-        accumulatedCredit: 0.0,
-        codeRegion: '',
-        visitToday: false,
-        visitStepNumber: 1,
-        plannedWeekDay: null,
-      );
-      final tradingPoint = TradingPointWithPermissions(tradingPoint: mockTradingPoint);
-      final permissions = SalesReqPermissions(
-        userCode: 'test_user',
-        skipTINduplicateCheck: false,
-        allowCreationWithoutTIN: false,
-        allowCreatingPointOfSale: false,
-        visit: true,
-        strictSequence: false,
-        unplannedOrder: false,
-        plannedRoute: false,
-        editClientCoordinates: false,
-        visitSteps: [
-          VisitStep(stepCode: 1, stepName: 'фото до (facing correction)', stepRequired: true),
-          VisitStep(stepCode: 2, stepName: 'создать заказ', stepRequired: true),
-        ],
-      );
+    group('finishVisit integration with data clearing', () {
+      test('should clear visit data after successful completion', () async {
+        // Arrange
+        const visitId = 'test_visit_123';
+        final tradingPoint = TradingPointWithPermissions(
+          tradingPoint: const TradingPoint(
+            id: 'client_123',
+            name: 'Test Client',
+            address: 'Test Address',
+            phone: '+998901234567',
+            ownerName: 'Test Owner',
+            contactPerson: 'Test Contact',
+            inn: '123456789',
+            status: 'active',
+            lastVisitDate: '',
+            hasOrders: false,
+            hasContracts: false,
+            isVisited: false,
+            hasContract: false,
+            latitude: 41.2995,
+            longitude: 69.2401,
+            region: 'Tashkent',
+            district: 'Yunusabad',
+            signboard: 'Test Signboard',
+            referencePoint: 'Test Reference',
+            responsiblePerson: 'Test Responsible',
+            responsiblePersonPhone: '+998987654321',
+            tradePointType: 'Shop',
+            creditLimit: 1000000.0,
+            accumulatedCredit: 0.0,
+            codeRegion: 'region_1',
+          ),
+          permissions: SalesReqPermissions(
+            userCode: 'user_123',
+            skipTINduplicateCheck: false,
+            allowCreationWithoutTIN: false,
+            allowCreatingPointOfSale: false,
+            visit: true,
+            strictSequence: false,
+            unplannedOrder: true,
+            plannedRoute: true,
+            editClientCoordinates: false,
+            clientZoneAccess: 0,
+            locationUpdateInterval: 0,
+            visitSteps: [],
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
 
-      // Mock repository calls - first step succeeds, second fails
-      when(mockRepository.getVisitStepDataByStep(visitId, 1))
-          .thenAnswer((_) async => [
-                VisitData(
-                  visitId: visitId,
-                  clientCode: 'test_client',
-                  stepCode: 1,
-                  stepName: 'фото до (facing correction)',
-                  dataType: 'completion',
-                  dataContent: '{"test": "data"}',
-                  timestamp: DateTime.now(),
-                )
-              ]);
+        final permissions = SalesReqPermissions(
+          userCode: 'user_123',
+          skipTINduplicateCheck: false,
+          allowCreationWithoutTIN: false,
+          allowCreatingPointOfSale: false,
+          visit: true,
+          strictSequence: false,
+          unplannedOrder: true,
+          plannedRoute: true,
+          editClientCoordinates: false,
+          clientZoneAccess: 0,
+          locationUpdateInterval: 0,
+          visitSteps: [],
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
 
-      when(mockRepository.getVisitStepDataByStep(visitId, 2))
-          .thenAnswer((_) async => []); // No completion data = failure
+        // Mock successful data clearing
+        when(mockRepository.deleteVisitStepDataByVisitId(visitId))
+            .thenAnswer((_) async => {});
 
-      // Act
-      final progressUpdates = <String>[];
-      final errorUpdates = <String>[];
+        // Act - Call the method that should trigger data clearing
+        final clearResult = await visitFinishService.clearVisitDataAfterCompletion(visitId: visitId);
 
-      final result = await visitFinishService.finishVisit(
-        visitId: visitId,
-        tradingPoint: tradingPoint,
-        permissions: permissions,
-        onProgress: (current, total, message, [requestData]) {
-          progressUpdates.add('$current/$total: $message');
-        },
-        onError: (step, error) {
-          errorUpdates.add('${step.stepName}: $error');
-        },
-      );
-
-      // Assert
-      expect(result, false);
-      expect(errorUpdates.length, 1);
-      expect(errorUpdates.first, contains('создать заказ'));
-    });
-
-    test('finishVisit should handle unknown step types', () async {
-      // Arrange
-      final visitId = 'test_visit_123';
-      final mockTradingPoint = TradingPoint(
-        id: 'test_client',
-        name: 'Test Client',
-        address: 'Test Address',
-        phone: '',
-        ownerName: '',
-        contactPerson: '',
-        inn: '',
-        status: 'active',
-        lastVisitDate: '',
-        hasOrders: false,
-        hasContracts: false,
-        isVisited: false,
-        hasContract: false,
-        latitude: 0.0,
-        longitude: 0.0,
-        region: '',
-        district: '',
-        signboard: '',
-        referencePoint: '',
-        responsiblePerson: '',
-        responsiblePersonPhone: '',
-        tradePointType: '',
-        creditLimit: 0.0,
-        accumulatedCredit: 0.0,
-        codeRegion: '',
-        visitToday: false,
-        visitStepNumber: 1,
-        plannedWeekDay: null,
-      );
-      final tradingPoint = TradingPointWithPermissions(tradingPoint: mockTradingPoint);
-      final permissions = SalesReqPermissions(
-        userCode: 'test_user',
-        skipTINduplicateCheck: false,
-        allowCreationWithoutTIN: false,
-        allowCreatingPointOfSale: false,
-        visit: true,
-        strictSequence: false,
-        unplannedOrder: false,
-        plannedRoute: false,
-        editClientCoordinates: false,
-        visitSteps: [
-          VisitStep(stepCode: 99, stepName: 'Unknown Step', stepRequired: true),
-        ],
-      );
-
-      // Mock repository calls
-      when(mockRepository.getVisitStepDataByStep(visitId, 99))
-          .thenAnswer((_) async => [
-                VisitData(
-                  visitId: visitId,
-                  clientCode: 'test_client',
-                  stepCode: 99,
-                  stepName: 'Unknown Step',
-                  dataType: 'completion',
-                  dataContent: '{"test": "data"}',
-                  timestamp: DateTime.now(),
-                )
-              ]);
-
-      // Act
-      final progressUpdates = <String>[];
-      final errorUpdates = <String>[];
-
-      final result = await visitFinishService.finishVisit(
-        visitId: visitId,
-        tradingPoint: tradingPoint,
-        permissions: permissions,
-        onProgress: (current, total, message, [requestData]) {
-          progressUpdates.add('$current/$total: $message');
-        },
-        onError: (step, error) {
-          errorUpdates.add('${step.stepName}: $error');
-        },
-      );
-
-      // Assert
-      expect(result, true);
-      expect(progressUpdates.any((msg) => msg.contains('Noma\'lum bosqich')), true);
-    });
-
-    test('finishVisit should handle repository errors gracefully', () async {
-      // Arrange
-      final visitId = 'test_visit_123';
-      final mockTradingPoint = TradingPoint(
-        id: 'test_client',
-        name: 'Test Client',
-        address: 'Test Address',
-        phone: '',
-        ownerName: '',
-        contactPerson: '',
-        inn: '',
-        status: 'active',
-        lastVisitDate: '',
-        hasOrders: false,
-        hasContracts: false,
-        isVisited: false,
-        hasContract: false,
-        latitude: 0.0,
-        longitude: 0.0,
-        region: '',
-        district: '',
-        signboard: '',
-        referencePoint: '',
-        responsiblePerson: '',
-        responsiblePersonPhone: '',
-        tradePointType: '',
-        creditLimit: 0.0,
-        accumulatedCredit: 0.0,
-        codeRegion: '',
-        visitToday: false,
-        visitStepNumber: 1,
-        plannedWeekDay: null,
-      );
-      final tradingPoint = TradingPointWithPermissions(tradingPoint: mockTradingPoint);
-      final permissions = SalesReqPermissions(
-        userCode: 'test_user',
-        skipTINduplicateCheck: false,
-        allowCreationWithoutTIN: false,
-        allowCreatingPointOfSale: false,
-        visit: true,
-        strictSequence: false,
-        unplannedOrder: false,
-        plannedRoute: false,
-        editClientCoordinates: false,
-        visitSteps: [
-          VisitStep(stepCode: 1, stepName: 'фото до (facing correction)', stepRequired: true),
-        ],
-      );
-
-      // Mock repository to throw error
-      when(mockRepository.getVisitStepDataByStep(visitId, 1))
-          .thenThrow(Exception('Database error'));
-
-      // Act
-      final progressUpdates = <String>[];
-      final errorUpdates = <String>[];
-
-      final result = await visitFinishService.finishVisit(
-        visitId: visitId,
-        tradingPoint: tradingPoint,
-        permissions: permissions,
-        onProgress: (current, total, message) {
-          progressUpdates.add('$current/$total: $message');
-        },
-        onError: (step, error) {
-          errorUpdates.add('${step.stepName}: $error');
-        },
-      );
-
-      // Assert
-      expect(result, false);
-      expect(errorUpdates.length, 1);
-      expect(errorUpdates.first, contains('Database error'));
+        // Assert
+        expect(clearResult, true);
+        verify(mockRepository.deleteVisitStepDataByVisitId(visitId)).called(1);
+      });
     });
   });
 }

@@ -180,8 +180,15 @@ class VisitFinishService {
 
       // All steps completed successfully
       onProgress(totalSteps, totalSteps, 'Barcha bosqichlar muvaffaqiyatli bajarildi');
-      debugPrint('VisitFinishService: Visit completion successful for visitId: $visitId');
 
+      // Clear all visit data after successful completion to prevent data accumulation
+      final cleanupSuccess = await clearVisitDataAfterCompletion(visitId: visitId);
+      if (!cleanupSuccess) {
+        debugPrint('VisitFinishService: Warning - visit data cleanup failed, but completion was successful');
+        // Don't fail the completion if cleanup fails
+      }
+
+      debugPrint('VisitFinishService: Visit completion successful for visitId: $visitId');
       return true;
 
     } catch (e, stackTrace) {
@@ -552,6 +559,34 @@ class VisitFinishService {
       debugPrint('VisitFinishService: Stack trace: $stackTrace');
       onProgress('Bosqichlarni bekor qilishda xatolik yuz berdi');
       // Don't throw - cancellation failure shouldn't prevent error reporting
+    }
+  }
+
+  /// Clears all visit-related data after successful completion
+  /// This ensures clean state for next visits and prevents data accumulation
+  /// Similar to cancel visit functionality but called after success
+  ///
+  /// Parameters:
+  /// - visitId: Unique identifier for the visit session to clear
+  ///
+  /// Returns: true if cleanup successful, false otherwise
+  Future<bool> clearVisitDataAfterCompletion({
+    required String visitId,
+  }) async {
+    try {
+      debugPrint('VisitFinishService: Clearing visit data after successful completion for visitId: $visitId');
+
+      // Delete all visit step data for this visit ID (includes order drafts and step progress)
+      await _visitDataRepository.deleteVisitStepDataByVisitId(visitId);
+
+      debugPrint('VisitFinishService: Successfully cleared all visit data for visitId: $visitId');
+      return true;
+
+    } catch (e, stackTrace) {
+      debugPrint('VisitFinishService: Error clearing visit data after completion: $e');
+      debugPrint('VisitFinishService: Stack trace: $stackTrace');
+      // Don't throw - cleanup failure shouldn't prevent completion success
+      return false;
     }
   }
 }

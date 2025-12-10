@@ -900,21 +900,42 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     });
   }
 
+  /// Handles unplanned order creation by navigating to visit steps page
+  /// For unplanned orders, all visit steps become optional and users can proceed freely
+  /// This allows agents to create orders without completing all required visit steps
   void _createOrder(TradingPointWithPermissions tradingPointWithPermissions) {
     final tradingPoint = tradingPointWithPermissions.tradingPoint;
-    _saveState(); // State saqlash
-    // Orders sahifasiga mijoz parametrlar bilan o'tish
+    _saveState(); // Save current page state before navigation
+
+    // Navigate to visit steps page with unplanned order flag
+    // This enables flexible workflow where steps are optional
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => OrdersPage(
-          initialClientFilter: tradingPoint.id,
-          initialClientName: tradingPoint.name,
+        builder: (_) => VisitStepsPage(
+          tradingPoint: tradingPointWithPermissions,
+          isUnplannedOrder: true, // Flag indicating this is an unplanned order
         ),
       ),
-    ).then((_) {
-      // Qaytib kelganda state avtomatik tiklanadi
+    ).then((result) {
+      // Restore page state when returning from visit steps
       _restoreState();
+
+      // If visit was completed successfully, update trading point status
+      // This marks the client as visited and refreshes the UI
+      if (result == true) {
+        setState(() {
+          final index = _allTradingPoints.indexWhere((tp) => tp.tradingPoint.id == tradingPoint.id);
+          if (index != -1) {
+            final updatedTradingPoint = tradingPoint.copyWith(isVisited: true);
+            _allTradingPoints[index] = TradingPointWithPermissions(
+              tradingPoint: updatedTradingPoint,
+              permissions: tradingPointWithPermissions.permissions,
+            );
+            _filterTradingPoints(_searchController.text);
+          }
+        });
+      }
     });
   }
 

@@ -258,5 +258,40 @@ void main() {
       // The visit ID should be generated as: visit_{userCode}_{clientId}_{date}
       // We can't easily test the exact ID without exposing it, but we can verify the flow works
     });
+
+    blocTest<VisitStepsBloc, VisitStepsState>(
+      'should make all steps optional for unplanned orders',
+      build: () {
+        when(mockPrefs.getUserCode()).thenReturn('test_user');
+        when(mockDataSyncService.getCachedSalesReqPermissions('test_user'))
+            .thenAnswer((_) async => testPermissions);
+        when(mockRepository.getVisitStepDataByVisitId(any))
+            .thenAnswer((_) async => []);
+
+        // Create bloc with unplanned order flag
+        return VisitStepsBloc(
+          dataSyncService: mockDataSyncService,
+          visitDataRepository: mockRepository,
+          visitFinishService: null, // Not needed for this test
+          isUnplannedOrder: true,
+        );
+      },
+      act: (bloc) => bloc.add(LoadVisitSteps(testTradingPoint)),
+      expect: () => [
+        VisitStepsLoading(),
+        isA<VisitStepsLoaded>(),
+      ],
+      verify: (bloc) {
+        final state = bloc.state as VisitStepsLoaded;
+        expect(state.stepProgress.length, 2);
+        // All steps should be optional (stepRequired = false) for unplanned orders
+        expect(state.stepProgress[0].step.stepRequired, false);
+        expect(state.stepProgress[1].step.stepRequired, false);
+        // Should be marked as unplanned order
+        expect(state.isUnplannedOrder, true);
+        // Should always allow proceeding to next step
+        expect(state.canProceedToNext, true);
+      },
+    );
   });
 }

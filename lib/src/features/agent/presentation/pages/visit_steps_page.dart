@@ -43,6 +43,7 @@ class VisitStepsLoaded extends VisitStepsState {
   final int currentStepIndex;
   final bool isStrictSequence;
   final bool canProceedToNext;
+  final bool isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
 
   const VisitStepsLoaded({
     required this.tradingPoint,
@@ -51,6 +52,7 @@ class VisitStepsLoaded extends VisitStepsState {
     required this.currentStepIndex,
     required this.isStrictSequence,
     required this.canProceedToNext,
+    required this.isUnplannedOrder,
   });
 
   @override
@@ -61,6 +63,7 @@ class VisitStepsLoaded extends VisitStepsState {
         currentStepIndex,
         isStrictSequence,
         canProceedToNext,
+        isUnplannedOrder,
       ];
 }
 
@@ -197,19 +200,23 @@ enum VisitStepStatus {
 
 /// Visit Steps BLoC - Enhanced with repository-based state management
 /// Ensures data persistence and consistency across page navigations
+/// Supports both planned visits (strict sequence) and unplanned orders (optional steps)
 class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   final DataSyncService _dataSyncService;
   final VisitDataRepository _visitDataRepository;
   final VisitFinishService _visitFinishService;
+  final bool _isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
   late String _visitId; // Unique identifier for this visit session
 
   VisitStepsBloc({
     required DataSyncService dataSyncService,
     required VisitDataRepository visitDataRepository,
     required VisitFinishService visitFinishService,
+    bool isUnplannedOrder = false, // Default to planned visit
   }) : _dataSyncService = dataSyncService,
         _visitDataRepository = visitDataRepository,
         _visitFinishService = visitFinishService,
+        _isUnplannedOrder = isUnplannedOrder,
         super(VisitStepsInitial()) {
     on<LoadVisitSteps>(_onLoadVisitSteps);
     on<CompleteStep>(_onCompleteStep);
@@ -264,6 +271,14 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
       debugPrint('VisitStepsBloc: Successfully loaded ${permissions.visitSteps.length} visit steps for user $userCode');
 
+      // For unplanned orders, make all steps optional by modifying the permissions
+      // This allows users to skip any step and proceed freely through the visit process
+      final modifiedPermissions = _isUnplannedOrder
+          ? permissions.copyWith(
+              visitSteps: permissions.visitSteps.map((step) => step.copyWith(stepRequired: false)).toList(),
+            )
+          : permissions;
+
       // Generate consistent visit ID for this trading point and date
       // This ensures that visits can be restored when navigating back to the page
       final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD format
@@ -272,21 +287,22 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       debugPrint('VisitStepsBloc: Using visit ID: $_visitId');
 
       // Load existing step progress from persistent storage with enhanced error handling
-      final stepProgress = await _loadStepProgressFromStorage(permissions.visitSteps, tradingPoint.tradingPoint.name);
+      final stepProgress = await _loadStepProgressFromStorage(modifiedPermissions.visitSteps, tradingPoint.tradingPoint.name);
 
       // Determine current step based on strict sequence
-      final isStrictSequence = permissions.strictSequence;
+      final isStrictSequence = modifiedPermissions.strictSequence;
       final currentStepIndex = _getCurrentStepIndex(stepProgress, isStrictSequence);
 
-      debugPrint('VisitStepsBloc: Loaded ${stepProgress.length} steps, current step index: $currentStepIndex, strict sequence: $isStrictSequence');
+      debugPrint('VisitStepsBloc: Loaded ${stepProgress.length} steps, current step index: $currentStepIndex, strict sequence: $isStrictSequence, unplanned order: $_isUnplannedOrder');
 
       emit(VisitStepsLoaded(
         tradingPoint: tradingPoint,
-        permissions: permissions,
+        permissions: modifiedPermissions,
         stepProgress: stepProgress,
         currentStepIndex: currentStepIndex,
         isStrictSequence: isStrictSequence,
-        canProceedToNext: _canProceedToNext(stepProgress, currentStepIndex, isStrictSequence),
+        canProceedToNext: _canProceedToNext(stepProgress, currentStepIndex, isStrictSequence, _isUnplannedOrder),
+        isUnplannedOrder: _isUnplannedOrder,
       ));
 
       debugPrint('VisitStepsBloc: Visit steps loaded successfully for trading point ${tradingPoint.tradingPoint.name}');
@@ -382,7 +398,8 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       stepProgress: updatedProgress,
       currentStepIndex: newCurrentStepIndex,
       isStrictSequence: currentState.isStrictSequence,
-      canProceedToNext: _canProceedToNext(updatedProgress, newCurrentStepIndex, currentState.isStrictSequence),
+      canProceedToNext: _canProceedToNext(updatedProgress, newCurrentStepIndex, currentState.isStrictSequence, currentState.isUnplannedOrder),
+      isUnplannedOrder: currentState.isUnplannedOrder,
     ));
   }
 
@@ -436,7 +453,8 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       stepProgress: updatedProgress,
       currentStepIndex: newCurrentStepIndex,
       isStrictSequence: currentState.isStrictSequence,
-      canProceedToNext: _canProceedToNext(updatedProgress, newCurrentStepIndex, currentState.isStrictSequence),
+      canProceedToNext: _canProceedToNext(updatedProgress, newCurrentStepIndex, currentState.isStrictSequence, currentState.isUnplannedOrder),
+      isUnplannedOrder: currentState.isUnplannedOrder,
     ));
   }
 
@@ -499,7 +517,8 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       stepProgress: updatedProgress,
       currentStepIndex: previousStepIndex,
       isStrictSequence: currentState.isStrictSequence,
-      canProceedToNext: _canProceedToNext(updatedProgress, previousStepIndex, currentState.isStrictSequence),
+      canProceedToNext: _canProceedToNext(updatedProgress, previousStepIndex, currentState.isStrictSequence, currentState.isUnplannedOrder),
+      isUnplannedOrder: currentState.isUnplannedOrder,
     ));
   }
 
@@ -645,8 +664,15 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     return index; // Returns -1 if all are completed
   }
 
-  bool _canProceedToNext(List<VisitStepProgress> progress, int currentStepIndex, bool isStrictSequence) {
+  /// Determines if the user can proceed to the next step
+  /// For unplanned orders, always returns true to allow free navigation
+  /// For planned visits, follows strict sequence rules
+  bool _canProceedToNext(List<VisitStepProgress> progress, int currentStepIndex, bool isStrictSequence, bool isUnplannedOrder) {
     if (currentStepIndex == -1) return false; // All completed
+
+    // For unplanned orders, always allow proceeding to next step
+    // This enables flexible workflow where users can skip steps as needed
+    if (isUnplannedOrder) return true;
 
     if (!isStrictSequence) return true; // Can always proceed in non-strict mode
 
@@ -883,12 +909,16 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 }
 
 /// Visit Steps Page Widget
+/// Handles both planned visits and unplanned orders.
+/// For unplanned orders, all visit steps become optional and users can proceed freely.
 class VisitStepsPage extends StatelessWidget {
   final TradingPointWithPermissions tradingPoint;
+  final bool isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
 
   const VisitStepsPage({
     super.key,
     required this.tradingPoint,
+    this.isUnplannedOrder = false, // Default to planned visit
   });
 
   @override
@@ -898,6 +928,7 @@ class VisitStepsPage extends StatelessWidget {
         dataSyncService: sl<DataSyncService>(),
         visitDataRepository: VisitDataRepository(sl<ApiDatabaseService>()),
         visitFinishService: VisitFinishService(VisitDataRepository(sl<ApiDatabaseService>())),
+        isUnplannedOrder: isUnplannedOrder, // Pass the flag to the bloc
       )..add(LoadVisitSteps(tradingPoint)),
       child: VisitStepsView(tradingPoint: tradingPoint),
     );

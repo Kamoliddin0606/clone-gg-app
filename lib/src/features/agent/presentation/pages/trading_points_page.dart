@@ -1040,6 +1040,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
               onCall: () => _makeCall(tp.tradingPoint.phone),
               onInformVisit: () => _handleVisitClient(context, tp),
               onCreateOrder: () => _createOrder(tp),
+              onViewClientOrders: () => _viewClinetOrders(tp),
               onViewContracts: () => _viewContracts(tp),
               onRefusal: () => _showRefusalDialog(tp),
               permissions: tp.permissions,
@@ -1240,6 +1241,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                             onCall: () => _makeCall(tp.tradingPoint.phone),
                             onInformVisit: () => _handleVisitClient(context, tp),
                             onCreateOrder: () => _createOrder(tp),
+                            onViewClientOrders: () => _viewClinetOrders(tp),
                             onViewContracts: () => _viewContracts(tp),
                             onRefusal: () => _showRefusalDialog(tp),
                             onOpenDetails: () => _openTpDetails(tp),
@@ -1408,6 +1410,7 @@ class TradingPointCard extends StatelessWidget {
   final VoidCallback onCall;
   final VoidCallback onInformVisit;
   final VoidCallback onCreateOrder;
+  final VoidCallback onViewClientOrders;
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
   final VoidCallback onOpenDetails;
@@ -1423,6 +1426,7 @@ class TradingPointCard extends StatelessWidget {
     required this.onCall,
     required this.onInformVisit,
     required this.onCreateOrder,
+    required this.onViewClientOrders,
     required this.onViewContracts,
     required this.onRefusal,
     required this.onOpenDetails,
@@ -1650,7 +1654,7 @@ class TradingPointCard extends StatelessWidget {
       ),
       // Orders button
       OutlinedButton.icon(
-        onPressed: onCreateOrder,
+        onPressed: onViewClientOrders,
         icon: const Icon(Icons.list_alt, size: 18),
         label: Text(l10n.orders),
         style: OutlinedButton.styleFrom(
@@ -2384,6 +2388,7 @@ class _TradingPointDetailsSheet extends StatefulWidget {
   final VoidCallback onCall;
   final VoidCallback onInformVisit;
   final VoidCallback onCreateOrder;
+  final VoidCallback onViewClientOrders;
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
   final SalesReqPermissions? permissions;
@@ -2394,6 +2399,7 @@ class _TradingPointDetailsSheet extends StatefulWidget {
     required this.onCall,
     required this.onInformVisit,
     required this.onCreateOrder,
+    required this.onViewClientOrders,
     required this.onViewContracts,
     required this.onRefusal,
     this.permissions,
@@ -2463,6 +2469,7 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
                   tradingPoint: widget.tradingPoint,
                   onInformVisit: widget.onInformVisit,
                   onCreateOrder: widget.onCreateOrder,
+                  onViewClientOrders: widget.onViewClientOrders,
                   onViewContracts: widget.onViewContracts,
                   onRefusal: widget.onRefusal,
                   permissions: widget.permissions,
@@ -3362,6 +3369,7 @@ class _ActionsMapPage extends StatefulWidget {
   final TradingPoint tradingPoint;
   final VoidCallback onInformVisit;
   final VoidCallback onCreateOrder;
+  final VoidCallback onViewClientOrders;
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
   final SalesReqPermissions? permissions;
@@ -3370,6 +3378,7 @@ class _ActionsMapPage extends StatefulWidget {
     required this.tradingPoint,
     required this.onInformVisit,
     required this.onCreateOrder,
+    required this.onViewClientOrders,
     required this.onViewContracts,
     required this.onRefusal,
     this.permissions,
@@ -3480,7 +3489,7 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
                 label: Text(AppLocalizations.of(context)!.unplannedOrder),
               ),
               OutlinedButton.icon(
-                onPressed: widget.onCreateOrder,
+                onPressed: widget.onViewClientOrders,
                 icon: const Icon(Icons.list_alt, size: 18),
                 label: Text(AppLocalizations.of(context)!.orders),
               ),

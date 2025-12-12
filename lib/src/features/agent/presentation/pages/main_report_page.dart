@@ -304,13 +304,7 @@ class _MainReportPageState extends State<MainReportPage>
     )..forward();
 
     // Initialize services
-    _dataSyncService = DataSyncService(
-      prefs: GetIt.instance<SharedPreferencesService>(),
-      apiService: GetIt.instance<SoapApiService>(),
-      dbService: GetIt.instance<ApiDatabaseService>(),
-      // dbReportService: GetIt.instance<ReportsSyncService>(),
-      dbHelper: GetIt.instance<DatabaseHelper>(),
-    );
+    _dataSyncService = GetIt.instance<DataSyncService>();
     _dbService = GetIt.instance<ApiDatabaseService>();
     _dbReportService = GetIt.instance<ReportsSyncService>();
     _prefs = GetIt.instance<SharedPreferencesService>();

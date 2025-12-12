@@ -1,10 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+import 'package:dio/dio.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
+import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/rest_api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 
 // Mock classes
@@ -12,6 +16,10 @@ class MockSharedPreferencesService extends Mock implements SharedPreferencesServ
 class MockSoapApiService extends Mock implements SoapApiService {}
 class MockApiDatabaseService extends Mock implements ApiDatabaseService {}
 class MockDatabaseHelper extends Mock implements DatabaseHelper {}
+class MockRestApiService extends Mock implements RestApiService {}
+class MockRestApiDatabaseService extends Mock implements RestApiDatabaseService {}
+class MockTokenService extends Mock implements TokenService {}
+class MockDio extends Mock implements Dio {}
 
 void main() {
   late DataSyncService dataSyncService;
@@ -19,18 +27,29 @@ void main() {
   late MockSoapApiService mockApiService;
   late MockApiDatabaseService mockDbService;
   late MockDatabaseHelper mockDbHelper;
+  late MockRestApiService mockRestApiService;
+  late MockRestApiDatabaseService mockRestApiDatabaseService;
+  late MockTokenService mockTokenService;
+  late MockDio mockDio;
 
   setUp(() {
     mockPrefs = MockSharedPreferencesService();
     mockApiService = MockSoapApiService();
     mockDbService = MockApiDatabaseService();
     mockDbHelper = MockDatabaseHelper();
+    mockRestApiService = MockRestApiService();
+    mockRestApiDatabaseService = MockRestApiDatabaseService();
+    mockTokenService = MockTokenService();
+    mockDio = MockDio();
 
     dataSyncService = DataSyncService(
       prefs: mockPrefs,
       apiService: mockApiService,
       dbService: mockDbService,
       dbHelper: mockDbHelper,
+      restApiService: mockRestApiService,
+      restApiDatabaseService: mockRestApiDatabaseService,
+      tokenService: mockTokenService,
     );
   });
 
@@ -102,4 +121,5 @@ void main() {
       verify(mockDbService.getOrderStatuses()).called(1);
     });
   });
+
 }

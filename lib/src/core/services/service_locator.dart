@@ -7,6 +7,9 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/rest_api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/reports_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/report_data_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telegram_bot_service.dart';
@@ -66,12 +69,24 @@ Future<void> setupServiceLocator() async {
   if (!sl.isRegistered<ApiDatabaseService>()) {
     sl.registerLazySingleton<ApiDatabaseService>(() => ApiDatabaseService());
   }
+  if (!sl.isRegistered<RestApiService>()) {
+    sl.registerLazySingleton<RestApiService>(() => RestApiService(sl<Dio>()));
+  }
+  if (!sl.isRegistered<RestApiDatabaseService>()) {
+    sl.registerLazySingleton<RestApiDatabaseService>(() => RestApiDatabaseService(sl<ApiDatabaseService>()));
+  }
+  if (!sl.isRegistered<TokenService>()) {
+    sl.registerLazySingleton<TokenService>(() => TokenService(sl<Dio>(), sl<SharedPreferencesService>()));
+  }
   if (!sl.isRegistered<DataSyncService>()) {
     sl.registerLazySingleton<DataSyncService>(() => DataSyncService(
       prefs: sl<SharedPreferencesService>(),
       apiService: sl<SoapApiService>(),
       dbService: sl<ApiDatabaseService>(),
       dbHelper: sl<DatabaseHelper>(),
+      restApiService: sl<RestApiService>(),
+      restApiDatabaseService: sl<RestApiDatabaseService>(),
+      tokenService: sl<TokenService>(),
     ));
   }
   if (!sl.isRegistered<ReportsSyncService>()) {

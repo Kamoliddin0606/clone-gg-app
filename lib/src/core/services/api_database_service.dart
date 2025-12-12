@@ -48,7 +48,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 19,
+      version: 20,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -785,6 +785,47 @@ class ApiDatabaseService {
       if (!hasLocationUpdateInterval) {
         await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0');
       }
+    } else if (oldVersion < 20) {
+      // Add thumbnails table for version 20
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS thumbnails (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          entity_type TEXT NOT NULL,
+          entity_id INTEGER NOT NULL,
+          code_1c TEXT NOT NULL,
+          entity_name TEXT NOT NULL,
+          thumbnail_url TEXT NOT NULL,
+          thumbnail_width INTEGER NOT NULL,
+          thumbnail_height INTEGER NOT NULL,
+          thumbnail_format TEXT NOT NULL,
+          thumbnail_size_kb TEXT NOT NULL,
+          original_width INTEGER NOT NULL,
+          original_height INTEGER NOT NULL,
+          original_format TEXT NOT NULL,
+          original_size_bytes INTEGER NOT NULL,
+          original_size_kb TEXT NOT NULL,
+          is_main INTEGER NOT NULL DEFAULT 0,
+          category TEXT,
+          note TEXT,
+          status_code TEXT NOT NULL,
+          status_name TEXT NOT NULL,
+          source_name TEXT NOT NULL,
+          source_type TEXT NOT NULL,
+          created_at_server TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (code_1c) REFERENCES clients (code) ON DELETE CASCADE,
+          FOREIGN KEY (code_1c) REFERENCES products (code) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create indexes for thumbnails table
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_entity_type ON thumbnails(entity_type)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_entity_id ON thumbnails(entity_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_code_1c ON thumbnails(code_1c)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_is_main ON thumbnails(is_main)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_status_code ON thumbnails(status_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_created_at_server ON thumbnails(created_at_server)');
     }
   }
 

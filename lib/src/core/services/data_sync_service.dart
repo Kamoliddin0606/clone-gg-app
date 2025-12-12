@@ -7,6 +7,9 @@ import 'package:sqflite/sqflite.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/rest_api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
@@ -33,6 +36,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_re
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
@@ -43,16 +47,25 @@ class DataSyncService {
   final SoapApiService _apiService;
   final ApiDatabaseService _dbService;
   final DatabaseHelper _dbHelper;
+  final RestApiService _restApiService;
+  final RestApiDatabaseService _restApiDatabaseService;
+  final TokenService _tokenService;
 
   DataSyncService({
     required SharedPreferencesService prefs,
     required SoapApiService apiService,
     required ApiDatabaseService dbService,
     required DatabaseHelper dbHelper,
+    required RestApiService restApiService,
+    required RestApiDatabaseService restApiDatabaseService,
+    required TokenService tokenService,
   }) : _prefs = prefs,
         _apiService = apiService,
         _dbService = dbService,
-        _dbHelper = dbHelper {
+        _dbHelper = dbHelper,
+        _restApiService = restApiService,
+        _restApiDatabaseService = restApiDatabaseService,
+        _tokenService = tokenService {
     _initializeWorkManager();
   }
 
@@ -310,6 +323,16 @@ class DataSyncService {
         // Continue with other sync operations - map tokens are optional
       }
 
+      // Sync thumbnails after all other data has been synced
+      try {
+        await _syncThumbnails();
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error syncing thumbnails during full data sync: $e');
+        }
+        // Continue with other sync operations - thumbnails are optional
+      }
+
       if(isEvyapServerSelected()){
         // Sync reports (current month by default)
         try {
@@ -483,7 +506,19 @@ class DataSyncService {
           // Continue with other steps
         }}
 
-      // Step 14: Completed
+      // Step 18: Sync thumbnails
+      yield SyncStep.syncingThumbnails;
+      try {
+        await _syncThumbnails();
+      } catch (e) {
+        // Log error but don't fail the entire sync
+        if (kDebugMode) {
+          print('Error syncing thumbnails: $e');
+        }
+        // Continue with other steps - thumbnails are optional
+      }
+
+      // Step 19: Completed
       yield SyncStep.completed;
 
       if (kDebugMode) {
@@ -1978,6 +2013,63 @@ class DataSyncService {
     final permissions = await _dbService.getSalesReqPermissions(userCode);
     if (permissions == null) return 0;
     return await _dbService.getVisitStepsCount(permissions.id!);
+  }
+
+  /// Sync thumbnails data
+  /// This method fetches thumbnail data from the REST API and saves it to the database
+  /// Thumbnails are synced after all other data to ensure clients and products tables are populated
+  /// Uses a specific server (http://178.218.200.120:1596) for thumbnails, not the user-selected base URL
+  /// This ensures thumbnails come from the dedicated media server regardless of user's main API server selection
+  ///
+  /// @return Future<List<Thumbnail>> List of synced thumbnails, empty list if failed
+  /// @throws Never - catches all exceptions internally to prevent sync interruption
+  Future<List<Thumbnail>> _syncThumbnails() async {
+    try {
+      if (kDebugMode) {
+        print('DataSyncService: Starting thumbnail sync from dedicated media server');
+      }
+
+      // Note: Base URL from preferences is not used for thumbnails
+      // Thumbnails are fetched from a dedicated media server: http://178.218.200.120:1596
+      // This is hardcoded in RestApiService to ensure consistency
+
+      // Get valid access token from the dedicated server
+      final accessToken = await _tokenService.getValidAccessToken();
+      if (accessToken == null || accessToken.isEmpty) {
+        if (kDebugMode) {
+          print('DataSyncService: No valid access token available from media server, skipping thumbnail sync');
+        }
+        return [];
+      }
+
+      // Fetch thumbnails from REST API using dedicated media server
+      // RestApiService.getThumbnails() uses hardcoded URL: http://178.218.200.120:1596/api/v1/thumbnails
+      final thumbnails = await _restApiService.getThumbnails(
+        authToken: accessToken,
+      );
+
+      if (kDebugMode) {
+        print('DataSyncService: Fetched ${thumbnails.length} thumbnails from dedicated media server');
+      }
+
+      // Save thumbnails to local database for offline access
+      await _restApiDatabaseService.saveThumbnails(thumbnails);
+
+      if (kDebugMode) {
+        print('DataSyncService: Successfully saved ${thumbnails.length} thumbnails to local database');
+      }
+
+      return thumbnails;
+
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: Error syncing thumbnails from media server: $e');
+      }
+      // Return empty list instead of throwing to prevent sync failure
+      // Thumbnails are optional and shouldn't block other sync operations
+      // User can continue using the app without thumbnails
+      return [];
+    }
   }
 
   /// Sync create orders to server

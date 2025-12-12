@@ -11,3 +11,11 @@
 6. Yakunlash va test: Vazifa yakunlangach, chuqur tahlil o'tkazib, kodning ishlashini tekshir. Unit testlar va integration testlar yozib, funksionallikni (masalan, bosqichlar ketma-ketligi, progress bar, error handling) tekshir. Agar kerak bo'lsa, edge case'lar (masalan, network xatoliklar, bo'sh ma'lumotlar) uchun testlar qo'sh.
 
 
+final serverService = ServerService(_prefs);
+      await serverService.restore();
+      _dataSyncService = DataSyncService(
+        prefs: _prefs,
+        apiService: SoapApiService(Dio(), serverService),
+        dbService: ApiDatabaseService(),
+        dbHelper: DatabaseHelper(),
+      );

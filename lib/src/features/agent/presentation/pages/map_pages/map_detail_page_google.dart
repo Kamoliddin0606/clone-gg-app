@@ -114,14 +114,7 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
 
       // Initialize shared preferences and data sync services
       _prefs = await SharedPreferencesService.getInstance();
-      final serverService = ServerService(_prefs);
-      await serverService.restore();
-      _dataSyncService = DataSyncService(
-        prefs: _prefs,
-        apiService: SoapApiService(Dio(), serverService),
-        dbService: ApiDatabaseService(),
-        dbHelper: DatabaseHelper(),
-      );
+      _dataSyncService = sl<DataSyncService>();
 
       if (kDebugMode) {
         print('Services initialized successfully. Online status: $_isOnline');

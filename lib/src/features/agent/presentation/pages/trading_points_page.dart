@@ -938,7 +938,23 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       }
     });
   }
-
+    void _viewClinetOrders(TradingPointWithPermissions tradingPointWithPermissions) {
+      final tradingPoint = tradingPointWithPermissions.tradingPoint;
+      _saveState(); // State saqlash
+      // Orders sahifasiga mijoz parametrlar bilan o'tish
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OrdersPage(
+            initialClientFilter: tradingPoint.id,
+            initialClientName: tradingPoint.name,
+          ),
+        ),
+      ).then((_) {
+        // Qaytib kelganda state avtomatik tiklanadi
+        _restoreState();
+      });
+    }
   void _viewContracts(TradingPointWithPermissions tradingPointWithPermissions) {
     final tradingPoint = tradingPointWithPermissions.tradingPoint;
     try {

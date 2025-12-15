@@ -2015,6 +2015,61 @@ class DataSyncService {
     return await _dbService.getVisitStepsCount(permissions.id!);
   }
 
+  /// Ensure authentication for thumbnail operations
+  /// This method checks if the user is authenticated for the thumbnail server
+  /// If not authenticated, it attempts to authenticate using provided credentials
+  /// Designed to be extensible for different authentication methods in the future
+  ///
+  /// @param username The username for authentication (default: 'admin')
+  /// @param password The password for authentication (default: '1234')
+  /// @return Future<bool> True if authentication successful, false otherwise
+  Future<bool> _ensureThumbnailAuthentication({
+    String username = 'admin',
+    String password = '1234',
+  }) async {
+    try {
+      if (kDebugMode) {
+        print('DataSyncService: Checking authentication status for thumbnail server');
+      }
+
+      // Check if already authenticated
+      final isAuthenticated = await _tokenService.isAuthenticated();
+      if (isAuthenticated) {
+        if (kDebugMode) {
+          print('DataSyncService: User is already authenticated for thumbnail server');
+        }
+        return true;
+      }
+
+      if (kDebugMode) {
+        print('DataSyncService: User not authenticated, attempting authentication with username: $username');
+      }
+
+      // Attempt authentication
+      final authSuccess = await _tokenService.authenticate(
+        username: username,
+        password: password,
+      );
+
+      if (authSuccess) {
+        if (kDebugMode) {
+          print('DataSyncService: Authentication successful for thumbnail server');
+        }
+        return true;
+      } else {
+        if (kDebugMode) {
+          print('DataSyncService: Authentication failed for thumbnail server');
+        }
+        return false;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: Error during thumbnail authentication: $e');
+      }
+      return false;
+    }
+  }
+
   /// Sync thumbnails data
   /// This method fetches thumbnail data from the REST API and saves it to the database
   /// Thumbnails are synced after all other data to ensure clients and products tables are populated
@@ -2033,11 +2088,20 @@ class DataSyncService {
       // Thumbnails are fetched from a dedicated media server: http://178.218.200.120:1596
       // This is hardcoded in RestApiService to ensure consistency
 
+      // Ensure authentication before proceeding with thumbnail sync
+      final authSuccess = await _ensureThumbnailAuthentication();
+      if (!authSuccess) {
+        if (kDebugMode) {
+          print('DataSyncService: Authentication failed, cannot sync thumbnails');
+        }
+        return [];
+      }
+
       // Get valid access token from the dedicated server
       final accessToken = await _tokenService.getValidAccessToken();
       if (accessToken == null || accessToken.isEmpty) {
         if (kDebugMode) {
-          print('DataSyncService: No valid access token available from media server, skipping thumbnail sync');
+          print('DataSyncService: No valid access token available from media server after authentication, skipping thumbnail sync');
         }
         return [];
       }

@@ -153,8 +153,27 @@ class RestApiService {
         print('RestApiService: Received ${response.data.length} characters of response data');
       }
 
-      // Parse the response data
-      final List<dynamic> responseData = response.data as List<dynamic>;
+      // Parse the response data - handle both direct list and wrapped in map
+      dynamic rawData = response.data;
+      List<dynamic> responseData;
+
+      if (rawData is List) {
+        responseData = rawData;
+      } else if (rawData is Map<String, dynamic>) {
+        // Try common keys for the list
+        responseData = rawData['data'] as List<dynamic>? ??
+                       rawData['thumbnails'] as List<dynamic>? ??
+                       rawData['results'] as List<dynamic>? ??
+                       [];
+        if (responseData.isEmpty && rawData.isNotEmpty) {
+          if (kDebugMode) {
+            print('RestApiService: Unable to find list in response map. Available keys: ${rawData.keys}');
+          }
+          throw Exception('Unable to find thumbnail list in response. Response keys: ${rawData.keys}');
+        }
+      } else {
+        throw Exception('Unexpected response type: ${rawData.runtimeType}. Expected List or Map.');
+      }
 
       if (kDebugMode) {
         print('RestApiService: Parsing ${responseData.length} thumbnail records');

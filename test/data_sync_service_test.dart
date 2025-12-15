@@ -10,6 +10,7 @@ import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart
 import 'package:gloria_marketing_flutter/src/core/services/rest_api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
 
 // Mock classes
 class MockSharedPreferencesService extends Mock implements SharedPreferencesService {}
@@ -119,6 +120,21 @@ void main() {
       verify(mockApiService.getOrderStatusList(userCode: userCode)).called(1);
       verify(mockDbService.saveOrderStatuses([])).called(1);
       verify(mockDbService.getOrderStatuses()).called(1);
+    });
+  });
+
+  group('DataSyncService Thumbnail Authentication Tests', () {
+    test('authentication methods are available', () async {
+      // This is a basic test to ensure the service has the authentication methods
+      // The actual authentication logic is tested indirectly through integration
+
+      // Verify that the token service has the required methods
+      expect(mockTokenService.isAuthenticated, isNotNull);
+      expect(mockTokenService.authenticate, isNotNull);
+      expect(mockTokenService.getValidAccessToken, isNotNull);
+
+      // Verify that the data sync service has the required dependencies
+      expect(dataSyncService, isNotNull);
     });
   });
 

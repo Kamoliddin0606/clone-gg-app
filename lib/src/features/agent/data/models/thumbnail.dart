@@ -13,10 +13,10 @@ class Thumbnail {
   final bool isMain;
   final String? category;
   final String? note;
-  final String statusCode;
-  final String statusName;
-  final String sourceName;
-  final String sourceType;
+  final String? statusCode;
+  final String? statusName;
+  final String? sourceName;
+  final String? sourceType;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -61,10 +61,10 @@ class Thumbnail {
       isMain: json['is_main'] as bool,
       category: json['category'] as String?,
       note: json['note'] as String?,
-      statusCode: json['status_code'] as String,
-      statusName: json['status_name'] as String,
-      sourceName: json['source_name'] as String,
-      sourceType: json['source_type'] as String,
+      statusCode: json['status_code'] as String?,
+      statusName: json['status_name'] as String?,
+      sourceName: json['source_name'] as String?,
+      sourceType: json['source_type'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
       clientId: json['client_id'] as int?,

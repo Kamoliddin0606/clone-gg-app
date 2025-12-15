@@ -8,6 +8,8 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 // Mock classes
 class MockDio extends Mock implements Dio {}
 
+class MockInterceptors extends Mock implements Interceptors {}
+
 void main() {
   late TokenService tokenService;
   late MockDio mockDio;
@@ -15,6 +17,8 @@ void main() {
 
   setUp(() async {
     mockDio = MockDio();
+    final mockInterceptors = MockInterceptors();
+    when(mockDio.interceptors).thenReturn(mockInterceptors);
     // Initialize SharedPreferences for testing
     SharedPreferences.setMockInitialValues({});
     prefsService = await SharedPreferencesService.getInstance();

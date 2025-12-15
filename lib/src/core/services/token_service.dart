@@ -24,10 +24,13 @@ class TokenService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Add authorization header if we have a valid token
-          final token = await getValidAccessToken();
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
+          // Skip adding token for token-related endpoints
+          if (!options.path.contains('/api/token')) {
+            // Add authorization header if we have a valid token
+            final token = await getValidAccessToken();
+            if (token != null) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
           }
           return handler.next(options);
         },
@@ -190,11 +193,12 @@ class TokenService {
           },
         ),
       );
-
+      print('TokenService: Refresh response status: ${response.statusCode}');
+      print('TokenService: Refresh response data: ${response.data}');
       if (response.statusCode == 200 && response.data != null) {
         final tokenData = response.data as Map<String, dynamic>;
         final newAccessToken = tokenData['access'] as String?;
-
+        print('TokenService: New access token: $newAccessToken');
         if (newAccessToken != null) {
           // Update stored access token and expiry
           final expiryTime = DateTime.now().add(const Duration(hours: 1));
@@ -207,6 +211,23 @@ class TokenService {
 
           return newAccessToken;
         }
+      } else if (response.statusCode == 401) {
+        if (kDebugMode) {
+          print('TokenService: Refresh token invalid (401), clearing tokens and redirecting to re-auth');
+        }
+        await clearTokens();
+        // TODO: Navigate to login or emit event for re-auth
+        return null;
+      } else if (response.statusCode == 400) {
+        if (kDebugMode) {
+          print('TokenService: Bad request (400) during token refresh: ${response.data}');
+        }
+        return null;
+      } else {
+        if (kDebugMode) {
+          print('TokenService: Token refresh failed with status: ${response.statusCode}, data: ${response.data}');
+        }
+        return null;
       }
 
       if (kDebugMode) {
@@ -217,6 +238,10 @@ class TokenService {
     } catch (e) {
       if (kDebugMode) {
         print('TokenService: Error refreshing token: $e');
+        if (e is DioException) {
+          print('TokenService: DioException response status: ${e.response?.statusCode}');
+          print('TokenService: DioException response data: ${e.response?.data}');
+        }
       }
       return null;
     }
@@ -243,12 +268,18 @@ class TokenService {
         final expiryTime = DateTime.parse(expiryString);
         final now = DateTime.now();
 
-        // If token expires within 5 minutes, refresh it
-        if (expiryTime.isBefore(now.add(const Duration(minutes: 5)))) {
+        // If token is expired, refresh it
+        if (expiryTime.isBefore(now)) {
           if (kDebugMode) {
-            print('TokenService: Access token expired or expiring soon, refreshing...');
+            print('TokenService: Access token expired, refreshing... $accessToken');
           }
-          return await _refreshAccessToken() ?? accessToken;
+          final newToken = await _refreshAccessToken();
+          if (newToken != null) {
+            return newToken;
+          } else {
+            // Refresh failed, don't return expired token
+            return null;
+          }
         }
       }
 

@@ -71,6 +71,12 @@ class VisitStepDataService {
     }
   }
 
+  /// Get all client photos for a specific client (stepCode 999)
+  Future<List<VisitData>> getClientPhotos(String clientCode) async {
+    final allClientData = await _visitDataRepository.getVisitStepDataByClient(clientCode);
+    return allClientData.where((data) => data.dataType == 'photo' && data.stepCode == 999).toList();
+  }
+
   /// Audit Step Operations
 
   /// Save audit data (inventory, prices, etc.)

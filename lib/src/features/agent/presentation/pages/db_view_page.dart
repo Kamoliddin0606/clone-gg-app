@@ -701,6 +701,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     }
   }
 
+
   /// Load order draft data from database
    /// This method fetches visit step data records from the visit_steps_data table
    /// where data_type is 'order_draft' and converts them to VisitData model objects
@@ -1298,19 +1299,19 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     } else if (item is Thumbnail) {
       cells.addAll([
         DataCell(Text(item.id?.toString() ?? '')),
-        DataCell(Text(item.entityType)),
-        DataCell(Text(item.entityId.toString())),
+        DataCell(Text(item.entityType ?? '')),
+        DataCell(Text(item.entityId?.toString() ?? '')),
         DataCell(Text(item.code1c)),
-        DataCell(Text(item.entityName)),
-        DataCell(Text(item.thumbnailUrl)),
-        DataCell(Text(item.thumbnailDimensions['width']?.toString() ?? '')),
-        DataCell(Text(item.thumbnailDimensions['height']?.toString() ?? '')),
-        DataCell(Text(item.thumbnailDimensions['format']?.toString() ?? '')),
-        DataCell(Text(item.thumbnailDimensions['size']?.toString() ?? '')),
-        DataCell(Text(item.originalDimensions['width']?.toString() ?? '')),
-        DataCell(Text(item.originalDimensions['height']?.toString() ?? '')),
-        DataCell(Text(item.originalDimensions['format']?.toString() ?? '')),
-        DataCell(Text(item.originalDimensions['size']?.toString() ?? '')),
+        DataCell(Text(item.entityName ?? '')),
+        DataCell(Text(item.thumbnailUrl ?? '')),
+        DataCell(Text(item.thumbnailDimensions?['width']?.toString() ?? '')),
+        DataCell(Text(item.thumbnailDimensions?['height']?.toString() ?? '')),
+        DataCell(Text(item.thumbnailDimensions?['format']?.toString() ?? '')),
+        DataCell(Text(item.thumbnailDimensions?['size']?.toString() ?? '')),
+        DataCell(Text(item.originalDimensions?['width']?.toString() ?? '')),
+        DataCell(Text(item.originalDimensions?['height']?.toString() ?? '')),
+        DataCell(Text(item.originalDimensions?['format']?.toString() ?? '')),
+        DataCell(Text(item.originalDimensions?['size']?.toString() ?? '')),
         DataCell(Text(item.isMain.toString())),
         DataCell(Text(item.category ?? '')),
         DataCell(Text(item.note ?? '')),
@@ -1318,7 +1319,7 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.statusName ?? '')),
         DataCell(Text(item.sourceName ?? '')),
         DataCell(Text(item.sourceType ?? '')),
-        DataCell(Text(item.createdAt.toIso8601String())),
+        DataCell(Text(item.createdAt?.toIso8601String() ?? '')),
         DataCell(Text(item.updatedAt?.toIso8601String() ?? '')),
       ]);
     } else if (item is VisitPlan) {

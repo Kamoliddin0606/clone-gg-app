@@ -49,7 +49,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 20,
+      version: 21,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -791,28 +791,28 @@ class ApiDatabaseService {
       await db.execute('''
         CREATE TABLE IF NOT EXISTS thumbnails (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          entity_type TEXT NOT NULL,
-          entity_id INTEGER NOT NULL,
+          entity_type TEXT,
+          entity_id INTEGER,
           code_1c TEXT NOT NULL,
-          entity_name TEXT NOT NULL,
-          thumbnail_url TEXT NOT NULL,
-          thumbnail_width INTEGER NOT NULL,
-          thumbnail_height INTEGER NOT NULL,
-          thumbnail_format TEXT NOT NULL,
-          thumbnail_size_kb TEXT NOT NULL,
-          original_width INTEGER NOT NULL,
-          original_height INTEGER NOT NULL,
-          original_format TEXT NOT NULL,
-          original_size_bytes INTEGER NOT NULL,
-          original_size_kb TEXT NOT NULL,
-          is_main INTEGER NOT NULL DEFAULT 0,
+          entity_name TEXT,
+          thumbnail_url TEXT,
+          thumbnail_width INTEGER,
+          thumbnail_height INTEGER,
+          thumbnail_format TEXT,
+          thumbnail_size_kb TEXT,
+          original_width INTEGER,
+          original_height INTEGER,
+          original_format TEXT,
+          original_size_bytes INTEGER,
+          original_size_kb TEXT,
+          is_main INTEGER DEFAULT 0,
           category TEXT,
           note TEXT,
-          status_code TEXT NOT NULL,
-          status_name TEXT NOT NULL,
-          source_name TEXT NOT NULL,
-          source_type TEXT NOT NULL,
-          created_at_server TEXT NOT NULL,
+          status_code TEXT,
+          status_name TEXT,
+          source_name TEXT,
+          source_type TEXT,
+          created_at_server TEXT,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL,
           FOREIGN KEY (code_1c) REFERENCES clients (code) ON DELETE CASCADE,
@@ -827,6 +827,90 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_is_main ON thumbnails(is_main)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_status_code ON thumbnails(status_code)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_created_at_server ON thumbnails(created_at_server)');
+    } else if (oldVersion < 21) {
+      // Update thumbnails table for version 21 - make most fields nullable except essential ones
+      // Add new columns if they don't exist, or modify existing ones to allow null
+      final columns = await db.rawQuery("PRAGMA table_info(thumbnails)");
+      final columnNames = columns.map((col) => col['name'] as String).toList();
+
+      // List of fields that should be nullable (remove NOT NULL constraint)
+      final nullableFields = [
+        'entity_type', 'entity_id', 'entity_name', 'thumbnail_url', 'thumbnail_width',
+        'thumbnail_height', 'thumbnail_format', 'thumbnail_size_kb', 'original_width',
+        'original_height', 'original_format', 'original_size_bytes', 'original_size_kb',
+        'status_code', 'status_name', 'source_name', 'source_type', 'created_at_server'
+      ];
+
+      for (final field in nullableFields) {
+        if (columnNames.contains(field)) {
+          // For SQLite, we can't directly modify column constraints
+          // Instead, we'll recreate the table with new schema
+          await db.execute('ALTER TABLE thumbnails RENAME TO thumbnails_old');
+
+          await db.execute('''
+            CREATE TABLE thumbnails (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              entity_type TEXT,
+              entity_id INTEGER,
+              code_1c TEXT NOT NULL,
+              entity_name TEXT,
+              thumbnail_url TEXT,
+              thumbnail_width INTEGER,
+              thumbnail_height INTEGER,
+              thumbnail_format TEXT,
+              thumbnail_size_kb TEXT,
+              original_width INTEGER,
+              original_height INTEGER,
+              original_format TEXT,
+              original_size_bytes INTEGER,
+              original_size_kb TEXT,
+              is_main INTEGER DEFAULT 0,
+              category TEXT,
+              note TEXT,
+              status_code TEXT,
+              status_name TEXT,
+              source_name TEXT,
+              source_type TEXT,
+              created_at_server TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              FOREIGN KEY (code_1c) REFERENCES clients (code) ON DELETE CASCADE,
+              FOREIGN KEY (code_1c) REFERENCES products (code) ON DELETE CASCADE
+            )
+          ''');
+
+          // Copy data from old table to new table
+          await db.execute('''
+            INSERT INTO thumbnails (
+              id, entity_type, entity_id, code_1c, entity_name, thumbnail_url,
+              thumbnail_width, thumbnail_height, thumbnail_format, thumbnail_size_kb,
+              original_width, original_height, original_format, original_size_bytes,
+              original_size_kb, is_main, category, note, status_code, status_name,
+              source_name, source_type, created_at_server, created_at, updated_at
+            )
+            SELECT
+              id, entity_type, entity_id, code_1c, entity_name, thumbnail_url,
+              thumbnail_width, thumbnail_height, thumbnail_format, thumbnail_size_kb,
+              original_width, original_height, original_format, original_size_bytes,
+              original_size_kb, is_main, category, note, status_code, status_name,
+              source_name, source_type, created_at_server, created_at, updated_at
+            FROM thumbnails_old
+          ''');
+
+          // Drop old table
+          await db.execute('DROP TABLE thumbnails_old');
+
+          // Recreate indexes
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_entity_type ON thumbnails(entity_type)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_entity_id ON thumbnails(entity_id)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_code_1c ON thumbnails(code_1c)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_is_main ON thumbnails(is_main)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_status_code ON thumbnails(status_code)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_created_at_server ON thumbnails(created_at_server)');
+
+          break; // Only need to do this once
+        }
+      }
     }
   }
 
@@ -2849,7 +2933,7 @@ class ApiDatabaseService {
         ORDER BY c.name ASC''',[userCode, userCode, currentWeekdayCode]);
 
       for (final row in result) {
-        print('DEBUG: client_code: ${row}');
+        print('DEBUG: client_code: ${row["thumbnail_url"]}');
       }
       if (kDebugMode) {
         print('DEBUG: Query returned ${result.length} trading points');

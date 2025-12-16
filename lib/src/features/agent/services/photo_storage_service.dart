@@ -322,4 +322,26 @@ class PhotoStorageService {
       }
     }
   }
+
+  /// Get all client photos for a specific client
+  Future<List<Map<String, dynamic>>> getClientPhotos(String clientCode) async {
+    try {
+      final clientPhotos = await _dataService.getClientPhotos(clientCode);
+      return clientPhotos.map((photo) {
+        final content = photo.parsedDataContent;
+        return {
+          'id': photo.id.toString(),
+          'visitId': photo.visitId,
+          'imagePath': content['image_path'],
+          'thumbnailPath': content['thumbnail_path'],
+          'timestamp': photo.timestamp,
+          'description': content['description'] ?? 'Client image',
+          'clientCode': photo.clientCode,
+        };
+      }).toList();
+    } catch (e) {
+      print('Error getting client photos: $e');
+      return [];
+    }
+  }
 }

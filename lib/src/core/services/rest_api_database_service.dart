@@ -12,40 +12,77 @@ class RestApiDatabaseService {
   RestApiDatabaseService(this._apiDatabaseService);
 
   /// Helper method to convert database row to Thumbnail object
+  /// Safely handles nullable fields that can now be null in the database
   Thumbnail _rowToThumbnail(Map<String, dynamic> row) {
     return Thumbnail(
       id: row['id'] as int?,
-      entityType: row['entity_type'] as String,
-      entityId: row['entity_id'] as int,
-      code1c: row['code_1c'] as String,
-      entityName: row['entity_name'] as String,
+      entityType: row['entity_type'] as String? ?? 'unknown',
+      entityId: _parseInt(row['entity_id']),
+      code1c: row['code_1c'] as String? ?? '',
+      entityName: row['entity_name'] as String? ?? '',
       imageId: 0, // Not stored in database, set to default
-      thumbnailUrl: row['thumbnail_url'] as String,
-      thumbnailDimensions: {
-        'width': row['thumbnail_width'] as int,
-        'height': row['thumbnail_height'] as int,
-        'format': row['thumbnail_format'] as String,
-        'size': row['thumbnail_size_kb'] as String,
-      },
-      originalDimensions: {
-        'width': row['original_width'] as int,
-        'height': row['original_height'] as int,
-        'format': row['original_format'] as String,
-        'size_bytes': row['original_size_bytes'] as int,
-        'size': row['original_size_kb'] as String,
-      },
-      isMain: (row['is_main'] as int) == 1,
+      thumbnailUrl: row['thumbnail_url'] as String? ?? '',
+      thumbnailDimensions: _parseThumbnailDimensions(row),
+      originalDimensions: _parseOriginalDimensions(row),
+      isMain: _parseBool(row['is_main']),
       category: row['category'] as String?,
       note: row['note'] as String?,
-      statusCode: row['status_code'] as String,
-      statusName: row['status_name'] as String,
-      sourceName: row['source_name'] as String,
-      sourceType: row['source_type'] as String,
-      createdAt: DateTime.parse(row['created_at_server'] as String),
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+      statusCode: row['status_code'] as String? ?? '',
+      statusName: row['status_name'] as String? ?? '',
+      sourceName: row['source_name'] as String? ?? '',
+      sourceType: row['source_type'] as String? ?? '',
+      createdAt: _parseDateTime(row['created_at_server']),
+      updatedAt: row['updated_at'] != null ? _parseDateTime(row['updated_at']) : null,
       clientId: null, // Not stored in database
       productId: null, // Not stored in database
     );
+  }
+
+  // Safe parsing helpers for nullable database fields
+  static int _parseInt(dynamic value, [int defaultValue = 0]) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? defaultValue;
+    return defaultValue;
+  }
+
+  static bool _parseBool(dynamic value, [bool defaultValue = false]) {
+    if (value == null) return defaultValue;
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) return value.toLowerCase() == 'true' || value == '1';
+    return defaultValue;
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null || (value.toString().isEmpty)) {
+      return DateTime.now();
+    }
+    try {
+      return DateTime.parse(value.toString());
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
+  static Map<String, dynamic> _parseThumbnailDimensions(Map<String, dynamic> map) {
+    return {
+      'width': _parseInt(map['thumbnail_width']),
+      'height': _parseInt(map['thumbnail_height']),
+      'format': map['thumbnail_format'] as String? ?? 'unknown',
+      'size': map['thumbnail_size_kb'] as String? ?? '0',
+    };
+  }
+
+  static Map<String, dynamic> _parseOriginalDimensions(Map<String, dynamic> map) {
+    return {
+      'width': _parseInt(map['original_width']),
+      'height': _parseInt(map['original_height']),
+      'format': map['original_format'] as String? ?? 'unknown',
+      'size_bytes': _parseInt(map['original_size_bytes']),
+      'size': map['original_size_kb'] as String? ?? '0',
+    };
   }
 
   /// Get database instance from ApiDatabaseService
@@ -81,34 +118,51 @@ class RestApiDatabaseService {
       // Delete all existing thumbnails (full sync approach)
       batch.delete('thumbnails');
 
-      // Deduplicate thumbnails by (entity_type, entity_id, code_1c) to avoid UNIQUE constraint violations
-      final uniqueThumbnails = <String, Thumbnail>{};
-      for (final thumbnail in thumbnails) {
+      // Separate main and non-main thumbnails before deduplication
+      final mainThumbnails = thumbnails.where((t) => t.isMain).toList();
+      final nonMainThumbnails = thumbnails.where((t) => !t.isMain).toList();
+
+      // Deduplicate main thumbnails by (entity_type, entity_id, code_1c)
+      final uniqueMainThumbnails = <String, Thumbnail>{};
+      for (final thumbnail in mainThumbnails) {
         final key = '${thumbnail.entityType}_${thumbnail.entityId}_${thumbnail.code1c}';
-        uniqueThumbnails[key] = thumbnail;
+        uniqueMainThumbnails[key] = thumbnail;
       }
 
+      // // Deduplicate non-main thumbnails by (entity_type, entity_id, code_1c)
+      // final uniqueNonMainThumbnails = <String, Thumbnail>{};
+      // for (final thumbnail in nonMainThumbnails) {
+      //   final key = '${thumbnail.entityType}_${thumbnail.entityId}_${thumbnail.code1c}';
+      //   uniqueNonMainThumbnails[key] = thumbnail;
+      // }
+
+      // Combine: main thumbnails first, then non-main in insertion order
+      final sortedUniqueThumbnails = [
+        ...uniqueMainThumbnails.values,
+        // ...uniqueNonMainThumbnails.values,
+      ];
+
       if (kDebugMode) {
-        print('RestApiDatabaseService: After deduplication: ${uniqueThumbnails.length} unique thumbnails');
+        print('RestApiDatabaseService: After deduplication: ${sortedUniqueThumbnails.length} unique thumbnails (${uniqueMainThumbnails.length} main');
       }
 
       // Add all inserts to batch
-      for (final thumbnail in uniqueThumbnails.values) {
+      for (final thumbnail in sortedUniqueThumbnails) {
         batch.insert('thumbnails', {
           'entity_type': thumbnail.entityType,
           'entity_id': thumbnail.entityId,
           'code_1c': thumbnail.code1c,
           'entity_name': thumbnail.entityName,
           'thumbnail_url': thumbnail.thumbnailUrl,
-          'thumbnail_width': thumbnail.thumbnailDimensions['width'] ?? 0,
-          'thumbnail_height': thumbnail.thumbnailDimensions['height'] ?? 0,
-          'thumbnail_format': thumbnail.thumbnailDimensions['format'] ?? '',
-          'thumbnail_size_kb': thumbnail.thumbnailDimensions['size'] ?? '',
-          'original_width': thumbnail.originalDimensions['width'] ?? 0,
-          'original_height': thumbnail.originalDimensions['height'] ?? 0,
-          'original_format': thumbnail.originalDimensions['format'] ?? '',
-          'original_size_bytes': thumbnail.originalDimensions['size_bytes'] ?? 0,
-          'original_size_kb': thumbnail.originalDimensions['size'] ?? '',
+          'thumbnail_width': thumbnail.thumbnailDimensions?['width'] ?? 0,
+          'thumbnail_height': thumbnail.thumbnailDimensions?['height'] ?? 0,
+          'thumbnail_format': thumbnail.thumbnailDimensions?['format'] ?? '',
+          'thumbnail_size_kb': thumbnail.thumbnailDimensions?['size'] ?? '',
+          'original_width': thumbnail.originalDimensions?['width'] ?? 0,
+          'original_height': thumbnail.originalDimensions?['height'] ?? 0,
+          'original_format': thumbnail.originalDimensions?['format'] ?? '',
+          'original_size_bytes': thumbnail.originalDimensions?['size_bytes'] ?? 0,
+          'original_size_kb': thumbnail.originalDimensions?['size'] ?? '',
           'is_main': thumbnail.isMain ? 1 : 0,
           'category': thumbnail.category,
           'note': thumbnail.note,
@@ -116,12 +170,12 @@ class RestApiDatabaseService {
           'status_name': thumbnail.statusName,
           'source_name': thumbnail.sourceName,
           'source_type': thumbnail.sourceType,
-          'created_at_server': thumbnail.createdAt.toIso8601String(),
+          'created_at_server': thumbnail.createdAt?.toIso8601String(),
           'created_at': now,
           'updated_at': now,
         });
 
-        if (kDebugMode && uniqueThumbnails.values.toList().indexOf(thumbnail) < 3) {
+        if (kDebugMode && sortedUniqueThumbnails.indexOf(thumbnail) < 3) {
           print('RestApiDatabaseService: Sample insert - Entity: ${thumbnail.entityType}, Code: ${thumbnail.code1c}, Main: ${thumbnail.isMain}');
         }
       }
@@ -130,12 +184,12 @@ class RestApiDatabaseService {
       await batch.commit(noResult: true);
 
       if (kDebugMode) {
-        print('RestApiDatabaseService: Successfully saved ${uniqueThumbnails.length} thumbnails');
+        print('RestApiDatabaseService: Successfully saved ${sortedUniqueThumbnails.length} thumbnails');
 
         // Log summary statistics
-        final clientThumbnails = uniqueThumbnails.values.where((t) => t.entityType == 'client').length;
-        final productThumbnails = uniqueThumbnails.values.where((t) => t.entityType == 'nomenklatura').length;
-        final mainThumbnails = uniqueThumbnails.values.where((t) => t.isMain).length;
+        final clientThumbnails = sortedUniqueThumbnails.where((t) => t.entityType == 'client').length;
+        final productThumbnails = sortedUniqueThumbnails.where((t) => t.entityType == 'nomenklatura').length;
+        final mainThumbnails = sortedUniqueThumbnails.where((t) => t.isMain).length;
 
         print('RestApiDatabaseService: Summary - Clients: $clientThumbnails, Products: $productThumbnails, Main images: $mainThumbnails');
       }

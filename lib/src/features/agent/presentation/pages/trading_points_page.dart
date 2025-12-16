@@ -34,6 +34,7 @@ import 'map_pages/map_detail_page_google.dart';
 import 'map_pages/map_detail_page_osm.dart';
 import 'map_pages/map_detail_page_yandex.dart';
 import 'visit_steps_page.dart';
+import 'client_images_page.dart';
 import 'dart:ui'; // blur uchun
 import 'dart:async';
 import 'dart:math' as math; // For pi constant and math operations
@@ -1309,7 +1310,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                           final tp = _filteredTradingPoints[index];
                           // GRID: foto yuqorida, qolgan ma’lumotlar bitta ustunda pastda
                           return _TradingPointGridTile(
-                            tp: tp.tradingPoint,
+                            tp: tp,
                             onCall: () => _makeCall(tp.tradingPoint.phone),
                             onInformVisit: () => _handleVisitClient(context, tp),
                             onCreateOrder: () => _createOrder(tp),
@@ -1943,6 +1944,8 @@ class TradingPointGridCard extends StatelessWidget {
   /// Prioritizes thumbnail URL from database (newly added feature) over other image sources
   /// This ensures client images from the media server are used when available
   String? _photo(TradingPoint t) {
+    print('_photo() called ${t.thumbnailUrl} ');
+
     final candidates = <String?>[
       t.thumbnailUrl, // New thumbnail URL from database - highest priority
       (t as dynamic).photoUrl as String?,
@@ -2154,7 +2157,7 @@ class _DefaultAvatar extends StatelessWidget {
   }
 }
 class _TradingPointGridTile extends StatelessWidget {
-  final TradingPoint tp;
+  final TradingPointWithPermissions tp;
   final VoidCallback onCall, onInformVisit, onCreateOrder, onViewContracts, onRefusal;
   final VoidCallback onOpenDetails;
   final LocationService? locationService;
@@ -2206,18 +2209,16 @@ class _TradingPointGridTile extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                  child: _NetAvatar(url: _safePhotoUrl(tp) ?? '', visited: tp.isVisited),
+                  child: _NetAvatar(url: _safePhotoUrl(tp.tradingPoint) ?? '', visited: tp.tradingPoint.isVisited),
                 ),
-                if (_safePhotoUrl(tp) == null)
-                  Container(color: cs.primaryContainer), // default rang (agar rasm yo‘q bo‘lsa)
-                if (tp.isVisited)
+                if (tp.tradingPoint.isVisited)
                   Container(color: Colors.black.withOpacity(.22)),
                 // Add distance info on bottom-right corner of image
                 if (locationService != null)
                   Positioned(
                     bottom: 4,
                     right: 4,
-                    child: _buildDistanceOverlay(tp, locationService!),
+                    child: _buildDistanceOverlay(tp.tradingPoint, locationService!),
                   ),
                 // Add visit indicators on top-right corner
                 Positioned(
@@ -2225,8 +2226,37 @@ class _TradingPointGridTile extends StatelessWidget {
                   right: 8,
                   child: VisitIndicators(
                     visitToday: tp.visitToday,
-                    isVisited: tp.isVisited,
+                    isVisited: tp.tradingPoint.isVisited,
                     visitStepNumber: tp.visitStepNumber,
+                  ),
+                ),
+                // Add edit icon for client images on top-left corner
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ClientImagesPage(tradingPoint: tp),
+                          ),
+                        );
+                      },
+                      tooltip: 'Mijoz rasmlarini boshqarish',
+                      iconSize: 20,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -2238,7 +2268,7 @@ class _TradingPointGridTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildScrollableText(tp.name,
+                _buildScrollableText(tp.tradingPoint.name,
                     style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                     maxLines: 3),
                 const SizedBox(height: 4),
@@ -2247,9 +2277,9 @@ class _TradingPointGridTile extends StatelessWidget {
                 // _line(Icons.badge_outlined, 'INN: ${tp.inn}'),
 
                 // NEW:
-                _lineMultiline(context, Icons.place_outlined, tp.address, maxLines: 2, scrollable: true),     // CHANGED
+                _lineMultiline(context, Icons.place_outlined, tp.tradingPoint.address, maxLines: 2, scrollable: true),     // CHANGED
                 const SizedBox(height: 2),
-                _lineMultiline(context, Icons.badge_outlined, 'INN: ${tp.inn}', maxLines: 2), // CHANGED
+                _lineMultiline(context, Icons.badge_outlined, 'INN: ${tp.tradingPoint.inn}', maxLines: 2), // CHANGED
                 // Add distance display
                 // if (locationService != null) ...[
                 //   const SizedBox(height: 2),
@@ -3496,7 +3526,7 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
     return Column(
       children: [
         // Header image before actions
-        _HeaderImage(url: url, visited: widget.tradingPoint.isVisited),
+        _HeaderImage(url: url, visited: widget.tradingPoint.isVisited, tradingPoint: widget.tradingPoint),
 
         // Actions below with marker rotation support
         Padding(
@@ -3557,7 +3587,8 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
 class _HeaderImage extends StatelessWidget {
   final String? url;
   final bool visited;
-  const _HeaderImage({required this.url, required this.visited});
+  final TradingPoint tradingPoint;
+  const _HeaderImage({required this.url, required this.visited, required this.tradingPoint});
 
   @override
   Widget build(BuildContext context) {
@@ -3572,7 +3603,42 @@ class _HeaderImage extends StatelessWidget {
           color: cs.primaryContainer,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: const Center(child: Icon(Icons.storefront, size: 48)),
+        child: Stack(
+          children: [
+            const Center(child: Icon(Icons.storefront, size: 48)),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ClientImagesPage(tradingPoint: TradingPointWithPermissions(
+                          tradingPoint: tradingPoint,
+                          permissions: null, // We don't have permissions here
+                        )),
+                      ),
+                    );
+                  },
+                  tooltip: 'Mijoz rasmlarini boshqarish',
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     } else {
       content = ClipRRect(
@@ -3593,6 +3659,37 @@ class _HeaderImage extends StatelessWidget {
             ),
             if (visited)
               Container(color: Colors.black.withOpacity(0.22)),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ClientImagesPage(tradingPoint: TradingPointWithPermissions(
+                          tradingPoint: tradingPoint,
+                          permissions: null, // We don't have permissions here
+                        )),
+                      ),
+                    );
+                  },
+                  tooltip: 'Mijoz rasmlarini boshqarish',
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       );

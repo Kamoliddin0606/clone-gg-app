@@ -2,14 +2,14 @@
 /// Represents image thumbnails for clients and products (nomenklatura)
 class Thumbnail {
   final int? id;
-  final String entityType; // 'client' or 'nomenklatura'
-  final int entityId; // ID from API
-  final String code1c; // Linking field (clients.code or products.code)
-  final String entityName;
+  final String? entityType; // 'client' or 'nomenklatura' - can be null in DB
+  final int? entityId; // ID from API - can be null in DB
+  final String code1c; // Linking field (clients.code or products.code) - required
+  final String? entityName; // can be null in DB
   final int imageId;
-  final String thumbnailUrl;
-  final Map<String, dynamic> thumbnailDimensions; // JSON: {width, height, format, size}
-  final Map<String, dynamic> originalDimensions; // JSON: {width, height, format, size_bytes, size}
+  final String? thumbnailUrl; // can be null in DB
+  final Map<String, dynamic>? thumbnailDimensions; // JSON: {width, height, format, size} - can be null in DB
+  final Map<String, dynamic>? originalDimensions; // JSON: {width, height, format, size_bytes, size} - can be null in DB
   final bool isMain;
   final String? category;
   final String? note;
@@ -17,7 +17,7 @@ class Thumbnail {
   final String? statusName;
   final String? sourceName;
   final String? sourceType;
-  final DateTime createdAt;
+  final DateTime? createdAt; // can be null in DB
   final DateTime? updatedAt;
 
   // Foreign keys (populated when saving)
@@ -26,22 +26,22 @@ class Thumbnail {
 
   const Thumbnail({
     this.id,
-    required this.entityType,
-    required this.entityId,
+    this.entityType,
+    this.entityId,
     required this.code1c,
-    required this.entityName,
-    required this.imageId,
-    required this.thumbnailUrl,
-    required this.thumbnailDimensions,
-    required this.originalDimensions,
-    required this.isMain,
+    this.entityName,
+    this.imageId = 0,
+    this.thumbnailUrl,
+    this.thumbnailDimensions,
+    this.originalDimensions,
+    this.isMain = false,
     this.category,
     this.note,
-    required this.statusCode,
-    required this.statusName,
-    required this.sourceName,
-    required this.sourceType,
-    required this.createdAt,
+    this.statusCode,
+    this.statusName,
+    this.sourceName,
+    this.sourceType,
+    this.createdAt,
     this.updatedAt,
     this.clientId,
     this.productId,
@@ -50,22 +50,22 @@ class Thumbnail {
   factory Thumbnail.fromJson(Map<String, dynamic> json) {
     return Thumbnail(
       id: json['id'] as int?,
-      entityType: json['entity_type'] as String,
-      entityId: json['entity_id'] as int,
+      entityType: json['entity_type'] as String?,
+      entityId: json['entity_id'] as int?,
       code1c: json['code_1c'] as String,
-      entityName: json['entity_name'] as String,
-      imageId: json['image_id'] as int,
-      thumbnailUrl: json['thumbnail_url'] as String,
-      thumbnailDimensions: json['thumbnail_dimensions'] as Map<String, dynamic>,
-      originalDimensions: json['original_dimensions'] as Map<String, dynamic>,
-      isMain: json['is_main'] as bool,
+      entityName: json['entity_name'] as String?,
+      imageId: json['image_id'] as int? ?? 0,
+      thumbnailUrl: json['thumbnail_url'] as String?,
+      thumbnailDimensions: json['thumbnail_dimensions'] as Map<String, dynamic>?,
+      originalDimensions: json['original_dimensions'] as Map<String, dynamic>?,
+      isMain: json['is_main'] as bool? ?? false,
       category: json['category'] as String?,
       note: json['note'] as String?,
       statusCode: json['status_code'] as String?,
       statusName: json['status_name'] as String?,
       sourceName: json['source_name'] as String?,
       sourceType: json['source_type'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : null,
       updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
       clientId: json['client_id'] as int?,
       productId: json['product_id'] as int?,
@@ -164,7 +164,7 @@ class Thumbnail {
       'status_name': statusName,
       'source_name': sourceName,
       'source_type': sourceType,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
       'client_id': clientId,
       'product_id': productId,

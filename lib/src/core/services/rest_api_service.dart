@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
+import 'package:path/path.dart' as p;
+import 'dart:io';
 
 /// REST API Service for handling REST API calls to the server
 /// This service handles thumbnail data retrieval and other REST API operations
@@ -307,6 +309,85 @@ class RestApiService {
         'error': e.toString(),
         'timestamp': DateTime.now().toIso8601String(),
       };
+    }
+  }
+
+  /// Upload client images in bulk to the server
+  /// Uses the dedicated media server endpoint for client image uploads
+  ///
+  /// @param clientCode The 1C code identifier for the client
+  /// @param images List of local image files to upload
+  /// @return Future<List<String>> List of successfully uploaded thumbnail URLs
+  /// @throws DioException on network/upload failures
+  Future<List<String>> uploadClientImagesBulk({
+    required String clientCode,
+    required List<File> images,
+  }) async {
+    try {
+      if (images.isEmpty) {
+        if (kDebugMode) {
+          print('RestApiService: No images provided for upload');
+        }
+        return [];
+      }
+
+      // Prepare FormData for multipart upload
+      final formData = FormData.fromMap({
+        'client': clientCode,
+        'images': images.map((file) {
+          final filename = p.basename(file.path);
+          return MultipartFile.fromFileSync(
+            file.path,
+            filename: filename,
+          );
+        }).toList(),
+      });
+
+      // Use dedicated media server base URL
+      const String mediaBaseUrl = 'http://178.218.200.120:1596';
+
+      final response = await _dio.post(
+        '$mediaBaseUrl/api/v1/client-image/bulk-upload/',
+        data: formData,
+        options: Options(
+          headers: {
+            'Accept': 'application/json',
+          },
+          sendTimeout: const Duration(minutes: 5), // Longer timeout for file uploads
+          receiveTimeout: const Duration(minutes: 1),
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data as Map<String, dynamic>? ?? <String, dynamic>{};
+
+        // Assume API returns list of thumbnail URLs
+        final urls = List<String>.from(data['urls'] ?? data['thumbnails'] ?? []);
+
+        if (kDebugMode) {
+          print('RestApiService: Successfully uploaded ${images.length} images for client $clientCode. Received ${urls.length} URLs');
+        }
+
+        return urls;
+      } else {
+        final errorMsg = _getErrorMessage(DioException(
+          requestOptions: RequestOptions(path: '/api/v1/client-image/bulk-upload/'),
+          response: response,
+          type: DioExceptionType.badResponse,
+        ));
+        throw Exception('Upload failed: ${response.statusCode} - $errorMsg');
+      }
+    } on DioException catch (e) {
+      final errorMsg = _getErrorMessage(e);
+      if (kDebugMode) {
+        print('RestApiService: DioException during client image upload: $errorMsg');
+      }
+      rethrow;
+    } catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: Unexpected error during client image upload: $e');
+      }
+      throw Exception('Rasmlarni yuklashda kutilmagan xatolik: $e');
     }
   }
 }

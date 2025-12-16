@@ -52,6 +52,18 @@ import 'package:yandex_maps_mapkit/yandex_map.dart';
 import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
 
 import 'package:yandex_maps_mapkit/mapkit_factory.dart' as mkf;
+
+/// Trading Points Page with thumbnail support
+///
+/// This page displays trading points (clients) with integrated thumbnail support.
+/// The page retrieves client data along with thumbnail URLs from the database,
+/// prioritizing main thumbnail images for client visual representation.
+///
+/// Key features:
+/// - Shows client images using thumbnail URLs from the media server when available
+/// - Falls back to other image sources if thumbnails are not available
+/// - Supports both list and grid view modes with image previews
+/// - Integrates with media server synchronization for thumbnail updates
 /// Transliterate Cyrillic characters to Latin (Uzbek standard)
 String transliterateToLatin(String text) {
   const cyrillicToLatin = {
@@ -74,7 +86,15 @@ String transliterateToLatin(String text) {
 // import '../../../../theme/theme_toggle.dart';
 enum _ViewMode { list, grid }
 
+/// Safely retrieves the best available photo URL for a trading point
+/// Prioritizes thumbnail URL from database (newly added feature) over other image sources
+/// This function handles dynamic property access safely to avoid runtime errors
+/// Returns the first non-empty, valid URL found or null if none exist
 String? _safePhotoUrl(dynamic tp) {
+  try {
+    final u = (tp as dynamic).thumbnailUrl; // New thumbnail URL from database - highest priority
+    if (u is String && u.trim().isNotEmpty) return u;
+  } catch (_) {}
   try {
     final u = (tp as dynamic).photoUrl;
     if (u is String && u.trim().isNotEmpty) return u;
@@ -94,6 +114,11 @@ String? _safePhotoUrl(dynamic tp) {
   return null; // yo‘q bo‘lsa — default avatar ishlatiladi
 }
 
+/// Trading Points Page - Displays list of clients with integrated thumbnail support
+///
+/// This page retrieves client data along with thumbnail URLs from the database
+/// and displays client images in both list and grid views. The page supports
+/// image display from media server thumbnails with fallback to other image sources.
 class TradingPointsPage extends StatefulWidget {
   const TradingPointsPage({super.key});
 
@@ -1914,8 +1939,12 @@ class TradingPointGridCard extends StatelessWidget {
     this.permissions,
   });
 
+  /// Returns the best available photo URL for the trading point
+  /// Prioritizes thumbnail URL from database (newly added feature) over other image sources
+  /// This ensures client images from the media server are used when available
   String? _photo(TradingPoint t) {
     final candidates = <String?>[
+      t.thumbnailUrl, // New thumbnail URL from database - highest priority
       (t as dynamic).photoUrl as String?,
       (t as dynamic).imageUrl as String?,
       (t as dynamic).avatarUrl as String?,

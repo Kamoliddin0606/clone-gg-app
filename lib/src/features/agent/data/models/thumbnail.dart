@@ -72,6 +72,80 @@ class Thumbnail {
     );
   }
 
+  /// Factory constructor for database row maps
+  /// Safely maps DB fields to model with casting, null checks, and defaults
+  factory Thumbnail.fromMap(Map<String, dynamic> map) {
+    return Thumbnail(
+      id: _parseInt(map['id']),
+      entityType: map['entity_type'] as String? ?? 'unknown',
+      entityId: _parseInt(map['entity_id']),
+      code1c: map['code_1c'] as String? ?? '',
+      entityName: map['entity_name'] as String? ?? '',
+      imageId: 0, // No field in DB table
+      thumbnailUrl: map['thumbnail_url'] as String? ?? '',
+      thumbnailDimensions: _parseThumbnailDimensions(map),
+      originalDimensions: _parseOriginalDimensions(map),
+      isMain: _parseBool(map['is_main']),
+      category: map['category'] as String?,
+      note: map['note'] as String?,
+      statusCode: map['status_code'] as String? ?? '',
+      statusName: map['status_name'] as String? ?? '',
+      sourceName: map['source_name'] as String? ?? '',
+      sourceType: map['source_type'] as String? ?? '',
+      createdAt: _parseDateTime(map['created_at_server']),
+      updatedAt: map['updated_at'] != null ? _parseDateTime(map['updated_at']) : null,
+      clientId: null, // Set when linking to clients table if needed
+      productId: null, // Set when linking to products table if needed
+    );
+  }
+
+  // Safe parsing helpers
+  static int _parseInt(dynamic value, [int defaultValue = 0]) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? defaultValue;
+    return defaultValue;
+  }
+
+  static bool _parseBool(dynamic value, [bool defaultValue = false]) {
+    if (value == null) return defaultValue;
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) return value.toLowerCase() == 'true' || value == '1';
+    return defaultValue;
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null || (value.toString().isEmpty)) {
+      return DateTime.now();
+    }
+    try {
+      return DateTime.parse(value.toString());
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
+  static Map<String, dynamic> _parseThumbnailDimensions(Map<String, dynamic> map) {
+    return {
+      'width': _parseInt(map['thumbnail_width']),
+      'height': _parseInt(map['thumbnail_height']),
+      'format': map['thumbnail_format'] as String? ?? 'unknown',
+      'size': map['thumbnail_size_kb'] as String? ?? '0',
+    };
+  }
+
+  static Map<String, dynamic> _parseOriginalDimensions(Map<String, dynamic> map) {
+    return {
+      'width': _parseInt(map['original_width']),
+      'height': _parseInt(map['original_height']),
+      'format': map['original_format'] as String? ?? 'unknown',
+      'size_bytes': _parseInt(map['original_size_bytes']),
+      'size': map['original_size_kb'] as String? ?? '0',
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

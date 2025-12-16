@@ -20,6 +20,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
@@ -2825,7 +2826,8 @@ class ApiDatabaseService {
           srp.location_update_interval,
           CASE WHEN pr.code_client IS NOT NULL THEN 1 ELSE 0 END as visit_today,
           COALESCE(pr.visit_order, 0) as visit_step_number,
-          pr.week_day as planned_week_day
+          pr.week_day as planned_week_day,
+          t.thumbnail_url as thumbnail_url
         FROM clients c
         LEFT JOIN sales_req_permissions srp ON srp.user_code = ?
         LEFT JOIN (
@@ -2836,6 +2838,14 @@ class ApiDatabaseService {
           FROM planned_routes
           WHERE user_code = ? AND code_weekday = ?
         ) pr ON c.code = pr.code_client
+        -- JOIN with thumbnails table to get client thumbnail images
+        -- Only get main (primary) images where entity_type = 'client' and is_main = 1
+        LEFT JOIN (
+          SELECT code_1c, thumbnail_url
+          FROM thumbnails
+          WHERE entity_type = 'client' AND is_main = 1
+          GROUP BY code_1c
+        ) t ON c.code = t.code_1c
         ORDER BY c.name ASC''',[userCode, userCode, currentWeekdayCode]);
 
       for (final row in result) {
@@ -2845,7 +2855,7 @@ class ApiDatabaseService {
         print('DEBUG: Query returned ${result.length} trading points');
         if (result.isNotEmpty) {
           final sample = result.first;
-          print('DEBUG: Sample result - visit_today: ${sample['visit_today']}, visit_step_number: ${sample['visit_step_number']}');
+          print('DEBUG: Sample result - visit_today: ${sample['visit_today']}, visit_step_number: ${sample['visit_step_number']}, thumbnail_url: ${sample['thumbnail_url']}');
         }
       }
 
@@ -3518,6 +3528,19 @@ class ApiDatabaseService {
         .map(
           (row) => VisitPlanList.fromMap(row),
         )
+        .toList();
+  }
+
+  // Thumbnails methods
+  Future<List<Thumbnail>> getThumbnails() async {
+    final db = await database;
+    final result = await db.query('thumbnails', orderBy: 'created_at_server DESC');
+
+    return result
+        .map((dynamic row) {
+          final map = Map<String, dynamic>.from(row as Map);
+          return Thumbnail.fromMap(map);
+        })
         .toList();
   }
 

@@ -40,6 +40,8 @@ class TradingPointWithPermissions {
       creditLimit: (map['credit_limit'] as num?)?.toDouble() ?? 0.0,
       accumulatedCredit: (map['accumulated_credit'] as num?)?.toDouble() ?? 0.0,
       codeRegion: map['code_region'] as String? ?? '',
+      // Include thumbnail URL from database JOIN with thumbnails table
+      thumbnailUrl: map['thumbnail_url'] as String?,
       visitToday: (map['visit_today'] as int?) == 1,
       visitStepNumber: map['visit_step_number'] as int? ?? 0,
       plannedWeekDay: map['planned_week_day'] as String?,

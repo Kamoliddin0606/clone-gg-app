@@ -25,6 +25,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_de
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -79,6 +82,9 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   List<VisitData> _visitStepsData = [];
   List<VisitData> _orderDraftData = [];
   List<PlannedRoute> _plannedRoutes = [];
+  List<Thumbnail> _thumbnails = [];
+  List<VisitPlan> _visitPlans = [];
+  List<VisitPlanList> _visitPlanLists = [];
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -381,6 +387,9 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     'Order Draft Data',
     'Order Draft Products',
     'Planned Routes',
+    'Thumbnails',
+    'Visit Plans',
+    'Visit Plan Lists',
   ];
 
   @override
@@ -439,6 +448,9 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _safeLoadData(() => _loadVisitStepsData(), 'Visit Steps Data'),
         _safeLoadData(() => _loadOrderDraftData(), 'Order Draft Data'),
         _safeLoadData(() => _dbService.getAllPlannedRoutes(), 'Planned Routes'),
+        _safeLoadData(() => _dbService.getThumbnails(), 'Thumbnails'),
+        _safeLoadData(() => _dbService.getVisitPlans(), 'Visit Plans'),
+        _safeLoadData(() => _dbService.getVisitPlanLists(), 'Visit Plan Lists'),
       ];
 
       final results = await Future.wait(futures);
@@ -484,6 +496,9 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _visitStepsData = _safeCast<VisitData>(results[26]);
         _orderDraftData = _safeCast<VisitData>(results[27]);
         _plannedRoutes = _safeCast<PlannedRoute>(results[28]);
+        _thumbnails = _safeCast<Thumbnail>(results[29]);
+        _visitPlans = _safeCast<VisitPlan>(results[30]);
+        _visitPlanLists = _safeCast<VisitPlanList>(results[31]);
         _isLoading = false;
       });
 
@@ -629,6 +644,63 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     }
   }
 
+  /// Load thumbnails from database
+  /// This method fetches all thumbnail records from the thumbnails table
+  /// and converts them to Thumbnail model objects for display in the UI.
+  /// Returns an empty list if an error occurs during loading.
+  Future<List<Thumbnail>> _loadThumbnails() async {
+    try {
+      final thumbnails = await _dbService.getThumbnails();
+      if (kDebugMode) {
+        print('DEBUG: Loaded ${thumbnails.length} thumbnails');
+      }
+      return thumbnails;
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading thumbnails: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Load visit plans from database
+  /// This method fetches all visit plan records from the visit_plans table
+  /// and converts them to VisitPlan model objects for display in the UI.
+  /// Returns an empty list if an error occurs during loading.
+  Future<List<VisitPlan>> _loadVisitPlans() async {
+    try {
+      final visitPlans = await _dbService.getVisitPlans();
+      if (kDebugMode) {
+        print('DEBUG: Loaded ${visitPlans.length} visit plans');
+      }
+      return visitPlans;
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading visit plans: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Load visit plan lists from database
+  /// This method fetches all visit plan list records from the visit_plan_lists table
+  /// and converts them to VisitPlanList model objects for display in the UI.
+  /// Returns an empty list if an error occurs during loading.
+  Future<List<VisitPlanList>> _loadVisitPlanLists() async {
+    try {
+      final visitPlanLists = await _dbService.getVisitPlanLists();
+      if (kDebugMode) {
+        print('DEBUG: Loaded ${visitPlanLists.length} visit plan lists');
+      }
+      return visitPlanLists;
+    } catch (e) {
+      if (kDebugMode) {
+        print('DEBUG: Error loading visit plan lists: $e');
+      }
+      return [];
+    }
+  }
+
   /// Load order draft data from database
    /// This method fetches visit step data records from the visit_steps_data table
    /// where data_type is 'order_draft' and converts them to VisitData model objects
@@ -763,6 +835,9 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
                     _buildDataTable(_orderDraftData, _getOrderDraftDataColumns()),
                     _buildDataTable(_extractOrderDraftProducts(), _getOrderDraftProductsColumns()),
                     _buildDataTable(_plannedRoutes, _getPlannedRoutesColumns()),
+                    _buildDataTable(_thumbnails, _getThumbnailsColumns()),
+                    _buildDataTable(_visitPlans, _getVisitPlansColumns()),
+                    _buildDataTable(_visitPlanLists, _getVisitPlanListsColumns()),
                   ],
                 ),
     );
@@ -1220,6 +1295,57 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.createdAt.toString())),
         DataCell(Text(item.updatedAt.toString())),
       ]);
+    } else if (item is Thumbnail) {
+      cells.addAll([
+        DataCell(Text(item.id?.toString() ?? '')),
+        DataCell(Text(item.entityType)),
+        DataCell(Text(item.entityId.toString())),
+        DataCell(Text(item.code1c)),
+        DataCell(Text(item.entityName)),
+        DataCell(Text(item.thumbnailUrl)),
+        DataCell(Text(item.thumbnailDimensions['width']?.toString() ?? '')),
+        DataCell(Text(item.thumbnailDimensions['height']?.toString() ?? '')),
+        DataCell(Text(item.thumbnailDimensions['format']?.toString() ?? '')),
+        DataCell(Text(item.thumbnailDimensions['size']?.toString() ?? '')),
+        DataCell(Text(item.originalDimensions['width']?.toString() ?? '')),
+        DataCell(Text(item.originalDimensions['height']?.toString() ?? '')),
+        DataCell(Text(item.originalDimensions['format']?.toString() ?? '')),
+        DataCell(Text(item.originalDimensions['size']?.toString() ?? '')),
+        DataCell(Text(item.isMain.toString())),
+        DataCell(Text(item.category ?? '')),
+        DataCell(Text(item.note ?? '')),
+        DataCell(Text(item.statusCode ?? '')),
+        DataCell(Text(item.statusName ?? '')),
+        DataCell(Text(item.sourceName ?? '')),
+        DataCell(Text(item.sourceType ?? '')),
+        DataCell(Text(item.createdAt.toIso8601String())),
+        DataCell(Text(item.updatedAt?.toIso8601String() ?? '')),
+      ]);
+    } else if (item is VisitPlan) {
+      cells.addAll([
+        DataCell(Text(item.id?.toString() ?? '')),
+        DataCell(Text(item.mainReportId.toString())),
+        DataCell(Text(item.clientCode)),
+        DataCell(Text(item.clientName)),
+        DataCell(Text(item.plannedDate)),
+        DataCell(Text(item.actualVisitDate ?? '')),
+        DataCell(Text(item.isCompleted.toString())),
+        DataCell(Text(item.notes ?? '')),
+        DataCell(Text(item.createdAt?.toIso8601String() ?? '')),
+        DataCell(Text(item.updatedAt?.toIso8601String() ?? '')),
+      ]);
+    } else if (item is VisitPlanList) {
+      cells.addAll([
+        DataCell(Text(item.id?.toString() ?? '')),
+        DataCell(Text(item.visitPlanId.toString())),
+        DataCell(Text(item.productCode)),
+        DataCell(Text(item.productName)),
+        DataCell(Text(item.plannedQuantity.toString())),
+        DataCell(Text(item.actualQuantity?.toString() ?? '')),
+        DataCell(Text(item.notes ?? '')),
+        DataCell(Text(item.createdAt?.toIso8601String() ?? '')),
+        DataCell(Text(item.updatedAt?.toIso8601String() ?? '')),
+      ]);
     }
 
     return DataRow(cells: cells);
@@ -1500,73 +1626,73 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
       ];
 
   List<DataColumn> _getVisitStepsColumns() => [
-         const DataColumn(label: Text('ID')),
-         const DataColumn(label: Text('Permissions ID')),
-         const DataColumn(label: Text('Step Code')),
-         const DataColumn(label: Text('Step Name')),
-         const DataColumn(label: Text('Required')),
-         const DataColumn(label: Text('Created At')),
-         const DataColumn(label: Text('Updated At')),
-       ];
+    const DataColumn(label: Text('ID')),
+    const DataColumn(label: Text('Permissions ID')),
+    const DataColumn(label: Text('Step Code')),
+    const DataColumn(label: Text('Step Name')),
+    const DataColumn(label: Text('Required')),
+    const DataColumn(label: Text('Created At')),
+    const DataColumn(label: Text('Updated At')),
+  ];
 
   /// Define column headers for the Visit Steps Data table
   /// Displays all relevant fields from the visit_steps_data database table
   List<DataColumn> _getVisitStepsDataColumns() => [
-          const DataColumn(label: Text('ID')), // Primary key
-          const DataColumn(label: Text('Visit ID')), // Visit session identifier
-          const DataColumn(label: Text('Client Code')), // Client being visited
-          const DataColumn(label: Text('Step Code')), // Step identifier
-          const DataColumn(label: Text('Step Name')), // Step name for reference
-          const DataColumn(label: Text('Data Type')), // Type of data stored
-          const DataColumn(label: Text('Data Content')), // JSON data content
-          const DataColumn(label: Text('Timestamp')), // Creation timestamp
-          const DataColumn(label: Text('Is Synced')), // Synchronization status
-          const DataColumn(label: Text('Synced At')), // Last sync timestamp
-          const DataColumn(label: Text('Sync Error')), // Error message if sync failed
-        ];
+    const DataColumn(label: Text('ID')), // Primary key
+    const DataColumn(label: Text('Visit ID')), // Visit session identifier
+    const DataColumn(label: Text('Client Code')), // Client being visited
+    const DataColumn(label: Text('Step Code')), // Step identifier
+    const DataColumn(label: Text('Step Name')), // Step name for reference
+    const DataColumn(label: Text('Data Type')), // Type of data stored
+    const DataColumn(label: Text('Data Content')), // JSON data content
+    const DataColumn(label: Text('Timestamp')), // Creation timestamp
+    const DataColumn(label: Text('Is Synced')), // Synchronization status
+    const DataColumn(label: Text('Synced At')), // Last sync timestamp
+    const DataColumn(label: Text('Sync Error')), // Error message if sync failed
+  ];
 
   /// Define column headers for the Order Draft Data table
    /// Displays order draft specific fields from the visit_steps_data table where data_type = 'order_draft'
    List<DataColumn> _getOrderDraftDataColumns() => [
-           const DataColumn(label: Text('ID')), // Primary key
-           const DataColumn(label: Text('Visit ID')), // Visit session identifier
-           const DataColumn(label: Text('Client Code')), // Client being visited
-           const DataColumn(label: Text('Step Name')), // Step name for reference
-           const DataColumn(label: Text('Organization')), // Selected organization display name
-           const DataColumn(label: Text('Warehouse')), // Selected warehouse display name
-           const DataColumn(label: Text('Price Type')), // Selected price type display name
-           const DataColumn(label: Text('Products Count')), // Number of products in the order
-           const DataColumn(label: Text('Total Weight')), // Calculated total weight
-           const DataColumn(label: Text('Total Capacity')), // Calculated total capacity
-           const DataColumn(label: Text('Notes')), // Additional notes
-           const DataColumn(label: Text('Agent Code')), // Agent who created the draft
-           const DataColumn(label: Text('Longitude')), // GPS longitude coordinate
-           const DataColumn(label: Text('Latitude')), // GPS latitude coordinate
-           const DataColumn(label: Text('Project Code')), // Project code
-           const DataColumn(label: Text('Has Promo')), // Whether order has promotional items
-           const DataColumn(label: Text('Timestamp')), // Creation timestamp
-           const DataColumn(label: Text('Is Synced')), // Synchronization status
-         ];
+     const DataColumn(label: Text('ID')), // Primary key
+     const DataColumn(label: Text('Visit ID')), // Visit session identifier
+     const DataColumn(label: Text('Client Code')), // Client being visited
+     const DataColumn(label: Text('Step Name')), // Step name for reference
+     const DataColumn(label: Text('Organization')), // Selected organization display name
+     const DataColumn(label: Text('Warehouse')), // Selected warehouse display name
+     const DataColumn(label: Text('Price Type')), // Selected price type display name
+     const DataColumn(label: Text('Products Count')), // Number of products in the order
+     const DataColumn(label: Text('Total Weight')), // Calculated total weight
+     const DataColumn(label: Text('Total Capacity')), // Calculated total capacity
+     const DataColumn(label: Text('Notes')), // Additional notes
+     const DataColumn(label: Text('Agent Code')), // Agent who created the draft
+     const DataColumn(label: Text('Longitude')), // GPS longitude coordinate
+     const DataColumn(label: Text('Latitude')), // GPS latitude coordinate
+     const DataColumn(label: Text('Project Code')), // Project code
+     const DataColumn(label: Text('Has Promo')), // Whether order has promotional items
+     const DataColumn(label: Text('Timestamp')), // Creation timestamp
+     const DataColumn(label: Text('Is Synced')), // Synchronization status
+   ];
 
    /// Define column headers for the Order Draft Products table
    /// Displays product details extracted from order draft JSON data
    List<DataColumn> _getOrderDraftProductsColumns() => [
-           const DataColumn(label: Text('Draft Visit ID')), // Visit ID from parent draft
-           const DataColumn(label: Text('Client Code')), // Client code from parent draft
-           const DataColumn(label: Text('Product Code')), // Product code
-           const DataColumn(label: Text('Vendor Code')), // Vendor/supplier code
-           const DataColumn(label: Text('Amount')), // Quantity
-           const DataColumn(label: Text('Price')), // Unit price
-           const DataColumn(label: Text('Total')), // Total price (price × amount)
-           const DataColumn(label: Text('Weight')), // Product weight
-           const DataColumn(label: Text('Capacity')), // Product capacity/volume
-           const DataColumn(label: Text('Payment Type')), // Payment type code
-           const DataColumn(label: Text('Discount Sum')), // Fixed discount amount
-           const DataColumn(label: Text('Discount Rate')), // Discount percentage
-           const DataColumn(label: Text('Gift Amount')), // Number of gift items
-           const DataColumn(label: Text('Promo')), // Whether product is promotional
-           const DataColumn(label: Text('Draft Timestamp')), // When the draft was created
-         ];
+     const DataColumn(label: Text('Draft Visit ID')), // Visit ID from parent draft
+     const DataColumn(label: Text('Client Code')), // Client code from parent draft
+     const DataColumn(label: Text('Product Code')), // Product code
+     const DataColumn(label: Text('Vendor Code')), // Vendor/supplier code
+     const DataColumn(label: Text('Amount')), // Quantity
+     const DataColumn(label: Text('Price')), // Unit price
+     const DataColumn(label: Text('Total')), // Total price (price × amount)
+     const DataColumn(label: Text('Weight')), // Product weight
+     const DataColumn(label: Text('Capacity')), // Product capacity/volume
+     const DataColumn(label: Text('Payment Type')), // Payment type code
+     const DataColumn(label: Text('Discount Sum')), // Fixed discount amount
+     const DataColumn(label: Text('Discount Rate')), // Discount percentage
+     const DataColumn(label: Text('Gift Amount')), // Number of gift items
+     const DataColumn(label: Text('Promo')), // Whether product is promotional
+     const DataColumn(label: Text('Draft Timestamp')), // When the draft was created
+   ];
 
   List<DataColumn> _getPlannedRoutesColumns() => [
         const DataColumn(label: Text('ID')),
@@ -1575,6 +1701,57 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         const DataColumn(label: Text('Weekday')),
         const DataColumn(label: Text('Client Code')),
         const DataColumn(label: Text('Client Name')),
+        const DataColumn(label: Text('Created At')),
+        const DataColumn(label: Text('Updated At')),
+      ];
+
+  List<DataColumn> _getThumbnailsColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('Entity Type')),
+        const DataColumn(label: Text('Entity ID')),
+        const DataColumn(label: Text('Code 1C')),
+        const DataColumn(label: Text('Entity Name')),
+        const DataColumn(label: Text('Thumbnail URL')),
+        const DataColumn(label: Text('Thumbnail Width')),
+        const DataColumn(label: Text('Thumbnail Height')),
+        const DataColumn(label: Text('Thumbnail Format')),
+        const DataColumn(label: Text('Thumbnail Size')),
+        const DataColumn(label: Text('Original Width')),
+        const DataColumn(label: Text('Original Height')),
+        const DataColumn(label: Text('Original Format')),
+        const DataColumn(label: Text('Original Size')),
+        const DataColumn(label: Text('Is Main')),
+        const DataColumn(label: Text('Category')),
+        const DataColumn(label: Text('Note')),
+        const DataColumn(label: Text('Status Code')),
+        const DataColumn(label: Text('Status Name')),
+        const DataColumn(label: Text('Source Name')),
+        const DataColumn(label: Text('Source Type')),
+        const DataColumn(label: Text('Created At Server')),
+        const DataColumn(label: Text('Updated At')),
+      ];
+
+  List<DataColumn> _getVisitPlansColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('Main Report ID')),
+        const DataColumn(label: Text('Client Code')),
+        const DataColumn(label: Text('Client Name')),
+        const DataColumn(label: Text('Planned Date')),
+        const DataColumn(label: Text('Actual Visit Date')),
+        const DataColumn(label: Text('Is Completed')),
+        const DataColumn(label: Text('Notes')),
+        const DataColumn(label: Text('Created At')),
+        const DataColumn(label: Text('Updated At')),
+      ];
+
+  List<DataColumn> _getVisitPlanListsColumns() => [
+        const DataColumn(label: Text('ID')),
+        const DataColumn(label: Text('Visit Plan ID')),
+        const DataColumn(label: Text('Product Code')),
+        const DataColumn(label: Text('Product Name')),
+        const DataColumn(label: Text('Planned Quantity')),
+        const DataColumn(label: Text('Actual Quantity')),
+        const DataColumn(label: Text('Notes')),
         const DataColumn(label: Text('Created At')),
         const DataColumn(label: Text('Updated At')),
       ];

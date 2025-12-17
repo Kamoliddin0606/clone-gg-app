@@ -18,6 +18,7 @@ import 'package:gloria_marketing_flutter/src/core/services/permissions_service.d
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart' hide MapType;
 import 'package:gloria_marketing_flutter/src/core/maps/services/map_cache_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_marker.dart' hide MarkerClusterConfig;
@@ -182,6 +183,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     late Connectivity _connectivity;
     bool _isOnline = true;
 
+    // Image service for client images
+    ThumbnailImageService? _thumbnailImageService;
+
     // PageStorage bucket for state persistence
     late final PageStorageBucket _storageBucket;
 
@@ -189,6 +193,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   void initState() {
     super.initState();
     _storageBucket = PageStorageBucket();
+    _initializeThumbnailImageService();
     _initializePermissions();
     _initializeLocationService();
     _initializePermissionsService();
@@ -196,6 +201,22 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _loadUserData();
     _restoreState();
     _loadDefaultMapProvider();
+  }
+
+  /// Initialize thumbnail image service
+  Future<void> _initializeThumbnailImageService() async {
+    try {
+      await sl.isReady<ThumbnailImageService>();
+      _thumbnailImageService = sl<ThumbnailImageService>();
+      if (kDebugMode) {
+        print('ThumbnailImageService initialized successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error initializing ThumbnailImageService: $e');
+      }
+      _thumbnailImageService = null;
+    }
   }
 
   /// Initialize permissions on page load
@@ -1070,11 +1091,107 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
               onViewContracts: () => _viewContracts(tp),
               onRefusal: () => _showRefusalDialog(tp),
               permissions: tp.permissions,
+              thumbnailImageService: _thumbnailImageService,
             );
           },
         );
       },
     );
+  }
+
+  /// Handle double-tap on client card to fetch images and open details
+  /// This method fetches all client images from DB, if not available fetches from server,
+  /// saves to DB, loads to cache, and then opens the client details with swipeable images
+  Future<void> _handleDoubleTapFetchImages(TradingPointWithPermissions tp) async {
+    try {
+      if (kDebugMode) {
+        print('TradingPointsPage: Handling double-tap for client ${tp.tradingPoint.name} (${tp.tradingPoint.id})');
+      }
+
+      // Show loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mijoz rasmlarini yuklash...')),
+        );
+      }
+
+      // Ensure ThumbnailImageService is initialized
+      ThumbnailImageService? thumbnailImageService = _thumbnailImageService;
+      if (thumbnailImageService == null) {
+        if (kDebugMode) {
+          print('TradingPointsPage: ThumbnailImageService not initialized, trying to initialize...');
+        }
+
+        // Try to initialize the service
+        try {
+          await sl.isReady<ThumbnailImageService>();
+          thumbnailImageService = sl<ThumbnailImageService>();
+          _thumbnailImageService = thumbnailImageService; // Cache it for future use
+
+          if (kDebugMode) {
+            print('TradingPointsPage: ThumbnailImageService initialized successfully on demand');
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('TradingPointsPage: Failed to initialize ThumbnailImageService: $e');
+          }
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Rasm xizmat mavjud emas'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      // Check if client images are already in database
+      final cachedImages = await thumbnailImageService.getClientImages(tp.tradingPoint.id);
+
+      if (cachedImages.isEmpty) {
+        if (kDebugMode) {
+          print('TradingPointsPage: No cached images found, fetching from server');
+        }
+
+        // Fetch images from server and save to database
+        await thumbnailImageService.fetchAndSaveClientImages(tp.tradingPoint.id);
+
+        if (kDebugMode) {
+          print('TradingPointsPage: Images fetched and saved to database');
+        }
+      } else {
+        if (kDebugMode) {
+          print('TradingPointsPage: Using cached images (${cachedImages.length} images)');
+        }
+      }
+
+      // Images are now in database/cache, open details
+      _openTpDetails(tp);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mijoz rasmlari yuklandi')),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('TradingPointsPage: Error fetching client images: $e');
+      }
+
+      // Still open details even if image fetch fails
+      _openTpDetails(tp);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Rasm yuklashda xatolik: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -1271,6 +1388,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                             onViewContracts: () => _viewContracts(tp),
                             onRefusal: () => _showRefusalDialog(tp),
                             onOpenDetails: () => _openTpDetails(tp),
+                            onDoubleTapFetchImages: () => _handleDoubleTapFetchImages(tp),
                             regionNames: _regionNames,
                             locationService: _locationService,
                             permissions: tp.permissions,
@@ -1440,6 +1558,7 @@ class TradingPointCard extends StatelessWidget {
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
   final VoidCallback onOpenDetails;
+  final VoidCallback? onDoubleTapFetchImages;
   final bool? expanded;
   final ValueChanged<bool>? onExpand;
   final Map<String, String> regionNames;
@@ -1456,6 +1575,7 @@ class TradingPointCard extends StatelessWidget {
     required this.onViewContracts,
     required this.onRefusal,
     required this.onOpenDetails,
+    this.onDoubleTapFetchImages,
     this.expanded,
     this.onExpand,
     required this.regionNames,
@@ -1481,7 +1601,7 @@ class TradingPointCard extends StatelessWidget {
           final newExpanded = !(expanded ?? false);
           onExpand?.call(newExpanded);
         },
-        onDoubleTap: onOpenDetails,
+        onDoubleTap: onDoubleTapFetchImages ?? onOpenDetails,
         child: ExpansionTile(
 
           key: PageStorageKey<String>('tp_expand_${tradingPoint.id}'), // FIXED: alohida kalit faqat ExpansionTile uchun
@@ -2451,6 +2571,7 @@ class _TradingPointDetailsSheet extends StatefulWidget {
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
   final SalesReqPermissions? permissions;
+  final ThumbnailImageService? thumbnailImageService;
 
   const _TradingPointDetailsSheet({
     required this.tradingPoint,
@@ -2462,6 +2583,7 @@ class _TradingPointDetailsSheet extends StatefulWidget {
     required this.onViewContracts,
     required this.onRefusal,
     this.permissions,
+    this.thumbnailImageService,
   });
 
   @override
@@ -2537,6 +2659,7 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
                 _ClientDetailsPage(
                   tradingPoint: widget.tradingPoint,
                   onCall: widget.onCall,
+                  thumbnailImageService: widget.thumbnailImageService,
                 ),
               ],
             ),
@@ -2551,10 +2674,12 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
 class _ClientDetailsPage extends StatefulWidget {
   final TradingPoint tradingPoint;
   final VoidCallback onCall;
+  final ThumbnailImageService? thumbnailImageService;
 
   const _ClientDetailsPage({
     required this.tradingPoint,
     required this.onCall,
+    this.thumbnailImageService,
   });
 
   @override
@@ -2564,6 +2689,8 @@ class _ClientDetailsPage extends StatefulWidget {
 class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   bool _locationPermissionGranted = false;
   MapProvider _defaultMapProvider = MapProvider.google;
+  List<ClientImage> _clientImages = [];
+  bool _isLoadingImages = true;
 
 
   @override
@@ -2571,6 +2698,43 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     super.initState();
     _checkLocationPermission();
     _loadDefaultMapProvider();
+    _loadClientImages();
+  }
+
+  /// Load client images from database
+  Future<void> _loadClientImages() async {
+    try {
+      // Use the passed ThumbnailImageService instance
+      final thumbnailImageService = widget.thumbnailImageService;
+      if (thumbnailImageService == null) {
+        if (kDebugMode) {
+          print('ThumbnailImageService not available in ClientDetailsPage');
+        }
+        if (mounted) {
+          setState(() {
+            _isLoadingImages = false;
+          });
+        }
+        return;
+      }
+
+      final images = await thumbnailImageService.getClientImages(widget.tradingPoint.id);
+      if (mounted) {
+        setState(() {
+          _clientImages = images;
+          _isLoadingImages = false;
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading client images: $e');
+      }
+      if (mounted) {
+        setState(() {
+          _isLoadingImages = false;
+        });
+      }
+    }
   }
 
   /// Validates and returns a valid LatLng, with fallback for invalid coordinates
@@ -3024,7 +3188,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Map component moved here with marker rotation support
+          // Map component with marker rotation support
           Container(
             height: 200,
             margin: const EdgeInsets.only(bottom: 16),
@@ -3450,12 +3614,38 @@ class _ActionsMapPage extends StatefulWidget {
 class _ActionsMapPageState extends State<_ActionsMapPage> {
   GoogleMapController? _mapController;
   bool _locationPermissionGranted = false;
-
+  List<ClientImage> _clientImages = [];
+  bool _isLoadingImages = true;
 
   @override
   void initState() {
     super.initState();
     _checkLocationPermission();
+    _loadClientImages();
+  }
+
+  /// Load client images from database
+  Future<void> _loadClientImages() async {
+    try {
+      // Get ThumbnailImageService from service locator
+      final thumbnailImageService = sl<ThumbnailImageService>();
+      final images = await thumbnailImageService.getClientImages(widget.tradingPoint.id);
+      if (mounted) {
+        setState(() {
+          _clientImages = images;
+          _isLoadingImages = false;
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading client images in ActionsMapPage: $e');
+      }
+      if (mounted) {
+        setState(() {
+          _isLoadingImages = false;
+        });
+      }
+    }
   }
 
   /// Validates and returns a valid LatLng, with fallback for invalid coordinates
@@ -3525,8 +3715,14 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
 
     return Column(
       children: [
-        // Header image before actions
-        _HeaderImage(url: url, visited: widget.tradingPoint.isVisited, tradingPoint: widget.tradingPoint),
+        // Header image with client images carousel
+        _HeaderImage(
+          url: url,
+          visited: widget.tradingPoint.isVisited,
+          tradingPoint: widget.tradingPoint,
+          clientImages: _clientImages,
+          isLoadingImages: _isLoadingImages,
+        ),
 
         // Actions below with marker rotation support
         Padding(
@@ -3583,118 +3779,132 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
   }
 }
 
-// Yordamchi: header image (blur/overlay tashrifda)
+// Yordamchi: header image (blur/overlay tashrifda) with client images carousel
 class _HeaderImage extends StatelessWidget {
   final String? url;
   final bool visited;
   final TradingPoint tradingPoint;
-  const _HeaderImage({required this.url, required this.visited, required this.tradingPoint});
+  final List<ClientImage> clientImages;
+  final bool isLoadingImages;
+  const _HeaderImage({
+    required this.url,
+    required this.visited,
+    required this.tradingPoint,
+    required this.clientImages,
+    required this.isLoadingImages,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final h = 250.0;
-    Widget content;
 
-    if (url == null || url!.trim().isEmpty) {
-      content = Container(
-        height: h,
+    return SizedBox(
+      height: h,
+      child: Container(
         decoration: BoxDecoration(
           color: cs.primaryContainer,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Stack(
           children: [
-            const Center(child: Icon(Icons.storefront, size: 48)),
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ClientImagesPage(tradingPoint: TradingPointWithPermissions(
-                          tradingPoint: tradingPoint,
-                          permissions: null, // We don't have permissions here
-                        )),
+            // Client images carousel
+            if (clientImages.isNotEmpty) ...[
+              PageView.builder(
+                itemCount: clientImages.length,
+                itemBuilder: (context, index) {
+                  final image = clientImages[index];
+                  return Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: DecorationImage(
+                        image: NetworkImage(image.imageThumbnailUrl ?? image.imageUrl ?? ''),
+                        fit: BoxFit.cover,
                       ),
-                    );
-                  },
-                  tooltip: 'Mijoz rasmlarini boshqarish',
-                  iconSize: 20,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                ),
+                    ),
+                    child: Stack(
+                      children: [
+                        if (image.isMain)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.8),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'Asosiy',
+                                style: TextStyle(color: Colors.white, fontSize: 12),
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          bottom: 8,
+                          left: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.6),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${index + 1} / ${clientImages.length}',
+                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      content = ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              url!,
-              fit: BoxFit.cover,
-              loadingBuilder: (c, child, p) => p == null
-                  ? child
-                  : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              errorBuilder: (c, e, s) => Container(
-                color: cs.surfaceContainerHighest,
-                child: const Center(child: Icon(Icons.storefront, size: 48)),
-              ),
-            ),
-            if (visited)
-              Container(color: Colors.black.withOpacity(0.22)),
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ClientImagesPage(tradingPoint: TradingPointWithPermissions(
-                          tradingPoint: tradingPoint,
-                          permissions: null, // We don't have permissions here
-                        )),
-                      ),
-                    );
-                  },
-                  tooltip: 'Mijoz rasmlarini boshqarish',
-                  iconSize: 20,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+            ] else if (isLoadingImages) ...[
+              const Center(child: CircularProgressIndicator()),
+            ] else ...[
+              // No images - show default with edit button
+              const Center(child: Icon(Icons.storefront, size: 48)),
+            ],
 
-    return SizedBox(height: h, child: content);
+            // Edit button (always visible)
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ClientImagesPage(tradingPoint: TradingPointWithPermissions(
+                          tradingPoint: tradingPoint,
+                          permissions: null, // We don't have permissions here
+                        )),
+                      ),
+                    );
+                  },
+                  tooltip: 'Mijoz rasmlarini boshqarish',
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

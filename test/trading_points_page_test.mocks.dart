@@ -7,6 +7,8 @@ import 'dart:async' as _i5;
 
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart'
     as _i4;
+import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart'
+    as _i19;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart'
     as _i13;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart'
@@ -604,4 +606,110 @@ class MockAgentRepository extends _i1.Mock implements _i7.AgentRepository {
             ),
           )
           as _i5.Future<List<_i18.ClientContractWithName>>);
+}
+
+/// A class which mocks [ThumbnailImageService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockThumbnailImageService extends _i1.Mock
+    implements _i19.ThumbnailImageService {
+  MockThumbnailImageService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  set onProgressUpdate(dynamic Function(double, String)? value) =>
+      super.noSuchMethod(
+        Invocation.setter(#onProgressUpdate, value),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void cancel() => super.noSuchMethod(
+    Invocation.method(#cancel, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void reset() => super.noSuchMethod(
+    Invocation.method(#reset, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i5.Future<void> updateClientThumbnails(String? clientCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateClientThumbnails, [clientCode]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> fetchAndUpdateThumbnails({
+    required String? entityType,
+    required List<String>? entityIds,
+    bool? replaceExisting = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#fetchAndUpdateThumbnails, [], {
+              #entityType: entityType,
+              #entityIds: entityIds,
+              #replaceExisting: replaceExisting,
+            }),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> fetchAndSaveClientImages(
+    String? clientCode, {
+    bool? replaceExisting = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #fetchAndSaveClientImages,
+              [clientCode],
+              {#replaceExisting: replaceExisting},
+            ),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<List<_i19.ClientImage>> getClientImages(String? clientCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#getClientImages, [clientCode]),
+            returnValue: _i5.Future<List<_i19.ClientImage>>.value(
+              <_i19.ClientImage>[],
+            ),
+          )
+          as _i5.Future<List<_i19.ClientImage>>);
+
+  @override
+  _i5.Future<_i19.ClientImage?> getMainClientImage(String? clientCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#getMainClientImage, [clientCode]),
+            returnValue: _i5.Future<_i19.ClientImage?>.value(),
+          )
+          as _i5.Future<_i19.ClientImage?>);
+
+  @override
+  _i5.Future<void> deleteClientImages(String? clientCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteClientImages, [clientCode]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<Map<String, int>> getThumbnailStats() =>
+      (super.noSuchMethod(
+            Invocation.method(#getThumbnailStats, []),
+            returnValue: _i5.Future<Map<String, int>>.value(<String, int>{}),
+          )
+          as _i5.Future<Map<String, int>>);
 }

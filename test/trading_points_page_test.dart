@@ -5,24 +5,29 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
+import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart' show ClientImage;
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
 // Generate mocks
-@GenerateMocks([SharedPreferencesService, AgentRepository])
+@GenerateMocks([SharedPreferencesService, AgentRepository, ThumbnailImageService])
 import 'trading_points_page_test.mocks.dart';
 
 void main() {
   late MockSharedPreferencesService mockPrefs;
   late MockAgentRepository mockRepository;
+  late MockThumbnailImageService mockThumbnailService;
 
   setUp(() {
     mockPrefs = MockSharedPreferencesService();
     mockRepository = MockAgentRepository();
+    mockThumbnailService = MockThumbnailImageService();
 
     // Setup service locator
     sl.registerSingleton<SharedPreferencesService>(mockPrefs);
     sl.registerSingleton<AgentRepository>(mockRepository);
+    sl.registerSingleton<ThumbnailImageService>(mockThumbnailService);
   });
 
   tearDown(() {
@@ -488,6 +493,203 @@ void main() {
 
       // Verify repository was called again
       verify(mockRepository.getClients(userCode: 'test_user', password: 'test_pass')).called(2);
+    });
+
+    testWidgets('should handle double-tap to fetch client images when not cached', (WidgetTester tester) async {
+      // Arrange
+      final testTradingPoint = model.TradingPoint(
+        id: '1',
+        name: 'Test Store',
+        address: 'Test Address',
+        phone: '+998901234567',
+        ownerName: 'Test Owner',
+        contactPerson: 'Test Person',
+        inn: '123456789',
+        status: 'active',
+        lastVisitDate: '',
+        hasOrders: false,
+        hasContracts: false,
+        isVisited: false,
+        hasContract: false,
+        latitude: 41.2995,
+        longitude: 69.2401,
+        region: 'Tashkent',
+        district: 'Yunusabad',
+        signboard: '',
+        referencePoint: '',
+        responsiblePerson: '',
+        responsiblePersonPhone: '',
+        tradePointType: '',
+        creditLimit: 0.0,
+        accumulatedCredit: 0.0,
+        codeRegion: '01',
+      );
+
+      when(mockPrefs.getUserCode()).thenReturn('test_user');
+      when(mockPrefs.getPassword()).thenReturn('test_pass');
+      when(mockRepository.getClients(userCode: 'test_user', password: 'test_pass'))
+          .thenAnswer((_) async => [testTradingPoint]);
+      when(mockRepository.getCachedBusinessRegions()).thenAnswer((_) async => []);
+
+      // Mock empty cached images, then successful fetch
+      when(mockThumbnailService.getClientImages('1')).thenAnswer((_) async => []);
+      when(mockThumbnailService.fetchAndSaveClientImages('1')).thenAnswer((_) async {});
+
+      // Act
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: TradingPointsPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Double-tap the trading point card
+      final cardFinder = find.byType(TradingPointCard);
+      expect(cardFinder, findsOneWidget);
+
+      // Perform double tap
+      await tester.tap(cardFinder);
+      await tester.tap(cardFinder);
+      await tester.pumpAndSettle();
+
+      // Verify that image fetching was attempted
+      verify(mockThumbnailService.getClientImages('1')).called(1);
+      verify(mockThumbnailService.fetchAndSaveClientImages('1')).called(1);
+    });
+
+    testWidgets('should handle double-tap to use cached client images', (WidgetTester tester) async {
+      // Arrange
+      final testTradingPoint = model.TradingPoint(
+        id: '1',
+        name: 'Test Store',
+        address: 'Test Address',
+        phone: '+998901234567',
+        ownerName: 'Test Owner',
+        contactPerson: 'Test Person',
+        inn: '123456789',
+        status: 'active',
+        lastVisitDate: '',
+        hasOrders: false,
+        hasContracts: false,
+        isVisited: false,
+        hasContract: false,
+        latitude: 41.2995,
+        longitude: 69.2401,
+        region: 'Tashkent',
+        district: 'Yunusabad',
+        signboard: '',
+        referencePoint: '',
+        responsiblePerson: '',
+        responsiblePersonPhone: '',
+        tradePointType: '',
+        creditLimit: 0.0,
+        accumulatedCredit: 0.0,
+        codeRegion: '01',
+      );
+
+      when(mockPrefs.getUserCode()).thenReturn('test_user');
+      when(mockPrefs.getPassword()).thenReturn('test_pass');
+      when(mockRepository.getClients(userCode: 'test_user', password: 'test_pass'))
+          .thenAnswer((_) async => [testTradingPoint]);
+      when(mockRepository.getCachedBusinessRegions()).thenAnswer((_) async => []);
+
+      // Mock cached images available
+      final mockImages = [
+        ClientImage(
+          clientCode: '1',
+          imageUrl: 'http://example.com/image1.jpg',
+          isMain: true,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      ];
+      when(mockThumbnailService.getClientImages('1')).thenAnswer((_) async => mockImages);
+
+      // Act
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: TradingPointsPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Double-tap the trading point card
+      final cardFinder = find.byType(TradingPointCard);
+      expect(cardFinder, findsOneWidget);
+
+      // Perform double tap
+      await tester.tap(cardFinder);
+      await tester.tap(cardFinder);
+      await tester.pumpAndSettle();
+
+      // Verify that cached images were used (no fetch from server)
+      verify(mockThumbnailService.getClientImages('1')).called(1);
+      verifyNever(mockThumbnailService.fetchAndSaveClientImages('1'));
+    });
+
+    testWidgets('should handle double-tap image fetch error gracefully', (WidgetTester tester) async {
+      // Arrange
+      final testTradingPoint = model.TradingPoint(
+        id: '1',
+        name: 'Test Store',
+        address: 'Test Address',
+        phone: '+998901234567',
+        ownerName: 'Test Owner',
+        contactPerson: 'Test Person',
+        inn: '123456789',
+        status: 'active',
+        lastVisitDate: '',
+        hasOrders: false,
+        hasContracts: false,
+        isVisited: false,
+        hasContract: false,
+        latitude: 41.2995,
+        longitude: 69.2401,
+        region: 'Tashkent',
+        district: 'Yunusabad',
+        signboard: '',
+        referencePoint: '',
+        responsiblePerson: '',
+        responsiblePersonPhone: '',
+        tradePointType: '',
+        creditLimit: 0.0,
+        accumulatedCredit: 0.0,
+        codeRegion: '01',
+      );
+
+      when(mockPrefs.getUserCode()).thenReturn('test_user');
+      when(mockPrefs.getPassword()).thenReturn('test_pass');
+      when(mockRepository.getClients(userCode: 'test_user', password: 'test_pass'))
+          .thenAnswer((_) async => [testTradingPoint]);
+      when(mockRepository.getCachedBusinessRegions()).thenAnswer((_) async => []);
+
+      // Mock empty cached images and fetch error
+      when(mockThumbnailService.getClientImages('1')).thenAnswer((_) async => []);
+      when(mockThumbnailService.fetchAndSaveClientImages('1')).thenThrow(Exception('Network error'));
+
+      // Act
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: TradingPointsPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Double-tap the trading point card
+      final cardFinder = find.byType(TradingPointCard);
+      expect(cardFinder, findsOneWidget);
+
+      // Perform double tap
+      await tester.tap(cardFinder);
+      await tester.tap(cardFinder);
+      await tester.pumpAndSettle();
+
+      // Verify that error was handled (still opens details)
+      verify(mockThumbnailService.getClientImages('1')).called(1);
+      verify(mockThumbnailService.fetchAndSaveClientImages('1')).called(1);
+
+      // Should still show the details page despite error
+      expect(find.text('Test Store'), findsOneWidget);
     });
   });
 }

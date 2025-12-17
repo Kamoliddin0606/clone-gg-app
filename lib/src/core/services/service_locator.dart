@@ -17,6 +17,7 @@ import 'package:gloria_marketing_flutter/src/core/services/telegram_token_servic
 import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -77,6 +78,14 @@ Future<void> setupServiceLocator() async {
   }
   if (!sl.isRegistered<TokenService>()) {
     sl.registerLazySingleton<TokenService>(() => TokenService(sl<Dio>(), sl<SharedPreferencesService>()));
+  }
+  if (!sl.isRegistered<ThumbnailImageService>()) {
+    sl.registerLazySingleton<ThumbnailImageService>(() => ThumbnailImageService(
+      databaseService: sl<ApiDatabaseService>(),
+      apiService: sl<RestApiService>(),
+      tokenService: sl<TokenService>(),
+      dio: sl<Dio>(),
+    ));
   }
   if (!sl.isRegistered<DataSyncService>()) {
     sl.registerLazySingleton<DataSyncService>(() => DataSyncService(

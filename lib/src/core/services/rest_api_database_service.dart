@@ -122,28 +122,36 @@ class RestApiDatabaseService {
       final mainThumbnails = thumbnails.where((t) => t.isMain).toList();
       final nonMainThumbnails = thumbnails.where((t) => !t.isMain).toList();
 
+      // Deduplicate  thumbnails by (entity_type, entity_id, code_1c, imageid)
+      final uniqueThumbnails = <String, Thumbnail>{};
+      for (final thumbnail in thumbnails) {
+        final key = '${thumbnail.entityType}_${thumbnail.entityId}_${thumbnail.code1c}_${thumbnail.imageId}';
+        uniqueThumbnails[key] = thumbnail;
+      }
+
       // Deduplicate main thumbnails by (entity_type, entity_id, code_1c)
       final uniqueMainThumbnails = <String, Thumbnail>{};
       for (final thumbnail in mainThumbnails) {
-        final key = '${thumbnail.entityType}_${thumbnail.entityId}_${thumbnail.code1c}';
+        final key = '${thumbnail.entityType}_${thumbnail.entityId}_${thumbnail.code1c}_${thumbnail.imageId}';
         uniqueMainThumbnails[key] = thumbnail;
       }
 
-      // // Deduplicate non-main thumbnails by (entity_type, entity_id, code_1c)
-      // final uniqueNonMainThumbnails = <String, Thumbnail>{};
-      // for (final thumbnail in nonMainThumbnails) {
-      //   final key = '${thumbnail.entityType}_${thumbnail.entityId}_${thumbnail.code1c}';
-      //   uniqueNonMainThumbnails[key] = thumbnail;
-      // }
+      // Deduplicate non-main thumbnails by (entity_type, entity_id, code_1c)
+      final uniqueNonMainThumbnails = <String, Thumbnail>{};
+      for (final thumbnail in nonMainThumbnails) {
+        final key = '${thumbnail.entityType}_${thumbnail.entityId}_${thumbnail.code1c}';
+        uniqueNonMainThumbnails[key] = thumbnail;
+      }
 
       // Combine: main thumbnails first, then non-main in insertion order
       final sortedUniqueThumbnails = [
-        ...uniqueMainThumbnails.values,
+        // ...uniqueMainThumbnails.values,
         // ...uniqueNonMainThumbnails.values,
+        ...uniqueThumbnails.values,
       ];
 
       if (kDebugMode) {
-        print('RestApiDatabaseService: After deduplication: ${sortedUniqueThumbnails.length} unique thumbnails (${uniqueMainThumbnails.length} main');
+        print('RestApiDatabaseService: After deduplication: ${sortedUniqueThumbnails.length} unique thumbnails (${uniqueThumbnails.length} main)');
       }
 
       // Add all inserts to batch

@@ -49,7 +49,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 21,
+      version: 22,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -911,6 +911,41 @@ class ApiDatabaseService {
           break; // Only need to do this once
         }
       }
+    } else if (oldVersion < 22) {
+      // Add client_images table for version 22
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS client_images (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          client_code TEXT NOT NULL,
+          image_url TEXT,
+          image_sm_url TEXT,
+          image_md_url TEXT,
+          image_lg_url TEXT,
+          image_thumbnail_url TEXT,
+          image_dimensions TEXT,
+          image_sm_dimensions TEXT,
+          image_md_dimensions TEXT,
+          image_lg_dimensions TEXT,
+          image_thumbnail_dimensions TEXT,
+          is_main INTEGER DEFAULT 0,
+          category TEXT,
+          note TEXT,
+          status_code TEXT,
+          status_name TEXT,
+          source_name TEXT,
+          source_type TEXT,
+          created_at_server TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create indexes for client_images table
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_code ON client_images(client_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)');
     }
   }
 
@@ -1526,6 +1561,35 @@ class ApiDatabaseService {
       )
     ''');
 
+    // Create client_images table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS client_images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_code TEXT NOT NULL,
+        image_url TEXT,
+        image_sm_url TEXT,
+        image_md_url TEXT,
+        image_lg_url TEXT,
+        image_thumbnail_url TEXT,
+        image_dimensions TEXT,
+        image_sm_dimensions TEXT,
+        image_md_dimensions TEXT,
+        image_lg_dimensions TEXT,
+        image_thumbnail_dimensions TEXT,
+        is_main INTEGER DEFAULT 0,
+        category TEXT,
+        note TEXT,
+        status_code TEXT,
+        status_name TEXT,
+        source_name TEXT,
+        source_type TEXT,
+        created_at_server TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE
+      )
+    ''');
+
     // Create indexes for new tables
     await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
@@ -1539,6 +1603,10 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_user_code ON planned_routes(user_code)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_weekday ON planned_routes(code_weekday)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_code ON client_images(client_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)');
 
     print('API cache database tables created successfully');
   }
@@ -3682,6 +3750,7 @@ class ApiDatabaseService {
     await db.delete('kpi_data');
     await db.delete('clients');
     await db.delete('client_contracts');
+    await db.delete('client_images');
     await db.delete('products');
     await db.delete('price_types');
     await db.delete('product_prices');
@@ -6535,6 +6604,41 @@ class ApiDatabaseService {
         'indexes': [
           'CREATE INDEX idx_user_organizations_code ON user_organizations(code)',
           'CREATE INDEX idx_user_organizations_user_code ON user_organizations(user_code)',
+        ],
+      },
+      'client_images': {
+        'sql': '''
+          CREATE TABLE client_images (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client_code TEXT NOT NULL,
+            image_url TEXT,
+            image_sm_url TEXT,
+            image_md_url TEXT,
+            image_lg_url TEXT,
+            image_thumbnail_url TEXT,
+            image_dimensions TEXT,
+            image_sm_dimensions TEXT,
+            image_md_dimensions TEXT,
+            image_lg_dimensions TEXT,
+            image_thumbnail_dimensions TEXT,
+            is_main INTEGER DEFAULT 0,
+            category TEXT,
+            note TEXT,
+            status_code TEXT,
+            status_name TEXT,
+            source_name TEXT,
+            source_type TEXT,
+            created_at_server TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_client_images_client_code ON client_images(client_code)',
+          'CREATE INDEX idx_client_images_is_main ON client_images(is_main)',
+          'CREATE INDEX idx_client_images_status_code ON client_images(status_code)',
+          'CREATE INDEX idx_client_images_created_at_server ON client_images(created_at_server)',
         ],
       },
     };

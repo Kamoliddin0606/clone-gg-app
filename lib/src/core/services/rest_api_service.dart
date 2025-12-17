@@ -123,10 +123,12 @@ class RestApiService {
   /// Uses hardcoded URL as thumbnails come from a separate service
   ///
   /// @param authToken The authentication token for API access
+  /// @param is_main Whether to fetch main thumbnails only (default: false)
   /// @return Future<List<Thumbnail>> List of thumbnail objects
   /// @throws Exception if API call fails or response parsing fails
   Future<List<Thumbnail>> getThumbnails({
     required String authToken,
+    bool is_main = false,
   }) async {
     // Hardcoded URL for thumbnails API - separate from main app API
     // TODO: Make this configurable when expanding to multiple environments
@@ -149,6 +151,7 @@ class RestApiService {
             'Authorization': 'Bearer $authToken',
           },
         ),
+        queryParameters: {'is_main': is_main.toString()},
       );
 
       if (kDebugMode) {

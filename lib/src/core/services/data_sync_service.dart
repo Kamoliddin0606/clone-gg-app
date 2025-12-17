@@ -2110,6 +2110,7 @@ class DataSyncService {
       // RestApiService.getThumbnails() uses hardcoded URL: http://178.218.200.120:1596/api/v1/thumbnails
       final thumbnails = await _restApiService.getThumbnails(
         authToken: accessToken,
+        is_main: true,
       );
 
       if (kDebugMode) {

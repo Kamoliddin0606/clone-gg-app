@@ -11,6 +11,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/services/photo_storage_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 /// Client Images Management Page
@@ -34,6 +35,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   final PhotoStorageService _photoStorageService = sl<PhotoStorageService>();
   final RestApiService _restApiService = sl<RestApiService>();
   final TokenService _tokenService = sl<TokenService>();
+  final ThumbnailImageService _thumbnailImageService = sl<ThumbnailImageService>();
 
   // UI State management
   bool _isLoading = true;
@@ -43,13 +45,32 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   late Animation<double> _fabAnimation;
   final TextEditingController _notesController = TextEditingController();
 
+  /// Server-synced images loaded from local database (client_images table)
+  ///
+  /// This list is the authoritative source for displaying *server images*.
+  /// It is refreshed by:
+  /// - reading DB via `ThumbnailImageService.getClientImages`
+  /// - optionally syncing from server via `ThumbnailImageService.fetchAndSaveClientImages`
+  List<ClientImage> _serverImages = [];
+
+  /// Loading state for server images list
+  bool _isServerImagesLoading = false;
+
+  /// State to prevent duplicate main-selection requests
+  bool _isSettingMain = false;
+
+  /// Uploading state for local pending images
+  bool _isUploading = false;
+
   // Camera related
   List<CameraDescription>? _cameras;
   CameraController? _cameraController;
   bool _isCameraInitialized = false;
 
-  // Upload related
-  bool _isUploading = false;
+  /// Convenience getter for current client code
+  ///
+  /// In this project, `tradingPoint.id` is used as client 1C code.
+  String get _clientCode => widget.tradingPoint.tradingPoint.id;
 
   @override
   void initState() {
@@ -77,29 +98,6 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       _isCameraInitialized = false;
     } catch (e) {
       debugPrint('Camera disposal error: $e');
-    }
-  }
-
-  /// Initialize page data and camera
-  Future<void> _initializePage() async {
-    try {
-      setState(() => _isLoading = true);
-
-      // Load existing client photos from local storage
-      await _loadClientPhotos();
-
-      // Initialize cameras for camera functionality only when needed
-      // Camera will be initialized when add_a_photo button is pressed
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sahifa yuklanishda xatolik: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
     }
   }
 
@@ -158,12 +156,10 @@ class _ClientImagesPageState extends State<ClientImagesPage>
 
       await _cameraController!.initialize();
 
-      // Check if initialization was successful
       if (_cameraController!.value.hasError) {
         throw Exception('Camera initialization failed: ${_cameraController!.value.errorDescription}');
       }
 
-      // Add error listener for camera errors
       _cameraController!.addListener(_onCameraError);
 
       if (mounted) {
@@ -193,8 +189,6 @@ class _ClientImagesPageState extends State<ClientImagesPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Kamera xatoligi: $error')),
           );
-
-          // Try to reinitialize camera if possible
           _reinitializeCamera();
         }
       }
@@ -205,8 +199,6 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   Future<void> _reinitializeCamera() async {
     try {
       await _disposeCamera();
-
-      // Wait a bit before reinitializing
       await Future.delayed(const Duration(seconds: 1));
 
       if (_cameras != null && _cameras!.isNotEmpty) {
@@ -228,7 +220,6 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         ),
       );
 
-      // Try to reconnect after a delay
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           _reinitializeCamera();
@@ -237,21 +228,148 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     }
   }
 
+  /// Initialize page data
+  ///
+  /// Responsibilities:
+  /// - load local pending photos
+  /// - load server images from DB
+  /// - attempt server sync (if token is available)
+  Future<void> _initializePage() async {
+    try {
+      setState(() => _isLoading = true);
+
+      await _loadClientPhotos();
+      await _loadServerImagesFromDatabase();
+      await _syncServerImagesFromApiIfPossible(replaceExisting: true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sahifa yuklanishda xatolik: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  /// Load server images from local database (client_images table)
+  ///
+  /// This does not call the network.
+  Future<void> _loadServerImagesFromDatabase() async {
+    try {
+      setState(() => _isServerImagesLoading = true);
+
+      final images = await _thumbnailImageService.getClientImages(_clientCode);
+
+      if (!mounted) return;
+
+      setState(() {
+        _serverImages = images;
+        _isServerImagesLoading = false;
+      });
+
+      if (kDebugMode) {
+        print('ClientImagesPage: Loaded ${images.length} server images from DB for client $_clientCode');
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _serverImages = [];
+        _isServerImagesLoading = false;
+      });
+
+      if (kDebugMode) {
+        print('ClientImagesPage: Error loading server images from DB: $e');
+      }
+    }
+  }
+
+  /// Sync server images from API to local database when possible
+  ///
+  /// This method:
+  /// - checks token availability
+  /// - calls `ThumbnailImageService.fetchAndSaveClientImages`
+  /// - reloads the images from DB
+  Future<void> _syncServerImagesFromApiIfPossible({bool replaceExisting = true}) async {
+    try {
+      final token = await _tokenService.getValidAccessToken();
+      if (token == null || token.isEmpty) {
+        if (kDebugMode) {
+          print('ClientImagesPage: Skipping server images sync - no valid access token');
+        }
+        return;
+      }
+
+      await _thumbnailImageService.fetchAndSaveClientImages(
+        _clientCode,
+        replaceExisting: replaceExisting,
+      );
+
+      await _loadServerImagesFromDatabase();
+    } catch (e) {
+      if (kDebugMode) {
+        print('ClientImagesPage: Error syncing server images: $e');
+      }
+    }
+  }
+
+  /// Request to set a server image as main (future-ready)
+  ///
+  /// Current backend contract is not implemented in this project.
+  /// We still keep the UI and a safe placeholder call to avoid breaking the app.
+  Future<void> _requestSetAsMain(ClientImage image) async {
+    if (_isSettingMain) return;
+    if (image.isMain) return;
+
+    try {
+      setState(() => _isSettingMain = true);
+
+      final success = await _restApiService.setClientImageAsMain(
+        clientCode: _clientCode,
+        imageId: image.id,
+        imageUrl: image.imageUrl,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        await _syncServerImagesFromApiIfPossible(replaceExisting: true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Asosiy rasmni o\'zgartirish server tomonda hali yoqilmagan'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Asosiy rasmni o\'zgartirishda xatolik: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSettingMain = false);
+      }
+    }
+  }
+
   /// Load existing client photos from local storage
   /// Loads photos from photo storage service with client-specific logic
   Future<void> _loadClientPhotos() async {
     try {
-      // Load existing client photos from database
-      final clientPhotos = await _photoStorageService.getClientPhotos(widget.tradingPoint.tradingPoint.id);
-
+      final clientPhotos = await _photoStorageService.getClientPhotos(_clientCode);
+      if (!mounted) return;
       setState(() => _photos = clientPhotos);
 
       if (kDebugMode) {
-        print('ClientImagesPage: Loaded ${clientPhotos.length} photos for client ${widget.tradingPoint.tradingPoint.id}');
+        print('ClientImagesPage: Loaded ${clientPhotos.length} local photos for client $_clientCode');
       }
     } catch (e) {
       debugPrint('Error loading client photos: $e');
-      // Continue with empty list
+      if (!mounted) return;
       setState(() => _photos = []);
     }
   }
@@ -259,20 +377,17 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   /// Save captured photo for client
   Future<void> _saveCapturedPhoto(File imageFile) async {
     try {
-      // For client images, we use a special storage approach
-      // Create a unique visitId for client images
-      final clientVisitId = 'client_${widget.tradingPoint.tradingPoint.id}_${DateTime.now().millisecondsSinceEpoch}';
+      final clientVisitId = 'client_${_clientCode}_${DateTime.now().millisecondsSinceEpoch}';
 
       final result = await _photoStorageService.savePhoto(
         visitId: clientVisitId,
-        clientCode: widget.tradingPoint.tradingPoint.id,
-        stepCode: 999, // Special step code for client images
+        clientCode: _clientCode,
+        stepCode: 999,
         stepName: 'Client Images',
         imageFile: imageFile,
         description: 'Client image - ${widget.tradingPoint.tradingPoint.name}',
       );
 
-      // Add to local photos list
       final newPhoto = {
         'id': DateTime.now().millisecondsSinceEpoch.toString(),
         'visitId': clientVisitId,
@@ -280,16 +395,16 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         'thumbnailPath': result['thumbnailPath'],
         'timestamp': DateTime.now(),
         'description': 'Client image',
-        'clientCode': widget.tradingPoint.tradingPoint.id,
+        'clientCode': _clientCode,
       };
+
+      if (!mounted) return;
 
       setState(() => _photos.add(newPhoto));
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rasm muvaffaqiyatli saqlandi')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rasm muvaffaqiyatli saqlandi')),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -299,27 +414,26 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     }
   }
 
-  /// Delete photo
+  /// Delete local pending photo
   Future<void> _deletePhoto(int index) async {
     try {
       final photo = _photos[index];
       final imagePath = photo['imagePath'];
       final visitId = photo['visitId'];
 
-      // Delete from photo storage service
       await _photoStorageService.deletePhoto(
         visitId,
-        999, // Special step code for client images
+        999,
         imagePath,
       );
 
+      if (!mounted) return;
+
       setState(() => _photos.removeAt(index));
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rasm o\'chirildi')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rasm o\'chirildi')),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -329,21 +443,20 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     }
   }
 
-  /// Upload all client images to server
-  /// Uses RestApiService.uploadClientImagesBulk for bulk upload
-  /// After successful upload, notifies user and triggers UI reload
+  /// Upload all local images to server
   Future<void> _uploadImagesToServer() async {
     if (_photos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Yuklash uchun rasm yo\'q')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Yuklash uchun rasm yo\'q')),
+        );
+      }
       return;
     }
 
     setState(() => _isUploading = true);
 
     try {
-      // Prepare image files
       final imageFiles = <File>[];
       for (final photo in _photos) {
         final file = File(photo['imagePath']);
@@ -356,37 +469,28 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         throw Exception('Hech bir rasm fayli topilmadi');
       }
 
-      // Get authentication token
       final accessToken = await _tokenService.getValidAccessToken();
       if (accessToken == null) {
         throw Exception('Autentifikatsiya tokeni mavjud emas');
       }
 
-      // Upload images using RestApiService
       final uploadedUrls = await _restApiService.uploadClientImagesBulk(
-        clientCode: widget.tradingPoint.tradingPoint.id,
+        clientCode: _clientCode,
         images: imageFiles,
       );
 
-      if (mounted) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${uploadedUrls.length} ta rasm muvaffaqiyatli yuklandi'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      if (!mounted) return;
 
-        // Clear local photos after successful upload
-        setState(() => _photos.clear());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${uploadedUrls.length} ta rasm muvaffaqiyatli yuklandi'),
+          backgroundColor: Colors.green,
+        ),
+      );
 
-        // Trigger UI reload by returning success result
-        Navigator.of(context).pop({
-          'uploaded': true,
-          'count': uploadedUrls.length,
-          'clientCode': widget.tradingPoint.tradingPoint.id,
-        });
-      }
+      setState(() => _photos.clear());
+
+      await _syncServerImagesFromApiIfPossible(replaceExisting: true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -404,25 +508,27 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   }
 
   /// Open camera page
-  void _openCameraPage() async {
-    // Initialize camera only when button is pressed
+  Future<void> _openCameraPage() async {
     if (_cameraController == null || !_isCameraInitialized) {
       await _initializeCameras();
       if (_cameraController == null || !_isCameraInitialized) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kamera tayyor emas')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kamera tayyor emas')),
+          );
+        }
         return;
       }
     }
 
-    // Check if camera is still available and properly initialized
     if (_cameraController!.value.isRecordingVideo ||
         !_cameraController!.value.isInitialized ||
         _cameraController!.value.hasError) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kamera mavjud emas yoki ishlamayapti')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kamera mavjud emas yoki ishlamayapti')),
+        );
+      }
       return;
     }
 
@@ -436,11 +542,10 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       ),
     );
 
-    // Reload photos when camera page is closed
     await _loadClientPhotos();
   }
 
-  /// Open full screen image viewer
+  /// Open full screen image viewer for local photos
   void _openFullScreenViewer(int initialIndex) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -449,6 +554,38 @@ class _ClientImagesPageState extends State<ClientImagesPage>
           initialIndex: initialIndex,
           onDeletePhoto: _deletePhoto,
           readOnly: false,
+        ),
+      ),
+    );
+  }
+
+  /// Open full screen image viewer for server images
+  void _openServerImageViewer(ClientImage image) {
+    final url = image.imageLgUrl ?? image.imageMdUrl ?? image.imageSmUrl ?? image.imageUrl ?? image.imageThumbnailUrl;
+
+    if (url == null || url.isEmpty) {
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black.withOpacity(0.7),
+            foregroundColor: Colors.white,
+            title: const Text('Rasm'),
+          ),
+          body: PhotoView(
+            imageProvider: NetworkImage(url),
+            minScale: PhotoViewComputedScale.contained,
+            maxScale: PhotoViewComputedScale.covered * 2,
+            errorBuilder: (context, error, stackTrace) {
+              return const Center(
+                child: Icon(Icons.broken_image, color: Colors.white),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -493,13 +630,40 @@ class _ClientImagesPageState extends State<ClientImagesPage>
 
   /// Build main photo content
   Widget _buildPhotoContent(ThemeData theme, AppLocalizations? l10n) {
-    if (_photos.isEmpty) {
-      return _buildEmptyState(theme, l10n);
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _loadClientPhotos();
+        await _syncServerImagesFromApiIfPossible(replaceExisting: true);
+      },
+      child: _buildCombinedContent(theme, l10n),
+    );
+  }
+
+  /// Build combined content (server images + local pending images)
+  ///
+  /// Priority:
+  /// - Show server images (authoritative)
+  /// - Also show local images (captured but not uploaded yet) as "pending"
+  Widget _buildCombinedContent(ThemeData theme, AppLocalizations? l10n) {
+    final hasAny = _serverImages.isNotEmpty || _photos.isNotEmpty;
+
+    if (!hasAny && !_isServerImagesLoading) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+          _buildEmptyState(theme, l10n),
+        ],
+      );
+    }
+
+    if (_isServerImagesLoading) {
+      return const Center(child: CircularProgressIndicator());
     }
 
     return _viewMode == ViewMode.grid
-        ? _buildGridView(theme)
-        : _buildListView(theme);
+        ? _buildGridViewCombined(theme)
+        : _buildListViewCombined(theme);
   }
 
   /// Build empty state when no photos
@@ -532,37 +696,176 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     );
   }
 
-  /// Build grid view for photos
-  Widget _buildGridView(ThemeData theme) {
+  /// Build grid view for server images + local images
+  Widget _buildGridViewCombined(ThemeData theme) {
+    final totalCount = _serverImages.length + _photos.length;
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: MasonryGridView.count(
         crossAxisCount: 2,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
-        itemCount: _photos.length,
+        itemCount: totalCount,
         itemBuilder: (context, index) {
-          final photo = _photos[index];
-          return _buildPhotoCard(photo, index, theme);
+          if (index < _serverImages.length) {
+            final image = _serverImages[index];
+            return _buildServerImageCard(image, theme);
+          }
+
+          final localIndex = index - _serverImages.length;
+          final photo = _photos[localIndex];
+          return _buildLocalPhotoCard(photo, localIndex, theme);
         },
       ),
     );
   }
 
-  /// Build list view for photos
-  Widget _buildListView(ThemeData theme) {
+  /// Build list view for server images + local images
+  Widget _buildListViewCombined(ThemeData theme) {
+    final totalCount = _serverImages.length + _photos.length;
+
     return ListView.builder(
       padding: const EdgeInsets.all(8.0),
-      itemCount: _photos.length,
+      itemCount: totalCount,
       itemBuilder: (context, index) {
-        final photo = _photos[index];
-        return _buildPhotoListItem(photo, index, theme);
+        if (index < _serverImages.length) {
+          final image = _serverImages[index];
+          return _buildServerImageListItem(image, theme);
+        }
+
+        final localIndex = index - _serverImages.length;
+        final photo = _photos[localIndex];
+        return _buildPhotoListItem(photo, localIndex, theme);
       },
     );
   }
 
-  /// Build photo card for grid view
-  Widget _buildPhotoCard(Map<String, dynamic> photo, int index, ThemeData theme) {
+  /// Build server image card for grid view
+  Widget _buildServerImageCard(ClientImage image, ThemeData theme) {
+    final previewUrl = image.imageThumbnailUrl ?? image.imageSmUrl ?? image.imageUrl;
+
+    return GestureDetector(
+      onTap: () => _openServerImageViewer(image),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            AspectRatio(
+              aspectRatio: 1.0, // 1:1 aspect ratio
+              child: previewUrl == null
+                  ? Container(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: const Center(child: Icon(Icons.broken_image)),
+                    )
+                  : Image.network(
+                      previewUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      loadingBuilder: (c, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                      },
+                      errorBuilder: (c, e, s) {
+                        return Container(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          child: const Center(child: Icon(Icons.broken_image)),
+                        );
+                      },
+                    ),
+            ),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: image.isMain
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.85),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.star, color: Colors.white, size: 14),
+                          SizedBox(width: 4),
+                          Text(
+                            'Main',
+                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Row(
+                children: [
+                  if (!image.isMain) ...[
+                    IconButton(
+                      icon: const Icon(Icons.radio_button_unchecked),
+                      onPressed: () => _requestSetAsMain(image),
+                      tooltip: 'Asosiy rasmga o\'zgartirish',
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build server image list item
+  Widget _buildServerImageListItem(ClientImage image, ThemeData theme) {
+    final previewUrl = image.imageThumbnailUrl ?? image.imageSmUrl ?? image.imageUrl;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        leading: GestureDetector(
+          onTap: () => _openServerImageViewer(image),
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              image: previewUrl == null
+                  ? null
+                  : DecorationImage(
+                      image: NetworkImage(previewUrl),
+                      fit: BoxFit.cover,
+                    ),
+            ),
+            child: previewUrl == null
+                ? const Center(child: Icon(Icons.broken_image))
+                : null,
+          ),
+        ),
+        title: Text(
+          image.isMain ? 'Asosiy rasm' : 'Rasm',
+          style: theme.textTheme.titleMedium,
+        ),
+        subtitle: Text(
+          image.createdAtServer ?? 'Server vaqti noma\'lum',
+        ),
+        trailing: image.isMain
+            ? const Icon(Icons.star, color: Colors.green)
+            : IconButton(
+                icon: const Icon(Icons.radio_button_unchecked),
+                onPressed: () => _requestSetAsMain(image),
+                tooltip: 'Asosiy rasmga o\'zgartirish',
+              ),
+        onTap: () => _openServerImageViewer(image),
+      ),
+    );
+  }
+
+  /// Build local photo card for grid view
+  Widget _buildLocalPhotoCard(Map<String, dynamic> photo, int index, ThemeData theme) {
     return GestureDetector(
       onTap: () => _openFullScreenViewer(index),
       child: Card(

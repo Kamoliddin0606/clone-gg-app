@@ -2352,11 +2352,11 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
     }
   }
 
-  /// Start automatic scrolling every 2 seconds
+  /// Start automatic scrolling every 5 seconds for grid view
   void _startAutoScroll() {
     _stopAutoScroll(); // Ensure no duplicate timers
-    
-    _autoScrollTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (!mounted || _userIsScrolling) return;
 
       // Calculate next page index (loop back to start after last page)
@@ -4061,7 +4061,7 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
 }
 
 // Yordamchi: header image (blur/overlay tashrifda) with client images carousel
-class _HeaderImage extends StatelessWidget {
+class _HeaderImage extends StatefulWidget {
   final String? url;
   final bool visited;
   final TradingPoint tradingPoint;
@@ -4074,6 +4074,94 @@ class _HeaderImage extends StatelessWidget {
     required this.clientImages,
     required this.isLoadingImages,
   });
+
+  @override
+  State<_HeaderImage> createState() => _HeaderImageState();
+}
+
+class _HeaderImageState extends State<_HeaderImage> {
+  final PageController _pageController = PageController();
+  Timer? _autoScrollTimer;
+  int _currentPage = 0;
+  bool _userIsScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.clientImages.length > 1) {
+      _startAutoScroll();
+    }
+  }
+
+  @override
+  void dispose() {
+    _stopAutoScroll();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_HeaderImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Restart auto-scroll if images changed
+    if (oldWidget.clientImages.length != widget.clientImages.length) {
+      _stopAutoScroll();
+      if (widget.clientImages.length > 1) {
+        _startAutoScroll();
+      }
+    }
+  }
+
+  /// Start automatic scrolling every 4 seconds for client detail header
+  void _startAutoScroll() {
+    _stopAutoScroll(); // Ensure no duplicate timers
+
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (!mounted || _userIsScrolling) return;
+
+      // Calculate next page index (loop back to start after last page)
+      final nextPage = (_currentPage + 1) % widget.clientImages.length;
+
+      // Animate to next page
+      _pageController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+
+      setState(() {
+        _currentPage = nextPage;
+      });
+    });
+  }
+
+  /// Stop automatic scrolling
+  void _stopAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = null;
+  }
+
+  /// Handle manual scroll start - pause auto-scroll
+  void _onScrollStart() {
+    setState(() {
+      _userIsScrolling = true;
+    });
+    _stopAutoScroll();
+  }
+
+  /// Handle manual scroll end - resume auto-scroll after 3 seconds
+  void _onScrollEnd() {
+    setState(() {
+      _userIsScrolling = false;
+    });
+
+    // Resume auto-scroll after 3 seconds of inactivity
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted && !_userIsScrolling && widget.clientImages.length > 1) {
+        _startAutoScroll();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -4089,62 +4177,78 @@ class _HeaderImage extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Client images carousel
-            if (clientImages.isNotEmpty) ...[
-              PageView.builder(
-                itemCount: clientImages.length,
-                itemBuilder: (context, index) {
-                  final image = clientImages[index];
-                  return Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      image: DecorationImage(
-                        image: NetworkImage(image.imageThumbnailUrl ?? image.imageUrl ?? ''),
-                        fit: BoxFit.cover,
+            // Client images carousel with auto-scroll
+            if (widget.clientImages.isNotEmpty) ...[
+              NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification is ScrollStartNotification) {
+                    _onScrollStart();
+                  } else if (notification is ScrollEndNotification) {
+                    _onScrollEnd();
+                    // Update current page when user stops scrolling
+                    final page = _pageController.page?.round() ?? 0;
+                    setState(() {
+                      _currentPage = page;
+                    });
+                  }
+                  return false;
+                },
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: widget.clientImages.length,
+                  itemBuilder: (context, index) {
+                    final image = widget.clientImages[index];
+                    return Container(
+                      margin: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        image: DecorationImage(
+                          image: NetworkImage(image.imageThumbnailUrl ?? image.imageUrl ?? ''),
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                    ),
-                    child: Stack(
-                      children: [
-                        if (image.isMain)
+                      child: Stack(
+                        children: [
+                          if (image.isMain)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  'Asosiy',
+                                  style: TextStyle(color: Colors.white, fontSize: 12),
+                                ),
+                              ),
+                            ),
                           Positioned(
-                            top: 8,
+                            bottom: 8,
+                            left: 8,
                             right: 8,
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.8),
-                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.black.withOpacity(0.6),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Text(
-                                'Asosiy',
-                                style: TextStyle(color: Colors.white, fontSize: 12),
+                              child: Text(
+                                '${index + 1} / ${widget.clientImages.length}',
+                                style: const TextStyle(color: Colors.white, fontSize: 12),
+                                textAlign: TextAlign.center,
                               ),
                             ),
                           ),
-                        Positioned(
-                          bottom: 8,
-                          left: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '${index + 1} / ${clientImages.length}',
-                              style: const TextStyle(color: Colors.white, fontSize: 12),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ] else if (isLoadingImages) ...[
+            ] else if (widget.isLoadingImages) ...[
               const Center(child: CircularProgressIndicator()),
             ] else ...[
               // No images - show default with edit button
@@ -4167,7 +4271,7 @@ class _HeaderImage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => ClientImagesPage(tradingPoint: TradingPointWithPermissions(
-                          tradingPoint: tradingPoint,
+                          tradingPoint: widget.tradingPoint,
                           permissions: null, // We don't have permissions here
                         )),
                       ),

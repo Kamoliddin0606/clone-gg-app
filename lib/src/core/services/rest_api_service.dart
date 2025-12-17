@@ -15,6 +15,50 @@ class RestApiService {
     _configureDio();
   }
 
+  /// Set a specific client image as the main image on the server
+  ///
+  /// This is a future extension point.
+  /// The UI can call this method when a user selects a non-main image
+  /// to become the new main image.
+  ///
+  /// IMPORTANT:
+  /// - At the moment, the backend endpoint/contract is not wired in this project.
+  /// - This method is intentionally implemented as a safe placeholder to avoid
+  ///   breaking the running application.
+  ///
+  /// When the server endpoint becomes available, implement the request here and
+  /// return `true` when the server confirms the update.
+  Future<bool> setClientImageAsMain({
+    required String clientCode,
+    int? imageId,
+    String? imageUrl,
+  }) async {
+    try {
+      if (kDebugMode) {
+        print(
+          'RestApiService: setClientImageAsMain placeholder called. '
+          'clientCode=$clientCode, imageId=$imageId, imageUrl=$imageUrl',
+        );
+      }
+
+      // TODO: Implement server request when endpoint is agreed.
+      // Example (not implemented):
+      // const String mediaBaseUrl = 'http://178.218.200.120:1596';
+      // final response = await _dio.post(
+      //   '$mediaBaseUrl/api/v1/client-image/set-main/',
+      //   data: {'client_code': clientCode, 'image_id': imageId, 'image_url': imageUrl},
+      // );
+      // return response.statusCode == 200;
+
+      return false;
+    } catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: setClientImageAsMain placeholder error: $e');
+      }
+      return false;
+    }
+  }
+
   /// Configure Dio instance with interceptors and settings
   void _configureDio() {
     _dio.options.connectTimeout = const Duration(seconds: 30);

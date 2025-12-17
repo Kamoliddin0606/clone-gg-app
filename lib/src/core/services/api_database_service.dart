@@ -51,7 +51,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 23, // Incremented to version 23 for image_id field addition
+      version: 24, // Incremented to version 24 for client_images schema alignment
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -918,7 +918,10 @@ class ApiDatabaseService {
       await db.execute('''
         CREATE TABLE IF NOT EXISTS client_images (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
+          server_id INTEGER,
           client_code TEXT NOT NULL,
+          client_id INTEGER,
+          image TEXT,
           image_url TEXT,
           image_sm_url TEXT,
           image_md_url TEXT,
@@ -932,6 +935,8 @@ class ApiDatabaseService {
           is_main INTEGER DEFAULT 0,
           category TEXT,
           note TEXT,
+          status TEXT,
+          source TEXT,
           status_code TEXT,
           status_name TEXT,
           source_name TEXT,
@@ -945,6 +950,8 @@ class ApiDatabaseService {
 
       // Create indexes for client_images table
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_code ON client_images(client_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)');
@@ -963,6 +970,34 @@ class ApiDatabaseService {
       
       // Create index for image_id column for faster queries
       await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_image_id ON thumbnails(image_id)');
+    } else if (oldVersion < 24) {
+      // Align client_images table to latest API response structure
+      //
+      // New API fields:
+      // - id (server image id)
+      // - client (numeric id)
+      // - image (original url)
+      // - status/source (nullable)
+      final columns = await db.rawQuery("PRAGMA table_info(client_images)");
+
+      Future<void> addColumnIfMissing(String name, String type) async {
+        final hasColumn = columns.any((col) => col['name'] == name);
+        if (!hasColumn) {
+          await db.execute('ALTER TABLE client_images ADD COLUMN $name $type');
+          if (kDebugMode) {
+            print('ApiDatabaseService: Added $name column to client_images table');
+          }
+        }
+      }
+
+      await addColumnIfMissing('server_id', 'INTEGER');
+      await addColumnIfMissing('client_id', 'INTEGER');
+      await addColumnIfMissing('image', 'TEXT');
+      await addColumnIfMissing('status', 'TEXT');
+      await addColumnIfMissing('source', 'TEXT');
+
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)');
     }
   }
 
@@ -1582,7 +1617,10 @@ class ApiDatabaseService {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS client_images (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        server_id INTEGER,
         client_code TEXT NOT NULL,
+        client_id INTEGER,
+        image TEXT,
         image_url TEXT,
         image_sm_url TEXT,
         image_md_url TEXT,
@@ -1596,6 +1634,8 @@ class ApiDatabaseService {
         is_main INTEGER DEFAULT 0,
         category TEXT,
         note TEXT,
+        status TEXT,
+        source TEXT,
         status_code TEXT,
         status_name TEXT,
         source_name TEXT,
@@ -1621,6 +1661,8 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_weekday ON planned_routes(code_weekday)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_code ON client_images(client_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)');

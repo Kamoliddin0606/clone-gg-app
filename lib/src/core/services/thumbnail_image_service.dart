@@ -10,12 +10,16 @@ import 'token_service.dart';
 /// Model class for client images
 class ClientImage {
   final int? id;
+  final int? serverId;
   final String clientCode;
+  final int? clientId;
+  final String? image;
   final String? imageUrl;
   final String? imageSmUrl;
   final String? imageMdUrl;
   final String? imageLgUrl;
   final String? imageThumbnailUrl;
+
   final String? imageDimensions;
   final String? imageSmDimensions;
   final String? imageMdDimensions;
@@ -24,6 +28,8 @@ class ClientImage {
   final bool isMain;
   final String? category;
   final String? note;
+  final String? status;
+  final String? source;
   final String? statusCode;
   final String? statusName;
   final String? sourceName;
@@ -34,12 +40,16 @@ class ClientImage {
 
   ClientImage({
     this.id,
+    this.serverId,
     required this.clientCode,
+    this.clientId,
+    this.image,
     this.imageUrl,
     this.imageSmUrl,
     this.imageMdUrl,
     this.imageLgUrl,
     this.imageThumbnailUrl,
+
     this.imageDimensions,
     this.imageSmDimensions,
     this.imageMdDimensions,
@@ -48,11 +58,14 @@ class ClientImage {
     this.isMain = false,
     this.category,
     this.note,
+    this.status,
+    this.source,
     this.statusCode,
     this.statusName,
     this.sourceName,
     this.sourceType,
     this.createdAtServer,
+
     required this.createdAt,
     required this.updatedAt,
   });
@@ -60,12 +73,16 @@ class ClientImage {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'server_id': serverId,
       'client_code': clientCode,
+      'client_id': clientId,
+      'image': image,
       'image_url': imageUrl,
       'image_sm_url': imageSmUrl,
       'image_md_url': imageMdUrl,
       'image_lg_url': imageLgUrl,
       'image_thumbnail_url': imageThumbnailUrl,
+
       'image_dimensions': imageDimensions,
       'image_sm_dimensions': imageSmDimensions,
       'image_md_dimensions': imageMdDimensions,
@@ -74,11 +91,14 @@ class ClientImage {
       'is_main': isMain ? 1 : 0,
       'category': category,
       'note': note,
+      'status': status,
+      'source': source,
       'status_code': statusCode,
       'status_name': statusName,
       'source_name': sourceName,
       'source_type': sourceType,
       'created_at_server': createdAtServer,
+
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -87,12 +107,16 @@ class ClientImage {
   factory ClientImage.fromMap(Map<String, dynamic> map) {
     return ClientImage(
       id: map['id'] as int?,
+      serverId: map['server_id'] as int?,
       clientCode: map['client_code'] as String,
+      clientId: map['client_id'] as int?,
+      image: map['image'] as String?,
       imageUrl: map['image_url'] as String?,
       imageSmUrl: map['image_sm_url'] as String?,
       imageMdUrl: map['image_md_url'] as String?,
       imageLgUrl: map['image_lg_url'] as String?,
       imageThumbnailUrl: map['image_thumbnail_url'] as String?,
+
       imageDimensions: map['image_dimensions'] as String?,
       imageSmDimensions: map['image_sm_dimensions'] as String?,
       imageMdDimensions: map['image_md_dimensions'] as String?,
@@ -101,6 +125,8 @@ class ClientImage {
       isMain: (map['is_main'] as int?) == 1,
       category: map['category'] as String?,
       note: map['note'] as String?,
+      status: map['status'] as String?,
+      source: map['source'] as String?,
       statusCode: map['status_code'] as String?,
       statusName: map['status_name'] as String?,
       sourceName: map['source_name'] as String?,
@@ -431,28 +457,53 @@ class ThumbnailImageService {
       );
     }
 
+    String? normalizeJson(dynamic value) {
+      if (value == null) return null;
+      if (value is String) return value;
+      try {
+        return jsonEncode(value);
+      } catch (_) {
+        return value.toString();
+      }
+    }
+
+    int normalizeIsMain(dynamic value) {
+      if (value is bool) return value ? 1 : 0;
+      if (value is num) return value.toInt() == 1 ? 1 : 0;
+      if (value is String) {
+        final lower = value.toLowerCase();
+        if (lower == 'true' || lower == '1') return 1;
+      }
+      return 0;
+    }
+
     // Insert new images
     for (final image in images) {
       batch.insert('client_images', {
+        'server_id': image['id'],
         'client_code': clientCode,
+        'client_id': image['client'],
+        'image': image['image'],
         'image_url': image['image_url'],
         'image_sm_url': image['image_sm_url'],
         'image_md_url': image['image_md_url'],
         'image_lg_url': image['image_lg_url'],
         'image_thumbnail_url': image['image_thumbnail_url'],
-        'image_dimensions': image['image_dimensions'],
-        'image_sm_dimensions': image['image_sm_dimensions'],
-        'image_md_dimensions': image['image_md_dimensions'],
-        'image_lg_dimensions': image['image_lg_dimensions'],
-        'image_thumbnail_dimensions': image['image_thumbnail_dimensions'],
-        'is_main': image['is_main'] ?? 0,
+        'image_dimensions': normalizeJson(image['image_dimensions']),
+        'image_sm_dimensions': normalizeJson(image['image_sm_dimensions']),
+        'image_md_dimensions': normalizeJson(image['image_md_dimensions']),
+        'image_lg_dimensions': normalizeJson(image['image_lg_dimensions']),
+        'image_thumbnail_dimensions': normalizeJson(image['image_thumbnail_dimensions']),
+        'is_main': normalizeIsMain(image['is_main']),
         'category': image['category'],
         'note': image['note'],
+        'status': image['status'],
+        'source': image['source'],
         'status_code': image['status_code'],
         'status_name': image['status_name'],
         'source_name': image['source_name'],
         'source_type': image['source_type'],
-        'created_at_server': image['created_at_server'],
+        'created_at_server': image['created_at'] ?? image['created_at_server'],
         'created_at': now,
         'updated_at': now,
       });

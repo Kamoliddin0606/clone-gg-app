@@ -74,6 +74,7 @@ class Thumbnail {
 
   /// Factory constructor for database row maps
   /// Safely maps DB fields to model with casting, null checks, and defaults
+  /// Updated to parse image_id field from database for server-side image tracking
   factory Thumbnail.fromMap(Map<String, dynamic> map) {
     return Thumbnail(
       id: _parseInt(map['id']),
@@ -81,7 +82,7 @@ class Thumbnail {
       entityId: _parseInt(map['entity_id']),
       code1c: map['code_1c'] as String? ?? '',
       entityName: map['entity_name'] as String? ?? '',
-      imageId: 0, // No field in DB table
+      imageId: _parseInt(map['image_id'], 0), // Parse image_id from database field, default to 0 if null
       thumbnailUrl: map['thumbnail_url'] as String? ?? '',
       thumbnailDimensions: _parseThumbnailDimensions(map),
       originalDimensions: _parseOriginalDimensions(map),

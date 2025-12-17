@@ -43,13 +43,15 @@ class ApiDatabaseService {
     return _database!;
   }
 
+  /// Initialize database with version 23
+  /// Added image_id field to thumbnails table for server-side image identification
   Future<Database> _initDatabase() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'gloria_api_cache.db');
 
     return await openDatabase(
       path,
-      version: 22,
+      version: 23, // Incremented to version 23 for image_id field addition
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -946,6 +948,21 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)');
+    } else if (oldVersion < 23) {
+      // Add image_id field to thumbnails table for version 23
+      // This field stores the server-side image identifier for tracking and synchronization
+      final columns = await db.rawQuery("PRAGMA table_info(thumbnails)");
+      final hasImageId = columns.any((col) => col['name'] == 'image_id');
+      
+      if (!hasImageId) {
+        await db.execute('ALTER TABLE thumbnails ADD COLUMN image_id INTEGER NOT NULL DEFAULT 0');
+        if (kDebugMode) {
+          print('ApiDatabaseService: Added image_id column to thumbnails table');
+        }
+      }
+      
+      // Create index for image_id column for faster queries
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_image_id ON thumbnails(image_id)');
     }
   }
 

@@ -13,6 +13,7 @@ class RestApiDatabaseService {
 
   /// Helper method to convert database row to Thumbnail object
   /// Safely handles nullable fields that can now be null in the database
+  /// Updated to include image_id field from server response
   Thumbnail _rowToThumbnail(Map<String, dynamic> row) {
     return Thumbnail(
       id: row['id'] as int?,
@@ -20,7 +21,7 @@ class RestApiDatabaseService {
       entityId: _parseInt(row['entity_id']),
       code1c: row['code_1c'] as String? ?? '',
       entityName: row['entity_name'] as String? ?? '',
-      imageId: 0, // Not stored in database, set to default
+      imageId: _parseInt(row['image_id'], 0), // Parse image_id from database field
       thumbnailUrl: row['thumbnail_url'] as String? ?? '',
       thumbnailDimensions: _parseThumbnailDimensions(row),
       originalDimensions: _parseOriginalDimensions(row),
@@ -89,8 +90,9 @@ class RestApiDatabaseService {
   Future<Database> get _database => _apiDatabaseService.database;
 
   /// Save thumbnails to database
-  /// This method saves thumbnail data to the thumbnails table
+  /// This method saves thumbnail data to the thumbnails table including image_id
   /// It replaces existing data with new data (full sync approach)
+  /// Updated to support image_id field for server-side image tracking
   ///
   /// @param thumbnails List of thumbnail objects to save
   /// @return Future<void>
@@ -122,14 +124,15 @@ class RestApiDatabaseService {
       final mainThumbnails = thumbnails.where((t) => t.isMain).toList();
       final nonMainThumbnails = thumbnails.where((t) => !t.isMain).toList();
 
-      // Deduplicate  thumbnails by (entity_type, entity_id, code_1c, imageid)
+      // Deduplicate thumbnails by (entity_type, entity_id, code_1c, image_id)
+      // image_id is included for unique identification of each server image
       final uniqueThumbnails = <String, Thumbnail>{};
       for (final thumbnail in thumbnails) {
         final key = '${thumbnail.entityType}_${thumbnail.entityId}_${thumbnail.code1c}_${thumbnail.imageId}';
         uniqueThumbnails[key] = thumbnail;
       }
 
-      // Deduplicate main thumbnails by (entity_type, entity_id, code_1c)
+      // Deduplicate main thumbnails by (entity_type, entity_id, code_1c, image_id)
       final uniqueMainThumbnails = <String, Thumbnail>{};
       for (final thumbnail in mainThumbnails) {
         final key = '${thumbnail.entityType}_${thumbnail.entityId}_${thumbnail.code1c}_${thumbnail.imageId}';
@@ -154,13 +157,14 @@ class RestApiDatabaseService {
         print('RestApiDatabaseService: After deduplication: ${sortedUniqueThumbnails.length} unique thumbnails (${uniqueThumbnails.length} main)');
       }
 
-      // Add all inserts to batch
+      // Add all inserts to batch including image_id field
       for (final thumbnail in sortedUniqueThumbnails) {
         batch.insert('thumbnails', {
           'entity_type': thumbnail.entityType,
           'entity_id': thumbnail.entityId,
           'code_1c': thumbnail.code1c,
           'entity_name': thumbnail.entityName,
+          'image_id': thumbnail.imageId, // Added image_id field for server-side tracking
           'thumbnail_url': thumbnail.thumbnailUrl,
           'thumbnail_width': thumbnail.thumbnailDimensions?['width'] ?? 0,
           'thumbnail_height': thumbnail.thumbnailDimensions?['height'] ?? 0,
@@ -184,7 +188,7 @@ class RestApiDatabaseService {
         });
 
         if (kDebugMode && sortedUniqueThumbnails.indexOf(thumbnail) < 3) {
-          print('RestApiDatabaseService: Sample insert - Entity: ${thumbnail.entityType}, Code: ${thumbnail.code1c}, Main: ${thumbnail.isMain}');
+          print('RestApiDatabaseService: Sample insert - Entity: ${thumbnail.entityType}, Code: ${thumbnail.code1c}, ImageID: ${thumbnail.imageId}, Main: ${thumbnail.isMain}');
         }
       }
 

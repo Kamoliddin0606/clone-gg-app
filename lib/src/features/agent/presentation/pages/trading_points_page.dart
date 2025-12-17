@@ -19,6 +19,7 @@ import 'package:gloria_marketing_flutter/src/core/services/api_database_service.
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/rest_api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart' hide MapType;
 import 'package:gloria_marketing_flutter/src/core/maps/services/map_cache_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_marker.dart' hide MarkerClusterConfig;
@@ -2276,6 +2277,287 @@ class _DefaultAvatar extends StatelessWidget {
     );
   }
 }
+/// Auto-scrolling Thumbnail Carousel Widget
+/// Displays client thumbnails with automatic scrolling every 2 seconds
+/// Supports manual scrolling by swiping/dragging
+class _AutoScrollThumbnailCarousel extends StatefulWidget {
+  final String clientCode;
+  final double height;
+  final bool isVisited;
+
+  const _AutoScrollThumbnailCarousel({
+    required this.clientCode,
+    this.height = 120,
+    this.isVisited = false,
+  });
+
+  @override
+  State<_AutoScrollThumbnailCarousel> createState() => _AutoScrollThumbnailCarouselState();
+}
+
+class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarousel> {
+  final PageController _pageController = PageController();
+  Timer? _autoScrollTimer;
+  int _currentPage = 0;
+  List<String> _thumbnailUrls = [];
+  bool _isLoading = true;
+  bool _userIsScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThumbnailUrls();
+  }
+
+  @override
+  void dispose() {
+    _stopAutoScroll();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  /// Load thumbnail URLs for the client from database
+  Future<void> _loadThumbnailUrls() async {
+    try {
+      // Get REST API database service
+      final restApiDbService = sl<RestApiDatabaseService>();
+      
+      // Get all thumbnails for this client
+      final thumbnails = await restApiDbService.getThumbnailsByCode(widget.clientCode);
+      
+      if (mounted) {
+        setState(() {
+          // Extract non-empty thumbnail URLs
+          _thumbnailUrls = thumbnails
+              .where((t) => t.thumbnailUrl != null && t.thumbnailUrl!.isNotEmpty)
+              .map((t) => t.thumbnailUrl!)
+              .toList();
+          _isLoading = false;
+        });
+
+        // Start auto-scroll if we have multiple images
+        if (_thumbnailUrls.length > 1) {
+          _startAutoScroll();
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading thumbnail URLs for client ${widget.clientCode}: $e');
+      }
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  /// Start automatic scrolling every 2 seconds
+  void _startAutoScroll() {
+    _stopAutoScroll(); // Ensure no duplicate timers
+    
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      if (!mounted || _userIsScrolling) return;
+
+      // Calculate next page index (loop back to start after last page)
+      final nextPage = (_currentPage + 1) % _thumbnailUrls.length;
+
+      // Animate to next page
+      _pageController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+
+      setState(() {
+        _currentPage = nextPage;
+      });
+    });
+  }
+
+  /// Stop automatic scrolling
+  void _stopAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = null;
+  }
+
+  /// Handle manual scroll start - pause auto-scroll
+  void _onScrollStart() {
+    setState(() {
+      _userIsScrolling = true;
+    });
+    _stopAutoScroll();
+  }
+
+  /// Handle manual scroll end - resume auto-scroll after 3 seconds
+  void _onScrollEnd() {
+    setState(() {
+      _userIsScrolling = false;
+    });
+    
+    // Resume auto-scroll after 3 seconds of inactivity
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted && !_userIsScrolling && _thumbnailUrls.length > 1) {
+        _startAutoScroll();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    // Show loading indicator while loading thumbnails
+    if (_isLoading) {
+      return Container(
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Show default icon if no thumbnails available
+    if (_thumbnailUrls.isEmpty) {
+      return Container(
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: const Center(
+          child: Icon(Icons.storefront, size: 40),
+        ),
+      );
+    }
+
+    // Show thumbnail carousel with auto-scroll
+    return SizedBox(
+      height: widget.height,
+      child: Stack(
+        children: [
+          // PageView for swipeable carousel with manual scroll detection
+          NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollStartNotification) {
+                _onScrollStart();
+              } else if (notification is ScrollEndNotification) {
+                _onScrollEnd();
+                // Update current page when user stops scrolling
+                final page = _pageController.page?.round() ?? 0;
+                setState(() {
+                  _currentPage = page;
+                });
+              }
+              return false;
+            },
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _thumbnailUrls.length,
+              itemBuilder: (context, index) {
+                return ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Thumbnail image with blur effect if visited
+                      Image.network(
+                        _thumbnailUrls[index],
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) {
+                            return widget.isVisited
+                                ? ImageFiltered(
+                                    imageFilter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                                    child: child,
+                                  )
+                                : child;
+                          }
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: cs.surfaceContainerHighest,
+                            child: const Icon(Icons.broken_image, size: 40),
+                          );
+                        },
+                      ),
+                      // Overlay for visited state
+                      if (widget.isVisited)
+                        Container(
+                          color: Colors.black.withOpacity(0.22),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Page indicator (bottom-center) - shows current position in carousel
+          if (_thumbnailUrls.length > 1)
+            Positioned(
+              bottom: 8,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  _thumbnailUrls.length,
+                  (index) => Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _currentPage == index
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.4),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // Image counter (top-right) - shows "X / Total" format
+          if (_thumbnailUrls.length > 1)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_currentPage + 1} / ${_thumbnailUrls.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Trading Point Grid Tile with auto-scrolling thumbnail carousel
 class _TradingPointGridTile extends StatelessWidget {
   final TradingPointWithPermissions tp;
   final VoidCallback onCall, onInformVisit, onCreateOrder, onViewContracts, onRefusal;
@@ -2321,66 +2603,65 @@ class _TradingPointGridTile extends StatelessWidget {
 
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // TOP: customer photo
-          SizedBox(
-            height: 120,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                  child: _NetAvatar(url: _safePhotoUrl(tp.tradingPoint) ?? '', visited: tp.tradingPoint.isVisited),
-                ),
-                if (tp.tradingPoint.isVisited)
-                  Container(color: Colors.black.withOpacity(.22)),
-                // Add distance info on bottom-right corner of image
-                if (locationService != null)
-                  Positioned(
-                    bottom: 4,
-                    right: 4,
-                    child: _buildDistanceOverlay(tp.tradingPoint, locationService!),
-                  ),
-                // Add visit indicators on top-right corner
+          // TOP: Auto-scrolling thumbnail carousel for client images
+          Stack(
+            children: [
+              // Auto-scrolling carousel widget
+              _AutoScrollThumbnailCarousel(
+                clientCode: tp.tradingPoint.id,
+                height: 120,
+                isVisited: tp.tradingPoint.isVisited,
+              ),
+              
+              // Distance info overlay (bottom-right corner)
+              if (locationService != null)
                 Positioned(
-                  top: 8,
-                  right: 8,
-                  child: VisitIndicators(
-                    visitToday: tp.visitToday,
-                    isVisited: tp.tradingPoint.isVisited,
-                    visitStepNumber: tp.visitStepNumber,
+                  bottom: 4,
+                  right: 4,
+                  child: _buildDistanceOverlay(tp.tradingPoint, locationService!),
+                ),
+              
+              // Visit indicators (top-right corner)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: VisitIndicators(
+                  visitToday: tp.visitToday,
+                  isVisited: tp.tradingPoint.isVisited,
+                  visitStepNumber: tp.visitStepNumber,
+                ),
+              ),
+              
+              // Edit icon for client images (top-left corner)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ClientImagesPage(tradingPoint: tp),
+                        ),
+                      );
+                    },
+                    tooltip: 'Mijoz rasmlarini boshqarish',
+                    iconSize: 20,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
                   ),
                 ),
-                // Add edit icon for client images on top-left corner
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ClientImagesPage(tradingPoint: tp),
-                          ),
-                        );
-                      },
-                      tooltip: 'Mijoz rasmlarini boshqarish',
-                      iconSize: 20,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
           // BODY: bitta ustunda ma'lumotlar
           Padding(

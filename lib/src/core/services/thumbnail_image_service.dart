@@ -138,14 +138,14 @@ class ClientImage {
   }
 }
 
-/// Service class for managing thumbnail and image operations
-class ThumbnailImageService {
+/// Service class for managing client image operations
+class ClientImagesService {
   final ApiDatabaseService _databaseService;
   final RestApiService _apiService;
   final TokenService _tokenService;
   final Dio _dio;
 
-  ThumbnailImageService({
+  ClientImagesService({
     required ApiDatabaseService databaseService,
     required RestApiService apiService,
     required TokenService tokenService,
@@ -178,201 +178,14 @@ class ThumbnailImageService {
     }
   }
 
-  /// Fetch and update thumbnails for a single client from server
-  /// This method gets thumbnails for one specific client and replaces existing ones
-  Future<void> updateClientThumbnails(String clientCode) async {
-    try {
-      if (kDebugMode) {
-        print('ThumbnailImageService: Updating thumbnails for client: $clientCode');
-      }
-
-      _checkCancelled();
-      onProgressUpdate?.call(0.0, 'Starting client thumbnail update...');
-
-      // Ensure we have a valid token
-      final token = await _tokenService.getValidAccessToken();
-      if (token == null) {
-        throw Exception('No valid access token available');
-      }
-
-      onProgressUpdate?.call(25.0, 'Fetching thumbnails from server...');
-
-      // Fetch thumbnails from API for this specific client
-      final thumbnails = await _fetchThumbnailsFromApi(token, 'client', clientCode);
-
-      onProgressUpdate?.call(75.0, 'Updating database...');
-
-      if (thumbnails.isNotEmpty) {
-        // Update thumbnails in database (always replace existing for single client)
-        await _updateThumbnailsInDatabase('client', clientCode, thumbnails, true);
-      }
-
-      onProgressUpdate?.call(100.0, 'Client thumbnails updated successfully');
-
-      if (kDebugMode) {
-        print('ThumbnailImageService: Successfully updated ${thumbnails.length} thumbnails for client: $clientCode');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('ThumbnailImageService: Error updating client thumbnails: $e');
-      }
-      onProgressUpdate?.call(0.0, 'Error: ${e.toString()}');
-      rethrow;
-    }
-  }
-
-  /// Fetch and update thumbnails for specific entities (Client/Product)
-  /// entityType: 'client' or 'product' or 'nomenklatura'
-  /// entityIds: List of entity codes to update thumbnails for
-  Future<void> fetchAndUpdateThumbnails({
-    required String entityType,
-    required List<String> entityIds,
-    bool replaceExisting = false,
-  }) async {
-    try {
-      if (kDebugMode) {
-        print('ThumbnailImageService: Starting thumbnail update for $entityType entities: $entityIds');
-      }
-
-      _checkCancelled();
-      onProgressUpdate?.call(0.0, 'Starting thumbnail update for $entityType...');
-
-      // Ensure we have a valid token
-      final token = await _tokenService.getValidAccessToken();
-      if (token == null) {
-        throw Exception('No valid access token available');
-      }
-
-      final totalEntities = entityIds.length;
-      var processedEntities = 0;
-
-      for (final entityId in entityIds) {
-        _checkCancelled();
-
-        try {
-          onProgressUpdate?.call(
-            (processedEntities / totalEntities) * 100,
-            'Processing $entityType: $entityId (${processedEntities + 1}/$totalEntities)',
-          );
-
-          // Fetch thumbnails from API
-          final thumbnails = await _fetchThumbnailsFromApi(token, entityType, entityId);
-
-          if (thumbnails.isNotEmpty) {
-            // Update thumbnails in database
-            await _updateThumbnailsInDatabase(entityType, entityId, thumbnails, replaceExisting);
-          }
-
-          processedEntities++;
-        } catch (e) {
-          if (kDebugMode) {
-            print('ThumbnailImageService: Error processing $entityType $entityId: $e');
-          }
-          // Continue with next entity instead of failing completely
-          processedEntities++;
-        }
-      }
-
-      onProgressUpdate?.call(100.0, 'Thumbnail update completed successfully');
-
-      if (kDebugMode) {
-        print('ThumbnailImageService: Thumbnail update completed for $entityType');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('ThumbnailImageService: Error in fetchAndUpdateThumbnails: $e');
-      }
-      onProgressUpdate?.call(0.0, 'Error: ${e.toString()}');
-      rethrow;
-    }
-  }
-
-  /// Fetch thumbnails from API for a specific entity
-  Future<List<Map<String, dynamic>>> _fetchThumbnailsFromApi(String token, String entityType, String entityId) async {
-    const String baseUrl = 'http://178.218.200.120:1596';
-    final endpoint = '$baseUrl/api/v1/thumbnails/$entityType/$entityId/';
-    final response = await _dio.get(
-      endpoint,
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      ),
-    );
-
-    if (response.statusCode == 200) {
-      final data = response.data;
-      if (data is List) {
-        return List<Map<String, dynamic>>.from(data);
-      } else if (data is Map && data.containsKey('results')) {
-        return List<Map<String, dynamic>>.from(data['results']);
-      }
-    }
-
-    return [];
-  }
-
-  /// Update thumbnails in database
-  Future<void> _updateThumbnailsInDatabase(
-    String entityType,
-    String entityId,
-    List<Map<String, dynamic>> thumbnails,
-    bool replaceExisting,
-  ) async {
-    final db = await _databaseService.database;
-    final now = DateTime.now().toIso8601String();
-
-    final batch = db.batch();
-
-    if (replaceExisting) {
-      // Delete existing thumbnails for this entity
-      batch.delete(
-        'thumbnails',
-        where: 'code_1c = ? AND entity_type = ?',
-        whereArgs: [entityId, entityType],
-      );
-    }
-
-    // Insert new thumbnails
-    for (final thumbnail in thumbnails) {
-      batch.insert('thumbnails', {
-        'entity_type': entityType,
-        'entity_id': thumbnail['entity_id'],
-        'code_1c': entityId,
-        'entity_name': thumbnail['entity_name'],
-        'thumbnail_url': thumbnail['thumbnail_url'],
-        'thumbnail_width': thumbnail['thumbnail_width'],
-        'thumbnail_height': thumbnail['thumbnail_height'],
-        'thumbnail_format': thumbnail['thumbnail_format'],
-        'thumbnail_size_kb': thumbnail['thumbnail_size_kb'],
-        'original_width': thumbnail['original_width'],
-        'original_height': thumbnail['original_height'],
-        'original_format': thumbnail['original_format'],
-        'original_size_bytes': thumbnail['original_size_bytes'],
-        'original_size_kb': thumbnail['original_size_kb'],
-        'is_main': thumbnail['is_main'] ?? 0,
-        'category': thumbnail['category'],
-        'note': thumbnail['note'],
-        'status_code': thumbnail['status_code'],
-        'status_name': thumbnail['status_name'],
-        'source_name': thumbnail['source_name'],
-        'source_type': thumbnail['source_type'],
-        'created_at_server': thumbnail['created_at_server'],
-        'created_at': now,
-        'updated_at': now,
-      });
-    }
-
-    await batch.commit(noResult: true);
-  }
-
   /// Fetch all images for a specific client and save to client_images table
-  Future<void> fetchAndSaveClientImages(String clientCode, {bool replaceExisting = false}) async {
+  Future<void> fetchAndSaveClientImages(String? clientCode, {bool? replaceExisting = false}) async {
     try {
+      if (clientCode == null || clientCode.trim().isEmpty) {
+        return;
+      }
       if (kDebugMode) {
-        print('ThumbnailImageService: Starting client image fetch for client: $clientCode');
+        print('ClientImagesService: Starting client image fetch for client: $clientCode');
       }
 
       _checkCancelled();
@@ -393,17 +206,17 @@ class ThumbnailImageService {
 
       if (images.isNotEmpty) {
         // Save images to database
-        await _saveClientImagesToDatabase(clientCode, images, replaceExisting);
+        await _saveClientImagesToDatabase(clientCode, images, replaceExisting == true);
       }
 
       onProgressUpdate?.call(100.0, 'Client images saved successfully');
 
       if (kDebugMode) {
-        print('ThumbnailImageService: Client image fetch completed for client: $clientCode');
+        print('ClientImagesService: Client image fetch completed for client: $clientCode');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('ThumbnailImageService: Error in fetchAndSaveClientImages: $e');
+        print('ClientImagesService: Error in fetchAndSaveClientImages: $e');
       }
       onProgressUpdate?.call(0.0, 'Error: ${e.toString()}');
       rethrow;
@@ -433,7 +246,6 @@ class ThumbnailImageService {
         return List<Map<String, dynamic>>.from(data['results']);
       }
     }
-
     return [];
   }
 
@@ -477,10 +289,29 @@ class ThumbnailImageService {
       return 0;
     }
 
+    final mainCandidate = images.cast<Map<String, dynamic>?>().firstWhere(
+          (img) => img != null && normalizeIsMain(img['is_main']) == 1,
+          orElse: () => null,
+        );
+    final int? mainServerId = mainCandidate == null ? null : (mainCandidate['id'] as num?)?.toInt();
+
+    if (!replaceExisting && mainServerId != null) {
+      batch.update(
+        'client_images',
+        {
+          'is_main': 0,
+          'updated_at': now,
+        },
+        where: 'client_code = ?',
+        whereArgs: [clientCode],
+      );
+    }
+
     // Insert new images
     for (final image in images) {
+      final int? serverId = (image['id'] as num?)?.toInt();
       batch.insert('client_images', {
-        'server_id': image['id'],
+        'server_id': serverId,
         'client_code': clientCode,
         'client_id': image['client'],
         'image': image['image'],
@@ -494,7 +325,7 @@ class ThumbnailImageService {
         'image_md_dimensions': normalizeJson(image['image_md_dimensions']),
         'image_lg_dimensions': normalizeJson(image['image_lg_dimensions']),
         'image_thumbnail_dimensions': normalizeJson(image['image_thumbnail_dimensions']),
-        'is_main': normalizeIsMain(image['is_main']),
+        'is_main': (mainServerId != null && serverId == mainServerId) ? 1 : normalizeIsMain(image['is_main']),
         'category': image['category'],
         'note': image['note'],
         'status': image['status'],
@@ -506,14 +337,17 @@ class ThumbnailImageService {
         'created_at_server': image['created_at'] ?? image['created_at_server'],
         'created_at': now,
         'updated_at': now,
-      });
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
 
     await batch.commit(noResult: true);
   }
 
   /// Get client images from database
-  Future<List<ClientImage>> getClientImages(String clientCode) async {
+  Future<List<ClientImage>> getClientImages(String? clientCode) async {
+    if (clientCode == null || clientCode.trim().isEmpty) {
+      return <ClientImage>[];
+    }
     final db = await _databaseService.database;
     final result = await db.query(
       'client_images',
@@ -526,7 +360,10 @@ class ThumbnailImageService {
   }
 
   /// Get main client image
-  Future<ClientImage?> getMainClientImage(String clientCode) async {
+  Future<ClientImage?> getMainClientImage(String? clientCode) async {
+    if (clientCode == null || clientCode.trim().isEmpty) {
+      return null;
+    }
     final db = await _databaseService.database;
     final result = await db.query(
       'client_images',
@@ -540,7 +377,10 @@ class ThumbnailImageService {
   }
 
   /// Delete client images
-  Future<void> deleteClientImages(String clientCode) async {
+  Future<void> deleteClientImages(String? clientCode) async {
+    if (clientCode == null || clientCode.trim().isEmpty) {
+      return;
+    }
     final db = await _databaseService.database;
     await db.delete(
       'client_images',
@@ -549,18 +389,42 @@ class ThumbnailImageService {
     );
   }
 
-  /// Get thumbnail statistics
-  Future<Map<String, int>> getThumbnailStats() async {
+  /// Get client images statistics
+  Future<Map<String, int>> getClientImagesStats() async {
     final db = await _databaseService.database;
-
-    final clientThumbnails = await db.rawQuery('SELECT COUNT(*) as count FROM thumbnails WHERE entity_type = "client"');
-    final productThumbnails = await db.rawQuery('SELECT COUNT(*) as count FROM thumbnails WHERE entity_type = "product" OR entity_type = "nomenklatura"');
     final clientImages = await db.rawQuery('SELECT COUNT(*) as count FROM client_images');
 
     return {
-      'client_thumbnails': Sqflite.firstIntValue(clientThumbnails) ?? 0,
-      'product_thumbnails': Sqflite.firstIntValue(productThumbnails) ?? 0,
       'client_images': Sqflite.firstIntValue(clientImages) ?? 0,
     };
   }
+}
+
+class ThumbnailImageService extends ClientImagesService {
+  ThumbnailImageService({
+    required ApiDatabaseService databaseService,
+    required RestApiService apiService,
+    required TokenService tokenService,
+    required Dio dio,
+  }) : super(
+          databaseService: databaseService,
+          apiService: apiService,
+          tokenService: tokenService,
+          dio: dio,
+        );
+
+  Future<void> updateClientThumbnails(String? clientCode) async {
+    if (clientCode == null || clientCode.trim().isEmpty) return;
+    return fetchAndSaveClientImages(clientCode);
+  }
+
+  Future<void> fetchAndUpdateThumbnails({
+    required String? entityType,
+    required List<String>? entityIds,
+    bool replaceExisting = false,
+  }) async {
+    return;
+  }
+
+  Future<Map<String, int>> getThumbnailStats() => getClientImagesStats();
 }

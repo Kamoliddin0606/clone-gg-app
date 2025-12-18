@@ -14,6 +14,35 @@ import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
+String? _bestClientImagePreviewUrl(ClientImage img) {
+  final candidates = <String?>[
+    img.imageThumbnailUrl,
+    img.imageSmUrl,
+    img.imageMdUrl,
+    img.imageUrl,
+    img.image,
+  ];
+  for (final s in candidates) {
+    if (s != null && s.trim().isNotEmpty) return s;
+  }
+  return null;
+}
+
+String? _bestClientImageFullscreenUrl(ClientImage img) {
+  final candidates = <String?>[
+    img.imageLgUrl,
+    img.imageMdUrl,
+    img.imageSmUrl,
+    img.imageUrl,
+    img.imageThumbnailUrl,
+    img.image,
+  ];
+  for (final s in candidates) {
+    if (s != null && s.trim().isNotEmpty) return s;
+  }
+  return null;
+}
+
 /// Client Images Management Page
 /// This page allows viewing, creating, and uploading client images to the server
 /// Designed for future expansion to handle multiple client images
@@ -35,7 +64,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   final PhotoStorageService _photoStorageService = sl<PhotoStorageService>();
   final RestApiService _restApiService = sl<RestApiService>();
   final TokenService _tokenService = sl<TokenService>();
-  final ThumbnailImageService _thumbnailImageService = sl<ThumbnailImageService>();
+  final ClientImagesService _clientImagesService = sl<ClientImagesService>();
 
   // UI State management
   bool _isLoading = true;
@@ -49,8 +78,8 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   ///
   /// This list is the authoritative source for displaying *server images*.
   /// It is refreshed by:
-  /// - reading DB via `ThumbnailImageService.getClientImages`
-  /// - optionally syncing from server via `ThumbnailImageService.fetchAndSaveClientImages`
+  /// - reading DB via `ClientImagesService.getClientImages`
+  /// - optionally syncing from server via `ClientImagesService.fetchAndSaveClientImages`
   List<ClientImage> _serverImages = [];
 
   /// Loading state for server images list
@@ -261,7 +290,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     try {
       setState(() => _isServerImagesLoading = true);
 
-      final images = await _thumbnailImageService.getClientImages(_clientCode);
+      final images = await _clientImagesService.getClientImages(_clientCode);
 
       if (!mounted) return;
 
@@ -291,7 +320,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   ///
   /// This method:
   /// - checks token availability
-  /// - calls `ThumbnailImageService.fetchAndSaveClientImages`
+  /// - calls `ClientImagesService.fetchAndSaveClientImages`
   /// - reloads the images from DB
   Future<void> _syncServerImagesFromApiIfPossible({bool replaceExisting = true}) async {
     try {
@@ -303,7 +332,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         return;
       }
 
-      await _thumbnailImageService.fetchAndSaveClientImages(
+      await _clientImagesService.fetchAndSaveClientImages(
         _clientCode,
         replaceExisting: replaceExisting,
       );
@@ -561,7 +590,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
 
   /// Open full screen image viewer for server images
   void _openServerImageViewer(ClientImage image) {
-    final url = image.imageLgUrl ?? image.imageMdUrl ?? image.imageSmUrl ?? image.imageUrl ?? image.imageThumbnailUrl;
+    final url = _bestClientImageFullscreenUrl(image);
 
     if (url == null || url.isEmpty) {
       return;
@@ -743,7 +772,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
 
   /// Build server image card for grid view
   Widget _buildServerImageCard(ClientImage image, ThemeData theme) {
-    final previewUrl = image.imageThumbnailUrl ?? image.imageSmUrl ?? image.imageUrl;
+    final previewUrl = _bestClientImagePreviewUrl(image);
 
     return GestureDetector(
       onTap: () => _openServerImageViewer(image),
@@ -821,7 +850,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
 
   /// Build server image list item
   Widget _buildServerImageListItem(ClientImage image, ThemeData theme) {
-    final previewUrl = image.imageThumbnailUrl ?? image.imageSmUrl ?? image.imageUrl;
+    final previewUrl = _bestClientImagePreviewUrl(image);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),

@@ -189,14 +189,14 @@ class _RoutePlanningExampleState extends State<RoutePlanningExample> {
           ),
           SizedBox(height: 8),
           ..._waypoints.map((point) => ListTile(
-            leading: Icon(Icons.location_on),
-            title: Text(point.title ?? 'Waypoint'),
-            subtitle: Text('${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}'),
-            trailing: IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () => _removeWaypoint(point.id),
-            ),
-          )),
+                leading: Icon(Icons.location_on),
+                title: Text(point.title ?? 'Waypoint'),
+                subtitle: Text('${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}'),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () => _removeWaypoint(point.id),
+                ),
+              )),
           SizedBox(height: 8),
           ElevatedButton.icon(
             onPressed: _addWaypoint,
@@ -217,7 +217,8 @@ class _RoutePlanningExampleState extends State<RoutePlanningExample> {
       coordinates: _waypoints.map((p) => [p.longitude, p.latitude]).toList(),
       distance: 15.5, // km
       estimatedTime: Duration(minutes: 45),
-      travelMode: TravelMode.driving, createdAt: DateTime.now(),
+      travelMode: TravelMode.driving,
+      createdAt: DateTime.now(),
     );
 
     setState(() => _currentRoute = mockRoute);
@@ -246,6 +247,72 @@ class _RoutePlanningExampleState extends State<RoutePlanningExample> {
 
   void _removeWaypoint(String id) {
     setState(() => _waypoints.removeWhere((p) => p.id == id));
+  }
+}
+
+class RouteInfoOverlay extends StatelessWidget {
+  final MapRoute? currentRoute;
+  final VoidCallback onClose;
+  final VoidCallback onOptimize;
+
+  const RouteInfoOverlay({
+    super.key,
+    required this.currentRoute,
+    required this.onClose,
+    required this.onOptimize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final route = currentRoute;
+    if (route == null) return const SizedBox.shrink();
+
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: 16,
+      child: Material(
+        elevation: 4,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Route',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onClose,
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text('Distance: ${route.distance.toStringAsFixed(1)} km'),
+              Text('ETA: ${route.estimatedTime.inMinutes} min'),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onOptimize,
+                      child: const Text('Optimize'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

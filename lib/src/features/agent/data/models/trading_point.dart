@@ -27,8 +27,7 @@ class TradingPoint {
   final double accumulatedCredit;
   final String codeRegion;
 
-  // Thumbnail URL for client image
-  final String? thumbnailUrl;
+  final String? photoUrl;
 
   // Yangi maydonlar: visit ma'lumotlari
   final bool visitToday;
@@ -61,7 +60,7 @@ class TradingPoint {
     required this.creditLimit,
     required this.accumulatedCredit,
     required this.codeRegion,
-    this.thumbnailUrl,
+    this.photoUrl,
     this.visitToday = false,
     this.visitStepNumber = 0,
     this.plannedWeekDay,
@@ -114,7 +113,7 @@ class TradingPoint {
       creditLimit: _safeParseDouble(json['creditLimit'], 'creditLimit'),
       accumulatedCredit: _safeParseDouble(json['accumulatedCredit'], 'accumulatedCredit'),
       codeRegion: json['codeRegion']?.toString() ?? '',
-      thumbnailUrl: json['thumbnailUrl']?.toString(),
+      photoUrl: json['photoUrl']?.toString(),
       visitToday: json['visitToday'] == true,
       visitStepNumber: json['visitStepNumber'] ?? 0,
       plannedWeekDay: json['plannedWeekDay']?.toString(),

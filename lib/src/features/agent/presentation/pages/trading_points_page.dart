@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-// import 'package:yandex_mapkit/yandex_mapkit.dart' as yandex;
 import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:latlong2/latlong.dart' as osm_latlong;
-import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
@@ -17,9 +15,7 @@ import 'package:gloria_marketing_flutter/src/core/services/permission_manager.da
 import 'package:gloria_marketing_flutter/src/core/services/permissions_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/rest_api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart' hide MapType;
 import 'package:gloria_marketing_flutter/src/core/maps/services/map_cache_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_marker.dart' hide MarkerClusterConfig;
@@ -37,36 +33,23 @@ import 'map_pages/map_detail_page_osm.dart';
 import 'map_pages/map_detail_page_yandex.dart';
 import 'visit_steps_page.dart';
 import 'client_images_page.dart';
-import 'dart:ui'; // blur uchun
+import 'dart:ui'; 
 import 'dart:async';
-import 'dart:math' as math; // For pi constant and math operations
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/services/location_service.dart';
 
-
-
-import 'package:yandex_maps_mapkit/init.dart' as ymk_init;
-
-// YandexMap vidjeti va MapWindow APIlari
-import 'package:yandex_maps_mapkit/yandex_map.dart';
-
-// MapKit core APIlari (MapKit, MapInputListener, UserLocationLayer, LocationManager, Point, CameraPosition, va h.k.)
-import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
-
-import 'package:yandex_maps_mapkit/mapkit_factory.dart' as mkf;
-
-/// Trading Points Page with thumbnail support
+/// Trading Points Page with client image support
 ///
-/// This page displays trading points (clients) with integrated thumbnail support.
-/// The page retrieves client data along with thumbnail URLs from the database,
-/// prioritizing main thumbnail images for client visual representation.
+/// This page displays trading points (clients) with integrated client image support.
+/// The page retrieves client data along with client image URLs from the database,
+/// prioritizing main client images for client visual representation.
 ///
 /// Key features:
-/// - Shows client images using thumbnail URLs from the media server when available
-/// - Falls back to other image sources if thumbnails are not available
+/// - Shows client images using media server URLs when available
+/// - Falls back to other image sources if images are not available
 /// - Supports both list and grid view modes with image previews
-/// - Integrates with media server synchronization for thumbnail updates
+/// - Integrates with media server synchronization for image updates
 /// Transliterate Cyrillic characters to Latin (Uzbek standard)
 String transliterateToLatin(String text) {
   const cyrillicToLatin = {
@@ -89,15 +72,25 @@ String transliterateToLatin(String text) {
 // import '../../../../theme/theme_toggle.dart';
 enum _ViewMode { list, grid }
 
+String? _bestClientImageUrl(ClientImage img) {
+  final candidates = <String?>[
+    img.imageThumbnailUrl,
+    img.imageSmUrl,
+    img.imageMdUrl,
+    img.imageUrl,
+    img.image,
+  ];
+  for (final s in candidates) {
+    if (s != null && s.trim().isNotEmpty) return s;
+  }
+  return null;
+}
+
 /// Safely retrieves the best available photo URL for a trading point
-/// Prioritizes thumbnail URL from database (newly added feature) over other image sources
+/// Prioritizes server image URL from database over other image sources
 /// This function handles dynamic property access safely to avoid runtime errors
 /// Returns the first non-empty, valid URL found or null if none exist
 String? _safePhotoUrl(dynamic tp) {
-  try {
-    final u = (tp as dynamic).thumbnailUrl; // New thumbnail URL from database - highest priority
-    if (u is String && u.trim().isNotEmpty) return u;
-  } catch (_) {}
   try {
     final u = (tp as dynamic).photoUrl;
     if (u is String && u.trim().isNotEmpty) return u;
@@ -117,11 +110,11 @@ String? _safePhotoUrl(dynamic tp) {
   return null; // yo‘q bo‘lsa — default avatar ishlatiladi
 }
 
-/// Trading Points Page - Displays list of clients with integrated thumbnail support
+/// Trading Points Page - Displays list of clients with integrated client image support
 ///
-/// This page retrieves client data along with thumbnail URLs from the database
+/// This page retrieves client data along with client image URLs from the database
 /// and displays client images in both list and grid views. The page supports
-/// image display from media server thumbnails with fallback to other image sources.
+/// image display from media server images with fallback to other image sources.
 class TradingPointsPage extends StatefulWidget {
   const TradingPointsPage({super.key});
 
@@ -185,7 +178,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     bool _isOnline = true;
 
     // Image service for client images
-    ThumbnailImageService? _thumbnailImageService;
+    ClientImagesService? _clientImagesService;
 
     // PageStorage bucket for state persistence
     late final PageStorageBucket _storageBucket;
@@ -194,7 +187,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   void initState() {
     super.initState();
     _storageBucket = PageStorageBucket();
-    _initializeThumbnailImageService();
+    _initializeClientImagesService();
     _initializePermissions();
     _initializeLocationService();
     _initializePermissionsService();
@@ -204,19 +197,19 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _loadDefaultMapProvider();
   }
 
-  /// Initialize thumbnail image service
-  Future<void> _initializeThumbnailImageService() async {
+  /// Initialize client images service
+  Future<void> _initializeClientImagesService() async {
     try {
-      await sl.isReady<ThumbnailImageService>();
-      _thumbnailImageService = sl<ThumbnailImageService>();
+      await sl.isReady<ClientImagesService>();
+      _clientImagesService = sl<ClientImagesService>();
       if (kDebugMode) {
-        print('ThumbnailImageService initialized successfully');
+        print('ClientImagesService initialized successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing ThumbnailImageService: $e');
+        print('Error initializing ClientImagesService: $e');
       }
-      _thumbnailImageService = null;
+      _clientImagesService = null;
     }
   }
 
@@ -1092,7 +1085,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
               onViewContracts: () => _viewContracts(tp),
               onRefusal: () => _showRefusalDialog(tp),
               permissions: tp.permissions,
-              thumbnailImageService: _thumbnailImageService,
+              clientImagesService: _clientImagesService,
             );
           },
         );
@@ -1116,25 +1109,25 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         );
       }
 
-      // Ensure ThumbnailImageService is initialized
-      ThumbnailImageService? thumbnailImageService = _thumbnailImageService;
-      if (thumbnailImageService == null) {
+      // Ensure ClientImagesService is initialized
+      ClientImagesService? clientImagesService = _clientImagesService;
+      if (clientImagesService == null) {
         if (kDebugMode) {
-          print('TradingPointsPage: ThumbnailImageService not initialized, trying to initialize...');
+          print('TradingPointsPage: ClientImagesService not initialized, trying to initialize...');
         }
 
         // Try to initialize the service
         try {
-          await sl.isReady<ThumbnailImageService>();
-          thumbnailImageService = sl<ThumbnailImageService>();
-          _thumbnailImageService = thumbnailImageService; // Cache it for future use
+          await sl.isReady<ClientImagesService>();
+          clientImagesService = sl<ClientImagesService>();
+          _clientImagesService = clientImagesService; // Cache it for future use
 
           if (kDebugMode) {
-            print('TradingPointsPage: ThumbnailImageService initialized successfully on demand');
+            print('TradingPointsPage: ClientImagesService initialized successfully on demand');
           }
         } catch (e) {
           if (kDebugMode) {
-            print('TradingPointsPage: Failed to initialize ThumbnailImageService: $e');
+            print('TradingPointsPage: Failed to initialize ClientImagesService: $e');
           }
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1149,7 +1142,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       }
 
       // Check if client images are already in database
-      final cachedImages = await thumbnailImageService.getClientImages(tp.tradingPoint.id);
+      final cachedImages = await clientImagesService.getClientImages(tp.tradingPoint.id);
 
       if (cachedImages.isEmpty) {
         if (kDebugMode) {
@@ -1157,7 +1150,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         }
 
         // Fetch images from server and save to database
-        await thumbnailImageService.fetchAndSaveClientImages(tp.tradingPoint.id);
+        await clientImagesService.fetchAndSaveClientImages(tp.tradingPoint.id);
 
         if (kDebugMode) {
           print('TradingPointsPage: Images fetched and saved to database');
@@ -1456,8 +1449,6 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     );
   }
 }
-
-
 
 // Aliasing original model
 typedef TradingPoint = model.TradingPoint;
@@ -2062,13 +2053,10 @@ class TradingPointGridCard extends StatelessWidget {
   });
 
   /// Returns the best available photo URL for the trading point
-  /// Prioritizes thumbnail URL from database (newly added feature) over other image sources
+  /// Prioritizes server image URL from database (newly added feature) over other image sources
   /// This ensures client images from the media server are used when available
   String? _photo(TradingPoint t) {
-    print('_photo() called ${t.thumbnailUrl} ');
-
     final candidates = <String?>[
-      t.thumbnailUrl, // New thumbnail URL from database - highest priority
       (t as dynamic).photoUrl as String?,
       (t as dynamic).imageUrl as String?,
       (t as dynamic).avatarUrl as String?,
@@ -2277,36 +2265,36 @@ class _DefaultAvatar extends StatelessWidget {
     );
   }
 }
-/// Auto-scrolling Thumbnail Carousel Widget
-/// Displays client thumbnails with automatic scrolling every 2 seconds
+/// Auto-scrolling Client Image Carousel Widget
+/// Displays client images with automatic scrolling every 2 seconds
 /// Supports manual scrolling by swiping/dragging
-class _AutoScrollThumbnailCarousel extends StatefulWidget {
+class _AutoScrollClientImageCarousel extends StatefulWidget {
   final String clientCode;
   final double height;
   final bool isVisited;
 
-  const _AutoScrollThumbnailCarousel({
+  const _AutoScrollClientImageCarousel({
     required this.clientCode,
     this.height = 120,
     this.isVisited = false,
   });
 
   @override
-  State<_AutoScrollThumbnailCarousel> createState() => _AutoScrollThumbnailCarouselState();
+  State<_AutoScrollClientImageCarousel> createState() => _AutoScrollClientImageCarouselState();
 }
 
-class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarousel> {
+class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCarousel> {
   final PageController _pageController = PageController();
   Timer? _autoScrollTimer;
   int _currentPage = 0;
-  List<String> _thumbnailUrls = [];
+  List<String> _imageUrls = [];
   bool _isLoading = true;
   bool _userIsScrolling = false;
 
   @override
   void initState() {
     super.initState();
-    _loadThumbnailUrls();
+    _loadImageUrls();
   }
 
   @override
@@ -2316,33 +2304,34 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
     super.dispose();
   }
 
-  /// Load thumbnail URLs for the client from database
-  Future<void> _loadThumbnailUrls() async {
+  /// Load image URLs for the client from database
+  Future<void> _loadImageUrls() async {
     try {
-      // Get REST API database service
-      final restApiDbService = sl<RestApiDatabaseService>();
-      
-      // Get all thumbnails for this client
-      final thumbnails = await restApiDbService.getThumbnailsByCode(widget.clientCode);
+      await sl.isReady<ClientImagesService>();
+      final clientImagesService = sl<ClientImagesService>();
+
+      final clientImages = await clientImagesService.getClientImages(widget.clientCode);
       
       if (mounted) {
         setState(() {
-          // Extract non-empty thumbnail URLs
-          _thumbnailUrls = thumbnails
-              .where((t) => t.thumbnailUrl != null && t.thumbnailUrl!.isNotEmpty)
-              .map((t) => t.thumbnailUrl!)
+          _imageUrls = clientImages
+              .map((img) {
+                return _bestClientImageUrl(img);
+              })
+              .whereType<String>()
+              .where((u) => u.trim().isNotEmpty)
               .toList();
           _isLoading = false;
         });
 
         // Start auto-scroll if we have multiple images
-        if (_thumbnailUrls.length > 1) {
+        if (_imageUrls.length > 1) {
           _startAutoScroll();
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error loading thumbnail URLs for client ${widget.clientCode}: $e');
+        print('Error loading image URLs for client ${widget.clientCode}: $e');
       }
       if (mounted) {
         setState(() {
@@ -2360,7 +2349,7 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
       if (!mounted || _userIsScrolling) return;
 
       // Calculate next page index (loop back to start after last page)
-      final nextPage = (_currentPage + 1) % _thumbnailUrls.length;
+      final nextPage = (_currentPage + 1) % _imageUrls.length;
 
       // Animate to next page
       _pageController.animateToPage(
@@ -2397,7 +2386,7 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
     
     // Resume auto-scroll after 3 seconds of inactivity
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted && !_userIsScrolling && _thumbnailUrls.length > 1) {
+      if (mounted && !_userIsScrolling && _imageUrls.length > 1) {
         _startAutoScroll();
       }
     });
@@ -2408,7 +2397,7 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    // Show loading indicator while loading thumbnails
+    // Show loading indicator while loading images
     if (_isLoading) {
       return Container(
         height: widget.height,
@@ -2422,8 +2411,8 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
       );
     }
 
-    // Show default icon if no thumbnails available
-    if (_thumbnailUrls.isEmpty) {
+    // Show default icon if no images available
+    if (_imageUrls.isEmpty) {
       return Container(
         height: widget.height,
         decoration: BoxDecoration(
@@ -2436,7 +2425,7 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
       );
     }
 
-    // Show thumbnail carousel with auto-scroll
+    // Show image carousel with auto-scroll
     return SizedBox(
       height: widget.height,
       child: Stack(
@@ -2458,16 +2447,16 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
             },
             child: PageView.builder(
               controller: _pageController,
-              itemCount: _thumbnailUrls.length,
+              itemCount: _imageUrls.length,
               itemBuilder: (context, index) {
                 return ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // Thumbnail image with blur effect if visited
+                      // Client image with blur effect if visited
                       Image.network(
-                        _thumbnailUrls[index],
+                        _imageUrls[index],
                         fit: BoxFit.cover,
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) {
@@ -2506,7 +2495,7 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
           ),
 
           // Page indicator (bottom-center) - shows current position in carousel
-          if (_thumbnailUrls.length > 1)
+          if (_imageUrls.length > 1)
             Positioned(
               bottom: 8,
               left: 0,
@@ -2514,7 +2503,7 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
-                  _thumbnailUrls.length,
+                  _imageUrls.length,
                   (index) => Container(
                     width: 8,
                     height: 8,
@@ -2531,7 +2520,7 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
             ),
 
           // Image counter (top-right) - shows "X / Total" format
-          if (_thumbnailUrls.length > 1)
+          if (_imageUrls.length > 1)
             Positioned(
               top: 8,
               right: 8,
@@ -2542,7 +2531,7 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '${_currentPage + 1} / ${_thumbnailUrls.length}',
+                  '${_currentPage + 1} / ${_imageUrls.length}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -2557,7 +2546,7 @@ class _AutoScrollThumbnailCarouselState extends State<_AutoScrollThumbnailCarous
   }
 }
 
-/// Trading Point Grid Tile with auto-scrolling thumbnail carousel
+/// Trading Point Grid Tile with auto-scrolling client image carousel
 class _TradingPointGridTile extends StatelessWidget {
   final TradingPointWithPermissions tp;
   final VoidCallback onCall, onInformVisit, onCreateOrder, onViewContracts, onRefusal;
@@ -2603,11 +2592,11 @@ class _TradingPointGridTile extends StatelessWidget {
 
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // TOP: Auto-scrolling thumbnail carousel for client images
+          // TOP: Auto-scrolling client image carousel
           Stack(
             children: [
               // Auto-scrolling carousel widget
-              _AutoScrollThumbnailCarousel(
+              _AutoScrollClientImageCarousel(
                 clientCode: tp.tradingPoint.id,
                 height: 120,
                 isVisited: tp.tradingPoint.isVisited,
@@ -2852,7 +2841,7 @@ class _TradingPointDetailsSheet extends StatefulWidget {
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
   final SalesReqPermissions? permissions;
-  final ThumbnailImageService? thumbnailImageService;
+  final ClientImagesService? clientImagesService;
 
   const _TradingPointDetailsSheet({
     required this.tradingPoint,
@@ -2864,7 +2853,7 @@ class _TradingPointDetailsSheet extends StatefulWidget {
     required this.onViewContracts,
     required this.onRefusal,
     this.permissions,
-    this.thumbnailImageService,
+    this.clientImagesService,
   });
 
   @override
@@ -2940,7 +2929,7 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
                 _ClientDetailsPage(
                   tradingPoint: widget.tradingPoint,
                   onCall: widget.onCall,
-                  thumbnailImageService: widget.thumbnailImageService,
+                  clientImagesService: widget.clientImagesService,
                 ),
               ],
             ),
@@ -2955,12 +2944,12 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
 class _ClientDetailsPage extends StatefulWidget {
   final TradingPoint tradingPoint;
   final VoidCallback onCall;
-  final ThumbnailImageService? thumbnailImageService;
+  final ClientImagesService? clientImagesService;
 
   const _ClientDetailsPage({
     required this.tradingPoint,
     required this.onCall,
-    this.thumbnailImageService,
+    this.clientImagesService,
   });
 
   @override
@@ -2985,11 +2974,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   /// Load client images from database
   Future<void> _loadClientImages() async {
     try {
-      // Use the passed ThumbnailImageService instance
-      final thumbnailImageService = widget.thumbnailImageService;
-      if (thumbnailImageService == null) {
+      // Use the passed ClientImagesService instance
+      final clientImagesService = widget.clientImagesService;
+      if (clientImagesService == null) {
         if (kDebugMode) {
-          print('ThumbnailImageService not available in ClientDetailsPage');
+          print('ClientImagesService not available in ClientDetailsPage');
         }
         if (mounted) {
           setState(() {
@@ -2999,7 +2988,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
         return;
       }
 
-      final images = await thumbnailImageService.getClientImages(widget.tradingPoint.id);
+      final images = await clientImagesService.getClientImages(widget.tradingPoint.id);
       if (mounted) {
         setState(() {
           _clientImages = images;
@@ -3908,9 +3897,9 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
   /// Load client images from database
   Future<void> _loadClientImages() async {
     try {
-      // Get ThumbnailImageService from service locator
-      final thumbnailImageService = sl<ThumbnailImageService>();
-      final images = await thumbnailImageService.getClientImages(widget.tradingPoint.id);
+      // Get ClientImagesService from service locator
+      final clientImagesService = sl<ClientImagesService>();
+      final images = await clientImagesService.getClientImages(widget.tradingPoint.id);
       if (mounted) {
         setState(() {
           _clientImages = images;
@@ -4198,12 +4187,13 @@ class _HeaderImageState extends State<_HeaderImage> {
                   itemCount: widget.clientImages.length,
                   itemBuilder: (context, index) {
                     final image = widget.clientImages[index];
+                    final imageUrl = _bestClientImageUrl(image);
                     return Container(
                       margin: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         image: DecorationImage(
-                          image: NetworkImage(image.imageThumbnailUrl ?? image.imageUrl ?? ''),
+                          image: NetworkImage(imageUrl ?? ''),
                           fit: BoxFit.cover,
                         ),
                       ),

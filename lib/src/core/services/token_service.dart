@@ -361,10 +361,10 @@ class TokenService {
   }
 
   /// Get base URL for token operations
-  /// Thumbnails and tokens use a separate API endpoint that is different from the main app API
+  /// Client images and tokens use a separate API endpoint that is different from the main app API
   /// This is hardcoded for now but designed to be configurable in the future
   Future<String> _getBaseUrl() async {
-    // Hardcoded URL for thumbnails and token operations
+    // Hardcoded URL for client images and token operations
     // TODO: Make this configurable through app configuration when expanding to multiple environments
     return 'http://178.218.200.120:1596';
   }

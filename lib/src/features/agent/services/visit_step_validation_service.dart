@@ -183,7 +183,7 @@ class VisitStepValidationService {
     if (thumbnailPath == null || thumbnailPath.toString().isEmpty) {
       errors.add(ValidationError(
         field: 'thumbnail_path',
-        message: 'Thumbnail path is required for photo data',
+        message: 'Preview path is required for photo data',
         type: ValidationErrorType.required,
         value: thumbnailPath,
       ));

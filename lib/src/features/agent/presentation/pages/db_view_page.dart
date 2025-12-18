@@ -25,7 +25,6 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_de
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
@@ -82,7 +81,6 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
   List<VisitData> _visitStepsData = [];
   List<VisitData> _orderDraftData = [];
   List<PlannedRoute> _plannedRoutes = [];
-  List<Thumbnail> _thumbnails = [];
   List<VisitPlan> _visitPlans = [];
   List<VisitPlanList> _visitPlanLists = [];
 
@@ -387,7 +385,6 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     'Order Draft Data',
     'Order Draft Products',
     'Planned Routes',
-    'Thumbnails',
     'Visit Plans',
     'Visit Plan Lists',
   ];
@@ -448,7 +445,6 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _safeLoadData(() => _loadVisitStepsData(), 'Visit Steps Data'),
         _safeLoadData(() => _loadOrderDraftData(), 'Order Draft Data'),
         _safeLoadData(() => _dbService.getAllPlannedRoutes(), 'Planned Routes'),
-        _safeLoadData(() => _dbService.getThumbnails(), 'Thumbnails'),
         _safeLoadData(() => _dbService.getVisitPlans(), 'Visit Plans'),
         _safeLoadData(() => _dbService.getVisitPlanLists(), 'Visit Plan Lists'),
       ];
@@ -496,9 +492,8 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         _visitStepsData = _safeCast<VisitData>(results[26]);
         _orderDraftData = _safeCast<VisitData>(results[27]);
         _plannedRoutes = _safeCast<PlannedRoute>(results[28]);
-        _thumbnails = _safeCast<Thumbnail>(results[29]);
-        _visitPlans = _safeCast<VisitPlan>(results[30]);
-        _visitPlanLists = _safeCast<VisitPlanList>(results[31]);
+        _visitPlans = _safeCast<VisitPlan>(results[29]);
+        _visitPlanLists = _safeCast<VisitPlanList>(results[30]);
         _isLoading = false;
       });
 
@@ -639,25 +634,6 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
     } catch (e) {
       if (kDebugMode) {
         print('DEBUG: Error loading visit steps data: $e');
-      }
-      return [];
-    }
-  }
-
-  /// Load thumbnails from database
-  /// This method fetches all thumbnail records from the thumbnails table
-  /// and converts them to Thumbnail model objects for display in the UI.
-  /// Returns an empty list if an error occurs during loading.
-  Future<List<Thumbnail>> _loadThumbnails() async {
-    try {
-      final thumbnails = await _dbService.getThumbnails();
-      if (kDebugMode) {
-        print('DEBUG: Loaded ${thumbnails.length} thumbnails');
-      }
-      return thumbnails;
-    } catch (e) {
-      if (kDebugMode) {
-        print('DEBUG: Error loading thumbnails: $e');
       }
       return [];
     }
@@ -836,7 +812,6 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
                     _buildDataTable(_orderDraftData, _getOrderDraftDataColumns()),
                     _buildDataTable(_extractOrderDraftProducts(), _getOrderDraftProductsColumns()),
                     _buildDataTable(_plannedRoutes, _getPlannedRoutesColumns()),
-                    _buildDataTable(_thumbnails, _getThumbnailsColumns()),
                     _buildDataTable(_visitPlans, _getVisitPlansColumns()),
                     _buildDataTable(_visitPlanLists, _getVisitPlanListsColumns()),
                   ],
@@ -1296,32 +1271,6 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         DataCell(Text(item.createdAt.toString())),
         DataCell(Text(item.updatedAt.toString())),
       ]);
-    } else if (item is Thumbnail) {
-      cells.addAll([
-        DataCell(Text(item.id?.toString() ?? '')),
-        DataCell(Text(item.entityType ?? '')),
-        DataCell(Text(item.entityId?.toString() ?? '')),
-        DataCell(Text(item.code1c)),
-        DataCell(Text(item.entityName ?? '')),
-        DataCell(Text(item.thumbnailUrl ?? '')),
-        DataCell(Text(item.thumbnailDimensions?['width']?.toString() ?? '')),
-        DataCell(Text(item.thumbnailDimensions?['height']?.toString() ?? '')),
-        DataCell(Text(item.thumbnailDimensions?['format']?.toString() ?? '')),
-        DataCell(Text(item.thumbnailDimensions?['size']?.toString() ?? '')),
-        DataCell(Text(item.originalDimensions?['width']?.toString() ?? '')),
-        DataCell(Text(item.originalDimensions?['height']?.toString() ?? '')),
-        DataCell(Text(item.originalDimensions?['format']?.toString() ?? '')),
-        DataCell(Text(item.originalDimensions?['size']?.toString() ?? '')),
-        DataCell(Text(item.isMain.toString())),
-        DataCell(Text(item.category ?? '')),
-        DataCell(Text(item.note ?? '')),
-        DataCell(Text(item.statusCode ?? '')),
-        DataCell(Text(item.statusName ?? '')),
-        DataCell(Text(item.sourceName ?? '')),
-        DataCell(Text(item.sourceType ?? '')),
-        DataCell(Text(item.createdAt?.toIso8601String() ?? '')),
-        DataCell(Text(item.updatedAt?.toIso8601String() ?? '')),
-      ]);
     } else if (item is VisitPlan) {
       cells.addAll([
         DataCell(Text(item.id?.toString() ?? '')),
@@ -1703,32 +1652,6 @@ class _DbViewPageState extends State<DbViewPage> with TickerProviderStateMixin {
         const DataColumn(label: Text('Client Code')),
         const DataColumn(label: Text('Client Name')),
         const DataColumn(label: Text('Created At')),
-        const DataColumn(label: Text('Updated At')),
-      ];
-
-  List<DataColumn> _getThumbnailsColumns() => [
-        const DataColumn(label: Text('ID')),
-        const DataColumn(label: Text('Entity Type')),
-        const DataColumn(label: Text('Entity ID')),
-        const DataColumn(label: Text('Code 1C')),
-        const DataColumn(label: Text('Entity Name')),
-        const DataColumn(label: Text('Thumbnail URL')),
-        const DataColumn(label: Text('Thumbnail Width')),
-        const DataColumn(label: Text('Thumbnail Height')),
-        const DataColumn(label: Text('Thumbnail Format')),
-        const DataColumn(label: Text('Thumbnail Size')),
-        const DataColumn(label: Text('Original Width')),
-        const DataColumn(label: Text('Original Height')),
-        const DataColumn(label: Text('Original Format')),
-        const DataColumn(label: Text('Original Size')),
-        const DataColumn(label: Text('Is Main')),
-        const DataColumn(label: Text('Category')),
-        const DataColumn(label: Text('Note')),
-        const DataColumn(label: Text('Status Code')),
-        const DataColumn(label: Text('Status Name')),
-        const DataColumn(label: Text('Source Name')),
-        const DataColumn(label: Text('Source Type')),
-        const DataColumn(label: Text('Created At Server')),
         const DataColumn(label: Text('Updated At')),
       ];
 

@@ -1,18 +1,85 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
-import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io';
 
 /// REST API Service for handling REST API calls to the server
-/// This service handles thumbnail data retrieval and other REST API operations
+/// This service handles client image data retrieval and other REST API operations
 /// It uses Dio for HTTP requests with proper error handling and logging
 class RestApiService {
   final Dio _dio;
 
   RestApiService(this._dio) {
     _configureDio();
+  }
+
+  /// Fetch client images from the media server REST API.
+  ///
+  /// This is the single source of truth for *client images* retrieval.
+  /// The response is returned as a list of raw maps to keep this service
+  /// independent from UI/database model classes.
+  ///
+  /// Endpoint:
+  /// - GET http://178.218.200.120:1596/api/v1/client-image
+  ///
+  /// Query params:
+  /// - client_code (optional)
+  ///
+  /// Auth:
+  /// - Requires Bearer token.
+  Future<List<Map<String, dynamic>>> getClientImages({
+    required String authToken,
+    String? clientCode,
+  }) async {
+    const String baseUrl = 'http://178.218.200.120:1596';
+    final endpoint = '$baseUrl/api/v1/client-image';
+
+    try {
+      if (authToken.isEmpty) {
+        throw ArgumentError('Authentication token cannot be empty');
+      }
+
+      final query = <String, dynamic>{};
+      if (clientCode != null && clientCode.trim().isNotEmpty) {
+        query['client_code'] = clientCode;
+      }
+
+      final response = await _dio.get(
+        endpoint,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $authToken',
+          },
+        ),
+        queryParameters: query.isEmpty ? null : query,
+      );
+
+      final raw = response.data;
+      if (raw is List) {
+        return List<Map<String, dynamic>>.from(raw);
+      }
+      if (raw is Map<String, dynamic>) {
+        final results = raw['results'] ?? raw['data'] ?? raw['client_images'];
+        if (results is List) {
+          return List<Map<String, dynamic>>.from(results);
+        }
+        return const <Map<String, dynamic>>[];
+      }
+
+      return const <Map<String, dynamic>>[];
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: DioException while fetching client images: ${e.message}');
+        print('RestApiService: Response status: ${e.response?.statusCode}');
+        print('RestApiService: Response data: ${e.response?.data}');
+      }
+      throw Exception('Client images ma\'lumotlarini olishda xatolik: ${e.error}');
+    } catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: Unexpected error while fetching client images: $e');
+      }
+      throw Exception('Client images ma\'lumotlarini qayta ishlashda xatolik: $e');
+    }
   }
 
   /// Set a specific client image as the main image on the server
@@ -161,141 +228,25 @@ class RestApiService {
     }
   }
 
-  /// Get thumbnails from the REST API
-  /// Fetches thumbnail data from the server and returns a list of Thumbnail objects
-  /// This method requires authentication token to be set in the headers
-  /// Uses hardcoded URL as thumbnails come from a separate service
-  ///
-  /// @param authToken The authentication token for API access
-  /// @param is_main Whether to fetch main thumbnails only (default: false)
-  /// @return Future<List<Thumbnail>> List of thumbnail objects
-  /// @throws Exception if API call fails or response parsing fails
-  Future<List<Thumbnail>> getThumbnails({
-    required String authToken,
-    bool is_main = false,
-  }) async {
-    // Hardcoded URL for thumbnails API - separate from main app API
-    // TODO: Make this configurable when expanding to multiple environments
-    const String thumbnailsBaseUrl = 'http://178.218.200.120:1596';
-
-    try {
-      if (kDebugMode) {
-        print('RestApiService: Fetching thumbnails from $thumbnailsBaseUrl/api/v1/thumbnails');
-      }
-
-      // Validate input parameters
-      if (authToken.isEmpty) {
-        throw ArgumentError('Authentication token cannot be empty');
-      }
-
-      final response = await _dio.get(
-        '$thumbnailsBaseUrl/api/v1/thumbnails',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $authToken',
-          },
-        ),
-        queryParameters: {'is_main': is_main.toString()},
-      );
-
-      if (kDebugMode) {
-        print('RestApiService: Received ${response.data.length} characters of response data');
-      }
-
-      // Parse the response data - handle both direct list and wrapped in map
-      dynamic rawData = response.data;
-      List<dynamic> responseData;
-
-      if (rawData is List) {
-        responseData = rawData;
-      } else if (rawData is Map<String, dynamic>) {
-        // Try common keys for the list
-        responseData = rawData['data'] as List<dynamic>? ??
-                       rawData['thumbnails'] as List<dynamic>? ??
-                       rawData['results'] as List<dynamic>? ??
-                       [];
-        if (responseData.isEmpty && rawData.isNotEmpty) {
-          if (kDebugMode) {
-            print('RestApiService: Unable to find list in response map. Available keys: ${rawData.keys}');
-          }
-          throw Exception('Unable to find thumbnail list in response. Response keys: ${rawData.keys}');
-        }
-      } else {
-        throw Exception('Unexpected response type: ${rawData.runtimeType}. Expected List or Map.');
-      }
-
-      if (kDebugMode) {
-        print('RestApiService: Parsing ${responseData.length} thumbnail records');
-      }
-
-      final thumbnails = <Thumbnail>[];
-
-      for (final item in responseData) {
-        try {
-          final thumbnail = Thumbnail.fromJson(item as Map<String, dynamic>);
-          thumbnails.add(thumbnail);
-
-          if (kDebugMode && thumbnails.length <= 3) {
-            print('RestApiService: Sample thumbnail - Entity: ${thumbnail.entityType}, Code: ${thumbnail.code1c}, Name: ${thumbnail.entityName}');
-          }
-        } catch (e) {
-          if (kDebugMode) {
-            print('RestApiService: Error parsing thumbnail item: $e');
-            print('RestApiService: Problematic item: $item');
-          }
-          // Continue with other items instead of failing completely
-        }
-      }
-
-      if (kDebugMode) {
-        print('RestApiService: Successfully parsed ${thumbnails.length} thumbnails');
-
-        // Log summary statistics
-        final clientThumbnails = thumbnails.where((t) => t.entityType == 'client').length;
-        final productThumbnails = thumbnails.where((t) => t.entityType == 'nomenklatura').length;
-        final mainThumbnails = thumbnails.where((t) => t.isMain).length;
-
-        print('RestApiService: Summary - Clients: $clientThumbnails, Products: $productThumbnails, Main images: $mainThumbnails');
-      }
-
-      return thumbnails;
-
-    } on DioException catch (e) {
-      if (kDebugMode) {
-        print('RestApiService: DioException while fetching thumbnails: ${e.message}');
-        print('RestApiService: Response status: ${e.response?.statusCode}');
-        print('RestApiService: Response data: ${e.response?.data}');
-      }
-      throw Exception('Thumbnails ma\'lumotlarini olishda xatolik: ${e.error}');
-    } catch (e) {
-      if (kDebugMode) {
-        print('RestApiService: Unexpected error while fetching thumbnails: $e');
-      }
-      throw Exception('Thumbnails ma\'lumotlarini qayta ishlashda xatolik: $e');
-    }
-  }
-
   /// Test API connectivity and authentication
   /// This method can be used to verify that the API is accessible and token is valid
-  /// Uses hardcoded URL as thumbnails come from a separate service
+  /// Uses client images endpoint as the primary signal that the media API is reachable
   ///
   /// @param authToken The authentication token for API access
   /// @return Future<bool> True if API is accessible, false otherwise
   Future<bool> testApiConnectivity({
     required String authToken,
   }) async {
-    // Hardcoded URL for thumbnails API - separate from main app API
-    // TODO: Make this configurable when expanding to multiple environments
-    const String thumbnailsBaseUrl = 'http://178.218.200.120:1596';
+    const String baseUrl = 'http://178.218.200.120:1596';
 
     try {
       if (kDebugMode) {
-        print('RestApiService: Testing API connectivity to $thumbnailsBaseUrl');
+        print('RestApiService: Testing API connectivity to $baseUrl');
       }
 
       // Make a simple request to test connectivity
       final response = await _dio.get(
-        '$thumbnailsBaseUrl/api/v1/thumbnails',
+        '$baseUrl/api/v1/client-image',
         options: Options(
           headers: {
             'Authorization': 'Bearer $authToken',
@@ -364,7 +315,7 @@ class RestApiService {
   ///
   /// @param clientCode The 1C code identifier for the client
   /// @param images List of local image files to upload
-  /// @return Future<List<String>> List of successfully uploaded thumbnail URLs
+  /// @return Future<List<String>> List of successfully uploaded image URLs
   /// @throws DioException on network/upload failures
   Future<List<String>> uploadClientImagesBulk({
     required String clientCode,
@@ -408,8 +359,7 @@ class RestApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data as Map<String, dynamic>? ?? <String, dynamic>{};
 
-        // Assume API returns list of thumbnail URLs
-        final urls = List<String>.from(data['urls'] ?? data['thumbnails'] ?? []);
+        final urls = List<String>.from(data['urls'] ?? []);
 
         if (kDebugMode) {
           print('RestApiService: Successfully uploaded ${images.length} images for client $clientCode. Received ${urls.length} URLs');

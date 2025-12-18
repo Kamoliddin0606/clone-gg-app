@@ -20,7 +20,6 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
@@ -29,6 +28,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
 
 class ApiDatabaseService {
   static final ApiDatabaseService _instance = ApiDatabaseService._internal();
@@ -44,7 +44,7 @@ class ApiDatabaseService {
   }
 
   /// Initialize database with version 23
-  /// Added image_id field to thumbnails table for server-side image identification
+  /// Database schema initialization
   Future<Database> _initDatabase() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'gloria_api_cache.db');
@@ -788,131 +788,6 @@ class ApiDatabaseService {
       if (!hasLocationUpdateInterval) {
         await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0');
       }
-    } else if (oldVersion < 20) {
-      // Add thumbnails table for version 20
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS thumbnails (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          entity_type TEXT,
-          entity_id INTEGER,
-          code_1c TEXT NOT NULL,
-          entity_name TEXT,
-          thumbnail_url TEXT,
-          thumbnail_width INTEGER,
-          thumbnail_height INTEGER,
-          thumbnail_format TEXT,
-          thumbnail_size_kb TEXT,
-          original_width INTEGER,
-          original_height INTEGER,
-          original_format TEXT,
-          original_size_bytes INTEGER,
-          original_size_kb TEXT,
-          is_main INTEGER DEFAULT 0,
-          category TEXT,
-          note TEXT,
-          status_code TEXT,
-          status_name TEXT,
-          source_name TEXT,
-          source_type TEXT,
-          created_at_server TEXT,
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL,
-          FOREIGN KEY (code_1c) REFERENCES clients (code) ON DELETE CASCADE,
-          FOREIGN KEY (code_1c) REFERENCES products (code) ON DELETE CASCADE
-        )
-      ''');
-
-      // Create indexes for thumbnails table
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_entity_type ON thumbnails(entity_type)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_entity_id ON thumbnails(entity_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_code_1c ON thumbnails(code_1c)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_is_main ON thumbnails(is_main)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_status_code ON thumbnails(status_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_created_at_server ON thumbnails(created_at_server)');
-    } else if (oldVersion < 21) {
-      // Update thumbnails table for version 21 - make most fields nullable except essential ones
-      // Add new columns if they don't exist, or modify existing ones to allow null
-      final columns = await db.rawQuery("PRAGMA table_info(thumbnails)");
-      final columnNames = columns.map((col) => col['name'] as String).toList();
-
-      // List of fields that should be nullable (remove NOT NULL constraint)
-      final nullableFields = [
-        'entity_type', 'entity_id', 'entity_name', 'thumbnail_url', 'thumbnail_width',
-        'thumbnail_height', 'thumbnail_format', 'thumbnail_size_kb', 'original_width',
-        'original_height', 'original_format', 'original_size_bytes', 'original_size_kb',
-        'status_code', 'status_name', 'source_name', 'source_type', 'created_at_server'
-      ];
-
-      for (final field in nullableFields) {
-        if (columnNames.contains(field)) {
-          // For SQLite, we can't directly modify column constraints
-          // Instead, we'll recreate the table with new schema
-          await db.execute('ALTER TABLE thumbnails RENAME TO thumbnails_old');
-
-          await db.execute('''
-            CREATE TABLE thumbnails (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              entity_type TEXT,
-              entity_id INTEGER,
-              code_1c TEXT NOT NULL,
-              entity_name TEXT,
-              thumbnail_url TEXT,
-              thumbnail_width INTEGER,
-              thumbnail_height INTEGER,
-              thumbnail_format TEXT,
-              thumbnail_size_kb TEXT,
-              original_width INTEGER,
-              original_height INTEGER,
-              original_format TEXT,
-              original_size_bytes INTEGER,
-              original_size_kb TEXT,
-              is_main INTEGER DEFAULT 0,
-              category TEXT,
-              note TEXT,
-              status_code TEXT,
-              status_name TEXT,
-              source_name TEXT,
-              source_type TEXT,
-              created_at_server TEXT,
-              created_at TEXT NOT NULL,
-              updated_at TEXT NOT NULL,
-              FOREIGN KEY (code_1c) REFERENCES clients (code) ON DELETE CASCADE,
-              FOREIGN KEY (code_1c) REFERENCES products (code) ON DELETE CASCADE
-            )
-          ''');
-
-          // Copy data from old table to new table
-          await db.execute('''
-            INSERT INTO thumbnails (
-              id, entity_type, entity_id, code_1c, entity_name, thumbnail_url,
-              thumbnail_width, thumbnail_height, thumbnail_format, thumbnail_size_kb,
-              original_width, original_height, original_format, original_size_bytes,
-              original_size_kb, is_main, category, note, status_code, status_name,
-              source_name, source_type, created_at_server, created_at, updated_at
-            )
-            SELECT
-              id, entity_type, entity_id, code_1c, entity_name, thumbnail_url,
-              thumbnail_width, thumbnail_height, thumbnail_format, thumbnail_size_kb,
-              original_width, original_height, original_format, original_size_bytes,
-              original_size_kb, is_main, category, note, status_code, status_name,
-              source_name, source_type, created_at_server, created_at, updated_at
-            FROM thumbnails_old
-          ''');
-
-          // Drop old table
-          await db.execute('DROP TABLE thumbnails_old');
-
-          // Recreate indexes
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_entity_type ON thumbnails(entity_type)');
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_entity_id ON thumbnails(entity_id)');
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_code_1c ON thumbnails(code_1c)');
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_is_main ON thumbnails(is_main)');
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_status_code ON thumbnails(status_code)');
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_created_at_server ON thumbnails(created_at_server)');
-
-          break; // Only need to do this once
-        }
-      }
     } else if (oldVersion < 22) {
       // Add client_images table for version 22
       await db.execute('''
@@ -951,25 +826,11 @@ class ApiDatabaseService {
       // Create indexes for client_images table
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_code ON client_images(client_code)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)');
+      await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_client_images_client_code_server_id ON client_images(client_code, server_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)');
-    } else if (oldVersion < 23) {
-      // Add image_id field to thumbnails table for version 23
-      // This field stores the server-side image identifier for tracking and synchronization
-      final columns = await db.rawQuery("PRAGMA table_info(thumbnails)");
-      final hasImageId = columns.any((col) => col['name'] == 'image_id');
-      
-      if (!hasImageId) {
-        await db.execute('ALTER TABLE thumbnails ADD COLUMN image_id INTEGER NOT NULL DEFAULT 0');
-        if (kDebugMode) {
-          print('ApiDatabaseService: Added image_id column to thumbnails table');
-        }
-      }
-      
-      // Create index for image_id column for faster queries
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_thumbnails_image_id ON thumbnails(image_id)');
     } else if (oldVersion < 24) {
       // Align client_images table to latest API response structure
       //
@@ -997,6 +858,7 @@ class ApiDatabaseService {
       await addColumnIfMissing('source', 'TEXT');
 
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)');
+      await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_client_images_client_code_server_id ON client_images(client_code, server_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)');
     }
   }
@@ -1662,6 +1524,7 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_code ON client_images(client_code)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)');
+    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_client_images_client_code_server_id ON client_images(client_code, server_id)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
@@ -3023,6 +2886,7 @@ class ApiDatabaseService {
       final result = await db.rawQuery('''
         SELECT
           c.*,
+          COALESCE(ci.image_thumbnail_url, ci.image_sm_url, ci.image_md_url, ci.image_url, ci.image) as photo_url,
           srp.id as permissions_id,
           srp.user_code,
           srp.skip_tin_duplicate_check,
@@ -3037,10 +2901,23 @@ class ApiDatabaseService {
           srp.location_update_interval,
           CASE WHEN pr.code_client IS NOT NULL THEN 1 ELSE 0 END as visit_today,
           COALESCE(pr.visit_order, 0) as visit_step_number,
-          pr.week_day as planned_week_day,
-          t.thumbnail_url as thumbnail_url
+          pr.week_day as planned_week_day
         FROM clients c
         LEFT JOIN sales_req_permissions srp ON srp.user_code = ?
+        LEFT JOIN (
+          SELECT
+            client_code,
+            image,
+            image_url,
+            image_sm_url,
+            image_md_url,
+            image_thumbnail_url,
+            ROW_NUMBER() OVER (
+              PARTITION BY client_code
+              ORDER BY is_main DESC, updated_at DESC, id DESC
+            ) as rn
+          FROM client_images
+        ) ci ON ci.client_code = c.code AND ci.rn = 1
         LEFT JOIN (
           SELECT
             code_client,
@@ -3049,24 +2926,12 @@ class ApiDatabaseService {
           FROM planned_routes
           WHERE user_code = ? AND code_weekday = ?
         ) pr ON c.code = pr.code_client
-        -- JOIN with thumbnails table to get client thumbnail images
-        -- Only get main (primary) images where entity_type = 'client' and is_main = 1
-        LEFT JOIN (
-          SELECT code_1c, thumbnail_url
-          FROM thumbnails
-          WHERE entity_type = 'client' AND is_main = 1
-          GROUP BY code_1c
-        ) t ON c.code = t.code_1c
         ORDER BY c.name ASC''',[userCode, userCode, currentWeekdayCode]);
-
-      for (final row in result) {
-        print('DEBUG: client_code: ${row["thumbnail_url"]}');
-      }
       if (kDebugMode) {
         print('DEBUG: Query returned ${result.length} trading points');
         if (result.isNotEmpty) {
           final sample = result.first;
-          print('DEBUG: Sample result - visit_today: ${sample['visit_today']}, visit_step_number: ${sample['visit_step_number']}, thumbnail_url: ${sample['thumbnail_url']}');
+          print('DEBUG: Sample result - visit_today: ${sample['visit_today']}, visit_step_number: ${sample['visit_step_number']}');
         }
       }
 
@@ -3739,19 +3604,6 @@ class ApiDatabaseService {
         .map(
           (row) => VisitPlanList.fromMap(row),
         )
-        .toList();
-  }
-
-  // Thumbnails methods
-  Future<List<Thumbnail>> getThumbnails() async {
-    final db = await database;
-    final result = await db.query('thumbnails', orderBy: 'created_at_server DESC');
-
-    return result
-        .map((dynamic row) {
-          final map = Map<String, dynamic>.from(row as Map);
-          return Thumbnail.fromMap(map);
-        })
         .toList();
   }
 
@@ -6747,5 +6599,9 @@ class ApiDatabaseService {
       }
       rethrow;
     }
+  }
+
+  Future<List<Thumbnail>> getThumbnails() async {
+    return <Thumbnail>[];
   }
 }

@@ -6,9 +6,37 @@ import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/rest_api_database_service.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
+import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+
+String? _bestClientImagePreviewUrl(ClientImage img) {
+  final candidates = <String?>[
+    img.imageThumbnailUrl,
+    img.imageSmUrl,
+    img.imageMdUrl,
+    img.imageUrl,
+    img.image,
+  ];
+  for (final s in candidates) {
+    if (s != null && s.trim().isNotEmpty) return s;
+  }
+  return null;
+}
+
+String? _bestClientImageFullscreenUrl(ClientImage img) {
+  final candidates = <String?>[
+    img.imageLgUrl,
+    img.imageMdUrl,
+    img.imageSmUrl,
+    img.imageUrl,
+    img.imageThumbnailUrl,
+    img.image,
+  ];
+  for (final s in candidates) {
+    if (s != null && s.trim().isNotEmpty) return s;
+  }
+  return null;
+}
 
 /// Client Images Management Page
 /// Allows viewing existing client images, adding new images via camera/gallery, and bulk uploading to server
@@ -29,11 +57,11 @@ class ClientImagesManagementPage extends StatefulWidget {
 
 class _ClientImagesManagementPageState extends State<ClientImagesManagementPage> {
   final RestApiService _restApiService = sl<RestApiService>();
-  final RestApiDatabaseService _restApiDatabaseService = sl<RestApiDatabaseService>();
+  final ClientImagesService _clientImagesService = sl<ClientImagesService>();
   final ImagePicker _imagePicker = ImagePicker();
 
-  /// List of server thumbnails for the client
-  List<Thumbnail> _serverImages = [];
+  /// List of server images for the client
+  List<ClientImage> _serverImages = [];
 
   /// List of new images to be uploaded
   List<XFile> _pendingImages = [];
@@ -54,7 +82,7 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
   Future<void> _loadServerImages() async {
     try {
       setState(() => _isLoading = true);
-      final images = await _restApiDatabaseService.getThumbnailsByCode(widget.clientCode);
+      final images = await _clientImagesService.getClientImages(widget.clientCode);
       setState(() {
         _serverImages = images;
         _isLoading = false;
@@ -258,9 +286,9 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
         itemBuilder: (context, index) {
           if (index < _serverImages.length) {
             // Server image
-            final thumbnail = _serverImages[index];
+            final image = _serverImages[index];
             return _buildImageCard(
-              imageUrl: thumbnail.thumbnailUrl,
+              imageUrl: _bestClientImagePreviewUrl(image),
               isServer: true,
               index: index,
               theme: theme,
@@ -355,7 +383,7 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
 
 /// Full screen image viewer
 class FullScreenImageViewer extends StatefulWidget {
-  final List<dynamic> images; // List<Thumbnail> or List<XFile>
+  final List<dynamic> images; // List<ClientImage> or List<XFile>
   final int initialIndex;
   final bool isServer;
   final Function(int)? onDelete;
@@ -412,9 +440,10 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
         builder: (BuildContext context, int index) {
           final image = widget.images[index];
           if (widget.isServer) {
-            final thumbnail = image as Thumbnail;
+            final serverImage = image as ClientImage;
+            final url = _bestClientImageFullscreenUrl(serverImage) ?? '';
             return PhotoViewGalleryPageOptions(
-              imageProvider: NetworkImage(thumbnail.thumbnailUrl!),
+              imageProvider: NetworkImage(url),
               initialScale: PhotoViewComputedScale.contained,
               minScale: PhotoViewComputedScale.contained,
               maxScale: PhotoViewComputedScale.covered * 2,

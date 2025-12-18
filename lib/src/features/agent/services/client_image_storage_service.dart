@@ -5,9 +5,9 @@ import 'package:image/image.dart' as img;
 
 class ClientImageStorageService {
   static const String _clientImagesDir = 'client_images';
-  static const String _thumbnailsDir = 'client_thumbnails';
+  static const String _previewsDir = 'client_previews';
   static const String _metadataFile = 'client_images_metadata.json';
-  static const int _thumbnailSize = 200;
+  static const int _previewSize = 200;
 
   /// Get application documents directory
   Future<Directory> _getAppDir() async {
@@ -24,14 +24,14 @@ class ClientImageStorageService {
     return imagesDir;
   }
 
-  /// Get thumbnails directory
-  Future<Directory> _getThumbnailsDir() async {
+  /// Get previews directory
+  Future<Directory> _getPreviewsDir() async {
     final appDir = await _getAppDir();
-    final thumbnailsDir = Directory('${appDir.path}/$_thumbnailsDir');
-    if (!await thumbnailsDir.exists()) {
-      await thumbnailsDir.create(recursive: true);
+    final previewsDir = Directory('${appDir.path}/$_previewsDir');
+    if (!await previewsDir.exists()) {
+      await previewsDir.create(recursive: true);
     }
-    return thumbnailsDir;
+    return previewsDir;
   }
 
   /// Get metadata file path
@@ -74,7 +74,7 @@ class ClientImageStorageService {
     }
   }
 
-  /// Save client image with thumbnail
+  /// Save client image with preview
   Future<Map<String, String>> saveClientImage({
     required String clientCode,
     required File imageFile,
@@ -82,21 +82,21 @@ class ClientImageStorageService {
   }) async {
     try {
       final imagesDir = await _getClientImagesDir();
-      final thumbnailsDir = await _getThumbnailsDir();
+      final previewsDir = await _getPreviewsDir();
 
       // Generate filenames
       final imageFileName = _generateFileName(clientCode);
-      final thumbnailFileName = '${imageFileName.replaceAll('.jpg', '')}_thumb.jpg';
+      final previewFileName = '${imageFileName.replaceAll('.jpg', '')}_preview.jpg';
 
       // Full paths
       final imagePath = '${imagesDir.path}/$imageFileName';
-      final thumbnailPath = '${thumbnailsDir.path}/$thumbnailFileName';
+      final previewPath = '${previewsDir.path}/$previewFileName';
 
       // Copy original image
       await imageFile.copy(imagePath);
 
-      // Create and save thumbnail
-      await _createThumbnail(imageFile, thumbnailPath);
+      // Create and save preview
+      await _createPreview(imageFile, previewPath);
 
       // Load existing metadata
       final metadata = await _loadMetadata();
@@ -106,7 +106,8 @@ class ClientImageStorageService {
         'id': DateTime.now().millisecondsSinceEpoch.toString(),
         'clientCode': clientCode,
         'imagePath': imagePath,
-        'thumbnailPath': thumbnailPath,
+        'previewPath': previewPath,
+        'thumbnailPath': previewPath,
         'timestamp': DateTime.now().toIso8601String(),
         'description': description ?? 'Client image',
         'originalFileName': imageFile.path.split('/').last,
@@ -120,15 +121,15 @@ class ClientImageStorageService {
 
       return {
         'imagePath': imagePath,
-        'thumbnailPath': thumbnailPath,
+        'previewPath': previewPath,
       };
     } catch (e) {
       throw Exception('Failed to save client image: $e');
     }
   }
 
-  /// Create thumbnail from image
-  Future<void> _createThumbnail(File imageFile, String thumbnailPath) async {
+  /// Create preview from image
+  Future<void> _createPreview(File imageFile, String previewPath) async {
     try {
       final imageBytes = await imageFile.readAsBytes();
       final image = img.decodeImage(imageBytes);
@@ -137,36 +138,36 @@ class ClientImageStorageService {
         throw Exception('Failed to decode image');
       }
 
-      // Calculate thumbnail dimensions
+      // Calculate preview dimensions
       final aspectRatio = image.width / image.height;
       int thumbWidth, thumbHeight;
 
       if (aspectRatio > 1) {
         // Landscape
-        thumbWidth = _thumbnailSize;
-        thumbHeight = (_thumbnailSize / aspectRatio).round();
+        thumbWidth = _previewSize;
+        thumbHeight = (_previewSize / aspectRatio).round();
       } else {
         // Portrait
-        thumbHeight = _thumbnailSize;
-        thumbWidth = (_thumbnailSize * aspectRatio).round();
+        thumbHeight = _previewSize;
+        thumbWidth = (_previewSize * aspectRatio).round();
       }
 
       // Resize image
-      final thumbnail = img.copyResize(
+      final preview = img.copyResize(
         image,
         width: thumbWidth,
         height: thumbHeight,
         interpolation: img.Interpolation.linear,
       );
 
-      // Save thumbnail
-      final thumbnailFile = File(thumbnailPath);
-      await thumbnailFile.writeAsBytes(img.encodeJpg(thumbnail, quality: 85));
+      // Save preview
+      final previewFile = File(previewPath);
+      await previewFile.writeAsBytes(img.encodeJpg(preview, quality: 85));
 
     } catch (e) {
-      // If thumbnail creation fails, copy original as thumbnail
-      await imageFile.copy(thumbnailPath);
-      print('Warning: Thumbnail creation failed, using original: $e');
+      // If preview creation fails, copy original as preview
+      await imageFile.copy(previewPath);
+      print('Warning: Preview creation failed, using original: $e');
     }
   }
 
@@ -188,23 +189,22 @@ class ClientImageStorageService {
         await imageFile.delete();
       }
 
-      // Try to find and delete thumbnail
-      final thumbnailPath = _getThumbnailPathFromImagePath(imagePath);
-      final thumbnailFile = File(thumbnailPath);
-      if (await thumbnailFile.exists()) {
-        await thumbnailFile.delete();
+      // Try to find and delete preview
+      final previewPath = _getPreviewPathFromImagePath(imagePath);
+      final previewFile = File(previewPath);
+      if (await previewFile.exists()) {
+        await previewFile.delete();
       }
-
     } catch (e) {
       print('Error deleting client image: $e');
     }
   }
 
-  /// Get thumbnail path from image path
-  String _getThumbnailPathFromImagePath(String imagePath) {
+  /// Get preview path from image path
+  String _getPreviewPathFromImagePath(String imagePath) {
     final fileName = imagePath.split('/').last;
-    final baseName = fileName.replaceAll('.jpg', '');
-    return imagePath.replaceAll(_clientImagesDir, _thumbnailsDir).replaceAll('.jpg', '_thumb.jpg');
+    final baseName = fileName.replaceAll('.jpg', '').replaceAll('_preview', '');
+    return imagePath.replaceAll(_clientImagesDir, _previewsDir).replaceAll('.jpg', '_preview.jpg');
   }
 
   /// Get all client images for a specific client
@@ -224,9 +224,9 @@ class ClientImageStorageService {
     return await file.exists() ? file : null;
   }
 
-  /// Get thumbnail file
-  Future<File?> getThumbnailFile(String thumbnailPath) async {
-    final file = File(thumbnailPath);
+  /// Get preview file
+  Future<File?> getPreviewFile(String previewPath) async {
+    final file = File(previewPath);
     return await file.exists() ? file : null;
   }
 
@@ -237,24 +237,27 @@ class ClientImageStorageService {
       final imagesToDelete = metadata.where((entry) => entry['clientCode'] == clientCode).toList();
 
       for (final entry in imagesToDelete) {
-        final imagePath = entry['imagePath'];
-        final thumbnailPath = entry['thumbnailPath'];
+        final imagePath = entry['imagePath'] as String?;
+        final previewPath = (entry['previewPath'] ?? entry['thumbnailPath']) as String?;
 
         // Delete files
-        final imageFile = File(imagePath);
-        if (await imageFile.exists()) {
-          await imageFile.delete();
+        if (imagePath != null) {
+          final imageFile = File(imagePath);
+          if (await imageFile.exists()) {
+            await imageFile.delete();
+          }
         }
-        final thumbnailFile = File(thumbnailPath);
-        if (await thumbnailFile.exists()) {
-          await thumbnailFile.delete();
+        if (previewPath != null) {
+          final previewFile = File(previewPath);
+          if (await previewFile.exists()) {
+            await previewFile.delete();
+          }
         }
       }
 
       // Remove from metadata
       metadata.removeWhere((entry) => entry['clientCode'] == clientCode);
       await _saveMetadata(metadata);
-
     } catch (e) {
       print('Error clearing client images: $e');
     }

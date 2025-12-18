@@ -1,14 +1,12 @@
 import 'dart:io';
-import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
 
 class PhotoStorageService {
   static const String _photosDir = 'visit_photos';
-  static const String _thumbnailsDir = 'visit_thumbnails';
-  static const int _thumbnailSize = 200;
+  static const String _previewsDir = 'visit_previews';
+  static const int _previewSize = 200;
 
   final VisitStepDataService _dataService;
 
@@ -29,14 +27,14 @@ class PhotoStorageService {
     return photosDir;
   }
 
-  /// Get thumbnails directory
-  Future<Directory> _getThumbnailsDir() async {
+  /// Get previews directory
+  Future<Directory> _getPreviewsDir() async {
     final appDir = await _getAppDir();
-    final thumbnailsDir = Directory('${appDir.path}/$_thumbnailsDir');
-    if (!await thumbnailsDir.exists()) {
-      await thumbnailsDir.create(recursive: true);
+    final previewsDir = Directory('${appDir.path}/$_previewsDir');
+    if (!await previewsDir.exists()) {
+      await previewsDir.create(recursive: true);
     }
-    return thumbnailsDir;
+    return previewsDir;
   }
 
   /// Generate unique filename
@@ -45,7 +43,7 @@ class PhotoStorageService {
     return '${visitId}_${stepCode}_${timestamp}$suffix.jpg';
   }
 
-  /// Save photo with thumbnail
+  /// Save photo with preview
   Future<Map<String, String>> savePhoto({
     required String visitId,
     required String clientCode,
@@ -57,21 +55,21 @@ class PhotoStorageService {
   }) async {
     try {
       final photosDir = await _getPhotosDir();
-      final thumbnailsDir = await _getThumbnailsDir();
+      final previewsDir = await _getPreviewsDir();
 
       // Generate filenames
       final imageFileName = _generateFileName(visitId, stepCode);
-      final thumbnailFileName = _generateFileName(visitId, stepCode, suffix: '_thumb');
+      final previewFileName = _generateFileName(visitId, stepCode, suffix: '_preview');
 
       // Full paths
       final imagePath = '${photosDir.path}/$imageFileName';
-      final thumbnailPath = '${thumbnailsDir.path}/$thumbnailFileName';
+      final previewPath = '${previewsDir.path}/$previewFileName';
 
       // Copy original image
       await imageFile.copy(imagePath);
 
-      // Create and save thumbnail
-      await _createThumbnail(imageFile, thumbnailPath);
+      // Create and save preview
+      await _createPreview(imageFile, previewPath);
 
       // Save to database
       await _dataService.savePhotoData(
@@ -80,7 +78,7 @@ class PhotoStorageService {
         stepCode: stepCode,
         stepName: stepName,
         imagePath: imagePath,
-        thumbnailPath: thumbnailPath,
+        thumbnailPath: previewPath,
         description: description,
         metadata: {
           ...?metadata,
@@ -92,15 +90,15 @@ class PhotoStorageService {
 
       return {
         'imagePath': imagePath,
-        'thumbnailPath': thumbnailPath,
+        'thumbnailPath': previewPath,
       };
     } catch (e) {
       throw Exception('Failed to save photo: $e');
     }
   }
 
-  /// Create thumbnail from image
-  Future<void> _createThumbnail(File imageFile, String thumbnailPath) async {
+  /// Create preview from image
+  Future<void> _createPreview(File imageFile, String previewPath) async {
     try {
       final imageBytes = await imageFile.readAsBytes();
       final image = img.decodeImage(imageBytes);
@@ -109,40 +107,40 @@ class PhotoStorageService {
         throw Exception('Failed to decode image');
       }
 
-      // Calculate thumbnail dimensions
+      // Calculate preview dimensions
       final aspectRatio = image.width / image.height;
       int thumbWidth, thumbHeight;
 
       if (aspectRatio > 1) {
         // Landscape
-        thumbWidth = _thumbnailSize;
-        thumbHeight = (_thumbnailSize / aspectRatio).round();
+        thumbWidth = _previewSize;
+        thumbHeight = (_previewSize / aspectRatio).round();
       } else {
         // Portrait
-        thumbHeight = _thumbnailSize;
-        thumbWidth = (_thumbnailSize * aspectRatio).round();
+        thumbHeight = _previewSize;
+        thumbWidth = (_previewSize * aspectRatio).round();
       }
 
       // Resize image
-      final thumbnail = img.copyResize(
+      final preview = img.copyResize(
         image,
         width: thumbWidth,
         height: thumbHeight,
         interpolation: img.Interpolation.linear,
       );
 
-      // Save thumbnail
-      final thumbnailFile = File(thumbnailPath);
-      await thumbnailFile.writeAsBytes(img.encodeJpg(thumbnail, quality: 85));
+      // Save preview
+      final previewFile = File(previewPath);
+      await previewFile.writeAsBytes(img.encodeJpg(preview, quality: 85));
 
     } catch (e) {
-      // If thumbnail creation fails, copy original as thumbnail
-      await imageFile.copy(thumbnailPath);
-      print('Warning: Thumbnail creation failed, using original: $e');
+      // If preview creation fails, copy original as preview
+      await imageFile.copy(previewPath);
+      print('Warning: Preview creation failed, using original: $e');
     }
   }
 
-  /// Delete photo and its thumbnail
+  /// Delete photo and its preview
   Future<void> deletePhoto(String visitId, int stepCode, String imagePath) async {
     try {
       // Delete from database
@@ -154,11 +152,11 @@ class PhotoStorageService {
         await imageFile.delete();
       }
 
-      // Try to find and delete thumbnail
-      final thumbnailPath = _getThumbnailPathFromImagePath(imagePath);
-      final thumbnailFile = File(thumbnailPath);
-      if (await thumbnailFile.exists()) {
-        await thumbnailFile.delete();
+      // Try to find and delete preview
+      final previewPath = _getPreviewPathFromImagePath(imagePath);
+      final previewFile = File(previewPath);
+      if (await previewFile.exists()) {
+        await previewFile.delete();
       }
 
     } catch (e) {
@@ -167,11 +165,11 @@ class PhotoStorageService {
     }
   }
 
-  /// Get thumbnail path from image path
-  String _getThumbnailPathFromImagePath(String imagePath) {
+  /// Get preview path from image path
+  String _getPreviewPathFromImagePath(String imagePath) {
     final fileName = imagePath.split('/').last;
-    final baseName = fileName.replaceAll('.jpg', '').replaceAll('_thumb', '');
-    return imagePath.replaceAll(_photosDir, _thumbnailsDir).replaceAll('.jpg', '_thumb.jpg');
+    final baseName = fileName.replaceAll('.jpg', '').replaceAll('_preview', '');
+    return imagePath.replaceAll(_photosDir, _previewsDir).replaceAll('.jpg', '_preview.jpg');
   }
 
   /// Get photo file
@@ -180,9 +178,9 @@ class PhotoStorageService {
     return await file.exists() ? file : null;
   }
 
-  /// Get thumbnail file
-  Future<File?> getThumbnailFile(String thumbnailPath) async {
-    final file = File(thumbnailPath);
+  /// Get preview file
+  Future<File?> getPreviewFile(String previewPath) async {
+    final file = File(previewPath);
     return await file.exists() ? file : null;
   }
 
@@ -190,17 +188,17 @@ class PhotoStorageService {
   Future<void> cleanupOrphanedFiles() async {
     try {
       final photosDir = await _getPhotosDir();
-      final thumbnailsDir = await _getThumbnailsDir();
+      final previewsDir = await _getPreviewsDir();
 
       // Get all photo files
       final photoFiles = await photosDir.list().where((entity) => entity is File).toList();
-      final thumbnailFiles = await thumbnailsDir.list().where((entity) => entity is File).toList();
+      final previewFiles = await previewsDir.list().where((entity) => entity is File).toList();
 
       // This would need database access to check which files are referenced
       // For now, just clean files older than 30 days
       final cutoffDate = DateTime.now().subtract(const Duration(days: 30));
 
-      for (final file in [...photoFiles, ...thumbnailFiles]) {
+      for (final file in [...photoFiles, ...previewFiles]) {
         final stat = await file.stat();
         if (stat.modified.isBefore(cutoffDate)) {
           await file.delete();
@@ -216,10 +214,10 @@ class PhotoStorageService {
   Future<Map<String, dynamic>> getStorageStats() async {
     try {
       final photosDir = await _getPhotosDir();
-      final thumbnailsDir = await _getThumbnailsDir();
+      final previewsDir = await _getPreviewsDir();
 
       int photoCount = 0;
-      int thumbnailCount = 0;
+      int previewCount = 0;
       int totalSize = 0;
 
       // Count photos
@@ -230,24 +228,24 @@ class PhotoStorageService {
         }
       }
 
-      // Count thumbnails
-      await for (final entity in thumbnailsDir.list()) {
+      // Count previews
+      await for (final entity in previewsDir.list()) {
         if (entity is File) {
-          thumbnailCount++;
+          previewCount++;
           totalSize += await entity.length();
         }
       }
 
       return {
         'photoCount': photoCount,
-        'thumbnailCount': thumbnailCount,
+        'previewCount': previewCount,
         'totalSize': totalSize,
         'formattedSize': _formatFileSize(totalSize),
       };
     } catch (e) {
       return {
         'photoCount': 0,
-        'thumbnailCount': 0,
+        'previewCount': 0,
         'totalSize': 0,
         'formattedSize': '0 B',
       };

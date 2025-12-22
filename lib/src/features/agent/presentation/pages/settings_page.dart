@@ -9,6 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart'
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_toggle.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings/data_sync_tab.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -24,7 +25,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this); // Changed from 3 to 4
   }
 
   @override
@@ -64,6 +65,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
               tabs: [
                  Tab(text: l10n.permissions),
                  Tab(text: l10n.maps),
+                 Tab( text: 'Data Sync'), // NEW TAB
                  Tab(text: l10n.interfaceSettings),
                ],
             ),
@@ -76,6 +78,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
               children: [
                  const PermissionsTab(),
                  const MapsTab(),
+                 const DataSyncTab(), // NEW TAB CONTENT
                  InterfaceSettingsTab(),
                ],
             ),

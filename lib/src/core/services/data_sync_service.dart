@@ -7,6 +7,8 @@ import 'package:gloria_marketing_flutter/src/core/services/api_database_service.
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
@@ -69,11 +71,18 @@ class DataSyncService {
   /// Register background sync task
   Future<void> registerBackgroundSync({
     Duration frequency = const Duration(hours: 6),
-    String? userCode,
-    String? password,
-    String? codeProject,
-    String? codeSklad,
   }) async {
+    // Get credentials from prefs since background task needs them
+    final userCode = _prefs.getUserCode();
+    final password = _prefs.getPassword();
+    final codeProject = _prefs.getCodeProject();
+    final codeSklad = _prefs.getWarehouseCode();
+
+    if (userCode == null || password == null) {
+      if (kDebugMode) print('Background sync: Missing credentials, cannot register.');
+      return;
+    }
+
     await Workmanager().registerPeriodicTask(
       _backgroundSyncTask,
       _backgroundSyncTask,
@@ -90,6 +99,26 @@ class DataSyncService {
       ),
       existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
+    if (kDebugMode) print('Background sync registered with frequency: $frequency');
+  }
+
+  /// Toggle background sync based on settings
+  Future<void> toggleBackgroundSync(bool enabled) async {
+    if (enabled) {
+      final intervalHours = _prefs.getBgSyncInterval();
+      final customMinutes = _prefs.getBgSyncCustomMinutes();
+      
+      Duration frequency;
+      if (customMinutes != null && customMinutes >= 60) {
+        frequency = Duration(minutes: customMinutes);
+      } else {
+        frequency = Duration(hours: intervalHours);
+      }
+      
+      await registerBackgroundSync(frequency: frequency);
+    } else {
+      await cancelBackgroundSync();
+    }
   }
 
   /// Cancel background sync
@@ -2071,10 +2100,22 @@ void callbackDispatcher() {
 
 Future<bool> _performBackgroundSync(Map<String, dynamic> inputData) async {
   try {
-    // TODO: Implement background sync with proper service initialization
-    // For now, this is a placeholder
+    // Initialize services
+    await setupServiceLocator();
+    
+    // Get orchestrator
+    final orchestrator = sl<DataSyncOrchestrator>();
+    
     if (kDebugMode) {
-      print('Background sync executed with data: $inputData');
+      print('Background sync starting...');
+    }
+    
+    // Execute full sync
+    // We use .last to wait for completion of the sync Stream
+    await orchestrator.syncAll().last;
+    
+    if (kDebugMode) {
+      print('Background sync completed successfully');
     }
     return true;
   } catch (e) {

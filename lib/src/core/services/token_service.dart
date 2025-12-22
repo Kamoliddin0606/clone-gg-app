@@ -247,6 +247,11 @@ class TokenService {
     }
   }
 
+  /// Public wrapper for refreshing access token
+  Future<String?> refreshAccessToken() async {
+    return _refreshAccessToken();
+  }
+
   /// Get a valid access token (refresh if necessary)
   /// This method returns a valid access token, refreshing it if expired
   ///
@@ -259,6 +264,10 @@ class TokenService {
       if (accessToken == null || accessToken.isEmpty) {
         if (kDebugMode) {
           print('TokenService: No access token stored');
+        }
+        final newToken = await _refreshAccessToken();
+        if (newToken != null && newToken.isNotEmpty) {
+          return newToken;
         }
         return null;
       }

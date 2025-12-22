@@ -186,6 +186,8 @@ class _AppState extends State<App> {
           return Consumer<LocaleProvider>(
             builder: (context, localeProvider, _) {
               return MaterialApp(
+                navigatorKey: AppRouter.navigatorKey,
+                scaffoldMessengerKey: AppRouter.scaffoldMessengerKey,
                 title: 'SelUp',
                 theme: appLight,
                 darkTheme: appDark,

@@ -20,10 +20,10 @@ class RestApiService {
   /// independent from UI/database model classes.
   ///
   /// Endpoint:
-  /// - GET http://178.218.200.120:1596/api/v1/client-image
+  /// - GET http://178.218.200.120:1596/api/v1/client-image/
   ///
   /// Query params:
-  /// - client_code (optional)
+  /// - client (optional)
   ///
   /// Auth:
   /// - Requires Bearer token.
@@ -32,7 +32,7 @@ class RestApiService {
     String? clientCode,
   }) async {
     const String baseUrl = 'http://178.218.200.120:1596';
-    final endpoint = '$baseUrl/api/v1/client-image';
+    final endpoint = '$baseUrl/api/v1/client-image/';
 
     try {
       if (authToken.isEmpty) {
@@ -41,7 +41,8 @@ class RestApiService {
 
       final query = <String, dynamic>{};
       if (clientCode != null && clientCode.trim().isNotEmpty) {
-        query['client_code'] = clientCode;
+        query['client_code_1c'] = clientCode;
+        query['client'] = clientCode;
       }
 
       final response = await _dio.get(

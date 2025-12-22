@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:sqflite/sqflite.dart';
 import 'api_database_service.dart';
 import 'rest_api_service.dart';
 import 'token_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/client_image_storage_service.dart';
 
 /// Model class for client images
 class ClientImage {
@@ -144,16 +146,19 @@ class ClientImagesService {
   final RestApiService _apiService;
   final TokenService _tokenService;
   final Dio _dio;
+  final ClientImageStorageService _clientImageStorageService;
 
   ClientImagesService({
     required ApiDatabaseService databaseService,
     required RestApiService apiService,
     required TokenService tokenService,
     required Dio dio,
+    ClientImageStorageService? clientImageStorageService,
   })  : _databaseService = databaseService,
         _apiService = apiService,
         _tokenService = tokenService,
-        _dio = dio;
+        _dio = dio,
+        _clientImageStorageService = clientImageStorageService ?? ClientImageStorageService();
 
   /// Callback for progress updates
   Function(double progress, String message)? onProgressUpdate;
@@ -178,12 +183,76 @@ class ClientImagesService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _cacheImagesLocally({
+    required String clientCode,
+    required List<Map<String, dynamic>> images,
+  }) async {
+    final out = <Map<String, dynamic>>[];
+
+    for (final image in images) {
+      String? pickUrl(Map<String, dynamic> img) {
+        final candidates = <dynamic>[
+          img['image_thumbnail_url'],
+          img['image_sm_url'],
+          img['image_md_url'],
+          img['image_lg_url'],
+          img['image_url'],
+          img['image'],
+        ];
+        for (final c in candidates) {
+          if (c is String && c.trim().isNotEmpty) return c;
+        }
+        return null;
+      }
+
+      final url = pickUrl(image);
+      if (url == null) {
+        out.add(image);
+        continue;
+      }
+
+      try {
+        final resp = await _dio.get<List<int>>(
+          url,
+          options: Options(responseType: ResponseType.bytes),
+        );
+        final bytes = resp.data;
+        if (bytes == null || bytes.isEmpty) {
+          out.add(image);
+          continue;
+        }
+
+        final tmpDir = await Directory.systemTemp.createTemp('client_img_');
+        final tmpFile = File('${tmpDir.path}/img_${DateTime.now().microsecondsSinceEpoch}.jpg');
+        await tmpFile.writeAsBytes(bytes, flush: true);
+
+        final saved = await _clientImageStorageService.saveClientImage(
+          clientCode: clientCode,
+          imageFile: tmpFile,
+          description: 'Client image',
+        );
+
+        out.add({
+          ...image,
+          // Store local paths so UI can render offline
+          'image': saved['imagePath'],
+          'image_thumbnail_url': saved['previewPath'],
+        });
+      } catch (_) {
+        out.add(image);
+      }
+    }
+
+    return out;
+  }
+
   /// Fetch all images for a specific client and save to client_images table
   Future<void> fetchAndSaveClientImages(String? clientCode, {bool? replaceExisting = false}) async {
     try {
       if (clientCode == null || clientCode.trim().isEmpty) {
         return;
       }
+
       if (kDebugMode) {
         print('ClientImagesService: Starting client image fetch for client: $clientCode');
       }
@@ -192,21 +261,38 @@ class ClientImagesService {
       onProgressUpdate?.call(0.0, 'Starting client image fetch...');
 
       // Ensure we have a valid token
-      final token = await _tokenService.getValidAccessToken();
-      if (token == null) {
-        throw Exception('No valid access token available');
+      String? token = await _tokenService.getValidAccessToken();
+      if (token == null || token.trim().isEmpty) {
+        if (kDebugMode) {
+          print('ClientImagesService: No valid access token, attempting refresh...');
+        }
+        token = await _tokenService.refreshAccessToken();
+      }
+      if (token == null || token.trim().isEmpty) {
+        throw Exception('No valid access token available. Please re-authenticate.');
       }
 
       onProgressUpdate?.call(25.0, 'Fetching images from server...');
 
-      // Fetch client images from API
-      final images = await _fetchClientImagesFromApi(token, clientCode);
+      // Fetch client images from API (filtered by client)
+      final images = await _apiService.getClientImages(
+        authToken: token,
+        clientCode: clientCode,
+      );
+
+      // Always clear existing locally cached images for this client before saving new ones
+      await _clientImageStorageService.clearClientImages(clientCode);
+
+      final cachedImages = await _cacheImagesLocally(
+        clientCode: clientCode,
+        images: images,
+      );
 
       onProgressUpdate?.call(75.0, 'Saving images to database...');
 
-      if (images.isNotEmpty) {
+      if (cachedImages.isNotEmpty) {
         // Save images to database
-        await _saveClientImagesToDatabase(clientCode, images, replaceExisting == true);
+        await _saveClientImagesToDatabase(clientCode, cachedImages, replaceExisting == true);
       }
 
       onProgressUpdate?.call(100.0, 'Client images saved successfully');
@@ -226,7 +312,7 @@ class ClientImagesService {
   /// Fetch client images from API
   Future<List<Map<String, dynamic>>> _fetchClientImagesFromApi(String token, String clientCode) async {
     const String baseUrl = 'http://178.218.200.120:1596';
-    final endpoint = '$baseUrl/api/v1/client-image/?client_code=$clientCode';
+    final endpoint = '$baseUrl/api/v1/client-image/';
     final response = await _dio.get(
       endpoint,
       options: Options(
@@ -236,6 +322,9 @@ class ClientImagesService {
           'Content-Type': 'application/json',
         },
       ),
+      queryParameters: {
+        'client': clientCode,
+      },
     );
 
     if (response.statusCode == 200) {

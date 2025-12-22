@@ -17,6 +17,9 @@ class SharedPreferencesService {
   static const String _baseUrlKey = 'selected_server_base_url';
   static const String _isOfflineModeKey = 'is_offline_mode';
   static const String _languageCodeKey = 'language_code';
+  static const String _bgSyncEnabledKey = 'bg_sync_enabled';
+  static const String _bgSyncIntervalKey = 'bg_sync_interval_hours';
+  static const String _bgSyncCustomMinutesKey = 'bg_sync_custom_minutes';
   // static const String _serverName = 'selected_server_name';
 
   static SharedPreferencesService? _instance;
@@ -354,5 +357,34 @@ Future<void> init() async {
       print('Error clearing map tokens: $e');
       return false;
     }
+  }
+
+  // Background Sync Settings
+  Future<void> setBgSyncEnabled(bool enabled) async {
+    await _preferences.setBool(_bgSyncEnabledKey, enabled);
+  }
+
+  bool isBgSyncEnabled() {
+    return _preferences.getBool(_bgSyncEnabledKey) ?? false;
+  }
+
+  Future<void> setBgSyncInterval(int hours) async {
+    await _preferences.setInt(_bgSyncIntervalKey, hours);
+  }
+
+  int getBgSyncInterval() {
+    return _preferences.getInt(_bgSyncIntervalKey) ?? 6; // Default 6 hours
+  }
+
+  Future<void> setBgSyncCustomMinutes(int? minutes) async {
+    if (minutes == null) {
+      await _preferences.remove(_bgSyncCustomMinutesKey);
+    } else {
+      await _preferences.setInt(_bgSyncCustomMinutesKey, minutes);
+    }
+  }
+
+  int? getBgSyncCustomMinutes() {
+    return _preferences.getInt(_bgSyncCustomMinutesKey);
   }
 }

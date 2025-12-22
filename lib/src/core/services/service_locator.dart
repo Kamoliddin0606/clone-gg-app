@@ -17,6 +17,8 @@ import 'package:gloria_marketing_flutter/src/core/services/location_service.dart
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/sync_notification_service.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -33,6 +35,9 @@ import '../network/server_service.dart';
 final sl = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
+  // 0) Critical Services
+  sl.registerSingleton<SyncNotificationService>(SyncNotificationService());
+
   // 1) SharedPreferences (ASYNC singleton)
   if (!sl.isRegistered<SharedPreferencesService>()) {
     sl.registerSingletonAsync<SharedPreferencesService>(
@@ -91,6 +96,15 @@ Future<void> setupServiceLocator() async {
       dbHelper: sl<DatabaseHelper>(),
     ));
   }
+  
+  // DataSyncOrchestrator - Global singleton for table-level sync management
+  if (!sl.isRegistered<DataSyncOrchestrator>()) {
+    sl.registerLazySingleton<DataSyncOrchestrator>(() => DataSyncOrchestrator(
+      dataSyncService: sl<DataSyncService>(),
+      prefs: sl<SharedPreferencesService>(),
+    ));
+  }
+
   if (!sl.isRegistered<ReportsSyncService>()) {
     sl.registerLazySingleton<ReportsSyncService>(() => ReportsSyncService(
       prefs: sl<SharedPreferencesService>(),

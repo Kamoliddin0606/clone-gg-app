@@ -14,6 +14,16 @@ import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
+ImageProvider? _clientImageProviderFromUrl(String? url) {
+  if (url == null) return null;
+  final u = url.trim();
+  if (u.isEmpty) return null;
+  if (u.startsWith('http://') || u.startsWith('https://')) {
+    return NetworkImage(u);
+  }
+  return FileImage(File(u));
+}
+
 String? _bestClientImagePreviewUrl(ClientImage img) {
   final candidates = <String?>[
     img.imageThumbnailUrl,
@@ -596,6 +606,11 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       return;
     }
 
+    final provider = _clientImageProviderFromUrl(url);
+    if (provider == null) {
+      return;
+    }
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => Scaffold(
@@ -606,7 +621,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
             title: const Text('Rasm'),
           ),
           body: PhotoView(
-            imageProvider: NetworkImage(url),
+            imageProvider: provider,
             minScale: PhotoViewComputedScale.contained,
             maxScale: PhotoViewComputedScale.covered * 2,
             errorBuilder: (context, error, stackTrace) {
@@ -773,6 +788,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   /// Build server image card for grid view
   Widget _buildServerImageCard(ClientImage image, ThemeData theme) {
     final previewUrl = _bestClientImagePreviewUrl(image);
+    final previewProvider = _clientImageProviderFromUrl(previewUrl);
 
     return GestureDetector(
       onTap: () => _openServerImageViewer(image),
@@ -782,13 +798,13 @@ class _ClientImagesPageState extends State<ClientImagesPage>
           children: [
             AspectRatio(
               aspectRatio: 1.0, // 1:1 aspect ratio
-              child: previewUrl == null
+              child: previewProvider == null
                   ? Container(
                       color: theme.colorScheme.surfaceContainerHighest,
                       child: const Center(child: Icon(Icons.broken_image)),
                     )
-                  : Image.network(
-                      previewUrl,
+                  : Image(
+                      image: previewProvider,
                       fit: BoxFit.cover,
                       width: double.infinity,
                       loadingBuilder: (c, child, progress) {
@@ -851,6 +867,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   /// Build server image list item
   Widget _buildServerImageListItem(ClientImage image, ThemeData theme) {
     final previewUrl = _bestClientImagePreviewUrl(image);
+    final previewProvider = _clientImageProviderFromUrl(previewUrl);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -862,14 +879,14 @@ class _ClientImagesPageState extends State<ClientImagesPage>
             height: 60,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              image: previewUrl == null
+              image: previewProvider == null
                   ? null
                   : DecorationImage(
-                      image: NetworkImage(previewUrl),
+                      image: previewProvider,
                       fit: BoxFit.cover,
                     ),
             ),
-            child: previewUrl == null
+            child: previewProvider == null
                 ? const Center(child: Icon(Icons.broken_image))
                 : null,
           ),

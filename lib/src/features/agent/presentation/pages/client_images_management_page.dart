@@ -38,6 +38,16 @@ String? _bestClientImageFullscreenUrl(ClientImage img) {
   return null;
 }
 
+ImageProvider? _clientImageProviderFromUrl(String? url) {
+  if (url == null) return null;
+  final u = url.trim();
+  if (u.isEmpty) return null;
+  if (u.startsWith('http://') || u.startsWith('https://')) {
+    return NetworkImage(u);
+  }
+  return FileImage(File(u));
+}
+
 /// Client Images Management Page
 /// Allows viewing existing client images, adding new images via camera/gallery, and bulk uploading to server
 /// Expandable for future features like image editing, categorization, etc.
@@ -317,6 +327,7 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
     required int index,
     required ThemeData theme,
   }) {
+    final provider = isServer ? _clientImageProviderFromUrl(imageUrl) : null;
     return GestureDetector(
       onTap: () => _openFullScreenViewer(index, isServer),
       child: Card(
@@ -325,18 +336,20 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
           children: [
             AspectRatio(
               aspectRatio: 1.0,
-              child: imageUrl != null
-                  ? Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (c, child, p) => p == null
-                          ? child
-                          : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      errorBuilder: (c, e, s) => Container(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        child: const Center(child: Icon(Icons.broken_image)),
-                      ),
-                    )
+              child: isServer
+                  ? (provider == null
+                      ? Container(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          child: const Center(child: Icon(Icons.broken_image)),
+                        )
+                      : Image(
+                          image: provider,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => Container(
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            child: const Center(child: Icon(Icons.broken_image)),
+                          ),
+                        ))
                   : Image.file(
                       file!,
                       fit: BoxFit.cover,
@@ -442,8 +455,19 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
           if (widget.isServer) {
             final serverImage = image as ClientImage;
             final url = _bestClientImageFullscreenUrl(serverImage) ?? '';
+            final provider = _clientImageProviderFromUrl(url);
+            if (provider == null) {
+              return PhotoViewGalleryPageOptions.customChild(
+                child: const Center(
+                  child: Icon(Icons.broken_image, color: Colors.white, size: 64),
+                ),
+                initialScale: PhotoViewComputedScale.contained,
+                minScale: PhotoViewComputedScale.contained,
+                maxScale: PhotoViewComputedScale.covered * 2,
+              );
+            }
             return PhotoViewGalleryPageOptions(
-              imageProvider: NetworkImage(url),
+              imageProvider: provider,
               initialScale: PhotoViewComputedScale.contained,
               minScale: PhotoViewComputedScale.contained,
               maxScale: PhotoViewComputedScale.covered * 2,

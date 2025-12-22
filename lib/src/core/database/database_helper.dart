@@ -259,6 +259,18 @@ class DatabaseHelper {
     );
   }
 
+  /// Get total record count for a specific table
+  Future<int> getTableRowCount(String tableName) async {
+    try {
+      final db = await database;
+      final result = await db.rawQuery('SELECT COUNT(*) FROM $tableName');
+      return Sqflite.firstIntValue(result) ?? 0;
+    } catch (e) {
+      if (kDebugMode) print('Error getting row count for $tableName: $e');
+      return 0;
+    }
+  }
+
   static bool _isValidUrl(String url) {
     try {
       final uri = Uri.parse(url);

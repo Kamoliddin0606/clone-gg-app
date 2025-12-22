@@ -6604,4 +6604,17 @@ class ApiDatabaseService {
   Future<List<Thumbnail>> getThumbnails() async {
     return <Thumbnail>[];
   }
+
+  /// Get total record count for a specific table
+  Future<int> getTableRowCount(String tableName) async {
+    try {
+      final db = await database;
+      // Use rawQuery for better performance and to handle dynamic table names
+      final result = await db.rawQuery('SELECT COUNT(*) FROM $tableName');
+      return Sqflite.firstIntValue(result) ?? 0;
+    } catch (e) {
+      if (kDebugMode) print('Error getting row count for $tableName: $e');
+      return 0;
+    }
+  }
 }

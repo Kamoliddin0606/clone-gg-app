@@ -35,6 +35,7 @@ import 'visit_steps_page.dart';
 import 'client_images_page.dart';
 import 'dart:ui'; 
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/services/location_service.dart';
@@ -84,6 +85,16 @@ String? _bestClientImageUrl(ClientImage img) {
     if (s != null && s.trim().isNotEmpty) return s;
   }
   return null;
+}
+
+ImageProvider? _clientImageProvider(String? url) {
+  if (url == null) return null;
+  final u = url.trim();
+  if (u.isEmpty) return null;
+  if (u.startsWith('http://') || u.startsWith('https://')) {
+    return NetworkImage(u);
+  }
+  return FileImage(File(u));
 }
 
 /// Safely retrieves the best available photo URL for a trading point
@@ -179,6 +190,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
     // Image service for client images
     ClientImagesService? _clientImagesService;
+    bool _isFetchingClientImages = false;
 
     // PageStorage bucket for state persistence
     late final PageStorageBucket _storageBucket;
@@ -200,7 +212,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   /// Initialize client images service
   Future<void> _initializeClientImagesService() async {
     try {
-      await sl.isReady<ClientImagesService>();
+      if (!sl.isRegistered<ClientImagesService>()) {
+        throw Exception('ClientImagesService is not registered');
+      }
       _clientImagesService = sl<ClientImagesService>();
       if (kDebugMode) {
         print('ClientImagesService initialized successfully');
@@ -1098,6 +1112,10 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   /// saves to DB, loads to cache, and then opens the client details with swipeable images
   Future<void> _handleDoubleTapFetchImages(TradingPointWithPermissions tp) async {
     try {
+      if (_isFetchingClientImages) {
+        return;
+      }
+      _isFetchingClientImages = true;
       if (kDebugMode) {
         print('TradingPointsPage: Handling double-tap for client ${tp.tradingPoint.name} (${tp.tradingPoint.id})');
       }
@@ -1118,7 +1136,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
         // Try to initialize the service
         try {
-          await sl.isReady<ClientImagesService>();
+          if (!sl.isRegistered<ClientImagesService>()) {
+            throw Exception('ClientImagesService is not registered');
+          }
           clientImagesService = sl<ClientImagesService>();
           _clientImagesService = clientImagesService; // Cache it for future use
 
@@ -1185,6 +1205,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           ),
         );
       }
+    } finally {
+      _isFetchingClientImages = false;
     }
   }
 
@@ -2096,7 +2118,14 @@ class TradingPointGridCard extends StatelessWidget {
                     imageFilter: tradingPoint.isVisited
                         ? ImageFilter.blur(sigmaX: 3, sigmaY: 3)
                         : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                    child: Image.network(url, fit: BoxFit.cover),
+                    child: Image(
+                      image: _clientImageProvider(url)!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: cs.surfaceContainerHighest,
+                        child: const Icon(Icons.storefront, size: 40),
+                      ),
+                    ),
                   ),
                 ),
                 if (tradingPoint.isVisited)
@@ -2231,14 +2260,14 @@ class _NetAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = Image.network(
-      url,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _DefaultAvatar(name: null),
-      loadingBuilder: (c, child, prog) => prog == null
-          ? child
-          : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-    );
+    final provider = _clientImageProvider(url);
+    final image = provider == null
+        ? const _DefaultAvatar(name: null)
+        : Image(
+            image: provider,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const _DefaultAvatar(name: null),
+          );
     // Yengil blur ham qo‘shmoqchi bo‘lsangiz (visited payti):
     return visited
         ? ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5), child: image)
@@ -2449,39 +2478,29 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
               controller: _pageController,
               itemCount: _imageUrls.length,
               itemBuilder: (context, index) {
+                final provider = _clientImageProvider(_imageUrls[index]);
                 return ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
                       // Client image with blur effect if visited
-                      Image.network(
-                        _imageUrls[index],
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) {
-                            return widget.isVisited
-                                ? ImageFiltered(
-                                    imageFilter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                                    child: child,
-                                  )
-                                : child;
-                          }
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: cs.surfaceContainerHighest,
-                            child: const Icon(Icons.broken_image, size: 40),
-                          );
-                        },
-                      ),
+                      if (provider == null)
+                        Container(
+                          color: cs.surfaceContainerHighest,
+                          child: const Icon(Icons.broken_image, size: 40),
+                        )
+                      else
+                        Image(
+                          image: provider,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: cs.surfaceContainerHighest,
+                              child: const Icon(Icons.broken_image, size: 40),
+                            );
+                          },
+                        ),
                       // Overlay for visited state
                       if (widget.isVisited)
                         Container(
@@ -4188,14 +4207,17 @@ class _HeaderImageState extends State<_HeaderImage> {
                   itemBuilder: (context, index) {
                     final image = widget.clientImages[index];
                     final imageUrl = _bestClientImageUrl(image);
+                    final provider = _clientImageProvider(imageUrl);
                     return Container(
                       margin: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        image: DecorationImage(
-                          image: NetworkImage(imageUrl ?? ''),
-                          fit: BoxFit.cover,
-                        ),
+                        image: provider == null
+                            ? null
+                            : DecorationImage(
+                                image: provider,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                       child: Stack(
                         children: [

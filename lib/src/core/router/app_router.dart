@@ -23,6 +23,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/m
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_check_page.dart';
 
 class AppRouter {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
   static const String permissionCheckRoute = '/permission-check';
   static const String loginRoute = '/';
   static const String agentHomeRoute = '/agent-home';

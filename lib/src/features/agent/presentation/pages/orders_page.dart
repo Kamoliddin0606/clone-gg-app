@@ -4,6 +4,7 @@
 // =============================
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:get_it/get_it.dart';
 import '../widgets/order_card.dart';
@@ -12,7 +13,6 @@ import '../widgets/order_models.dart';
 import '../widgets/order_detail_sections.dart';
 import '../widgets/status_chip.dart';
 import '../widgets/order_filters_panel.dart';
-import '../shared/formatters.dart';
 import '../shared/order_status_utils.dart';
 import 'order_details_page.dart';
 import '../../../../core/services/data_sync_service.dart';
@@ -320,7 +320,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Buyurtmalar'),
+          title: Text(AppLocalizations.of(context)?.orders ?? 'Orders'),
           centerTitle: true,
           leading: (ModalRoute.of(context)?.canPop ?? false)
               ? IconButton(
@@ -338,7 +338,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Buyurtmalar'),
+          title: Text(AppLocalizations.of(context)?.orders ?? 'Orders'),
           centerTitle: true,
           leading: (ModalRoute.of(context)?.canPop ?? false)
               ? IconButton(
@@ -353,7 +353,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Xatolik yuz berdi: $_error'),
+              Text('${AppLocalizations.of(context)?.errorOccurredPrefix ?? "Error occurred"}: $_error'),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadOrderStatusesAndOrders,
@@ -370,7 +370,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
       length: _statusTabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Buyurtmalar'), centerTitle: true,
+          title: Text(AppLocalizations.of(context)?.orders ?? 'Orders'), centerTitle: true,
           leading: (ModalRoute.of(context)?.canPop ?? false)
               ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: ()=>Navigator.maybePop(context))
               : null,
@@ -387,7 +387,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
           // Tune row
           AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: _showTuneRow
               ? Padding(key: const ValueKey('tune'), padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children:[
-            Text('Buyurtmalar soni: ${_filtered.length}', style: Theme.of(context).textTheme.titleMedium), const Spacer(),
+            Text('${AppLocalizations.of(context)?.ordersCount ?? "Orders count"}: ${_filtered.length}', style: Theme.of(context).textTheme.titleMedium), const Spacer(),
             IconButton(tooltip: 'List', onPressed: _switchToList, icon: Icon(Icons.view_agenda_rounded, color: _isGrid? cs.outline : cs.primary)),
             IconButton(tooltip: 'Grid', onPressed: _switchToGrid, icon: Icon(Icons.grid_view_rounded, color: _isGrid? cs.primary : cs.outline)),
             IconButton(onPressed: _toggleTune, icon: const Icon(Icons.close))

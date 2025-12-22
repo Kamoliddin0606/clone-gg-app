@@ -1194,8 +1194,155 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allRequiredStepsCompleted => 'All required steps completed';
 
   @override
+  String get soapRequest => 'SOAP Request';
+
+  @override
+  String get soapRequestCopied => 'SOAP request copied';
+
+  @override
+  String get copy => 'Copy';
+
+  @override
+  String get orderNotFound => 'Order not found';
+
+  @override
+  String get readOnly => 'Read-only';
+
+  @override
+  String get pageUnderDevelopment => 'Page under development';
+
+  @override
+  String get stepCompletedReadOnly => 'This step is completed. View-only mode.';
+
+  @override
+  String get stepTypeNotImplemented => 'This step type page is not implemented yet.';
+
+  @override
+  String get orderDetailsNavigationErrorPrefix => 'Error opening order details';
+
+  @override
+  String get errorOccurredPrefix => 'Error occurred';
+
+  @override
+  String get stepErrorPrefix => 'Step error';
+
+  @override
+  String get visitFinishErrorPrefix => 'Error finishing visit';
+
+  @override
+  String get stepsCount => 'steps';
+
+  @override
+  String get visitFinishing => 'Finishing visit...';
+
+  @override
+  String get orderNumber => 'Order number';
+
+  @override
+  String get dataSaveError => 'Error saving data';
+
+  @override
+  String get saveErrorPrefix => 'Save error';
+
+  @override
+  String get dataLoadError => 'Error loading data';
+
+  @override
+  String get productsLoadError => 'Error loading products';
+
+  @override
+  String get settingsUpdateError => 'Error updating settings';
+
+  @override
+  String get clearOrder => 'Clear order';
+
+  @override
+  String get suggestedOrders => 'Suggested orders';
+
+  @override
+  String get productSelectionError => 'Error navigating to product selection';
+
+  @override
+  String get orderDataCleared => 'Order data cleared';
+
+  @override
+  String get dataClearError => 'Error clearing data';
+
+  @override
+  String get orderCreationError => 'Error creating order';
+
+  @override
+  String get deliveryDateChangedSuccess => 'Delivery date changed successfully';
+
+  @override
+  String get dateChangeError => 'Error changing date';
+
+  @override
+  String get clearOrderConfirmTitle => 'Clear order';
+
+  @override
+  String get clearOrderConfirmMessage => 'All selected products and related data will be deleted. Settings will be preserved. Do you want to continue?';
+
+  @override
+  String get clientDataLoadError => 'Error loading client data';
+
+  @override
+  String get locationNotAvailable => 'Location data not available. Visit cannot be completed.';
+
+  @override
+  String get visitCompletedFor => 'Visit completed successfully for';
+
+  @override
+  String get contractsPageError => 'Error navigating to contracts page';
+
+  @override
+  String get loadingClientImages => 'Loading client images...';
+
+  @override
+  String get clientImagesLoaded => 'Client images loaded';
+
+  @override
+  String get imageLoadError => 'Error loading images';
+
+  @override
+  String get disableVisitTodayFilter => 'Disable today\'s visit filter';
+
+  @override
+  String get showVisitTodayOnly => 'Show only today\'s visit clients';
+
+  @override
+  String get newClient => 'New client';
+
+  @override
+  String get orderHistory => 'Order history';
+
+  @override
+  String get tradingPointsNotFound => 'Trading points not found';
+
+  @override
+  String get clientCount => 'Client count';
+
+  @override
+  String get manageClientImages => 'Manage client images';
+
+  @override
+  String get ordersCount => 'Orders count';
+
+  @override
+  String get orderNumberPrefix => 'Order №';
+
+  @override
+  String get clientOrdersFor => 'orders for client';
+
+  @override
   String get cancelVisit => 'Cancel Visit';
 
   @override
   String get cancelVisitConfirmation => 'Are you sure you want to cancel this visit? All progress will be lost.';
+
+  @override
+  String get checkingDistance => 'Checking distance to trading point...';
+
+  @override
+  String get distanceRestrictionError => 'You are too far from the trading point to complete the visit.';
 }

@@ -1194,8 +1194,155 @@ class AppLocalizationsRu extends AppLocalizations {
   String get allRequiredStepsCompleted => 'Все обязательные шаги завершены';
 
   @override
+  String get soapRequest => 'SOAP запрос';
+
+  @override
+  String get soapRequestCopied => 'SOAP запрос скопирован';
+
+  @override
+  String get copy => 'Копировать';
+
+  @override
+  String get orderNotFound => 'Заказ не найден';
+
+  @override
+  String get readOnly => 'Только просмотр';
+
+  @override
+  String get pageUnderDevelopment => 'Страница в разработке';
+
+  @override
+  String get stepCompletedReadOnly => 'Этот шаг завершен. Режим только просмотра.';
+
+  @override
+  String get stepTypeNotImplemented => 'Для этого типа шага страница еще не реализована.';
+
+  @override
+  String get orderDetailsNavigationErrorPrefix => 'Ошибка при открытии деталей заказа';
+
+  @override
+  String get errorOccurredPrefix => 'Произошла ошибка';
+
+  @override
+  String get stepErrorPrefix => 'Ошибка шага';
+
+  @override
+  String get visitFinishErrorPrefix => 'Ошибка при завершении визита';
+
+  @override
+  String get stepsCount => 'шагов';
+
+  @override
+  String get visitFinishing => 'Завершение визита...';
+
+  @override
+  String get orderNumber => 'Номер заказа';
+
+  @override
+  String get dataSaveError => 'Ошибка сохранения данных';
+
+  @override
+  String get saveErrorPrefix => 'Ошибка сохранения';
+
+  @override
+  String get dataLoadError => 'Ошибка загрузки данных';
+
+  @override
+  String get productsLoadError => 'Ошибка загрузки продуктов';
+
+  @override
+  String get settingsUpdateError => 'Ошибка обновления настроек';
+
+  @override
+  String get clearOrder => 'Очистить заказ';
+
+  @override
+  String get suggestedOrders => 'Рекомендуемые заказы';
+
+  @override
+  String get productSelectionError => 'Ошибка перехода к выбору продуктов';
+
+  @override
+  String get orderDataCleared => 'Данные заказа очищены';
+
+  @override
+  String get dataClearError => 'Ошибка очистки данных';
+
+  @override
+  String get orderCreationError => 'Ошибка создания заказа';
+
+  @override
+  String get deliveryDateChangedSuccess => 'Дата доставки успешно изменена';
+
+  @override
+  String get dateChangeError => 'Ошибка изменения даты';
+
+  @override
+  String get clearOrderConfirmTitle => 'Очистить заказ';
+
+  @override
+  String get clearOrderConfirmMessage => 'Все выбранные продукты и связанные данные будут удалены. Настройки будут сохранены. Продолжить?';
+
+  @override
+  String get clientDataLoadError => 'Ошибка загрузки данных клиента';
+
+  @override
+  String get locationNotAvailable => 'Данные о местоположении недоступны. Посещение невозможно.';
+
+  @override
+  String get visitCompletedFor => 'Посещение успешно завершено для';
+
+  @override
+  String get contractsPageError => 'Ошибка перехода на страницу контрактов';
+
+  @override
+  String get loadingClientImages => 'Загрузка изображений клиента...';
+
+  @override
+  String get clientImagesLoaded => 'Изображения клиента загружены';
+
+  @override
+  String get imageLoadError => 'Ошибка загрузки изображений';
+
+  @override
+  String get disableVisitTodayFilter => 'Отключить фильтр сегодняшних посещений';
+
+  @override
+  String get showVisitTodayOnly => 'Показать только клиентов с посещением сегодня';
+
+  @override
+  String get newClient => 'Новый клиент';
+
+  @override
+  String get orderHistory => 'История заказов';
+
+  @override
+  String get tradingPointsNotFound => 'Торговые точки не найдены';
+
+  @override
+  String get clientCount => 'Количество клиентов';
+
+  @override
+  String get manageClientImages => 'Управление изображениями клиента';
+
+  @override
+  String get ordersCount => 'Количество заказов';
+
+  @override
+  String get orderNumberPrefix => 'Заказ №';
+
+  @override
+  String get clientOrdersFor => 'заказы клиента';
+
+  @override
   String get cancelVisit => 'Отменить посещение';
 
   @override
   String get cancelVisitConfirmation => 'Вы уверены, что хотите отменить это посещение? Весь прогресс будет потерян.';
+
+  @override
+  String get checkingDistance => 'Проверка расстояния до торговой точки...';
+
+  @override
+  String get distanceRestrictionError => 'Вы находитесь слишком далеко от торговой точки для завершения визита.';
 }

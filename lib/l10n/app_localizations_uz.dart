@@ -1194,8 +1194,155 @@ class AppLocalizationsUz extends AppLocalizations {
   String get allRequiredStepsCompleted => 'Barcha majburiy qadamlar bajarildi';
 
   @override
+  String get soapRequest => 'SOAP so\'rov';
+
+  @override
+  String get soapRequestCopied => 'SOAP so\'rov nusxalandi';
+
+  @override
+  String get copy => 'Nusxalash';
+
+  @override
+  String get orderNotFound => 'Buyurtma topilmadi';
+
+  @override
+  String get readOnly => 'Faqat ko\'rish';
+
+  @override
+  String get pageUnderDevelopment => 'Sahifa ishlab chiqilmoqda';
+
+  @override
+  String get stepCompletedReadOnly => 'Bu step yakunlangan. Faqat ko\'rish rejimida.';
+
+  @override
+  String get stepTypeNotImplemented => 'Bu step turi uchun sahifa hali yaratilmagan';
+
+  @override
+  String get orderDetailsNavigationErrorPrefix => 'Buyurtma tafsilotlariga o\'tishda xatolik';
+
+  @override
+  String get errorOccurredPrefix => 'Xatolik yuz berdi';
+
+  @override
+  String get stepErrorPrefix => 'Bosqichda xatolik';
+
+  @override
+  String get visitFinishErrorPrefix => 'Tashrifni yakunlashda xatolik';
+
+  @override
+  String get stepsCount => 'bosqich';
+
+  @override
+  String get visitFinishing => 'Tashrif yakunlanmoqda...';
+
+  @override
+  String get orderNumber => 'Buyurtma raqami';
+
+  @override
+  String get dataSaveError => 'Ma\'lumotlarni saqlashda xatolik yuz berdi';
+
+  @override
+  String get saveErrorPrefix => 'Saqlashda xatolik';
+
+  @override
+  String get dataLoadError => 'Ma\'lumotlarni yuklashda xatolik yuz berdi';
+
+  @override
+  String get productsLoadError => 'Mahsulotlarni yuklashda xatolik';
+
+  @override
+  String get settingsUpdateError => 'Sozlamalarni yangilashda xatolik';
+
+  @override
+  String get clearOrder => 'Buyurtmani tozalash';
+
+  @override
+  String get suggestedOrders => 'Taklif qilingan buyurtmalar';
+
+  @override
+  String get productSelectionError => 'Mahsulot tanlash sahifasiga o\'tishda xatolik yuz berdi';
+
+  @override
+  String get orderDataCleared => 'Buyurtma ma\'lumotlari tozalandi';
+
+  @override
+  String get dataClearError => 'Ma\'lumotlarni tozalashda xatolik';
+
+  @override
+  String get orderCreationError => 'Buyurtma yaratishda xatolik';
+
+  @override
+  String get deliveryDateChangedSuccess => 'Yetkazib berish sanasi muvaffaqiyatli o\'zgartirildi';
+
+  @override
+  String get dateChangeError => 'Sana o\'zgartirishda xatolik';
+
+  @override
+  String get clearOrderConfirmTitle => 'Buyurtmani tozalash';
+
+  @override
+  String get clearOrderConfirmMessage => 'Tanlangan barcha mahsulotlar va ular bilan bog\'liq ma\'lumotlar o\'chiriladi. Sozlamalar tanlovlari saqlanib qolinadi. Davom etishni xohlaysizmi?';
+
+  @override
+  String get clientDataLoadError => 'Mijozlar ma\'lumotlarini yuklashda xatolik';
+
+  @override
+  String get locationNotAvailable => 'Joylashuv ma\'lumotlari mavjud emas. Tashrifni amalga oshirib bo\'lmaydi.';
+
+  @override
+  String get visitCompletedFor => 'ga tashrif muvaffaqiyatli yakunlandi';
+
+  @override
+  String get contractsPageError => 'Shartnomalar sahifasiga o\'tishda xatolik';
+
+  @override
+  String get loadingClientImages => 'Mijoz rasmlarini yuklash...';
+
+  @override
+  String get clientImagesLoaded => 'Mijoz rasmlari yuklandi';
+
+  @override
+  String get imageLoadError => 'Rasm yuklashda xatolik';
+
+  @override
+  String get disableVisitTodayFilter => 'Bugungi tashrif filtrini o\'chirish';
+
+  @override
+  String get showVisitTodayOnly => 'Faqat bugungi tashrif mijozlarini ko\'rsatish';
+
+  @override
+  String get newClient => 'Yangi mijoz';
+
+  @override
+  String get orderHistory => 'Buyurtmalar tarixi';
+
+  @override
+  String get tradingPointsNotFound => 'Savdo nuqtalari topilmadi';
+
+  @override
+  String get clientCount => 'Mijozlar soni';
+
+  @override
+  String get manageClientImages => 'Mijoz rasmlarini boshqarish';
+
+  @override
+  String get ordersCount => 'Buyurtmalar soni';
+
+  @override
+  String get orderNumberPrefix => 'Buyurtma №';
+
+  @override
+  String get clientOrdersFor => 'mijozining buyurtmalari';
+
+  @override
   String get cancelVisit => 'Tashrifni bekor qilish';
 
   @override
   String get cancelVisitConfirmation => 'Haqiqatan ham bu tashrifni bekor qilmoqchimisiz? Barcha progress yo\'qoladi.';
+
+  @override
+  String get checkingDistance => 'Tashrif nuqtasigacha bo\'lgan masofa tekshirilmoqda...';
+
+  @override
+  String get distanceRestrictionError => 'Siz tashrifni yakunlash uchun savdo nuqtasidan juda uzoqdasiz.';
 }

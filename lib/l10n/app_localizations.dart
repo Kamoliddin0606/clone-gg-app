@@ -2478,6 +2478,143 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to cancel this visit? All progress will be lost.'**
   String get cancelVisitConfirmation;
+
+  /// No description provided for @soapRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'SOAP Request'**
+  String get soapRequest;
+
+  /// No description provided for @soapRequestCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'SOAP request copied'**
+  String get soapRequestCopied;
+
+  /// No description provided for @copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copy;
+
+  /// No description provided for @orderNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Order not found'**
+  String get orderNotFound;
+
+  /// No description provided for @readOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only'**
+  String get readOnly;
+
+  /// No description provided for @pageUnderDevelopment.
+  ///
+  /// In en, this message translates to:
+  /// **'Page under development'**
+  String get pageUnderDevelopment;
+
+  /// No description provided for @stepCompletedReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This step is completed. View-only mode.'**
+  String get stepCompletedReadOnly;
+
+  /// No description provided for @stepTypeNotImplemented.
+  ///
+  /// In en, this message translates to:
+  /// **'This step type page is not implemented yet.'**
+  String get stepTypeNotImplemented;
+
+  /// No description provided for @orderDetailsNavigationErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Error opening order details'**
+  String get orderDetailsNavigationErrorPrefix;
+
+  /// No description provided for @errorOccurredPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Error occurred'**
+  String get errorOccurredPrefix;
+
+  /// No description provided for @stepErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Step error'**
+  String get stepErrorPrefix;
+
+  /// No description provided for @visitFinishErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Error finishing visit'**
+  String get visitFinishErrorPrefix;
+
+  /// No description provided for @stepsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'steps'**
+  String get stepsCount;
+
+  /// No description provided for @visitFinishing.
+  ///
+  /// In en, this message translates to:
+  /// **'Finishing visit...'**
+  String get visitFinishing;
+
+  /// No description provided for @orderNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Order number'**
+  String get orderNumber;
+
+  String get dataSaveError;
+  String get saveErrorPrefix;
+  String get dataLoadError;
+  String get productsLoadError;
+  String get settingsUpdateError;
+  String get clearOrder;
+  String get suggestedOrders;
+  String get productSelectionError;
+  String get orderDataCleared;
+  String get dataClearError;
+  String get orderCreationError;
+  String get deliveryDateChangedSuccess;
+  String get dateChangeError;
+  String get clearOrderConfirmTitle;
+  String get clearOrderConfirmMessage;
+
+  String get clientDataLoadError;
+  String get locationNotAvailable;
+  String get visitCompletedFor;
+  String get contractsPageError;
+  String get loadingClientImages;
+  String get clientImagesLoaded;
+  String get imageLoadError;
+  String get disableVisitTodayFilter;
+  String get showVisitTodayOnly;
+  String get newClient;
+  String get orderHistory;
+  String get tradingPointsNotFound;
+  String get clientCount;
+  String get manageClientImages;
+
+  String get ordersCount;
+  String get orderNumberPrefix;
+  String get clientOrdersFor;
+
+  /// No description provided for @checkingDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking distance to trading point...'**
+  String get checkingDistance;
+
+  /// No description provided for @distanceRestrictionError.
+  ///
+  /// In en, this message translates to:
+  /// **'You are too far from the trading point to complete the visit.'**
+  String get distanceRestrictionError;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

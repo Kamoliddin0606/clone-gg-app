@@ -17,12 +17,14 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/s
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/competitor_audit_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/create_order_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/photo_facing_after_page.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/visit_completion_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/order_models.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/order_details_page.dart';
+import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations_en.dart';
 import 'package:flutter/services.dart';
+import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 /// Visit Steps Page - BLoC State Management
 abstract class VisitStepsState extends Equatable {
@@ -208,6 +210,19 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   final bool _isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
   late String _visitId; // Unique identifier for this visit session
 
+  AppLocalizations _l10n() {
+    try {
+      final ctx = AppRouter.navigatorKey.currentContext;
+      if (ctx != null) {
+        final l10n = AppLocalizations.of(ctx);
+        if (l10n != null) return l10n;
+      }
+    } catch (_) {
+      // Ignore and fallback to English.
+    }
+    return AppLocalizationsEn();
+  }
+
   VisitStepsBloc({
     required DataSyncService dataSyncService,
     required VisitDataRepository visitDataRepository,
@@ -248,7 +263,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
       if (userCode == null) {
         debugPrint('VisitStepsBloc: User code not found, cannot load visit steps');
-        emit(VisitStepsError(AppLocalizationsEn().userCodeNotFound));
+        emit(VisitStepsError(_l10n().userCodeNotFound));
         return;
       }
 
@@ -258,14 +273,14 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
       if (permissions == null) {
         debugPrint('VisitStepsBloc: Permissions data not available for user $userCode');
-        emit(VisitStepsError(AppLocalizationsEn().permissionsDataNotAvailable));
+        emit(VisitStepsError(_l10n().permissionsDataNotAvailable));
         return;
       }
 
       // Check if visit steps are available in the permissions
       if (permissions.visitSteps.isEmpty) {
         debugPrint('VisitStepsBloc: No visit steps configured for user $userCode');
-        emit(VisitStepsError(AppLocalizationsEn().visitSteps));
+        emit(VisitStepsError(_l10n().visitSteps));
         return;
       }
 
@@ -313,8 +328,8 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
       // Emit error state with more descriptive message
       final errorMessage = e is Exception
-          ? 'Xatolik yuz berdi: ${e.toString().replaceAll('Exception: ', '')}'
-          : AppLocalizationsEn().errorLoadingPermissions;
+          ? '${_l10n().errorOccurredPrefix}: ${e.toString().replaceAll('Exception: ', '')}'
+          : _l10n().errorLoadingPermissions;
 
       emit(VisitStepsError(errorMessage));
     }
@@ -414,7 +429,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
     // Only allow skipping if step is not required
     if (step.stepRequired) {
-      emit(VisitStepsError(AppLocalizationsEn().stepCannotBeSkipped));
+      emit(VisitStepsError(_l10n().stepCannotBeSkipped));
       return;
     }
 
@@ -535,7 +550,51 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         progress.step.stepRequired && progress.status != VisitStepStatus.completed);
 
     if (hasIncompleteRequiredSteps) {
-      emit(VisitStepsError(AppLocalizationsEn().allRequiredStepsMustBeCompleted));
+      emit(VisitStepsError(_l10n().allRequiredStepsMustBeCompleted));
+      return;
+    }
+
+    // Distance restriction check
+    try {
+      final clientZoneAccess = currentState.permissions.clientZoneAccess;
+      if (clientZoneAccess > 0) {
+        emit(VisitStepsFinishing(
+          currentStep: 0,
+          totalSteps: currentState.stepProgress.length,
+          message: _l10n().checkingDistance,
+          tradingPoint: currentState.tradingPoint,
+        ));
+
+        final locationService = sl<LocationService>();
+        final position = await locationService.getCurrentLocation();
+
+        if (position == null) {
+          emit(VisitStepsError(_l10n().locationNotAvailable));
+          return;
+        }
+
+        final distanceKm = locationService.calculateDistance(
+          position.latitude,
+          position.longitude,
+          currentState.tradingPoint.tradingPoint.latitude,
+          currentState.tradingPoint.tradingPoint.longitude,
+        );
+
+        final distanceMeters = distanceKm * 1000;
+
+        if (distanceMeters > clientZoneAccess) {
+          debugPrint('Distance restriction failed: $distanceMeters > $clientZoneAccess');
+          emit(VisitStepsError(_l10n().distanceRestrictionError));
+          return;
+        }
+        
+        debugPrint('Distance restriction passed: $distanceMeters <= $clientZoneAccess');
+      }
+    } catch (e) {
+      debugPrint('Error checking distance restriction: $e');
+      // If error occurs during distance check, we might want to allow finishing or block it.
+      // Given the requirement, it's safer to block with an error if calculation fails.
+      emit(VisitStepsError('${_l10n().errorOccurredPrefix}: $e'));
       return;
     }
 
@@ -555,7 +614,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
           ));
         },
         onError: (step, error) {
-          emit(VisitStepsError('Bosqichda xatolik: ${step.stepName} - $error'));
+          emit(VisitStepsError('${_l10n().stepErrorPrefix}: ${step.stepName} - $error'));
         },
       );
 
@@ -604,7 +663,7 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     } catch (e, stackTrace) {
       debugPrint('VisitStepsBloc: Error finishing visit: $e');
       debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
-      emit(VisitStepsError('Tashrifni yakunlashda xatolik yuz berdi: ${e.toString()}'));
+      emit(VisitStepsError('${_l10n().visitFinishErrorPrefix}: ${e.toString()}'));
     }
   }
 
@@ -946,15 +1005,63 @@ class VisitStepsView extends StatefulWidget {
 
 class _VisitStepsViewState extends State<VisitStepsView> {
 
+  Future<void> _navigateToOrderDetails(BuildContext context, String orderCode) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final ds = sl<DataSyncService>();
+      final order = await ds.getCachedOrderByNumOrder(orderCode);
+
+      if (order == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.orderNotFound),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final model = OrderModel(
+        id: order.id,
+        numOrder: order.numOrder,
+        dateOrder: order.dateOrder,
+        captionOrder: order.captionOrder,
+        typePriceCode: order.typePriceCode,
+        status: order.status,
+        commentSupervisor: order.commentSupervisor,
+        commentForwarder: order.commentForwarder,
+        commentAgent: order.commentAgent,
+        total: order.total,
+        clientCode: order.clientCode,
+        clientName: order.clientName,
+        codeOrg: order.codeOrg,
+        mainStatus: order.mainStatus,
+        courierName: order.courierName,
+        courierCar: order.courierCar,
+        courierPlate: null,
+        items: const [],
+      );
+
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => OrderDetailsPage(order: model),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error navigating to order details: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l10n.orderDetailsNavigationErrorPrefix}: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
-
-    // Ensure AppLocalizations is available, fallback to default if null
-    if (l10n == null) {
-      return Center(child: Text(AppLocalizationsEn().error));
-    }
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -996,48 +1103,48 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           // VisitStepsCompleted is now handled by the UI builder, not the listener
         },
         builder: (context, state) {
-           if (state is VisitStepsLoading) {
-             return const Center(child: CircularProgressIndicator());
-           }
+          if (state is VisitStepsLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-           if (state is VisitStepsLoaded) {
-             return _buildLoadedView(context, state, theme, l10n);
-           }
+          if (state is VisitStepsLoaded) {
+            return _buildLoadedView(context, state, theme, l10n);
+          }
 
-           if (state is VisitStepsCompleted) {
-             return _buildCompletedView(context, state, theme, l10n);
-           }
+          if (state is VisitStepsCompleted) {
+            return _buildCompletedView(context, state, theme, l10n);
+          }
 
-           if (state is VisitStepsFinishing) {
-             return _buildFinishingView(context, state, theme, l10n);
-           }
+          if (state is VisitStepsFinishing) {
+            return _buildFinishingView(context, state, theme, l10n);
+          }
 
-           if (state is VisitStepsError) {
-             return Center(
-               child: Column(
-                 mainAxisAlignment: MainAxisAlignment.center,
-                 children: [
-                   const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                   const SizedBox(height: 16),
-                   Text(
-                     state.message,
-                     style: theme.textTheme.titleMedium,
-                     textAlign: TextAlign.center,
-                   ),
-                   const SizedBox(height: 16),
-                   FilledButton(
-                     onPressed: () {
-                       context.read<VisitStepsBloc>().add(LoadVisitSteps(widget.tradingPoint));
-                     },
-                     child: Text(l10n.retry),
-                   ),
-                 ],
-               ),
-             );
-           }
+          if (state is VisitStepsError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    state.message,
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () {
+                      context.read<VisitStepsBloc>().add(LoadVisitSteps(widget.tradingPoint));
+                    },
+                    child: Text(l10n.retry),
+                  ),
+                ],
+              ),
+            );
+          }
 
-           return Center(child: Text(l10n.unknownState));
-         },
+          return Center(child: Text(l10n.unknownState));
+        },
       ),
     );
   }
@@ -1125,7 +1232,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '${state.currentStep} / ${state.totalSteps} bosqich',
+                    '${state.currentStep} / ${state.totalSteps} ${l10n.stepsCount}',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -1154,7 +1261,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'SOAP Request',
+                                l10n.soapRequest,
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.w600,
@@ -1167,14 +1274,14 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                                   if (state.requestData != null && state.requestData!.isNotEmpty) {
                                     await Clipboard.setData(ClipboardData(text: state.requestData!));
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('SOAP request nusxalandi'),
-                                        duration: Duration(seconds: 2),
+                                      SnackBar(
+                                        content: Text(l10n.soapRequestCopied),
+                                        duration: const Duration(seconds: 2),
                                       ),
                                     );
                                   }
                                 },
-                                tooltip: 'Nusxalash',
+                                tooltip: l10n.copy,
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                               ),
@@ -1242,6 +1349,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   }
 
   Widget _buildCompletionHeader(BuildContext context, VisitStepsCompleted state, ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1267,7 +1375,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Tashrif muvaffaqiyatli yakunlandi!',
+            l10n.visitCompletedSuccessfully,
             style: theme.textTheme.headlineSmall?.copyWith(
               color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.bold,
@@ -1285,7 +1393,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           if (state.orderCode != null) ...[
             const SizedBox(height: 8),
             Text(
-              'Buyurtma raqami: ${state.orderCode}',
+              '${l10n.orderNumber}: ${state.orderCode}',
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w500,
@@ -1372,7 +1480,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                         if (stepProgress.completedAt != null) ...[
                           const SizedBox(height: 4),
                           Text(
-                            'Yakunlandi: ${stepProgress.completedAt!.toLocal().toString().split('.')[0]}',
+                            '${l10n.completedAt}: ${stepProgress.completedAt!.toLocal().toString().split('.')[0]}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -1423,7 +1531,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
         child: FilledButton.icon(
           onPressed: () => Navigator.of(context).pop(true), // Return success
           icon: const Icon(Icons.done),
-          label: Text('Tashrifni yakunlash'),
+          label: Text(l10n.finishVisit),
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 12),
           ),
@@ -1432,64 +1540,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     );
   }
 
-  void _navigateToOrderDetails(BuildContext context, String orderCode) async {
-    try {
-      // Fetch the order from database
-      final dataSyncService = sl<DataSyncService>();
-      final order = await dataSyncService.getCachedOrderByNumOrder(orderCode);
-
-      if (order != null) {
-        // Convert to OrderModel for OrderDetailsPage
-        final orderModel = OrderModel(
-          id: order.id,
-          numOrder: order.numOrder,
-          dateOrder: order.dateOrder,
-          captionOrder: order.captionOrder,
-          typePriceCode: order.typePriceCode,
-          status: order.status,
-          commentSupervisor: order.commentSupervisor,
-          commentForwarder: order.commentForwarder,
-          commentAgent: order.commentAgent,
-          total: order.total,
-          clientCode: order.clientCode,
-          clientName: order.clientName,
-          codeOrg: order.codeOrg,
-          mainStatus: order.mainStatus,
-          courierName: order.courierName,
-          courierCar: order.courierCar,
-          courierPlate: order.courierCar, // Assuming courierCar contains plate info
-          items: const [], // Items will be loaded separately if needed
-        );
-
-        // Navigate to order details page
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OrderDetailsPage(order: orderModel),
-          ),
-        );
-      } else {
-        // Order not found, show error
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Buyurtma topilmadi'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Error navigating to order details: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Buyurtma tafsilotlariga o\'tishda xatolik: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   Widget _buildClientHeader(BuildContext context, VisitStepsLoaded state, ThemeData theme) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1553,7 +1605,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${l10n?.visitStepNumber ?? 'Visit Step'}: ${state.tradingPoint.visitStepNumber}',
+                      '${l10n.visitStepNumber}: ${state.tradingPoint.visitStepNumber}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w500,
@@ -1570,6 +1622,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   }
 
   Widget _buildClientHeaderFinishing(BuildContext context, VisitStepsFinishing state, ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1616,7 +1669,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tashrif yakunlanmoqda...',
+                  l10n.visitFinishing,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w500,
@@ -1631,6 +1684,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   }
 
   Widget _buildFinishingProgressIndicator(BuildContext context, VisitStepsFinishing state, ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     final progress = state.totalSteps > 0 ? state.currentStep / state.totalSteps : 0.0;
 
     return Container(
@@ -1641,7 +1695,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Tashrifni yakunlash',
+                l10n.finishVisit,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -1666,7 +1720,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   }
 
   Widget _buildProgressIndicator(BuildContext context, VisitStepsLoaded state, ThemeData theme) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final completedSteps = state.stepProgress.where((p) => p.status == VisitStepStatus.completed).length;
     final totalSteps = state.stepProgress.length;
     final progress = totalSteps > 0 ? completedSteps / totalSteps : 0.0;
@@ -1679,7 +1733,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                l10n?.visitProgress ?? 'Visit Progress',
+                l10n.visitProgress,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -1780,19 +1834,19 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                   final shouldCancel = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text(l10n?.cancelVisit ?? 'Cancel Visit'),
-                      content: Text(l10n?.cancelVisitConfirmation ?? 'Are you sure you want to cancel this visit? All progress will be lost.'),
+                      title: Text(l10n.cancelVisit),
+                      content: Text(l10n.cancelVisitConfirmation),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(false),
-                          child: Text(l10n?.no ?? 'No'),
+                          child: Text(l10n.no),
                         ),
                         FilledButton(
                           onPressed: () => Navigator.of(context).pop(true),
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.red,
                           ),
-                          child: Text(l10n?.yes ?? 'Yes'),
+                          child: Text(l10n.yes),
                         ),
                       ],
                     ),
@@ -1809,7 +1863,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                   }
                 },
                 icon: const Icon(Icons.close),
-                label: Text(l10n.cancel ?? 'Cancel'),
+                label: Text(l10n.cancel),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -1822,7 +1876,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                     ? () => context.read<VisitStepsBloc>().add(FinishVisit())
                     : null,
                 icon: const Icon(Icons.check_circle),
-                label: Text(l10n.finishVisit ?? 'Finish Visit'),
+                label: Text(l10n.finishVisit),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -1850,30 +1904,30 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   }
 
   void _showVisitInfoDialog(BuildContext context, VisitStepsLoaded state) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n?.visitInfo ?? 'Visit Information'),
+        title: Text(l10n.visitInfo),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${l10n?.client ?? 'Client'}: ${state.tradingPoint.tradingPoint.name}'),
+            Text('${l10n.client}: ${state.tradingPoint.tradingPoint.name}'),
             const SizedBox(height: 8),
-            Text('${l10n?.strictSequence ?? 'Strict Sequence'}: ${state.isStrictSequence ? (l10n?.yes ?? 'Yes') : (l10n?.no ?? 'No')}'),
+            Text('${l10n.strictSequence}: ${state.isStrictSequence ? l10n.yes : l10n.no}'),
             const SizedBox(height: 8),
-            Text('${l10n?.visitStepNumber ?? 'Visit Step'}: ${state.tradingPoint.visitStepNumber}'),
+            Text('${l10n.visitStepNumber}: ${state.tradingPoint.visitStepNumber}'),
             const SizedBox(height: 8),
-            Text('${l10n?.totalSteps ?? 'Total Steps'}: ${state.stepProgress.length}'),
+            Text('${l10n.totalSteps}: ${state.stepProgress.length}'),
             const SizedBox(height: 8),
-            Text('${l10n?.requiredSteps ?? 'Required Steps'}: ${state.stepProgress.where((p) => p.step.stepRequired).length}'),
+            Text('${l10n.requiredSteps}: ${state.stepProgress.where((p) => p.step.stepRequired).length}'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n?.close ?? 'Close'),
+            child: Text(l10n.close),
           ),
         ],
       ),
@@ -1926,7 +1980,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final step = widget.stepProgress.step;
     final status = widget.stepProgress.status;
 
@@ -2015,7 +2069,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                step.stepRequired ? (l10n?.mandatory ?? 'Mandatory') : (l10n?.optional ?? 'Optional'),
+                                step.stepRequired ? l10n.mandatory : l10n.optional,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: step.stepRequired
                                       ? theme.colorScheme.onErrorContainer
@@ -2033,7 +2087,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  l10n?.current ?? 'Current',
+                                  l10n.current,
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.onPrimary,
                                     fontWeight: FontWeight.w500,
@@ -2070,7 +2124,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                           widget.onPrevious();
                         },
                         icon: const Icon(Icons.arrow_back, size: 18),
-                        label: Text(l10n?.previous ?? 'Previous'),
+                        label: Text(l10n.previous),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
@@ -2085,7 +2139,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                       child: OutlinedButton.icon(
                         onPressed: () => _showSkipDialog(context),
                         icon: const Icon(Icons.skip_next, size: 18),
-                        label: Text(l10n?.skipStep ?? 'Skip'),
+                        label: Text(l10n.skipStep),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
@@ -2115,7 +2169,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      l10n?.completed ?? 'Completed',
+                      l10n.completed,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w500,
@@ -2136,7 +2190,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               if (widget.stepProgress.notes?.isNotEmpty == true) ...[
                 const SizedBox(height: 8),
                 Text(
-                  '${l10n?.notes ?? 'Notes'}: ${widget.stepProgress.notes}',
+                  '${l10n.notes}: ${widget.stepProgress.notes}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -2159,7 +2213,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      l10n?.skipped ?? 'Skipped',
+                      l10n.skipped,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
@@ -2171,7 +2225,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               if (widget.stepProgress.skipReason?.isNotEmpty == true) ...[
                 const SizedBox(height: 8),
                 Text(
-                  '${l10n?.reason ?? 'Reason'}: ${widget.stepProgress.skipReason}',
+                  '${l10n.reason}: ${widget.stepProgress.skipReason}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -2194,7 +2248,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      l10n?.previousStepsRequired ?? 'Previous steps must be completed',
+                      l10n.previousStepsRequired,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -2210,60 +2264,21 @@ class _VisitStepCardState extends State<_VisitStepCard> {
     );
   }
 
-  void _showCompleteDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('${widget.stepProgress.step.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n?.confirmCompletion ?? 'Confirm completion'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _notesController,
-              decoration: InputDecoration(
-                hintText: l10n?.enterNotesOptional ?? 'Enter notes (optional)',
-                border: const OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n?.cancelCompletion ?? 'Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              widget.onComplete({'notes': _notesController.text.trim()});
-              _notesController.clear();
-              Navigator.of(context).pop();
-            },
-            child: Text(l10n?.confirmCompletion ?? 'Confirm'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showSkipDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${widget.stepProgress.step.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
+        title: Text('${widget.stepProgress.step.stepName} ${l10n.completed.toLowerCase()}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(l10n?.confirmCompletion ?? 'Confirm completion'),
+            Text(l10n.confirmCompletion),
             const SizedBox(height: 12),
             TextField(
               controller: _skipReasonController,
               decoration: InputDecoration(
-                hintText: l10n?.enterNotesOptional ?? 'Enter notes (optional)',
+                hintText: l10n.enterNotesOptional,
                 border: const OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -2273,7 +2288,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n?.cancel ?? 'Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -2281,7 +2296,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               _skipReasonController.clear();
               Navigator.of(context).pop();
             },
-            child: Text(l10n?.confirmCompletion ?? 'Confirm Completion'),
+            child: Text(l10n.confirmCompletion),
           ),
         ],
       ),
@@ -2301,7 +2316,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
   /// This ensures data integrity by preventing access to steps that haven't been
   /// reached yet in strict sequence mode, while allowing review of completed steps.
   void _navigateToStepDetail(BuildContext context, VisitStep step) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     // Retrieve current state to determine step accessibility
     final currentState = context.read<VisitStepsBloc>().state as VisitStepsLoaded;
@@ -2325,7 +2340,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
       // Display user-friendly error message for blocked navigation
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n?.previousStepsRequired ?? 'Previous steps must be completed'),
+          content: Text(l10n.previousStepsRequired),
           backgroundColor: Colors.orange,
           duration: const Duration(seconds: 3),
         ),
@@ -2396,7 +2411,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               const Icon(Icons.visibility, color: Colors.grey),
               const SizedBox(width: 8),
               Text(
-                'Faqat ko\'rish',
+                l10n.readOnly,
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
               const SizedBox(width: 16),
@@ -2413,15 +2428,15 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Sahifa ishlab chiqilmoqda',
+                  l10n.pageUnderDevelopment,
                   style: Theme.of(context).textTheme.headlineSmall,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   readOnly
-                      ? 'Bu step yakunlangan. Faqat ko\'rish rejimida.'
-                      : 'Bu step turi uchun sahifa hali yaratilmagan',
+                      ? l10n.stepCompletedReadOnly
+                      : l10n.stepTypeNotImplemented,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -2431,7 +2446,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                 FilledButton.icon(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.arrow_back),
-                  label: Text(AppLocalizations.of(context)?.back ?? 'Orqaga'),
+                  label: Text(l10n.back),
                 ),
               ],
             ),

@@ -33,7 +33,7 @@ enum ViewMode {
   largeImage
 }
 
-/// Buyurtma yaratish sahifasi - Create order page
+/// Create order page
 ///
 /// This page allows agents to create orders by:
 /// - Selecting organization, warehouse, and price type from settings
@@ -209,7 +209,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ma\'lumotlarni saqlashda xatolik yuz berdi'),
+            content: Text(AppLocalizations.of(context)?.dataSaveError ?? 'Error saving data'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 2),
           ),
@@ -489,7 +489,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ma\'lumotlarni yuklashda xatolik yuz berdi: ${e.toString()}'),
+            content: Text('${AppLocalizations.of(context)?.dataLoadError ?? "Error loading data"}: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -612,7 +612,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Mahsulotlarni yuklashda xatolik: ${e.toString()}'),
+            content: Text('${AppLocalizations.of(context)?.productsLoadError ?? "Error loading products"}: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -652,7 +652,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sozlamalarni yangilashda xatolik: ${e.toString()}'),
+            content: Text('${AppLocalizations.of(context)?.settingsUpdateError ?? "Error updating settings"}: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -979,7 +979,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                         );
                       }
                     },
-                    child: Text('Saqlash'),
+                    child: Text(AppLocalizations.of(context)?.save ?? 'Save'),
                   ),
                 ),
               ],
@@ -1059,7 +1059,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                           : Colors.blue,
                     ),
                     onPressed: () => _saveOrderDraft(),
-                    tooltip: 'Saqlash',
+                    tooltip: AppLocalizations.of(context)?.save ?? 'Save',
                   ),
                 ),
 
@@ -1074,7 +1074,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                       color: Colors.redAccent,
                     ),
                     onPressed: _selectedProducts.isEmpty ? null : _showClearConfirmationDialog,
-                    tooltip: 'Buyurtmani tozalash',
+                    tooltip: AppLocalizations.of(context)?.clearOrder ?? 'Clear order',
                   ),
                 ),
 
@@ -1091,7 +1091,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     onPressed: () {
                       // TODO: Show suggested orders
                     },
-                    tooltip: 'Taklif qilingan buyurtmalar',
+                    tooltip: AppLocalizations.of(context)?.suggestedOrders ?? 'Suggested orders',
                   ),
                 ),
 
@@ -2110,7 +2110,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         try {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Mahsulot tanlash sahifasiga o\'tishda xatolik yuz berdi'),
+              content: Text(AppLocalizations.of(context)?.productSelectionError ?? 'Error navigating to product selection'),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -2178,15 +2178,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Buyurtmani tozalash'),
-        content: const Text(
-          'Tanlangan barcha mahsulotlar va ular bilan bog\'liq ma\'lumotlar o\'chiriladi. '
-          'Sozlamalar tanlovlari saqlanib qolinadi. Davom etishni xohlaysizmi?',
+        title: Text(AppLocalizations.of(context)?.clearOrderConfirmTitle ?? 'Clear order'),
+        content: Text(
+          AppLocalizations.of(context)?.clearOrderConfirmMessage ?? 'All selected products and related data will be deleted. Settings will be preserved. Do you want to continue?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () {
@@ -2240,8 +2239,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Buyurtma ma\'lumotlari tozalandi'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)?.orderDataCleared ?? 'Order data cleared'),
             backgroundColor: Colors.green,
           ),
         );
@@ -2254,7 +2253,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ma\'lumotlarni tozalashda xatolik: ${e.toString()}'),
+            content: Text('${AppLocalizations.of(context)?.dataClearError ?? "Error clearing data"}: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -2389,7 +2388,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Buyurtma yaratishda xatolik: ${e.toString()}'),
+                        content: Text('${AppLocalizations.of(context)?.orderCreationError ?? "Error creating order"}: ${e.toString()}'),
                         backgroundColor: Theme.of(context).colorScheme.error,
                       ),
                     );
@@ -2430,8 +2429,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         // Show success message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Yetkazib berish sanasi muvaffaqiyatli o\'zgartirildi'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)?.deliveryDateChangedSuccess ?? 'Delivery date changed successfully'),
               backgroundColor: Colors.green,
             ),
           );
@@ -2447,7 +2446,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sana o\'zgartirishda xatolik: ${e.toString()}'),
+            content: Text('${AppLocalizations.of(context)?.dateChangeError ?? "Error changing date"}: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

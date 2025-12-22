@@ -123,16 +123,32 @@ class LocationService {
   /// Update current location and store it
   Future<void> _updateLocation() async {
     try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 5),
-      );
-      await _storeLocation(position);
+      final position = await getCurrentLocation();
+      if (position != null) {
+        await _storeLocation(position);
+      }
     } catch (e) {
       if (kDebugMode) {
         print('Error updating location: $e');
       }
       // Don't rethrow - location updates should be non-blocking
+    }
+  }
+
+  /// Get current fresh location from Geolocator
+  Future<Position?> getCurrentLocation() async {
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting current location: $e');
+      }
+      return null;
     }
   }
 

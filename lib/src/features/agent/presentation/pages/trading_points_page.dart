@@ -152,8 +152,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     String userCode = "";
     String password = "";
     int? _expandedIndex;
-    bool _showViewBar = false;               // ADD: panel ko'rinish holati
-    _ViewMode _viewMode = _ViewMode.list;    // ADD: hozirgi ko'rinish
+    bool _showViewBar = false;               // ADD: view panel visibility state
+    _ViewMode _viewMode = _ViewMode.list;    // ADD: current view mode
     Map<String, String> _regionNames = {};   // Business region code to name mapping
 
     // Permissions service
@@ -386,7 +386,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Xatolik: $e')),
+          SnackBar(content: Text('${AppLocalizations.of(context)?.error ?? "Error"}: $e')),
         );
       }
     }
@@ -526,7 +526,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           regions = await repository.syncBusinessRegions(userCode: userCode);
         } catch (e) {
           print('Failed to sync business regions: $e');
-          // Continue with empty regions - will show "Noma'lum"
+          // Continue with empty regions - will show "Unknown"
         }
       }
 
@@ -572,7 +572,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Mijozlar ma\'lumotlarini yuklashda xatolik: $e'),
+            content: Text('${AppLocalizations.of(context)?.clientDataLoadError ?? "Error loading client data"}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -867,8 +867,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (distanceKm == null) {
         // No location available
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Joylashuv ma\'lumotlari mavjud emas. Tashrifni amalga oshirib bo\'lmaydi.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)?.locationNotAvailable ?? 'Location data not available. Visit cannot be completed.'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -913,7 +913,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Xatolik yuz berdi: $e'),
+            content: Text('${AppLocalizations.of(context)?.errorOccurredPrefix ?? "Error occurred"}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -947,7 +947,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${tradingPoint.name} ga tashrif muvaffaqiyatli yakunlandi'),
+            content: Text('${tradingPoint.name} ${AppLocalizations.of(context)?.visitCompletedFor ?? "visit completed successfully"}'),
             backgroundColor: Colors.green,
           ),
         );
@@ -995,8 +995,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   }
     void _viewClinetOrders(TradingPointWithPermissions tradingPointWithPermissions) {
       final tradingPoint = tradingPointWithPermissions.tradingPoint;
-      _saveState(); // State saqlash
-      // Orders sahifasiga mijoz parametrlar bilan o'tish
+      _saveState(); // Save state
+      // Navigate to orders page with client parameters
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -1006,7 +1006,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           ),
         ),
       ).then((_) {
-        // Qaytib kelganda state avtomatik tiklanadi
+        // State is automatically restored when returning
         _restoreState();
       });
     }
@@ -1045,7 +1045,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Shartnomalar sahifasiga o\'tishda xatolik: $e'),
+            content: Text('${AppLocalizations.of(context)?.contractsPageError ?? "Error navigating to contracts page"}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -1123,7 +1123,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       // Show loading indicator
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Mijoz rasmlarini yuklash...')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.loadingClientImages ?? 'Loading client images...')),
         );
       }
 
@@ -1186,7 +1186,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Mijoz rasmlari yuklandi')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.clientImagesLoaded ?? 'Client images loaded')),
         );
       }
     } catch (e) {
@@ -1200,7 +1200,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Rasm yuklashda xatolik: $e'),
+            content: Text('${AppLocalizations.of(context)?.imageLoadError ?? "Error loading images"}: $e'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -1246,7 +1246,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                 Icons.today_outlined,
                 color: _showVisitTodayOnly ? theme.colorScheme.primary : null,
               ),
-              tooltip: _showVisitTodayOnly ? 'Bugungi tashrif filtrini o\'chirish' : 'Faqat bugungi tashrif mijozlarini ko\'rsatish',
+              tooltip: _showVisitTodayOnly ? (AppLocalizations.of(context)?.disableVisitTodayFilter ?? 'Disable today\'s visit filter') : (AppLocalizations.of(context)?.showVisitTodayOnly ?? 'Show only today\'s visit clients'),
             ),
 
             // Sorting button
@@ -1274,33 +1274,33 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'orders',
                   child: Row(
                     children: [
-                      Icon(Icons.shopping_cart),
-                      SizedBox(width: 8),
-                      Text('Buyurtmalar'),
+                      const Icon(Icons.shopping_cart),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)?.orders ?? 'Orders'),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'new_client',
                   child: Row(
                     children: [
-                      Icon(Icons.add_business),
-                      SizedBox(width: 8),
-                      Text('Yangi mijoz'),
+                      const Icon(Icons.add_business),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)?.newClient ?? 'New client'),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'orders_history',
                   child: Row(
                     children: [
-                      Icon(Icons.history),
-                      SizedBox(width: 8),
-                      Text('Buyurtmalar tarixi'),
+                      const Icon(Icons.history),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)?.orderHistory ?? 'Order history'),
                     ],
                   ),
                 ),
@@ -1323,7 +1323,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         ),
         child: Column(
           children: [
-            // Search bar (M3 uslub, yumshoq soya)
+            // Search bar (M3 style, soft shadow)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: _SearchField(
@@ -1331,7 +1331,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                 onChanged: _filterTradingPoints,
               ),
             ),
-            // === ADD: yashirin/ko'rinar panel (son + list/grid tugmalar) ===
+            // === ADD: collapsible panel (count + list/grid buttons) ===
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
               child: AnimatedSwitcher(
@@ -1521,7 +1521,7 @@ class _EmptyStateState extends State<_EmptyState> {
     final theme = Theme.of(context);
     return RefreshIndicator(
       onRefresh: () async {
-        // TradingPointsPage state'iga kirish uchun context orqali topish
+        // Access TradingPointsPage state through context
         final state = context.findAncestorStateOfType<_TradingPointsPageState>();
         if (state != null) {
           await state._loadUserData();
@@ -1538,7 +1538,7 @@ class _EmptyStateState extends State<_EmptyState> {
                 Icon(Icons.find_in_page_outlined, size: 48, color: theme.hintColor),
                 const SizedBox(height: 8),
                 Text(
-                  'Savdo nuqtalari topilmadi',
+                  AppLocalizations.of(context)?.tradingPointsNotFound ?? 'Trading points not found',
                   style: theme.textTheme.titleMedium?.copyWith(color: theme.hintColor),
                   textAlign: TextAlign.center,
                 ),
@@ -1980,7 +1980,7 @@ class _RefusalDialogState extends State<RefusalDialog> {
     );
   }
 }
-// ADD: Ko'rinish paneli (count + list/grid tugmalar + yopish ikon)
+// ADD: View toolbar panel (count + list/grid buttons + close icon)
 class _ViewToolbar extends StatelessWidget {
   final int count;
   final _ViewMode mode;
@@ -2005,7 +2005,7 @@ class _ViewToolbar extends StatelessWidget {
       children: [
         // Mijozlar soni
         Text(
-          'Mijozlar soni: $count',
+          '${AppLocalizations.of(context)?.clientCount ?? "Client count"}: $count',
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -2592,9 +2592,9 @@ class _TradingPointGridTile extends StatelessWidget {
     return Card(
       // onTap: onOpenDetails,
       // borderRadius: BorderRadius.circular(16),
-      elevation: 6,                                // CHANGED: chiroyli soya
-      shadowColor: Colors.black.withOpacity(.15),  // CHANGED: yumshoq soya
-      surfaceTintColor: Colors.transparent,        // CHANGED: M3 tintni o'chirish
+      elevation: 6,                                // CHANGED: nice shadow
+      shadowColor: Colors.black.withOpacity(.15),  // CHANGED: soft shadow
+      surfaceTintColor: Colors.transparent,        // CHANGED: disable M3 tint
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -2659,7 +2659,7 @@ class _TradingPointGridTile extends StatelessWidget {
                         ),
                       );
                     },
-                    tooltip: 'Mijoz rasmlarini boshqarish',
+                    tooltip: AppLocalizations.of(context)?.manageClientImages ?? 'Manage client images',
                     iconSize: 20,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(
@@ -2671,7 +2671,7 @@ class _TradingPointGridTile extends StatelessWidget {
               ),
             ],
           ),
-          // BODY: bitta ustunda ma'lumotlar
+          // BODY: data in single column
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             child: Column(
@@ -3107,14 +3107,14 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                   markerId: MarkerId(markerId),
                   position: position,
                   infoWindow: InfoWindow(title: title),
-                  // marker tagi pastdan "tiralib" tursin
+                  // marker anchor at bottom center
                   anchor: const Offset(0.5, 1.0),
                 ),
               },
               onMapCreated: (controller) {
-                // Agar kerak bo'lsa controller'ni saqlab qo'yish mumkin
+                // If needed, save the controller
                 // _googleController = controller;
-                // (Kalit manifestda bo'lgani uchun bu yerda API init shart emas)
+                // (API init not needed here since key is in manifest)
               },
             ),
             // Custom map control icons positioned over the map

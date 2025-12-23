@@ -445,7 +445,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         if (kDebugMode) {
           print('OpenRouteService response received');
         }
-        print(data);
+        if (kDebugMode) print(data);
         if (data['features'] != null && data['features'].isNotEmpty) {
           final feature = data['features'][0];
           final geometry = feature['geometry'];
@@ -490,11 +490,13 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
               }).toList();
             }
           }
-          print("________________API dan olingan ma'lumotlar_____________________");
-          print(decodedPoints);
-          print(wayPoints);
-          print(instructions);
-          print(properties['bbox'] ?? data['bbox']);
+          if (kDebugMode) {
+            print("________________API dan olingan ma'lumotlar_____________________");
+            print(decodedPoints);
+            print(wayPoints);
+            print(instructions);
+            print(properties['bbox'] ?? data['bbox']);
+          }
 
           return {
             'coordinates': decodedPoints,
@@ -1072,17 +1074,17 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         };
       }
 
-      print('No geocoding results found');
+      if (kDebugMode) print('No geocoding results found');
       return _getFallbackAddress();
 
     } catch (e) {
-      print('Nominatim Geocoding API error: $e');
+      if (kDebugMode) print('Nominatim Geocoding API error: $e');
 
       // Try Google Geocoding API as fallback
       try {
         return await _getAddressFromGoogleAPI(point);
       } catch (googleError) {
-        print('Google Geocoding API fallback also failed: $googleError');
+        if (kDebugMode) print('Google Geocoding API fallback also failed: $googleError');
         return _getFallbackAddress();
       }
     }
@@ -1130,7 +1132,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       return _getFallbackAddress();
 
     } catch (e) {
-      print('Google Geocoding API error: $e');
+      if (kDebugMode) print('Google Geocoding API error: $e');
       return _getFallbackAddress();
     }
   }

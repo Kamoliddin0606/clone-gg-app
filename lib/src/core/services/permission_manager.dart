@@ -427,14 +427,14 @@ class PermissionManager {
     // First check if location services are enabled
     final serviceEnabled = await isLocationServiceEnabled();
     if (!serviceEnabled) {
-      print('servis enabled');
+      if (kDebugMode) print('servis enabled');
       return await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (context) => const LocationServiceDialog(),
       ) ?? false;
     }
-    print('servis not enabled');
+    if (kDebugMode) print('servis not enabled');
     // Services are enabled, show permission dialog
     return await _showPermissionDialog(context);
   }

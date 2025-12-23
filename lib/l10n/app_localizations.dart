@@ -2467,18 +2467,6 @@ abstract class AppLocalizations {
   /// **'All required steps completed'**
   String get allRequiredStepsCompleted;
 
-  /// No description provided for @cancelVisit.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel Visit'**
-  String get cancelVisit;
-
-  /// No description provided for @cancelVisitConfirmation.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to cancel this visit? All progress will be lost.'**
-  String get cancelVisitConfirmation;
-
   /// No description provided for @soapRequest.
   ///
   /// In en, this message translates to:
@@ -2569,52 +2557,419 @@ abstract class AppLocalizations {
   /// **'Order number'**
   String get orderNumber;
 
+  /// No description provided for @dataSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving data'**
   String get dataSaveError;
+
+  /// No description provided for @saveErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Save error'**
   String get saveErrorPrefix;
+
+  /// No description provided for @dataLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading data'**
   String get dataLoadError;
+
+  /// No description provided for @productsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading products'**
   String get productsLoadError;
+
+  /// No description provided for @settingsUpdateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error updating settings'**
   String get settingsUpdateError;
+
+  /// No description provided for @clearOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear order'**
   String get clearOrder;
+
+  /// No description provided for @suggestedOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested orders'**
   String get suggestedOrders;
+
+  /// No description provided for @productSelectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error navigating to product selection'**
   String get productSelectionError;
+
+  /// No description provided for @orderDataCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Order data cleared'**
   String get orderDataCleared;
+
+  /// No description provided for @dataClearError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error clearing data'**
   String get dataClearError;
+
+  /// No description provided for @orderCreationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error creating order'**
   String get orderCreationError;
+
+  /// No description provided for @deliveryDateChangedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery date changed successfully'**
   String get deliveryDateChangedSuccess;
+
+  /// No description provided for @dateChangeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error changing date'**
   String get dateChangeError;
+
+  /// No description provided for @clearOrderConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear order'**
   String get clearOrderConfirmTitle;
+
+  /// No description provided for @clearOrderConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'All selected products and related data will be deleted. Settings will be preserved. Do you want to continue?'**
   String get clearOrderConfirmMessage;
 
+  /// No description provided for @clientDataLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading client data'**
   String get clientDataLoadError;
+
+  /// No description provided for @locationNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Location data not available. Visit cannot be completed.'**
   String get locationNotAvailable;
+
+  /// No description provided for @visitCompletedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit completed successfully for'**
   String get visitCompletedFor;
+
+  /// No description provided for @contractsPageError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error navigating to contracts page'**
   String get contractsPageError;
+
+  /// No description provided for @loadingClientImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading client images...'**
   String get loadingClientImages;
+
+  /// No description provided for @clientImagesLoaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Client images loaded'**
   String get clientImagesLoaded;
+
+  /// No description provided for @imageLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading images'**
   String get imageLoadError;
+
+  /// No description provided for @disableVisitTodayFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable today\'s visit filter'**
   String get disableVisitTodayFilter;
+
+  /// No description provided for @showVisitTodayOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Show only today\'s visit clients'**
   String get showVisitTodayOnly;
+
+  /// No description provided for @newClient.
+  ///
+  /// In en, this message translates to:
+  /// **'New client'**
   String get newClient;
+
+  /// No description provided for @orderHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Order history'**
   String get orderHistory;
+
+  /// No description provided for @tradingPointsNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading points not found'**
   String get tradingPointsNotFound;
+
+  /// No description provided for @clientCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Client count'**
   String get clientCount;
+
+  /// No description provided for @manageClientImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage client images'**
   String get manageClientImages;
 
+  /// No description provided for @ordersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders count'**
   String get ordersCount;
+
+  /// No description provided for @orderNumberPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Order №'**
   String get orderNumberPrefix;
+
+  /// No description provided for @clientOrdersFor.
+  ///
+  /// In en, this message translates to:
+  /// **'orders for client'**
   String get clientOrdersFor;
+
+  /// No description provided for @locationServicesDisabledSortingNotWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services are disabled. Distance sorting will not work.'**
+  String get locationServicesDisabledSortingNotWork;
+
+  /// No description provided for @userDataNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'User data not found'**
+  String get userDataNotFound;
+
+  /// No description provided for @phoneNumberNotSpecified.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number not specified'**
+  String get phoneNumberNotSpecified;
+
+  /// No description provided for @phoneCallFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone call failed'**
+  String get phoneCallFailed;
+
+  /// No description provided for @connectedToInternet.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to internet'**
+  String get connectedToInternet;
+
+  /// No description provided for @offlineModeActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline mode'**
+  String get offlineModeActive;
+
+  /// No description provided for @refusalReasonSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Refusal reason sent for'**
+  String get refusalReasonSent;
+
+  /// No description provided for @viewPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'View panel'**
+  String get viewPanel;
+
+  /// No description provided for @sortByDistanceRequiresPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission required for distance sorting'**
+  String get sortByDistanceRequiresPermission;
+
+  /// No description provided for @sortByDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by distance'**
+  String get sortByDistance;
+
+  /// No description provided for @sortAlphabeticalAZ.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort alphabetically (A-Z)'**
+  String get sortAlphabeticalAZ;
+
+  /// No description provided for @sortAlphabeticalZA.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort alphabetically (Z-A)'**
+  String get sortAlphabeticalZA;
+
+  /// No description provided for @serverSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'server selected'**
+  String get serverSelected;
+
+  /// No description provided for @noInternetNoSavedUser.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet and no saved user data found'**
+  String get noInternetNoSavedUser;
+
+  /// No description provided for @noInternetLoginMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet and entered login does not match saved login'**
+  String get noInternetLoginMismatch;
+
+  /// No description provided for @savedUserServerMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved user data does not match current server. Please change server.'**
+  String get savedUserServerMismatch;
+
+  /// No description provided for @noInternetUserNotInDb.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet and user data not found in database or does not match'**
+  String get noInternetUserNotInDb;
+
+  /// No description provided for @offlineLoginError.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline login error'**
+  String get offlineLoginError;
+
+  /// No description provided for @noInternetAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet available'**
+  String get noInternetAvailable;
+
+  /// No description provided for @offlineModeQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to enter offline mode as'**
+  String get offlineModeQuestion;
+
+  /// No description provided for @offlineModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'In offline mode you can work with existing data, but cannot load new data.'**
+  String get offlineModeDescription;
+
+  /// No description provided for @offlineLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline login'**
+  String get offlineLogin;
+
+  /// No description provided for @dataUpdating.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating data...'**
+  String get dataUpdating;
+
+  /// No description provided for @errorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get errorPrefix;
+
+  /// No description provided for @cacheDataUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache data is being used'**
+  String get cacheDataUsed;
+
+  /// No description provided for @loginSuccessful.
+  ///
+  /// In en, this message translates to:
+  /// **'Login Successful!'**
+  String get loginSuccessful;
+
+  /// No description provided for @onlineLoginError.
+  ///
+  /// In en, this message translates to:
+  /// **'Online login processing error'**
+  String get onlineLoginError;
+
+  /// No description provided for @unknownUserRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown user role'**
+  String get unknownUserRole;
+
+  /// No description provided for @enterField.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter'**
+  String get enterField;
+
+  /// No description provided for @imageServiceNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Image service not available'**
+  String get imageServiceNotAvailable;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search...'**
+  String get searchHint;
+
+  /// No description provided for @pullToRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull down to refresh!'**
+  String get pullToRefresh;
+
+  /// No description provided for @pullToRefreshOrSyncData.
+  ///
+  /// In en, this message translates to:
+  /// **'If pull to refresh doesn\'t work, use \'sync all data\' option in settings menu'**
+  String get pullToRefreshOrSyncData;
 
   /// No description provided for @checkingDistance.
   ///
   /// In en, this message translates to:
-  /// **'Checking distance to trading point...'**
+  /// **'Checking distance...'**
   String get checkingDistance;
 
   /// No description provided for @distanceRestrictionError.
   ///
   /// In en, this message translates to:
-  /// **'You are too far from the trading point to complete the visit.'**
+  /// **'You are too far from the client. Please move closer to complete the visit.'**
   String get distanceRestrictionError;
+
+  /// No description provided for @cancelVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Visit'**
+  String get cancelVisit;
+
+  /// No description provided for @cancelVisitConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel this visit? All progress will be lost.'**
+  String get cancelVisitConfirmation;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

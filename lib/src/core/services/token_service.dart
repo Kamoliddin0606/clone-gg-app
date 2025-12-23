@@ -193,12 +193,16 @@ class TokenService {
           },
         ),
       );
-      print('TokenService: Refresh response status: ${response.statusCode}');
-      print('TokenService: Refresh response data: ${response.data}');
+      if (kDebugMode) {
+        print('TokenService: Refresh response status: ${response.statusCode}');
+        print('TokenService: Refresh response data: ${response.data}');
+      }
       if (response.statusCode == 200 && response.data != null) {
         final tokenData = response.data as Map<String, dynamic>;
         final newAccessToken = tokenData['access'] as String?;
-        print('TokenService: New access token: $newAccessToken');
+        if (kDebugMode) {
+          print('TokenService: New access token: $newAccessToken');
+        }
         if (newAccessToken != null) {
           // Update stored access token and expiry
           final expiryTime = DateTime.now().add(const Duration(hours: 1));

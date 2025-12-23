@@ -66,14 +66,14 @@ class VisitStepPerformanceMonitor {
     const verySlowThreshold = 15000; // 15 seconds
 
     if (metrics.duration > verySlowThreshold) {
-      print('🚨 CRITICAL PERFORMANCE ISSUE: ${metrics.operationName} took ${metrics.duration}ms');
+      if (kDebugMode) print('🚨 CRITICAL PERFORMANCE ISSUE: ${metrics.operationName} took ${metrics.duration}ms');
       _reportCriticalPerformance(metrics);
     } else if (metrics.duration > slowThreshold) {
-      print('⚠️ SLOW OPERATION: ${metrics.operationName} took ${metrics.duration}ms');
+      if (kDebugMode) print('⚠️ SLOW OPERATION: ${metrics.operationName} took ${metrics.duration}ms');
     }
 
     if (!metrics.success) {
-      print('❌ FAILED OPERATION: ${metrics.operationName} (${metrics.error})');
+      if (kDebugMode) print('❌ FAILED OPERATION: ${metrics.operationName} (${metrics.error})');
     }
   }
 
@@ -81,7 +81,8 @@ class VisitStepPerformanceMonitor {
   void _reportCriticalPerformance(PerformanceMetrics metrics) {
     // In a real app, this would send to monitoring service
     // For now, just log detailed information
-    print('''
+    if (kDebugMode) {
+      print('''
 🚨 CRITICAL PERFORMANCE REPORT 🚨
 Operation: ${metrics.operationName}
 Duration: ${metrics.duration}ms
@@ -91,6 +92,7 @@ Success: ${metrics.success}
 Error: ${metrics.error}
 Metadata: ${metrics.metadata}
 ''');
+    }
   }
 
   /// Get performance statistics
@@ -342,7 +344,7 @@ class MemoryOptimizer {
         final data = await entry.value();
         cacheData(entry.key, data);
       } catch (e) {
-        print('Failed to preload ${entry.key}: $e');
+        if (kDebugMode) print('Failed to preload ${entry.key}: $e');
       }
     }
   }

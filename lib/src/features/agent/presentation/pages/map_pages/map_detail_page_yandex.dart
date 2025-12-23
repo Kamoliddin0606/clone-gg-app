@@ -705,7 +705,7 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       // Get Yandex API key from preferences
       final apiKey = _prefs.getYandexMapsToken();
       if (apiKey == null || apiKey.isEmpty) {
-        print('Yandex API key not found, using fallback');
+        if (kDebugMode) print('Yandex API key not found, using fallback');
         return _getFallbackAddress();
       }
 
@@ -739,10 +739,12 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
           if (locality != null) {
             city = locality['LocalityName'] ?? '';
           }
-          print(metaData);
-          print(addressDetails);
-          print(country);
-          print(locality);
+          if (kDebugMode) {
+            print(metaData);
+            print(addressDetails);
+            print(country);
+            print(locality);
+          }
           return {
             'address': address,
             'city': city.isNotEmpty ? city : 'Aniqlanmadi',
@@ -752,17 +754,17 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
         }
       }
 
-      print('No geocoding results found');
+      if (kDebugMode) print('No geocoding results found');
       return _getFallbackAddress();
 
     } catch (e) {
-      print('Yandex Geocoding API error: $e');
+      if (kDebugMode) print('Yandex Geocoding API error: $e');
 
       // Try Google Geocoding API as fallback
       try {
         return await _getAddressFromGoogleAPI(point);
       } catch (googleError) {
-        print('Google Geocoding API fallback also failed: $googleError');
+        if (kDebugMode) print('Google Geocoding API fallback also failed: $googleError');
         return _getFallbackAddress();
       }
     }
@@ -810,7 +812,7 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       return _getFallbackAddress();
 
     } catch (e) {
-      print('Google Geocoding API error: $e');
+      if (kDebugMode) print('Google Geocoding API error: $e');
       return _getFallbackAddress();
     }
   }

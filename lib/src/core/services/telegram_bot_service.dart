@@ -66,7 +66,7 @@ class TelegramBotService {
 
       if (response.statusCode == 200) {
         // Log success
-        print('Telegram Bot: Message sent successfully.');
+        if (kDebugMode) print('Telegram Bot: Message sent successfully.');
 
         // Show success feedback
         _showSnackBar(context, 'Hisobot muvaffaqiyatli yuborildi!');
@@ -80,7 +80,7 @@ class TelegramBotService {
       }
     } catch (e) {
       // Log error
-      print('Telegram Bot Error: $e');
+      if (kDebugMode) print('Telegram Bot Error: $e');
 
       // Show error UI feedback
       _showSnackBar(context, 'Xatolik: $e', isError: true);

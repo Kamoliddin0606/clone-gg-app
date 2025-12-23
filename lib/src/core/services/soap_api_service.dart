@@ -149,7 +149,7 @@ class SoapApiService {
 ''';
 
     try {
-      print("user: $userCode");
+      if (kDebugMode) print("user: $userCode");
       final response = await _dio.post(
         _baseUrl,
         data: soapEnvelope,
@@ -160,11 +160,11 @@ class SoapApiService {
           },
         ),
       );
-      print('KPI data response: ${response.data}');
+      if (kDebugMode) print('KPI data response: ${response.data}');
       final document = XmlDocument.parse(response.data);
 
       final returnElement = document.findAllElements('m:return').first;
-      print('KPI data response: $returnElement');
+      if (kDebugMode) print('KPI data response: $returnElement');
      
       return KpiData(
         plan: returnElement.findElements('m:TotalPlan').first.innerText,
@@ -804,7 +804,7 @@ class SoapApiService {
     String? authToken,
   }) async {
     final timestamp = DateTime.now().toIso8601String();
-    print('[$timestamp] DEBUG API: getPromotions called');
+    if (kDebugMode) print('[$timestamp] DEBUG API: getPromotions called');
 
     const soapEnvelope = '''
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sam="http://www.sample-package.org">
@@ -817,8 +817,10 @@ class SoapApiService {
 
     try {
 
-      print('[$timestamp] DEBUG API: Sending SOAP request to $_baseUrl');
-      print('[$timestamp] DEBUG API: SOAP Envelope: $soapEnvelope');
+      if (kDebugMode) {
+        print('[$timestamp] DEBUG API: Sending SOAP request to $_baseUrl');
+        print('[$timestamp] DEBUG API: SOAP Envelope: $soapEnvelope');
+      }
       try {
         final response = await _dio.post(
           _baseUrl,
@@ -831,16 +833,18 @@ class SoapApiService {
             },
           ),
         );
-        print('[$timestamp] DEBUG API: Received response from server');
-        // Log the auth token if available
-        if (authToken != null) {
-          print('[$timestamp] DEBUG API: Using auth token: $authToken');
-        } else {
-          print('[$timestamp] DEBUG API: No auth token provided');
+        if (kDebugMode) {
+          print('[$timestamp] DEBUG API: Received response from server');
+          // Log the auth token if available
+          if (authToken != null) {
+            print('[$timestamp] DEBUG API: Using auth token: $authToken');
+          } else {
+            print('[$timestamp] DEBUG API: No auth token provided');
+          }
+          print("-------------------my check___________________ ${response}");
         }
-        print("-------------------my check___________________ ${response}");
       } catch (e) {
-        print('[$timestamp] DEBUG API: Error printing auth token: $e');
+        if (kDebugMode) print('[$timestamp] DEBUG API: Error printing auth token: $e');
       }
       final response = await _dio.post(
         _baseUrl,
@@ -853,14 +857,16 @@ class SoapApiService {
           },
         ),
       );
-      print('-------------------my check___________________ \n${response}');
-      print('[$timestamp] DEBUG API: Response status: ${response.statusCode}');
-      print('[$timestamp] DEBUG API: Response data length: ${response.data.length}');
+      if (kDebugMode) {
+        print('-------------------my check___________________ \n${response}');
+        print('[$timestamp] DEBUG API: Response status: ${response.statusCode}');
+        print('[$timestamp] DEBUG API: Response data length: ${response.data.length}');
+      }
 
       // Check for HTTP status errors
       final responseData = response.data.toString();
       if (response.statusCode != 200) {
-        print('[$timestamp] DEBUG API: HTTP error detected: ${response.statusCode}');
+        if (kDebugMode) print('[$timestamp] DEBUG API: HTTP error detected: ${response.statusCode}');
 
         // Prepare appropriate error message based on status code
         String faultMessage;
@@ -914,47 +920,50 @@ class SoapApiService {
             faultMessage = 'SOAP Fault (${response.statusCode}): $faultString';
           }
         } catch (e) {
-          print('[$timestamp] DEBUG API: Error parsing fault details: $e');
+          if (kDebugMode) print('[$timestamp] DEBUG API: Error parsing fault details: $e');
           // Keep the HTTP status-based message
         }
 
         // Log the error
-        print('[$timestamp] ERROR API: $faultMessage');
-        print('[$timestamp] ERROR API: Status Code: ${response.statusCode}');
-        print('[$timestamp] ERROR API: Full response: $responseData');
+        if (kDebugMode) {
+          print('[$timestamp] ERROR API: $faultMessage');
+          print('[$timestamp] ERROR API: Status Code: ${response.statusCode}');
+          print('[$timestamp] ERROR API: Full response: $responseData');
+        }
 
         // Throw SoapFaultException to be caught by the outer catch block
         throw SoapFaultException(faultMessage, responseData);
       }
 
       final document = XmlDocument.parse(response.data);
-      print('[$timestamp] DEBUG API: Parsed XML document');
+      if (kDebugMode) print('[$timestamp] DEBUG API: Parsed XML document');
       debugPrint('Document data: ${document.toString()}');
 
       final returnElement = document.findAllElements('m:return').first;
       final rowElements = returnElement.findAllElements('m:row').where((row) =>
         row.children.isNotEmpty && row.findElements('m:code').isNotEmpty);
-      print('[$timestamp] DEBUG API: Found ${rowElements.length} row elements');
+      if (kDebugMode) print('[$timestamp] DEBUG API: Found ${rowElements.length} row elements');
 
       final promotions = rowElements.map((element) {
-        print('[$timestamp] DEBUG API: Parsing promotion from XML element');
+        if (kDebugMode) print('[$timestamp] DEBUG API: Parsing promotion from XML element');
         return PromotionModel.fromXml(element);
       }).toList();
 
-      print('[$timestamp] DEBUG API: Successfully parsed ${promotions.length} promotions');
+      if (kDebugMode) print('[$timestamp] DEBUG API: Successfully parsed ${promotions.length} promotions');
       return promotions;
     } catch (e) {
-      print('[$timestamp] DEBUG API: Error in getPromotions: $e');
+      if (kDebugMode) print('[$timestamp] DEBUG API: Error in getPromotions: $e');
 
       // Check if this is a method not found error (common on some servers like Garnier)
       if (e.toString().contains('method') ||
           e.toString().contains('not found') ||
           e.toString().contains('available') ||
           e.toString().contains('500')) {
-        print('[$timestamp] DEBUG API: getPromo method not available on this server, returning empty list');
+        if (kDebugMode) print('[$timestamp] DEBUG API: getPromo method not available on this server, returning empty list');
         return []; // Return empty list instead of throwing
       }
 
+      if (kDebugMode) print('[$timestamp] DEBUG API: Unexpected error in getPromotions: $e');
       throw Exception('Promosyon ma\'lumotlarini olishda xatolik: $e');
     }
   }
@@ -1276,7 +1285,7 @@ class SoapApiService {
           },
         ),
       );
-      print('buyurtmalar royxati soap holatda: ${response.data}');
+      if (kDebugMode) print('buyurtmalar royxati soap holatda: ${response.data}');
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 
@@ -1332,12 +1341,16 @@ class SoapApiService {
 
       final document = XmlDocument.parse(response.data);
       final returnElement = document.findAllElements('m:return').first;
-      print(returnElement.toString());
+      if (kDebugMode) {
+        print(returnElement.toString());
+      }
       // Parse main permissions
 
       final userCoded = _getElementText(returnElement, 'm:userCode');
-      print('userCode: $userCoded');
-      print('userCode: $userCode');
+      if (kDebugMode) {
+        print('userCode: $userCoded');
+        print('userCode: $userCode');
+      }
       final skipTINduplicateCheck = _getElementText(returnElement, 'm:SkipTINduplicateCheck')?.toLowerCase() == 'true';
       final allowCreationWithoutTIN = _getElementText(returnElement, 'm:AllowCreationWithoutTIN')?.toLowerCase() == 'true';
       final allowCreatingPointOfSale = _getElementText(returnElement, 'm:AllowCreatingPointOfSale')?.toLowerCase() == 'true';
@@ -1364,22 +1377,24 @@ class SoapApiService {
           'stepRequired': stepRequired,
         });
       }
-      print({
-        'permissions': {
-          'userCode': userCode,
-          'skipTINduplicateCheck': skipTINduplicateCheck,
-          'allowCreationWithoutTIN': allowCreationWithoutTIN,
-          'allowCreatingPointOfSale': allowCreatingPointOfSale,
-          'visit': visit,
-          'strictSequence': strictSequence,
-          'unplannedOrder': unplannedOrder,
-          'plannedRoute': plannedRoute,
-          'editClientCoordinates': editClientCoordinates,
-          'clientZoneAccess': clientZoneAccess,
-          'locationUpdateInterval': locationUpdateInterval,
-        },
-        'visitSteps': visitSteps,
-      });
+      if (kDebugMode) {
+        print({
+          'permissions': {
+            'userCode': userCode,
+            'skipTINduplicateCheck': skipTINduplicateCheck,
+            'allowCreationWithoutTIN': allowCreationWithoutTIN,
+            'allowCreatingPointOfSale': allowCreatingPointOfSale,
+            'visit': visit,
+            'strictSequence': strictSequence,
+            'unplannedOrder': unplannedOrder,
+            'plannedRoute': plannedRoute,
+            'editClientCoordinates': editClientCoordinates,
+            'clientZoneAccess': clientZoneAccess,
+            'locationUpdateInterval': locationUpdateInterval,
+          },
+          'visitSteps': visitSteps,
+        });
+      }
       return {
         'permissions': {
           'userCode': userCode,

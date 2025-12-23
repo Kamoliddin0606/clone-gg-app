@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -36,7 +37,6 @@ import 'client_images_page.dart';
 import 'dart:ui'; 
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 
 import '../../../../core/services/location_service.dart';
 
@@ -244,9 +244,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         if (!serviceEnabled && mounted) {
           // Show snackbar to inform user about disabled location services
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Joylashuv xizmatlari o\'chirilgan. Masofa bo\'yicha tartiblash ishlamaydi.'),
-              duration: Duration(seconds: 3),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)?.locationServicesDisabledSortingNotWork ?? 'Location services are disabled. Distance sorting will not work.'),
+              duration: const Duration(seconds: 3),
             ),
           );
         }
@@ -351,7 +351,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     if (mounted && wasOnline != _isOnline) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isOnline ? 'Internetga ulandi' : 'Offline rejim'),
+          content: Text(_isOnline ? (AppLocalizations.of(context)?.connectedToInternet ?? 'Connected to internet') : (AppLocalizations.of(context)?.offlineModeActive ?? 'Offline mode')),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -373,7 +373,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         setState(() => _isLoading = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Foydalanuvchi ma\'lumotlari mavjud emas')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.userDataNotFound ?? 'User data not found')),
           );
         }
         return;
@@ -525,7 +525,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         try {
           regions = await repository.syncBusinessRegions(userCode: userCode);
         } catch (e) {
-          print('Failed to sync business regions: $e');
+          if (kDebugMode) print('Failed to sync business regions: $e');
           // Continue with empty regions - will show "Unknown"
         }
       }
@@ -772,7 +772,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     if (hasPermission && _locationService != null) {
       await _locationService!.ensureTrackingStarted();
     }
-    print("has permissions: $hasPermission");
+    if (kDebugMode) print("has permissions: $hasPermission");
     return hasPermission;
   }
 
@@ -795,11 +795,11 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   String _getSortButtonTooltip() {
     if (_isDistanceSort) {
       if (_locationPermissionStatus != AppPermissionStatus.granted) {
-        return 'Masofaga ko\'ra tartiblash uchun joylashuv ruxsati kerak';
+        return AppLocalizations.of(context)?.sortByDistanceRequiresPermission ?? 'Location permission required for distance sorting';
       }
-      return 'Masofaga ko\'ra tartiblash';
+      return AppLocalizations.of(context)?.sortByDistance ?? 'Sort by distance';
     }
-    return _isAlphabeticalSort ? 'Alifbo tartibida (A-Z)' : 'Alifbo tartibida (Z-A)';
+    return _isAlphabeticalSort ? (AppLocalizations.of(context)?.sortAlphabeticalAZ ?? 'Sort alphabetically (A-Z)') : (AppLocalizations.of(context)?.sortAlphabeticalZA ?? 'Sort alphabetically (Z-A)');
   }
 
   /// Ensure user location is available before enabling distance sorting
@@ -829,7 +829,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   Future<void> _makeCall(String phoneNumber) async {
     if (phoneNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Telefon raqami ko\'rsatilmagan')),
+        SnackBar(content: Text(AppLocalizations.of(context)?.phoneNumberNotSpecified ?? 'Phone number not specified')),
       );
       return;
     }
@@ -840,7 +840,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Telefon qo\'ng\'irog\'i amalga oshirilmadi')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.phoneCallFailed ?? 'Phone call failed')),
         );
       }
     }
@@ -1062,7 +1062,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         onRefusalSent: (reason) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${tradingPoint.name} uchun rad etish sababi yuborildi: $reason'),
+              content: Text('${tradingPoint.name} ${AppLocalizations.of(context)?.refusalReasonSent ?? "refusal reason sent"}: $reason'),
               backgroundColor: Colors.orange,
             ),
           );
@@ -1151,8 +1151,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           }
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Rasm xizmat mavjud emas'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context)?.imageServiceNotAvailable ?? 'Image service not available'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -1219,7 +1219,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       child: Scaffold(
         // AppBar — Material 3, AgentHome uslubi
         appBar: AppBar(
-          title: Text('Savdo nuqtalari', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+          title: Text(AppLocalizations.of(context)?.tradingPoints ?? 'Trading Points', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
           centerTitle: false,
           actions: [
             // Filter button
@@ -1346,7 +1346,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                     : Align(
                   alignment: Alignment.centerRight,
                   child: IconButton(
-                    tooltip: 'Ko‘rinish paneli',
+                    tooltip: AppLocalizations.of(context)?.viewPanel ?? 'View panel',
                     onPressed: () => setState(() => _showViewBar = true),
                     icon: const Icon(Icons.tune), // biriktirilgan namunadagi kabi "tune" tugma
                   ),
@@ -1868,9 +1868,9 @@ class TradingPointCard extends StatelessWidget {
   /// Example: 0.9km displays as "900m", 1.5km displays as "1.5km"
   Widget _buildDistanceDisplayForList(BuildContext context, TradingPoint tp, LocationService locationService) {
     // Debug logging for distance calculation
-    print("tp.latitude: ${tp.latitude}, tp.longitude: ${tp.longitude} ${tp.name}");
+    if (kDebugMode) print("tp.latitude: ${tp.latitude}, tp.longitude: ${tp.longitude} ${tp.name}");
     final distance = locationService.getDistanceToTradingPoint(tp.latitude, tp.longitude);
-    print('Trading points distance ${distance}');
+    if (kDebugMode) print('Trading points distance ${distance}');
 
     // Return empty widget if distance cannot be calculated
     if (distance == null) return const SizedBox.shrink();
@@ -1889,7 +1889,7 @@ class TradingPointCard extends StatelessWidget {
       distanceText = '${distance.toStringAsFixed(1)}km';
     }
 
-    print('distanceText: $distanceText');
+    if (kDebugMode) print('distanceText: $distanceText');
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -3043,7 +3043,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                    latitude != 0.0 && longitude != 0.0;
 
     if (!isValid) {
-      print('Warning: Invalid coordinates for $clientName: lat=$latitude, lng=$longitude. Using default location.');
+      if (kDebugMode) print('Warning: Invalid coordinates for $clientName: lat=$latitude, lng=$longitude. Using default location.');
       return const LatLng(defaultLat, defaultLng);
     }
 
@@ -3954,7 +3954,7 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
                    latitude != 0.0 && longitude != 0.0;
 
     if (!isValid) {
-      print('Warning: Invalid coordinates for $clientName: lat=$latitude, lng=$longitude. Using default location.');
+      if (kDebugMode) print('Warning: Invalid coordinates for $clientName: lat=$latitude, lng=$longitude. Using default location.');
       return const LatLng(defaultLat, defaultLng);
     }
 

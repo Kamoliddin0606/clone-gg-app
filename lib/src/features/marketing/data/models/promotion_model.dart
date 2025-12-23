@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:xml/xml.dart';
 
 class PromotionModel extends Equatable {
@@ -32,7 +33,7 @@ class PromotionModel extends Equatable {
 
   factory PromotionModel.fromXml(XmlElement element) {
     final timestamp = DateTime.now().toIso8601String();
-    print('[$timestamp] DEBUG MODEL: Parsing PromotionModel from XML');
+    if (kDebugMode) print('[$timestamp] DEBUG MODEL: Parsing PromotionModel from XML');
 
     try {
       final code = element.findElements('m:code').first.innerText;
@@ -47,7 +48,7 @@ class PromotionModel extends Equatable {
       final dateEnd = DateTime.parse(
           element.findElements('m:dateEnd').first.innerText);
 
-      print('[$timestamp] DEBUG MODEL: Basic fields - code: $code, name: $name, type: $type, dates: $dateStart to $dateEnd');
+      if (kDebugMode) print('[$timestamp] DEBUG MODEL: Basic fields - code: $code, name: $name, type: $type, dates: $dateStart to $dateEnd');
 
       final productListRaw = element.findAllElements('m:productList').map((product) {
         return PromotionProduct(
@@ -98,7 +99,7 @@ class PromotionModel extends Equatable {
       }
       final classList = classListMap.values.toList();
 
-      print('[$timestamp] DEBUG MODEL: Products: ${productList.length}, Bonuses: ${bonusList.length}, Classes: ${classList.length}');
+      if (kDebugMode) print('[$timestamp] DEBUG MODEL: Products: ${productList.length}, Bonuses: ${bonusList.length}, Classes: ${classList.length}');
 
       return PromotionModel(
         code: code,
@@ -115,8 +116,10 @@ class PromotionModel extends Equatable {
         isActive: DateTime.now().isBefore(dateEnd),
       );
     } catch (e) {
-      print('[$timestamp] DEBUG MODEL: Error parsing XML: $e');
-      print('[$timestamp] DEBUG MODEL: XML element: ${element.toXmlString()}');
+      if (kDebugMode) {
+        print('[$timestamp] DEBUG MODEL: Error parsing XML: $e');
+        print('[$timestamp] DEBUG MODEL: XML element: ${element.toXmlString()}');
+      }
       rethrow;
     }
   }

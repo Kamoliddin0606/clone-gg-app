@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 
@@ -19,10 +20,10 @@ class LocaleProvider with ChangeNotifier {
       final languageCode = prefs.getLanguageCode();
       _locale = Locale(languageCode);
       _isInitialized = true;
-      print('LocaleProvider initialized with locale: $_locale');
+      if (kDebugMode) print('LocaleProvider initialized with locale: $_locale');
       notifyListeners();
     } catch (e) {
-      print('Error initializing LocaleProvider: $e');
+      if (kDebugMode) print('Error initializing LocaleProvider: $e');
       // Fallback to default locale
       _locale = const Locale('uz');
       _isInitialized = true;
@@ -38,10 +39,10 @@ class LocaleProvider with ChangeNotifier {
       final prefs = await SharedPreferencesService.getInstance();
       await prefs.setLanguageCode(locale.languageCode);
       _locale = locale;
-      print('Locale changed to: $_locale');
+      if (kDebugMode) print('Locale changed to: $_locale');
       notifyListeners();
     } catch (e) {
-      print('Error setting locale: $e');
+      if (kDebugMode) print('Error setting locale: $e');
       rethrow;
     }
   }

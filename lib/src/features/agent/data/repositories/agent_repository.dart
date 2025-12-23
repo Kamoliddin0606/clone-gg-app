@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
@@ -36,10 +37,10 @@ required DataSyncService dataSyncService,
       );
     } catch (e) {
       // If API fails, try to return cached data
-      print('Error fetching KPI data: $e');
+      if (kDebugMode) print('Error fetching KPI data: $e');
       final cachedData = await _dataSyncService.getCachedKpiData(userCode);
       if (cachedData != null) {
-        print('Returning cached KPI data: $cachedData');
+        if (kDebugMode) print('Returning cached KPI data: $cachedData');
         return cachedData;
       }
 
@@ -172,7 +173,7 @@ required DataSyncService dataSyncService,
         codeProject: codeProject,
       );
     } catch (e) {
-      print('Error fetching products with prices: $e');
+      if (kDebugMode) print('Error fetching products with prices: $e');
       return [];
     }
   }
@@ -264,7 +265,7 @@ required DataSyncService dataSyncService,
 
       await dbHelper.saveUser(userData);
     } catch (e) {
-      print('Error saving prefs to users: $e');
+      if (kDebugMode) print('Error saving prefs to users: $e');
       rethrow;
     }
   }
@@ -316,7 +317,7 @@ required DataSyncService dataSyncService,
       );
     } catch (e) {
       // Fallback to regular contracts if JOIN query fails
-      print('Error fetching contracts with names, falling back to regular contracts: $e');
+      if (kDebugMode) print('Error fetching contracts with names, falling back to regular contracts: $e');
       final contracts = await getCachedClientContracts(
         clientCode: clientCode,
         active: active,

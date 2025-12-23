@@ -1335,14 +1335,113 @@ class AppLocalizationsUz extends AppLocalizations {
   String get clientOrdersFor => 'mijozining buyurtmalari';
 
   @override
+  String get locationServicesDisabledSortingNotWork => 'Joylashuv xizmatlari o\'chirilgan. Masofa bo\'yicha tartiblash ishlamaydi.';
+
+  @override
+  String get userDataNotFound => 'Foydalanuvchi ma\'lumotlari mavjud emas';
+
+  @override
+  String get phoneNumberNotSpecified => 'Telefon raqami ko\'rsatilmagan';
+
+  @override
+  String get phoneCallFailed => 'Telefon qo\'ng\'irog\'i amalga oshirilmadi';
+
+  @override
+  String get connectedToInternet => 'Internetga ulandi';
+
+  @override
+  String get offlineModeActive => 'Offline rejim';
+
+  @override
+  String get refusalReasonSent => 'uchun rad etish sababi yuborildi';
+
+  @override
+  String get viewPanel => 'Ko\'rinish paneli';
+
+  @override
+  String get sortByDistanceRequiresPermission => 'Masofaga ko\'ra tartiblash uchun joylashuv ruxsati kerak';
+
+  @override
+  String get sortByDistance => 'Masofaga ko\'ra tartiblash';
+
+  @override
+  String get sortAlphabeticalAZ => 'Alifbo tartibida (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'Alifbo tartibida (Z-A)';
+
+  @override
+  String get serverSelected => 'server tanlandi';
+
+  @override
+  String get noInternetNoSavedUser => 'Internet mavjud emas va saqlangan foydalanuvchi ma\'lumotlari topilmadi';
+
+  @override
+  String get noInternetLoginMismatch => 'Internet mavjud emas va kiritilgan login saqlangan login bilan mos kelmaydi';
+
+  @override
+  String get savedUserServerMismatch => 'Saqlangan foydalanuvchi ma\'lumotlari joriy server bilan mos kelmaydi. Iltimos, serverni o\'zgartiring.';
+
+  @override
+  String get noInternetUserNotInDb => 'Internet mavjud emas va foydalanuvchi ma\'lumotlari bazada topilmadi yoki mos kelmaydi';
+
+  @override
+  String get offlineLoginError => 'Offline kirishda xatolik';
+
+  @override
+  String get noInternetAvailable => 'Internet mavjud emas';
+
+  @override
+  String get offlineModeQuestion => 'sifatida offline rejimda kirishni xohlaysizmi?';
+
+  @override
+  String get offlineModeDescription => 'Offline rejimda siz mavjud ma\'lumotlar bilan ishlashingiz mumkin, lekin yangi ma\'lumotlarni yuklay olmaysiz.';
+
+  @override
+  String get offlineLogin => 'Offline kirish';
+
+  @override
+  String get dataUpdating => 'Ma\'lumotlar yangilanmoqda...';
+
+  @override
+  String get errorPrefix => 'Xatolik';
+
+  @override
+  String get cacheDataUsed => 'Kesh ma\'lumotlaridan foydalaniladi';
+
+  @override
+  String get loginSuccessful => 'Kirish muvaffaqiyatli!';
+
+  @override
+  String get onlineLoginError => 'Online kirishni qayta ishlashda xatolik';
+
+  @override
+  String get unknownUserRole => 'Noma\'lum foydalanuvchi roli';
+
+  @override
+  String get enterField => 'kiriting';
+
+  @override
+  String get imageServiceNotAvailable => 'Rasm xizmati mavjud emas';
+
+  @override
+  String get searchHint => 'Qidirish...';
+
+  @override
+  String get pullToRefresh => 'Pastga surib yangilash uchun urinib ko\'ring!';
+
+  @override
+  String get pullToRefreshOrSyncData => 'Pastga surish ish bermasa sozlamalar menyusida joylashgan \'barcha ma\'lumotlarni yangilash\' amalini bajaring';
+
+  @override
+  String get checkingDistance => 'Masofa tekshirilmoqda...';
+
+  @override
+  String get distanceRestrictionError => 'Siz mijozdan juda uzoqdasiz. Tashrifni yakunlash uchun yaqinroq boring.';
+
+  @override
   String get cancelVisit => 'Tashrifni bekor qilish';
 
   @override
-  String get cancelVisitConfirmation => 'Haqiqatan ham bu tashrifni bekor qilmoqchimisiz? Barcha progress yo\'qoladi.';
-
-  @override
-  String get checkingDistance => 'Tashrif nuqtasigacha bo\'lgan masofa tekshirilmoqda...';
-
-  @override
-  String get distanceRestrictionError => 'Siz tashrifni yakunlash uchun savdo nuqtasidan juda uzoqdasiz.';
+  String get cancelVisitConfirmation => 'Haqiqatan ham bu tashrifni bekor qilmoqchimisiz? Barcha jarayon yo\'qoladi.';
 }

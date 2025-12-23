@@ -1335,14 +1335,113 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientOrdersFor => 'orders for client';
 
   @override
+  String get locationServicesDisabledSortingNotWork => 'Location services are disabled. Distance sorting will not work.';
+
+  @override
+  String get userDataNotFound => 'User data not found';
+
+  @override
+  String get phoneNumberNotSpecified => 'Phone number not specified';
+
+  @override
+  String get phoneCallFailed => 'Phone call failed';
+
+  @override
+  String get connectedToInternet => 'Connected to internet';
+
+  @override
+  String get offlineModeActive => 'Offline mode';
+
+  @override
+  String get refusalReasonSent => 'Refusal reason sent for';
+
+  @override
+  String get viewPanel => 'View panel';
+
+  @override
+  String get sortByDistanceRequiresPermission => 'Location permission required for distance sorting';
+
+  @override
+  String get sortByDistance => 'Sort by distance';
+
+  @override
+  String get sortAlphabeticalAZ => 'Sort alphabetically (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'Sort alphabetically (Z-A)';
+
+  @override
+  String get serverSelected => 'server selected';
+
+  @override
+  String get noInternetNoSavedUser => 'No internet and no saved user data found';
+
+  @override
+  String get noInternetLoginMismatch => 'No internet and entered login does not match saved login';
+
+  @override
+  String get savedUserServerMismatch => 'Saved user data does not match current server. Please change server.';
+
+  @override
+  String get noInternetUserNotInDb => 'No internet and user data not found in database or does not match';
+
+  @override
+  String get offlineLoginError => 'Offline login error';
+
+  @override
+  String get noInternetAvailable => 'No internet available';
+
+  @override
+  String get offlineModeQuestion => 'Do you want to enter offline mode as';
+
+  @override
+  String get offlineModeDescription => 'In offline mode you can work with existing data, but cannot load new data.';
+
+  @override
+  String get offlineLogin => 'Offline login';
+
+  @override
+  String get dataUpdating => 'Updating data...';
+
+  @override
+  String get errorPrefix => 'Error';
+
+  @override
+  String get cacheDataUsed => 'Cache data is being used';
+
+  @override
+  String get loginSuccessful => 'Login Successful!';
+
+  @override
+  String get onlineLoginError => 'Online login processing error';
+
+  @override
+  String get unknownUserRole => 'Unknown user role';
+
+  @override
+  String get enterField => 'Please enter';
+
+  @override
+  String get imageServiceNotAvailable => 'Image service not available';
+
+  @override
+  String get searchHint => 'Search...';
+
+  @override
+  String get pullToRefresh => 'Pull down to refresh!';
+
+  @override
+  String get pullToRefreshOrSyncData => 'If pull to refresh doesn\'t work, use \'sync all data\' option in settings menu';
+
+  @override
+  String get checkingDistance => 'Checking distance...';
+
+  @override
+  String get distanceRestrictionError => 'You are too far from the client. Please move closer to complete the visit.';
+
+  @override
   String get cancelVisit => 'Cancel Visit';
 
   @override
   String get cancelVisitConfirmation => 'Are you sure you want to cancel this visit? All progress will be lost.';
-
-  @override
-  String get checkingDistance => 'Checking distance to trading point...';
-
-  @override
-  String get distanceRestrictionError => 'You are too far from the trading point to complete the visit.';
 }

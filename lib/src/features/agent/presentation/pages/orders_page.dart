@@ -264,23 +264,25 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
     final int? tabStatus = _statusMap[_statusTabs[_currentTabIndex]];
 
     // Debug: Userdan kelgan filter statuslari va UI da oldindan bor statuslar ro'yxatini chiqarish
-    print('=== FILTER DEBUG ===');
-    print('User tanlagan filter statuslari (_filters.statuses): ${_filters.statuses}');
-    print('UI dagi mavjud statuslar ro\'yxati (_statusMap): $_statusMap');
-    print('Joriy tab index: $_currentTabIndex');
-    print('Joriy tab nomi: ${_statusTabs[_currentTabIndex]}');
-    print('Joriy tab status kodi (tabStatus): $tabStatus');
-    print('===================');
+    if (kDebugMode) {
+      print('=== FILTER DEBUG ===');
+      print('User tanlagan filter statuslari (_filters.statuses): ${_filters.statuses}');
+      print('UI dagi mavjud statuslar ro\'yxati (_statusMap): $_statusMap');
+      print('Joriy tab index: $_currentTabIndex');
+      print('Joriy tab nomi: ${_statusTabs[_currentTabIndex]}');
+      print('Joriy tab status kodi (tabStatus): $tabStatus');
+      print('===================');
+    }
 
     setState((){
       _filtered = _all.where((o){
-        print("Order status: ${o.mainStatus} tanlangan tab: ${_statusTabs[_currentTabIndex]}");
+        if (kDebugMode) print("Order status: ${o.mainStatus} tanlangan tab: ${_statusTabs[_currentTabIndex]}");
         final matchTab = (tabStatus==null) ? true : o.mainStatus == _statusTabs[_currentTabIndex];
-        print("_filters.statuses: ${_filters.statuses} o.mainStatus: ${o.mainStatus} Check: ${_statusMap[o.mainStatus]}");
+        if (kDebugMode) print("_filters.statuses: ${_filters.statuses} o.mainStatus: ${o.mainStatus} Check: ${_statusMap[o.mainStatus]}");
         final matchStatusMulti = _filters.statuses.isEmpty ? true : _filters.statuses.contains(_statusMap[o.mainStatus]);
         final matchDate = _filters.range==null ? true : (o.dateOrder.isAfter(_filters.range!.start.subtract(const Duration(seconds:1))) && o.dateOrder.isBefore(_filters.range!.end.add(const Duration(seconds:1))));
         final matchClient = _filters.clients.isEmpty ? true : _filters.clients.contains(o.clientName);
-        print('order main status : ${o.mainStatus}');
+        if (kDebugMode) print('order main status : ${o.mainStatus}');
         final text = _normalize([
           o.numOrder, o.clientName, o.captionOrder, o.clientCode, o.codeOrg, statusText(o.mainStatus),
           NumberFormat('#,##0').format(o.total)
@@ -288,7 +290,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
         final matchSearch = q.isEmpty ? true : text.contains(q);
 
         // Debug: Har bir order uchun filter natijalarini alohida chiqarish
-        print('Order: ${o.numOrder} | Status: ${o.status} | Tab Match: $matchTab | Multi Status Match: $matchStatusMulti | Date Match: $matchDate | Client Match: $matchClient | Search Match: $matchSearch | Overall: ${matchTab && matchStatusMulti && matchDate && matchClient && matchSearch}');
+        if (kDebugMode) print('Order: ${o.numOrder} | Status: ${o.status} | Tab Match: $matchTab | Multi Status Match: $matchStatusMulti | Date Match: $matchDate | Client Match: $matchClient | Search Match: $matchSearch | Overall: ${matchTab && matchStatusMulti && matchDate && matchClient && matchSearch}');
 
         return matchTab && matchStatusMulti && matchDate && matchClient && matchSearch;
       }).toList();

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedPreferencesService {
@@ -70,7 +71,7 @@ Future<void> init() async {
     await _preferences.setString(_chatIDKey, chatID);
     await _preferences.setString(_topicIDKey, topicID);
     // Log for debugging
-    print('Saved TelegramID: $telegramID, ChatID: $chatID, TopicID: $topicID');
+    if (kDebugMode) print('Saved TelegramID: $telegramID, ChatID: $chatID, TopicID: $topicID');
   }
 
   // Get saved username
@@ -102,8 +103,10 @@ Future<void> init() async {
 
   // Get user code
   String? getUserCode() {
-    print('Getting user code from SharedPreferences');
-    print('User code key: $_userCodeKey');
+    if (kDebugMode) {
+      print('Getting user code from SharedPreferences');
+      print('User code key: $_userCodeKey');
+    }
     return _preferences.getString(_userCodeKey);
   }
 
@@ -125,21 +128,21 @@ Future<void> init() async {
   // Get telegram ID
   String? getTelegramID() {
     final id = _preferences.getString(_telegramIDKey);
-    print('Retrieved TelegramID: $id');
+    if (kDebugMode) print('Retrieved TelegramID: $id');
     return id;
   }
 
   // Get chat ID
   String? getChatID() {
     final id = _preferences.getString(_chatIDKey);
-    print('Retrieved ChatID: $id');
+    if (kDebugMode) print('Retrieved ChatID: $id');
     return id;
   }
 
   // Get topic ID
   String? getTopicID() {
     final id = _preferences.getString(_topicIDKey);
-    print('Retrieved TopicID: $id');
+    if (kDebugMode) print('Retrieved TopicID: $id');
     return id;
   }
 
@@ -167,7 +170,7 @@ Future<void> init() async {
 
   String? getServerName() {
     final serverName = _preferences.getString(_serverNameKey);
-    print('Retrieved server name: $serverName');
+    if (kDebugMode) print('Retrieved server name: $serverName');
     return serverName;
   }
 
@@ -200,9 +203,9 @@ Future<void> init() async {
   Future<void> setLanguageCode(String languageCode) async {
     try {
       await _preferences.setString(_languageCodeKey, languageCode);
-      print('Language code saved: $languageCode');
+      if (kDebugMode) print('Language code saved: $languageCode');
     } catch (e) {
-      print('Error saving language code: $e');
+      if (kDebugMode) print('Error saving language code: $e');
       rethrow;
     }
   }
@@ -210,10 +213,10 @@ Future<void> init() async {
   String getLanguageCode() {
     try {
       final languageCode = _preferences.getString(_languageCodeKey) ?? 'uz'; // Default to Uzbek
-      print('Retrieved language code: $languageCode');
+      if (kDebugMode) print('Retrieved language code: $languageCode');
       return languageCode;
     } catch (e) {
-      print('Error retrieving language code: $e');
+      if (kDebugMode) print('Error retrieving language code: $e');
       return 'uz'; // Fallback to Uzbek
     }
   }
@@ -221,9 +224,9 @@ Future<void> init() async {
   Future<void> clearLanguageCode() async {
     try {
       await _preferences.remove(_languageCodeKey);
-      print('Language code cleared');
+      if (kDebugMode) print('Language code cleared');
     } catch (e) {
-      print('Error clearing language code: $e');
+      if (kDebugMode) print('Error clearing language code: $e');
       rethrow;
     }
   }
@@ -267,11 +270,11 @@ Future<void> init() async {
       await _preferences.setString('google_maps_api_key', googleToken);
       await _preferences.setString('map_tokens_last_updated', DateTime.now().toIso8601String());
 
-      print('Map tokens saved successfully - Yandex: ${yandexToken.isNotEmpty ? 'Present' : 'Empty'}, Google: ${googleToken.isNotEmpty ? 'Present' : 'Empty'}');
+      if (kDebugMode) print('Map tokens saved successfully - Yandex: ${yandexToken.isNotEmpty ? 'Present' : 'Empty'}, Google: ${googleToken.isNotEmpty ? 'Present' : 'Empty'}');
 
       return true;
     } catch (e) {
-      print('Error saving map tokens: $e');
+      if (kDebugMode) print('Error saving map tokens: $e');
       return false;
     }
   }
@@ -287,7 +290,7 @@ Future<void> init() async {
         'googleToken': googleToken,
       };
     } catch (e) {
-      print('Error getting map tokens: $e');
+      if (kDebugMode) print('Error getting map tokens: $e');
       return {
         'yandexToken': '',
         'googleToken': '',
@@ -327,7 +330,7 @@ Future<void> init() async {
 
       return difference.inDays <= 30;
     } catch (e) {
-      print('Error checking map token validity: $e');
+      if (kDebugMode) print('Error checking map token validity: $e');
       return false;
     }
   }
@@ -338,7 +341,7 @@ Future<void> init() async {
       final lastUpdatedStr = _preferences.getString('map_tokens_last_updated');
       return lastUpdatedStr != null ? DateTime.parse(lastUpdatedStr) : null;
     } catch (e) {
-      print('Error getting map tokens last updated: $e');
+      if (kDebugMode) print('Error getting map tokens last updated: $e');
       return null;
     }
   }
@@ -350,11 +353,11 @@ Future<void> init() async {
       await _preferences.remove('google_maps_api_key');
       await _preferences.remove('map_tokens_last_updated');
 
-      print('Map tokens cleared successfully');
+      if (kDebugMode) print('Map tokens cleared successfully');
 
       return true;
     } catch (e) {
-      print('Error clearing map tokens: $e');
+      if (kDebugMode) print('Error clearing map tokens: $e');
       return false;
     }
   }

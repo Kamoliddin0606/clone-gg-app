@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
@@ -50,9 +51,9 @@ class VisitStepSyncService {
       }
 
       _isInitialized = true;
-      print('VisitStepSyncService initialized successfully');
+      if (kDebugMode) print('VisitStepSyncService initialized successfully');
     } catch (e) {
-      print('Error initializing VisitStepSyncService: $e');
+      if (kDebugMode) print('Error initializing VisitStepSyncService: $e');
       rethrow;
     }
   }
@@ -66,10 +67,10 @@ class VisitStepSyncService {
   void _onConnectivityChanged(List<ConnectivityResult> results) {
     if (!_isOffline(results)) {
       // Network available, sync data
-      print('Network available, starting visit step data sync');
+      if (kDebugMode) print('Network available, starting visit step data sync');
       syncUnsyncedData();
     } else {
-      print('Network unavailable, visit step sync paused');
+      if (kDebugMode) print('Network unavailable, visit step sync paused');
     }
   }
 
@@ -78,7 +79,7 @@ class VisitStepSyncService {
     _syncTimer?.cancel();
     _syncTimer = Timer.periodic(_syncInterval, (_) {
       if (!_isInitialized) return;
-      print('Periodic visit step sync triggered');
+      if (kDebugMode) print('Periodic visit step sync triggered');
       syncUnsyncedData();
     });
   }
@@ -89,11 +90,11 @@ class VisitStepSyncService {
       final unsyncedData = await _visitDataRepository.getPendingSyncVisitStepData();
 
       if (unsyncedData.isEmpty) {
-        print('No unsynced visit step data found');
+        if (kDebugMode) print('No unsynced visit step data found');
         return;
       }
 
-      print('Found ${unsyncedData.length} unsynced visit step records');
+      if (kDebugMode) print('Found ${unsyncedData.length} unsynced visit step records');
 
       // Group data by visit ID for efficient processing
       final groupedData = <String, List<VisitData>>{};
@@ -104,7 +105,7 @@ class VisitStepSyncService {
         groupedData[data.visitId]!.add(data);
       }
 
-      print('Grouped into ${groupedData.length} visits');
+      if (kDebugMode) print('Grouped into ${groupedData.length} visits');
 
       // Sync each visit's data
       int successCount = 0;
@@ -115,25 +116,25 @@ class VisitStepSyncService {
           await _syncVisitData(entry.key, entry.value);
           successCount++;
         } catch (e) {
-          print('Failed to sync visit ${entry.key}: $e');
+          if (kDebugMode) print('Failed to sync visit ${entry.key}: $e');
           failureCount++;
         }
       }
 
-      print('Sync completed: $successCount successful, $failureCount failed');
+      if (kDebugMode) print('Sync completed: $successCount successful, $failureCount failed');
 
       // Update last sync time
       await _prefs.preferences.setString(_lastSyncKey, DateTime.now().toIso8601String());
 
     } catch (e) {
-      print('Error during visit step data sync: $e');
+      if (kDebugMode) print('Error during visit step data sync: $e');
       _scheduleRetrySync();
     }
   }
 
   /// Sync data for a specific visit
   Future<void> _syncVisitData(String visitId, List<VisitData> visitData) async {
-    print('Syncing visit $visitId with ${visitData.length} data items');
+    if (kDebugMode) print('Syncing visit $visitId with ${visitData.length} data items');
 
     // Group data by type for different sync strategies
     final photos = visitData.where((d) => d.dataType == 'photo').toList();
@@ -166,12 +167,12 @@ class VisitStepSyncService {
 
     // Mark all data as synced
     await _visitDataRepository.markVisitStepDataAsSynced(visitId);
-    print('Visit $visitId sync completed successfully');
+    if (kDebugMode) print('Visit $visitId sync completed successfully');
   }
 
   /// Sync photo data
   Future<void> _syncPhotos(String visitId, List<VisitData> photos) async {
-    print('Syncing ${photos.length} photos for visit $visitId');
+    if (kDebugMode) print('Syncing ${photos.length} photos for visit $visitId');
 
     for (final photo in photos) {
       try {
@@ -184,7 +185,7 @@ class VisitStepSyncService {
         await _visitDataRepository.updateVisitStepDataSyncStatus(photo.id!, true);
 
       } catch (e) {
-        print('Error syncing photo ${photo.id}: $e');
+        if (kDebugMode) print('Error syncing photo ${photo.id}: $e');
         // Continue with other photos
       }
     }
@@ -192,7 +193,7 @@ class VisitStepSyncService {
 
   /// Sync audit data
   Future<void> _syncAuditData(String visitId, List<VisitData> audits) async {
-    print('Syncing ${audits.length} audit records for visit $visitId');
+    if (kDebugMode) print('Syncing ${audits.length} audit records for visit $visitId');
 
     for (final audit in audits) {
       try {
@@ -201,14 +202,14 @@ class VisitStepSyncService {
         await _visitDataRepository.updateVisitStepDataSyncStatus(audit.id!, true);
 
       } catch (e) {
-        print('Error syncing audit ${audit.id}: $e');
+        if (kDebugMode) print('Error syncing audit ${audit.id}: $e');
       }
     }
   }
 
   /// Sync order data
   Future<void> _syncOrderData(String visitId, List<VisitData> orders) async {
-    print('Syncing ${orders.length} orders for visit $visitId');
+    if (kDebugMode) print('Syncing ${orders.length} orders for visit $visitId');
 
     for (final order in orders) {
       try {
@@ -216,14 +217,14 @@ class VisitStepSyncService {
         await _visitDataRepository.updateVisitStepDataSyncStatus(order.id!, true);
 
       } catch (e) {
-        print('Error syncing order ${order.id}: $e');
+        if (kDebugMode) print('Error syncing order ${order.id}: $e');
       }
     }
   }
 
   /// Sync form data
   Future<void> _syncFormData(String visitId, List<VisitData> forms) async {
-    print('Syncing ${forms.length} forms for visit $visitId');
+    if (kDebugMode) print('Syncing ${forms.length} forms for visit $visitId');
 
     for (final form in forms) {
       try {
@@ -231,14 +232,14 @@ class VisitStepSyncService {
         await _visitDataRepository.updateVisitStepDataSyncStatus(form.id!, true);
 
       } catch (e) {
-        print('Error syncing form ${form.id}: $e');
+        if (kDebugMode) print('Error syncing form ${form.id}: $e');
       }
     }
   }
 
   /// Sync notes
   Future<void> _syncNotes(String visitId, List<VisitData> notes) async {
-    print('Syncing ${notes.length} notes for visit $visitId');
+    if (kDebugMode) print('Syncing ${notes.length} notes for visit $visitId');
 
     for (final note in notes) {
       try {
@@ -246,7 +247,7 @@ class VisitStepSyncService {
         await _visitDataRepository.updateVisitStepDataSyncStatus(note.id!, true);
 
       } catch (e) {
-        print('Error syncing note ${note.id}: $e');
+        if (kDebugMode) print('Error syncing note ${note.id}: $e');
       }
     }
   }
@@ -259,7 +260,7 @@ class VisitStepSyncService {
         await _syncVisitData(visitId, visitData);
       }
     } catch (e) {
-      print('Error force syncing visit $visitId: $e');
+      if (kDebugMode) print('Error force syncing visit $visitId: $e');
       rethrow;
     }
   }
@@ -276,7 +277,7 @@ class VisitStepSyncService {
         'isOnline': !(await _connectivity.checkConnectivity()).every((r) => r == ConnectivityResult.none),
       };
     } catch (e) {
-      print('Error getting sync status: $e');
+      if (kDebugMode) print('Error getting sync status: $e');
       return {
         'unsyncedCount': 0,
         'lastSync': null,
@@ -289,7 +290,7 @@ class VisitStepSyncService {
   void _scheduleRetrySync() {
     Timer(_retryDelay, () {
       if (_isInitialized) {
-        print('Retrying visit step sync');
+        if (kDebugMode) print('Retrying visit step sync');
         syncUnsyncedData();
       }
     });
@@ -300,9 +301,9 @@ class VisitStepSyncService {
     try {
       final cutoffDate = DateTime.now().subtract(maxAge);
       await _visitDataRepository.deleteOldVisitStepData(olderThan: cutoffDate.difference(DateTime.now()));
-      print('Cleaned up visit step data older than $maxAge');
+      if (kDebugMode) print('Cleaned up visit step data older than $maxAge');
     } catch (e) {
-      print('Error cleaning up old data: $e');
+      if (kDebugMode) print('Error cleaning up old data: $e');
     }
   }
 
@@ -311,6 +312,6 @@ class VisitStepSyncService {
     _connectivitySubscription?.cancel();
     _syncTimer?.cancel();
     _isInitialized = false;
-    print('VisitStepSyncService disposed');
+    if (kDebugMode) print('VisitStepSyncService disposed');
   }
 }

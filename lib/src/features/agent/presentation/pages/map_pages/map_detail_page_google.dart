@@ -697,7 +697,7 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
       // Get Google API key from preferences
       final apiKey = _prefs.getGoogleMapsToken();
       if (apiKey == null || apiKey.isEmpty) {
-        print('Google API key not found, using fallback');
+        if (kDebugMode) print('Google API key not found, using fallback');
         return _getFallbackAddress();
       }
 
@@ -733,17 +733,17 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
         };
       }
 
-      print('No geocoding results found');
+      if (kDebugMode) print('No geocoding results found');
       return _getFallbackAddress();
 
     } catch (e) {
-      print('Google Geocoding API error: $e');
+      if (kDebugMode) print('Google Geocoding API error: $e');
 
       // Try Yandex Geocoding API as fallback
       try {
         return await _getAddressFromYandexAPI(point);
       } catch (yandexError) {
-        print('Yandex Geocoding API fallback also failed: $yandexError');
+        if (kDebugMode) print('Yandex Geocoding API fallback also failed: $yandexError');
         return _getFallbackAddress();
       }
     }
@@ -800,7 +800,7 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
       return _getFallbackAddress();
 
     } catch (e) {
-      print('Yandex Geocoding API error: $e');
+      if (kDebugMode) print('Yandex Geocoding API error: $e');
       return _getFallbackAddress();
     }
   }

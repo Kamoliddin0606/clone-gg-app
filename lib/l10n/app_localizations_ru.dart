@@ -1335,14 +1335,113 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clientOrdersFor => 'заказы клиента';
 
   @override
-  String get cancelVisit => 'Отменить посещение';
+  String get locationServicesDisabledSortingNotWork => 'Службы определения местоположения отключены. Сортировка по расстоянию не будет работать.';
 
   @override
-  String get cancelVisitConfirmation => 'Вы уверены, что хотите отменить это посещение? Весь прогресс будет потерян.';
+  String get userDataNotFound => 'Данные пользователя не найдены';
 
   @override
-  String get checkingDistance => 'Проверка расстояния до торговой точки...';
+  String get phoneNumberNotSpecified => 'Номер телефона не указан';
 
   @override
-  String get distanceRestrictionError => 'Вы находитесь слишком далеко от торговой точки для завершения визита.';
+  String get phoneCallFailed => 'Телефонный звонок не удался';
+
+  @override
+  String get connectedToInternet => 'Подключено к интернету';
+
+  @override
+  String get offlineModeActive => 'Офлайн режим';
+
+  @override
+  String get refusalReasonSent => 'Причина отказа отправлена для';
+
+  @override
+  String get viewPanel => 'Панель просмотра';
+
+  @override
+  String get sortByDistanceRequiresPermission => 'Для сортировки по расстоянию требуется разрешение на местоположение';
+
+  @override
+  String get sortByDistance => 'Сортировка по расстоянию';
+
+  @override
+  String get sortAlphabeticalAZ => 'По алфавиту (А-Я)';
+
+  @override
+  String get sortAlphabeticalZA => 'По алфавиту (Я-А)';
+
+  @override
+  String get serverSelected => 'сервер выбран';
+
+  @override
+  String get noInternetNoSavedUser => 'Нет интернета и сохраненные данные пользователя не найдены';
+
+  @override
+  String get noInternetLoginMismatch => 'Нет интернета и введенный логин не совпадает с сохраненным';
+
+  @override
+  String get savedUserServerMismatch => 'Сохраненные данные пользователя не соответствуют текущему серверу. Пожалуйста, измените сервер.';
+
+  @override
+  String get noInternetUserNotInDb => 'Нет интернета и данные пользователя не найдены в базе или не совпадают';
+
+  @override
+  String get offlineLoginError => 'Ошибка офлайн входа';
+
+  @override
+  String get noInternetAvailable => 'Интернет недоступен';
+
+  @override
+  String get offlineModeQuestion => 'Хотите войти в офлайн режим как';
+
+  @override
+  String get offlineModeDescription => 'В офлайн режиме вы можете работать с существующими данными, но не можете загружать новые.';
+
+  @override
+  String get offlineLogin => 'Офлайн вход';
+
+  @override
+  String get dataUpdating => 'Обновление данных...';
+
+  @override
+  String get errorPrefix => 'Ошибка';
+
+  @override
+  String get cacheDataUsed => 'Используются кэшированные данные';
+
+  @override
+  String get loginSuccessful => 'Вход выполнен успешно!';
+
+  @override
+  String get onlineLoginError => 'Ошибка обработки онлайн входа';
+
+  @override
+  String get unknownUserRole => 'Неизвестная роль пользователя';
+
+  @override
+  String get enterField => 'Введите';
+
+  @override
+  String get imageServiceNotAvailable => 'Сервис изображений недоступен';
+
+  @override
+  String get searchHint => 'Поиск...';
+
+  @override
+  String get pullToRefresh => 'Потяните вниз для обновления!';
+
+  @override
+  String get pullToRefreshOrSyncData => 'Если обновление не работает, используйте опцию \'синхронизировать все данные\' в меню настроек';
+
+  @override
+  String get checkingDistance => 'Проверка расстояния...';
+
+  @override
+  String get distanceRestrictionError => 'Вы слишком далеко от клиента. Подойдите ближе для завершения визита.';
+
+  @override
+  String get cancelVisit => 'Отменить визит';
+
+  @override
+  String get cancelVisitConfirmation => 'Вы уверены, что хотите отменить визит? Весь прогресс будет потерян.';
 }

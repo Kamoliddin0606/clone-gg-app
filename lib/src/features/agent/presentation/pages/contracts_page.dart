@@ -260,11 +260,11 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
     // Apply trading points filter
 
-    print('_filters.tradingPointCodes: ${_filters.tradingPointCodes}');
+    if (kDebugMode) print('_filters.tradingPointCodes: ${_filters.tradingPointCodes}');
     if (_filters.tradingPointCodes.isNotEmpty) {
       filtered = filtered.where((contract) {
-        print('_filters.tradingPointCodes: ${_filters.tradingPointCodes}');
-        print('contracts code clients:${contract.codeClient}');
+        if (kDebugMode) print('_filters.tradingPointCodes: ${_filters.tradingPointCodes}');
+        if (kDebugMode) print('contracts code clients:${contract.codeClient}');
         return _filters.tradingPointCodes.contains(contract.codeClient);
       }).toList();
     }

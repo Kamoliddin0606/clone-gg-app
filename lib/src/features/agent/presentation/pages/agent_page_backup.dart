@@ -1,4 +1,5 @@
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -89,7 +90,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
         await _loadKpiData();
       }
     } catch (e) {
-      print('Error loading user data: $e');
+      if (kDebugMode) print('Error loading user data: $e');
     }
   }
 

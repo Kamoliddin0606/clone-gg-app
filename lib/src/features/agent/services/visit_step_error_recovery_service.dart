@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
@@ -64,7 +65,7 @@ class VisitStepErrorRecoveryService {
     required ErrorRecoveryConfig config,
     required Future<bool> Function() retryOperation,
   }) async {
-    print('Handling error for operation $operationId: $error');
+    if (kDebugMode) print('Handling error for operation $operationId: $error');
 
     // Log the error
     await _logError(operationId, error, errorData);
@@ -98,7 +99,7 @@ class VisitStepErrorRecoveryService {
     final currentAttempts = _retryCounts[operationId] ?? 0;
 
     if (currentAttempts >= config.maxRetries) {
-      print('Max retries exceeded for operation $operationId');
+      if (kDebugMode) print('Max retries exceeded for operation $operationId');
       await _scheduleManualIntervention(operationId, VisitStepError.timeoutError, null);
       return false;
     }
@@ -108,14 +109,14 @@ class VisitStepErrorRecoveryService {
     // Calculate delay with exponential backoff
     final delay = config.retryDelay * (1 << currentAttempts); // 2^attempts
 
-    print('Scheduling retry for operation $operationId in ${delay.inSeconds}s (attempt ${currentAttempts + 1})');
+    if (kDebugMode) print('Scheduling retry for operation $operationId in ${delay.inSeconds}s (attempt ${currentAttempts + 1})');
 
     _retryTimers[operationId]?.cancel();
     _retryTimers[operationId] = Timer(delay, () {
       retryOperation().timeout(config.timeout)
         .then((success) {
           if (success) {
-            print('Retry successful for operation $operationId');
+            if (kDebugMode) print('Retry successful for operation $operationId');
             _clearError(operationId).then((_) {
               _retryCounts.remove(operationId);
             });
@@ -124,7 +125,7 @@ class VisitStepErrorRecoveryService {
           }
         })
         .catchError((e) {
-          print('Retry failed for operation $operationId: $e');
+          if (kDebugMode) print('Retry failed for operation $operationId: $e');
           _attemptRetry(operationId, config, retryOperation);
         });
     });
@@ -134,7 +135,7 @@ class VisitStepErrorRecoveryService {
 
   /// Attempt fallback operation
   Future<bool> _attemptFallback(String operationId, VisitStepError error, dynamic errorData) async {
-    print('Attempting fallback for operation $operationId');
+    if (kDebugMode) print('Attempting fallback for operation $operationId');
 
     try {
       switch (error) {
@@ -154,7 +155,7 @@ class VisitStepErrorRecoveryService {
           return false;
       }
     } catch (e) {
-      print('Fallback failed for operation $operationId: $e');
+      if (kDebugMode) print('Fallback failed for operation $operationId: $e');
       return false;
     }
   }
@@ -195,7 +196,7 @@ class VisitStepErrorRecoveryService {
 
   /// Schedule manual intervention
   Future<void> _scheduleManualIntervention(String operationId, VisitStepError error, dynamic errorData) async {
-    print('Scheduling manual intervention for operation $operationId');
+    if (kDebugMode) print('Scheduling manual intervention for operation $operationId');
 
     final failedOperation = {
       'operationId': operationId,
@@ -210,7 +211,7 @@ class VisitStepErrorRecoveryService {
 
   /// Skip operation
   Future<void> _skipOperation(String operationId) async {
-    print('Skipping operation $operationId');
+    if (kDebugMode) print('Skipping operation $operationId');
 
     await _visitDataRepository.markOperationAsSkipped(operationId);
     await _clearError(operationId);
@@ -315,7 +316,7 @@ class VisitStepErrorRecoveryService {
 
     for (final op in failedOps) {
       // Try to recover failed operations
-      print('Processing failed operation: ${op['operationId']}');
+      if (kDebugMode) print('Processing failed operation: ${op['operationId']}');
       // Implementation would depend on specific operation type
     }
   }

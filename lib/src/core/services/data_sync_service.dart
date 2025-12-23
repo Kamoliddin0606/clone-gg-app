@@ -145,9 +145,11 @@ class DataSyncService {
 
   /// Check if preferences user matches database user table
   Future<bool> validateUserWithDatabase() async {
-    print('Validating user with database...');
-    print('User code: ${_prefs.getUserCode()}');
-    print('User name: ${_prefs.getUserName()}');
+    if (kDebugMode) {
+      print('Validating user with database...');
+      print('User code: ${_prefs.getUserCode()}');
+      print('User name: ${_prefs.getUserName()}');
+    }
 
     try {
       final prefsUserCode = _prefs.getUserCode();
@@ -157,13 +159,13 @@ class DataSyncService {
 
       // If no stored preferences, consider it valid
       if (prefsUserCode == null || prefsUserName == null) {
-        print('No stored preferences found');
+        if (kDebugMode) print('No stored preferences found');
         return true;
       }
 
       // Get user from database
       final dbUser = await _dbHelper.getUserByCode(prefsUserCode);
-      print('Database user: $dbUser');
+      if (kDebugMode) print('Database user: $dbUser');
       // If user not in database, consider it invalid (needs sync)
       if (dbUser == null) {
         if (kDebugMode) {
@@ -548,7 +550,7 @@ class DataSyncService {
     if (kDebugMode) {
       print('KPI ma\'lumotlari yuklandi: $kpiData');
     }
-    print("_________________________________ kpi plan ${kpiData.fact}");
+    if (kDebugMode) print("_________________________________ kpi plan ${kpiData.fact}");
     await _dbService.saveKpiData(userCode, kpiData);
     return kpiData;
   }
@@ -561,7 +563,7 @@ class DataSyncService {
   }) async {
     if (!forceRefresh) {
       final cached = await _dbService.getClients();
-      print(cached);
+      if (kDebugMode) print(cached);
       if (cached.isNotEmpty) {
         return cached;
       }
@@ -901,11 +903,12 @@ class DataSyncService {
   }) async {
 
     final timestamp = DateTime.now().toIso8601String();
-    print('[$timestamp] DEBUG SYNC: syncPromotions called, forceRefresh: $forceRefresh');
-
-    print('[$timestamp] DEBUG SYNC: Checking cached promotions');
+    if (kDebugMode) {
+      print('[$timestamp] DEBUG SYNC: syncPromotions called, forceRefresh: $forceRefresh');
+      print('[$timestamp] DEBUG SYNC: Checking cached promotions');
+    }
     final cached = await _dbService.getPromotions();
-    print('[$timestamp] DEBUG SYNC: Cached promotions count: ${cached.length}');
+    if (kDebugMode) print('[$timestamp] DEBUG SYNC: Cached promotions count: ${cached.length}');
 
     if (cached.isNotEmpty) {
       // Check if data is recent (less than 24 hours old)
@@ -914,22 +917,22 @@ class DataSyncService {
           .map((p) => p.lastSynced!)
           .fold<DateTime?>(null, (prev, curr) => prev == null || curr.isAfter(prev) ? curr : prev);
 
-      print('[$timestamp] DEBUG SYNC: Most recent sync: $mostRecentSync');
+      if (kDebugMode) print('[$timestamp] DEBUG SYNC: Most recent sync: $mostRecentSync');
 
       if (mostRecentSync != null) {
         final now = DateTime.now();
         final diff = now.difference(mostRecentSync).inHours;
-        print('[$timestamp] DEBUG SYNC: Time difference: ${diff} hours');
+        if (kDebugMode) print('[$timestamp] DEBUG SYNC: Time difference: ${diff} hours');
 
         if (diff < 24) {
-          print('[$timestamp] DEBUG SYNC: Returning cached data (recent)');
+          if (kDebugMode) print('[$timestamp] DEBUG SYNC: Returning cached data (recent)');
           return cached;
         }
       }
     }
 
     if( isAvonServerSelected() || isEvyapServerSelected() ) {
-      print('[$timestamp] DEBUG SYNC: Proceeding with fresh sync');
+      if (kDebugMode) print('[$timestamp] DEBUG SYNC: Proceeding with fresh sync');
       return await _syncPromotions(authToken);
     }
     return <PromotionModel>[];
@@ -1036,32 +1039,32 @@ class DataSyncService {
   Future<List<PromotionModel>> _syncPromotions(String? authToken) async {
     if(isEvyapServerSelected()|| isAvonServerSelected()){
       final timestamp = DateTime.now().toIso8601String();
-      print('[$timestamp] DEBUG SYNC: _syncPromotions called');
+      if (kDebugMode) print('[$timestamp] DEBUG SYNC: _syncPromotions called');
 
       try {
-        print('[$timestamp] DEBUG SYNC: Calling _apiService.getPromotions');
+        if (kDebugMode) print('[$timestamp] DEBUG SYNC: Calling _apiService.getPromotions');
         final promotions = await _apiService.getPromotions(authToken: authToken);
-        print('[$timestamp] DEBUG SYNC: API returned ${promotions.length} promotions');
+        if (kDebugMode) print('[$timestamp] DEBUG SYNC: API returned ${promotions.length} promotions');
 
         if (kDebugMode) {
           print('Aksiyalar ma\'lumotlari yuklandi: ${promotions.length} ta aksiya');
         }
 
-        print('[$timestamp] DEBUG SYNC: Saving promotions to database');
+        if (kDebugMode) print('[$timestamp] DEBUG SYNC: Saving promotions to database');
         await _dbService.savePromotions(promotions);
-        print('[$timestamp] DEBUG SYNC: Promotions saved to database');
+        if (kDebugMode) print('[$timestamp] DEBUG SYNC: Promotions saved to database');
 
         return promotions;
       } catch (e) {
-        print('[$timestamp] DEBUG SYNC: Error syncing promotions: $e');
+        if (kDebugMode) print('[$timestamp] DEBUG SYNC: Error syncing promotions: $e');
 
         // If promotion API fails, return cached data instead of failing the entire sync
         try {
           final cachedPromotions = await _dbService.getPromotions();
-          print('[$timestamp] DEBUG SYNC: Returning ${cachedPromotions.length} cached promotions');
+          if (kDebugMode) print('[$timestamp] DEBUG SYNC: Returning ${cachedPromotions.length} cached promotions');
           return cachedPromotions;
         } catch (cacheError) {
-          print('[$timestamp] DEBUG SYNC: Error getting cached promotions: $cacheError');
+          if (kDebugMode) print('[$timestamp] DEBUG SYNC: Error getting cached promotions: $cacheError');
           // Return empty list if both API and cache fail
           return [];
         }
@@ -1137,12 +1140,12 @@ class DataSyncService {
       await _dbService.saveAKBByCategories(akbByCategories);
       debugPrint('all report data saved successfully');
       final savedReports = await _dbService.getMainReports(userCode: userCode);
-      print("___________saved report${savedReports.first.id}");
+      if (kDebugMode) print("___________saved report${savedReports.first.id}");
       final savedReport = savedReports.firstWhere(
             (r) => r.dateStart.toIso8601String().split('T')[0] == dateStart &&
             r.dateEnd.toIso8601String().split('T')[0] == dateEnd,
       );
-      print("___________saved report${savedReport}");
+      if (kDebugMode) print("___________saved report${savedReport}");
       // Update related tables with correct main_report_id
       final updatedBusinessRegionReports = businessRegionReports.map((report) =>
           report.copyWith(mainReportId: savedReport.id)
@@ -1151,7 +1154,7 @@ class DataSyncService {
       final updatedAKBByCategories = akbByCategories.map((category) =>
           category.copyWith(mainReportId: savedReport.id)
       ).toList();
-      print('yangilangan kategoriyalar: ${updatedAKBByCategories.length}');
+      if (kDebugMode) print('yangilangan kategoriyalar: ${updatedAKBByCategories.length}');
       // Save related data
       await _dbService.saveBusinessRegionReports(updatedBusinessRegionReports);
       await _dbService.saveAKBByCategories(updatedAKBByCategories);
@@ -1469,8 +1472,10 @@ class DataSyncService {
         uniqueCourierCars.add(order.courierCar!);
       }
     }
-    print('uniqueCouriers: $uniqueCouriers');
-    print('uniqueCourierCars: $uniqueCourierCars');
+    if (kDebugMode) {
+      print('uniqueCouriers: $uniqueCouriers');
+      print('uniqueCourierCars: $uniqueCourierCars');
+    }
 
     // Save unique courier data to cache
     for (final courierName in uniqueCouriers) {
@@ -1524,7 +1529,7 @@ class DataSyncService {
     required String orderDate2,
     bool forceRefresh = false,
   }) async {
-    print('syncOrderDetails called with numberOrder: $numberOrder, orderDate1: $orderDate1, orderDate2: $orderDate2');
+    if (kDebugMode) print('syncOrderDetails called with numberOrder: $numberOrder, orderDate1: $orderDate1, orderDate2: $orderDate2');
     if (!forceRefresh) {
       final cached = await _dbService.getOrderDetailByNumOrder(numberOrder);
       if (cached != null) {
@@ -1597,7 +1602,7 @@ class DataSyncService {
         print('permissions: ${permissions['permissions']}');
         if (permissions != null) {
           permissions.forEach((key, value) {
-            print('  $key: $value (type: ${value?.runtimeType})');
+            if (kDebugMode) print('  $key: $value (type: ${value?.runtimeType})');
           });
         }
         print('Agent ruxsatlari ma\'lumotlari yuklandi: ${permissions?['userCode']}');
@@ -1616,7 +1621,7 @@ class DataSyncService {
 
       final userCodeValue = permissions['userCode'];
       if (userCodeValue == null) {
-        print('WARNING: userCode is null in API response: ${permissions['visitSteps']}');
+        if (kDebugMode) print('WARNING: userCode is null in API response: ${permissions['visitSteps']}');
         if (kDebugMode) {
           print('WARNING: userCode is null in API response');
         }
@@ -1646,7 +1651,7 @@ class DataSyncService {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      print(salesReqPermissions.visitSteps);
+      if (kDebugMode) print(salesReqPermissions.visitSteps);
 
       // Save sales req permissions first to get the ID
       await _dbService.clearSalesReqPermissions();

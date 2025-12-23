@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
@@ -136,7 +137,7 @@ class PhotoStorageService {
     } catch (e) {
       // If preview creation fails, copy original as preview
       await imageFile.copy(previewPath);
-      print('Warning: Preview creation failed, using original: $e');
+      if (kDebugMode) print('Warning: Preview creation failed, using original: $e');
     }
   }
 
@@ -160,7 +161,7 @@ class PhotoStorageService {
       }
 
     } catch (e) {
-      print('Error deleting photo: $e');
+      if (kDebugMode) print('Error deleting photo: $e');
       // Don't throw - file deletion failure shouldn't break the flow
     }
   }
@@ -206,7 +207,7 @@ class PhotoStorageService {
       }
 
     } catch (e) {
-      print('Error cleaning up orphaned files: $e');
+      if (kDebugMode) print('Error cleaning up orphaned files: $e');
     }
   }
 
@@ -284,7 +285,7 @@ class PhotoStorageService {
 
       return compressedFile;
     } catch (e) {
-      print('Image compression failed: $e');
+      if (kDebugMode) print('Image compression failed: $e');
       return imageFile; // Return original if compression fails
     }
   }
@@ -315,7 +316,7 @@ class PhotoStorageService {
         }
 
       } catch (e) {
-        print('Failed to process image ${imageFile.path}: $e');
+        if (kDebugMode) print('Failed to process image ${imageFile.path}: $e');
         // Continue with other images
       }
     }
@@ -338,7 +339,7 @@ class PhotoStorageService {
         };
       }).toList();
     } catch (e) {
-      print('Error getting client photos: $e');
+      if (kDebugMode) print('Error getting client photos: $e');
       return [];
     }
   }

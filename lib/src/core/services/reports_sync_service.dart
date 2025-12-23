@@ -67,7 +67,7 @@ class ReportsSyncService {
     required DateTime dateStart,
     required DateTime dateEnd,
   }) async* {
-    print('Checking if Evyap server is selected...');
+    if (kDebugMode) print('Checking if Evyap server is selected...');
     if(isEvyapServerSelected()){
       final controller = StreamController<ReportSyncStep>();
 
@@ -165,7 +165,7 @@ class ReportsSyncService {
 
       if (!forceRefresh) {
         final cached = await _dbService.getMainReports(userCode: userCode);
-        print('Bazada malumot bor: ${cached.length}');
+        if (kDebugMode) print('Bazada malumot bor: ${cached.length}');
         final existingReport = cached.firstWhere(
               (report) => report.userCode == userCode,
           orElse: () => MainReport(

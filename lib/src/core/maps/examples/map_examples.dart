@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../widgets/map_widget.dart';
 import '../models/map_point.dart';
@@ -29,7 +30,7 @@ class MapExamples {
         ),
         initialZoom: 12.0,
         onMapReady: () {
-          print('Basic map is ready!');
+          if (kDebugMode) print('Basic map is ready!');
         },
       ),
     );
@@ -86,7 +87,7 @@ class MapExamples {
         initialMarkers: markers,
         enableClustering: true,
         onMarkerTap: (marker) {
-          print('Tapped marker: ${marker.title}');
+          if (kDebugMode) print('Tapped marker: ${marker.title}');
         },
       ),
     );
@@ -159,7 +160,7 @@ class _RoutePlanningExampleState extends State<RoutePlanningExample> {
             initialRoutes: _currentRoute != null ? [_currentRoute!] : [],
             enableRouting: true,
             onRouteTap: (route) {
-              print('Route tapped: ${route.id}');
+              if (kDebugMode) print('Route tapped: ${route.id}');
             },
           ),
           if (_currentRoute != null)
@@ -226,7 +227,7 @@ class _RoutePlanningExampleState extends State<RoutePlanningExample> {
 
   void _optimizeRoute() {
     // Implement route optimization
-    print('Optimizing route...');
+    if (kDebugMode) print('Optimizing route...');
   }
 
   void _toggleNavigation() {
@@ -357,7 +358,7 @@ class _LocationServicesExampleState extends State<LocationServicesExample> {
           setState(() => _currentLocation = location);
         },
         onError: (error) {
-          print('Location error: $error');
+          if (kDebugMode) print('Location error: $error');
         },
       );
 
@@ -369,17 +370,17 @@ class _LocationServicesExampleState extends State<LocationServicesExample> {
           _showGeofenceNotification(event);
         },
         onError: (error) {
-          print('Geofence error: $error');
+          if (kDebugMode) print('Geofence error: $error');
         },
       );
     } catch (e) {
-      print('Error initializing location services: $e');
+      if (kDebugMode) print('Error initializing location services: $e');
     }
   }
 
   void _showGeofenceNotification(GeofenceEvent event) {
     final action = event.type == GeofenceEventType.entered ? 'Entered' : 'Exited';
-    print('$action region: ${event.region.name}');
+    if (kDebugMode) print('$action region: ${event.region.name}');
     // Show notification to user
   }
 
@@ -394,7 +395,7 @@ class _LocationServicesExampleState extends State<LocationServicesExample> {
               provider: MapProvider.google,
               enableLocation: true,
               onLocationUpdate: (location) {
-                print('Location updated: ${location.latitude}, ${location.longitude}');
+                if (kDebugMode) print('Location updated: ${location.latitude}, ${location.longitude}');
               },
             ),
           ),
@@ -474,10 +475,10 @@ class _OfflineMapsExampleState extends State<OfflineMapsExample> {
 
   Future<void> _downloadOfflineArea() async {
     // This would use MapCacheService to cache tiles
-    print('Downloading offline area...');
+    if (kDebugMode) print('Downloading offline area...');
     // Simulate download progress
     await Future.delayed(Duration(seconds: 2));
-    print('Offline area downloaded');
+    if (kDebugMode) print('Offline area downloaded');
   }
 
   @override
@@ -546,7 +547,7 @@ class _OfflineMapsExampleState extends State<OfflineMapsExample> {
           ElevatedButton.icon(
             onPressed: () {
               // Clear cache
-              print('Clearing cache...');
+              if (kDebugMode) print('Clearing cache...');
             },
             icon: Icon(Icons.delete_sweep),
             label: Text('Clear Cache'),

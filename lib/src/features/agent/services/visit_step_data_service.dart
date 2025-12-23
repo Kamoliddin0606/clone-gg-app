@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
@@ -67,7 +68,7 @@ class VisitStepDataService {
       }
     } catch (e) {
       // Log error but don't fail the operation
-      print('Error deleting photo files: $e');
+      if (kDebugMode) print('Error deleting photo files: $e');
     }
   }
 
@@ -288,7 +289,7 @@ class VisitStepDataService {
           }
         }
       } catch (e) {
-        print('Error deleting photo files for step $stepCode: $e');
+        if (kDebugMode) print('Error deleting photo files for step $stepCode: $e');
       }
     }
 

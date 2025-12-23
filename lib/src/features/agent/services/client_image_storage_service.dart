@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
@@ -58,7 +59,7 @@ class ClientImageStorageService {
       final data = jsonDecode(content) as List;
       return data.map((e) => e as Map<String, dynamic>).toList();
     } catch (e) {
-      print('Error loading metadata: $e');
+      if (kDebugMode) print('Error loading metadata: $e');
       return [];
     }
   }
@@ -70,7 +71,7 @@ class ClientImageStorageService {
       final file = File(metadataPath);
       await file.writeAsString(jsonEncode(metadata));
     } catch (e) {
-      print('Error saving metadata: $e');
+      if (kDebugMode) print('Error saving metadata: $e');
     }
   }
 
@@ -167,7 +168,7 @@ class ClientImageStorageService {
     } catch (e) {
       // If preview creation fails, copy original as preview
       await imageFile.copy(previewPath);
-      print('Warning: Preview creation failed, using original: $e');
+      if (kDebugMode) print('Warning: Preview creation failed, using original: $e');
     }
   }
 
@@ -196,7 +197,7 @@ class ClientImageStorageService {
         await previewFile.delete();
       }
     } catch (e) {
-      print('Error deleting client image: $e');
+      if (kDebugMode) print('Error deleting client image: $e');
     }
   }
 
@@ -213,7 +214,7 @@ class ClientImageStorageService {
       final metadata = await _loadMetadata();
       return metadata.where((entry) => entry['clientCode'] == clientCode).toList();
     } catch (e) {
-      print('Error getting client images: $e');
+      if (kDebugMode) print('Error getting client images: $e');
       return [];
     }
   }
@@ -259,7 +260,7 @@ class ClientImageStorageService {
       metadata.removeWhere((entry) => entry['clientCode'] == clientCode);
       await _saveMetadata(metadata);
     } catch (e) {
-      print('Error clearing client images: $e');
+      if (kDebugMode) print('Error clearing client images: $e');
     }
   }
 }

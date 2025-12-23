@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 
 class UserModel extends UserEntity {
@@ -42,9 +43,11 @@ class UserModel extends UserEntity {
       throw FormatException('Invalid baseUrl format: $baseUrl');
     }
     // Log new parameters for debugging
-    print('TelegramID: ${soapResponse['TelegramID'] ?? 'N/A'}');
-    print('ChatID: ${soapResponse['ChatID'] ?? 'N/A'}');
-    print('TopicID: ${soapResponse['TopicID'] ?? 'N/A'}');
+    if (kDebugMode) {
+      print('TelegramID: ${soapResponse['TelegramID'] ?? 'N/A'}');
+      print('ChatID: ${soapResponse['ChatID'] ?? 'N/A'}');
+      print('TopicID: ${soapResponse['TopicID'] ?? 'N/A'}');
+    }
 
     return UserModel(
       id: soapResponse['Code'],

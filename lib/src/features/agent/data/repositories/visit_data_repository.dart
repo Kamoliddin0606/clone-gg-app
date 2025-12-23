@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 
@@ -171,20 +172,20 @@ class VisitDataRepository {
   Future<void> markDataForOfflineSync(String operationId) async {
     // Implementation would depend on specific requirements
     // For now, just log that data needs offline sync
-    print('Data marked for offline sync: $operationId');
+    if (kDebugMode) print('Data marked for offline sync: $operationId');
   }
 
   /// Save data with alternative method (for error recovery)
   Future<void> saveWithAlternativeMethod(String operationId, dynamic errorData) async {
     // Implementation would depend on specific requirements
     // For now, just log the alternative save attempt
-    print('Attempting alternative save for operation: $operationId');
+    if (kDebugMode) print('Attempting alternative save for operation: $operationId');
   }
 
   /// Mark operation as skipped (for error recovery)
   Future<void> markOperationAsSkipped(String operationId) async {
     // Implementation would depend on specific requirements
     // For now, just log that operation was skipped
-    print('Operation marked as skipped: $operationId');
+    if (kDebugMode) print('Operation marked as skipped: $operationId');
   }
 }

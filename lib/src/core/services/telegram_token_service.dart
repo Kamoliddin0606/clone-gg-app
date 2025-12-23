@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:xml/xml.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -54,7 +55,7 @@ class TelegramTokenService {
         final message = messageElement?.innerText ?? 'Noma\'lum xatolik';
 
         if (error) {
-          print('Telegram Token Error: $message');
+          if (kDebugMode) print('Telegram Token Error: $message');
           throw Exception('Server xatolik: $message');
         }
 
@@ -63,13 +64,13 @@ class TelegramTokenService {
           throw Exception('Token topilmadi');
         }
 
-        print('Telegram Token: Muvaffaqiyatli olindi');
+        if (kDebugMode) print('Telegram Token: Muvaffaqiyatli olindi');
         return token;
       } else {
         throw Exception('HTTP xatolik: ${response.statusCode}');
       }
     } catch (e) {
-      print('Telegram Token Fetch Error: $e');
+      if (kDebugMode) print('Telegram Token Fetch Error: $e');
       throw Exception('Token olishda xatolik: $e');
     }
   }

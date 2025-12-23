@@ -53,7 +53,7 @@ class ApiKeyService {
       final apiKey = _prefs.preferences.getString(keyType);
 
       if (kDebugMode && apiKey != null) {
-        print('API key retrieved for: $keyType');
+        // API key retrieved for keyType
       }
 
       return apiKey;
@@ -69,7 +69,7 @@ class ApiKeyService {
   Future<bool> hasApiKey(String keyType) async {
     try {
       final apiKey = await getApiKey(keyType);
-      print('Checking API key existence for $keyType: $apiKey'); // Debugging print'
+      if (kDebugMode) print('Checking API key existence for $keyType: $apiKey');
       return apiKey != null && apiKey.isNotEmpty;
     } catch (e) {
       if (kDebugMode) {

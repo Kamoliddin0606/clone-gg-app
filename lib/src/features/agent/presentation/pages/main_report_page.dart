@@ -316,7 +316,7 @@ class _MainReportPageState extends State<MainReportPage>
   Future<void> _loadReportData() async {
     try {
       final userCode = _prefs.getUserCode();
-      print(userCode);
+      if (kDebugMode) print(userCode);
       if (userCode != null) {
         final today = DateTime.now();
         final dateStart = today.toIso8601String().split('T')[0];
@@ -830,7 +830,7 @@ class _MainReportPageState extends State<MainReportPage>
     try {
       // Get user code from preferences
       final userCode = _prefs.getUserCode();
-      print("userCode: $userCode");
+      if (kDebugMode) print("userCode: $userCode");
       if (userCode == null) {
         _showErrorSnackBar(context, 'Foydalanuvchi kodi topilmadi');
         return;
@@ -841,9 +841,9 @@ class _MainReportPageState extends State<MainReportPage>
       }
 
       // Step 1: Clear main report data
-      print('clear main report data started');
+      if (kDebugMode) print('clear main report data started');
       await _dataSyncService.clearMainReportData();
-      print('clear main report data finished sucesfuly');
+      if (kDebugMode) print('clear main report data finished sucesfuly');
       // Step 2: Sync new report data
       final reportData = await _dataSyncService.syncReportByPeriod(
         userCode: userCode,
@@ -858,7 +858,7 @@ class _MainReportPageState extends State<MainReportPage>
         final mainReport = reportData['mainReport'] as MainReport;
         final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
         final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
-        print('malumotlarni saqlashdan oldin to\'liq main report qismlar ${reportData}');
+        if (kDebugMode) print('malumotlarni saqlashdan oldin to\'liq main report qismlar ${reportData}');
         // Convert business region reports to map
         final akbByRegion = <String, int>{};
         for (final regionReport in businessRegionReports) {

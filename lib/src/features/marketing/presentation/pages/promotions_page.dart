@@ -62,7 +62,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
 
   Future<void> _loadPromotions() async {
     final timestamp = DateTime.now().toIso8601String();
-    print('[$timestamp] DEBUG: _loadPromotions called');
+    if (kDebugMode) print('[$timestamp] DEBUG: _loadPromotions called');
 
     setState(() {
       _isLoading = true;
@@ -70,22 +70,22 @@ class _PromotionsPageState extends State<PromotionsPage> {
     });
 
     try {
-      print('[$timestamp] DEBUG: Fetching cached promotions');
+      if (kDebugMode) print('[$timestamp] DEBUG: Fetching cached promotions');
       final cachedPromotions = await _dataSyncService.getCachedPromotions();
-      print('[$timestamp] DEBUG: Cached promotions count: ${cachedPromotions.length}');
+      if (kDebugMode) print('[$timestamp] DEBUG: Cached promotions count: ${cachedPromotions.length}');
 
       if (cachedPromotions.isNotEmpty) {
         setState(() {
           _promotions = cachedPromotions;
           _isLoading = false;
         });
-        print('[$timestamp] DEBUG: Set cached promotions to UI, count: ${cachedPromotions.length}');
+        if (kDebugMode) print('[$timestamp] DEBUG: Set cached promotions to UI, count: ${cachedPromotions.length}');
       }
 
-      print('[$timestamp] DEBUG: Starting background sync');
+      if (kDebugMode) print('[$timestamp] DEBUG: Starting background sync');
       await _syncPromotionsInBackground();
     } catch (e) {
-      print('[$timestamp] DEBUG: Error in _loadPromotions: $e');
+      if (kDebugMode) print('[$timestamp] DEBUG: Error in _loadPromotions: $e');
       setState(() {
         _errorMessage = 'Ma\'lumotlarni yuklashda xatolik: $e';
         _isLoading = false;
@@ -95,22 +95,22 @@ class _PromotionsPageState extends State<PromotionsPage> {
 
   Future<void> _syncPromotionsInBackground() async {
     final timestamp = DateTime.now().toIso8601String();
-    print('[$timestamp] DEBUG: _syncPromotionsInBackground started');
+    if (kDebugMode) print('[$timestamp] DEBUG: _syncPromotionsInBackground started');
 
     try {
-      print('[$timestamp] DEBUG: Calling _dataSyncService.syncPromotions');
+      if (kDebugMode) print('[$timestamp] DEBUG: Calling _dataSyncService.syncPromotions');
       final freshPromotions = await _dataSyncService.syncPromotions(forceRefresh: true);
-      print('[$timestamp] DEBUG: Fresh promotions count: ${freshPromotions.length}');
+      if (kDebugMode) print('[$timestamp] DEBUG: Fresh promotions count: ${freshPromotions.length}');
 
       if (mounted) {
         setState(() {
           _promotions = freshPromotions;
           _isLoading = false; // In case it was still loading
         });
-        print('[$timestamp] DEBUG: Updated UI with fresh promotions, count: ${freshPromotions.length}');
+        if (kDebugMode) print('[$timestamp] DEBUG: Updated UI with fresh promotions, count: ${freshPromotions.length}');
       }
     } catch (e) {
-      print('[$timestamp] DEBUG: Error in _syncPromotionsInBackground: $e');
+      if (kDebugMode) print('[$timestamp] DEBUG: Error in _syncPromotionsInBackground: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Aksiyalar yangilanishida xatolik: $e')),
@@ -121,23 +121,23 @@ class _PromotionsPageState extends State<PromotionsPage> {
 
   Future<void> _onRefresh() async {
     final timestamp = DateTime.now().toIso8601String();
-    print('[$timestamp] DEBUG: _onRefresh called');
+    if (kDebugMode) print('[$timestamp] DEBUG: _onRefresh called');
 
     setState(() {
       _isRefreshing = true;
     });
 
     try {
-      print('[$timestamp] DEBUG: Refreshing promotions');
+      if (kDebugMode) print('[$timestamp] DEBUG: Refreshing promotions');
       final freshPromotions = await _dataSyncService.syncPromotions(forceRefresh: true);
-      print('[$timestamp] DEBUG: Refreshed promotions count: ${freshPromotions.length}');
+      if (kDebugMode) print('[$timestamp] DEBUG: Refreshed promotions count: ${freshPromotions.length}');
 
       setState(() {
         _promotions = freshPromotions;
       });
-      print('[$timestamp] DEBUG: Updated UI with refreshed promotions');
+      if (kDebugMode) print('[$timestamp] DEBUG: Updated UI with refreshed promotions');
     } catch (e) {
-      print('[$timestamp] DEBUG: Error in _onRefresh: $e');
+      if (kDebugMode) print('[$timestamp] DEBUG: Error in _onRefresh: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Yangilanishda xatolik: $e')),
@@ -147,7 +147,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
       setState(() {
         _isRefreshing = false;
       });
-      print('[$timestamp] DEBUG: _onRefresh completed');
+      if (kDebugMode) print('[$timestamp] DEBUG: _onRefresh completed');
     }
   }
 
@@ -212,24 +212,24 @@ class _PromotionsPageState extends State<PromotionsPage> {
 
   Widget _buildContent() {
     final timestamp = DateTime.now().toIso8601String();
-    print('[$timestamp] DEBUG UI: _buildContent called, isLoading: $_isLoading, promotions: ${_promotions.length}, error: $_errorMessage');
+    if (kDebugMode) print('[$timestamp] DEBUG UI: _buildContent called, isLoading: $_isLoading, promotions: ${_promotions.length}, error: $_errorMessage');
 
     if (_isLoading && _promotions.isEmpty) {
-      print('[$timestamp] DEBUG UI: Showing loading view');
+      if (kDebugMode) print('[$timestamp] DEBUG UI: Showing loading view');
       return _buildLoadingView();
     }
 
     if (_errorMessage != null && _promotions.isEmpty) {
-      print('[$timestamp] DEBUG UI: Showing error view');
+      if (kDebugMode) print('[$timestamp] DEBUG UI: Showing error view');
       return _buildErrorView();
     }
 
     if (_promotions.isEmpty) {
-      print('[$timestamp] DEBUG UI: Showing empty view');
+      if (kDebugMode) print('[$timestamp] DEBUG UI: Showing empty view');
       return _buildEmptyView();
     }
 
-    print('[$timestamp] DEBUG UI: Building list view with ${_promotions.length} promotions');
+    if (kDebugMode) print('[$timestamp] DEBUG UI: Building list view with ${_promotions.length} promotions');
     return ListView.separated(
       itemCount: _promotions.length,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -240,7 +240,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
         final description = _buildPromotionDescription(promotion);
         final startDate = _formatDate(promotion.dateStart);
         final endDate = _formatDate(promotion.dateEnd);
-        print('[$timestamp] DEBUG UI: Building card for promotion ${promotion.code}: ${promotion.name}');
+        if (kDebugMode) print('[$timestamp] DEBUG UI: Building card for promotion ${promotion.code}: ${promotion.name}');
         return PromotionCard(
           name: promotion.name,
           id: promotion.code,

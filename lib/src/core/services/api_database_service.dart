@@ -1530,7 +1530,7 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)');
 
-    print('API cache database tables created successfully');
+    if (kDebugMode) print('API cache database tables created successfully');
   }
 
   // KPI Data methods
@@ -1590,11 +1590,11 @@ class ApiDatabaseService {
       orderBy: 'created_at DESC',
       limit: 1,
     );
-    print(result.isEmpty);
+    if (kDebugMode) print(result.isEmpty);
     if (result.isEmpty) return null;
 
     final row = result.first;
-    print('KPI data row: $row');
+    if (kDebugMode) print('KPI data row: $row');
 
     return KpiData(
       plan: row['plan'] as String,
@@ -1682,7 +1682,7 @@ class ApiDatabaseService {
       if (value is num) return value.toDouble();
 
       // Log warning for unexpected types
-      print('Warning: Unexpected type for $fieldName in client $clientCode: ${value.runtimeType} = $value');
+      if (kDebugMode) print('Warning: Unexpected type for $fieldName in client $clientCode: ${value.runtimeType} = $value');
       return 0.0;
     }
 
@@ -1945,7 +1945,7 @@ class ApiDatabaseService {
   // Promotions methods
   Future<void> savePromotions(List<PromotionModel> promotions) async {
     final timestamp = DateTime.now().toIso8601String();
-    print('[$timestamp] DEBUG DB: savePromotions called with ${promotions.length} promotions');
+    if (kDebugMode) print('[$timestamp] DEBUG DB: savePromotions called with ${promotions.length} promotions');
 
     final db = await database;
     final now = DateTime.now().toIso8601String();
@@ -1954,7 +1954,7 @@ class ApiDatabaseService {
     final batch = db.batch();
 
     // Delete all existing promotions and their products
-    print('[$timestamp] DEBUG DB: Deleting existing promotions and products');
+    if (kDebugMode) print('[$timestamp] DEBUG DB: Deleting existing promotions and products');
     batch.delete('promotion_product_list');
     batch.delete('promotion_bonus_list');
     batch.delete('promotion_class_list');
@@ -1966,11 +1966,11 @@ class ApiDatabaseService {
       uniquePromotions[promotion.code] = promotion;
     }
 
-    print('[$timestamp] DEBUG DB: After deduplication: ${uniquePromotions.length} unique promotions');
+    if (kDebugMode) print('[$timestamp] DEBUG DB: After deduplication: ${uniquePromotions.length} unique promotions');
 
     // Add all inserts to batch
     for (final promotion in uniquePromotions.values) {
-      print('[$timestamp] DEBUG DB: Inserting promotion ${promotion.code}: ${promotion.name}');
+      if (kDebugMode) print('[$timestamp] DEBUG DB: Inserting promotion ${promotion.code}: ${promotion.name}');
       batch.insert('promotions', {
         'code': promotion.code,
         'name': promotion.name,
@@ -2033,13 +2033,13 @@ class ApiDatabaseService {
         });
       }
 
-      print('[$timestamp] DEBUG DB: Promotion ${promotion.code} has ${uniqueProductList.length} unique products, ${uniqueBonusList.length} unique bonuses, and ${uniqueClassList.length} unique classes');
+      if (kDebugMode) print('[$timestamp] DEBUG DB: Promotion ${promotion.code} has ${uniqueProductList.length} unique products, ${uniqueBonusList.length} unique bonuses, and ${uniqueClassList.length} unique classes');
     }
 
     // Execute batch operation
-    print('[$timestamp] DEBUG DB: Committing batch');
+    if (kDebugMode) print('[$timestamp] DEBUG DB: Committing batch');
     await batch.commit(noResult: true);
-    print('[$timestamp] DEBUG DB: Batch committed successfully');
+    if (kDebugMode) print('[$timestamp] DEBUG DB: Batch committed successfully');
   }
 
   Future<List<PromotionModel>> getPromotions({
@@ -2048,7 +2048,7 @@ class ApiDatabaseService {
     DateTime? dateFilter,
   }) async {
     final timestamp = DateTime.now().toIso8601String();
-    print('[$timestamp] DEBUG DB: getPromotions called, onlyActive: $onlyActive, searchQuery: $searchQuery, dateFilter: $dateFilter');
+    if (kDebugMode) print('[$timestamp] DEBUG DB: getPromotions called, onlyActive: $onlyActive, searchQuery: $searchQuery, dateFilter: $dateFilter');
 
     final db = await database;
 
@@ -2080,7 +2080,7 @@ class ApiDatabaseService {
       whereArgs.addAll(['%$searchQuery%', '%$searchQuery%']);
     }
 
-    print('[$timestamp] DEBUG DB: Query: SELECT * FROM promotions $whereClause with args: $whereArgs');
+    if (kDebugMode) print('[$timestamp] DEBUG DB: Query: SELECT * FROM promotions $whereClause with args: $whereArgs');
 
     final promotionResults = await db.rawQuery('''
       SELECT * FROM promotions
@@ -2088,7 +2088,7 @@ class ApiDatabaseService {
       ORDER BY date_start DESC, name ASC
     ''', whereArgs);
 
-    print('[$timestamp] DEBUG DB: Found ${promotionResults.length} promotion records');
+    if (kDebugMode) print('[$timestamp] DEBUG DB: Found ${promotionResults.length} promotion records');
 
     final promotions = <PromotionModel>[];
 
@@ -2119,7 +2119,7 @@ class ApiDatabaseService {
         orderBy: 'class_name ASC',
       );
 
-      print('[$timestamp] DEBUG DB: Promotion $promotionCode has ${productResults.length} products, ${bonusResults.length} bonuses, ${classResults.length} classes');
+      if (kDebugMode) print('[$timestamp] DEBUG DB: Promotion $promotionCode has ${productResults.length} products, ${bonusResults.length} bonuses, ${classResults.length} classes');
 
       final productList = productResults.map((row) => PromotionProduct(
         code: row['product_code'] as String,
@@ -2154,7 +2154,7 @@ class ApiDatabaseService {
       ));
     }
 
-    print('[$timestamp] DEBUG DB: Returning ${promotions.length} promotions');
+    if (kDebugMode) print('[$timestamp] DEBUG DB: Returning ${promotions.length} promotions');
     return promotions;
   }
 
@@ -2967,11 +2967,13 @@ class ApiDatabaseService {
     String? searchQuery,
     String? codeProject,
   }) async {
-    print('DEBUG: ApiDatabaseService.getProductsWithPrices called');
-    print('DEBUG: priceTypeCode = $priceTypeCode');
-    print('DEBUG: warehouseCodes = $warehouseCodes');
-    print('DEBUG: searchQuery = $searchQuery');
-    print('DEBUG: codeProject = $codeProject');
+    if (kDebugMode) {
+      print('DEBUG: ApiDatabaseService.getProductsWithPrices called');
+      print('DEBUG: priceTypeCode = $priceTypeCode');
+      print('DEBUG: warehouseCodes = $warehouseCodes');
+      print('DEBUG: searchQuery = $searchQuery');
+      print('DEBUG: codeProject = $codeProject');
+    }
 
     final db = await database;
 
@@ -3054,21 +3056,27 @@ class ApiDatabaseService {
       ORDER BY p.name ASC, p.code ASC
     ''';
 
-    print('DEBUG: Executing query: $query');
-    print('DEBUG: Query args: $whereArgs');
+    if (kDebugMode) {
+      print('DEBUG: Executing query: $query');
+      print('DEBUG: Query args: $whereArgs');
+    }
 
     final result = await db.rawQuery(query, whereArgs);
 
-    print('DEBUG: Query returned ${result.length} rows');
-    if (result.isNotEmpty) {
-      print('DEBUG: First row sample: ${result.first}');
+    if (kDebugMode) {
+      print('DEBUG: Query returned ${result.length} rows');
+      if (result.isNotEmpty) {
+        print('DEBUG: First row sample: ${result.first}');
+      }
     }
 
     final productsWithPrices = result.map((row) => ProductWithPrice.fromMap(row)).toList();
 
-    print('DEBUG: Parsed ${productsWithPrices.length} ProductWithPrice objects');
-    if (productsWithPrices.isNotEmpty) {
-      print('DEBUG: First product: ${productsWithPrices.first.productName} - ${productsWithPrices.first.price}');
+    if (kDebugMode) {
+      print('DEBUG: Parsed ${productsWithPrices.length} ProductWithPrice objects');
+      if (productsWithPrices.isNotEmpty) {
+        print('DEBUG: First product: ${productsWithPrices.first.productName} - ${productsWithPrices.first.price}');
+      }
     }
 
     return productsWithPrices;
@@ -4142,7 +4150,7 @@ class ApiDatabaseService {
         await batch.commit(noResult: true);
       } catch (e) {
         // Log error and rethrow
-        print('Error saving order details batch: $e');
+        if (kDebugMode) print('Error saving order details batch: $e');
         rethrow;
       }
     });
@@ -4335,7 +4343,7 @@ class ApiDatabaseService {
         }
       } catch (e) {
         // Log error and rethrow
-        print('Error saving order detail ${orderDetail.numOrder}: $e');
+        if (kDebugMode) print('Error saving order detail ${orderDetail.numOrder}: $e');
         rethrow;
       }
     });
@@ -4459,7 +4467,7 @@ class ApiDatabaseService {
         }
       } catch (e) {
         // Log error and rethrow
-        print('Error updating order detail $numOrder: $e');
+        if (kDebugMode) print('Error updating order detail $numOrder: $e');
         rethrow;
       }
     });
@@ -4489,7 +4497,7 @@ class ApiDatabaseService {
         await txn.delete('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
       } catch (e) {
         // Log error and rethrow
-        print('Error deleting order detail $numOrder: $e');
+        if (kDebugMode) print('Error deleting order detail $numOrder: $e');
         rethrow;
       }
     });
@@ -4528,7 +4536,7 @@ class ApiDatabaseService {
     if (maps.isEmpty) return null;
 
     final permission = SalesReqPermissions.fromMap(maps.first);
-    print('_______ getting salse req premissions: Fetched SalesReqPermissions: ${permission.userCode}');
+    if (kDebugMode) print('_______ getting salse req premissions: Fetched SalesReqPermissions: ${permission.userCode}');
     // Get associated visit steps
     final visitStepsMaps = await db.query(
       'visit_steps',
@@ -5135,7 +5143,7 @@ class ApiDatabaseService {
           });
         }
       } catch (e) {
-        print('Error saving create order: $e');
+        if (kDebugMode) print('Error saving create order: $e');
         rethrow;
       }
     });
@@ -5560,7 +5568,7 @@ class ApiDatabaseService {
       await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)');
     } catch (e) {
       // Indexes might already exist, ignore error
-      print('Warning: Could not create indexes, they might already exist: $e');
+      if (kDebugMode) print('Warning: Could not create indexes, they might already exist: $e');
     }
   }
 

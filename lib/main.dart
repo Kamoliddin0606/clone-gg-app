@@ -14,7 +14,7 @@ import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_schemes.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart'; // agar kerak bo‘lsa
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart'; // if needed
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:async';
@@ -22,13 +22,14 @@ import 'dart:math' show sin, cos, sqrt, asin, pi;
 
 import 'package:yandex_maps_mapkit/init.dart' as ymk_init;
 
-// YandexMap vidjeti va MapWindow APIlari
+// YandexMap widget and MapWindow APIs
 import 'package:yandex_maps_mapkit/yandex_map.dart';
 
-// MapKit core APIlari (MapKit, MapInputListener, UserLocationLayer, LocationManager, Point, CameraPosition, va h.k.)
+// MapKit core APIs (MapKit, MapInputListener, UserLocationLayer, LocationManager, Point, CameraPosition, etc.)
 import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
 
 import 'package:yandex_maps_mapkit/mapkit_factory.dart' as mkf;
+
 void main() async {
   // Ensure that Flutter bindings are initialized.
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,25 +62,28 @@ void main() async {
     // Also check location services status
     final serviceEnabled = await permissionManager.isLocationServiceEnabled();
     if (!serviceEnabled && kDebugMode) {
-      print('Location services are disabled on app start');
+      debugPrint('Location services are disabled on app start');
     }
   } catch (e) {
     // Permission check failed, continue without it
     // App will handle permissions when needed
   }
   final apiKey = await _ApiKeyProvider().resolveApiKey();
-  print('your api key: $apiKey');
+  if (kDebugMode) {
+    debugPrint('Your API key: $apiKey');
+  }
   await ymk_init.initMapkit(apiKey: apiKey);
   // TODO: Initialize other services
 
   runApp(const App());
 }
+
 class _ApiKeyProvider {
   static const _prefsKey = 'yandex_maps_api_key';
 
-  // ⚠️ ZAXIRA KALIT — faqat test uchun!
-  // TODO: PROD’DA OLIB TASHLANG! API kalitni kodda saqlamang.
-  // Kelajakda bu fallback butunlay olib tashlanadi.
+  // ⚠️ BACKUP KEY — for testing only!
+  // TODO: REMOVE IN PROD! Do not store API key in code.
+  // In the future, this fallback will be completely removed.
   static const _fallbackHardcodedKey = 'bf2fb1fa-dd2f-4d56-8ea5-3f9d6350ea67';
 
   Future<String> resolveApiKey() async {
@@ -97,12 +101,11 @@ class _ApiKeyProvider {
         return fromServer;
       }
 
-      debugPrint(
-          '[API KEY] Using HARD-CODED FALLBACK (test only, remove in prod).');
+      debugPrint('[API KEY] Using HARD-CODED FALLBACK (test only, remove in prod).');
       return _fallbackHardcodedKey;
     } catch (e, st) {
       debugPrint('[API KEY] resolve error: $e\n$st');
-      // Xatolik bo‘lsa ham, demo ishlashi uchun fallback kalitni qaytaramiz.
+      // Even if there's an error, return fallback key for demo to work.
       return _fallbackHardcodedKey;
     }
   }
@@ -126,12 +129,12 @@ class _ApiKeyProvider {
     }
   }
 
-  /// "Server so‘rovi" — hozircha placeholder (kelajakda HTTP bilan almashtiriladi).
-  /// Hozircha null qaytarsa, fallback ishlatiladi.
+  /// "Server request" — placeholder for now (will be replaced with HTTP in the future).
+  /// If null is returned for now, fallback is used.
   Future<String?> _getFromServerPlaceholder() async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
-    // TODO: bu yerga haqiqiy backend so‘rovi qo‘yiladi (HTTP, auth, va h.k.).
-    // Hozircha null — > fallback ishlaydi.
+    // TODO: Real backend request will be placed here (HTTP, auth, etc.).
+    // For now null -> fallback works.
     final dataSyncService = sl<DataSyncService>();
     final result = await dataSyncService.syncMapTokens();
     var token = result['yandexToken'];

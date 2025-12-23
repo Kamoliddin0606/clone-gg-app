@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -53,11 +54,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         );
       },
     );
-    print(' tanlangan server malumotlar ${selected.toString()}');
-    print(' tanlangan server url ${selected?.url}');
-    print(' tanlangan server nomi ${selected?.name}');
+    if (kDebugMode) {
+      print('Selected server data: ${selected.toString()}');
+      print('Selected server URL: ${selected?.url}');
+      print('Selected server name: ${selected?.name}');
+    }
     if (selected != null) {
-      // Tanlovni saqlaymiz — ApiService baseUrl avtomatik yangilanadi
+      // Save the selection — ApiService baseUrl is automatically updated
       await service.set(selected);
       _isServerExplicitlySelected = true;
 
@@ -66,7 +69,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${selected.label} server tanlandi')),
+        SnackBar(content: Text('${selected.label} ${AppLocalizations.of(context)?.serverSelected ?? "server selected"}')),
       );
     }
   }
@@ -142,7 +145,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         await serverService.set(serverService.current.value);
       } catch (e) {
         // Log error but don't block login
-        print('Error saving default server: $e');
+        if (kDebugMode) print('Error saving default server: $e');
       }
     }
 
@@ -166,8 +169,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         // No saved user data in preferences
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Internet mavjud emas va saqlangan foydalanuvchi ma\'lumotlari topilmadi'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)?.noInternetNoSavedUser ?? 'No internet and no saved user data found'),
               backgroundColor: Colors.red,
             ),
           );
@@ -179,8 +182,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (username != prefsUsername) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Internet mavjud emas va kiritilgan login saqlangan login bilan mos kelmaydi'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)?.noInternetLoginMismatch ?? 'No internet and entered login does not match saved login'),
               backgroundColor: Colors.red,
             ),
           );
@@ -193,8 +196,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if(userData?['base_url'] != sl<ServerService>().current.value.url) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Saqlangan foydalanuvchi ma\'lumotlari joriy server bilan mos kelmaydi. Iltimos, serverni o\'zgartiring.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)?.savedUserServerMismatch ?? 'Saved user data does not match current server. Please change server.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -211,8 +214,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         // User not found in database or data doesn't match
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Internet mavjud emas va foydalanuvchi ma\'lumotlari bazada topilmadi yoki mos kelmaydi'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)?.noInternetUserNotInDb ?? 'No internet and user data not found in database or does not match'),
               backgroundColor: Colors.red,
             ),
           );
@@ -222,7 +225,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Offline kirishda xatolik: $e'),
+            content: Text('${AppLocalizations.of(context)?.offlineLoginError ?? "Offline login error"}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -234,19 +237,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     return await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Internet mavjud emas'),
+        title: Text(AppLocalizations.of(context)?.noInternetAvailable ?? 'No internet available'),
         content: Text(
-          '${userData['name']} (${userData['username']}) sifatida offline rejimda kirishni xohlaysizmi?\n\n'
-          'Offline rejimda siz mavjud ma\'lumotlar bilan ishlashingiz mumkin, lekin yangi ma\'lumotlarni yuklay olmaysiz.',
+          '${userData['name']} (${userData['username']}) ${AppLocalizations.of(context)?.offlineModeQuestion ?? "Do you want to enter offline mode as"}\n\n'
+          '${AppLocalizations.of(context)?.offlineModeDescription ?? "In offline mode you can work with existing data, but cannot load new data."}',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Offline kirish'),
+            child: Text(AppLocalizations.of(context)?.offlineLogin ?? 'Offline login'),
           ),
         ],
       ),
@@ -295,7 +298,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             break;
           default:
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Unknown user role: $role')),
+              SnackBar(content: Text('${AppLocalizations.of(context)?.unknownUserRole ?? "Unknown user role"}: $role')),
             );
         }
       }
@@ -303,7 +306,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Offline login xatolik: $e'),
+            content: Text('${AppLocalizations.of(context)?.offlineLoginError ?? "Offline login error"}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -325,7 +328,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (dbUser == null) {
         // No user in database, need to sync all data
         needsDataSync = true;
-        print('No user found in database, will sync all data');
+        if (kDebugMode) print('No user found in database, will sync all data');
       } else {
         // Check if user data matches
         final userMatches = dbUser['code'] == state.user.code &&
@@ -337,9 +340,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         if (!userMatches) {
           // User data doesn't match, need to sync all data
           needsDataSync = true;
-          print('User data mismatch, will sync all data');
+          if (kDebugMode) print('User data mismatch, will sync all data');
         } else {
-          print('User data matches, no sync needed');
+          if (kDebugMode) print('User data matches, no sync needed');
         }
       }
 
@@ -370,7 +373,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Login Successful!')));
+          ..showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)?.loginSuccessful ?? 'Login Successful!')));
 
         _navigateToHomePage(state.user.role);
       }
@@ -378,7 +381,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Online login processing error: $e'),
+            content: Text('${AppLocalizations.of(context)?.onlineLoginError ?? "Online login processing error"}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -393,7 +396,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Ma\'lumotlar yangilanmoqda...'),
+        title: Text(AppLocalizations.of(context)?.dataUpdating ?? 'Updating data...'),
         content: SizedBox(
           width: double.maxFinite,
           child: StreamBuilder<SyncStep>(
@@ -410,9 +413,9 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                   children: [
                     const Icon(Icons.error, color: Colors.red, size: 48),
                     const SizedBox(height: 16),
-                    Text('Xatolik: ${snapshot.error}'),
+                    Text('${AppLocalizations.of(context)?.errorPrefix ?? "Error"}: ${snapshot.error}'),
                     const SizedBox(height: 16),
-                    const Text('Kesh ma\'lumotlaridan foydalaniladi'),
+                    Text(AppLocalizations.of(context)?.cacheDataUsed ?? 'Cache data is being used'),
                   ],
                 );
               }
@@ -473,7 +476,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       default:
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text('Unknown user role: $role')));
+          ..showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)?.unknownUserRole ?? "Unknown user role"}: $role')));
     }
   }
 
@@ -517,7 +520,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthFailure) {
-                print('Auth failure: ${state.message}, type: ${state.errorType}');
+                if (kDebugMode) print('Auth failure: ${state.message}, type: ${state.errorType}');
                 if (state.errorType == AuthErrorType.connectivity) {
                   // Only try offline login for connectivity issues
                   _tryOfflineLogin(_usernameController.text, _passwordController.text);
@@ -722,7 +725,7 @@ class _M3Input extends StatelessWidget {
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
         ),
-        validator: (v) => (v == null || v.trim().isEmpty) ? '$label kiriting' : null,
+        validator: (v) => (v == null || v.trim().isEmpty) ? '${AppLocalizations.of(context)?.enterField ?? "Please enter"} $label' : null,
       ),
     );
   }

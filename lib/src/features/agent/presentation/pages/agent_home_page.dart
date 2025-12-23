@@ -149,7 +149,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
       }
 
     } catch (e) {
-      print('Error loading user data: $e');
+      if (kDebugMode) print('Error loading user data: $e');
     }
   }
 
@@ -217,7 +217,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
         await _loadKpiData();
       }
     } catch (e) {
-      print('Error checking user data: $e');
+      if (kDebugMode) print('Error checking user data: $e');
       // Load cached data as fallback
       await _loadKpiData();
     }

@@ -67,8 +67,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       if (kDebugMode) {
         print('Validating user data with database after login...');
+        print('Validating user data: saved username: ${_prefs.getSavedUsername()}, current user: ${user.username}');
       }
-      print('Validating user data with database after login...${_prefs.getSavedUsername()} ${user.username} ');
 
       // Check if preferences user data matches database user table first row
       final isValid = await dataSyncService.validateUserWithDatabase();

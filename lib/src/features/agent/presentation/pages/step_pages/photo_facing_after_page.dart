@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:photo_view/photo_view.dart';
@@ -1316,7 +1317,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
 
   /// Capture photo from camera
   Future<void> _capturePhoto() async {
-    print("Rasmga olinyapti yoki kamera mavjud emas: ${_isCapturing} ${_isCameraAvailable}");
+    if (kDebugMode) print("Rasmga olinyapti yoki kamera mavjud emas: ${_isCapturing} ${_isCameraAvailable}");
     if (_isCapturing || !_isCameraAvailable) return;
 
     setState(() => _isCapturing = true);

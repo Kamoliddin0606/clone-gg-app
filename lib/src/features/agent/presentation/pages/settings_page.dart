@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart';
@@ -409,7 +410,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
       // Get user code from shared preferences
       final prefs = context.read<SharedPreferencesService>();
       final userCode = prefs.getUserCode();
-      print('__________Setting permisionsda User code: $userCode');
+      if (kDebugMode) print('__________Setting permisionsda User code: $userCode');
       if (userCode == null) {
         setState(() {
           _errorMessage = AppLocalizations.of(context)!.userCodeNotFound;
@@ -907,7 +908,7 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
         _selectedLanguage = localeProvider.currentLanguageCode;
       });
     } catch (e) {
-      print('Error loading current language: $e');
+      if (kDebugMode) print('Error loading current language: $e');
       setState(() {
         _selectedLanguage = 'uz'; // Fallback
       });
@@ -955,7 +956,7 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
           );
         }
       } catch (e) {
-        print('Error changing language: $e');
+        if (kDebugMode) print('Error changing language: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1168,14 +1169,14 @@ class _MapsTabState extends State<MapsTab> {
       _apiKeyService = sl<ApiKeyService>();
       await _loadApiKeys();
     } catch (e) {
-      print('Error initializing API key service: $e');
+      if (kDebugMode) print('Error initializing API key service: $e');
       // Fallback: try to get from context
       try {
         _apiKeyService = ApiKeyService.instance;
         await _apiKeyService.initialize(context.read<SharedPreferencesService>());
         await _loadApiKeys();
       } catch (fallbackError) {
-        print('Fallback API key service initialization failed: $fallbackError');
+        if (kDebugMode) print('Fallback API key service initialization failed: $fallbackError');
       }
     }
   }
@@ -1192,7 +1193,7 @@ class _MapsTabState extends State<MapsTab> {
         _osmApiKeyController.text = osmKey ?? '';
       });
     } catch (e) {
-      print('Error loading API keys: $e');
+      if (kDebugMode) print('Error loading API keys: $e');
     }
   }
 
@@ -1210,7 +1211,7 @@ class _MapsTabState extends State<MapsTab> {
         });
       }
     } catch (e) {
-      print('Error loading map settings: $e');
+      if (kDebugMode) print('Error loading map settings: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -1257,7 +1258,7 @@ class _MapsTabState extends State<MapsTab> {
           );
         }
       } catch (e) {
-        print('Error saving map settings: $e');
+        if (kDebugMode) print('Error saving map settings: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1286,17 +1287,17 @@ class _MapsTabState extends State<MapsTab> {
       switch (provider) {
         case MapProvider.google:
           final hasKey = await _apiKeyService.hasApiKey(ApiKeyService.googleMapsApiKey);
-          print('hasKey: $hasKey');
+          if (kDebugMode) print('hasKey: $hasKey');
           return hasKey ? 'sozlangan' : 'sozlanmagan';
         case MapProvider.yandex:
           final hasKey = await _apiKeyService.hasApiKey(ApiKeyService.yandexMapsApiKey);
-          print('hasKey: $hasKey');
+          if (kDebugMode) print('hasKey: $hasKey');
           return hasKey ? 'sozlangan' : 'sozlanmagan';
         case MapProvider.openStreetMap:
           return 'kalit_shart_emas'; // OSM doesn't require API key
       }
     } catch (e) {
-      print('Error checking API key status: $e');
+      if (kDebugMode) print('Error checking API key status: $e');
       return 'xatolik';
     }
   }

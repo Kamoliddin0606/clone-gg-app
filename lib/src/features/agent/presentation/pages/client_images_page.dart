@@ -508,9 +508,13 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         throw Exception('Hech bir rasm fayli topilmadi');
       }
 
-      final accessToken = await _tokenService.getValidAccessToken();
+      // Use ensureValidToken for complete auth flow:
+      // 1. Check access token validity
+      // 2. Refresh if expired  
+      // 3. Re-authenticate if refresh fails
+      final accessToken = await _tokenService.ensureValidToken();
       if (accessToken == null) {
-        throw Exception('Autentifikatsiya tokeni mavjud emas');
+        throw Exception('Autentifikatsiya muddati tugadi. Iltimos, qayta kiring.');
       }
 
       final uploadedUrls = await _restApiService.uploadClientImagesBulk(

@@ -20,31 +20,63 @@ class AgentRepository {
   final DataSyncService _dataSyncService;
 
   AgentRepository({
-required DataSyncService dataSyncService,
+    required DataSyncService dataSyncService,
   }) : _dataSyncService = dataSyncService;
 
-  /// Get KPI data from server and cache locally
+  /// Get KPI data using cache-first strategy:
+  /// 1. Check cache (database) first
+  /// 2. If cache is empty or forceRefresh, fetch from API
+  /// 3. Save fetched data to database
+  /// 4. Return data from cache
   Future<KpiData> getKpiData({
     required String userCode,
     required String password,
     bool forceRefresh = false,
   }) async {
     try {
-      return await _dataSyncService.syncKpiData(
+      // Step 1: Check cache first (unless forceRefresh)
+      if (!forceRefresh) {
+        final cachedData = await _dataSyncService.getCachedKpiData(userCode);
+        if (cachedData != null) {
+          if (kDebugMode) {
+            print('AgentRepository: Returning KPI data from cache: $cachedData');
+          }
+          return cachedData;
+        }
+        if (kDebugMode) {
+          print('AgentRepository: Cache is empty, fetching from API...');
+        }
+      } else {
+        if (kDebugMode) {
+          print('AgentRepository: Force refresh requested, fetching from API...');
+        }
+      }
+
+      // Step 2: Cache is empty or forceRefresh - fetch from API and save to database
+      final kpiData = await _dataSyncService.syncKpiData(
         userCode: userCode,
         password: password,
-        forceRefresh: forceRefresh,
+        forceRefresh: true, // Always fetch from API at this point
       );
+
+      if (kDebugMode) {
+        print('AgentRepository: KPI data fetched from API and saved to DB: $kpiData');
+      }
+
+      // Step 3: Return the data (already saved to DB by syncKpiData)
+      return kpiData;
     } catch (e) {
-      // If API fails, try to return cached data
-      if (kDebugMode) print('Error fetching KPI data: $e');
+      // If API fails, try to return cached data as fallback
+      if (kDebugMode) print('AgentRepository: Error fetching KPI data: $e');
+      
       final cachedData = await _dataSyncService.getCachedKpiData(userCode);
       if (cachedData != null) {
-        if (kDebugMode) print('Returning cached KPI data: $cachedData');
+        if (kDebugMode) print('AgentRepository: Returning cached KPI data as fallback: $cachedData');
         return cachedData;
       }
 
       // If no cached data, return default values
+      if (kDebugMode) print('AgentRepository: No cached data available, returning defaults');
       return KpiData(
         plan: '0',
         fact: '0',

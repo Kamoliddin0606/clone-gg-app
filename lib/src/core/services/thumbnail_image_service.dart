@@ -260,16 +260,16 @@ class ClientImagesService {
       _checkCancelled();
       onProgressUpdate?.call(0.0, 'Starting client image fetch...');
 
-      // Ensure we have a valid token
-      String? token = await _tokenService.getValidAccessToken();
+      // Ensure we have a valid token using the full authentication flow:
+      // 1. Check access token validity
+      // 2. Refresh if expired
+      // 3. Re-authenticate if refresh fails
+      final token = await _tokenService.ensureValidToken();
       if (token == null || token.trim().isEmpty) {
         if (kDebugMode) {
-          print('ClientImagesService: No valid access token, attempting refresh...');
+          print('ClientImagesService: Failed to obtain valid token after all attempts');
         }
-        token = await _tokenService.refreshAccessToken();
-      }
-      if (token == null || token.trim().isEmpty) {
-        throw Exception('No valid access token available. Please re-authenticate.');
+        throw Exception('Autentifikatsiya muddati tugadi. Iltimos, qayta kiring.');
       }
 
       onProgressUpdate?.call(25.0, 'Fetching images from server...');

@@ -543,15 +543,33 @@ class DataSyncService {
   }
 
   Future<KpiData> _syncKpiData(String userCode, String password) async {
+    if (kDebugMode) {
+      print('DataSyncService: Fetching KPI data from API for user: $userCode');
+    }
+    
     final kpiData = await _apiService.getKpiData(
       userCode: userCode,
       password: password,
     );
+    
     if (kDebugMode) {
-      print('KPI ma\'lumotlari yuklandi: $kpiData');
+      print('DataSyncService: KPI data received from API: $kpiData');
+      print('DataSyncService: KPI plan=${kpiData.plan}, fact=${kpiData.fact}');
     }
-    if (kDebugMode) print("_________________________________ kpi plan ${kpiData.fact}");
-    await _dbService.saveKpiData(userCode, kpiData);
+    
+    // Save to database
+    try {
+      await _dbService.saveKpiData(userCode, kpiData);
+      if (kDebugMode) {
+        print('DataSyncService: KPI data saved to database successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: Error saving KPI data to database: $e');
+      }
+      rethrow;
+    }
+    
     return kpiData;
   }
 

@@ -1582,32 +1582,55 @@ class ApiDatabaseService {
   }
 
   Future<KpiData?> getKpiData(String userCode) async {
-    final db = await database;
-    final result = await db.query(
-      'kpi_data',
-      where: 'user_code = ?',
-      whereArgs: [userCode],
-      orderBy: 'created_at DESC',
-      limit: 1,
-    );
-    if (kDebugMode) print(result.isEmpty);
-    if (result.isEmpty) return null;
+    try {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Getting KPI data for user: $userCode');
+      }
 
-    final row = result.first;
-    if (kDebugMode) print('KPI data row: $row');
+      // Ensure table exists before querying
+      final tableInfo = getTableCreationSql()['kpi_data'];
+      if (tableInfo != null) {
+        await ensureTableExists('kpi_data', tableInfo['sql'] as String, tableInfo['indexes'] as List<String>);
+      }
 
-    return KpiData(
-      plan: row['plan'] as String,
-      fact: row['fact'] as String,
-      totalPercent: row['total_percent'] as String,
-      totalForecast: row['total_forecast'] as String,
-      totalPercentForecastFact: row['total_percent_forecast_fact'] as String,
-      akbPlan: row['akb_plan'] as String,
-      akbFact: row['akb_fact'] as String,
-      akbPercent: row['akb_percent'] as String,
-      okb: row['okb'] as String,
-      updateDate: row['update_date'] as String,
-    );
+      final db = await database;
+      final result = await db.query(
+        'kpi_data',
+        where: 'user_code = ?',
+        whereArgs: [userCode],
+        orderBy: 'created_at DESC',
+        limit: 1,
+      );
+      
+      if (kDebugMode) {
+        print('ApiDatabaseService: KPI query result isEmpty: ${result.isEmpty}');
+      }
+      
+      if (result.isEmpty) return null;
+
+      final row = result.first;
+      if (kDebugMode) {
+        print('ApiDatabaseService: KPI data row: $row');
+      }
+
+      return KpiData(
+        plan: row['plan'] as String,
+        fact: row['fact'] as String,
+        totalPercent: row['total_percent'] as String,
+        totalForecast: row['total_forecast'] as String,
+        totalPercentForecastFact: row['total_percent_forecast_fact'] as String,
+        akbPlan: row['akb_plan'] as String,
+        akbFact: row['akb_fact'] as String,
+        akbPercent: row['akb_percent'] as String,
+        okb: row['okb'] as String,
+        updateDate: row['update_date'] as String,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting KPI data for user $userCode: $e');
+      }
+      return null;
+    }
   }
 
   // Clients methods

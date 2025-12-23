@@ -416,4 +416,120 @@ class TokenService {
       print('TokenService: User logged out, tokens cleared');
     }
   }
+
+  /// Ensure a valid token is available with complete auth flow
+  /// This method implements the full token validation sequence:
+  /// 1. Check if access token exists and is not expired -> return it
+  /// 2. If expired, try to refresh using refresh token
+  /// 3. If refresh fails, re-authenticate using stored credentials
+  /// 
+  /// @param username Optional username for re-authentication (uses stored if not provided)
+  /// @param password Optional password for re-authentication (uses stored if not provided)
+  /// @return Future<String?> Valid access token or null if all methods fail
+  /// @throws Exception if re-authentication is required but credentials are not available
+  Future<String?> ensureValidToken({
+    String? username,
+    String? password,
+  }) async {
+    try {
+      // Step 1: Check if we have a valid (non-expired) access token
+      final accessToken = _prefsService.preferences.getString(_accessTokenKey);
+      final expiryString = _prefsService.preferences.getString(_tokenExpiryKey);
+
+      if (accessToken != null && accessToken.isNotEmpty && expiryString != null) {
+        final expiryTime = DateTime.parse(expiryString);
+        // Add 1 minute buffer to avoid edge cases
+        if (expiryTime.isAfter(DateTime.now().add(const Duration(minutes: 1)))) {
+          if (kDebugMode) {
+            print('TokenService: Access token is valid, returning existing token');
+          }
+          return accessToken;
+        }
+      }
+
+      if (kDebugMode) {
+        print('TokenService: Access token expired or not available, attempting refresh...');
+      }
+
+      // Step 2: Try to refresh the token
+      final refreshedToken = await _refreshAccessToken();
+      if (refreshedToken != null && refreshedToken.isNotEmpty) {
+        if (kDebugMode) {
+          print('TokenService: Token refreshed successfully');
+        }
+        return refreshedToken;
+      }
+
+      if (kDebugMode) {
+        print('TokenService: Refresh failed, attempting re-authentication...');
+      }
+
+      // Step 3: Refresh failed, try to re-authenticate
+      // Get credentials from parameters or stored preferences
+      final authUsername = username ?? _prefsService.getUserCode();
+      final authPassword = password ?? _prefsService.getPassword();
+
+      if (authUsername == null || authUsername.isEmpty ||
+          authPassword == null || authPassword.isEmpty) {
+        if (kDebugMode) {
+          print('TokenService: No credentials available for re-authentication');
+        }
+        // Clear invalid tokens
+        await clearTokens();
+        return null;
+      }
+
+      // Re-authenticate with stored credentials
+      final success = await authenticate(
+        username: authUsername,
+        password: authPassword,
+      );
+
+      if (success) {
+        if (kDebugMode) {
+          print('TokenService: Re-authentication successful');
+        }
+        // Return the newly acquired token
+        return _prefsService.preferences.getString(_accessTokenKey);
+      }
+
+      if (kDebugMode) {
+        print('TokenService: Re-authentication failed');
+      }
+      // Clear invalid tokens if re-auth failed
+      await clearTokens();
+      return null;
+
+    } catch (e) {
+      if (kDebugMode) {
+        print('TokenService: Error in ensureValidToken: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Check if access token is expired
+  /// @return bool True if token is expired or doesn't exist
+  bool isTokenExpired() {
+    final expiryString = _prefsService.preferences.getString(_tokenExpiryKey);
+    if (expiryString == null) return true;
+    
+    try {
+      final expiryTime = DateTime.parse(expiryString);
+      return expiryTime.isBefore(DateTime.now());
+    } catch (e) {
+      return true;
+    }
+  }
+
+  /// Get stored access token without validation
+  /// Use ensureValidToken for validated token retrieval
+  String? getStoredAccessToken() {
+    return _prefsService.preferences.getString(_accessTokenKey);
+  }
+
+  /// Get stored refresh token
+  String? getStoredRefreshToken() {
+    return _prefsService.preferences.getString(_refreshTokenKey);
+  }
 }

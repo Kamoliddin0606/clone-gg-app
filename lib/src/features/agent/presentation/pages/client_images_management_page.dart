@@ -7,6 +7,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 String? _bestClientImagePreviewUrl(ClientImage img) {
@@ -68,6 +69,7 @@ class ClientImagesManagementPage extends StatefulWidget {
 class _ClientImagesManagementPageState extends State<ClientImagesManagementPage> {
   final RestApiService _restApiService = sl<RestApiService>();
   final ClientImagesService _clientImagesService = sl<ClientImagesService>();
+  final TokenService _tokenService = sl<TokenService>();
   final ImagePicker _imagePicker = ImagePicker();
 
   /// List of server images for the client
@@ -150,6 +152,16 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
 
     try {
       setState(() => _isUploading = true);
+      
+      // Ensure valid token using complete auth flow:
+      // 1. Check access token validity
+      // 2. Refresh if expired
+      // 3. Re-authenticate if refresh fails
+      final token = await _tokenService.ensureValidToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('Autentifikatsiya muddati tugadi. Iltimos, qayta kiring.');
+      }
+      
       final files = _pendingImages.map((xfile) => File(xfile.path)).toList();
       final urls = await _restApiService.uploadClientImagesBulk(
         clientCode: widget.clientCode,

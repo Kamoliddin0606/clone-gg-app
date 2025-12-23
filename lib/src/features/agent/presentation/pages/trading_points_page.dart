@@ -3658,6 +3658,10 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
   Timer? _updateTimer;
   double? _currentDistanceKm;
   double? _currentAccuracy;
+  double? _userLat;
+  double? _userLon;
+  bool _isRefreshing = false;
+  final osm.MapController _mapController = osm.MapController();
 
   @override
   void initState() {
@@ -3674,6 +3678,7 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
   @override
   void dispose() {
     _updateTimer?.cancel();
+    _mapController.dispose();
     super.dispose();
   }
 
@@ -3687,10 +3692,14 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
 
     final locationData = widget.locationService!.getStoredLocation();
     final accuracy = locationData?['accuracy'] as double?;
+    final userLat = locationData?['latitude'] as double?;
+    final userLon = locationData?['longitude'] as double?;
 
     setState(() {
       _currentDistanceKm = distance;
       _currentAccuracy = accuracy;
+      _userLat = userLat;
+      _userLon = userLon;
     });
 
     // Check if conditions are now met
@@ -3699,11 +3708,41 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
     }
   }
 
+  Future<void> _manualRefresh() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    
+    try {
+      // Request fresh location from GPS
+      await widget.locationService?.refreshLocation();
+      _updateDistanceAndAccuracy();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Manual refresh error: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
+  }
+
   bool _areConditionsMet() {
     if (_currentDistanceKm == null) return false;
     final distanceMeters = (_currentDistanceKm! * 1000).round();
     final clientZoneAccess = widget.tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
     return distanceMeters <= clientZoneAccess;
+  }
+
+  /// Calculate appropriate zoom level based on distance in meters
+  double _calculateZoomForDistance(int distanceMeters) {
+    if (distanceMeters < 100) return 18.0;
+    if (distanceMeters < 300) return 17.0;
+    if (distanceMeters < 500) return 16.0;
+    if (distanceMeters < 1000) return 15.0;
+    if (distanceMeters < 2000) return 14.0;
+    if (distanceMeters < 5000) return 13.0;
+    return 12.0;
   }
 
   @override
@@ -3777,17 +3816,138 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
           ),
           const SizedBox(height: 8),
 
-          // GPS accuracy
+          // GPS accuracy with refresh button
           Row(
             children: [
               Icon(Icons.gps_not_fixed, size: 20, color: cs.secondary),
               const SizedBox(width: 8),
-              Text(
-                'GPS aniqligi: ${_currentAccuracy != null ? '${_currentAccuracy!.toStringAsFixed(1)}m' : 'Noma\'lum'}',
-                style: theme.textTheme.bodyMedium,
+              Expanded(
+                child: Text(
+                  'GPS aniqligi: ${_currentAccuracy != null ? '${_currentAccuracy!.toStringAsFixed(1)}m' : 'Noma\'lum'}',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+              // Manual refresh button
+              SizedBox(
+                height: 32,
+                child: OutlinedButton.icon(
+                  onPressed: _isRefreshing ? null : _manualRefresh,
+                  icon: _isRefreshing
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh, size: 16),
+                  label: Text(_isRefreshing ? 'Yangilanmoqda...' : 'Yangilash'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    textStyle: const TextStyle(fontSize: 12),
+                  ),
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 16),
+
+          // Mini map showing user and client positions
+          if (_userLat != null && _userLon != null)
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.outline.withOpacity(0.3)),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: osm.FlutterMap(
+                mapController: _mapController,
+                options: osm.MapOptions(
+                  initialCenter: osm_latlong.LatLng(
+                    (_userLat! + widget.tradingPointWithPermissions.tradingPoint.latitude) / 2,
+                    (_userLon! + widget.tradingPointWithPermissions.tradingPoint.longitude) / 2,
+                  ),
+                  initialZoom: _calculateZoomForDistance(distanceMeters ?? 1000),
+                  interactionOptions: const osm.InteractionOptions(
+                    flags: osm.InteractiveFlag.pinchZoom | osm.InteractiveFlag.drag,
+                  ),
+                ),
+                children: [
+                  osm.TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.gloria.marketing',
+                  ),
+                  osm.MarkerLayer(
+                    markers: [
+                      // User marker (blue)
+                      osm.Marker(
+                        point: osm_latlong.LatLng(_userLat!, _userLon!),
+                        width: 40,
+                        height: 40,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.blue, width: 2),
+                          ),
+                          child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 24),
+                        ),
+                      ),
+                      // Client marker (red/green based on compliance)
+                      osm.Marker(
+                        point: osm_latlong.LatLng(
+                          widget.tradingPointWithPermissions.tradingPoint.latitude,
+                          widget.tradingPointWithPermissions.tradingPoint.longitude,
+                        ),
+                        width: 40,
+                        height: 40,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: (isCompliant ? Colors.green : Colors.red).withOpacity(0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: isCompliant ? Colors.green : Colors.red, width: 2),
+                          ),
+                          child: Icon(Icons.storefront, color: isCompliant ? Colors.green : Colors.red, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Draw line between user and client
+                  osm.PolylineLayer(
+                    polylines: [
+                      osm.Polyline(
+                        points: [
+                          osm_latlong.LatLng(_userLat!, _userLon!),
+                          osm_latlong.LatLng(
+                            widget.tradingPointWithPermissions.tradingPoint.latitude,
+                            widget.tradingPointWithPermissions.tradingPoint.longitude,
+                          ),
+                        ],
+                        color: isCompliant ? Colors.green.withOpacity(0.7) : Colors.red.withOpacity(0.7),
+                        strokeWidth: 3,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          if (_userLat == null || _userLon == null)
+            Container(
+              height: 100,
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.location_off, color: cs.outline, size: 32),
+                    const SizedBox(height: 8),
+                    Text('Joylashuv ma\'lumotlari kutilmoqda...', style: theme.textTheme.bodySmall),
+                  ],
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
 
           // Progress bar for distance compliance

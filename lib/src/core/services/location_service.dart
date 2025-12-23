@@ -135,6 +135,11 @@ class LocationService {
     }
   }
 
+  /// Public method to manually refresh location (for UI triggered updates)
+  Future<void> refreshLocation() async {
+    await _updateLocation();
+  }
+
   /// Get current fresh location from Geolocator
   Future<Position?> getCurrentLocation() async {
     try {

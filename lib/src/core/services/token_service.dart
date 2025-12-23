@@ -466,13 +466,17 @@ class TokenService {
 
       // Step 3: Refresh failed, try to re-authenticate
       // Get credentials from parameters or stored preferences
-      final authUsername = username ?? _prefsService.getUserCode();
+      final authUsername = username ?? _prefsService.getSavedUsername();
       final authPassword = password ?? _prefsService.getPassword();
+
+      if (kDebugMode) {
+        print('TokenService: Retrieved credentials - username: ${authUsername != null ? '***' : 'null'}, password: ${authPassword != null ? '***' : 'null'}');
+      }
 
       if (authUsername == null || authUsername.isEmpty ||
           authPassword == null || authPassword.isEmpty) {
         if (kDebugMode) {
-          print('TokenService: No credentials available for re-authentication');
+          print('TokenService: No credentials available for re-authentication (username empty: ${authUsername?.isEmpty ?? true}, password empty: ${authPassword?.isEmpty ?? true})');
         }
         // Clear invalid tokens
         await clearTokens();

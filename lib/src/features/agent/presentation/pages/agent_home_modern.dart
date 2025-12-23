@@ -1436,6 +1436,9 @@ class _HeroHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final nf = NumberFormat.decimalPattern();
     final percent = (kpi.totalPercent / 100).clamp(0.0, 1.0);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final appTheme = theme.extension<AppThemeExtension>();
 
     return ClipRRect(
         borderRadius: BorderRadius.circular(28),
@@ -1448,67 +1451,53 @@ class _HeroHeader extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Theme.of(context).extension<AppThemeExtension>()?.glassBackground ?? const Color(
-                          0x804B2DA5),
-                      Theme.of(context).extension<AppThemeExtension>()?.accentSecondary.withOpacity(0.3) ?? const Color(
-                          0x32FDFDFD),
-                    ],
+                    colors: isDark 
+                      ? [
+                          const Color(0xFF1E293B),
+                          const Color(0xFF0F172A),
+                        ]
+                      : [
+                          appTheme?.glassBackground ?? const Color(0x804B2DA5),
+                          appTheme?.accentSecondary.withValues(alpha: 0.3) ?? const Color(0x32FDFDFD),
+                        ],
                   ),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(
+                    color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.2),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark 
+                        ? Colors.black.withValues(alpha: 0.3)
+                        : theme.colorScheme.primary.withValues(alpha: 0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: Row(
-                    children: [// Animated circular progress
-                    SizedBox(
-                    width: 110,
-                    height: 110,
-                    child: TweenAnimationBuilder<double>(
-                        duration: const Duration(milliseconds: 900),
-                        tween: Tween<double>(begin: 0.0, end: percent),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, _) {
-                          return Stack(
-                              alignment: Alignment.center,
-                              children: [
-                              ShaderMask(
-                              shaderCallback: (rect) => SweepGradient(
-                            startAngle: -3.14159 / 2,
-                            endAngle: 3 * 3.14159 / 2,
-                            colors: [
-                              Theme.of(context).extension<AppThemeExtension>()?.accentPrimary ?? const Color(0xFF6C8CFF),
-                              Theme.of(context).extension<AppThemeExtension>()?.accentSecondary ?? const Color(0xFF00E5A8),
-                            ],
-                          ).createShader(rect),
-                          child: CircularProgressIndicator(
-                          value: value,
-                          strokeWidth: 10.0,
-                          backgroundColor: Colors.white12,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                          ),Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('${(value * 100).toStringAsFixed(1)}%',
-                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-                                    const SizedBox(height: 2),
-                                    Text(AppLocalizations.of(context)!.plan, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70)),
-                                  ],
-                                )
-                              ],
-                          );
-                        },
+                    children: [
+                    // Modern circular progress with glow effect
+                    _ModernCircularProgress(
+                      percent: percent,
+                      size: 110,
+                      isDark: isDark,
+                      theme: theme,
+                      appTheme: appTheme,
                     ),
-                ),const SizedBox(width: 16),
+                    const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(AppLocalizations.of(context)!.todayPerformance,
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                                )),
                             const SizedBox(height: 8),
-                            _animatedMetric(context, AppLocalizations.of(context)!.totalFact, nf.format(kpi.totalFact)),
-                            _animatedMetric(context, AppLocalizations.of(context)!.totalPlan, nf.format(kpi.totalPlan)),
-                            _animatedMetric(context, AppLocalizations.of(context)!.forecast, nf.format(kpi.totalForecast)),
+                            _animatedMetric(context, AppLocalizations.of(context)!.totalFact, nf.format(kpi.totalFact), isDark),
+                            _animatedMetric(context, AppLocalizations.of(context)!.totalPlan, nf.format(kpi.totalPlan), isDark),
+                            _animatedMetric(context, AppLocalizations.of(context)!.forecast, nf.format(kpi.totalForecast), isDark),
                           ],
                         ),
                       ),
@@ -1518,7 +1507,9 @@ class _HeroHeader extends StatelessWidget {
         ),
     );
   }
-  Widget _animatedMetric(BuildContext context, String label, String value) {
+  
+  Widget _animatedMetric(BuildContext context, String label, String value, bool isDark) {
+    final theme = Theme.of(context);
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 900),
@@ -1529,14 +1520,163 @@ class _HeroHeader extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 2),
             child: Row(
               children: [
-                Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
+                Text(label, style: theme.textTheme.bodySmall?.copyWith(
+                  color: isDark ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                )),
                 const Spacer(),
-                Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                Text(value, style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                )),
               ],
             ),
           ),
         );
       },
+    );
+  }
+}
+
+/// Modern circular progress indicator with glow effect and theme support
+class _ModernCircularProgress extends StatelessWidget {
+  final double percent;
+  final double size;
+  final bool isDark;
+  final ThemeData theme;
+  final AppThemeExtension? appTheme;
+
+  const _ModernCircularProgress({
+    required this.percent,
+    required this.size,
+    required this.isDark,
+    required this.theme,
+    this.appTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Define gradient colors based on theme
+    final gradientColors = isDark
+      ? [const Color(0xFF60A5FA), const Color(0xFF34D399)] // Blue to emerald for dark
+      : [theme.colorScheme.primary, const Color(0xFF10B981)]; // Primary to emerald for light
+    
+    final backgroundColor = isDark
+      ? Colors.white.withValues(alpha: 0.08)
+      : theme.colorScheme.primary.withValues(alpha: 0.12);
+    
+    final glowColor = isDark
+      ? const Color(0xFF60A5FA).withValues(alpha: 0.4)
+      : theme.colorScheme.primary.withValues(alpha: 0.3);
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 1200),
+        tween: Tween<double>(begin: 0.0, end: percent),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, _) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              // Glow effect behind progress
+              Container(
+                width: size - 8,
+                height: size - 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: glowColor,
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+              ),
+              // Background circle
+              SizedBox(
+                width: size,
+                height: size,
+                child: CircularProgressIndicator(
+                  value: 1.0,
+                  strokeWidth: 10.0,
+                  backgroundColor: Colors.transparent,
+                  valueColor: AlwaysStoppedAnimation<Color>(backgroundColor),
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              // Gradient progress arc
+              SizedBox(
+                width: size,
+                height: size,
+                child: ShaderMask(
+                  shaderCallback: (rect) => SweepGradient(
+                    startAngle: -pi / 2,
+                    endAngle: 3 * pi / 2,
+                    colors: gradientColors,
+                    stops: const [0.0, 1.0],
+                  ).createShader(rect),
+                  child: CircularProgressIndicator(
+                    value: value,
+                    strokeWidth: 10.0,
+                    backgroundColor: Colors.transparent,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    strokeCap: StrokeCap.round,
+                  ),
+                ),
+              ),
+              // Inner glass circle with percentage text
+              Container(
+                width: size - 24,
+                height: size - 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark 
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.white.withValues(alpha: 0.7),
+                  border: Border.all(
+                    color: isDark 
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.white.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
+                  boxShadow: isDark ? null : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${(value * 100).toStringAsFixed(1)}%',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : theme.colorScheme.primary,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      AppLocalizations.of(context)!.plan,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: isDark 
+                          ? Colors.white60 
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

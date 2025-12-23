@@ -413,10 +413,11 @@ class AgentHomeBloc extends Bloc<AgentHomeEvent, AgentHomeState> {
       );
 
       final kpiView = KpiView(
-        salesSum: kpiData.totalForecast,
-        itemsSold: null,
-        customersServed: null,
+        plan: kpiData.plan,
+        fact: kpiData.fact,
         totalPercent: kpiData.totalPercent,
+        totalForecast: kpiData.totalForecast,
+        totalPercentForecastFact: kpiData.totalPercentForecastFact,
         akbPlan: kpiData.akbPlan,
         akbFact: kpiData.akbFact,
         akbPercent: kpiData.akbPercent,
@@ -430,10 +431,11 @@ class AgentHomeBloc extends Bloc<AgentHomeEvent, AgentHomeState> {
         final cachedData = await _dataSyncService.getCachedKpiData(event.userCode);
         if (cachedData != null) {
           final kpiView = KpiView(
-            salesSum: cachedData.totalForecast,
-            itemsSold: null,
-            customersServed: null,
+            plan: cachedData.plan,
+            fact: cachedData.fact,
             totalPercent: cachedData.totalPercent,
+            totalForecast: cachedData.totalForecast,
+            totalPercentForecastFact: cachedData.totalPercentForecastFact,
             akbPlan: cachedData.akbPlan,
             akbFact: cachedData.akbFact,
             akbPercent: cachedData.akbPercent,
@@ -446,8 +448,11 @@ class AgentHomeBloc extends Bloc<AgentHomeEvent, AgentHomeState> {
 
       // Default fallback
       const defaultKpi = KpiView(
-        salesSum: '0',
+        plan: '0',
+        fact: '0',
         totalPercent: '0%',
+        totalForecast: '0',
+        totalPercentForecastFact: '0%',
         akbPlan: '0',
         akbFact: '0',
         akbPercent: '0%',
@@ -472,10 +477,11 @@ class AgentHomeBloc extends Bloc<AgentHomeEvent, AgentHomeState> {
         );
 
         final kpiView = KpiView(
-          salesSum: kpiData.totalForecast,
-          itemsSold: null,
-          customersServed: null,
+          plan: kpiData.plan,
+          fact: kpiData.fact,
           totalPercent: kpiData.totalPercent,
+          totalForecast: kpiData.totalForecast,
+          totalPercentForecastFact: kpiData.totalPercentForecastFact,
           akbPlan: kpiData.akbPlan,
           akbFact: kpiData.akbFact,
           akbPercent: kpiData.akbPercent,
@@ -557,20 +563,22 @@ class AgentHomeBloc extends Bloc<AgentHomeEvent, AgentHomeState> {
 ///
 ///
 class KpiView {
-  final String? salesSum; // e.g. formatted "128 000 000"
-  final String? itemsSold; // e.g. "342"
-  final String? customersServed; // e.g. "58"
+  final String? plan; // Total plan value
+  final String? fact; // Total fact value
   final String? totalPercent; // e.g. "76" (without % sign) or "76.3"
-  final String? akbPlan; // plan value
-  final String? akbFact; // fact value
-  final String? akbPercent; // percent string without %
+  final String? totalForecast; // Forecast value
+  final String? totalPercentForecastFact; // Forecast percent of fact
+  final String? akbPlan; // AKB plan value
+  final String? akbFact; // AKB fact value
+  final String? akbPercent; // AKB percent string without %
   final String? okb; // OKB value
 
   const KpiView({
-    this.salesSum,
-    this.itemsSold,
-    this.customersServed,
+    this.plan,
+    this.fact,
     this.totalPercent,
+    this.totalForecast,
+    this.totalPercentForecastFact,
     this.akbPlan,
     this.akbFact,
     this.akbPercent,
@@ -880,12 +888,12 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
     }
 
     return Kpi(
-      totalPlan: parseDouble(kpiView.salesSum),
-      totalFact: parseDouble(kpiView.salesSum), // Using salesSum as fact for now
+      totalPlan: parseDouble(kpiView.plan),
+      totalFact: parseDouble(kpiView.fact),
       totalPercent: parseDouble(kpiView.totalPercent),
-      totalForecast: parseDouble(kpiView.salesSum), // Using salesSum as forecast for now
-      totalPercentForecastFact: parseDouble(kpiView.totalPercent),
-      okb: parseInt(kpiView.customersServed),
+      totalForecast: parseDouble(kpiView.totalForecast),
+      totalPercentForecastFact: parseDouble(kpiView.totalPercentForecastFact),
+      okb: parseInt(kpiView.okb),
       akbPlan: parseInt(kpiView.akbPlan),
       akbFact: parseInt(kpiView.akbFact),
     );

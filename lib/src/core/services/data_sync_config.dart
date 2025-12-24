@@ -376,9 +376,9 @@ class DataSyncConfig {
       syncFunction: () => ds.syncOrders(userCode: userCode, forceRefresh: true),
     );
 
-    _tables['create_orders'] = DataSyncTable(
-      id: 'create_orders',
-      tableName: 'create_orders',
+    _tables['create_order'] = DataSyncTable(
+      id: 'create_order',
+      tableName: 'create_order',
       nameEn: 'Local Orders',
       nameRu: 'Локальные заказы',
       nameUz: 'Lokal buyurtmalar',
@@ -610,7 +610,7 @@ class DataSyncConfig {
       icon: Icons.receipt_long,
       tableIds: [
         'order_statuses', 'orders', 'order_details', 'order_detail_products', 
-        'order_payments', 'couriers', 'courier_cars', 'order_couriers', 'create_orders'
+        'order_payments', 'couriers', 'courier_cars', 'order_couriers', 'create_order'
       ],
       color: Colors.indigo,
     );

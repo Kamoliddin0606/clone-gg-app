@@ -101,6 +101,9 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   /// Uploading state for local pending images
   bool _isUploading = false;
 
+  /// State for server image deletion in progress
+  bool _isDeletingServerImage = false;
+
   // Camera related
   List<CameraDescription>? _cameras;
   CameraController? _cameraController;
@@ -393,6 +396,101 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         setState(() => _isSettingMain = false);
       }
     }
+  }
+
+  /// Delete a server image from both server and local database
+  ///
+  /// Shows confirmation dialog, then deletes image via ClientImagesService.
+  /// On success, reloads the image list and shows success message.
+  Future<void> _deleteServerImage(ClientImage image) async {
+    if (_isDeletingServerImage) return;
+
+    try {
+      setState(() => _isDeletingServerImage = true);
+
+      // Delete from server and local DB
+      await _clientImagesService.deleteClientImageFromServer(image);
+
+      if (!mounted) return;
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Rasm muvaffaqiyatli o\'chirildi'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Reload images from database
+      await _loadServerImagesFromDatabase();
+
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Rasmni o\'chirishda xatolik: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isDeletingServerImage = false);
+      }
+    }
+  }
+
+  /// Show confirmation dialog for deleting a server image
+  void _showServerImageDeleteConfirmation(ClientImage image) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rasmni o\'chirish'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning_amber, color: Colors.orange, size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Bu amal qaytarib bo\'lmaydi. Rasm serverdan ham o\'chiriladi.',
+                      style: TextStyle(fontSize: 12, color: Colors.orange),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Bekor qilish'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteServerImage(image);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('O\'chirish'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Load existing client photos from local storage
@@ -851,12 +949,27 @@ class _ClientImagesPageState extends State<ClientImagesPage>
               top: 8,
               right: 8,
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: _isDeletingServerImage 
+                        ? null 
+                        : () => _showServerImageDeleteConfirmation(image),
+                    tooltip: 'Rasmni o\'chirish',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
                   if (!image.isMain) ...[
+                    const SizedBox(width: 4),
                     IconButton(
-                      icon: const Icon(Icons.radio_button_unchecked),
+                      icon: const Icon(Icons.star_border, color: Colors.amber),
                       onPressed: () => _requestSetAsMain(image),
                       tooltip: 'Asosiy rasmga o\'zgartirish',
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.8),
+                      ),
                     ),
                   ],
                 ],
@@ -902,13 +1015,26 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         subtitle: Text(
           image.createdAtServer ?? 'Server vaqti noma\'lum',
         ),
-        trailing: image.isMain
-            ? const Icon(Icons.star, color: Colors.green)
-            : IconButton(
-                icon: const Icon(Icons.radio_button_unchecked),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+              onPressed: _isDeletingServerImage
+                  ? null
+                  : () => _showServerImageDeleteConfirmation(image),
+              tooltip: 'Rasmni o\'chirish',
+            ),
+            if (image.isMain)
+              const Icon(Icons.star, color: Colors.green)
+            else
+              IconButton(
+                icon: const Icon(Icons.star_border, color: Colors.amber, size: 20),
                 onPressed: () => _requestSetAsMain(image),
                 tooltip: 'Asosiy rasmga o\'zgartirish',
               ),
+          ],
+        ),
         onTap: () => _openServerImageViewer(image),
       ),
     );
@@ -928,6 +1054,28 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                 File(photo['thumbnailPath'] ?? photo['imagePath']),
                 fit: BoxFit.cover,
                 width: double.infinity,
+              ),
+            ),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      'Yuborilmagan',
+                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
             ),
             Positioned(
@@ -954,21 +1102,59 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       child: ListTile(
         leading: GestureDetector(
           onTap: () => _openFullScreenViewer(index),
-          child: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              image: DecorationImage(
-                image: FileImage(File(photo['thumbnailPath'] ?? photo['imagePath'])),
-                fit: BoxFit.cover,
+          child: Stack(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  image: DecorationImage(
+                    image: FileImage(File(photo['thumbnailPath'] ?? photo['imagePath'])),
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
-            ),
+              // Small "pending" indicator on thumbnail
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(6),
+                      bottomRight: Radius.circular(8),
+                    ),
+                  ),
+                  child: const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 12),
+                ),
+              ),
+            ],
           ),
         ),
-        title: Text(
-          'Rasm ${index + 1}',
-          style: theme.textTheme.titleMedium,
+        title: Row(
+          children: [
+            Text(
+              'Rasm ${index + 1}',
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(width: 8),
+            // "Yuborilmagan" badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.orange, width: 1),
+              ),
+              child: const Text(
+                'Yuborilmagan',
+                style: TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
         ),
         subtitle: Text(
           photo['timestamp'] != null

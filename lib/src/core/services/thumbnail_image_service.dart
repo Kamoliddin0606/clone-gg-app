@@ -465,7 +465,86 @@ class ClientImagesService {
     return ClientImage.fromMap(result.first);
   }
 
-  /// Delete client images
+  /// Delete a single client image from both server and local database
+  ///
+  /// This method:
+  /// 1. Validates the image has a valid server ID
+  /// 2. Obtains a valid authentication token
+  /// 3. Deletes the image from the server via REST API
+  /// 4. Deletes the image from local database
+  /// 5. Clears locally cached image files
+  ///
+  /// @param image The ClientImage object to delete
+  /// @return Future<bool> True if deletion was successful
+  /// @throws Exception on authentication or server errors
+  Future<bool> deleteClientImageFromServer(ClientImage image) async {
+    try {
+      // Validate server ID
+      if (image.serverId == null) {
+        throw Exception('Rasmning server ID si mavjud emas');
+      }
+
+      if (kDebugMode) {
+        print('ClientImagesService: Deleting image with server ID: ${image.serverId}');
+        print('ClientImagesService: Client code: ${image.clientCode}');
+      }
+
+      // Get valid token using full authentication flow
+      final token = await _tokenService.ensureValidToken();
+      if (token == null || token.trim().isEmpty) {
+        throw Exception('Autentifikatsiya muddati tugadi. Iltimos, qayta kiring.');
+      }
+
+      // Delete from server
+      final success = await _apiService.deleteClientImage(
+        authToken: token,
+        imageId: image.serverId!,
+      );
+
+      if (!success) {
+        throw Exception('Serverdan rasmni o\'chirishda xatolik');
+      }
+
+      // Delete from local database
+      final db = await _databaseService.database;
+      await db.delete(
+        'client_images',
+        where: 'server_id = ?',
+        whereArgs: [image.serverId],
+      );
+
+      // Clear locally cached image file if exists
+      if (image.image != null && image.image!.isNotEmpty) {
+        try {
+          final localFile = File(image.image!);
+          if (await localFile.exists()) {
+            await localFile.delete();
+            if (kDebugMode) {
+              print('ClientImagesService: Deleted local file: ${image.image}');
+            }
+          }
+        } catch (e) {
+          // Ignore file deletion errors - not critical
+          if (kDebugMode) {
+            print('ClientImagesService: Could not delete local file: $e');
+          }
+        }
+      }
+
+      if (kDebugMode) {
+        print('ClientImagesService: Successfully deleted image ID: ${image.serverId}');
+      }
+
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ClientImagesService: Error deleting image: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Delete all client images for a client
   Future<void> deleteClientImages(String? clientCode) async {
     if (clientCode == null || clientCode.trim().isEmpty) {
       return;

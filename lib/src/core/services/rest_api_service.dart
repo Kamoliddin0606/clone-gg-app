@@ -126,6 +126,77 @@ class RestApiService {
     }
   }
 
+  /// Delete a client image from the server
+  ///
+  /// Endpoint: DELETE http://178.218.200.120:1596/api/v1/client-image/{id}/
+  /// Returns 204 No Content on success
+  ///
+  /// @param authToken The authentication token for API access
+  /// @param imageId The server ID of the image to delete
+  /// @return Future<bool> True if deletion was successful, false otherwise
+  Future<bool> deleteClientImage({
+    required String authToken,
+    required int imageId,
+  }) async {
+    const String baseUrl = 'http://178.218.200.120:1596';
+    final endpoint = '$baseUrl/api/v1/client-image/$imageId/';
+
+    try {
+      if (authToken.isEmpty) {
+        throw ArgumentError('Authentication token cannot be empty');
+      }
+
+      if (kDebugMode) {
+        print('RestApiService: Deleting client image with ID: $imageId');
+        print('RestApiService: Endpoint: $endpoint');
+      }
+
+      final response = await _dio.delete(
+        endpoint,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $authToken',
+          },
+        ),
+      );
+
+      // 204 No Content means successful deletion
+      if (response.statusCode == 204 || response.statusCode == 200) {
+        if (kDebugMode) {
+          print('RestApiService: Successfully deleted client image ID: $imageId');
+        }
+        return true;
+      }
+
+      if (kDebugMode) {
+        print('RestApiService: Unexpected status code: ${response.statusCode}');
+      }
+      return false;
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: DioException while deleting client image: ${e.message}');
+        print('RestApiService: Response status: ${e.response?.statusCode}');
+        print('RestApiService: Response data: ${e.response?.data}');
+      }
+
+      // Handle specific error cases
+      if (e.response?.statusCode == 404) {
+        throw Exception('Rasm serverda topilmadi (ID: $imageId)');
+      } else if (e.response?.statusCode == 401) {
+        throw Exception('Autentifikatsiya muddati tugadi. Iltimos, qayta kiring.');
+      } else if (e.response?.statusCode == 403) {
+        throw Exception('Bu rasmni o\'chirishga ruxsatingiz yo\'q.');
+      }
+
+      throw Exception('Rasmni o\'chirishda xatolik: ${e.message}');
+    } catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: Unexpected error while deleting client image: $e');
+      }
+      throw Exception('Rasmni o\'chirishda kutilmagan xatolik: $e');
+    }
+  }
+
   /// Configure Dio instance with interceptors and settings
   void _configureDio() {
     _dio.options.connectTimeout = const Duration(seconds: 30);

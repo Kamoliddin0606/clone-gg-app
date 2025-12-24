@@ -10,10 +10,12 @@ class ContractTemplates {
     required bool isCreditContract,
     required String creditPercent,
     TradingPoint? clientData,
+    String? organizationName,
   }) {
     final clientName = clientData?.name ?? contract.clientName ?? contract.codeClient;
     final ownerName = clientData?.ownerName ?? "_________________";
     final docBasis = clientData?.tradePointType == "ИП" ? "YaTT ro'yxatdan o'tkazish guvohnomasi" : "Ustav";
+    final orgName = organizationName ?? '"GLORIYA MARKETING" MChJ';
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,7 +39,7 @@ class ContractTemplates {
           ],
         ),
         const SizedBox(height: 20),
-        _p(theme, '     "GLORIYA MARKETING" MChJ keyingi o\'rinlarda «Yetkazib beruvchi» deb ataluvchi, Ustav asosida faoliyat yurituvchi direktor Ortikov A.Sh. nomidan bir tomondan, va $clientName keyingi o\'rinlarda «Xaridor» deb ataluvchi, $docBasis asosida faoliyat yurituvchi $ownerName nomidan ikkinchi tomondan, birgalikda keyingi o\'rinlarda «Tomonlar», alohida «Tomon» deb atalib, quyidagilar to\'g\'risida mazkur Shartnomani tuzdilar:'),
+        _p(theme, '     $orgName keyingi o\'rinlarda «Yetkazib beruvchi» deb ataluvchi, Ustav asosida faoliyat yurituvchi direktor Ortikov A.Sh. nomidan bir tomondan, va $clientName keyingi o\'rinlarda «Xaridor» deb ataluvchi, $docBasis asosida faoliyat yurituvchi $ownerName nomidan ikkinchi tomondan, birgalikda keyingi o\'rinlarda «Tomonlar», alohida «Tomon» deb atalib, quyidagilar to\'g\'risida mazkur Shartnomani tuzdilar:'),
         const SizedBox(height: 16),
         
         // 1-BO'LIM
@@ -130,7 +132,7 @@ class ContractTemplates {
                 children: [
                   Text('Yetkazib beruvchi:', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 4),
-                  Text('"GLORIYA MARKETING" MChJ', style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87)),
+                  Text(orgName, style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87)),
                   Text('Manzil: Toshkent sh.', style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87)),
                   Text('Telefon: +998712370303', style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87)),
                   Text('H/r: 20208000600823324001', style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87)),
@@ -203,10 +205,14 @@ class ContractTemplates {
     required bool isCreditContract,
     required String creditPercent,
     TradingPoint? clientData,
+    String? organizationName,
   }) {
     final clientName = clientData?.name ?? contract.clientName ?? contract.codeClient;
     final ownerName = clientData?.ownerName ?? "_________________";
     final docBasis = clientData?.tradePointType == "ИП" ? "Свидетельства о регистрации ИП" : "Устава";
+    final orgName = organizationName ?? '"GLORIYA MARKETING" MChJ';
+    // Convert org name to Russian format
+    final orgNameRu = orgName.contains('MChJ') ? 'ООО "${orgName.replaceAll('"', '').replaceAll(' MChJ', '').replaceAll('MChJ', '')}"' : orgName;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,7 +236,7 @@ class ContractTemplates {
           ],
         ),
         const SizedBox(height: 20),
-        _p(theme, '     ООО "GLORIYA MARKETING" именуемое в дальнейшем «Поставщик» в лице директора Ортиков А.Ш., действующего на основании Устава, с одной стороны, и $clientName именуемое в дальнейшем «Покупатель» в лице $ownerName, действующего на основании $docBasis, с другой стороны, вместе именуемые в дальнейшем «Стороны», а по отдельности «Сторона», заключили настоящий Договор о нижеследующем:'),
+        _p(theme, '     $orgNameRu именуемое в дальнейшем «Поставщик» в лице директора Ортиков А.Ш., действующего на основании Устава, с одной стороны, и $clientName именуемое в дальнейшем «Покупатель» в лице $ownerName, действующего на основании $docBasis, с другой стороны, вместе именуемые в дальнейшем «Стороны», а по отдельности «Сторона», заключили настоящий Договор о нижеследующем:'),
         const SizedBox(height: 16),
         
         // РАЗДЕЛ 1
@@ -323,7 +329,7 @@ class ContractTemplates {
                 children: [
                   Text('Поставщик:', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 4),
-                  Text('ООО "GLORIYA MARKETING"', style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87)),
+                  Text(orgNameRu, style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87)),
                   Text('Адрес: г. Ташкент', style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87)),
                   Text('Телефон: +998712370303', style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87)),
                   Text('Р/сч: 20208000600823324001', style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87)),

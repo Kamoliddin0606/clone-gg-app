@@ -323,7 +323,7 @@ class ClientImagesService {
         },
       ),
       queryParameters: {
-        'client': clientCode,
+        'client_code_1c': clientCode,
       },
     );
 

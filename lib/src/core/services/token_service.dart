@@ -15,6 +15,16 @@ class TokenService {
   static const String _tokenExpiryKey = 'rest_api_token_expiry';
   static const String _tokenTypeKey = 'rest_api_token_type';
 
+  // =========================================================================
+  // 1C LOGIN AUTHENTICATION CONSTANTS
+  // =========================================================================
+  
+  /// Yangi 1C-login avtorizatsiya endpointi.
+  /// Bu endpoint foydalanuvchi login, password va project_name (baseURL) ma'lumotlarini
+  /// qabul qilib, access va refresh tokenlarni qaytaradi.
+  static const String _1cLoginBaseUrl = 'http://178.218.200.120:1596';
+  static const String _1cLoginEndpoint = '/api/v1/auth/1c-login/';
+
   TokenService(this._dio, this._prefsService) {
     _configureDio();
   }
@@ -77,6 +87,7 @@ class TokenService {
   /// @param username The username for authentication
   /// @param password The password for authentication
   /// @return Future<Map<String, dynamic>?> Token information or null if failed
+  @Deprecated('Use getTokensFrom1CLogin instead for new 1C authentication flow')
   Future<Map<String, dynamic>?> getTokens({
     required String baseUrl,
     required String username,
@@ -162,6 +173,261 @@ class TokenService {
         print('TokenService: Unexpected error while getting tokens: $e');
       }
       throw Exception('Token olishda kutilmagan xatolik: $e');
+    }
+  }
+
+  // ===========================================================================
+  // YANGI 1C-LOGIN AVTORIZATSIYA METODI
+  // ===========================================================================
+
+  /// Yangi 1C-login avtorizatsiya endpointi orqali tokenlarni olish.
+  /// 
+  /// Bu metod yangi avtorizatsiya tizimi uchun ishlatiladi.
+  /// Endpoint: http://178.218.200.120:1596/api/v1/auth/1c-login/
+  /// 
+  /// Ma'lumotlar:
+  /// - [login] - Foydalanuvchi logini (SharedPreferences: saved_username)
+  /// - [password] - Foydalanuvchi paroli (SharedPreferences: saved_password)
+  /// - [projectName] - Foydalanuvchi baseURL/project nomi (SharedPreferences: selected_server_base_url)
+  /// 
+  /// Qaytaradi:
+  /// - Map<String, dynamic>? - Token ma'lumotlari yoki null agar muvaffaqiyatsiz bo'lsa
+  /// 
+  /// Xatolar:
+  /// - ArgumentError - Majburiy parametrlar bo'sh bo'lsa
+  /// - DioException - Tarmoq xatoliklari
+  /// - Exception - Boshqa kutilmagan xatolar
+  Future<Map<String, dynamic>?> getTokensFrom1CLogin({
+    required String login,
+    required String password,
+    required String projectName,
+  }) async {
+    // So'rov URL'ini yaratish
+    final requestUrl = '$_1cLoginBaseUrl$_1cLoginEndpoint';
+    
+    try {
+      if (kDebugMode) {
+        print('═══════════════════════════════════════════════════════════════');
+        print('TokenService: 1C-LOGIN AVTORIZATSIYA BOSHLANDI');
+        print('TokenService: Endpoint: $requestUrl');
+        print('TokenService: Login: $login');
+        print('TokenService: Project Name: $projectName');
+        print('═══════════════════════════════════════════════════════════════');
+      }
+
+      // =========================================================================
+      // PARAMETRLARNI VALIDATSIYA QILISH
+      // =========================================================================
+      if (login.isEmpty) {
+        throw ArgumentError('Login (foydalanuvchi nomi) bo\'sh bo\'lishi mumkin emas');
+      }
+      if (password.isEmpty) {
+        throw ArgumentError('Password (parol) bo\'sh bo\'lishi mumkin emas');
+      }
+      if (projectName.isEmpty) {
+        throw ArgumentError('Project name (baseURL) bo\'sh bo\'lishi mumkin emas');
+      }
+
+      // =========================================================================
+      // API SO'ROVINI YUBORISH
+      // =========================================================================
+      final response = await _dio.post(
+        requestUrl,
+        data: {
+          'login': login,           // Foydalanuvchi logini
+          'password': password,     // Foydalanuvchi paroli
+          'project_name': projectName,  // BaseURL / project nomi
+        },
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          // Ulanish va javob olish uchun timeout
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      // =========================================================================
+      // JAVOBNI QAYTA ISHLASH
+      // =========================================================================
+      if (response.statusCode == 200 && response.data != null) {
+        final tokenData = response.data as Map<String, dynamic>;
+
+        if (kDebugMode) {
+          print('TokenService: 1C-Login javob olindi');
+          print('TokenService: Response keys: ${tokenData.keys.toList()}');
+        }
+
+        // Token ma'lumotlarini ajratib olish
+        // API javobi strukturasi:
+        // {
+        //   "user": { "username": "...", "full_name": "...", "code_1c": "..." },
+        //   "tokens": { "access": "...", "refresh": "..." },
+        //   "message": "..."
+        // }
+        
+        String? accessToken;
+        String? refreshToken;
+        String tokenType = 'Bearer';
+        
+        // 1. Avval nested 'tokens' obyektini tekshirish (1C-Login API formati)
+        if (tokenData.containsKey('tokens') && tokenData['tokens'] is Map) {
+          final tokensObj = tokenData['tokens'] as Map<String, dynamic>;
+          accessToken = (tokensObj['access'] ?? tokensObj['access_token']) as String?;
+          refreshToken = (tokensObj['refresh'] ?? tokensObj['refresh_token']) as String?;
+          tokenType = (tokensObj['token_type'] ?? 'Bearer') as String;
+          
+          if (kDebugMode) {
+            print('TokenService: Tokens obyekti ichidan olindi');
+            print('TokenService: Access token: ${accessToken != null ? "mavjud" : "mavjud emas"}');
+            print('TokenService: Refresh token: ${refreshToken != null ? "mavjud" : "mavjud emas"}');
+          }
+        } 
+        // 2. Agar 'tokens' obyekti yo'q bo'lsa, root levelda qidirish
+        else {
+          accessToken = (tokenData['access'] ?? tokenData['access_token']) as String?;
+          refreshToken = (tokenData['refresh'] ?? tokenData['refresh_token']) as String?;
+          tokenType = (tokenData['token_type'] ?? 'Bearer') as String;
+          
+          if (kDebugMode) {
+            print('TokenService: Tokenlar root levelda qidirildi');
+          }
+        }
+        
+        // User ma'lumotlarini ham saqlash (agar kerak bo'lsa)
+        if (tokenData.containsKey('user') && tokenData['user'] is Map) {
+          final userObj = tokenData['user'] as Map<String, dynamic>;
+          if (kDebugMode) {
+            print('TokenService: User ma\'lumotlari: ${userObj['username']} - ${userObj['full_name']}');
+          }
+        }
+
+        // Token muddati (agar serverdan kelsa)
+        DateTime expiryTime;
+        if (tokenData.containsKey('expires_in')) {
+          // expires_in sekundlarda bo'lsa
+          final expiresIn = tokenData['expires_in'] as int;
+          expiryTime = DateTime.now().add(Duration(seconds: expiresIn));
+        } else if (tokenData.containsKey('expires_at')) {
+          // expires_at ISO 8601 formatida bo'lsa
+          expiryTime = DateTime.parse(tokenData['expires_at'] as String);
+        } else {
+          // Default: 1 soat
+          expiryTime = DateTime.now().add(const Duration(hours: 1));
+        }
+
+        // Access token mavjudligini tekshirish
+        if (accessToken != null && accessToken.isNotEmpty) {
+          // Tokenlarni saqlash
+          await _storeTokens(
+            accessToken,
+            refreshToken ?? '', // Refresh token bo'lmasligi mumkin
+            tokenType,
+            expiryTime,
+          );
+
+          if (kDebugMode) {
+            print('═══════════════════════════════════════════════════════════════');
+            print('TokenService: 1C-LOGIN MUVAFFAQIYATLI');
+            print('TokenService: Access Token: ${accessToken.substring(0, accessToken.length > 20 ? 20 : accessToken.length)}...');
+            print('TokenService: Refresh Token: ${refreshToken != null && refreshToken.isNotEmpty ? "mavjud" : "mavjud emas"}');
+            print('TokenService: Token muddati: $expiryTime');
+            print('═══════════════════════════════════════════════════════════════');
+          }
+
+          return {
+            'access': accessToken,
+            'refresh': refreshToken ?? '',
+            'token_type': tokenType,
+            'expires_at': expiryTime.toIso8601String(),
+            'login_method': '1c-login', // Qaysi metod orqali olinganini belgilash
+          };
+        } else {
+          if (kDebugMode) {
+            print('TokenService: 1C-Login javobida access token topilmadi');
+            print('TokenService: Response data: $tokenData');
+          }
+          return null;
+        }
+      } else {
+        if (kDebugMode) {
+          print('TokenService: 1C-Login so\'rovi muvaffaqiyatsiz');
+          print('TokenService: Status code: ${response.statusCode}');
+          print('TokenService: Response data: ${response.data}');
+        }
+        return null;
+      }
+
+    } on DioException catch (e) {
+      // =========================================================================
+      // DIO XATOLARINI QAYTA ISHLASH
+      // =========================================================================
+      if (kDebugMode) {
+        print('═══════════════════════════════════════════════════════════════');
+        print('TokenService: 1C-LOGIN DIO XATOSI');
+        print('TokenService: Xato turi: ${e.type}');
+        print('TokenService: Xabar: ${e.message}');
+        print('TokenService: Status code: ${e.response?.statusCode}');
+        print('TokenService: Response data: ${e.response?.data}');
+        print('═══════════════════════════════════════════════════════════════');
+      }
+
+      // Foydalanuvchiga tushunarli xato xabarini qaytarish
+      String errorMessage;
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+          errorMessage = 'Serverga ulanish vaqti tugadi. Internet aloqasini tekshiring.';
+          break;
+        case DioExceptionType.sendTimeout:
+          errorMessage = 'So\'rov yuborish vaqti tugadi. Qaytadan urinib ko\'ring.';
+          break;
+        case DioExceptionType.receiveTimeout:
+          errorMessage = 'Javob kutish vaqti tugadi. Qaytadan urinib ko\'ring.';
+          break;
+        case DioExceptionType.badResponse:
+          final statusCode = e.response?.statusCode;
+          if (statusCode == 400) {
+            errorMessage = 'Noto\'g\'ri so\'rov. Login yoki parol xato.';
+          } else if (statusCode == 401) {
+            errorMessage = 'Avtorizatsiya muvaffaqiyatsiz. Login yoki parol xato.';
+          } else if (statusCode == 403) {
+            errorMessage = 'Kirish taqiqlangan. Ruxsatingiz yo\'q.';
+          } else if (statusCode == 404) {
+            errorMessage = 'Avtorizatsiya endpointi topilmadi.';
+          } else if (statusCode == 500) {
+            errorMessage = 'Server xatosi. Keyinroq urinib ko\'ring.';
+          } else {
+            errorMessage = 'Server xatosi ($statusCode).';
+          }
+          break;
+        case DioExceptionType.cancel:
+          errorMessage = 'So\'rov bekor qilindi.';
+          break;
+        case DioExceptionType.unknown:
+          if (e.error.toString().contains('SocketException')) {
+            errorMessage = 'Tarmoq xatosi. Internet aloqasini tekshiring.';
+          } else {
+            errorMessage = 'Noma\'lum xato yuz berdi.';
+          }
+          break;
+        default:
+          errorMessage = 'Kutilmagan xato yuz berdi.';
+      }
+
+      throw Exception('1C-Login avtorizatsiya xatosi: $errorMessage');
+    } catch (e) {
+      // =========================================================================
+      // BOSHQA XATOLARNI QAYTA ISHLASH
+      // =========================================================================
+      if (kDebugMode) {
+        print('═══════════════════════════════════════════════════════════════');
+        print('TokenService: 1C-LOGIN KUTILMAGAN XATO');
+        print('TokenService: Xato: $e');
+        print('═══════════════════════════════════════════════════════════════');
+      }
+      throw Exception('1C-Login avtorizatsiyada kutilmagan xatolik: $e');
     }
   }
 
@@ -388,12 +654,14 @@ class TokenService {
   /// @param username The username for authentication
   /// @param password The password for authentication
   /// @return Future<bool> True if authentication successful, false otherwise
+  @Deprecated('Use authenticateWith1CLogin instead for new 1C authentication flow')
   Future<bool> authenticate({
     required String username,
     required String password,
   }) async {
     try {
       final baseUrl = await _getBaseUrl();
+      // ignore: deprecated_member_use_from_same_package
       final tokens = await getTokens(
         baseUrl: baseUrl,
         username: username,
@@ -404,6 +672,82 @@ class TokenService {
     } catch (e) {
       if (kDebugMode) {
         print('TokenService: Authentication failed: $e');
+      }
+      return false;
+    }
+  }
+
+  // ===========================================================================
+  // YANGI 1C-LOGIN AVTORIZATSIYA METODI (QULAYLIK UCHUN)
+  // ===========================================================================
+
+  /// Yangi 1C-login avtorizatsiya endpointi orqali foydalanuvchini autentifikatsiya qilish.
+  /// 
+  /// Bu metod SharedPreferences'dan credentials'ni o'qib, yangi 1C-login endpointiga yuboradi.
+  /// Agar parametrlar berilmasa, SharedPreferences'dan o'qiladi.
+  /// 
+  /// Ma'lumotlar:
+  /// - [login] - Foydalanuvchi logini (opsional, SharedPreferences: saved_username)
+  /// - [password] - Foydalanuvchi paroli (opsional, SharedPreferences: saved_password)
+  /// - [projectName] - BaseURL/project nomi (opsional, SharedPreferences: selected_server_base_url)
+  /// 
+  /// Qaytaradi:
+  /// - Future<bool> - True agar autentifikatsiya muvaffaqiyatli bo'lsa
+  Future<bool> authenticateWith1CLogin({
+    String? login,
+    String? password,
+    String? projectName,
+  }) async {
+    try {
+      // SharedPreferences'dan credentials'ni olish (agar parametrlar berilmagan bo'lsa)
+      final authLogin = login ?? _prefsService.getSavedUsername();
+      final authPassword = password ?? _prefsService.getPassword();
+      final authProjectName = projectName ?? _prefsService.getBaseUrl();
+
+      if (kDebugMode) {
+        print('TokenService: authenticateWith1CLogin boshlandi');
+        print('TokenService: Login: ${authLogin != null ? "***" : "null"}');
+        print('TokenService: Password: ${authPassword != null ? "***" : "null"}');
+        print('TokenService: Project Name: $authProjectName');
+      }
+
+      // Majburiy parametrlarni tekshirish
+      if (authLogin == null || authLogin.isEmpty) {
+        if (kDebugMode) {
+          print('TokenService: Login (username) mavjud emas');
+        }
+        return false;
+      }
+      if (authPassword == null || authPassword.isEmpty) {
+        if (kDebugMode) {
+          print('TokenService: Password mavjud emas');
+        }
+        return false;
+      }
+      if (authProjectName == null || authProjectName.isEmpty) {
+        if (kDebugMode) {
+          print('TokenService: Project name (baseURL) mavjud emas');
+        }
+        return false;
+      }
+
+      // 1C-login endpointiga so'rov yuborish
+      final tokens = await getTokensFrom1CLogin(
+        login: authLogin,
+        password: authPassword,
+        projectName: authProjectName,
+      );
+
+      final success = tokens != null;
+      
+      if (kDebugMode) {
+        print('TokenService: authenticateWith1CLogin natijasi: ${success ? "MUVAFFAQIYATLI" : "MUVAFFAQIYATSIZ"}');
+      }
+
+      return success;
+    } catch (e) {
+      if (kDebugMode) {
+        print('TokenService: authenticateWith1CLogin xatosi: $e');
       }
       return false;
     }
@@ -421,7 +765,7 @@ class TokenService {
   /// This method implements the full token validation sequence:
   /// 1. Check if access token exists and is not expired -> return it
   /// 2. If expired, try to refresh using refresh token
-  /// 3. If refresh fails, re-authenticate using stored credentials
+  /// 3. If refresh fails, re-authenticate using stored credentials (1C-Login)
   /// 
   /// @param username Optional username for re-authentication (uses stored if not provided)
   /// @param password Optional password for re-authentication (uses stored if not provided)
@@ -432,81 +776,99 @@ class TokenService {
     String? password,
   }) async {
     try {
-      // Step 1: Check if we have a valid (non-expired) access token
+      // =========================================================================
+      // 1-BOSQICH: Mavjud tokenni tekshirish
+      // =========================================================================
       final accessToken = _prefsService.preferences.getString(_accessTokenKey);
       final expiryString = _prefsService.preferences.getString(_tokenExpiryKey);
 
       if (accessToken != null && accessToken.isNotEmpty && expiryString != null) {
         final expiryTime = DateTime.parse(expiryString);
-        // Add 1 minute buffer to avoid edge cases
+        // 1 daqiqa bufer qo'shish (edge case'larni oldini olish uchun)
         if (expiryTime.isAfter(DateTime.now().add(const Duration(minutes: 1)))) {
           if (kDebugMode) {
-            print('TokenService: Access token is valid, returning existing token');
+            print('TokenService: Mavjud token yaroqli, qaytarilmoqda');
           }
           return accessToken;
         }
       }
 
       if (kDebugMode) {
-        print('TokenService: Access token expired or not available, attempting refresh...');
+        print('TokenService: Token muddati tugagan yoki mavjud emas, yangilash urinilmoqda...');
       }
 
-      // Step 2: Try to refresh the token
+      // =========================================================================
+      // 2-BOSQICH: Tokenni yangilash (refresh)
+      // =========================================================================
       final refreshedToken = await _refreshAccessToken();
       if (refreshedToken != null && refreshedToken.isNotEmpty) {
         if (kDebugMode) {
-          print('TokenService: Token refreshed successfully');
+          print('TokenService: Token muvaffaqiyatli yangilandi');
         }
         return refreshedToken;
       }
 
       if (kDebugMode) {
-        print('TokenService: Refresh failed, attempting re-authentication...');
+        print('TokenService: Yangilash muvaffaqiyatsiz, qayta autentifikatsiya qilinmoqda (1C-Login)...');
       }
 
-      // Step 3: Refresh failed, try to re-authenticate
-      // Get credentials from parameters or stored preferences
-      final authUsername = username ?? _prefsService.getSavedUsername();
+      // =========================================================================
+      // 3-BOSQICH: 1C-Login orqali qayta autentifikatsiya
+      // =========================================================================
+      // Parametrlardan yoki SharedPreferences'dan credentials olish
+      final authLogin = username ?? _prefsService.getSavedUsername();
       final authPassword = password ?? _prefsService.getPassword();
+      final authProjectName = _prefsService.getBaseUrl();
 
       if (kDebugMode) {
-        print('TokenService: Retrieved credentials - username: ${authUsername != null ? '***' : 'null'}, password: ${authPassword != null ? '***' : 'null'}');
+        print('TokenService: Credentials olindi - login: ${authLogin != null ? "***" : "null"}, password: ${authPassword != null ? "***" : "null"}, projectName: $authProjectName');
       }
 
-      if (authUsername == null || authUsername.isEmpty ||
+      // Credentials tekshirish
+      if (authLogin == null || authLogin.isEmpty ||
           authPassword == null || authPassword.isEmpty) {
         if (kDebugMode) {
-          print('TokenService: No credentials available for re-authentication (username empty: ${authUsername?.isEmpty ?? true}, password empty: ${authPassword?.isEmpty ?? true})');
+          print('TokenService: Qayta autentifikatsiya uchun credentials mavjud emas');
         }
-        // Clear invalid tokens
+        // Yaroqsiz tokenlarni tozalash
         await clearTokens();
         return null;
       }
 
-      // Re-authenticate with stored credentials
-      final success = await authenticate(
-        username: authUsername,
+      // Project name (baseURL) tekshirish
+      if (authProjectName == null || authProjectName.isEmpty) {
+        if (kDebugMode) {
+          print('TokenService: Project name (baseURL) mavjud emas, 1C-Login amalga oshirilmaydi');
+        }
+        await clearTokens();
+        return null;
+      }
+
+      // 1C-Login orqali qayta autentifikatsiya
+      final success = await authenticateWith1CLogin(
+        login: authLogin,
         password: authPassword,
+        projectName: authProjectName,
       );
 
       if (success) {
         if (kDebugMode) {
-          print('TokenService: Re-authentication successful');
+          print('TokenService: 1C-Login orqali qayta autentifikatsiya muvaffaqiyatli');
         }
-        // Return the newly acquired token
+        // Yangi olingan tokenni qaytarish
         return _prefsService.preferences.getString(_accessTokenKey);
       }
 
       if (kDebugMode) {
-        print('TokenService: Re-authentication failed');
+        print('TokenService: 1C-Login orqali qayta autentifikatsiya muvaffaqiyatsiz');
       }
-      // Clear invalid tokens if re-auth failed
+      // Muvaffaqiyatsiz bo'lsa tokenlarni tozalash
       await clearTokens();
       return null;
 
     } catch (e) {
       if (kDebugMode) {
-        print('TokenService: Error in ensureValidToken: $e');
+        print('TokenService: ensureValidToken xatosi: $e');
       }
       return null;
     }

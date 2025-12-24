@@ -179,8 +179,8 @@ class _ContractDetailPageState extends State<ContractDetailPage> with TickerProv
             const SizedBox(height: 16),
             Container(width: double.infinity, padding: const EdgeInsets.all(20), decoration: BoxDecoration(border: Border.all(color: colorScheme.outlineVariant), borderRadius: BorderRadius.circular(12), color: Colors.white),
               child: _selectedLanguage == ContractLanguage.uzbek 
-                ? ContractTemplates.buildUzbekContract(theme: theme, contract: contract, isCreditContract: isCreditContract, creditPercent: creditPercent, clientData: _clientData)
-                : ContractTemplates.buildRussianContract(theme: theme, contract: contract, isCreditContract: isCreditContract, creditPercent: creditPercent, clientData: _clientData)),
+                ? ContractTemplates.buildUzbekContract(theme: theme, contract: contract, isCreditContract: isCreditContract, creditPercent: creditPercent, clientData: _clientData, organizationName: _organizationName)
+                : ContractTemplates.buildRussianContract(theme: theme, contract: contract, isCreditContract: isCreditContract, creditPercent: creditPercent, clientData: _clientData, organizationName: _organizationName)),
             const SizedBox(height: 24),
             Row(children: [
               Expanded(child: OutlinedButton.icon(

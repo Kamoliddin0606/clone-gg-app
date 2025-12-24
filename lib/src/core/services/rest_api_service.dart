@@ -42,7 +42,6 @@ class RestApiService {
       final query = <String, dynamic>{};
       if (clientCode != null && clientCode.trim().isNotEmpty) {
         query['client_code_1c'] = clientCode;
-        query['client'] = clientCode;
       }
 
       final response = await _dio.get(

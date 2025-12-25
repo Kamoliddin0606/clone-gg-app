@@ -557,6 +557,93 @@ class ClientImagesService {
     );
   }
 
+  /// Set a client image as the main image
+  ///
+  /// This method:
+  /// 1. Validates that the image has a valid server ID
+  /// 2. Gets a valid authentication token
+  /// 3. Calls the server API to set the image as main (PATCH /api/v1/client-image/{id}/)
+  /// 4. On success, updates the local database:
+  ///    - Removes is_main flag from all other images of the same client
+  ///    - Sets is_main flag on the selected image
+  ///
+  /// @param image The ClientImage to set as main
+  /// @return Future<bool> True if operation was successful on both server and local
+  /// @throws Exception if server operation fails or token is invalid
+  Future<bool> setClientImageAsMain(ClientImage image) async {
+    // Validate server ID
+    if (image.serverId == null || image.serverId! <= 0) {
+      if (kDebugMode) {
+        print('ClientImagesService: Cannot set as main - no valid server ID');
+      }
+      throw Exception('Rasm serverda mavjud emas. Avval serverga yuklang.');
+    }
+
+    // Already main - no action needed
+    if (image.isMain) {
+      if (kDebugMode) {
+        print('ClientImagesService: Image is already main, no action needed');
+      }
+      return true;
+    }
+
+    try {
+      if (kDebugMode) {
+        print('ClientImagesService: Setting image as main, serverId=${image.serverId}');
+      }
+
+      // Get valid token
+      final token = await _tokenService.getValidAccessToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('Avtorizatsiya tokeni topilmadi. Qayta tizimga kiring.');
+      }
+
+      // Call server API to set as main
+      final success = await _apiService.setClientImageAsMain(
+        authToken: token,
+        imageServerId: image.serverId!,
+      );
+
+      if (!success) {
+        throw Exception('Serverda rasmni asosiy qilib belgilashda xatolik');
+      }
+
+      // Server success - now update local database
+      final db = await _databaseService.database;
+
+      // Start a transaction to ensure atomicity
+      await db.transaction((txn) async {
+        // 1. Remove is_main flag from all images of this client
+        await txn.update(
+          'client_images',
+          {'is_main': 0},
+          where: 'client_code = ?',
+          whereArgs: [image.clientCode],
+        );
+
+        // 2. Set is_main flag on the selected image
+        await txn.update(
+          'client_images',
+          {'is_main': 1},
+          where: 'server_id = ?',
+          whereArgs: [image.serverId],
+        );
+      });
+
+      if (kDebugMode) {
+        print('ClientImagesService: Successfully set image as main (serverId=${image.serverId})');
+        print('ClientImagesService: Updated local database for client: ${image.clientCode}');
+      }
+
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ClientImagesService: Error setting image as main: $e');
+      }
+      rethrow;
+    }
+  }
+
   /// Get client images statistics
   Future<Map<String, int>> getClientImagesStats() async {
     final db = await _databaseService.database;

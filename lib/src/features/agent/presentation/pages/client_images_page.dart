@@ -358,10 +358,13 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     }
   }
 
-  /// Request to set a server image as main (future-ready)
+  /// Request to set a server image as main
   ///
-  /// Current backend contract is not implemented in this project.
-  /// We still keep the UI and a safe placeholder call to avoid breaking the app.
+  /// This method:
+  /// 1. Calls ClientImagesService to set the image as main on server (PATCH API)
+  /// 2. On success, updates local database (removes main from others, sets this as main)
+  /// 3. Reloads the images list from local database to reflect changes
+  /// 4. Shows success/error feedback to user
   Future<void> _requestSetAsMain(ClientImage image) async {
     if (_isSettingMain) return;
     if (image.isMain) return;
@@ -369,27 +372,30 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     try {
       setState(() => _isSettingMain = true);
 
-      final success = await _restApiService.setClientImageAsMain(
-        clientCode: _clientCode,
-        imageId: image.id,
-        imageUrl: image.imageUrl,
-      );
+      // Call service to set as main (handles both server and local update)
+      final success = await _clientImagesService.setClientImageAsMain(image);
 
       if (!mounted) return;
 
       if (success) {
-        await _syncServerImagesFromApiIfPossible(replaceExisting: true);
-      } else {
+        // Reload images from local database to reflect changes
+        await _loadServerImagesFromDatabase();
+        
+        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Asosiy rasmni o\'zgartirish server tomonda hali yoqilmagan'),
+            content: Text('Rasm asosiy qilib belgilandi'),
+            backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Asosiy rasmni o\'zgartirishda xatolik: $e')),
+        SnackBar(
+          content: Text('Asosiy rasmni o\'zgartirishda xatolik: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) {
@@ -580,6 +586,54 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     }
   }
 
+  /// Delete all local photos after successful upload to server
+  /// This cleans up the local storage to avoid duplicate data
+  Future<void> _deleteLocalPhotosAfterUpload() async {
+    for (final photo in _photos) {
+      try {
+        final imagePath = photo['imagePath'] as String?;
+        final thumbnailPath = photo['thumbnailPath'] as String?;
+        final visitId = photo['visitId'] as String?;
+
+        // Delete main image file
+        if (imagePath != null) {
+          final imageFile = File(imagePath);
+          if (await imageFile.exists()) {
+            await imageFile.delete();
+            if (kDebugMode) {
+              print('ClientImagesPage: Deleted local image: $imagePath');
+            }
+          }
+        }
+
+        // Delete thumbnail file
+        if (thumbnailPath != null && thumbnailPath != imagePath) {
+          final thumbFile = File(thumbnailPath);
+          if (await thumbFile.exists()) {
+            await thumbFile.delete();
+            if (kDebugMode) {
+              print('ClientImagesPage: Deleted local thumbnail: $thumbnailPath');
+            }
+          }
+        }
+
+        // Delete from photo storage service
+        if (visitId != null && imagePath != null) {
+          await _photoStorageService.deletePhoto(visitId, 999, imagePath);
+        }
+      } catch (e) {
+        // Log but don't fail - cleanup errors are not critical
+        if (kDebugMode) {
+          print('ClientImagesPage: Error deleting local photo: $e');
+        }
+      }
+    }
+
+    if (kDebugMode) {
+      print('ClientImagesPage: Local photos cleanup completed');
+    }
+  }
+
   /// Upload all local images to server
   Future<void> _uploadImagesToServer() async {
     if (_photos.isEmpty) {
@@ -621,6 +675,11 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       );
 
       if (!mounted) return;
+
+      // Successfully uploaded - delete local files from storage
+      if (uploadedUrls.isNotEmpty) {
+        await _deleteLocalPhotosAfterUpload();
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

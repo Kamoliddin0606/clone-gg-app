@@ -87,42 +87,93 @@ class RestApiService {
   /// This is a future extension point.
   /// The UI can call this method when a user selects a non-main image
   /// to become the new main image.
+  /// Set a client image as main image
   ///
-  /// IMPORTANT:
-  /// - At the moment, the backend endpoint/contract is not wired in this project.
-  /// - This method is intentionally implemented as a safe placeholder to avoid
-  ///   breaking the running application.
+  /// Endpoint: PATCH http://178.218.200.120:1596/api/v1/client-image/{id}/
+  /// Request body: {"is_main": true}
+  /// Returns 200 OK on success
   ///
-  /// When the server endpoint becomes available, implement the request here and
-  /// return `true` when the server confirms the update.
+  /// @param authToken The authentication token for API access
+  /// @param imageServerId The server ID of the image to set as main
+  /// @return Future<bool> True if operation was successful, false otherwise
   Future<bool> setClientImageAsMain({
-    required String clientCode,
-    int? imageId,
-    String? imageUrl,
+    required String authToken,
+    required int imageServerId,
   }) async {
+    const String mediaBaseUrl = 'http://178.218.200.120:1596';
+    final String endpoint = '$mediaBaseUrl/api/v1/client-image/$imageServerId/';
+
     try {
       if (kDebugMode) {
-        print(
-          'RestApiService: setClientImageAsMain placeholder called. '
-          'clientCode=$clientCode, imageId=$imageId, imageUrl=$imageUrl',
-        );
+        print('RestApiService: setClientImageAsMain called for imageServerId=$imageServerId');
+        print('RestApiService: PATCH $endpoint');
       }
 
-      // TODO: Implement server request when endpoint is agreed.
-      // Example (not implemented):
-      // const String mediaBaseUrl = 'http://178.218.200.120:1596';
-      // final response = await _dio.post(
-      //   '$mediaBaseUrl/api/v1/client-image/set-main/',
-      //   data: {'client_code': clientCode, 'image_id': imageId, 'image_url': imageUrl},
-      // );
-      // return response.statusCode == 200;
+      final response = await _dio.patch(
+        endpoint,
+        data: {'is_main': true},
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $authToken',
+            'Content-Type': 'application/json',
+          },
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
 
+      if (kDebugMode) {
+        print('RestApiService: setClientImageAsMain response status: ${response.statusCode}');
+        print('RestApiService: setClientImageAsMain response data: ${response.data}');
+      }
+
+      // Success: 200 OK
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print('RestApiService: Image successfully set as main');
+        }
+        return true;
+      }
+
+      // Handle error responses
+      if (response.statusCode == 401) {
+        if (kDebugMode) {
+          print('RestApiService: setClientImageAsMain - Unauthorized (401)');
+        }
+        throw Exception('Avtorizatsiya xatosi. Qayta tizimga kiring.');
+      }
+
+      if (response.statusCode == 404) {
+        if (kDebugMode) {
+          print('RestApiService: setClientImageAsMain - Image not found (404)');
+        }
+        throw Exception('Rasm serverda topilmadi.');
+      }
+
+      if (kDebugMode) {
+        print('RestApiService: setClientImageAsMain failed with status ${response.statusCode}');
+      }
       return false;
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: setClientImageAsMain DioException: ${e.type}');
+        print('RestApiService: Error message: ${e.message}');
+      }
+      
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Server bilan aloqa vaqti tugadi.');
+      }
+      
+      if (e.type == DioExceptionType.connectionError) {
+        throw Exception('Internetga ulanishda xatolik.');
+      }
+      
+      rethrow;
     } catch (e) {
       if (kDebugMode) {
-        print('RestApiService: setClientImageAsMain placeholder error: $e');
+        print('RestApiService: setClientImageAsMain error: $e');
       }
-      return false;
+      rethrow;
     }
   }
 

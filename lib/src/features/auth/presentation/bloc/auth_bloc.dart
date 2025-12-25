@@ -6,6 +6,8 @@ import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/a
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -22,6 +24,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }) : _prefs = prefs,
         super(AuthInitial()) {
     on<LoginButtonPressed>(_onLoginButtonPressed);
+    on<LogoutButtonPressed>(_onLogoutButtonPressed);
   }
 
   Future<void> _onLoginButtonPressed(
@@ -37,6 +40,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // Validate user data with database after successful login
       await _validateAndSyncUserData(user);
+
+      // =========================================================================
+      // Background Location Tracking - login muvaffaqiyatli bo'lgandan keyin
+      // joylashuvni kuzatishni boshlash
+      // =========================================================================
+      await _startBackgroundLocationTracking();
 
       emit(AuthSuccess(user: user));
     } catch (e) {
@@ -111,15 +120,123 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           print('User data validation passed. No sync needed.');
         }
       }
-
-
-
     } catch (e) {
       // Log the error but don't fail the login process
       if (kDebugMode) {
         print('Error during user data validation and sync: $e');
       }
       // Continue with login success - validation is not critical for login
+    }
+  }
+
+  /// Background location tracking'ni boshlash
+  /// 
+  /// Bu metod login muvaffaqiyatli bo'lgandan keyin chaqiriladi.
+  /// Service'ni initialize qiladi va tracking'ni boshlaydi.
+  /// Xato bo'lsa ham login jarayoni davom etadi.
+  Future<void> _startBackgroundLocationTracking() async {
+    try {
+      if (kDebugMode) {
+        print('AuthBloc: Starting background location tracking...');
+      }
+
+      final backgroundLocationService = sl<BackgroundLocationTrackingService>();
+      
+      // Service'ni initialize qilish (agar qilinmagan bo'lsa)
+      await backgroundLocationService.initialize();
+      
+      // Tracking'ni boshlash
+      final started = await backgroundLocationService.startTracking();
+      
+      if (kDebugMode) {
+        if (started) {
+          print('AuthBloc: Background location tracking started successfully');
+          print('AuthBloc: Interval: ${backgroundLocationService.currentIntervalSeconds}s');
+        } else {
+          print('AuthBloc: Background location tracking could not be started');
+        }
+      }
+    } catch (e) {
+      // Log the error but don't fail the login process
+      if (kDebugMode) {
+        print('AuthBloc: Error starting background location tracking: $e');
+      }
+      // Continue with login success - tracking is not critical for login
+    }
+  }
+
+  /// Logout event handler
+  /// 
+  /// Bu metod foydalanuvchi tizimdan chiqqanda chaqiriladi.
+  /// Background location tracking to'xtatiladi va user ma'lumotlari tozalanadi.
+  Future<void> _onLogoutButtonPressed(
+    LogoutButtonPressed event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      if (kDebugMode) {
+        print('AuthBloc: Logout started...');
+      }
+
+      // =========================================================================
+      // 1. Background Location Tracking'ni to'xtatish
+      // =========================================================================
+      await _stopBackgroundLocationTracking();
+
+      // =========================================================================
+      // 2. User ma'lumotlarini tozalash
+      // =========================================================================
+      // Clear user code from preferences
+      await _prefs.clearUserData();
+
+      if (kDebugMode) {
+        print('AuthBloc: User data cleared');
+      }
+
+      // =========================================================================
+      // 3. Logout state'ini emit qilish
+      // =========================================================================
+      emit(const LogoutSuccess());
+
+      if (kDebugMode) {
+        print('AuthBloc: Logout completed successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AuthBloc: Logout error: $e');
+      }
+      // Xato bo'lsa ham logout qilish
+      emit(const LogoutSuccess());
+    }
+  }
+
+  /// Background location tracking'ni to'xtatish
+  /// 
+  /// Bu metod logout paytida chaqiriladi.
+  /// Tracking to'xtatiladi va resurslar tozalanadi.
+  Future<void> _stopBackgroundLocationTracking() async {
+    try {
+      if (kDebugMode) {
+        print('AuthBloc: Stopping background location tracking...');
+      }
+
+      final backgroundLocationService = sl<BackgroundLocationTrackingService>();
+      
+      // Tracking'ni to'xtatish
+      await backgroundLocationService.stopTracking();
+      
+      // Service'ni tozalash
+      await backgroundLocationService.dispose();
+      
+      if (kDebugMode) {
+        print('AuthBloc: Background location tracking stopped successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AuthBloc: Error stopping background location tracking: $e');
+      }
+      // Xato bo'lsa ham logout jarayoni davom etadi
     }
   }
 }

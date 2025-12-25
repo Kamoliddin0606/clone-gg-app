@@ -9,6 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
@@ -2109,6 +2110,8 @@ void callbackDispatcher() {
           return await _performBackgroundSync(inputData ?? {});
         case 'retryDataSync':
           return await _performRetrySync(inputData ?? {});
+        case 'backgroundLocationUpdate':
+          return await _performBackgroundLocationUpdate(inputData ?? {});
         default:
           return false;
       }
@@ -2159,6 +2162,48 @@ Future<bool> _performRetrySync(Map<String, dynamic> inputData) async {
   } catch (e) {
     if (kDebugMode) {
       print('Retry sync failed: $e');
+    }
+    return false;
+  }
+}
+
+/// Background location update task
+/// 
+/// Bu funksiya Workmanager tomonidan fonda chaqiriladi.
+/// Joylashuvni oladi va serverga yuboradi.
+Future<bool> _performBackgroundLocationUpdate(Map<String, dynamic> inputData) async {
+  try {
+    if (kDebugMode) {
+      print('Background location update starting...');
+    }
+
+    // Initialize services
+    await setupServiceLocator();
+    
+    // Get BackgroundLocationTrackingService
+    final backgroundLocationService = sl<BackgroundLocationTrackingService>();
+    
+    // Initialize and update location
+    await backgroundLocationService.initialize();
+    
+    // Trigger a single location update
+    // Note: The service will handle sending to server
+    if (backgroundLocationService.isTrackingActive) {
+      if (kDebugMode) {
+        print('Background location update: Tracking is active, service will handle updates');
+      }
+    } else {
+      // Start tracking if not active
+      await backgroundLocationService.startTracking();
+    }
+    
+    if (kDebugMode) {
+      print('Background location update completed successfully');
+    }
+    return true;
+  } catch (e) {
+    if (kDebugMode) {
+      print('Background location update failed: $e');
     }
     return false;
   }

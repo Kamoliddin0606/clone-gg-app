@@ -19,6 +19,7 @@ import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart'
 import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/sync_notification_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -146,6 +147,17 @@ Future<void> setupServiceLocator() async {
       await apiKeyService.initialize(sl<SharedPreferencesService>());
       return apiKeyService;
     });
+  }
+
+  // Background Location Tracking Service - fonda joylashuvni kuzatish uchun
+  // Bu service ilova aktiv bo'lmasa ham ishlaydi va serverga location yuboradi
+  // Alohida Dio instance ishlatadi - boshqa service interceptorlaridan ta'sirlanmaydi
+  if (!sl.isRegistered<BackgroundLocationTrackingService>()) {
+    sl.registerLazySingleton<BackgroundLocationTrackingService>(() => BackgroundLocationTrackingService(
+      prefs: sl<SharedPreferencesService>(),
+      tokenService: sl<TokenService>(),
+      dbService: sl<ApiDatabaseService>(),
+    ));
   }
 
   // Repositories

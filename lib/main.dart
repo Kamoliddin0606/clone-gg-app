@@ -15,6 +15,7 @@ import 'package:gloria_marketing_flutter/src/theme/theme_schemes.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart'; // if needed
+import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:async';
@@ -73,7 +74,37 @@ void main() async {
     debugPrint('Your API key: $apiKey');
   }
   await ymk_init.initMapkit(apiKey: apiKey);
-  // TODO: Initialize other services
+
+  // =========================================================================
+  // Background Location Tracking Service - fonda joylashuvni kuzatish
+  // =========================================================================
+  // Bu service ilova aktiv bo'lmasa ham ishlaydi va serverga location yuboradi.
+  // LocationUpdateInterval serverdan olingan vaqt oralig'ida ishlaydi.
+  try {
+    final backgroundLocationService = sl<BackgroundLocationTrackingService>();
+    await backgroundLocationService.initialize();
+    
+    // Agar user tizimga kirgan bo'lsa, tracking'ni boshlash
+    final prefs = sl<SharedPreferencesService>();
+    final userCode = prefs.getUserCode();
+    if (userCode != null && userCode.isNotEmpty) {
+      await backgroundLocationService.startTracking();
+      if (kDebugMode) {
+        debugPrint('BackgroundLocationTracking: Started for user $userCode');
+        debugPrint('BackgroundLocationTracking: Interval: ${backgroundLocationService.currentIntervalSeconds}s');
+      }
+    } else {
+      if (kDebugMode) {
+        debugPrint('BackgroundLocationTracking: User not logged in, tracking not started');
+      }
+    }
+  } catch (e, stackTrace) {
+    if (kDebugMode) {
+      debugPrint('BackgroundLocationTracking: Initialization error: $e');
+      debugPrint('BackgroundLocationTracking: Stack trace: $stackTrace');
+    }
+    // Xato bo'lsa ham ilova ishlashni davom ettiradi
+  }
 
   runApp(const App());
 }
@@ -154,13 +185,79 @@ class App extends StatefulWidget {
   State<App> createState() => _AppState();
 }
 
-class _AppState extends State<App> {
+class _AppState extends State<App> with WidgetsBindingObserver {
   final LocaleProvider _localeProvider = LocaleProvider();
 
   @override
   void initState() {
     super.initState();
     _initializeLocale();
+    // App lifecycle events'ni kuzatish uchun observer qo'shish
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    // Observer'ni olib tashlash
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// App lifecycle state o'zgarganda chaqiriladi
+  /// Bu metod ilova fonga o'tganda ham location tracking ishlashini ta'minlaydi
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    if (kDebugMode) {
+      debugPrint('AppLifecycleState changed: $state');
+    }
+
+    // App lifecycle holatiga qarab harakat qilish
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // Ilova qayta aktiv bo'lganda
+        // Agar tracking to'xtatilgan bo'lsa, qayta boshlash
+        _ensureBackgroundLocationTracking();
+        break;
+      case AppLifecycleState.paused:
+        // Ilova fonga o'tganda
+        // Tracking davom etadi (Timer va Position stream ishlashda davom etadi)
+        if (kDebugMode) {
+          debugPrint('App paused - background location tracking continues');
+        }
+        break;
+      case AppLifecycleState.inactive:
+        // Ilova inactive holatda
+        break;
+      case AppLifecycleState.detached:
+        // Ilova detached holatda
+        break;
+      case AppLifecycleState.hidden:
+        // Ilova yashiringan holatda
+        break;
+    }
+  }
+
+  /// Background location tracking ishlayotganligini tekshirish va zarur bo'lsa boshlash
+  Future<void> _ensureBackgroundLocationTracking() async {
+    try {
+      final backgroundLocationService = sl<BackgroundLocationTrackingService>();
+      final prefs = sl<SharedPreferencesService>();
+      final userCode = prefs.getUserCode();
+      
+      // Agar user login qilgan bo'lsa va tracking ishlamayotgan bo'lsa
+      if (userCode != null && userCode.isNotEmpty && !backgroundLocationService.isTrackingActive) {
+        await backgroundLocationService.startTracking();
+        if (kDebugMode) {
+          debugPrint('BackgroundLocationTracking: Restarted after app resume');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('BackgroundLocationTracking: Error ensuring tracking: $e');
+      }
+    }
   }
 
   Future<void> _initializeLocale() async {

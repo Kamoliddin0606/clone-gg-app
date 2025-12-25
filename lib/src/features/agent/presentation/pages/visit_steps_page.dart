@@ -554,10 +554,30 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       return;
     }
 
-    // Distance restriction check
+    // ============================================================================
+    // MASOFA CHEKLOVI TEKSHIRUVI (Distance Restriction Check)
+    // ============================================================================
+    // Bu tekshiruv faqat REJALI TASHRIFLAR uchun amal qiladi.
+    // Rejadan tashqari buyurtmalar (isUnplannedOrder = true) uchun masofa 
+    // tekshiruvi o'tkazib yuboriladi, chunki agent ixtiyoriy joydan buyurtma 
+    // yaratishi mumkin.
+    // 
+    // Tekshiruv shartlari:
+    // 1. clientZoneAccess > 0 bo'lishi kerak (server tomonidan belgilangan masofa)
+    // 2. isUnplannedOrder = false bo'lishi kerak (rejali tashrif)
+    // ============================================================================
     try {
       final clientZoneAccess = currentState.permissions.clientZoneAccess;
-      if (clientZoneAccess > 0) {
+      
+      // Rejadan tashqari buyurtmalar uchun masofa tekshiruvini o'tkazib yuborish
+      // Bu agent uchun moslashuvchanlikni ta'minlaydi - u ixtiyoriy joydan
+      // rejadan tashqari buyurtma yaratishi mumkin
+      if (currentState.isUnplannedOrder) {
+        debugPrint('VisitStepsBloc: Masofa tekshiruvi o\'tkazib yuborildi - rejadan tashqari buyurtma');
+      } else if (clientZoneAccess > 0) {
+        // Faqat rejali tashriflar uchun masofa tekshiruvini bajarish
+        debugPrint('VisitStepsBloc: Masofa tekshiruvi boshlanmoqda - clientZoneAccess: $clientZoneAccess metr');
+        
         emit(VisitStepsFinishing(
           currentStep: 0,
           totalSteps: currentState.stepProgress.length,
@@ -565,14 +585,18 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
           tradingPoint: currentState.tradingPoint,
         ));
 
+        // Joriy joylashuvni olish
         final locationService = sl<LocationService>();
         final position = await locationService.getCurrentLocation();
 
+        // Joylashuv ma'lumotlari mavjud emasligini tekshirish
         if (position == null) {
+          debugPrint('VisitStepsBloc: Joylashuv ma\'lumotlari mavjud emas');
           emit(VisitStepsError(_l10n().locationNotAvailable));
           return;
         }
 
+        // Agent va mijoz orasidagi masofani hisoblash
         final distanceKm = locationService.calculateDistance(
           position.latitude,
           position.longitude,
@@ -582,18 +606,24 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
         final distanceMeters = distanceKm * 1000;
 
+        // Masofa cheklovini tekshirish
+        // Agar agent belgilangan masofadan uzoqda bo'lsa, xatolik qaytarish
         if (distanceMeters > clientZoneAccess) {
-          debugPrint('Distance restriction failed: $distanceMeters > $clientZoneAccess');
+          debugPrint('VisitStepsBloc: Masofa cheklovi bajarilmadi - joriy: ${distanceMeters.toStringAsFixed(0)}m > talab: ${clientZoneAccess}m');
           emit(VisitStepsError(_l10n().distanceRestrictionError));
           return;
         }
         
-        debugPrint('Distance restriction passed: $distanceMeters <= $clientZoneAccess');
+        debugPrint('VisitStepsBloc: Masofa tekshiruvi muvaffaqiyatli - joriy: ${distanceMeters.toStringAsFixed(0)}m <= talab: ${clientZoneAccess}m');
+      } else {
+        // clientZoneAccess = 0 bo'lganda masofa tekshiruvi o'tkazib yuboriladi
+        debugPrint('VisitStepsBloc: Masofa tekshiruvi o\'tkazib yuborildi - clientZoneAccess = 0');
       }
-    } catch (e) {
-      debugPrint('Error checking distance restriction: $e');
-      // If error occurs during distance check, we might want to allow finishing or block it.
-      // Given the requirement, it's safer to block with an error if calculation fails.
+    } catch (e, stackTrace) {
+      // Masofa tekshiruvida xatolik yuz berganda
+      // Xavfsizlik nuqtai nazaridan, xatolik bo'lsa visitni yakunlashga ruxsat bermaslik
+      debugPrint('VisitStepsBloc: Masofa tekshiruvida xatolik: $e');
+      debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
       emit(VisitStepsError('${_l10n().errorOccurredPrefix}: $e'));
       return;
     }

@@ -19,3 +19,13 @@ class LoginButtonPressed extends AuthEvent {
   @override
   List<Object> get props => [username, password];
 }
+
+/// Logout event - foydalanuvchi tizimdan chiqish
+/// 
+/// Bu event chaqirilganda:
+/// 1. Background location tracking to'xtatiladi
+/// 2. User ma'lumotlari tozalanadi
+/// 3. Login sahifasiga yo'naltiriladi
+class LogoutButtonPressed extends AuthEvent {
+  const LogoutButtonPressed();
+}

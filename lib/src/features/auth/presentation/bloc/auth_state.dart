@@ -39,3 +39,8 @@ class AuthFailure extends AuthState {
   @override
   List<Object> get props => [message, errorType];
 }
+
+/// Logout muvaffaqiyatli bo'lganda
+class LogoutSuccess extends AuthState {
+  const LogoutSuccess();
+}

@@ -73,12 +73,22 @@ String transliterateToLatin(String text) {
 // import '../../../../theme/theme_toggle.dart';
 enum _ViewMode { list, grid }
 
-String? _bestClientImageUrl(ClientImage img) {
+/// =============================================================================
+/// RASM O'LCHAMI TANLASH FUNKSIYALARI (ClientImage uchun)
+/// =============================================================================
+/// Client detail va to'liq ekran ko'rish uchun mos o'lchamli rasmlar:
+/// - Medium: Client detail sheet carousel uchun - optimal sifat va tezlik
+/// - Large/Original: To'liq ekran ko'rish uchun - eng yuqori sifat
+/// =============================================================================
+
+/// Medium rasm URL - Client detail sheet uchun
+/// O'rtacha sifat, detail ko'rinishi uchun optimal
+String? _getMediumImageUrl(ClientImage img) {
   final candidates = <String?>[
-    img.imageThumbnailUrl,
-    img.imageSmUrl,
-    img.imageMdUrl,
-    img.imageUrl,
+    img.imageMdUrl,         // Birinchi - Medium
+    img.imageSmUrl,         // Fallback - Small
+    img.imageUrl,           // Fallback - Original
+    img.imageThumbnailUrl,  // Fallback - Thumbnail
     img.image,
   ];
   for (final s in candidates) {
@@ -86,6 +96,23 @@ String? _bestClientImageUrl(ClientImage img) {
   }
   return null;
 }
+
+/// Large/Original rasm URL - To'liq ekran ko'rish uchun
+/// Eng yuqori sifat, katta rasmlar uchun
+String? _getLargeImageUrl(ClientImage img) {
+  final candidates = <String?>[
+    img.imageUrl,           // Birinchi - Original/Large
+    img.imageMdUrl,         // Fallback - Medium
+    img.imageSmUrl,         // Fallback - Small
+    img.imageThumbnailUrl,  // Fallback - Thumbnail
+    img.image,
+  ];
+  for (final s in candidates) {
+    if (s != null && s.trim().isNotEmpty) return s;
+  }
+  return null;
+}
+
 
 ImageProvider? _clientImageProvider(String? url) {
   if (url == null) return null;
@@ -2316,7 +2343,8 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
   final PageController _pageController = PageController();
   Timer? _autoScrollTimer;
   int _currentPage = 0;
-  List<String> _imageUrls = [];
+  List<String> _imageUrls = [];        // Medium o'lchamli rasmlar (carousel uchun)
+  List<String> _largeImageUrls = [];   // Large o'lchamli rasmlar (to'liq ekran uchun)
   bool _isLoading = true;
   bool _userIsScrolling = false;
 
@@ -2343,13 +2371,22 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
       
       if (mounted) {
         setState(() {
+          // Client detail uchun MEDIUM o'lchamli rasmlarni yuklash
+          // Bu carousel ko'rinishida optimal sifat va tezlikni ta'minlaydi
           _imageUrls = clientImages
-              .map((img) {
-                return _bestClientImageUrl(img);
-              })
+              .map((img) => _getMediumImageUrl(img))
               .whereType<String>()
               .where((u) => u.trim().isNotEmpty)
               .toList();
+          
+          // To'liq ekran ko'rish uchun LARGE o'lchamli rasmlarni yuklash
+          // Eng yuqori sifatli rasmlar
+          _largeImageUrls = clientImages
+              .map((img) => _getLargeImageUrl(img))
+              .whereType<String>()
+              .where((u) => u.trim().isNotEmpty)
+              .toList();
+          
           _isLoading = false;
         });
 
@@ -2421,6 +2458,43 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
     });
   }
 
+  /// To'liq ekran rasm ko'rish sahifasini ochish
+  /// [initialIndex] - ochilishi kerak bo'lgan rasm indeksi
+  void _openFullScreenViewer(int initialIndex) {
+    // Auto-scroll ni to'xtatish
+    _stopAutoScroll();
+    
+    // Agar large rasmlar bo'sh bo'lsa, medium rasmlardan foydalanish
+    final imagesToShow = _largeImageUrls.isNotEmpty ? _largeImageUrls : _imageUrls;
+    
+    if (imagesToShow.isEmpty) return;
+    
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black87,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return _FullScreenImageViewer(
+            imageUrls: imagesToShow,
+            initialIndex: initialIndex,
+            clientName: null, // Mijoz nomini keyinroq qo'shish mumkin
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+      ),
+    ).then((_) {
+      // Qaytib kelganda auto-scroll ni qayta boshlash
+      if (mounted && _imageUrls.length > 1) {
+        _startAutoScroll();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -2479,34 +2553,62 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
               itemCount: _imageUrls.length,
               itemBuilder: (context, index) {
                 final provider = _clientImageProvider(_imageUrls[index]);
-                return ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // Client image with blur effect if visited
-                      if (provider == null)
-                        Container(
-                          color: cs.surfaceContainerHighest,
-                          child: const Icon(Icons.broken_image, size: 40),
-                        )
-                      else
-                        Image(
-                          image: provider,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: cs.surfaceContainerHighest,
-                              child: const Icon(Icons.broken_image, size: 40),
-                            );
-                          },
-                        ),
-                      // Overlay for visited state
-                      if (widget.isVisited)
-                        Container(
-                          color: Colors.black.withOpacity(0.22),
-                        ),
-                    ],
+                return GestureDetector(
+                  // Double-tap orqali to'liq ekran rasm ko'rish
+                  onDoubleTap: () => _openFullScreenViewer(index),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Client image with blur effect if visited
+                        if (provider == null)
+                          Container(
+                            color: cs.surfaceContainerHighest,
+                            child: const Icon(Icons.broken_image, size: 40),
+                          )
+                        else
+                          Image(
+                            image: provider,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: cs.surfaceContainerHighest,
+                                child: const Icon(Icons.broken_image, size: 40),
+                              );
+                            },
+                          ),
+                        // Overlay for visited state
+                        if (widget.isVisited)
+                          Container(
+                            color: Colors.black.withOpacity(0.22),
+                          ),
+                        // Double-tap ko'rsatma (rasm bor bo'lganda)
+                        if (provider != null)
+                          Positioned(
+                            bottom: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.fullscreen, color: Colors.white70, size: 14),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    '2x bosing',
+                                    style: TextStyle(color: Colors.white70, fontSize: 10),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -4331,6 +4433,47 @@ class _HeaderImageState extends State<_HeaderImage> {
     });
   }
 
+  /// To'liq ekran rasm ko'rish sahifasini ochish
+  /// [initialIndex] - ochilishi kerak bo'lgan rasm indeksi
+  void _openFullScreenViewer(int initialIndex) {
+    // Auto-scroll ni to'xtatish
+    _stopAutoScroll();
+    
+    // Large o'lchamli rasmlarni tayyorlash
+    final largeImageUrls = widget.clientImages
+        .map((img) => _getLargeImageUrl(img))
+        .whereType<String>()
+        .where((u) => u.trim().isNotEmpty)
+        .toList();
+    
+    if (largeImageUrls.isEmpty) return;
+    
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black87,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return _FullScreenImageViewer(
+            imageUrls: largeImageUrls,
+            initialIndex: initialIndex,
+            clientName: widget.tradingPoint.name,
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+      ),
+    ).then((_) {
+      // Qaytib kelganda auto-scroll ni qayta boshlash
+      if (mounted && widget.clientImages.length > 1) {
+        _startAutoScroll();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -4366,55 +4509,83 @@ class _HeaderImageState extends State<_HeaderImage> {
                   itemCount: widget.clientImages.length,
                   itemBuilder: (context, index) {
                     final image = widget.clientImages[index];
-                    final imageUrl = _bestClientImageUrl(image);
+                    // Header uchun MEDIUM o'lchamli rasmlarni ko'rsatish
+                    final imageUrl = _getMediumImageUrl(image);
                     final provider = _clientImageProvider(imageUrl);
-                    return Container(
-                      margin: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        image: provider == null
-                            ? null
-                            : DecorationImage(
-                                image: provider,
-                                fit: BoxFit.cover,
+                    return GestureDetector(
+                      // Double-tap orqali to'liq ekran rasm ko'rish
+                      onDoubleTap: () => _openFullScreenViewer(index),
+                      child: Container(
+                        margin: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          image: provider == null
+                              ? null
+                              : DecorationImage(
+                                  image: provider,
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                        child: Stack(
+                          children: [
+                            if (image.isMain)
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.8),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text(
+                                    'Asosiy',
+                                    style: TextStyle(color: Colors.white, fontSize: 12),
+                                  ),
+                                ),
                               ),
-                      ),
-                      child: Stack(
-                        children: [
-                          if (image.isMain)
+                            // Double-tap ko'rsatma
                             Positioned(
-                              top: 8,
+                              bottom: 8,
                               right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.fullscreen, color: Colors.white70, size: 14),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '2x bosing',
+                                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // Rasm soni
+                            Positioned(
+                              bottom: 8,
+                              left: 8,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.8),
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: Colors.black.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Text(
-                                  'Asosiy',
-                                  style: TextStyle(color: Colors.white, fontSize: 12),
+                                child: Text(
+                                  '${index + 1} / ${widget.clientImages.length}',
+                                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ),
-                          Positioned(
-                            bottom: 8,
-                            left: 8,
-                            right: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.6),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${index + 1} / ${widget.clientImages.length}',
-                                style: const TextStyle(color: Colors.white, fontSize: 12),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -4461,6 +4632,283 @@ class _HeaderImageState extends State<_HeaderImage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// =============================================================================
+/// TO'LIQ EKRAN RASM KO'RISH SAHIFASI
+/// =============================================================================
+/// Rasmlarni to'liq ekranda ko'rish, swipe bilan o'tish va zoom qilish imkoniyati
+/// Double-tap orqali client detail carousel dan ochiladi
+/// =============================================================================
+class _FullScreenImageViewer extends StatefulWidget {
+  /// Barcha rasm URL lari (Large o'lchamda)
+  final List<String> imageUrls;
+  
+  /// Boshlang'ich rasm indeksi
+  final int initialIndex;
+  
+  /// Mijoz nomi (header uchun)
+  final String? clientName;
+
+  const _FullScreenImageViewer({
+    required this.imageUrls,
+    this.initialIndex = 0,
+    this.clientName,
+  });
+
+  @override
+  State<_FullScreenImageViewer> createState() => _FullScreenImageViewerState();
+}
+
+class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+  
+  /// Har bir rasm uchun TransformationController (zoom uchun)
+  final Map<int, TransformationController> _transformControllers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    // Barcha transformation controllerlarni tozalash
+    for (final controller in _transformControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  /// Rasm uchun TransformationController olish yoki yaratish
+  TransformationController _getTransformController(int index) {
+    if (!_transformControllers.containsKey(index)) {
+      _transformControllers[index] = TransformationController();
+    }
+    return _transformControllers[index]!;
+  }
+
+  /// Zoom ni reset qilish
+  void _resetZoom(int index) {
+    final controller = _transformControllers[index];
+    if (controller != null) {
+      controller.value = Matrix4.identity();
+    }
+  }
+
+  /// Double-tap da zoom in/out qilish
+  void _handleDoubleTapZoom(int index, TapDownDetails details, BoxConstraints constraints) {
+    final controller = _getTransformController(index);
+    final position = details.localPosition;
+    
+    // Agar zoom qilingan bo'lsa - reset qilish
+    if (controller.value.getMaxScaleOnAxis() > 1.0) {
+      controller.value = Matrix4.identity();
+    } else {
+      // Zoom in qilish (2x)
+      final scale = 2.5;
+      final x = -position.dx * (scale - 1);
+      final y = -position.dy * (scale - 1);
+      controller.value = Matrix4.identity()
+        ..translate(x, y)
+        ..scale(scale);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.close, color: Colors.white, size: 24),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: widget.clientName != null
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  widget.clientName!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )
+            : null,
+        centerTitle: true,
+        actions: [
+          // Rasm soni ko'rsatish
+          if (widget.imageUrls.length > 1)
+            Container(
+              margin: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${_currentIndex + 1} / ${widget.imageUrls.length}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          // Rasmlar PageView
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.imageUrls.length,
+            onPageChanged: (index) {
+              // Oldingi rasmning zoom ni reset qilish
+              _resetZoom(_currentIndex);
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final imageUrl = widget.imageUrls[index];
+              final provider = _clientImageProvider(imageUrl);
+
+              if (provider == null) {
+                return const Center(
+                  child: Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                );
+              }
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return GestureDetector(
+                    // Double-tap zoom qilish uchun
+                    onDoubleTapDown: (details) {
+                      _handleDoubleTapZoom(index, details, constraints);
+                    },
+                    onDoubleTap: () {}, // onDoubleTapDown ishlashi uchun kerak
+                    child: InteractiveViewer(
+                      transformationController: _getTransformController(index),
+                      minScale: 1.0,
+                      maxScale: 5.0,
+                      // Pinch-to-zoom va pan qilish imkoniyati
+                      child: Center(
+                        child: Image(
+                          image: provider,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Rasmni yuklashda xatolik',
+                                    style: TextStyle(color: Colors.white54),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+
+          // Pastki indikator
+          if (widget.imageUrls.length > 1)
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 20,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  widget.imageUrls.length,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: _currentIndex == index ? 24 : 8,
+                    height: 8,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: _currentIndex == index
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.4),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // Zoom haqida ko'rsatma (birinchi marta ko'rsatiladi)
+          Positioned(
+            bottom: MediaQuery.of(context).padding.bottom + 60,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.touch_app, color: Colors.white70, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'Zoom uchun 2x bosing yoki qisib kattalashtiring',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

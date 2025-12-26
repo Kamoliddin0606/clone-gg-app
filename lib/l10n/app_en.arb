@@ -493,6 +493,7 @@
   "manageClientImages": "Manage client images",
   "ordersCount": "Orders count",
   "orderNumberPrefix": "Order №",
+  "viewOrder": "View Order",
   "clientOrdersFor": "orders for client",
   "locationServicesDisabledSortingNotWork": "Location services are disabled. Distance sorting will not work.",
   "userDataNotFound": "User data not found",
@@ -530,5 +531,16 @@
   "checkingDistance": "Checking distance...",
   "distanceRestrictionError": "You are too far from the client. Please move closer to complete the visit.",
   "cancelVisit": "Cancel Visit",
-  "cancelVisitConfirmation": "Are you sure you want to cancel this visit? All progress will be lost."
+  "cancelVisitConfirmation": "Are you sure you want to cancel this visit? All progress will be lost.",
+  "syncStatusIdle": "Waiting",
+  "syncStatusProducts": "Updating products",
+  "syncStatusBalances": "Updating balances",
+  "syncStatusOrders": "Updating orders",
+  "syncStatusCompleted": "Updated",
+  "syncStatusError": "Error",
+  "syncInProgress": "Syncing...",
+  "syncErrorUserNotFound": "User code not found",
+  "syncAlreadyInProgress": "Sync already in progress",
+  "syncCompleted": "Data updated successfully",
+  "syncError": "Sync error occurred"
 }

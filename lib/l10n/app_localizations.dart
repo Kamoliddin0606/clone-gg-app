@@ -526,7 +526,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncError.
   ///
   /// In en, this message translates to:
-  /// **'Synchronization error'**
+  /// **'Sync error occurred'**
   String get syncError;
 
   /// No description provided for @noInternet.
@@ -2743,6 +2743,12 @@ abstract class AppLocalizations {
   /// **'Order №'**
   String get orderNumberPrefix;
 
+  /// No description provided for @viewOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'View Order'**
+  String get viewOrder;
+
   /// No description provided for @clientOrdersFor.
   ///
   /// In en, this message translates to:
@@ -2970,6 +2976,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to cancel this visit? All progress will be lost.'**
   String get cancelVisitConfirmation;
+
+  /// No description provided for @syncStatusIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get syncStatusIdle;
+
+  /// No description provided for @syncStatusProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating products'**
+  String get syncStatusProducts;
+
+  /// No description provided for @syncStatusBalances.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating balances'**
+  String get syncStatusBalances;
+
+  /// No description provided for @syncStatusOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating orders'**
+  String get syncStatusOrders;
+
+  /// No description provided for @syncStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get syncStatusCompleted;
+
+  /// No description provided for @syncStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get syncStatusError;
+
+  /// No description provided for @syncInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing...'**
+  String get syncInProgress;
+
+  /// No description provided for @syncErrorUserNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'User code not found'**
+  String get syncErrorUserNotFound;
+
+  /// No description provided for @syncAlreadyInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync already in progress'**
+  String get syncAlreadyInProgress;
+
+  /// No description provided for @syncCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Data updated successfully'**
+  String get syncCompleted;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

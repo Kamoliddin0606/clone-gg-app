@@ -222,7 +222,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get syncComplete => 'Sinxronizatsiya tugadi';
 
   @override
-  String get syncError => 'Sinxronizatsiya xatoligi';
+  String get syncError => 'Sinxronizatsiyada xatolik yuz berdi';
 
   @override
   String get noInternet => 'Internet mavjud emas';
@@ -1332,6 +1332,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get orderNumberPrefix => 'Buyurtma №';
 
   @override
+  String get viewOrder => 'Buyurtmani ko\'rish';
+
+  @override
   String get clientOrdersFor => 'mijozining buyurtmalari';
 
   @override
@@ -1444,4 +1447,34 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get cancelVisitConfirmation => 'Haqiqatan ham bu tashrifni bekor qilmoqchimisiz? Barcha jarayon yo\'qoladi.';
+
+  @override
+  String get syncStatusIdle => 'Kutilmoqda';
+
+  @override
+  String get syncStatusProducts => 'Mahsulotlar yangilanmoqda';
+
+  @override
+  String get syncStatusBalances => 'Balanslar yangilanmoqda';
+
+  @override
+  String get syncStatusOrders => 'Buyurtmalar yangilanmoqda';
+
+  @override
+  String get syncStatusCompleted => 'Yangilandi';
+
+  @override
+  String get syncStatusError => 'Xatolik';
+
+  @override
+  String get syncInProgress => 'Sinxronizatsiya...';
+
+  @override
+  String get syncErrorUserNotFound => 'Foydalanuvchi kodi topilmadi';
+
+  @override
+  String get syncAlreadyInProgress => 'Sinxronizatsiya allaqachon davom etmoqda';
+
+  @override
+  String get syncCompleted => 'Ma\'lumotlar muvaffaqiyatli yangilandi';
 }

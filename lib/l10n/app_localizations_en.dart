@@ -222,7 +222,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncComplete => 'Synchronization completed';
 
   @override
-  String get syncError => 'Synchronization error';
+  String get syncError => 'Sync error occurred';
 
   @override
   String get noInternet => 'No internet connection';
@@ -1332,6 +1332,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderNumberPrefix => 'Order №';
 
   @override
+  String get viewOrder => 'View Order';
+
+  @override
   String get clientOrdersFor => 'orders for client';
 
   @override
@@ -1444,4 +1447,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancelVisitConfirmation => 'Are you sure you want to cancel this visit? All progress will be lost.';
+
+  @override
+  String get syncStatusIdle => 'Waiting';
+
+  @override
+  String get syncStatusProducts => 'Updating products';
+
+  @override
+  String get syncStatusBalances => 'Updating balances';
+
+  @override
+  String get syncStatusOrders => 'Updating orders';
+
+  @override
+  String get syncStatusCompleted => 'Updated';
+
+  @override
+  String get syncStatusError => 'Error';
+
+  @override
+  String get syncInProgress => 'Syncing...';
+
+  @override
+  String get syncErrorUserNotFound => 'User code not found';
+
+  @override
+  String get syncAlreadyInProgress => 'Sync already in progress';
+
+  @override
+  String get syncCompleted => 'Data updated successfully';
 }

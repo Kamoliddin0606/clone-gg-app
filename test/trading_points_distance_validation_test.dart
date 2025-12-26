@@ -251,6 +251,241 @@ void main() {
     });
   });
 
+  group('DistanceValidationDialog Initialization Tests', () {
+    late MockLocationService mockLocationService;
+    late TradingPointWithPermissions testTradingPoint;
+
+    setUp(() {
+      mockLocationService = MockLocationService();
+
+      // Create test data with compliant distance
+      final tradingPoint = model.TradingPoint(
+        id: 'test_id',
+        name: 'Test Trading Point',
+        address: 'Test Address',
+        phone: '123456789',
+        ownerName: 'Test Owner',
+        contactPerson: 'Test Contact',
+        inn: '123456789',
+        status: 'active',
+        lastVisitDate: '',
+        hasOrders: false,
+        hasContracts: false,
+        isVisited: false,
+        hasContract: false,
+        latitude: 41.2995,
+        longitude: 69.2401,
+        region: 'Test Region',
+        district: 'Test District',
+        signboard: '',
+        referencePoint: '',
+        responsiblePerson: '',
+        responsiblePersonPhone: '',
+        tradePointType: '',
+        creditLimit: 0.0,
+        accumulatedCredit: 0.0,
+        codeRegion: '',
+        visitToday: true,
+        visitStepNumber: 1,
+        plannedWeekDay: null,
+      );
+
+      final permissions = SalesReqPermissions(
+        userCode: 'test_user',
+        skipTINduplicateCheck: false,
+        allowCreationWithoutTIN: false,
+        allowCreatingPointOfSale: false,
+        visit: true,
+        strictSequence: false,
+        unplannedOrder: false,
+        plannedRoute: false,
+        editClientCoordinates: false,
+        clientZoneAccess: 100, // 100 meters
+        locationUpdateInterval: 0,
+        visitSteps: [],
+      );
+
+      testTradingPoint = TradingPointWithPermissions(
+        tradingPoint: tradingPoint,
+        permissions: permissions,
+      );
+    });
+
+    testWidgets('Dialog renders fully before checking conditions - prevents premature closure',
+        (WidgetTester tester) async {
+      // Mock location service to return compliant distance immediately
+      // This simulates the scenario where conditions ARE met from the start
+      when(mockLocationService.getDistanceToTradingPoint(41.2995, 69.2401))
+          .thenReturn(0.05); // 50 meters (within 100m limit)
+      // Omit latitude/longitude to skip FlutterMap rendering (avoids test issues)
+      when(mockLocationService.getStoredLocation()).thenReturn({
+        'accuracy': 5.0,
+      });
+
+      bool onConditionsMetCalled = false;
+      int onConditionsMetCallCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (dialogContext) => DistanceValidationDialog(
+                      tradingPointWithPermissions: testTradingPoint,
+                      locationService: mockLocationService,
+                      onConditionsMet: () {
+                        onConditionsMetCalled = true;
+                        onConditionsMetCallCount++;
+                        Navigator.of(dialogContext).pop();
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Show Dialog'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Tap button to show dialog
+      await tester.tap(find.text('Show Dialog'));
+      
+      // First pump - starts showing dialog
+      await tester.pump();
+      
+      // At this point, dialog should be visible but onConditionsMet should NOT be called yet
+      // because addPostFrameCallback hasn't fired
+      expect(find.text('Masofa tekshiruvi'), findsOneWidget);
+      
+      // After pumpAndSettle, the postFrameCallback will fire
+      await tester.pumpAndSettle();
+      
+      // Now onConditionsMet should have been called (conditions are met)
+      expect(onConditionsMetCalled, true);
+      // Should only be called once (not multiple times)
+      expect(onConditionsMetCallCount, 1);
+    });
+
+    testWidgets('Dialog shows content when conditions are not met',
+        (WidgetTester tester) async {
+      // Mock location service to return non-compliant distance
+      when(mockLocationService.getDistanceToTradingPoint(41.2995, 69.2401))
+          .thenReturn(0.15); // 150 meters (exceeds 100m limit)
+      // Omit latitude/longitude to skip FlutterMap rendering (avoids test issues)
+      when(mockLocationService.getStoredLocation()).thenReturn({
+        'accuracy': 5.0,
+      });
+
+      bool onConditionsMetCalled = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (dialogContext) => DistanceValidationDialog(
+                      tradingPointWithPermissions: testTradingPoint,
+                      locationService: mockLocationService,
+                      onConditionsMet: () {
+                        onConditionsMetCalled = true;
+                        Navigator.of(dialogContext).pop();
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Show Dialog'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Tap button to show dialog
+      await tester.tap(find.text('Show Dialog'));
+      await tester.pumpAndSettle();
+
+      // Dialog should be visible and onConditionsMet should NOT be called
+      expect(find.text('Masofa tekshiruvi'), findsOneWidget);
+      expect(find.text('Masofa talabiga javob bermaydi'), findsOneWidget);
+      expect(onConditionsMetCalled, false);
+      
+      // Cancel button should be visible
+      expect(find.text('Bekor qilish'), findsOneWidget);
+      
+      // Continue button should NOT be visible (conditions not met)
+      expect(find.text('Davom etish'), findsNothing);
+    });
+
+    testWidgets('Timer only checks conditions after dialog is ready',
+        (WidgetTester tester) async {
+      // Start with non-compliant distance (no user location to avoid map rendering)
+      when(mockLocationService.getDistanceToTradingPoint(41.2995, 69.2401))
+          .thenReturn(0.15); // 150 meters
+      when(mockLocationService.getStoredLocation()).thenReturn({
+        'accuracy': 5.0,
+        // Intentionally omit latitude/longitude to skip map rendering
+      });
+
+      bool onConditionsMetCalled = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (dialogContext) => DistanceValidationDialog(
+                      tradingPointWithPermissions: testTradingPoint,
+                      locationService: mockLocationService,
+                      onConditionsMet: () {
+                        onConditionsMetCalled = true;
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Show Dialog'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Tap button to show dialog
+      await tester.tap(find.text('Show Dialog'));
+      await tester.pumpAndSettle();
+      
+      // Should not be called yet (distance is non-compliant)
+      expect(onConditionsMetCalled, false);
+
+      // Update to compliant distance
+      when(mockLocationService.getDistanceToTradingPoint(41.2995, 69.2401))
+          .thenReturn(0.05); // 50 meters
+
+      // Wait for 2 second timer update
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump(); // Additional pump for setState
+
+      // Now should be called (timer checked conditions after dialog was ready)
+      expect(onConditionsMetCalled, true);
+      
+      // Clean up - close dialog to avoid timer issues
+      await tester.tap(find.text('Bekor qilish'));
+      await tester.pumpAndSettle();
+    });
+  });
+
   group('DistanceComplianceProgressBar Tests', () {
     testWidgets('Shows compliant progress bar', (WidgetTester tester) async {
       await tester.pumpWidget(

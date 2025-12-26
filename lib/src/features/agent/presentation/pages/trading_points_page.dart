@@ -876,11 +876,18 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   /// Handle visit client with distance validation
   Future<void> _handleVisitClient(BuildContext context, TradingPointWithPermissions tradingPointWithPermissions) async {
     try {
+      if (kDebugMode) {
+        print('_handleVisitClient: Starting for ${tradingPointWithPermissions.tradingPoint.name}');
+        print('_handleVisitClient: visitToday=${tradingPointWithPermissions.visitToday}');
+        print('_handleVisitClient: permissions=${tradingPointWithPermissions.permissions}');
+        print('_handleVisitClient: clientZoneAccess=${tradingPointWithPermissions.permissions?.clientZoneAccess}');
+      }
+
       // Check if visitToday is true
       if (!tradingPointWithPermissions.visitToday) {
         // Should not happen as button is only shown when visitToday is true, but safety check
         if (kDebugMode) {
-          print('Visit client called but visitToday is false for ${tradingPointWithPermissions.tradingPoint.name}');
+          print('_handleVisitClient: ABORT - visitToday is false');
         }
         return;
       }
@@ -891,8 +898,15 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         tradingPointWithPermissions.tradingPoint.longitude,
       );
 
+      if (kDebugMode) {
+        print('_handleVisitClient: distanceKm=$distanceKm, _locationService=$_locationService');
+      }
+
       if (distanceKm == null) {
         // No location available
+        if (kDebugMode) {
+          print('_handleVisitClient: ABORT - distanceKm is null, showing snackbar');
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)?.locationNotAvailable ?? 'Location data not available. Visit cannot be completed.'),
@@ -906,19 +920,32 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       final clientZoneAccess = tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
 
       if (kDebugMode) {
-        print('Distance check: ${distanceMeters}m vs clientZoneAccess: ${clientZoneAccess}m for ${tradingPointWithPermissions.tradingPoint.name}');
+        print('_handleVisitClient: distanceMeters=$distanceMeters, clientZoneAccess=$clientZoneAccess');
+        print('_handleVisitClient: Condition check - clientZoneAccess==0: ${clientZoneAccess == 0}, distanceMeters<=clientZoneAccess: ${distanceMeters <= clientZoneAccess}');
       }
 
       // If clientZoneAccess is 0, skip distance check and proceed directly
       if (clientZoneAccess == 0 || distanceMeters <= clientZoneAccess) {
         // Distance requirement met or no check required, proceed with visit
+        if (kDebugMode) {
+          print('_handleVisitClient: Proceeding directly to _informVisit (no dialog needed)');
+        }
         await _informVisit(tradingPointWithPermissions);
       } else {
         // Distance requirement not met, show dialog
+        if (kDebugMode) {
+          print('_handleVisitClient: Distance requirement NOT met, showing DistanceValidationDialog');
+          print('_handleVisitClient: mounted=$mounted, context=$context');
+        }
         if (mounted) {
+          // Close any open bottom sheet before showing dialog
+          // This ensures the dialog is visible and not hidden behind the bottom sheet
+          Navigator.of(context).popUntil((route) => route is! PopupRoute);
+          
           showDialog(
             context: context,
             barrierDismissible: false,
+            useRootNavigator: true, // Show dialog on top of everything including bottom sheets
             builder: (dialogContext) => DistanceValidationDialog(
               tradingPointWithPermissions: tradingPointWithPermissions,
               locationService: _locationService,
@@ -931,11 +958,19 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
               },
             ),
           );
+          if (kDebugMode) {
+            print('_handleVisitClient: showDialog called successfully');
+          }
+        } else {
+          if (kDebugMode) {
+            print('_handleVisitClient: ABORT - widget not mounted, cannot show dialog');
+          }
         }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) {
-        print('Error in _handleVisitClient: $e');
+        print('_handleVisitClient: ERROR - $e');
+        print('_handleVisitClient: StackTrace - $stackTrace');
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -3764,15 +3799,39 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
   double? _userLon;
   bool _isRefreshing = false;
   final osm.MapController _mapController = osm.MapController();
+  
+  /// Flag to track if dialog is fully initialized and rendered
+  /// This prevents calling onConditionsMet() before the dialog is visible
+  bool _isDialogReady = false;
 
   @override
   void initState() {
     super.initState();
-    _updateDistanceAndAccuracy();
+    
+    // Initial distance/accuracy update without condition check
+    // This only populates the UI values, doesn't trigger navigation
+    _updateDistanceAndAccuracy(checkConditions: false);
+    
+    // Wait for the first frame to be rendered before checking conditions
+    // This ensures the dialog is fully visible before any auto-close logic
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() => _isDialogReady = true);
+        
+        // Now safe to check conditions after dialog is rendered
+        if (_areConditionsMet()) {
+          if (kDebugMode) {
+            print('DistanceValidationDialog: Conditions met after dialog rendered, proceeding...');
+          }
+          widget.onConditionsMet();
+        }
+      }
+    });
+    
     // Update every 2 seconds as required
     _updateTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (mounted) {
-        _updateDistanceAndAccuracy();
+      if (mounted && _isDialogReady) {
+        _updateDistanceAndAccuracy(checkConditions: true);
       }
     });
   }
@@ -3784,32 +3843,57 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
     super.dispose();
   }
 
-  void _updateDistanceAndAccuracy() {
-    if (widget.locationService == null) return;
+  /// Updates distance and accuracy values from LocationService
+  /// 
+  /// [checkConditions] - If true, will check if distance conditions are met
+  /// and trigger onConditionsMet callback. Set to false during initState
+  /// to prevent premature dialog closure before it's fully rendered.
+  void _updateDistanceAndAccuracy({bool checkConditions = true}) {
+    if (widget.locationService == null) {
+      if (kDebugMode) {
+        print('DistanceValidationDialog: LocationService is null, cannot update distance');
+      }
+      return;
+    }
 
-    final distance = widget.locationService!.getDistanceToTradingPoint(
-      widget.tradingPointWithPermissions.tradingPoint.latitude,
-      widget.tradingPointWithPermissions.tradingPoint.longitude,
-    );
+    try {
+      final distance = widget.locationService!.getDistanceToTradingPoint(
+        widget.tradingPointWithPermissions.tradingPoint.latitude,
+        widget.tradingPointWithPermissions.tradingPoint.longitude,
+      );
 
-    final locationData = widget.locationService!.getStoredLocation();
-    final accuracy = locationData?['accuracy'] as double?;
-    final userLat = locationData?['latitude'] as double?;
-    final userLon = locationData?['longitude'] as double?;
+      final locationData = widget.locationService!.getStoredLocation();
+      final accuracy = locationData?['accuracy'] as double?;
+      final userLat = locationData?['latitude'] as double?;
+      final userLon = locationData?['longitude'] as double?;
 
-    setState(() {
-      _currentDistanceKm = distance;
-      _currentAccuracy = accuracy;
-      _userLat = userLat;
-      _userLon = userLon;
-    });
+      if (mounted) {
+        setState(() {
+          _currentDistanceKm = distance;
+          _currentAccuracy = accuracy;
+          _userLat = userLat;
+          _userLon = userLon;
+        });
+      }
 
-    // Check if conditions are now met
-    if (_areConditionsMet()) {
-      widget.onConditionsMet();
+      // Check if conditions are now met (only if dialog is ready and checkConditions is true)
+      if (checkConditions && _isDialogReady && _areConditionsMet()) {
+        if (kDebugMode) {
+          final distanceMeters = distance != null ? (distance * 1000).round() : null;
+          final clientZoneAccess = widget.tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
+          print('DistanceValidationDialog: Conditions met! Distance: ${distanceMeters}m, Required: ${clientZoneAccess}m');
+        }
+        widget.onConditionsMet();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('DistanceValidationDialog: Error updating distance: $e');
+      }
     }
   }
 
+  /// Manual refresh button handler
+  /// Requests fresh GPS location and updates distance/accuracy values
   Future<void> _manualRefresh() async {
     if (_isRefreshing) return;
     setState(() => _isRefreshing = true);
@@ -3817,10 +3901,11 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
     try {
       // Request fresh location from GPS
       await widget.locationService?.refreshLocation();
-      _updateDistanceAndAccuracy();
+      // Check conditions after manual refresh since user explicitly requested update
+      _updateDistanceAndAccuracy(checkConditions: true);
     } catch (e) {
       if (kDebugMode) {
-        print('Manual refresh error: $e');
+        print('DistanceValidationDialog: Manual refresh error: $e');
       }
     } finally {
       if (mounted) {
@@ -3829,6 +3914,15 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
     }
   }
 
+  /// Checks if distance conditions are met for visit
+  /// 
+  /// Returns true if:
+  /// - Current distance is available (not null)
+  /// - Distance in meters is less than or equal to clientZoneAccess
+  /// 
+  /// Note: If clientZoneAccess is 0, this will return false since
+  /// no distance can be <= 0. However, clientZoneAccess=0 cases
+  /// are handled in _handleVisitClient to skip the dialog entirely.
   bool _areConditionsMet() {
     if (_currentDistanceKm == null) return false;
     final distanceMeters = (_currentDistanceKm! * 1000).round();
@@ -3873,10 +3967,12 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
           ),
         ],
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      content: SizedBox(
+        width: 300, // Fixed width to avoid LayoutBuilder intrinsic dimension issues with FlutterMap
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Text(
             '${widget.tradingPointWithPermissions.tradingPoint.name} ga tashrif uchun masofa talabiga javob berishingiz kerak.',
             style: theme.textTheme.bodyMedium,
@@ -3978,6 +4074,23 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
                     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.gloria.marketing',
                   ),
+                  // Circle showing the allowed distance zone around trading point
+                  // Green if user is inside, Red if user is outside
+                  osm.CircleLayer(
+                    circles: [
+                      osm.CircleMarker(
+                        point: osm_latlong.LatLng(
+                          widget.tradingPointWithPermissions.tradingPoint.latitude,
+                          widget.tradingPointWithPermissions.tradingPoint.longitude,
+                        ),
+                        radius: clientZoneAccess.toDouble(), // Radius in meters
+                        useRadiusInMeter: true,
+                        color: (isCompliant ? Colors.green : Colors.red).withValues(alpha: 0.15),
+                        borderColor: isCompliant ? Colors.green : Colors.red,
+                        borderStrokeWidth: 2,
+                      ),
+                    ],
+                  ),
                   osm.MarkerLayer(
                     markers: [
                       // User marker (blue)
@@ -4060,6 +4173,7 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
               tradingPointId: widget.tradingPointWithPermissions.tradingPoint.id,
             ),
         ],
+        ),
       ),
       actions: [
         TextButton(

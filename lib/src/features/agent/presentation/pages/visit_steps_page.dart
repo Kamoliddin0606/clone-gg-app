@@ -12,6 +12,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_re
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_finish_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/post_order_sync_manager.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/post_order_sync_notification.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/photo_facing_before_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/shelf_audit_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/competitor_audit_page.dart';
@@ -1034,6 +1036,36 @@ class VisitStepsView extends StatefulWidget {
 }
 
 class _VisitStepsViewState extends State<VisitStepsView> {
+  /// PostOrderSyncManager - for background sync after order submission
+  PostOrderSyncManager? _postOrderSyncManager;
+  bool _syncStarted = false;
+
+  @override
+  void dispose() {
+    _postOrderSyncManager?.dispose();
+    super.dispose();
+  }
+
+  /// Start background sync after successful order submission
+  void _startBackgroundSync(BuildContext context) {
+    if (_syncStarted) return;
+    _syncStarted = true;
+
+    debugPrint('VisitStepsView: Starting background sync after order submission');
+
+    _postOrderSyncManager = PostOrderSyncManager(
+      dataSyncService: sl<DataSyncService>(),
+    );
+
+    final progressStream = _postOrderSyncManager!.syncAfterOrderSubmissionStream();
+    
+    PostOrderSyncNotification.show(
+      context,
+      progressStream,
+      autoDismissOnComplete: true,
+      autoDismissDelay: const Duration(seconds: 4),
+    );
+  }
 
   Future<void> _navigateToOrderDetails(BuildContext context, String orderCode) async {
     final l10n = AppLocalizations.of(context)!;
@@ -1350,6 +1382,15 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     ThemeData theme,
     AppLocalizations l10n,
   ) {
+    // Start background sync if order was successfully submitted
+    if (state.orderCode != null && state.orderCode!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _startBackgroundSync(context);
+        }
+      });
+    }
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1541,6 +1582,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     ThemeData theme,
     AppLocalizations l10n,
   ) {
+    final hasOrder = state.orderCode != null && state.orderCode!.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1558,14 +1601,45 @@ class _VisitStepsViewState extends State<VisitStepsView> {
         ],
       ),
       child: SafeArea(
-        child: FilledButton.icon(
-          onPressed: () => Navigator.of(context).pop(true), // Return success
-          icon: const Icon(Icons.done),
-          label: Text(l10n.finishVisit),
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-          ),
-        ),
+        child: hasOrder
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Buyurtmani ko'rish tugmasi
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => _navigateToOrderDetails(context, state.orderCode!),
+                      icon: const Icon(Icons.receipt_long),
+                      label: Text(l10n.viewOrder),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Yakunlash tugmasi
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      icon: const Icon(Icons.done),
+                      label: Text(l10n.finishVisit),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : FilledButton.icon(
+                onPressed: () => Navigator.of(context).pop(true),
+                icon: const Icon(Icons.done),
+                label: Text(l10n.finishVisit),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
       ),
     );
   }

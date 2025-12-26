@@ -493,6 +493,7 @@
   "manageClientImages": "Mijoz rasmlarini boshqarish",
   "ordersCount": "Buyurtmalar soni",
   "orderNumberPrefix": "Buyurtma №",
+  "viewOrder": "Buyurtmani ko'rish",
   "clientOrdersFor": "mijozining buyurtmalari",
   "locationServicesDisabledSortingNotWork": "Joylashuv xizmatlari o'chirilgan. Masofa bo'yicha tartiblash ishlamaydi.",
   "userDataNotFound": "Foydalanuvchi ma'lumotlari mavjud emas",
@@ -530,5 +531,16 @@
   "checkingDistance": "Masofa tekshirilmoqda...",
   "distanceRestrictionError": "Siz mijozdan juda uzoqdasiz. Tashrifni yakunlash uchun yaqinroq boring.",
   "cancelVisit": "Tashrifni bekor qilish",
-  "cancelVisitConfirmation": "Haqiqatan ham bu tashrifni bekor qilmoqchimisiz? Barcha jarayon yo'qoladi."
+  "cancelVisitConfirmation": "Haqiqatan ham bu tashrifni bekor qilmoqchimisiz? Barcha jarayon yo'qoladi.",
+  "syncStatusIdle": "Kutilmoqda",
+  "syncStatusProducts": "Mahsulotlar yangilanmoqda",
+  "syncStatusBalances": "Balanslar yangilanmoqda",
+  "syncStatusOrders": "Buyurtmalar yangilanmoqda",
+  "syncStatusCompleted": "Yangilandi",
+  "syncStatusError": "Xatolik",
+  "syncInProgress": "Sinxronizatsiya...",
+  "syncErrorUserNotFound": "Foydalanuvchi kodi topilmadi",
+  "syncAlreadyInProgress": "Sinxronizatsiya allaqachon davom etmoqda",
+  "syncCompleted": "Ma'lumotlar muvaffaqiyatli yangilandi",
+  "syncError": "Sinxronizatsiyada xatolik yuz berdi"
 }

@@ -493,6 +493,7 @@
   "manageClientImages": "Управление изображениями клиента",
   "ordersCount": "Количество заказов",
   "orderNumberPrefix": "Заказ №",
+  "viewOrder": "Просмотр заказа",
   "clientOrdersFor": "заказы клиента",
   "locationServicesDisabledSortingNotWork": "Службы определения местоположения отключены. Сортировка по расстоянию не будет работать.",
   "userDataNotFound": "Данные пользователя не найдены",
@@ -530,5 +531,16 @@
   "checkingDistance": "Проверка расстояния...",
   "distanceRestrictionError": "Вы слишком далеко от клиента. Подойдите ближе для завершения визита.",
   "cancelVisit": "Отменить визит",
-  "cancelVisitConfirmation": "Вы уверены, что хотите отменить визит? Весь прогресс будет потерян."
+  "cancelVisitConfirmation": "Вы уверены, что хотите отменить визит? Весь прогресс будет потерян.",
+  "syncStatusIdle": "Ожидание",
+  "syncStatusProducts": "Обновление товаров",
+  "syncStatusBalances": "Обновление остатков",
+  "syncStatusOrders": "Обновление заказов",
+  "syncStatusCompleted": "Обновлено",
+  "syncStatusError": "Ошибка",
+  "syncInProgress": "Синхронизация...",
+  "syncErrorUserNotFound": "Код пользователя не найден",
+  "syncAlreadyInProgress": "Синхронизация уже выполняется",
+  "syncCompleted": "Данные успешно обновлены",
+  "syncError": "Ошибка синхронизации"
 }

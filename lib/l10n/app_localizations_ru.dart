@@ -1332,6 +1332,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get orderNumberPrefix => 'Заказ №';
 
   @override
+  String get viewOrder => 'Просмотр заказа';
+
+  @override
   String get clientOrdersFor => 'заказы клиента';
 
   @override
@@ -1444,4 +1447,34 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get cancelVisitConfirmation => 'Вы уверены, что хотите отменить визит? Весь прогресс будет потерян.';
+
+  @override
+  String get syncStatusIdle => 'Ожидание';
+
+  @override
+  String get syncStatusProducts => 'Обновление товаров';
+
+  @override
+  String get syncStatusBalances => 'Обновление остатков';
+
+  @override
+  String get syncStatusOrders => 'Обновление заказов';
+
+  @override
+  String get syncStatusCompleted => 'Обновлено';
+
+  @override
+  String get syncStatusError => 'Ошибка';
+
+  @override
+  String get syncInProgress => 'Синхронизация...';
+
+  @override
+  String get syncErrorUserNotFound => 'Код пользователя не найден';
+
+  @override
+  String get syncAlreadyInProgress => 'Синхронизация уже выполняется';
+
+  @override
+  String get syncCompleted => 'Данные успешно обновлены';
 }

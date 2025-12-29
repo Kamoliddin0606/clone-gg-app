@@ -1762,4 +1762,58 @@ class AppLocalizationsUz extends AppLocalizations {
   String debtAmount(String amount) {
     return 'Qarz: $amount';
   }
+
+  @override
+  String get securityCheck => 'Xavfsizlik tekshiruvi';
+
+  @override
+  String get securityCheckLoading => 'Yuklanmoqda...';
+
+  @override
+  String get securityCheckVerifying => 'Xavfsizlik tekshiruvi...';
+
+  @override
+  String get securityCheckAllowed => 'Ruxsat berildi';
+
+  @override
+  String get securityCheckBlocked => 'Ruxsat berilmadi';
+
+  @override
+  String get securityCheckError => 'Xatolik yuz berdi';
+
+  @override
+  String get securityCheckLogin => 'Tizimga kirish...';
+
+  @override
+  String get accessDenied => 'Ruxsat berilmadi';
+
+  @override
+  String get accessDeniedMessage => 'Ushbu ilovaga kirishingiz bloklangan.';
+
+  @override
+  String get accessBlockedReasonAccountBound => 'Bu hisob boshqa qurilmaga bog\'langan';
+
+  @override
+  String get accessBlockedReasonDeviceBound => 'Bu qurilmada boshqa hisob mavjud';
+
+  @override
+  String get accessBlockedReasonHighRisk => 'Qurilma xavfsizlik talablariga javob bermaydi';
+
+  @override
+  String get accessBlockedReasonPolicyViolation => 'Xavfsizlik siyosati buzilgan';
+
+  @override
+  String get accessBlockedReasonUnknown => 'Noma\'lum sabab';
+
+  @override
+  String get retryCheck => 'Qayta tekshirish';
+
+  @override
+  String get contactSupportTeam => 'Support bilan bog\'lanish';
+
+  @override
+  String get logoutConfirmTitle => 'Chiqish';
+
+  @override
+  String get logoutConfirmMessage => 'Haqiqatan ham tizimdan chiqmoqchimisiz?';
 }

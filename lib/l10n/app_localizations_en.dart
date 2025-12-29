@@ -1762,4 +1762,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String debtAmount(String amount) {
     return 'Debt: $amount';
   }
+
+  @override
+  String get securityCheck => 'Security Check';
+
+  @override
+  String get securityCheckLoading => 'Loading...';
+
+  @override
+  String get securityCheckVerifying => 'Security verification...';
+
+  @override
+  String get securityCheckAllowed => 'Access granted';
+
+  @override
+  String get securityCheckBlocked => 'Access denied';
+
+  @override
+  String get securityCheckError => 'An error occurred';
+
+  @override
+  String get securityCheckLogin => 'Signing in...';
+
+  @override
+  String get accessDenied => 'Access Denied';
+
+  @override
+  String get accessDeniedMessage => 'Your access to this application has been blocked.';
+
+  @override
+  String get accessBlockedReasonAccountBound => 'This account is linked to another device';
+
+  @override
+  String get accessBlockedReasonDeviceBound => 'This device has another account';
+
+  @override
+  String get accessBlockedReasonHighRisk => 'Device does not meet security requirements';
+
+  @override
+  String get accessBlockedReasonPolicyViolation => 'Security policy violated';
+
+  @override
+  String get accessBlockedReasonUnknown => 'Unknown reason';
+
+  @override
+  String get retryCheck => 'Retry';
+
+  @override
+  String get contactSupportTeam => 'Contact Support';
+
+  @override
+  String get logoutConfirmTitle => 'Logout';
+
+  @override
+  String get logoutConfirmMessage => 'Are you sure you want to log out?';
 }

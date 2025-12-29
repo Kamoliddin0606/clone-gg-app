@@ -737,5 +737,23 @@
         "type": "String"
       }
     }
-  }
+  },
+  "securityCheck": "Security Check",
+  "securityCheckLoading": "Loading...",
+  "securityCheckVerifying": "Security verification...",
+  "securityCheckAllowed": "Access granted",
+  "securityCheckBlocked": "Access denied",
+  "securityCheckError": "An error occurred",
+  "securityCheckLogin": "Signing in...",
+  "accessDenied": "Access Denied",
+  "accessDeniedMessage": "Your access to this application has been blocked.",
+  "accessBlockedReasonAccountBound": "This account is linked to another device",
+  "accessBlockedReasonDeviceBound": "This device has another account",
+  "accessBlockedReasonHighRisk": "Device does not meet security requirements",
+  "accessBlockedReasonPolicyViolation": "Security policy violated",
+  "accessBlockedReasonUnknown": "Unknown reason",
+  "retryCheck": "Retry",
+  "contactSupportTeam": "Contact Support",
+  "logoutConfirmTitle": "Logout",
+  "logoutConfirmMessage": "Are you sure you want to log out?"
 }

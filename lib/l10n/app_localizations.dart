@@ -3546,6 +3546,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Debt: {amount}'**
   String debtAmount(String amount);
+
+  /// No description provided for @securityCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Security Check'**
+  String get securityCheck;
+
+  /// No description provided for @securityCheckLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get securityCheckLoading;
+
+  /// No description provided for @securityCheckVerifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Security verification...'**
+  String get securityCheckVerifying;
+
+  /// No description provided for @securityCheckAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Access granted'**
+  String get securityCheckAllowed;
+
+  /// No description provided for @securityCheckBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Access denied'**
+  String get securityCheckBlocked;
+
+  /// No description provided for @securityCheckError.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred'**
+  String get securityCheckError;
+
+  /// No description provided for @securityCheckLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in...'**
+  String get securityCheckLogin;
+
+  /// No description provided for @accessDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Denied'**
+  String get accessDenied;
+
+  /// No description provided for @accessDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your access to this application has been blocked.'**
+  String get accessDeniedMessage;
+
+  /// No description provided for @accessBlockedReasonAccountBound.
+  ///
+  /// In en, this message translates to:
+  /// **'This account is linked to another device'**
+  String get accessBlockedReasonAccountBound;
+
+  /// No description provided for @accessBlockedReasonDeviceBound.
+  ///
+  /// In en, this message translates to:
+  /// **'This device has another account'**
+  String get accessBlockedReasonDeviceBound;
+
+  /// No description provided for @accessBlockedReasonHighRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Device does not meet security requirements'**
+  String get accessBlockedReasonHighRisk;
+
+  /// No description provided for @accessBlockedReasonPolicyViolation.
+  ///
+  /// In en, this message translates to:
+  /// **'Security policy violated'**
+  String get accessBlockedReasonPolicyViolation;
+
+  /// No description provided for @accessBlockedReasonUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown reason'**
+  String get accessBlockedReasonUnknown;
+
+  /// No description provided for @retryCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retryCheck;
+
+  /// No description provided for @contactSupportTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Support'**
+  String get contactSupportTeam;
+
+  /// No description provided for @logoutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get logoutConfirmTitle;
+
+  /// No description provided for @logoutConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out?'**
+  String get logoutConfirmMessage;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -294,7 +294,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 themeMode: themeMode,
                 locale: localeProvider.locale,
                 onGenerateRoute: AppRouter.generateRoute,
-                initialRoute: AppRouter.permissionCheckRoute,
+                initialRoute: AppRouter.securityCheckRoute,
                 localizationsDelegates: AppLocalizations.localizationsDelegates,
                 supportedLocales: AppLocalizations.supportedLocales,
               );

@@ -737,5 +737,23 @@
         "type": "String"
       }
     }
-  }
+  },
+  "securityCheck": "Xavfsizlik tekshiruvi",
+  "securityCheckLoading": "Yuklanmoqda...",
+  "securityCheckVerifying": "Xavfsizlik tekshiruvi...",
+  "securityCheckAllowed": "Ruxsat berildi",
+  "securityCheckBlocked": "Ruxsat berilmadi",
+  "securityCheckError": "Xatolik yuz berdi",
+  "securityCheckLogin": "Tizimga kirish...",
+  "accessDenied": "Ruxsat berilmadi",
+  "accessDeniedMessage": "Ushbu ilovaga kirishingiz bloklangan.",
+  "accessBlockedReasonAccountBound": "Bu hisob boshqa qurilmaga bog'langan",
+  "accessBlockedReasonDeviceBound": "Bu qurilmada boshqa hisob mavjud",
+  "accessBlockedReasonHighRisk": "Qurilma xavfsizlik talablariga javob bermaydi",
+  "accessBlockedReasonPolicyViolation": "Xavfsizlik siyosati buzilgan",
+  "accessBlockedReasonUnknown": "Noma'lum sabab",
+  "retryCheck": "Qayta tekshirish",
+  "contactSupportTeam": "Support bilan bog'lanish",
+  "logoutConfirmTitle": "Chiqish",
+  "logoutConfirmMessage": "Haqiqatan ham tizimdan chiqmoqchimisiz?"
 }

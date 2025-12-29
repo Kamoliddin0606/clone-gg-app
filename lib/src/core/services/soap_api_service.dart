@@ -1934,4 +1934,169 @@ class SoapApiService {
       throw Exception('Foydalanuvchi tashkilotlarini olishda xatolik: $e');
     }
   }
+
+  // ===========================================================================
+  // DEVICE & ACCOUNT ACCESS CHECK
+  // ===========================================================================
+
+  /// Check device and account access on startup
+  /// 
+  /// Bu metod ilova ishga tushganda qurilma va account bog'liqligini tekshiradi.
+  /// Server ALLOW yoki BLOCK qaytaradi.
+  /// 
+  /// Parameters:
+  /// - [userId] - Foydalanuvchi identifikatori (userCode)
+  /// - [localUuid] - Local UUID (flutter_secure_storage dan)
+  /// - [appDeviceId] - Qurilma identifikatori (androidId/identifierForVendor)
+  /// - [platform] - Platforma (Android/iOS)
+  /// - [brand] - Brend (Samsung, Xiaomi, Apple)
+  /// - [model] - Model (Galaxy S21, iPhone 13)
+  /// - [osVersion] - OS versiyasi
+  /// - [sdk] - SDK versiyasi (faqat Android)
+  /// - [appVersion] - Ilova versiyasi
+  /// - [deviceFingerprint] - Device fingerprint (Android)
+  Future<Map<String, dynamic>> checkAccessOnStartup({
+    required String userId,
+    required String localUuid,
+    String? appDeviceId,
+    required String platform,
+    required String brand,
+    required String model,
+    required String osVersion,
+    String? sdk,
+    required String appVersion,
+    String? deviceFingerprint,
+  }) async {
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:CheckAccessOnStartup>
+         <sam:UserId>$userId</sam:UserId>
+         <sam:LocalUUID>$localUuid</sam:LocalUUID>
+         <sam:AppDeviceId>${appDeviceId ?? ''}</sam:AppDeviceId>
+         <sam:Platform>$platform</sam:Platform>
+         <sam:Brand>$brand</sam:Brand>
+         <sam:Model>$model</sam:Model>
+         <sam:OSVersion>$osVersion</sam:OSVersion>
+         <sam:SDK>${sdk ?? ''}</sam:SDK>
+         <sam:AppVersion>$appVersion</sam:AppVersion>
+         <sam:DeviceFingerprint>${deviceFingerprint ?? ''}</sam:DeviceFingerprint>
+      </sam:CheckAccessOnStartup>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      if (kDebugMode) {
+        print('SOAP API: CheckAccessOnStartup for user: $userId, platform: $platform');
+      }
+
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      if (kDebugMode) {
+        print('SOAP API: CheckAccessOnStartup response received');
+      }
+
+      final document = XmlDocument.parse(response.data);
+      final returnElement = document.findAllElements('m:return').firstOrNull;
+
+      if (returnElement == null) {
+        // Agar server javob bermasa, default ALLOW qaytarish
+        if (kDebugMode) {
+          print('SOAP API: No return element found, defaulting to ALLOW');
+        }
+        return {
+          'status': 'ALLOW',
+          'riskScore': 0,
+          'reason': null,
+          'message': null,
+        };
+      }
+
+      // Parse response
+      final status = _getElementText(returnElement, 'm:Status') ?? 'ALLOW';
+      final riskScoreText = _getElementText(returnElement, 'm:RiskScore');
+      final reason = _getElementText(returnElement, 'm:Reason');
+      final message = _getElementText(returnElement, 'm:Message');
+
+      if (kDebugMode) {
+        print('SOAP API: CheckAccessOnStartup result - Status: $status, RiskScore: $riskScoreText, Reason: $reason');
+      }
+
+      return {
+        'status': status,
+        'riskScore': riskScoreText != null ? int.tryParse(riskScoreText) : null,
+        'reason': reason,
+        'message': message,
+      };
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        print('SOAP API: DioException in CheckAccessOnStartup: ${e.message}');
+        print('SOAP API: Response: ${e.response?.data}');
+      }
+      
+      // Server 500 xatosi - metod mavjud emas yoki server xatosi
+      // Bu holatda foydalanuvchini bloklash emas, davom etish kerak
+      if (e.response?.statusCode == 500) {
+        if (kDebugMode) {
+          print('SOAP API: Server error 500, defaulting to ALLOW (method may not exist on server)');
+        }
+        return {
+          'status': 'ALLOW',
+          'riskScore': 0,
+          'reason': null,
+          'message': 'Server xatosi - tekshiruv o\'tkazib yuborildi',
+        };
+      }
+      
+      // Tarmoq xatosi (connection timeout, no internet)
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        if (kDebugMode) {
+          print('SOAP API: Network error, defaulting to ALLOW for offline mode');
+        }
+        return {
+          'status': 'ALLOW',
+          'riskScore': 0,
+          'reason': null,
+          'message': 'Offline rejim - tekshiruv o\'tkazib yuborildi',
+        };
+      }
+      
+      // Boshqa xatolar uchun ham ALLOW qaytarish
+      // Foydalanuvchini bloklash emas
+      if (kDebugMode) {
+        print('SOAP API: Other DioException, defaulting to ALLOW');
+      }
+      return {
+        'status': 'ALLOW',
+        'riskScore': 0,
+        'reason': null,
+        'message': 'Xatolik - tekshiruv o\'tkazib yuborildi',
+      };
+    } catch (e) {
+      if (kDebugMode) {
+        print('SOAP API: Error in CheckAccessOnStartup: $e');
+      }
+      // Har qanday xatolikda foydalanuvchini bloklash emas
+      return {
+        'status': 'ALLOW',
+        'riskScore': 0,
+        'reason': null,
+        'message': 'Xatolik - tekshiruv o\'tkazib yuborildi',
+      };
+    }
+  }
 }

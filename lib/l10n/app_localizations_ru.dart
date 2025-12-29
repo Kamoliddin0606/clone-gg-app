@@ -1762,4 +1762,58 @@ class AppLocalizationsRu extends AppLocalizations {
   String debtAmount(String amount) {
     return 'Долг: $amount';
   }
+
+  @override
+  String get securityCheck => 'Проверка безопасности';
+
+  @override
+  String get securityCheckLoading => 'Загрузка...';
+
+  @override
+  String get securityCheckVerifying => 'Проверка безопасности...';
+
+  @override
+  String get securityCheckAllowed => 'Доступ разрешен';
+
+  @override
+  String get securityCheckBlocked => 'Доступ запрещен';
+
+  @override
+  String get securityCheckError => 'Произошла ошибка';
+
+  @override
+  String get securityCheckLogin => 'Вход в систему...';
+
+  @override
+  String get accessDenied => 'Доступ запрещен';
+
+  @override
+  String get accessDeniedMessage => 'Ваш доступ к этому приложению заблокирован.';
+
+  @override
+  String get accessBlockedReasonAccountBound => 'Этот аккаунт привязан к другому устройству';
+
+  @override
+  String get accessBlockedReasonDeviceBound => 'На этом устройстве есть другой аккаунт';
+
+  @override
+  String get accessBlockedReasonHighRisk => 'Устройство не соответствует требованиям безопасности';
+
+  @override
+  String get accessBlockedReasonPolicyViolation => 'Нарушение политики безопасности';
+
+  @override
+  String get accessBlockedReasonUnknown => 'Неизвестная причина';
+
+  @override
+  String get retryCheck => 'Повторить проверку';
+
+  @override
+  String get contactSupportTeam => 'Связаться с поддержкой';
+
+  @override
+  String get logoutConfirmTitle => 'Выход';
+
+  @override
+  String get logoutConfirmMessage => 'Вы действительно хотите выйти из системы?';
 }

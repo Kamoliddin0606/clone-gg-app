@@ -8,6 +8,7 @@ import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -40,6 +41,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // Validate user data with database after successful login
       await _validateAndSyncUserData(user);
+
+      // =========================================================================
+      // REST API Token olish - Background services uchun kerak
+      // =========================================================================
+      await _obtainRestApiTokens(event.username, event.password);
 
       // =========================================================================
       // Background Location Tracking - login muvaffaqiyatli bo'lgandan keyin
@@ -208,6 +214,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
       // Xato bo'lsa ham logout qilish
       emit(const LogoutSuccess());
+    }
+  }
+
+  /// REST API tokenlarini olish
+  /// 
+  /// Bu metod login muvaffaqiyatli bo'lgandan keyin chaqiriladi.
+  /// 1C-Login endpointi orqali access va refresh tokenlarni oladi.
+  /// BackgroundLocationTrackingService va boshqa REST API servislar uchun kerak.
+  Future<void> _obtainRestApiTokens(String username, String password) async {
+    try {
+      if (kDebugMode) {
+        print('AuthBloc: Obtaining REST API tokens via 1C-Login...');
+      }
+
+      final tokenService = sl<TokenService>();
+      
+      // 1C-Login orqali tokenlarni olish
+      final success = await tokenService.authenticateWith1CLogin(
+        login: username,
+        password: password,
+      );
+      
+      if (kDebugMode) {
+        if (success) {
+          print('AuthBloc: REST API tokens obtained successfully');
+        } else {
+          print('AuthBloc: Failed to obtain REST API tokens (non-critical)');
+        }
+      }
+    } catch (e) {
+      // Log the error but don't fail the login process
+      if (kDebugMode) {
+        print('AuthBloc: Error obtaining REST API tokens: $e');
+      }
+      // Continue with login success - REST API tokens are not critical for basic login
     }
   }
 

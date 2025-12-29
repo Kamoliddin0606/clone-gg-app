@@ -737,5 +737,23 @@
         "type": "String"
       }
     }
-  }
+  },
+  "securityCheck": "Проверка безопасности",
+  "securityCheckLoading": "Загрузка...",
+  "securityCheckVerifying": "Проверка безопасности...",
+  "securityCheckAllowed": "Доступ разрешен",
+  "securityCheckBlocked": "Доступ запрещен",
+  "securityCheckError": "Произошла ошибка",
+  "securityCheckLogin": "Вход в систему...",
+  "accessDenied": "Доступ запрещен",
+  "accessDeniedMessage": "Ваш доступ к этому приложению заблокирован.",
+  "accessBlockedReasonAccountBound": "Этот аккаунт привязан к другому устройству",
+  "accessBlockedReasonDeviceBound": "На этом устройстве есть другой аккаунт",
+  "accessBlockedReasonHighRisk": "Устройство не соответствует требованиям безопасности",
+  "accessBlockedReasonPolicyViolation": "Нарушение политики безопасности",
+  "accessBlockedReasonUnknown": "Неизвестная причина",
+  "retryCheck": "Повторить проверку",
+  "contactSupportTeam": "Связаться с поддержкой",
+  "logoutConfirmTitle": "Выход",
+  "logoutConfirmMessage": "Вы действительно хотите выйти из системы?"
 }

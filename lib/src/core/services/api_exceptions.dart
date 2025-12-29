@@ -48,3 +48,22 @@ class SoapFaultException implements Exception {
   @override
   String toString() => message;
 }
+
+class ConnectivityException implements Exception {
+  final String message;
+  ConnectivityException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class AccessBlockedException implements Exception {
+  final String message;
+  final String? reason;
+  final int? riskScore;
+
+  AccessBlockedException(this.message, {this.reason, this.riskScore});
+
+  @override
+  String toString() => message;
+}

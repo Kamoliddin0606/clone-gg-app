@@ -4,6 +4,7 @@ import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrato
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
 import 'package:gloria_marketing_flutter/src/core/utils/sync_helpers.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/group_sync_card.dart';
 
@@ -43,6 +44,10 @@ class _DataSyncTabState extends State<DataSyncTab>
   int _bgSyncInterval = 6;
   int? _bgSyncCustomMinutes;
   final TextEditingController _customMinutesController = TextEditingController();
+  
+  // Client Balance Cache state
+  int _balanceCacheCount = 0;
+  bool _isClearingBalanceCache = false;
 
   @override
   void initState() {
@@ -71,9 +76,78 @@ class _DataSyncTabState extends State<DataSyncTab>
     if (_bgSyncCustomMinutes != null) {
       _customMinutesController.text = _bgSyncCustomMinutes.toString();
     }
+    
+    // Load balance cache count
+    if (sl.isRegistered<ClientBalanceService>()) {
+      _balanceCacheCount = await sl<ClientBalanceService>().getBalanceCount();
+    }
 
     if (mounted) {
       setState(() {});
+    }
+  }
+  
+  /// Clear all client balance cache
+  Future<void> _clearBalanceCache() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Balans keshini tozalash'),
+          ],
+        ),
+        content: Text(
+          'Barcha mijozlar balans ma\'lumotlari o\'chiriladi. '
+          'Keyingi safar balans ko\'rilganda qayta yuklanadi.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Bekor qilish'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Tozalash', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed != true) return;
+    
+    setState(() => _isClearingBalanceCache = true);
+    
+    try {
+      if (sl.isRegistered<ClientBalanceService>()) {
+        await sl<ClientBalanceService>().clearAllBalances();
+        _balanceCacheCount = 0;
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Balans keshi tozalandi'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Xatolik: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isClearingBalanceCache = false);
+      }
     }
   }
 
@@ -386,9 +460,14 @@ class _DataSyncTabState extends State<DataSyncTab>
                 ),
               ),
 
-              // Bottom padding
+              // Background sync settings
               SliverToBoxAdapter(
                 child: _buildBackgroundSyncSettings(theme, colorScheme),
+              ),
+
+              // Balance cache management
+              SliverToBoxAdapter(
+                child: _buildBalanceCacheSettings(theme, colorScheme),
               ),
 
               // Bottom padding
@@ -399,6 +478,79 @@ class _DataSyncTabState extends State<DataSyncTab>
           ),
         );
       },
+    );
+  }
+
+  /// Build balance cache management section
+  Widget _buildBalanceCacheSettings(ThemeData theme, ColorScheme colorScheme) {
+    return Container(
+      margin: EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.account_balance_wallet_outlined, color: colorScheme.primary, size: 24),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Mijoz Balansi Keshi',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '$_balanceCacheCount ta mijoz balansi saqlangan',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Mijozlar balans ma\'lumotlari lokal keshda saqlanadi. '
+            'Agar ma\'lumotlar eskirgan bo\'lsa, keshni tozalashingiz mumkin.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isClearingBalanceCache ? null : _clearBalanceCache,
+              icon: _isClearingBalanceCache
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(Icons.delete_outline, color: Colors.red),
+              label: Text(
+                _isClearingBalanceCache ? 'Tozalanmoqda...' : 'Keshni tozalash',
+                style: TextStyle(color: _isClearingBalanceCache ? null : Colors.red),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.red.withOpacity(0.5)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

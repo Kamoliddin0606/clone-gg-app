@@ -542,5 +542,200 @@
   "syncErrorUserNotFound": "Foydalanuvchi kodi topilmadi",
   "syncAlreadyInProgress": "Sinxronizatsiya allaqachon davom etmoqda",
   "syncCompleted": "Ma'lumotlar muvaffaqiyatli yangilandi",
-  "syncError": "Sinxronizatsiyada xatolik yuz berdi"
+  "syncError": "Sinxronizatsiyada xatolik yuz berdi",
+  "clientBalance": "Mijoz balansi",
+  "clientBalanceDetails": "Balans tafsilotlari",
+  "clientIsDebtor": "Mijoz qarzdor",
+  "clientHasOverpayment": "Ortiqcha to'lov",
+  "balanceIsZero": "Balans nolda",
+  "totalDebt": "Jami qarzdorlik",
+  "totalPayment": "Jami to'lov",
+  "totalOrder": "Jami buyurtma",
+  "unpaidOrders": "To'lanmagan buyurtmalar",
+  "overdueOrders": "Muddati o'tgan buyurtmalar",
+  "balanceStatus": "Balans holati",
+  "contractsTab": "Shartnomalar",
+  "ordersTab": "Buyurtmalar",
+  "overviewTab": "Umumiy",
+  "paymentAndDebtRatio": "To'lov va qarzdorlik nisbati",
+  "orderAndPaymentRatio": "Buyurtma va to'lov nisbati",
+  "paid": "To'langan",
+  "partiallyPaid": "Qisman to'langan",
+  "unpaid": "To'lanmagan",
+  "overdueDays": "Muddati {days} kun o'tgan",
+  "@overdueDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "refreshAfterSeconds": "{seconds} soniyadan keyin yangilash",
+  "@refreshAfterSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "balanceUpdated": "Yangilangan: {date}",
+  "@balanceUpdated": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noBalanceData": "Balans ma'lumotlari topilmadi",
+  "balanceLoadError": "Balansni yuklashda xatolik",
+  "balanceServiceNotAvailable": "Balans xizmati mavjud emas",
+  "clientInnNotFound": "Mijoz INN raqami topilmadi",
+  "statistics": "Statistika",
+  "contractsCount": "Shartnomalar soni",
+  "ordersCount": "Buyurtmalar soni",
+  "contract": "Shartnoma",
+  "order": "Buyurtma",
+  "overpayment": "Ortiqcha to'lov",
+  "debt": "Qarzdorlik",
+  "debtAndOverpaymentRatio": "Qarzdorlik va ortiqcha to'lov nisbati",
+  "debtor": "Qarzdor",
+  "excess": "Ortiqcha",
+  "orderAmountLabel": "Buyurtma",
+  "paidAmountLabel": "To'langan",
+  "debtLabel": "Qarz",
+  "excessLabel": "Ortiqcha",
+  "ordersStatus": "Buyurtmalar holati",
+  "clearBalanceCache": "Balans keshini tozalash",
+  "clearBalanceCacheConfirm": "Barcha keshlangan balans ma'lumotlarini tozalashni xohlaysizmi?",
+  "balanceCacheCleared": "Balans keshi tozalandi",
+  "networkError": "Tarmoq xatosi. Internetni tekshiring.",
+  "timeoutError": "So'rov vaqti tugadi. Qayta urinib ko'ring.",
+  "dataNotFound": "Ma'lumot topilmadi.",
+  "invalidDataError": "Noto'g'ri ma'lumot olindi.",
+  "unknownBalanceError": "Noma'lum xatolik yuz berdi.",
+  "retryButton": "Qayta urinish",
+  "balanceFor": "Balans: {name}",
+  "@balanceFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewTabShort": "Umumiy",
+  "contractsTabShort": "Shartnomalar",
+  "ordersTabShort": "Buyurtmalar",
+  "updatedAt": "Yangilangan: {date} {time}",
+  "@updatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "totalOrdered": "Jami buyurtma",
+  "totalPaid": "Jami to'lov",
+  "contractsCountLabel": "Shartnomalar soni",
+  "ordersCountLabel": "Buyurtmalar soni",
+  "unpaidOrdersLabel": "To'lanmagan buyurtmalar",
+  "partiallyPaidLabel": "Qisman to'langan",
+  "overdueLabel": "Muddati o'tgan",
+  "contractWithCode": "Shartnoma: {code}",
+  "@contractWithCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "totalSummary": "Jami",
+  "paidSummary": "To'langan",
+  "partialSummary": "Qisman",
+  "unpaidSummary": "To'lanmagan",
+  "excessSummary": "Ortiqcha",
+  "ordersWithCount": "Buyurtmalar ({count})",
+  "@ordersWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "overpaymentWithCount": "Ortiqcha to'lovlar ({count})",
+  "@overpaymentWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderWithNumber": "Buyurtma: {number}",
+  "@orderWithNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "noDataAvailable": "Ma'lumot yo'q",
+  "noContractsFound": "Shartnomalar yo'q",
+  "noOrdersFound": "Buyurtmalar yo'q",
+  "paidLabel": "To'langan",
+  "debtLabelChart": "Qarzdorlik",
+  "paymentLabel": "To'lov",
+  "partialLabel": "Qisman",
+  "unpaidLabel": "To'lanmagan",
+  "countItems": "{count} ta",
+  "@countItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contractDialog": "Shartnoma",
+  "codeLabel": "Kod: {code}",
+  "@codeLabel": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "projectLabel": "Loyiha: {name}",
+  "@projectLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "idLabel": "ID: {id}",
+  "@idLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "closeButton": "Yopish",
+  "paymentAmount": "To'lov: {amount}",
+  "@paymentAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "debtAmount": "Qarz: {amount}",
+  "@debtAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  }
 }

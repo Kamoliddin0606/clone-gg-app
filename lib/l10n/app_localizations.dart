@@ -2110,8 +2110,8 @@ abstract class AppLocalizations {
   /// No description provided for @updatedAt.
   ///
   /// In en, this message translates to:
-  /// **'Updated At'**
-  String get updatedAt;
+  /// **'Updated: {date} {time}'**
+  String updatedAt(String date, String time);
 
   /// No description provided for @totalPercent.
   ///
@@ -2734,7 +2734,7 @@ abstract class AppLocalizations {
   /// No description provided for @ordersCount.
   ///
   /// In en, this message translates to:
-  /// **'Orders count'**
+  /// **'Orders Count'**
   String get ordersCount;
 
   /// No description provided for @orderNumberPrefix.
@@ -3036,6 +3036,516 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Data updated successfully'**
   String get syncCompleted;
+
+  /// No description provided for @clientBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Balance'**
+  String get clientBalance;
+
+  /// No description provided for @clientBalanceDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance Details'**
+  String get clientBalanceDetails;
+
+  /// No description provided for @clientIsDebtor.
+  ///
+  /// In en, this message translates to:
+  /// **'Client is debtor'**
+  String get clientIsDebtor;
+
+  /// No description provided for @clientHasOverpayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpayment available'**
+  String get clientHasOverpayment;
+
+  /// No description provided for @balanceIsZero.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance is zero'**
+  String get balanceIsZero;
+
+  /// No description provided for @totalDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Debt'**
+  String get totalDebt;
+
+  /// No description provided for @totalPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Payment'**
+  String get totalPayment;
+
+  /// No description provided for @totalOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Order'**
+  String get totalOrder;
+
+  /// No description provided for @unpaidOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid Orders'**
+  String get unpaidOrders;
+
+  /// No description provided for @overdueOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue Orders'**
+  String get overdueOrders;
+
+  /// No description provided for @balanceStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance Status'**
+  String get balanceStatus;
+
+  /// No description provided for @contractsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Contracts'**
+  String get contractsTab;
+
+  /// No description provided for @ordersTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get ordersTab;
+
+  /// No description provided for @overviewTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get overviewTab;
+
+  /// No description provided for @paymentAndDebtRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment and Debt Ratio'**
+  String get paymentAndDebtRatio;
+
+  /// No description provided for @orderAndPaymentRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Order and Payment Ratio'**
+  String get orderAndPaymentRatio;
+
+  /// No description provided for @paid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get paid;
+
+  /// No description provided for @partiallyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Partially Paid'**
+  String get partiallyPaid;
+
+  /// No description provided for @unpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid'**
+  String get unpaid;
+
+  /// No description provided for @overdueDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue {days} days'**
+  String overdueDays(int days);
+
+  /// No description provided for @refreshAfterSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh after {seconds}s'**
+  String refreshAfterSeconds(int seconds);
+
+  /// No description provided for @balanceUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated: {date}'**
+  String balanceUpdated(String date);
+
+  /// No description provided for @noBalanceData.
+  ///
+  /// In en, this message translates to:
+  /// **'No balance data found'**
+  String get noBalanceData;
+
+  /// No description provided for @balanceLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading balance'**
+  String get balanceLoadError;
+
+  /// No description provided for @balanceServiceNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance service not available'**
+  String get balanceServiceNotAvailable;
+
+  /// No description provided for @clientInnNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Client INN not found'**
+  String get clientInnNotFound;
+
+  /// No description provided for @statistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get statistics;
+
+  /// No description provided for @contractsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Contracts Count'**
+  String get contractsCount;
+
+  /// No description provided for @contract.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract'**
+  String get contract;
+
+  /// No description provided for @order.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get order;
+
+  /// No description provided for @overpayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpayment'**
+  String get overpayment;
+
+  /// No description provided for @debt.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get debt;
+
+  /// No description provided for @debtAndOverpaymentRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt and Overpayment Ratio'**
+  String get debtAndOverpaymentRatio;
+
+  /// No description provided for @debtor.
+  ///
+  /// In en, this message translates to:
+  /// **'Debtor'**
+  String get debtor;
+
+  /// No description provided for @excess.
+  ///
+  /// In en, this message translates to:
+  /// **'Excess'**
+  String get excess;
+
+  /// No description provided for @orderAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get orderAmountLabel;
+
+  /// No description provided for @paidAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get paidAmountLabel;
+
+  /// No description provided for @debtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get debtLabel;
+
+  /// No description provided for @excessLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Excess'**
+  String get excessLabel;
+
+  /// No description provided for @ordersStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders Status'**
+  String get ordersStatus;
+
+  /// No description provided for @clearBalanceCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Balance Cache'**
+  String get clearBalanceCache;
+
+  /// No description provided for @clearBalanceCacheConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all cached balance data?'**
+  String get clearBalanceCacheConfirm;
+
+  /// No description provided for @balanceCacheCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance cache cleared'**
+  String get balanceCacheCleared;
+
+  /// No description provided for @networkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Please check your connection.'**
+  String get networkError;
+
+  /// No description provided for @timeoutError.
+  ///
+  /// In en, this message translates to:
+  /// **'Request timed out. Please try again.'**
+  String get timeoutError;
+
+  /// No description provided for @dataNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Data not found.'**
+  String get dataNotFound;
+
+  /// No description provided for @invalidDataError.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid data received.'**
+  String get invalidDataError;
+
+  /// No description provided for @unknownBalanceError.
+  ///
+  /// In en, this message translates to:
+  /// **'An unknown error occurred.'**
+  String get unknownBalanceError;
+
+  /// No description provided for @retryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retryButton;
+
+  /// No description provided for @balanceFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance: {name}'**
+  String balanceFor(String name);
+
+  /// No description provided for @overviewTabShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get overviewTabShort;
+
+  /// No description provided for @contractsTabShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Contracts'**
+  String get contractsTabShort;
+
+  /// No description provided for @ordersTabShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get ordersTabShort;
+
+  /// No description provided for @totalOrdered.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Orders'**
+  String get totalOrdered;
+
+  /// No description provided for @totalPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Paid'**
+  String get totalPaid;
+
+  /// No description provided for @contractsCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Contracts Count'**
+  String get contractsCountLabel;
+
+  /// No description provided for @ordersCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders Count'**
+  String get ordersCountLabel;
+
+  /// No description provided for @unpaidOrdersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid Orders'**
+  String get unpaidOrdersLabel;
+
+  /// No description provided for @partiallyPaidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Partially Paid'**
+  String get partiallyPaidLabel;
+
+  /// No description provided for @overdueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get overdueLabel;
+
+  /// No description provided for @contractWithCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract: {code}'**
+  String contractWithCode(String code);
+
+  /// No description provided for @totalSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get totalSummary;
+
+  /// No description provided for @paidSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get paidSummary;
+
+  /// No description provided for @partialSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial'**
+  String get partialSummary;
+
+  /// No description provided for @unpaidSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid'**
+  String get unpaidSummary;
+
+  /// No description provided for @excessSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Excess'**
+  String get excessSummary;
+
+  /// No description provided for @ordersWithCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders ({count})'**
+  String ordersWithCount(int count);
+
+  /// No description provided for @overpaymentWithCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpayments ({count})'**
+  String overpaymentWithCount(int count);
+
+  /// No description provided for @orderWithNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Order: {number}'**
+  String orderWithNumber(String number);
+
+  /// No description provided for @noDataAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No data available'**
+  String get noDataAvailable;
+
+  /// No description provided for @noContractsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No contracts found'**
+  String get noContractsFound;
+
+  /// No description provided for @noOrdersFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders found'**
+  String get noOrdersFound;
+
+  /// No description provided for @paidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get paidLabel;
+
+  /// No description provided for @debtLabelChart.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get debtLabelChart;
+
+  /// No description provided for @paymentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get paymentLabel;
+
+  /// No description provided for @partialLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial'**
+  String get partialLabel;
+
+  /// No description provided for @unpaidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid'**
+  String get unpaidLabel;
+
+  /// No description provided for @countItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items'**
+  String countItems(int count);
+
+  /// No description provided for @contractDialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract'**
+  String get contractDialog;
+
+  /// No description provided for @codeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Code: {code}'**
+  String codeLabel(String code);
+
+  /// No description provided for @projectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Project: {name}'**
+  String projectLabel(String name);
+
+  /// No description provided for @idLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ID: {id}'**
+  String idLabel(String id);
+
+  /// No description provided for @closeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closeButton;
+
+  /// No description provided for @paymentAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment: {amount}'**
+  String paymentAmount(String amount);
+
+  /// No description provided for @debtAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt: {amount}'**
+  String debtAmount(String amount);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -34,6 +34,7 @@ import 'map_pages/map_detail_page_osm.dart';
 import 'map_pages/map_detail_page_yandex.dart';
 import 'visit_steps_page.dart';
 import 'client_images_page.dart';
+import '../widgets/client_balance_widget_v2.dart';
 import 'dart:ui'; 
 import 'dart:async';
 import 'dart:io';
@@ -4378,21 +4379,22 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
     final cs = theme.colorScheme;
     final url = _safePhotoUrl(widget.tradingPoint);
 
-    return Column(
-      children: [
-        // Header image with client images carousel
-        _HeaderImage(
-          url: url,
-          visited: widget.tradingPoint.isVisited,
-          tradingPoint: widget.tradingPoint,
-          clientImages: _clientImages,
-          isLoadingImages: _isLoadingImages,
-        ),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Header image with client images carousel
+          _HeaderImage(
+            url: url,
+            visited: widget.tradingPoint.isVisited,
+            tradingPoint: widget.tradingPoint,
+            clientImages: _clientImages,
+            isLoadingImages: _isLoadingImages,
+          ),
 
-        // Actions below with marker rotation support
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Wrap(
+          // Actions below with marker rotation support
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
@@ -4424,22 +4426,33 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
               OutlinedButton.icon(
                 onPressed: () {}, // TODO: Navigate to reports
                 icon: const Icon(Icons.bar_chart, size: 18),
-                label: const Text('Hisobotlar'),
+                label: Text(AppLocalizations.of(context)!.reports),
               ),
               OutlinedButton.icon(
                 onPressed: () {}, // TODO: Debit-credit
                 icon: const Icon(Icons.account_balance, size: 18),
-                label: const Text('Debit-Kredit'),
+                label: Text(AppLocalizations.of(context)!.debitCredit),
               ),
-              OutlinedButton.icon(
-                onPressed: () {}, // TODO: Graph
-                icon: const Icon(Icons.show_chart, size: 18),
-                label: const Text('Grafik'),
-              ),
+              // OutlinedButton.icon(
+              //   onPressed: () {}, // TODO: Graph
+              //   icon: const Icon(Icons.show_chart, size: 18),
+              //   label: Text(AppLocalizations.of(context)!),
+              // ),
             ],
           ),
         ),
-      ],
+
+          // Mijoz balansi bo'limi
+          // Bu widget mijoz balansini ko'rsatadi va detallarga o'tish imkonini beradi
+          // Cubit bilan state management amalga oshiriladi
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ClientBalanceWidgetV2(
+              tradingPoint: widget.tradingPoint,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

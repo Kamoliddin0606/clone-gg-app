@@ -51,7 +51,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 24, // Incremented to version 24 for client_images schema alignment
+      version: 26, // Incremented to version 26 for client_balance-clients relationship
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -861,6 +861,126 @@ class ApiDatabaseService {
       await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_client_images_client_code_server_id ON client_images(client_code, server_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)');
     }
+    
+    // =========================================================================
+    // Version 25: Client Balance tables for storing balance data from buh2 API
+    // =========================================================================
+    if (oldVersion < 25) {
+      // Asosiy mijoz balansi jadvali
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS client_balances (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          inn TEXT UNIQUE NOT NULL,
+          balance REAL NOT NULL DEFAULT 0.0,
+          project_name TEXT,
+          last_updated TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      // Shartnomalar bo'yicha balans jadvali
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS client_balance_contracts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          inn TEXT NOT NULL,
+          project_name TEXT,
+          region TEXT,
+          tax_id TEXT,
+          customer_name TEXT,
+          contract_code TEXT,
+          payment_amount REAL NOT NULL DEFAULT 0.0,
+          debt_amount REAL NOT NULL DEFAULT 0.0,
+          contract_id TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (inn) REFERENCES client_balances (inn) ON DELETE CASCADE
+        )
+      ''');
+
+      // Buyurtmalar bo'yicha balans jadvali
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS client_balance_orders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          inn TEXT NOT NULL,
+          project_name TEXT,
+          region TEXT,
+          tax_id TEXT,
+          customer_name TEXT,
+          contract_code TEXT,
+          sales_channel TEXT,
+          order_number TEXT,
+          order_date TEXT,
+          order_amount REAL NOT NULL DEFAULT 0.0,
+          payment_amount REAL NOT NULL DEFAULT 0.0,
+          debt_amount REAL NOT NULL DEFAULT 0.0,
+          status TEXT,
+          overdue_days INTEGER NOT NULL DEFAULT 0,
+          contract_id TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (inn) REFERENCES client_balances (inn) ON DELETE CASCADE
+        )
+      ''');
+
+      // Indekslar
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_inn ON client_balances(inn)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_last_updated ON client_balances(last_updated)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_inn ON client_balance_contracts(inn)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_contract_code ON client_balance_contracts(contract_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_inn ON client_balance_orders(inn)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_number ON client_balance_orders(order_number)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_status ON client_balance_orders(status)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_date ON client_balance_orders(order_date)');
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Created client_balances tables (version 25)');
+      }
+    }
+
+    // =========================================================================
+    // Version 26: Add client_code relationship to clients table
+    // =========================================================================
+    if (oldVersion < 26) {
+      // client_balances jadvaliga client_code ustunini qo'shish
+      final balanceColumns = await db.rawQuery("PRAGMA table_info(client_balances)");
+      final hasClientCode = balanceColumns.any((col) => col['name'] == 'client_code');
+      if (!hasClientCode) {
+        await db.execute('ALTER TABLE client_balances ADD COLUMN client_code TEXT REFERENCES clients(code) ON DELETE CASCADE');
+        if (kDebugMode) {
+          print('ApiDatabaseService: Added client_code column to client_balances table');
+        }
+      }
+
+      // client_balance_contracts jadvaliga client_code ustunini qo'shish
+      final contractColumns = await db.rawQuery("PRAGMA table_info(client_balance_contracts)");
+      final contractHasClientCode = contractColumns.any((col) => col['name'] == 'client_code');
+      if (!contractHasClientCode) {
+        await db.execute('ALTER TABLE client_balance_contracts ADD COLUMN client_code TEXT REFERENCES clients(code) ON DELETE CASCADE');
+        if (kDebugMode) {
+          print('ApiDatabaseService: Added client_code column to client_balance_contracts table');
+        }
+      }
+
+      // client_balance_orders jadvaliga client_code ustunini qo'shish
+      final orderColumns = await db.rawQuery("PRAGMA table_info(client_balance_orders)");
+      final orderHasClientCode = orderColumns.any((col) => col['name'] == 'client_code');
+      if (!orderHasClientCode) {
+        await db.execute('ALTER TABLE client_balance_orders ADD COLUMN client_code TEXT REFERENCES clients(code) ON DELETE CASCADE');
+        if (kDebugMode) {
+          print('ApiDatabaseService: Added client_code column to client_balance_orders table');
+        }
+      }
+
+      // Indekslar yaratish
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_client_code ON client_balances(client_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_client_code ON client_balance_contracts(client_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_client_code ON client_balance_orders(client_code)');
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Added client_code relationships (version 26)');
+      }
+    }
   }
 
   Future<void> _createTables(Database db) async {
@@ -1529,6 +1649,86 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)');
+
+    // =========================================================================
+    // Client Balance tables - Mijoz balansi ma'lumotlari uchun
+    // =========================================================================
+    
+    // Asosiy mijoz balansi jadvali - clients table bilan bog'langan
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS client_balances (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        inn TEXT UNIQUE NOT NULL,
+        client_code TEXT,
+        balance REAL NOT NULL DEFAULT 0.0,
+        project_name TEXT,
+        last_updated TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE
+      )
+    ''');
+
+    // Shartnomalar bo'yicha balans jadvali - clients table bilan bog'langan
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS client_balance_contracts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        inn TEXT NOT NULL,
+        client_code TEXT,
+        project_name TEXT,
+        region TEXT,
+        tax_id TEXT,
+        customer_name TEXT,
+        contract_code TEXT,
+        payment_amount REAL NOT NULL DEFAULT 0.0,
+        debt_amount REAL NOT NULL DEFAULT 0.0,
+        contract_id TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (inn) REFERENCES client_balances (inn) ON DELETE CASCADE,
+        FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE
+      )
+    ''');
+
+    // Buyurtmalar bo'yicha balans jadvali - clients table bilan bog'langan
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS client_balance_orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        inn TEXT NOT NULL,
+        client_code TEXT,
+        project_name TEXT,
+        region TEXT,
+        tax_id TEXT,
+        customer_name TEXT,
+        contract_code TEXT,
+        sales_channel TEXT,
+        order_number TEXT,
+        order_date TEXT,
+        order_amount REAL NOT NULL DEFAULT 0.0,
+        payment_amount REAL NOT NULL DEFAULT 0.0,
+        debt_amount REAL NOT NULL DEFAULT 0.0,
+        status TEXT,
+        overdue_days INTEGER NOT NULL DEFAULT 0,
+        contract_id TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (inn) REFERENCES client_balances (inn) ON DELETE CASCADE,
+        FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE
+      )
+    ''');
+
+    // Client Balance indekslari
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_inn ON client_balances(inn)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_client_code ON client_balances(client_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_last_updated ON client_balances(last_updated)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_inn ON client_balance_contracts(inn)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_client_code ON client_balance_contracts(client_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_contract_code ON client_balance_contracts(contract_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_inn ON client_balance_orders(inn)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_client_code ON client_balance_orders(client_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_number ON client_balance_orders(order_number)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_status ON client_balance_orders(status)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_date ON client_balance_orders(order_date)');
 
     if (kDebugMode) print('API cache database tables created successfully');
   }

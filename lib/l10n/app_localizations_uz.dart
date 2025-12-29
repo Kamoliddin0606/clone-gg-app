@@ -1014,7 +1014,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get createdAt => 'Yaratilgan';
 
   @override
-  String get updatedAt => 'Yangilangan';
+  String updatedAt(String date, String time) {
+    return 'Yangilangan: $date $time';
+  }
 
   @override
   String get totalPercent => 'Jami %';
@@ -1477,4 +1479,287 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get syncCompleted => 'Ma\'lumotlar muvaffaqiyatli yangilandi';
+
+  @override
+  String get clientBalance => 'Mijoz balansi';
+
+  @override
+  String get clientBalanceDetails => 'Balans tafsilotlari';
+
+  @override
+  String get clientIsDebtor => 'Mijoz qarzdor';
+
+  @override
+  String get clientHasOverpayment => 'Ortiqcha to\'lov';
+
+  @override
+  String get balanceIsZero => 'Balans nolda';
+
+  @override
+  String get totalDebt => 'Jami qarzdorlik';
+
+  @override
+  String get totalPayment => 'Jami to\'lov';
+
+  @override
+  String get totalOrder => 'Jami buyurtma';
+
+  @override
+  String get unpaidOrders => 'To\'lanmagan buyurtmalar';
+
+  @override
+  String get overdueOrders => 'Muddati o\'tgan buyurtmalar';
+
+  @override
+  String get balanceStatus => 'Balans holati';
+
+  @override
+  String get contractsTab => 'Shartnomalar';
+
+  @override
+  String get ordersTab => 'Buyurtmalar';
+
+  @override
+  String get overviewTab => 'Umumiy';
+
+  @override
+  String get paymentAndDebtRatio => 'To\'lov va qarzdorlik nisbati';
+
+  @override
+  String get orderAndPaymentRatio => 'Buyurtma va to\'lov nisbati';
+
+  @override
+  String get paid => 'To\'langan';
+
+  @override
+  String get partiallyPaid => 'Qisman to\'langan';
+
+  @override
+  String get unpaid => 'To\'lanmagan';
+
+  @override
+  String overdueDays(int days) {
+    return 'Muddati $days kun o\'tgan';
+  }
+
+  @override
+  String refreshAfterSeconds(int seconds) {
+    return '$seconds soniyadan keyin yangilash';
+  }
+
+  @override
+  String balanceUpdated(String date) {
+    return 'Yangilangan: $date';
+  }
+
+  @override
+  String get noBalanceData => 'Balans ma\'lumotlari topilmadi';
+
+  @override
+  String get balanceLoadError => 'Balansni yuklashda xatolik';
+
+  @override
+  String get balanceServiceNotAvailable => 'Balans xizmati mavjud emas';
+
+  @override
+  String get clientInnNotFound => 'Mijoz INN raqami topilmadi';
+
+  @override
+  String get statistics => 'Statistika';
+
+  @override
+  String get contractsCount => 'Shartnomalar soni';
+
+  @override
+  String get contract => 'Shartnoma';
+
+  @override
+  String get order => 'Buyurtma';
+
+  @override
+  String get overpayment => 'Ortiqcha to\'lov';
+
+  @override
+  String get debt => 'Qarzdorlik';
+
+  @override
+  String get debtAndOverpaymentRatio => 'Qarzdorlik va ortiqcha to\'lov nisbati';
+
+  @override
+  String get debtor => 'Qarzdor';
+
+  @override
+  String get excess => 'Ortiqcha';
+
+  @override
+  String get orderAmountLabel => 'Buyurtma';
+
+  @override
+  String get paidAmountLabel => 'To\'langan';
+
+  @override
+  String get debtLabel => 'Qarz';
+
+  @override
+  String get excessLabel => 'Ortiqcha';
+
+  @override
+  String get ordersStatus => 'Buyurtmalar holati';
+
+  @override
+  String get clearBalanceCache => 'Balans keshini tozalash';
+
+  @override
+  String get clearBalanceCacheConfirm => 'Barcha keshlangan balans ma\'lumotlarini tozalashni xohlaysizmi?';
+
+  @override
+  String get balanceCacheCleared => 'Balans keshi tozalandi';
+
+  @override
+  String get networkError => 'Tarmoq xatosi. Internetni tekshiring.';
+
+  @override
+  String get timeoutError => 'So\'rov vaqti tugadi. Qayta urinib ko\'ring.';
+
+  @override
+  String get dataNotFound => 'Ma\'lumot topilmadi.';
+
+  @override
+  String get invalidDataError => 'Noto\'g\'ri ma\'lumot olindi.';
+
+  @override
+  String get unknownBalanceError => 'Noma\'lum xatolik yuz berdi.';
+
+  @override
+  String get retryButton => 'Qayta urinish';
+
+  @override
+  String balanceFor(String name) {
+    return 'Balans: $name';
+  }
+
+  @override
+  String get overviewTabShort => 'Umumiy';
+
+  @override
+  String get contractsTabShort => 'Shartnomalar';
+
+  @override
+  String get ordersTabShort => 'Buyurtmalar';
+
+  @override
+  String get totalOrdered => 'Jami buyurtma';
+
+  @override
+  String get totalPaid => 'Jami to\'lov';
+
+  @override
+  String get contractsCountLabel => 'Shartnomalar soni';
+
+  @override
+  String get ordersCountLabel => 'Buyurtmalar soni';
+
+  @override
+  String get unpaidOrdersLabel => 'To\'lanmagan buyurtmalar';
+
+  @override
+  String get partiallyPaidLabel => 'Qisman to\'langan';
+
+  @override
+  String get overdueLabel => 'Muddati o\'tgan';
+
+  @override
+  String contractWithCode(String code) {
+    return 'Shartnoma: $code';
+  }
+
+  @override
+  String get totalSummary => 'Jami';
+
+  @override
+  String get paidSummary => 'To\'langan';
+
+  @override
+  String get partialSummary => 'Qisman';
+
+  @override
+  String get unpaidSummary => 'To\'lanmagan';
+
+  @override
+  String get excessSummary => 'Ortiqcha';
+
+  @override
+  String ordersWithCount(int count) {
+    return 'Buyurtmalar ($count)';
+  }
+
+  @override
+  String overpaymentWithCount(int count) {
+    return 'Ortiqcha to\'lovlar ($count)';
+  }
+
+  @override
+  String orderWithNumber(String number) {
+    return 'Buyurtma: $number';
+  }
+
+  @override
+  String get noDataAvailable => 'Ma\'lumot yo\'q';
+
+  @override
+  String get noContractsFound => 'Shartnomalar yo\'q';
+
+  @override
+  String get noOrdersFound => 'Buyurtmalar yo\'q';
+
+  @override
+  String get paidLabel => 'To\'langan';
+
+  @override
+  String get debtLabelChart => 'Qarzdorlik';
+
+  @override
+  String get paymentLabel => 'To\'lov';
+
+  @override
+  String get partialLabel => 'Qisman';
+
+  @override
+  String get unpaidLabel => 'To\'lanmagan';
+
+  @override
+  String countItems(int count) {
+    return '$count ta';
+  }
+
+  @override
+  String get contractDialog => 'Shartnoma';
+
+  @override
+  String codeLabel(String code) {
+    return 'Kod: $code';
+  }
+
+  @override
+  String projectLabel(String name) {
+    return 'Loyiha: $name';
+  }
+
+  @override
+  String idLabel(String id) {
+    return 'ID: $id';
+  }
+
+  @override
+  String get closeButton => 'Yopish';
+
+  @override
+  String paymentAmount(String amount) {
+    return 'To\'lov: $amount';
+  }
+
+  @override
+  String debtAmount(String amount) {
+    return 'Qarz: $amount';
+  }
 }

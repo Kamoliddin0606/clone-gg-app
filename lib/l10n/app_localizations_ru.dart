@@ -1014,7 +1014,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createdAt => 'Создано';
 
   @override
-  String get updatedAt => 'Обновлено';
+  String updatedAt(String date, String time) {
+    return 'Обновлено: $date $time';
+  }
 
   @override
   String get totalPercent => 'Общий %';
@@ -1477,4 +1479,287 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncCompleted => 'Данные успешно обновлены';
+
+  @override
+  String get clientBalance => 'Баланс клиента';
+
+  @override
+  String get clientBalanceDetails => 'Детали баланса';
+
+  @override
+  String get clientIsDebtor => 'Клиент должник';
+
+  @override
+  String get clientHasOverpayment => 'Переплата';
+
+  @override
+  String get balanceIsZero => 'Баланс равен нулю';
+
+  @override
+  String get totalDebt => 'Общая задолженность';
+
+  @override
+  String get totalPayment => 'Общая оплата';
+
+  @override
+  String get totalOrder => 'Общий заказ';
+
+  @override
+  String get unpaidOrders => 'Неоплаченные заказы';
+
+  @override
+  String get overdueOrders => 'Просроченные заказы';
+
+  @override
+  String get balanceStatus => 'Статус баланса';
+
+  @override
+  String get contractsTab => 'Договоры';
+
+  @override
+  String get ordersTab => 'Заказы';
+
+  @override
+  String get overviewTab => 'Обзор';
+
+  @override
+  String get paymentAndDebtRatio => 'Соотношение оплат и долгов';
+
+  @override
+  String get orderAndPaymentRatio => 'Соотношение заказов и оплат';
+
+  @override
+  String get paid => 'Оплачено';
+
+  @override
+  String get partiallyPaid => 'Частично оплачено';
+
+  @override
+  String get unpaid => 'Не оплачено';
+
+  @override
+  String overdueDays(int days) {
+    return 'Просрочено $days дней';
+  }
+
+  @override
+  String refreshAfterSeconds(int seconds) {
+    return 'Обновить через $seconds сек';
+  }
+
+  @override
+  String balanceUpdated(String date) {
+    return 'Обновлено: $date';
+  }
+
+  @override
+  String get noBalanceData => 'Данные баланса не найдены';
+
+  @override
+  String get balanceLoadError => 'Ошибка загрузки баланса';
+
+  @override
+  String get balanceServiceNotAvailable => 'Сервис баланса недоступен';
+
+  @override
+  String get clientInnNotFound => 'ИНН клиента не найден';
+
+  @override
+  String get statistics => 'Статистика';
+
+  @override
+  String get contractsCount => 'Количество договоров';
+
+  @override
+  String get contract => 'Договор';
+
+  @override
+  String get order => 'Заказ';
+
+  @override
+  String get overpayment => 'Переплата';
+
+  @override
+  String get debt => 'Задолженность';
+
+  @override
+  String get debtAndOverpaymentRatio => 'Соотношение долга и переплаты';
+
+  @override
+  String get debtor => 'Должник';
+
+  @override
+  String get excess => 'Излишек';
+
+  @override
+  String get orderAmountLabel => 'Заказ';
+
+  @override
+  String get paidAmountLabel => 'Оплачено';
+
+  @override
+  String get debtLabel => 'Долг';
+
+  @override
+  String get excessLabel => 'Излишек';
+
+  @override
+  String get ordersStatus => 'Статус заказов';
+
+  @override
+  String get clearBalanceCache => 'Очистить кэш баланса';
+
+  @override
+  String get clearBalanceCacheConfirm => 'Очистить все кэшированные данные баланса?';
+
+  @override
+  String get balanceCacheCleared => 'Кэш баланса очищен';
+
+  @override
+  String get networkError => 'Ошибка сети. Проверьте подключение.';
+
+  @override
+  String get timeoutError => 'Время запроса истекло. Попробуйте снова.';
+
+  @override
+  String get dataNotFound => 'Данные не найдены.';
+
+  @override
+  String get invalidDataError => 'Получены некорректные данные.';
+
+  @override
+  String get unknownBalanceError => 'Произошла неизвестная ошибка.';
+
+  @override
+  String get retryButton => 'Повторить';
+
+  @override
+  String balanceFor(String name) {
+    return 'Баланс: $name';
+  }
+
+  @override
+  String get overviewTabShort => 'Обзор';
+
+  @override
+  String get contractsTabShort => 'Договоры';
+
+  @override
+  String get ordersTabShort => 'Заказы';
+
+  @override
+  String get totalOrdered => 'Всего заказов';
+
+  @override
+  String get totalPaid => 'Всего оплачено';
+
+  @override
+  String get contractsCountLabel => 'Количество договоров';
+
+  @override
+  String get ordersCountLabel => 'Количество заказов';
+
+  @override
+  String get unpaidOrdersLabel => 'Неоплаченные заказы';
+
+  @override
+  String get partiallyPaidLabel => 'Частично оплачено';
+
+  @override
+  String get overdueLabel => 'Просрочено';
+
+  @override
+  String contractWithCode(String code) {
+    return 'Договор: $code';
+  }
+
+  @override
+  String get totalSummary => 'Всего';
+
+  @override
+  String get paidSummary => 'Оплачено';
+
+  @override
+  String get partialSummary => 'Частично';
+
+  @override
+  String get unpaidSummary => 'Не оплачено';
+
+  @override
+  String get excessSummary => 'Излишек';
+
+  @override
+  String ordersWithCount(int count) {
+    return 'Заказы ($count)';
+  }
+
+  @override
+  String overpaymentWithCount(int count) {
+    return 'Переплаты ($count)';
+  }
+
+  @override
+  String orderWithNumber(String number) {
+    return 'Заказ: $number';
+  }
+
+  @override
+  String get noDataAvailable => 'Данные отсутствуют';
+
+  @override
+  String get noContractsFound => 'Договоры не найдены';
+
+  @override
+  String get noOrdersFound => 'Заказы не найдены';
+
+  @override
+  String get paidLabel => 'Оплачено';
+
+  @override
+  String get debtLabelChart => 'Задолженность';
+
+  @override
+  String get paymentLabel => 'Оплата';
+
+  @override
+  String get partialLabel => 'Частично';
+
+  @override
+  String get unpaidLabel => 'Не оплачено';
+
+  @override
+  String countItems(int count) {
+    return '$count шт';
+  }
+
+  @override
+  String get contractDialog => 'Договор';
+
+  @override
+  String codeLabel(String code) {
+    return 'Код: $code';
+  }
+
+  @override
+  String projectLabel(String name) {
+    return 'Проект: $name';
+  }
+
+  @override
+  String idLabel(String id) {
+    return 'ID: $id';
+  }
+
+  @override
+  String get closeButton => 'Закрыть';
+
+  @override
+  String paymentAmount(String amount) {
+    return 'Оплата: $amount';
+  }
+
+  @override
+  String debtAmount(String amount) {
+    return 'Долг: $amount';
+  }
 }

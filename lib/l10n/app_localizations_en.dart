@@ -1014,7 +1014,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createdAt => 'Created At';
 
   @override
-  String get updatedAt => 'Updated At';
+  String updatedAt(String date, String time) {
+    return 'Updated: $date $time';
+  }
 
   @override
   String get totalPercent => 'Total %';
@@ -1326,7 +1328,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageClientImages => 'Manage client images';
 
   @override
-  String get ordersCount => 'Orders count';
+  String get ordersCount => 'Orders Count';
 
   @override
   String get orderNumberPrefix => 'Order №';
@@ -1477,4 +1479,287 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncCompleted => 'Data updated successfully';
+
+  @override
+  String get clientBalance => 'Client Balance';
+
+  @override
+  String get clientBalanceDetails => 'Balance Details';
+
+  @override
+  String get clientIsDebtor => 'Client is debtor';
+
+  @override
+  String get clientHasOverpayment => 'Overpayment available';
+
+  @override
+  String get balanceIsZero => 'Balance is zero';
+
+  @override
+  String get totalDebt => 'Total Debt';
+
+  @override
+  String get totalPayment => 'Total Payment';
+
+  @override
+  String get totalOrder => 'Total Order';
+
+  @override
+  String get unpaidOrders => 'Unpaid Orders';
+
+  @override
+  String get overdueOrders => 'Overdue Orders';
+
+  @override
+  String get balanceStatus => 'Balance Status';
+
+  @override
+  String get contractsTab => 'Contracts';
+
+  @override
+  String get ordersTab => 'Orders';
+
+  @override
+  String get overviewTab => 'Overview';
+
+  @override
+  String get paymentAndDebtRatio => 'Payment and Debt Ratio';
+
+  @override
+  String get orderAndPaymentRatio => 'Order and Payment Ratio';
+
+  @override
+  String get paid => 'Paid';
+
+  @override
+  String get partiallyPaid => 'Partially Paid';
+
+  @override
+  String get unpaid => 'Unpaid';
+
+  @override
+  String overdueDays(int days) {
+    return 'Overdue $days days';
+  }
+
+  @override
+  String refreshAfterSeconds(int seconds) {
+    return 'Refresh after ${seconds}s';
+  }
+
+  @override
+  String balanceUpdated(String date) {
+    return 'Updated: $date';
+  }
+
+  @override
+  String get noBalanceData => 'No balance data found';
+
+  @override
+  String get balanceLoadError => 'Error loading balance';
+
+  @override
+  String get balanceServiceNotAvailable => 'Balance service not available';
+
+  @override
+  String get clientInnNotFound => 'Client INN not found';
+
+  @override
+  String get statistics => 'Statistics';
+
+  @override
+  String get contractsCount => 'Contracts Count';
+
+  @override
+  String get contract => 'Contract';
+
+  @override
+  String get order => 'Order';
+
+  @override
+  String get overpayment => 'Overpayment';
+
+  @override
+  String get debt => 'Debt';
+
+  @override
+  String get debtAndOverpaymentRatio => 'Debt and Overpayment Ratio';
+
+  @override
+  String get debtor => 'Debtor';
+
+  @override
+  String get excess => 'Excess';
+
+  @override
+  String get orderAmountLabel => 'Order';
+
+  @override
+  String get paidAmountLabel => 'Paid';
+
+  @override
+  String get debtLabel => 'Debt';
+
+  @override
+  String get excessLabel => 'Excess';
+
+  @override
+  String get ordersStatus => 'Orders Status';
+
+  @override
+  String get clearBalanceCache => 'Clear Balance Cache';
+
+  @override
+  String get clearBalanceCacheConfirm => 'Clear all cached balance data?';
+
+  @override
+  String get balanceCacheCleared => 'Balance cache cleared';
+
+  @override
+  String get networkError => 'Network error. Please check your connection.';
+
+  @override
+  String get timeoutError => 'Request timed out. Please try again.';
+
+  @override
+  String get dataNotFound => 'Data not found.';
+
+  @override
+  String get invalidDataError => 'Invalid data received.';
+
+  @override
+  String get unknownBalanceError => 'An unknown error occurred.';
+
+  @override
+  String get retryButton => 'Retry';
+
+  @override
+  String balanceFor(String name) {
+    return 'Balance: $name';
+  }
+
+  @override
+  String get overviewTabShort => 'Overview';
+
+  @override
+  String get contractsTabShort => 'Contracts';
+
+  @override
+  String get ordersTabShort => 'Orders';
+
+  @override
+  String get totalOrdered => 'Total Orders';
+
+  @override
+  String get totalPaid => 'Total Paid';
+
+  @override
+  String get contractsCountLabel => 'Contracts Count';
+
+  @override
+  String get ordersCountLabel => 'Orders Count';
+
+  @override
+  String get unpaidOrdersLabel => 'Unpaid Orders';
+
+  @override
+  String get partiallyPaidLabel => 'Partially Paid';
+
+  @override
+  String get overdueLabel => 'Overdue';
+
+  @override
+  String contractWithCode(String code) {
+    return 'Contract: $code';
+  }
+
+  @override
+  String get totalSummary => 'Total';
+
+  @override
+  String get paidSummary => 'Paid';
+
+  @override
+  String get partialSummary => 'Partial';
+
+  @override
+  String get unpaidSummary => 'Unpaid';
+
+  @override
+  String get excessSummary => 'Excess';
+
+  @override
+  String ordersWithCount(int count) {
+    return 'Orders ($count)';
+  }
+
+  @override
+  String overpaymentWithCount(int count) {
+    return 'Overpayments ($count)';
+  }
+
+  @override
+  String orderWithNumber(String number) {
+    return 'Order: $number';
+  }
+
+  @override
+  String get noDataAvailable => 'No data available';
+
+  @override
+  String get noContractsFound => 'No contracts found';
+
+  @override
+  String get noOrdersFound => 'No orders found';
+
+  @override
+  String get paidLabel => 'Paid';
+
+  @override
+  String get debtLabelChart => 'Debt';
+
+  @override
+  String get paymentLabel => 'Payment';
+
+  @override
+  String get partialLabel => 'Partial';
+
+  @override
+  String get unpaidLabel => 'Unpaid';
+
+  @override
+  String countItems(int count) {
+    return '$count items';
+  }
+
+  @override
+  String get contractDialog => 'Contract';
+
+  @override
+  String codeLabel(String code) {
+    return 'Code: $code';
+  }
+
+  @override
+  String projectLabel(String name) {
+    return 'Project: $name';
+  }
+
+  @override
+  String idLabel(String id) {
+    return 'ID: $id';
+  }
+
+  @override
+  String get closeButton => 'Close';
+
+  @override
+  String paymentAmount(String amount) {
+    return 'Payment: $amount';
+  }
+
+  @override
+  String debtAmount(String amount) {
+    return 'Debt: $amount';
+  }
 }

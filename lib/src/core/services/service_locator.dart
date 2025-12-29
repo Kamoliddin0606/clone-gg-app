@@ -20,6 +20,7 @@ import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_servi
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/sync_notification_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -157,6 +158,17 @@ Future<void> setupServiceLocator() async {
       prefs: sl<SharedPreferencesService>(),
       tokenService: sl<TokenService>(),
       dbService: sl<ApiDatabaseService>(),
+    ));
+  }
+
+  // ClientBalanceService - Mijoz balansi ma'lumotlarini olish va saqlash uchun
+  // SOAP API orqali http://kit.gloriya.uz:5443/gloriya_buh2/gloriya_buh2.1cws manzilidan
+  // balans ma'lumotlarini oladi. 10 soniyalik cooldown bilan yangilanadi.
+  if (!sl.isRegistered<ClientBalanceService>()) {
+    sl.registerLazySingleton<ClientBalanceService>(() => ClientBalanceService(
+      dio: Dio(), // Alohida Dio instance - boshqa interceptorlardan ta'sirlanmaydi
+      dbService: sl<ApiDatabaseService>(),
+      prefs: sl<SharedPreferencesService>(),
     ));
   }
 

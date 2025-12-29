@@ -542,5 +542,200 @@
   "syncErrorUserNotFound": "User code not found",
   "syncAlreadyInProgress": "Sync already in progress",
   "syncCompleted": "Data updated successfully",
-  "syncError": "Sync error occurred"
+  "syncError": "Sync error occurred",
+  "clientBalance": "Client Balance",
+  "clientBalanceDetails": "Balance Details",
+  "clientIsDebtor": "Client is debtor",
+  "clientHasOverpayment": "Overpayment available",
+  "balanceIsZero": "Balance is zero",
+  "totalDebt": "Total Debt",
+  "totalPayment": "Total Payment",
+  "totalOrder": "Total Order",
+  "unpaidOrders": "Unpaid Orders",
+  "overdueOrders": "Overdue Orders",
+  "balanceStatus": "Balance Status",
+  "contractsTab": "Contracts",
+  "ordersTab": "Orders",
+  "overviewTab": "Overview",
+  "paymentAndDebtRatio": "Payment and Debt Ratio",
+  "orderAndPaymentRatio": "Order and Payment Ratio",
+  "paid": "Paid",
+  "partiallyPaid": "Partially Paid",
+  "unpaid": "Unpaid",
+  "overdueDays": "Overdue {days} days",
+  "@overdueDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "refreshAfterSeconds": "Refresh after {seconds}s",
+  "@refreshAfterSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "balanceUpdated": "Updated: {date}",
+  "@balanceUpdated": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noBalanceData": "No balance data found",
+  "balanceLoadError": "Error loading balance",
+  "balanceServiceNotAvailable": "Balance service not available",
+  "clientInnNotFound": "Client INN not found",
+  "statistics": "Statistics",
+  "contractsCount": "Contracts Count",
+  "ordersCount": "Orders Count",
+  "contract": "Contract",
+  "order": "Order",
+  "overpayment": "Overpayment",
+  "debt": "Debt",
+  "debtAndOverpaymentRatio": "Debt and Overpayment Ratio",
+  "debtor": "Debtor",
+  "excess": "Excess",
+  "orderAmountLabel": "Order",
+  "paidAmountLabel": "Paid",
+  "debtLabel": "Debt",
+  "excessLabel": "Excess",
+  "ordersStatus": "Orders Status",
+  "clearBalanceCache": "Clear Balance Cache",
+  "clearBalanceCacheConfirm": "Clear all cached balance data?",
+  "balanceCacheCleared": "Balance cache cleared",
+  "networkError": "Network error. Please check your connection.",
+  "timeoutError": "Request timed out. Please try again.",
+  "dataNotFound": "Data not found.",
+  "invalidDataError": "Invalid data received.",
+  "unknownBalanceError": "An unknown error occurred.",
+  "retryButton": "Retry",
+  "balanceFor": "Balance: {name}",
+  "@balanceFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewTabShort": "Overview",
+  "contractsTabShort": "Contracts",
+  "ordersTabShort": "Orders",
+  "updatedAt": "Updated: {date} {time}",
+  "@updatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "totalOrdered": "Total Orders",
+  "totalPaid": "Total Paid",
+  "contractsCountLabel": "Contracts Count",
+  "ordersCountLabel": "Orders Count",
+  "unpaidOrdersLabel": "Unpaid Orders",
+  "partiallyPaidLabel": "Partially Paid",
+  "overdueLabel": "Overdue",
+  "contractWithCode": "Contract: {code}",
+  "@contractWithCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "totalSummary": "Total",
+  "paidSummary": "Paid",
+  "partialSummary": "Partial",
+  "unpaidSummary": "Unpaid",
+  "excessSummary": "Excess",
+  "ordersWithCount": "Orders ({count})",
+  "@ordersWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "overpaymentWithCount": "Overpayments ({count})",
+  "@overpaymentWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderWithNumber": "Order: {number}",
+  "@orderWithNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "noDataAvailable": "No data available",
+  "noContractsFound": "No contracts found",
+  "noOrdersFound": "No orders found",
+  "paidLabel": "Paid",
+  "debtLabelChart": "Debt",
+  "paymentLabel": "Payment",
+  "partialLabel": "Partial",
+  "unpaidLabel": "Unpaid",
+  "countItems": "{count} items",
+  "@countItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contractDialog": "Contract",
+  "codeLabel": "Code: {code}",
+  "@codeLabel": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "projectLabel": "Project: {name}",
+  "@projectLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "idLabel": "ID: {id}",
+  "@idLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "closeButton": "Close",
+  "paymentAmount": "Payment: {amount}",
+  "@paymentAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "debtAmount": "Debt: {amount}",
+  "@debtAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  }
 }

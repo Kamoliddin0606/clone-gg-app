@@ -542,5 +542,200 @@
   "syncErrorUserNotFound": "Код пользователя не найден",
   "syncAlreadyInProgress": "Синхронизация уже выполняется",
   "syncCompleted": "Данные успешно обновлены",
-  "syncError": "Ошибка синхронизации"
+  "syncError": "Ошибка синхронизации",
+  "clientBalance": "Баланс клиента",
+  "clientBalanceDetails": "Детали баланса",
+  "clientIsDebtor": "Клиент должник",
+  "clientHasOverpayment": "Переплата",
+  "balanceIsZero": "Баланс равен нулю",
+  "totalDebt": "Общая задолженность",
+  "totalPayment": "Общая оплата",
+  "totalOrder": "Общий заказ",
+  "unpaidOrders": "Неоплаченные заказы",
+  "overdueOrders": "Просроченные заказы",
+  "balanceStatus": "Статус баланса",
+  "contractsTab": "Договоры",
+  "ordersTab": "Заказы",
+  "overviewTab": "Обзор",
+  "paymentAndDebtRatio": "Соотношение оплат и долгов",
+  "orderAndPaymentRatio": "Соотношение заказов и оплат",
+  "paid": "Оплачено",
+  "partiallyPaid": "Частично оплачено",
+  "unpaid": "Не оплачено",
+  "overdueDays": "Просрочено {days} дней",
+  "@overdueDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "refreshAfterSeconds": "Обновить через {seconds} сек",
+  "@refreshAfterSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "balanceUpdated": "Обновлено: {date}",
+  "@balanceUpdated": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noBalanceData": "Данные баланса не найдены",
+  "balanceLoadError": "Ошибка загрузки баланса",
+  "balanceServiceNotAvailable": "Сервис баланса недоступен",
+  "clientInnNotFound": "ИНН клиента не найден",
+  "statistics": "Статистика",
+  "contractsCount": "Количество договоров",
+  "ordersCount": "Количество заказов",
+  "contract": "Договор",
+  "order": "Заказ",
+  "overpayment": "Переплата",
+  "debt": "Задолженность",
+  "debtAndOverpaymentRatio": "Соотношение долга и переплаты",
+  "debtor": "Должник",
+  "excess": "Излишек",
+  "orderAmountLabel": "Заказ",
+  "paidAmountLabel": "Оплачено",
+  "debtLabel": "Долг",
+  "excessLabel": "Излишек",
+  "ordersStatus": "Статус заказов",
+  "clearBalanceCache": "Очистить кэш баланса",
+  "clearBalanceCacheConfirm": "Очистить все кэшированные данные баланса?",
+  "balanceCacheCleared": "Кэш баланса очищен",
+  "networkError": "Ошибка сети. Проверьте подключение.",
+  "timeoutError": "Время запроса истекло. Попробуйте снова.",
+  "dataNotFound": "Данные не найдены.",
+  "invalidDataError": "Получены некорректные данные.",
+  "unknownBalanceError": "Произошла неизвестная ошибка.",
+  "retryButton": "Повторить",
+  "balanceFor": "Баланс: {name}",
+  "@balanceFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewTabShort": "Обзор",
+  "contractsTabShort": "Договоры",
+  "ordersTabShort": "Заказы",
+  "updatedAt": "Обновлено: {date} {time}",
+  "@updatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "totalOrdered": "Всего заказов",
+  "totalPaid": "Всего оплачено",
+  "contractsCountLabel": "Количество договоров",
+  "ordersCountLabel": "Количество заказов",
+  "unpaidOrdersLabel": "Неоплаченные заказы",
+  "partiallyPaidLabel": "Частично оплачено",
+  "overdueLabel": "Просрочено",
+  "contractWithCode": "Договор: {code}",
+  "@contractWithCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "totalSummary": "Всего",
+  "paidSummary": "Оплачено",
+  "partialSummary": "Частично",
+  "unpaidSummary": "Не оплачено",
+  "excessSummary": "Излишек",
+  "ordersWithCount": "Заказы ({count})",
+  "@ordersWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "overpaymentWithCount": "Переплаты ({count})",
+  "@overpaymentWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderWithNumber": "Заказ: {number}",
+  "@orderWithNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "noDataAvailable": "Данные отсутствуют",
+  "noContractsFound": "Договоры не найдены",
+  "noOrdersFound": "Заказы не найдены",
+  "paidLabel": "Оплачено",
+  "debtLabelChart": "Задолженность",
+  "paymentLabel": "Оплата",
+  "partialLabel": "Частично",
+  "unpaidLabel": "Не оплачено",
+  "countItems": "{count} шт",
+  "@countItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contractDialog": "Договор",
+  "codeLabel": "Код: {code}",
+  "@codeLabel": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "projectLabel": "Проект: {name}",
+  "@projectLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "idLabel": "ID: {id}",
+  "@idLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "closeButton": "Закрыть",
+  "paymentAmount": "Оплата: {amount}",
+  "@paymentAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "debtAmount": "Долг: {amount}",
+  "@debtAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  }
 }

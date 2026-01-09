@@ -3810,6 +3810,312 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No internet connection'**
   String get noInternetConnection;
+
+  /// No description provided for @createClientTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Client'**
+  String get createClientTitle;
+
+  /// No description provided for @createClientBasicInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Information'**
+  String get createClientBasicInfo;
+
+  /// No description provided for @createClientContactInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Information'**
+  String get createClientContactInfo;
+
+  /// No description provided for @createClientAddressInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get createClientAddressInfo;
+
+  /// No description provided for @createClientBankInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Details (optional)'**
+  String get createClientBankInfo;
+
+  /// No description provided for @createClientClientName.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Name'**
+  String get createClientClientName;
+
+  /// No description provided for @createClientClientNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Store or company name'**
+  String get createClientClientNameHint;
+
+  /// No description provided for @createClientSignboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Signboard'**
+  String get createClientSignboard;
+
+  /// No description provided for @createClientSignboardHint.
+  ///
+  /// In en, this message translates to:
+  /// **'External display name'**
+  String get createClientSignboardHint;
+
+  /// No description provided for @createClientInn.
+  ///
+  /// In en, this message translates to:
+  /// **'TIN (Tax ID)'**
+  String get createClientInn;
+
+  /// No description provided for @createClientInnHint.
+  ///
+  /// In en, this message translates to:
+  /// **'9 or 14 digits'**
+  String get createClientInnHint;
+
+  /// No description provided for @createClientTradePointType.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade Point Type'**
+  String get createClientTradePointType;
+
+  /// No description provided for @createClientSelectTradePointType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select trade point type'**
+  String get createClientSelectTradePointType;
+
+  /// No description provided for @createClientRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Region'**
+  String get createClientRegion;
+
+  /// No description provided for @createClientSelectRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Select region'**
+  String get createClientSelectRegion;
+
+  /// No description provided for @createClientContactPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Person'**
+  String get createClientContactPerson;
+
+  /// No description provided for @createClientContactPersonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Responsible person name'**
+  String get createClientContactPersonHint;
+
+  /// No description provided for @createClientPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get createClientPhone;
+
+  /// No description provided for @createClientPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'+998 XX XXX XX XX'**
+  String get createClientPhoneHint;
+
+  /// No description provided for @createClientResponsiblePhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Responsible Person Phone'**
+  String get createClientResponsiblePhone;
+
+  /// No description provided for @createClientResponsiblePhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional phone (optional)'**
+  String get createClientResponsiblePhoneHint;
+
+  /// No description provided for @createClientAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get createClientAddress;
+
+  /// No description provided for @createClientAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Full address'**
+  String get createClientAddressHint;
+
+  /// No description provided for @createClientDeliveryAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Address'**
+  String get createClientDeliveryAddress;
+
+  /// No description provided for @createClientDeliveryAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If different (optional)'**
+  String get createClientDeliveryAddressHint;
+
+  /// No description provided for @createClientLandmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Landmark'**
+  String get createClientLandmark;
+
+  /// No description provided for @createClientLandmarkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby recognizable place'**
+  String get createClientLandmarkHint;
+
+  /// No description provided for @createClientDirector.
+  ///
+  /// In en, this message translates to:
+  /// **'Director'**
+  String get createClientDirector;
+
+  /// No description provided for @createClientDirectorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name'**
+  String get createClientDirectorHint;
+
+  /// No description provided for @createClientMfo.
+  ///
+  /// In en, this message translates to:
+  /// **'MFO'**
+  String get createClientMfo;
+
+  /// No description provided for @createClientMfoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'5-digit bank code'**
+  String get createClientMfoHint;
+
+  /// No description provided for @createClientBankAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Account'**
+  String get createClientBankAccount;
+
+  /// No description provided for @createClientBankAccountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'20 digits'**
+  String get createClientBankAccountHint;
+
+  /// No description provided for @createClientLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get createClientLocation;
+
+  /// No description provided for @createClientLocationDetecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Detecting...'**
+  String get createClientLocationDetecting;
+
+  /// No description provided for @createClientLocationNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Location not found'**
+  String get createClientLocationNotFound;
+
+  /// No description provided for @createClientRefreshLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get createClientRefreshLocation;
+
+  /// No description provided for @createClientSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Client'**
+  String get createClientSubmit;
+
+  /// No description provided for @createClientCreating.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating...'**
+  String get createClientCreating;
+
+  /// No description provided for @createClientSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Created!'**
+  String get createClientSuccess;
+
+  /// No description provided for @createClientSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing data...'**
+  String get createClientSyncing;
+
+  /// No description provided for @createClientCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get createClientCode;
+
+  /// No description provided for @createClientTerritoryWarningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Important Notice!'**
+  String get createClientTerritoryWarningTitle;
+
+  /// No description provided for @createClientTerritoryWarningMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Client should only be created within your sales territory. Otherwise, there may be problems with ordering and delivery.'**
+  String get createClientTerritoryWarningMessage;
+
+  /// No description provided for @createClientAutoFilledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-filled. Modify if necessary.'**
+  String get createClientAutoFilledHint;
+
+  /// No description provided for @createClientAddressDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Address detected and auto-filled'**
+  String get createClientAddressDetected;
+
+  /// No description provided for @createClientSelectRegionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a region'**
+  String get createClientSelectRegionError;
+
+  /// No description provided for @createClientSelectTypeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a trade point type'**
+  String get createClientSelectTypeError;
+
+  /// No description provided for @createClientLocationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Location data not found'**
+  String get createClientLocationError;
+
+  /// No description provided for @createClientUserCodeError.
+  ///
+  /// In en, this message translates to:
+  /// **'User code not found'**
+  String get createClientUserCodeError;
+
+  /// No description provided for @createClientUnknownError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown error'**
+  String get createClientUnknownError;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

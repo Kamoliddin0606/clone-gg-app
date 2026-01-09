@@ -1894,4 +1894,157 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get noInternetConnection => 'Internet aloqasi yo\'q';
+
+  @override
+  String get createClientTitle => 'Yangi mijoz';
+
+  @override
+  String get createClientBasicInfo => 'Asosiy ma\'lumotlar';
+
+  @override
+  String get createClientContactInfo => 'Aloqa ma\'lumotlari';
+
+  @override
+  String get createClientAddressInfo => 'Manzil';
+
+  @override
+  String get createClientBankInfo => 'Bank ma\'lumotlari (ixtiyoriy)';
+
+  @override
+  String get createClientClientName => 'Mijoz nomi';
+
+  @override
+  String get createClientClientNameHint => 'Do\'kon yoki korxona nomi';
+
+  @override
+  String get createClientSignboard => 'Viveska (belgi)';
+
+  @override
+  String get createClientSignboardHint => 'Tashqi ko\'rinishdagi nomi';
+
+  @override
+  String get createClientInn => 'INN (STIR)';
+
+  @override
+  String get createClientInnHint => '9 yoki 14 raqamli';
+
+  @override
+  String get createClientTradePointType => 'Savdo nuqtasi turi';
+
+  @override
+  String get createClientSelectTradePointType => 'Savdo nuqtasi turini tanlang';
+
+  @override
+  String get createClientRegion => 'Hudud';
+
+  @override
+  String get createClientSelectRegion => 'Hududni tanlang';
+
+  @override
+  String get createClientContactPerson => 'Aloqa shaxsi';
+
+  @override
+  String get createClientContactPersonHint => 'Mas\'ul shaxs ismi';
+
+  @override
+  String get createClientPhone => 'Telefon raqami';
+
+  @override
+  String get createClientPhoneHint => '+998 XX XXX XX XX';
+
+  @override
+  String get createClientResponsiblePhone => 'Mas\'ul shaxs telefoni';
+
+  @override
+  String get createClientResponsiblePhoneHint => 'Qo\'shimcha telefon (ixtiyoriy)';
+
+  @override
+  String get createClientAddress => 'Manzil';
+
+  @override
+  String get createClientAddressHint => 'To\'liq manzil';
+
+  @override
+  String get createClientDeliveryAddress => 'Yetkazib berish manzili';
+
+  @override
+  String get createClientDeliveryAddressHint => 'Boshqacha bo\'lsa (ixtiyoriy)';
+
+  @override
+  String get createClientLandmark => 'Mo\'ljal';
+
+  @override
+  String get createClientLandmarkHint => 'Yaqin atrofdagi taniqli joy';
+
+  @override
+  String get createClientDirector => 'Direktor';
+
+  @override
+  String get createClientDirectorHint => 'F.I.O';
+
+  @override
+  String get createClientMfo => 'MFO';
+
+  @override
+  String get createClientMfoHint => '5 raqamli bank kodi';
+
+  @override
+  String get createClientBankAccount => 'Hisob raqami';
+
+  @override
+  String get createClientBankAccountHint => '20 raqamli';
+
+  @override
+  String get createClientLocation => 'Joylashuv';
+
+  @override
+  String get createClientLocationDetecting => 'Aniqlanmoqda...';
+
+  @override
+  String get createClientLocationNotFound => 'Joylashuv topilmadi';
+
+  @override
+  String get createClientRefreshLocation => 'Yangilash';
+
+  @override
+  String get createClientSubmit => 'Mijozni yaratish';
+
+  @override
+  String get createClientCreating => 'Yaratilmoqda...';
+
+  @override
+  String get createClientSuccess => 'Mijoz yaratildi!';
+
+  @override
+  String get createClientSyncing => 'Ma\'lumotlar sinxronlanmoqda...';
+
+  @override
+  String get createClientCode => 'Kod';
+
+  @override
+  String get createClientTerritoryWarningTitle => 'Muhim eslatma!';
+
+  @override
+  String get createClientTerritoryWarningMessage => 'Mijoz faqat sizning savdo hududingiz ichida yaratilishi kerak. Aks holda buyurtma olish va yetkazib berishda muammolar yuzaga kelishi mumkin.';
+
+  @override
+  String get createClientAutoFilledHint => 'Avtomatik to\'ldirildi. Zarurat bo\'lsa o\'zgartiring.';
+
+  @override
+  String get createClientAddressDetected => 'Manzil aniqlandi va avtomatik to\'ldirildi';
+
+  @override
+  String get createClientSelectRegionError => 'Iltimos, hududni tanlang';
+
+  @override
+  String get createClientSelectTypeError => 'Iltimos, savdo nuqtasi turini tanlang';
+
+  @override
+  String get createClientLocationError => 'Joylashuv ma\'lumotlari topilmadi';
+
+  @override
+  String get createClientUserCodeError => 'Foydalanuvchi kodi topilmadi';
+
+  @override
+  String get createClientUnknownError => 'Noma\'lum xatolik';
 }

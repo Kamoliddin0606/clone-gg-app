@@ -1894,4 +1894,157 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noInternetConnection => 'No internet connection';
+
+  @override
+  String get createClientTitle => 'New Client';
+
+  @override
+  String get createClientBasicInfo => 'Basic Information';
+
+  @override
+  String get createClientContactInfo => 'Contact Information';
+
+  @override
+  String get createClientAddressInfo => 'Address';
+
+  @override
+  String get createClientBankInfo => 'Bank Details (optional)';
+
+  @override
+  String get createClientClientName => 'Client Name';
+
+  @override
+  String get createClientClientNameHint => 'Store or company name';
+
+  @override
+  String get createClientSignboard => 'Signboard';
+
+  @override
+  String get createClientSignboardHint => 'External display name';
+
+  @override
+  String get createClientInn => 'TIN (Tax ID)';
+
+  @override
+  String get createClientInnHint => '9 or 14 digits';
+
+  @override
+  String get createClientTradePointType => 'Trade Point Type';
+
+  @override
+  String get createClientSelectTradePointType => 'Select trade point type';
+
+  @override
+  String get createClientRegion => 'Region';
+
+  @override
+  String get createClientSelectRegion => 'Select region';
+
+  @override
+  String get createClientContactPerson => 'Contact Person';
+
+  @override
+  String get createClientContactPersonHint => 'Responsible person name';
+
+  @override
+  String get createClientPhone => 'Phone Number';
+
+  @override
+  String get createClientPhoneHint => '+998 XX XXX XX XX';
+
+  @override
+  String get createClientResponsiblePhone => 'Responsible Person Phone';
+
+  @override
+  String get createClientResponsiblePhoneHint => 'Additional phone (optional)';
+
+  @override
+  String get createClientAddress => 'Address';
+
+  @override
+  String get createClientAddressHint => 'Full address';
+
+  @override
+  String get createClientDeliveryAddress => 'Delivery Address';
+
+  @override
+  String get createClientDeliveryAddressHint => 'If different (optional)';
+
+  @override
+  String get createClientLandmark => 'Landmark';
+
+  @override
+  String get createClientLandmarkHint => 'Nearby recognizable place';
+
+  @override
+  String get createClientDirector => 'Director';
+
+  @override
+  String get createClientDirectorHint => 'Full name';
+
+  @override
+  String get createClientMfo => 'MFO';
+
+  @override
+  String get createClientMfoHint => '5-digit bank code';
+
+  @override
+  String get createClientBankAccount => 'Bank Account';
+
+  @override
+  String get createClientBankAccountHint => '20 digits';
+
+  @override
+  String get createClientLocation => 'Location';
+
+  @override
+  String get createClientLocationDetecting => 'Detecting...';
+
+  @override
+  String get createClientLocationNotFound => 'Location not found';
+
+  @override
+  String get createClientRefreshLocation => 'Refresh';
+
+  @override
+  String get createClientSubmit => 'Create Client';
+
+  @override
+  String get createClientCreating => 'Creating...';
+
+  @override
+  String get createClientSuccess => 'Client Created!';
+
+  @override
+  String get createClientSyncing => 'Syncing data...';
+
+  @override
+  String get createClientCode => 'Code';
+
+  @override
+  String get createClientTerritoryWarningTitle => 'Important Notice!';
+
+  @override
+  String get createClientTerritoryWarningMessage => 'Client should only be created within your sales territory. Otherwise, there may be problems with ordering and delivery.';
+
+  @override
+  String get createClientAutoFilledHint => 'Auto-filled. Modify if necessary.';
+
+  @override
+  String get createClientAddressDetected => 'Address detected and auto-filled';
+
+  @override
+  String get createClientSelectRegionError => 'Please select a region';
+
+  @override
+  String get createClientSelectTypeError => 'Please select a trade point type';
+
+  @override
+  String get createClientLocationError => 'Location data not found';
+
+  @override
+  String get createClientUserCodeError => 'User code not found';
+
+  @override
+  String get createClientUnknownError => 'Unknown error';
 }

@@ -1894,4 +1894,157 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noInternetConnection => 'Нет подключения к интернету';
+
+  @override
+  String get createClientTitle => 'Новый клиент';
+
+  @override
+  String get createClientBasicInfo => 'Основная информация';
+
+  @override
+  String get createClientContactInfo => 'Контактная информация';
+
+  @override
+  String get createClientAddressInfo => 'Адрес';
+
+  @override
+  String get createClientBankInfo => 'Банковские реквизиты (необязательно)';
+
+  @override
+  String get createClientClientName => 'Название клиента';
+
+  @override
+  String get createClientClientNameHint => 'Название магазина или компании';
+
+  @override
+  String get createClientSignboard => 'Вывеска';
+
+  @override
+  String get createClientSignboardHint => 'Внешнее название';
+
+  @override
+  String get createClientInn => 'ИНН';
+
+  @override
+  String get createClientInnHint => '9 или 14 цифр';
+
+  @override
+  String get createClientTradePointType => 'Тип торговой точки';
+
+  @override
+  String get createClientSelectTradePointType => 'Выберите тип торговой точки';
+
+  @override
+  String get createClientRegion => 'Регион';
+
+  @override
+  String get createClientSelectRegion => 'Выберите регион';
+
+  @override
+  String get createClientContactPerson => 'Контактное лицо';
+
+  @override
+  String get createClientContactPersonHint => 'Имя ответственного лица';
+
+  @override
+  String get createClientPhone => 'Номер телефона';
+
+  @override
+  String get createClientPhoneHint => '+998 XX XXX XX XX';
+
+  @override
+  String get createClientResponsiblePhone => 'Телефон ответственного лица';
+
+  @override
+  String get createClientResponsiblePhoneHint => 'Дополнительный телефон (необязательно)';
+
+  @override
+  String get createClientAddress => 'Адрес';
+
+  @override
+  String get createClientAddressHint => 'Полный адрес';
+
+  @override
+  String get createClientDeliveryAddress => 'Адрес доставки';
+
+  @override
+  String get createClientDeliveryAddressHint => 'Если отличается (необязательно)';
+
+  @override
+  String get createClientLandmark => 'Ориентир';
+
+  @override
+  String get createClientLandmarkHint => 'Ближайшее известное место';
+
+  @override
+  String get createClientDirector => 'Директор';
+
+  @override
+  String get createClientDirectorHint => 'Ф.И.О';
+
+  @override
+  String get createClientMfo => 'МФО';
+
+  @override
+  String get createClientMfoHint => '5-значный код банка';
+
+  @override
+  String get createClientBankAccount => 'Расчетный счет';
+
+  @override
+  String get createClientBankAccountHint => '20 цифр';
+
+  @override
+  String get createClientLocation => 'Местоположение';
+
+  @override
+  String get createClientLocationDetecting => 'Определение...';
+
+  @override
+  String get createClientLocationNotFound => 'Местоположение не найдено';
+
+  @override
+  String get createClientRefreshLocation => 'Обновить';
+
+  @override
+  String get createClientSubmit => 'Создать клиента';
+
+  @override
+  String get createClientCreating => 'Создание...';
+
+  @override
+  String get createClientSuccess => 'Клиент создан!';
+
+  @override
+  String get createClientSyncing => 'Синхронизация данных...';
+
+  @override
+  String get createClientCode => 'Код';
+
+  @override
+  String get createClientTerritoryWarningTitle => 'Важное замечание!';
+
+  @override
+  String get createClientTerritoryWarningMessage => 'Клиент должен быть создан только в пределах вашей территории продаж. В противном случае могут возникнуть проблемы с заказом и доставкой.';
+
+  @override
+  String get createClientAutoFilledHint => 'Автозаполнено. При необходимости измените.';
+
+  @override
+  String get createClientAddressDetected => 'Адрес определен и автозаполнен';
+
+  @override
+  String get createClientSelectRegionError => 'Пожалуйста, выберите регион';
+
+  @override
+  String get createClientSelectTypeError => 'Пожалуйста, выберите тип торговой точки';
+
+  @override
+  String get createClientLocationError => 'Данные о местоположении не найдены';
+
+  @override
+  String get createClientUserCodeError => 'Код пользователя не найден';
+
+  @override
+  String get createClientUnknownError => 'Неизвестная ошибка';
 }

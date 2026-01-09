@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
@@ -437,11 +438,12 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Yangi mijoz'),
+        title: Text(l10n.createClientTitle),
         centerTitle: false,
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -466,7 +468,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
               padding: const EdgeInsets.all(16),
               children: [
                 // Warning banner about territory
-                _buildTerritoryWarningBanner(colorScheme),
+                _buildTerritoryWarningBanner(colorScheme, l10n),
                 const SizedBox(height: 16),
                 
                 // Header card with location
@@ -474,12 +476,12 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 const SizedBox(height: 20),
                 
                 // Basic info section
-                _buildSectionHeader(theme, 'Asosiy ma\'lumotlar', Icons.store),
+                _buildSectionHeader(theme, l10n.createClientBasicInfo, Icons.store),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _nameController,
-                  label: 'Mijoz nomi',
-                  hint: 'Do\'kon yoki korxona nomi',
+                  label: l10n.createClientClientName,
+                  hint: l10n.createClientClientNameHint,
                   icon: Icons.business,
                   isRequired: true,
                   textCapitalization: TextCapitalization.words,
@@ -487,16 +489,16 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _signboardController,
-                  label: 'Viveska (belgi)',
-                  hint: 'Tashqi ko\'rinishdagi nomi',
+                  label: l10n.createClientSignboard,
+                  hint: l10n.createClientSignboardHint,
                   icon: Icons.signpost,
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _innController,
-                  label: 'INN (STIR)',
-                  hint: '9 yoki 14 raqamli',
+                  label: l10n.createClientInn,
+                  hint: l10n.createClientInnHint,
                   icon: Icons.numbers,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -510,12 +512,12 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 const SizedBox(height: 24),
                 
                 // Contact info section
-                _buildSectionHeader(theme, 'Aloqa ma\'lumotlari', Icons.contact_phone),
+                _buildSectionHeader(theme, l10n.createClientContactInfo, Icons.contact_phone),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _contactPersonController,
-                  label: 'Aloqa shaxsi',
-                  hint: 'Mas\'ul shaxs ismi',
+                  label: l10n.createClientContactPerson,
+                  hint: l10n.createClientContactPersonHint,
                   icon: Icons.person,
                   isRequired: true,
                   textCapitalization: TextCapitalization.words,
@@ -523,8 +525,8 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _contactPhoneController,
-                  label: 'Telefon raqami',
-                  hint: '+998 XX XXX XX XX',
+                  label: l10n.createClientPhone,
+                  hint: l10n.createClientPhoneHint,
                   icon: Icons.phone,
                   isRequired: true,
                   keyboardType: TextInputType.phone,
@@ -532,8 +534,8 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _responsiblePhoneController,
-                  label: 'Mas\'ul shaxs telefoni',
-                  hint: 'Qo\'shimcha telefon (ixtiyoriy)',
+                  label: l10n.createClientResponsiblePhone,
+                  hint: l10n.createClientResponsiblePhoneHint,
                   icon: Icons.phone_android,
                   keyboardType: TextInputType.phone,
                 ),
@@ -541,35 +543,35 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 const SizedBox(height: 24),
                 
                 // Address section
-                _buildSectionHeader(theme, 'Manzil', Icons.location_on),
+                _buildSectionHeader(theme, l10n.createClientAddressInfo, Icons.location_on),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _addressController,
-                  label: 'Manzil',
-                  hint: 'To\'liq manzil',
+                  label: l10n.createClientAddress,
+                  hint: l10n.createClientAddressHint,
                   icon: Icons.home,
                   isRequired: true,
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
                 ),
                 if (_addressAutoFilled)
-                  _buildAutoFillHelperText(),
+                  _buildAutoFillHelperText(l10n),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _addressDeliveryController,
-                  label: 'Yetkazib berish manzili',
-                  hint: 'Boshqacha bo\'lsa (ixtiyoriy)',
+                  label: l10n.createClientDeliveryAddress,
+                  hint: l10n.createClientDeliveryAddressHint,
                   icon: Icons.local_shipping,
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
                 ),
                 if (_addressAutoFilled)
-                  _buildAutoFillHelperText(),
+                  _buildAutoFillHelperText(l10n),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _referencePointController,
-                  label: 'Mo\'ljal',
-                  hint: 'Yaqin atrofdagi taniqli joy',
+                  label: l10n.createClientLandmark,
+                  hint: l10n.createClientLandmarkHint,
                   icon: Icons.place,
                   textCapitalization: TextCapitalization.sentences,
                 ),
@@ -577,20 +579,20 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 const SizedBox(height: 24),
                 
                 // Bank details section (optional)
-                _buildSectionHeader(theme, 'Bank ma\'lumotlari (ixtiyoriy)', Icons.account_balance),
+                _buildSectionHeader(theme, l10n.createClientBankInfo, Icons.account_balance),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _directorController,
-                  label: 'Direktor',
-                  hint: 'F.I.O',
+                  label: l10n.createClientDirector,
+                  hint: l10n.createClientDirectorHint,
                   icon: Icons.person_outline,
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _mfoController,
-                  label: 'MFO',
-                  hint: '5 raqamli bank kodi',
+                  label: l10n.createClientMfo,
+                  hint: l10n.createClientMfoHint,
                   icon: Icons.account_balance_wallet,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -599,8 +601,8 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _bankAccountController,
-                  label: 'Hisob raqami',
-                  hint: '20 raqamli',
+                  label: l10n.createClientBankAccount,
+                  hint: l10n.createClientBankAccountHint,
                   icon: Icons.credit_card,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -621,7 +623,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
     );
   }
 
-  Widget _buildAutoFillHelperText() {
+  Widget _buildAutoFillHelperText(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.only(left: 12, top: 4),
       child: Row(
@@ -634,7 +636,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
           const SizedBox(width: 4),
           Expanded(
             child: Text(
-              'Avtomatik to\'ldirildi. Zarurat bo\'lsa o\'zgartiring.',
+              l10n.createClientAutoFilledHint,
               style: TextStyle(
                 color: Colors.red.shade600,
                 fontSize: 11,
@@ -647,7 +649,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
     );
   }
 
-  Widget _buildTerritoryWarningBanner(ColorScheme colorScheme) {
+  Widget _buildTerritoryWarningBanner(ColorScheme colorScheme, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -676,7 +678,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Muhim eslatma!',
+                  l10n.createClientTerritoryWarningTitle,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.orange.shade800,
@@ -685,8 +687,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Mijoz faqat sizning savdo hududingiz ichida yaratilishi kerak. '
-                  'Aks holda buyurtma olish va yetkazib berishda muammolar yuzaga kelishi mumkin.',
+                  l10n.createClientTerritoryWarningMessage,
                   style: TextStyle(
                     color: Colors.orange.shade900,
                     fontSize: 12,

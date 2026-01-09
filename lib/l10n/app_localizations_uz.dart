@@ -1816,4 +1816,82 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get logoutConfirmMessage => 'Haqiqatan ham tizimdan chiqmoqchimisiz?';
+
+  @override
+  String get newContract => 'Yangi shartnoma';
+
+  @override
+  String get createContract => 'Shartnoma yaratish';
+
+  @override
+  String get createContractTitle => 'Yangi shartnoma';
+
+  @override
+  String get createContractSubtitle => 'Barcha maydonlarni to\'ldiring';
+
+  @override
+  String get contractCreatedSuccess => 'Shartnoma muvaffaqiyatli yaratildi';
+
+  @override
+  String get contractCreatedError => 'Shartnoma yaratishda xatolik';
+
+  @override
+  String get contractListRefreshed => 'Shartnomalar ro\'yxati yangilandi';
+
+  @override
+  String get selectClient => 'Mijozni tanlang';
+
+  @override
+  String get selectContractType => 'Shartnoma turini tanlang';
+
+  @override
+  String get contractTypesNotFound => 'Shartnoma turlari topilmadi';
+
+  @override
+  String get reloadContractTypes => 'Qayta yuklash';
+
+  @override
+  String get autoFilled => 'Avtomatik to\'ldirilgan';
+
+  @override
+  String get referenceNumber => 'Ma\'lumotnoma raqami';
+
+  @override
+  String get referenceTermDate => 'Muddati';
+
+  @override
+  String get certificateNumber => 'Sertifikat raqami';
+
+  @override
+  String get certificateTermDate => 'Sertifikat muddati';
+
+  @override
+  String get certificateUnlimited => 'Sertifikat muddatsiz';
+
+  @override
+  String get passportNumber => 'Pasport raqami';
+
+  @override
+  String get passportTermDate => 'Pasport muddati';
+
+  @override
+  String get districtName => 'Tuman nomi';
+
+  @override
+  String get districtCode => 'Tuman kodi';
+
+  @override
+  String get documentInfo => 'Hujjatlar ma\'lumotlari';
+
+  @override
+  String get regionInfo => 'Hudud ma\'lumotlari';
+
+  @override
+  String get creatingContract => 'Yaratilmoqda...';
+
+  @override
+  String get serverTimeout => 'Server bilan bog\'lanishda vaqt tugadi';
+
+  @override
+  String get noInternetConnection => 'Internet aloqasi yo\'q';
 }

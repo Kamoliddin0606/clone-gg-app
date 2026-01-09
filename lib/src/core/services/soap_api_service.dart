@@ -21,6 +21,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_de
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 
@@ -816,36 +817,10 @@ class SoapApiService {
 ''';
 
     try {
-
       if (kDebugMode) {
         print('[$timestamp] DEBUG API: Sending SOAP request to $_baseUrl');
-        print('[$timestamp] DEBUG API: SOAP Envelope: $soapEnvelope');
       }
-      try {
-        final response = await _dio.post(
-          _baseUrl,
-          data: soapEnvelope,
-          options: Options(
-            headers: {
-              'Content-Type': 'application/soap+xml; charset=utf-8',
-              'SOAPAction': '',
-              if (authToken != null) 'Authorization': 'Bearer $authToken',
-            },
-          ),
-        );
-        if (kDebugMode) {
-          print('[$timestamp] DEBUG API: Received response from server');
-          // Log the auth token if available
-          if (authToken != null) {
-            print('[$timestamp] DEBUG API: Using auth token: $authToken');
-          } else {
-            print('[$timestamp] DEBUG API: No auth token provided');
-          }
-          print("-------------------my check___________________ ${response}");
-        }
-      } catch (e) {
-        if (kDebugMode) print('[$timestamp] DEBUG API: Error printing auth token: $e');
-      }
+
       final response = await _dio.post(
         _baseUrl,
         data: soapEnvelope,
@@ -855,6 +830,7 @@ class SoapApiService {
             'SOAPAction': '',
             if (authToken != null) 'Authorization': 'Bearer $authToken',
           },
+          validateStatus: (status) => true,
         ),
       );
       if (kDebugMode) {
@@ -863,9 +839,10 @@ class SoapApiService {
         print('[$timestamp] DEBUG API: Response data length: ${response.data.length}');
       }
 
-      // Check for HTTP status errors
+      // Check for SOAP Fault or HTTP status errors
+      // Fault tekshirish - statusCode qanday bo'lishidan qat'i nazar
       final responseData = response.data.toString();
-      if (response.statusCode != 200) {
+      if (responseData.contains('Fault') || response.statusCode != 200) {
         if (kDebugMode) print('[$timestamp] DEBUG API: HTTP error detected: ${response.statusCode}');
 
         // Prepare appropriate error message based on status code
@@ -951,20 +928,28 @@ class SoapApiService {
 
       if (kDebugMode) print('[$timestamp] DEBUG API: Successfully parsed ${promotions.length} promotions');
       return promotions;
+    } on SoapFaultException catch (e) {
+      // SOAP Fault xatosi - bo'sh ro'yxat qaytarish va davom etish
+      if (kDebugMode) {
+        print('[$timestamp] DEBUG API: SOAP Fault detected: ${e.message}');
+        print('[$timestamp] DEBUG API: Returning empty promotions list');
+      }
+      return [];
     } catch (e) {
       if (kDebugMode) print('[$timestamp] DEBUG API: Error in getPromotions: $e');
 
-      // Check if this is a method not found error (common on some servers like Garnier)
+      // Check if this is a method not found error or Fault (common on some servers)
       if (e.toString().contains('method') ||
           e.toString().contains('not found') ||
           e.toString().contains('available') ||
+          e.toString().contains('Fault') ||
           e.toString().contains('500')) {
         if (kDebugMode) print('[$timestamp] DEBUG API: getPromo method not available on this server, returning empty list');
         return []; // Return empty list instead of throwing
       }
 
       if (kDebugMode) print('[$timestamp] DEBUG API: Unexpected error in getPromotions: $e');
-      throw Exception('Promosyon ma\'lumotlarini olishda xatolik: $e');
+      return []; // Har qanday xatolikda bo'sh ro'yxat qaytarish
     }
   }
 
@@ -2000,14 +1985,40 @@ class SoapApiService {
             'Content-Type': 'application/soap+xml; charset=utf-8',
             'SOAPAction': '',
           },
+          validateStatus: (status) => true,
         ),
       );
 
       if (kDebugMode) {
-        print('SOAP API: CheckAccessOnStartup response received');
+        print('SOAP API: CheckAccessOnStartup response received, statusCode: ${response.statusCode}');
       }
 
-      final document = XmlDocument.parse(response.data);
+      final responseData = response.data?.toString() ?? '';
+      
+      // Fault tekshirish - statusCode qanday bo'lishidan qat'i nazar
+      if (responseData.contains('Fault') || response.statusCode != 200) {
+        String? soapFaultMessage;
+        try {
+          if (responseData.contains('Fault')) {
+            final faultDoc = XmlDocument.parse(responseData);
+            soapFaultMessage = faultDoc.findAllElements('soap:Text').firstOrNull?.innerText.trim() ??
+                               faultDoc.findAllElements('faultstring').firstOrNull?.innerText.trim();
+          }
+        } catch (_) {}
+        
+        if (kDebugMode) {
+          print('SOAP API: CheckAccessOnStartup server error ${response.statusCode}: $soapFaultMessage');
+        }
+        
+        return {
+          'status': 'ALLOW',
+          'riskScore': 0,
+          'reason': null,
+          'message': soapFaultMessage ?? 'Server xatosi: ${response.statusCode}',
+        };
+      }
+
+      final document = XmlDocument.parse(responseData);
       final returnElement = document.findAllElements('m:return').firstOrNull;
 
       if (returnElement == null) {
@@ -2097,6 +2108,132 @@ class SoapApiService {
         'reason': null,
         'message': 'Xatolik - tekshiruv o\'tkazib yuborildi',
       };
+    }
+  }
+
+  /// Get contract types from server
+  Future<List<ContractType>> getTypeOfContract() async {
+    if (kDebugMode) print('SOAP API: getTypeOfContract called');
+
+    const soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:GetTypeOfContract/>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': ''},
+          validateStatus: (status) => true,
+        ),
+      );
+
+      final responseData = response.data?.toString() ?? '';
+      
+      if (responseData.contains('Fault') || response.statusCode != 200) {
+        if (kDebugMode) print('SOAP API: getTypeOfContract error ${response.statusCode}');
+        return [];
+      }
+
+      final document = XmlDocument.parse(responseData);
+      final rowElements = document.findAllElements('m:Rows');
+      return rowElements.map((row) => ContractType(
+        code: _getElementText(row, 'm:Code') ?? '',
+        name: _getElementText(row, 'm:Name') ?? '',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      )).toList();
+    } catch (e) {
+      if (kDebugMode) print('SOAP API: getTypeOfContract error: $e');
+      return [];
+    }
+  }
+
+  /// Create a new contract
+  Future<Map<String, dynamic>> setContract({
+    required String dateOfContract,
+    required String codeUser,
+    required String codeClient,
+    required double sumOfContract,
+    String? termReference,
+    String? termCertificate,
+    String? numbReference,
+    String? numbCertificate,
+    required String typeOfContract,
+    String? numbPassport,
+    String? termPassport,
+    bool certificateUnlimited = false,
+    String? psCodeProject,
+    String? psCodeDistrict,
+    String? psNameDistrict,
+  }) async {
+    if (kDebugMode) print('SOAP API: setContract for client: $codeClient');
+
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:SetContract>
+         <sam:DateOfContract>$dateOfContract</sam:DateOfContract>
+         <sam:CodeUser>$codeUser</sam:CodeUser>
+         <sam:CodeClient>$codeClient</sam:CodeClient>
+         <sam:SumOfContract>$sumOfContract</sam:SumOfContract>
+         <sam:TermReference>${termReference ?? ''}</sam:TermReference>
+         <sam:TermCertificate>${termCertificate ?? ''}</sam:TermCertificate>
+         <sam:NumbReference>${numbReference ?? ''}</sam:NumbReference>
+         <sam:NumbCertificate>${numbCertificate ?? ''}</sam:NumbCertificate>
+         <sam:TypeOfContract>$typeOfContract</sam:TypeOfContract>
+         <sam:NumbPassport>${numbPassport ?? ''}</sam:NumbPassport>
+         <sam:TermPassport>${termPassport ?? ''}</sam:TermPassport>
+         <sam:CertificateUnlimited>${certificateUnlimited ? 1 : 0}</sam:CertificateUnlimited>
+         <sam:PS_CodeProject>${psCodeProject ?? ''}</sam:PS_CodeProject>
+         <sam:PS_CodeDistrict>${psCodeDistrict ?? ''}</sam:PS_CodeDistrict>
+         <sam:PS_NameDistrict>${psNameDistrict ?? ''}</sam:PS_NameDistrict>
+      </sam:SetContract>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': ''},
+          validateStatus: (status) => true,
+        ),
+      );
+
+      final responseData = response.data?.toString() ?? '';
+      
+      if (responseData.contains('Fault') || response.statusCode != 200) {
+        String? faultMsg;
+        try {
+          if (responseData.contains('Fault')) {
+            final doc = XmlDocument.parse(responseData);
+            faultMsg = doc.findAllElements('soap:Text').firstOrNull?.innerText.trim() ??
+                       doc.findAllElements('faultstring').firstOrNull?.innerText.trim();
+          }
+        } catch (_) {}
+        return {'success': false, 'message': faultMsg ?? 'Server xatosi: ${response.statusCode}'};
+      }
+
+      final document = XmlDocument.parse(responseData);
+      final returnElement = document.findAllElements('m:return').firstOrNull;
+      final contractCode = returnElement != null 
+          ? (_getElementText(returnElement, 'm:CodeContract') ?? _getElementText(returnElement, 'm:Code') ?? returnElement.innerText.trim())
+          : null;
+
+      return {'success': true, 'message': 'Shartnoma yaratildi', 'contractCode': contractCode};
+    } catch (e) {
+      if (kDebugMode) print('SOAP API: setContract error: $e');
+      return {'success': false, 'message': e.toString()};
     }
   }
 }

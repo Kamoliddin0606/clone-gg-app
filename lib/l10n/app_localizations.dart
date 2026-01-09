@@ -3298,7 +3298,7 @@ abstract class AppLocalizations {
   /// No description provided for @networkError.
   ///
   /// In en, this message translates to:
-  /// **'Network error. Please check your connection.'**
+  /// **'Network error'**
   String get networkError;
 
   /// No description provided for @timeoutError.
@@ -3654,6 +3654,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to log out?'**
   String get logoutConfirmMessage;
+
+  /// No description provided for @newContract.
+  ///
+  /// In en, this message translates to:
+  /// **'New Contract'**
+  String get newContract;
+
+  /// No description provided for @createContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Contract'**
+  String get createContract;
+
+  /// No description provided for @createContractTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Contract'**
+  String get createContractTitle;
+
+  /// No description provided for @createContractSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in all fields'**
+  String get createContractSubtitle;
+
+  /// No description provided for @contractCreatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract created successfully'**
+  String get contractCreatedSuccess;
+
+  /// No description provided for @contractCreatedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error creating contract'**
+  String get contractCreatedError;
+
+  /// No description provided for @contractListRefreshed.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract list refreshed'**
+  String get contractListRefreshed;
+
+  /// No description provided for @selectClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Select client'**
+  String get selectClient;
+
+  /// No description provided for @selectContractType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select contract type'**
+  String get selectContractType;
+
+  /// No description provided for @contractTypesNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract types not found'**
+  String get contractTypesNotFound;
+
+  /// No description provided for @reloadContractTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get reloadContractTypes;
+
+  /// No description provided for @autoFilled.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-filled'**
+  String get autoFilled;
+
+  /// No description provided for @referenceNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference number'**
+  String get referenceNumber;
+
+  /// No description provided for @referenceTermDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Term date'**
+  String get referenceTermDate;
+
+  /// No description provided for @certificateNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate number'**
+  String get certificateNumber;
+
+  /// No description provided for @certificateTermDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate term date'**
+  String get certificateTermDate;
+
+  /// No description provided for @certificateUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate unlimited'**
+  String get certificateUnlimited;
+
+  /// No description provided for @passportNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport number'**
+  String get passportNumber;
+
+  /// No description provided for @passportTermDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport term date'**
+  String get passportTermDate;
+
+  /// No description provided for @districtName.
+  ///
+  /// In en, this message translates to:
+  /// **'District name'**
+  String get districtName;
+
+  /// No description provided for @districtCode.
+  ///
+  /// In en, this message translates to:
+  /// **'District code'**
+  String get districtCode;
+
+  /// No description provided for @documentInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Document information'**
+  String get documentInfo;
+
+  /// No description provided for @regionInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Region information'**
+  String get regionInfo;
+
+  /// No description provided for @creatingContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating...'**
+  String get creatingContract;
+
+  /// No description provided for @serverTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Server connection timed out'**
+  String get serverTimeout;
+
+  /// No description provided for @noInternetConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get noInternetConnection;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

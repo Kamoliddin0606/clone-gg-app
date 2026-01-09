@@ -1616,7 +1616,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get balanceCacheCleared => 'Balance cache cleared';
 
   @override
-  String get networkError => 'Network error. Please check your connection.';
+  String get networkError => 'Network error';
 
   @override
   String get timeoutError => 'Request timed out. Please try again.';
@@ -1816,4 +1816,82 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logoutConfirmMessage => 'Are you sure you want to log out?';
+
+  @override
+  String get newContract => 'New Contract';
+
+  @override
+  String get createContract => 'Create Contract';
+
+  @override
+  String get createContractTitle => 'New Contract';
+
+  @override
+  String get createContractSubtitle => 'Fill in all fields';
+
+  @override
+  String get contractCreatedSuccess => 'Contract created successfully';
+
+  @override
+  String get contractCreatedError => 'Error creating contract';
+
+  @override
+  String get contractListRefreshed => 'Contract list refreshed';
+
+  @override
+  String get selectClient => 'Select client';
+
+  @override
+  String get selectContractType => 'Select contract type';
+
+  @override
+  String get contractTypesNotFound => 'Contract types not found';
+
+  @override
+  String get reloadContractTypes => 'Reload';
+
+  @override
+  String get autoFilled => 'Auto-filled';
+
+  @override
+  String get referenceNumber => 'Reference number';
+
+  @override
+  String get referenceTermDate => 'Term date';
+
+  @override
+  String get certificateNumber => 'Certificate number';
+
+  @override
+  String get certificateTermDate => 'Certificate term date';
+
+  @override
+  String get certificateUnlimited => 'Certificate unlimited';
+
+  @override
+  String get passportNumber => 'Passport number';
+
+  @override
+  String get passportTermDate => 'Passport term date';
+
+  @override
+  String get districtName => 'District name';
+
+  @override
+  String get districtCode => 'District code';
+
+  @override
+  String get documentInfo => 'Document information';
+
+  @override
+  String get regionInfo => 'Region information';
+
+  @override
+  String get creatingContract => 'Creating...';
+
+  @override
+  String get serverTimeout => 'Server connection timed out';
+
+  @override
+  String get noInternetConnection => 'No internet connection';
 }

@@ -1816,4 +1816,82 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get logoutConfirmMessage => 'Вы действительно хотите выйти из системы?';
+
+  @override
+  String get newContract => 'Новый контракт';
+
+  @override
+  String get createContract => 'Создать контракт';
+
+  @override
+  String get createContractTitle => 'Новый контракт';
+
+  @override
+  String get createContractSubtitle => 'Заполните все поля';
+
+  @override
+  String get contractCreatedSuccess => 'Контракт успешно создан';
+
+  @override
+  String get contractCreatedError => 'Ошибка создания контракта';
+
+  @override
+  String get contractListRefreshed => 'Список контрактов обновлен';
+
+  @override
+  String get selectClient => 'Выберите клиента';
+
+  @override
+  String get selectContractType => 'Выберите тип контракта';
+
+  @override
+  String get contractTypesNotFound => 'Типы контрактов не найдены';
+
+  @override
+  String get reloadContractTypes => 'Перезагрузить';
+
+  @override
+  String get autoFilled => 'Автозаполнено';
+
+  @override
+  String get referenceNumber => 'Номер справки';
+
+  @override
+  String get referenceTermDate => 'Срок действия';
+
+  @override
+  String get certificateNumber => 'Номер сертификата';
+
+  @override
+  String get certificateTermDate => 'Срок сертификата';
+
+  @override
+  String get certificateUnlimited => 'Сертификат бессрочный';
+
+  @override
+  String get passportNumber => 'Номер паспорта';
+
+  @override
+  String get passportTermDate => 'Срок паспорта';
+
+  @override
+  String get districtName => 'Название района';
+
+  @override
+  String get districtCode => 'Код района';
+
+  @override
+  String get documentInfo => 'Информация о документах';
+
+  @override
+  String get regionInfo => 'Информация о регионе';
+
+  @override
+  String get creatingContract => 'Создание...';
+
+  @override
+  String get serverTimeout => 'Время подключения к серверу истекло';
+
+  @override
+  String get noInternetConnection => 'Нет подключения к интернету';
 }

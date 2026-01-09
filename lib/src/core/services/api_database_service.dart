@@ -29,6 +29,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_da
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
 
 class ApiDatabaseService {
   static final ApiDatabaseService _instance = ApiDatabaseService._internal();
@@ -51,7 +52,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 26, // Incremented to version 26 for client_balance-clients relationship
+      version: 27, // Incremented to version 27 for contract_types table
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -981,6 +982,29 @@ class ApiDatabaseService {
         print('ApiDatabaseService: Added client_code relationships (version 26)');
       }
     }
+
+    // =========================================================================
+    // Version 27: Contract Types table for storing contract type data
+    // =========================================================================
+    if (oldVersion < 27) {
+      // Create contract_types table for caching contract types from server
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS contract_types (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code TEXT UNIQUE NOT NULL,
+          name TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      // Create index for contract_types table
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_contract_types_code ON contract_types(code)');
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Created contract_types table (version 27)');
+      }
+    }
   }
 
   Future<void> _createTables(Database db) async {
@@ -1729,6 +1753,22 @@ class ApiDatabaseService {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_number ON client_balance_orders(order_number)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_status ON client_balance_orders(status)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_date ON client_balance_orders(order_date)');
+
+    // =========================================================================
+    // Contract Types table - Shartnoma turlari uchun
+    // =========================================================================
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS contract_types (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Contract Types indekslari
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_contract_types_code ON contract_types(code)');
 
     if (kDebugMode) print('API cache database tables created successfully');
   }
@@ -6846,6 +6886,127 @@ class ApiDatabaseService {
     } catch (e) {
       if (kDebugMode) print('Error getting row count for $tableName: $e');
       return 0;
+    }
+  }
+
+  // ===========================================================================
+  // CONTRACT TYPES METHODS
+  // ===========================================================================
+
+  /// Save contract types to local cache
+  /// 
+  /// This method clears existing contract types and saves the new list.
+  /// Contract types are retrieved from GetTypeOfContract SOAP API.
+  /// 
+  /// Parameters:
+  /// - [contractTypes] - List of ContractType objects
+  Future<void> saveContractTypes(List<ContractType> contractTypes) async {
+    try {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Saving ${contractTypes.length} contract types');
+      }
+
+      final db = await database;
+      final now = DateTime.now().toIso8601String();
+
+      // Use transaction for better performance
+      await db.transaction((txn) async {
+        // Clear existing contract types
+        await txn.delete('contract_types');
+
+        // Insert new contract types
+        for (final contractType in contractTypes) {
+          await txn.insert(
+            'contract_types',
+            {
+              'code': contractType.code,
+              'name': contractType.name,
+              'created_at': now,
+              'updated_at': now,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      });
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Successfully saved ${contractTypes.length} contract types');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error saving contract types: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Get all cached contract types
+  /// 
+  /// Returns a list of ContractType objects.
+  /// Returns empty list if no contract types are cached.
+  Future<List<ContractType>> getContractTypes() async {
+    try {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Getting cached contract types');
+      }
+
+      final db = await database;
+      final results = await db.query(
+        'contract_types',
+        columns: ['code', 'name', 'created_at', 'updated_at'],
+        orderBy: 'name ASC',
+      );
+
+      final contractTypes = results.map((row) => ContractType(
+        code: row['code'] as String,
+        name: row['name'] as String,
+        createdAt: row['created_at'] != null ? DateTime.tryParse(row['created_at'] as String) : null,
+        updatedAt: row['updated_at'] != null ? DateTime.tryParse(row['updated_at'] as String) : null,
+      )).toList();
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Retrieved ${contractTypes.length} cached contract types');
+      }
+
+      return contractTypes;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting contract types: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Check if contract types are cached
+  /// 
+  /// Returns true if there are cached contract types, false otherwise.
+  Future<bool> hasContractTypes() async {
+    try {
+      final db = await database;
+      final result = await db.rawQuery('SELECT COUNT(*) FROM contract_types');
+      final count = Sqflite.firstIntValue(result) ?? 0;
+      return count > 0;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error checking contract types: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Clear all cached contract types
+  Future<void> clearContractTypes() async {
+    try {
+      final db = await database;
+      await db.delete('contract_types');
+      if (kDebugMode) {
+        print('ApiDatabaseService: Cleared contract types cache');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error clearing contract types: $e');
+      }
+      rethrow;
     }
   }
 }

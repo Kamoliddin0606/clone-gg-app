@@ -4,11 +4,13 @@ import 'package:intl/intl.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import '../../../../Utility/formatter.dart';
 import '../../data/models/client_contract.dart';
 import '../../data/models/trading_point.dart';
 import '../widgets/contract_models.dart';
 import '../widgets/contracts_filters_panel.dart';
+import '../widgets/create_contract_form.dart';
 import 'contract_detail_page.dart';
 
 enum _ViewMode { list, grid }
@@ -52,6 +54,12 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
   // Track if initial filter has been applied to prevent clearing
   bool _initialFilterApplied = false;
+
+  // Draggable FAB state - position for draggable floating action button
+  Offset _fabPosition = const Offset(16, 100);
+  
+  // Track time when contracts were refreshed for highlighting new contracts
+  DateTime? _newContractHighlightTime;
 
   @override
   void initState() {
@@ -512,6 +520,42 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
           ],
         ),
       ),
+      // Draggable Floating Action Button for creating new contracts
+      floatingActionButton: _buildDraggableFab(),
+    );
+  }
+
+  /// Build a draggable floating action button for contract creation
+  /// The FAB can be dragged to any position on the screen
+  Widget _buildDraggableFab() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final screenSize = MediaQuery.of(context).size;
+    
+    return Positioned(
+      left: _fabPosition.dx,
+      top: _fabPosition.dy,
+      child: GestureDetector(
+        onPanUpdate: (details) {
+          setState(() {
+            // Update position with boundary constraints
+            _fabPosition = Offset(
+              (_fabPosition.dx + details.delta.dx).clamp(0, screenSize.width - 56),
+              (_fabPosition.dy + details.delta.dy).clamp(0, screenSize.height - 150),
+            );
+          });
+        },
+        child: FloatingActionButton.extended(
+          onPressed: _showCreateContractForm,
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          elevation: 6,
+          icon: const Icon(Icons.add),
+          label: const Text(
+            'Yangi shartnoma',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
     );
   }
 
@@ -573,6 +617,136 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
         builder: (context) => ContractDetailPage(contract: contract),
       ),
     );
+  }
+
+  /// Show the contract creation form in a bottom sheet
+  /// If contracts are filtered by client, auto-fill that client in the form
+  void _showCreateContractForm() {
+    // Determine if we have a pre-selected client (from filter)
+    String? preSelectedClientCode;
+    String? preSelectedClientName;
+    
+    // If filtered by a single client, use that client as pre-selected
+    if (_filters.tradingPointCodes.length == 1) {
+      preSelectedClientCode = _filters.tradingPointCodes.first;
+      // Find the client name from trading points
+      final client = _tradingPoints.firstWhere(
+        (tp) => tp.id == preSelectedClientCode,
+        orElse: () => TradingPoint(
+          id: preSelectedClientCode ?? '',
+          name: preSelectedClientCode ?? '',
+          address: '',
+          phone: '',
+          ownerName: '',
+          contactPerson: '',
+          inn: '',
+          status: '',
+          lastVisitDate: '',
+          hasOrders: false,
+          hasContracts: false,
+          isVisited: false,
+          hasContract: false,
+          latitude: 0,
+          longitude: 0,
+          region: '',
+          district: '',
+          signboard: '',
+          referencePoint: '',
+          responsiblePerson: '',
+          responsiblePersonPhone: '',
+          tradePointType: '',
+          creditLimit: 0,
+          accumulatedCredit: 0,
+          codeRegion: '',
+        ),
+      );
+      preSelectedClientName = client.name;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CreateContractForm(
+        preSelectedClientCode: preSelectedClientCode,
+        preSelectedClientName: preSelectedClientName,
+        availableClients: _tradingPoints,
+        onContractCreated: () {
+          // Close the form
+          Navigator.of(context).pop();
+          // Refresh contracts list from server
+          _refreshContractsAfterCreation();
+        },
+        onClose: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
+  /// Refresh contracts after a new contract is created
+  Future<void> _refreshContractsAfterCreation() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final prefs = sl<SharedPreferencesService>();
+      final userCode = prefs.getUserCode();
+      
+      if (userCode == null || userCode.isEmpty) {
+        throw Exception('User code not found');
+      }
+
+      final dataSyncService = sl<DataSyncService>();
+      final repository = sl<AgentRepository>();
+      
+      // Sync contracts from server using DataSyncService
+      await dataSyncService.syncClientContracts(userCode: userCode, forceRefresh: true);
+      
+      // Reload contracts
+      final contracts = await repository.getCachedClientContractsWithNames();
+      
+      setState(() {
+        _contracts = contracts;
+        _isLoading = false;
+        // Mark the highlight time for new contracts
+        _newContractHighlightTime = DateTime.now();
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                const Text('Shartnomalar ro\'yxati yangilandi'),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error refreshing contracts: $e');
+      }
+      setState(() {
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Yangilashda xatolik: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 }
 

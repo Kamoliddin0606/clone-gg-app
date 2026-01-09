@@ -37,7 +37,11 @@ class DataSyncTab extends StatefulWidget {
 class _DataSyncTabState extends State<DataSyncTab>
     with AutomaticKeepAliveClientMixin {
   late final DataSyncOrchestrator _orchestrator;
+  late final ScrollController _scrollController;
   bool _isSyncingAll = false;
+  bool _isRefreshingCounts = false;
+  double _lastScrollPosition = 0.0;
+  DateTime? _lastRefreshTime;
   
   // Background Sync Settings state
   bool _bgSyncEnabled = false;
@@ -53,10 +57,66 @@ class _DataSyncTabState extends State<DataSyncTab>
   void initState() {
     super.initState();
     _orchestrator = sl<DataSyncOrchestrator>();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+    
     // Auto-refresh metadata on entry
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshMetadata();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _customMinutesController.dispose();
+    super.dispose();
+  }
+
+  /// Handle scroll events to refresh record counts when scrolling down
+  void _onScroll() {
+    if (!mounted || _isRefreshingCounts || _isSyncingAll) return;
+
+    final currentPosition = _scrollController.position.pixels;
+    final isScrollingDown = currentPosition > _lastScrollPosition;
+    _lastScrollPosition = currentPosition;
+
+    // Only refresh when scrolling down and not refreshed recently
+    if (isScrollingDown && _shouldRefreshCounts()) {
+      _refreshRecordCountsOnly();
+    }
+  }
+
+  /// Check if enough time has passed since last refresh (debounce)
+  bool _shouldRefreshCounts() {
+    if (_lastRefreshTime == null) return true;
+    
+    final timeSinceLastRefresh = DateTime.now().difference(_lastRefreshTime!);
+    return timeSinceLastRefresh.inSeconds >= 3; // Refresh every 3 seconds max
+  }
+
+  /// Refresh only record counts without full metadata reload
+  Future<void> _refreshRecordCountsOnly() async {
+    if (_isRefreshingCounts) return;
+
+    setState(() {
+      _isRefreshingCounts = true;
+      _lastRefreshTime = DateTime.now();
+    });
+
+    try {
+      await _orchestrator.refreshRecordCounts();
+      if (mounted) {
+        setState(() {});
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshingCounts = false;
+        });
+      }
+    }
   }
 
   /// Refresh metadata from orchestrator
@@ -286,6 +346,7 @@ class _DataSyncTabState extends State<DataSyncTab>
         return RefreshIndicator(
           onRefresh: _refreshMetadata,
           child: CustomScrollView(
+            controller: _scrollController,
             slivers: [
               // Header with Sync All button
               SliverToBoxAdapter(

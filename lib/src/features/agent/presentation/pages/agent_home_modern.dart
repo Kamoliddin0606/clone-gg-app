@@ -1007,7 +1007,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
                   ),
                   IconButton(
                     tooltip: AppLocalizations.of(context)!.refresh,
-                    onPressed: _syncDataWithProgress,
+                    onPressed: widget.onRefresh,
                     icon: const Icon(Icons.refresh),
                   ),
                   // Offline indicator - shows when app is in offline mode

@@ -45,7 +45,8 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
   bool _isFilterPanelVisible = false;
   // Removed unused fields - now using _filters
   List<ClientContractWithName> _contracts = [];
-  List<TradingPoint> _tradingPoints = [];
+  List<TradingPoint> _tradingPoints = []; // Clients with contracts (for filter)
+  List<TradingPoint> _allTradingPoints = []; // All clients (for create form)
   bool _isLoading = true;
   String? _errorMessage;
   bool _showViewBar = false;
@@ -55,9 +56,6 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
   // Track if initial filter has been applied to prevent clearing
   bool _initialFilterApplied = false;
 
-  // Draggable FAB state - position for draggable floating action button
-  Offset _fabPosition = const Offset(16, 100);
-  
   // Track time when contracts were refreshed for highlighting new contracts
   DateTime? _newContractHighlightTime;
 
@@ -520,40 +518,16 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
           ],
         ),
       ),
-      // Draggable Floating Action Button for creating new contracts
-      floatingActionButton: _buildDraggableFab(),
-    );
-  }
-
-  /// Build a draggable floating action button for contract creation
-  /// The FAB can be dragged to any position on the screen
-  Widget _buildDraggableFab() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final screenSize = MediaQuery.of(context).size;
-    
-    return Positioned(
-      left: _fabPosition.dx,
-      top: _fabPosition.dy,
-      child: GestureDetector(
-        onPanUpdate: (details) {
-          setState(() {
-            // Update position with boundary constraints
-            _fabPosition = Offset(
-              (_fabPosition.dx + details.delta.dx).clamp(0, screenSize.width - 56),
-              (_fabPosition.dy + details.delta.dy).clamp(0, screenSize.height - 150),
-            );
-          });
-        },
-        child: FloatingActionButton.extended(
-          onPressed: _showCreateContractForm,
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
-          elevation: 6,
-          icon: const Icon(Icons.add),
-          label: const Text(
-            'Yangi shartnoma',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
+      // Floating Action Button for creating new contracts
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showCreateContractForm,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        elevation: 6,
+        icon: const Icon(Icons.add),
+        label: const Text(
+          'Yangi shartnoma',
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -585,6 +559,7 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
       setState(() {
         _tradingPoints = filteredTradingPoints;
+        _allTradingPoints = allTradingPoints; // Store ALL clients for create form
       });
     } catch (e) {
       // Log error but don't fail the entire page load
@@ -670,7 +645,7 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       builder: (context) => CreateContractForm(
         preSelectedClientCode: preSelectedClientCode,
         preSelectedClientName: preSelectedClientName,
-        availableClients: _tradingPoints,
+        availableClients: _allTradingPoints, // Use ALL clients, not just those with contracts
         onContractCreated: () {
           // Close the form
           Navigator.of(context).pop();

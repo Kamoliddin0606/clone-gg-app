@@ -30,6 +30,10 @@ class _ContractDetailPageState extends State<ContractDetailPage> with TickerProv
   bool _isLoadingClient = true;
   ContractLanguage _selectedLanguage = ContractLanguage.uzbek;
   String? _organizationName;
+  
+  // Hidden fields state
+  bool _isAmountVisible = false;
+  bool _isPassportVisible = false;
 
   @override
   void initState() {
@@ -113,7 +117,7 @@ class _ContractDetailPageState extends State<ContractDetailPage> with TickerProv
               Expanded(child: _buildDetailItem(context, 'Tugash sanasi', contract.termOfContract != null ? DateFormat('dd.MM.yyyy').format(contract.termOfContract!) : 'Noma\'lum', Icons.event_busy)),
             ]),
             const SizedBox(height: 16),
-            _buildDetailItem(context, 'Shartnoma summasi', '${formatNumber(contract.sumOfContract)} UZS', Icons.account_balance_wallet, isLarge: true),
+            _buildHiddenAmountItem(context, 'Shartnoma summasi', '${formatNumber(contract.sumOfContract)} UZS', Icons.account_balance_wallet),
           ]))),
         const SizedBox(height: 16),
         Card(elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), color: colorScheme.surface,
@@ -134,7 +138,7 @@ class _ContractDetailPageState extends State<ContractDetailPage> with TickerProv
             _buildDetailRow(context, 'Sertifikat cheklangan', contract.certificateUnlimited == 1 ? 'Ha' : 'Yo\'q'),
             if (contract.numbReference?.isNotEmpty == true) _buildDetailRow(context, 'Reference raqami', contract.numbReference!),
             if (contract.numbCertificate?.isNotEmpty == true) _buildDetailRow(context, 'Sertifikat raqami', contract.numbCertificate!),
-            if (contract.numbPassport?.isNotEmpty == true) _buildDetailRow(context, 'Passport raqami', contract.numbPassport!),
+            if (contract.numbPassport?.isNotEmpty == true) _buildHiddenPassportRow(context, 'Passport raqami', contract.numbPassport!),
             if (contract.codeDistrict?.isNotEmpty == true) _buildDetailRow(context, 'Tuman kodi', contract.codeDistrict!),
             if (contract.nameDistrict?.isNotEmpty == true) _buildDetailRow(context, 'Tuman nomi', contract.nameDistrict!),
             if (contract.codeProject?.isNotEmpty == true) _buildDetailRow(context, 'Loyiha kodi', contract.codeProject!),
@@ -213,6 +217,150 @@ class _ContractDetailPageState extends State<ContractDetailPage> with TickerProv
 
   bool _isCreditContract(String? t) => t != null && t.isNotEmpty && (t.toLowerCase().contains('кредит') || t.toLowerCase().contains('kredit') || t.toLowerCase().contains('рассрочк') || (!t.toLowerCase().contains('100%') && !t.toLowerCase().contains('предоплат')));
   String _extractCreditPercent(String? t) { if (t == null) return '30'; final m = RegExp(r'(\d+)\s*%').firstMatch(t); return m?.group(1) ?? '30'; }
+
+  /// Build hidden amount item with animated reveal
+  Widget _buildHiddenAmountItem(BuildContext context, String label, String value, IconData icon) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return GestureDetector(
+      onTap: () => setState(() => _isAmountVisible = !_isAmountVisible),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 16, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: _isAmountVisible ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(
+                    Icons.visibility,
+                    size: 18,
+                    color: _isAmountVisible ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            AnimatedCrossFade(
+              firstChild: Row(
+                children: [
+                  Text(
+                    '••••••••••',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Bosing',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+              secondChild: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.8, end: 1.0),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.elasticOut,
+                builder: (context, scale, child) => Transform.scale(
+                  scale: _isAmountVisible ? scale : 1,
+                  child: Text(
+                    value,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+              crossFadeState: _isAmountVisible ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 300),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build hidden passport row with tap to reveal
+  Widget _buildHiddenPassportRow(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GestureDetector(
+        onTap: () => setState(() => _isPassportVisible = !_isPassportVisible),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 140,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '$label:',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    _isPassportVisible ? Icons.visibility : Icons.visibility_off,
+                    size: 16,
+                    color: _isPassportVisible ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: AnimatedCrossFade(
+                firstChild: Text(
+                  '••••••••',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    letterSpacing: 2,
+                  ),
+                ),
+                secondChild: Text(
+                  value,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                crossFadeState: _isPassportVisible ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 250),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildDetailItem(BuildContext context, String label, String value, IconData icon, {bool isLarge = false}) {
     final theme = Theme.of(context); final colorScheme = theme.colorScheme;

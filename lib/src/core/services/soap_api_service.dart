@@ -2142,7 +2142,17 @@ class SoapApiService {
       }
 
       final document = XmlDocument.parse(responseData);
-      final rowElements = document.findAllElements('m:Rows');
+      
+      // Parse contract types similar to other methods - find m:return first, then m:Rows
+      final returnElement = document.findAllElements('m:return').firstOrNull;
+      if (returnElement == null) {
+        if (kDebugMode) print('SOAP API: getTypeOfContract - no return element found');
+        return [];
+      }
+      
+      final rowElements = returnElement.findAllElements('m:Rows');
+      if (kDebugMode) print('SOAP API: getTypeOfContract found ${rowElements.length} contract types');
+      
       return rowElements.map((row) => ContractType(
         code: _getElementText(row, 'm:Code') ?? '',
         name: _getElementText(row, 'm:Name') ?? '',
@@ -2199,6 +2209,14 @@ class SoapApiService {
    </soap:Body>
 </soap:Envelope>
 ''';
+
+    if (kDebugMode) {
+      print('═══════════════════════════════════════════════════════════════');
+      print('SOAP REQUEST - SetContract');
+      print('═══════════════════════════════════════════════════════════════');
+      print(soapEnvelope);
+      print('═══════════════════════════════════════════════════════════════');
+    }
 
     try {
       final response = await _dio.post(

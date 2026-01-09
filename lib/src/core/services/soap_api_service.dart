@@ -22,6 +22,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_o
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 
@@ -2165,6 +2166,57 @@ class SoapApiService {
     }
   }
 
+  /// Get cities district contracting data
+  Future<List<DistrictContracting>> getCitiesDistrictContracting({
+    required String codeUser,
+    required String codeProject,
+  }) async {
+    if (kDebugMode) print('SOAP API: getCitiesDistrictContracting for user: $codeUser, project: $codeProject');
+
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:PS_GetCitiesDistrictContracting>
+         <sam:CodeUser>$codeUser</sam:CodeUser>
+         <sam:CodeProject>$codeProject</sam:CodeProject>
+      </sam:PS_GetCitiesDistrictContracting>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': ''},
+        ),
+      );
+
+      final document = XmlDocument.parse(response.data);
+      final returnElement = document.findAllElements('m:return').firstOrNull;
+      
+      if (returnElement == null) {
+        if (kDebugMode) print('SOAP API: getCitiesDistrictContracting no return element');
+        return [];
+      }
+      
+      final rowElements = returnElement.findAllElements('m:Rows');
+      if (kDebugMode) print('SOAP API: getCitiesDistrictContracting found ${rowElements.length} districts');
+      
+      return rowElements.map((row) => DistrictContracting(
+        codeDistrict: _getElementText(row, 'm:CodeDistrict') ?? '',
+        nameDistrict: _getElementText(row, 'm:NameDistrict') ?? '',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      )).toList();
+    } catch (e) {
+      if (kDebugMode) print('SOAP API: getCitiesDistrictContracting error: $e');
+      return [];
+    }
+  }
+
   /// Create a new contract
   Future<Map<String, dynamic>> setContract({
     required String dateOfContract,
@@ -2251,6 +2303,120 @@ class SoapApiService {
       return {'success': true, 'message': 'Shartnoma yaratildi', 'contractCode': contractCode};
     } catch (e) {
       if (kDebugMode) print('SOAP API: setContract error: $e');
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Create a new client (trading point)
+  /// Based on SetClient SOAP method
+  /// Returns success status, message, and client code if successful
+  Future<Map<String, dynamic>> setClient({
+    required String name,
+    required String signboard,
+    required String inn,
+    required String tradePointType,
+    required String contactPerson,
+    required String contactPersonPhone,
+    required String address,
+    required String addressDelivery,
+    required String referencePoint,
+    required String responsiblePersonPhone,
+    required double longitude,
+    required double latitude,
+    required String codeUser,
+    required String codeRegion,
+    String? director,
+    String? mfo,
+    String? bankAccount,
+  }) async {
+    if (kDebugMode) print('SOAP API: setClient - Creating new client: $name');
+
+    final soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:SetClient>
+         <sam:Name>$name</sam:Name>
+         <sam:Signboard>$signboard</sam:Signboard>
+         <sam:INN>$inn</sam:INN>
+         <sam:TradePointType>$tradePointType</sam:TradePointType>
+         <sam:ContactPerson>$contactPerson</sam:ContactPerson>
+         <sam:ContactPersonPhone>$contactPersonPhone</sam:ContactPersonPhone>
+         <sam:Adress>$address</sam:Adress>
+         <sam:AdressDelivery>$addressDelivery</sam:AdressDelivery>
+         <sam:ReferencePoint>$referencePoint</sam:ReferencePoint>
+         <sam:ResponsiblePersonPhone>$responsiblePersonPhone</sam:ResponsiblePersonPhone>
+         <sam:Longitude>$longitude</sam:Longitude>
+         <sam:Latitude>$latitude</sam:Latitude>
+         <sam:CodeUser>$codeUser</sam:CodeUser>
+         <sam:CodeRegion>$codeRegion</sam:CodeRegion>
+         <sam:Director>${director ?? ''}</sam:Director>
+         <sam:MFO>${mfo ?? ''}</sam:MFO>
+         <sam:BankAccount>${bankAccount ?? ''}</sam:BankAccount>
+      </sam:SetClient>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    if (kDebugMode) {
+      print('═══════════════════════════════════════════════════════════════');
+      print('SOAP REQUEST - SetClient');
+      print('═══════════════════════════════════════════════════════════════');
+      print(soapEnvelope);
+      print('═══════════════════════════════════════════════════════════════');
+    }
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': ''},
+          validateStatus: (status) => true,
+        ),
+      );
+
+      final responseData = response.data?.toString() ?? '';
+      
+      if (kDebugMode) {
+        print('═══════════════════════════════════════════════════════════════');
+        print('SOAP RESPONSE - SetClient');
+        print('═══════════════════════════════════════════════════════════════');
+        print(responseData);
+        print('═══════════════════════════════════════════════════════════════');
+      }
+
+      if (responseData.contains('Fault') || response.statusCode != 200) {
+        String? faultMsg;
+        try {
+          if (responseData.contains('Fault')) {
+            final doc = XmlDocument.parse(responseData);
+            faultMsg = doc.findAllElements('soap:Text').firstOrNull?.innerText.trim() ??
+                       doc.findAllElements('faultstring').firstOrNull?.innerText.trim() ??
+                       doc.findAllElements('m:Text').firstOrNull?.innerText.trim();
+          }
+        } catch (_) {}
+        return {'success': false, 'message': faultMsg ?? 'Server xatosi: ${response.statusCode}'};
+      }
+
+      final document = XmlDocument.parse(responseData);
+      final returnElement = document.findAllElements('m:return').firstOrNull;
+      
+      // Try to extract client code from response
+      String? clientCode;
+      if (returnElement != null) {
+        clientCode = _getElementText(returnElement, 'm:CodeClient') ?? 
+                     _getElementText(returnElement, 'm:Code') ?? 
+                     returnElement.innerText.trim();
+      }
+
+      return {
+        'success': true, 
+        'message': 'Mijoz muvaffaqiyatli yaratildi', 
+        'clientCode': clientCode,
+      };
+    } catch (e) {
+      if (kDebugMode) print('SOAP API: setClient error: $e');
       return {'success': false, 'message': e.toString()};
     }
   }

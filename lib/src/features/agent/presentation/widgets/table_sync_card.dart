@@ -330,15 +330,16 @@ class _TableSyncCardState extends State<TableSyncCard> {
 
           // Sync buttons
           SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               TextButton.icon(
                 icon: Icon(Icons.sync_disabled, size: 18),
                 label: Text('Table only'),
                 onPressed: () => _performSync(SyncMode.tableOnly),
               ),
-              SizedBox(width: 8),
               ElevatedButton.icon(
                 icon: Icon(Icons.sync, size: 18),
                 label: Text('With dependencies'),

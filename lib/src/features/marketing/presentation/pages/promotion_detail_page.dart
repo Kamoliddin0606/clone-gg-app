@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
 
 /// Transliterate Cyrillic characters to Latin (Uzbek standard)
 String transliterateToLatin(String text) {
@@ -53,6 +57,235 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
 
   void _onSearchChanged() {
     setState(() {});
+  }
+
+  /// Show product details dialog fetching data from products table
+  Future<void> _showProductDetails(String productCode) async {
+    final dbService = sl<ApiDatabaseService>();
+    
+    // Fetch product data and image in parallel
+    final results = await Future.wait([
+      dbService.getProductByCode(productCode),
+      dbService.getMainProductImage(productCode),
+    ]);
+    
+    final product = results[0] as ProductData?;
+    final productImage = results[1] as ProductImage?;
+
+    if (!mounted) return;
+
+    if (product == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mahsulot ma\'lumotlari topilmadi: $productCode'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    _showProductDetailsDialog(product, productImage: productImage);
+  }
+
+  /// Display product details in a bottom sheet dialog
+  void _showProductDetailsDialog(ProductData product, {ProductImage? productImage}) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final imageUrl = productImage?.thumbnailOrBestUrl;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header with product image
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    // Show product image if available, otherwise show code avatar
+                    imageUrl != null && imageUrl.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              imageUrl,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: 56,
+                                  height: 56,
+                                  color: colorScheme.surfaceContainerHighest,
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) => CircleAvatar(
+                                radius: 28,
+                                backgroundColor: colorScheme.primaryContainer,
+                                child: Text(
+                                  product.code.length >= 2 ? product.code.substring(0, 2) : product.code,
+                                  style: TextStyle(
+                                    color: colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : CircleAvatar(
+                            radius: 28,
+                            backgroundColor: colorScheme.primaryContainer,
+                            child: Text(
+                              product.code.length >= 2 ? product.code.substring(0, 2) : product.code,
+                              style: TextStyle(
+                                color: colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.name,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Kod: ${product.code}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close, color: colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Product details
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _buildDetailRow('O\'lchov birligi', product.unit, Icons.straighten),
+                    _buildDetailRow('Kategoriya', product.category, Icons.category),
+                    _buildDetailRow('Brend', product.productBrand, Icons.branding_watermark),
+                    _buildDetailRow('Seriya', product.productSeries, Icons.layers),
+                    _buildDetailRow('Shtrix kod', product.barcode, Icons.qr_code),
+                    _buildDetailRow('Vendor kod', product.vendorCode, Icons.tag),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Ombor ma\'lumotlari',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildDetailRow('Miqdori', '${product.quantity}', Icons.inventory_2),
+                    _buildDetailRow('Mavjud', '${product.available}', Icons.check_circle_outline),
+                    _buildDetailRow('Band qilingan', '${product.reserved}', Icons.lock_outline),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Fizik xususiyatlar',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildDetailRow('Og\'irligi', '${product.weight} kg', Icons.scale),
+                    _buildDetailRow('Hajmi', '${product.capacity} L', Icons.water_drop),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build a single detail row for product info
+  Widget _buildDetailRow(String label, String value, IconData icon) {
+    if (value.isEmpty || value == '0.0' || value == '0') {
+      return const SizedBox.shrink();
+    }
+    
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: colorScheme.primary),
+          const SizedBox(width: 12),
+          Text(
+            '$label:',
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -457,10 +690,11 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
+            onTap: () => _showProductDetails(product.code),
             leading: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(
-                product.code.substring(0, 2),
+                product.code.length >= 2 ? product.code.substring(0, 2) : product.code,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                   fontWeight: FontWeight.bold,
@@ -503,6 +737,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
+            onTap: () => _showProductDetails(bonus.code),
             leading: CircleAvatar(
               backgroundColor: Colors.green.withOpacity(0.1),
               child: const Icon(

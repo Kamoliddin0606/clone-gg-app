@@ -192,6 +192,19 @@ class DataSyncConfig {
       syncFunction: () => ds.syncProductBalances(codeProject: codeProject, codeSklad: codeSklad, forceRefresh: true),
     );
 
+    _tables['product_images'] = DataSyncTable(
+      id: 'product_images',
+      tableName: 'product_images',
+      nameEn: 'Product Images',
+      nameRu: 'Фото товаров',
+      nameUz: 'Mahsulot rasmlari',
+      icon: Icons.photo_library,
+      dependsOn: ['products'],
+      cascadeTo: [],
+      groupId: 'product_catalog',
+      syncFunction: () => ds.syncProductImages(forceRefresh: true),
+    );
+
     // =========================================================================
     // GROUP: PRICES (Types & Values)
     // =========================================================================
@@ -578,7 +591,7 @@ class DataSyncConfig {
       nameRu: 'Каталог товаров',
       nameUz: 'Mahsulotlar katalogi',
       icon: Icons.inventory_2,
-      tableIds: ['products', 'product_balances', 'product_brands', 'product_series'],
+      tableIds: ['products', 'product_balances', 'product_brands', 'product_series', 'product_images'],
       color: Colors.orange,
     );
 

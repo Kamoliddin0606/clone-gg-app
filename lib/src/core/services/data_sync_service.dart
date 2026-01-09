@@ -16,6 +16,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
@@ -36,6 +37,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_org
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
+import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 
 /// Centralized service for data synchronization and user validation
 class DataSyncService {
@@ -702,6 +706,39 @@ class DataSyncService {
     }
     await _dbService.saveBusinessRegions(regions);
     return regions;
+  }
+
+  /// Sync district contracting data
+  Future<List<DistrictContracting>> syncDistrictContracting({
+    required String userCode,
+    required String codeProject,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getDistrictContracting();
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+    }
+
+    return await _syncDistrictContracting(userCode, codeProject);
+  }
+
+  Future<List<DistrictContracting>> _syncDistrictContracting(String userCode, String codeProject) async {
+    final districts = await _apiService.getCitiesDistrictContracting(
+      codeUser: userCode,
+      codeProject: codeProject,
+    );
+    if (kDebugMode) {
+      print('Shartnoma uchun shahar/tuman ma\'lumotlari yuklandi: ${districts.length} ta');
+    }
+    await _dbService.saveDistrictContracting(districts);
+    return districts;
+  }
+
+  /// Get cached district contracting data
+  Future<List<DistrictContracting>> getCachedDistrictContracting() async {
+    return await _dbService.getDistrictContracting();
   }
 
   /// Sync user warehouses data
@@ -2090,6 +2127,117 @@ class DataSyncService {
       }
       rethrow;
     }
+  }
+
+  // =========================================================================
+  // Product Images Sync (REST API)
+  // =========================================================================
+
+  /// Sync product images from REST API media server
+  /// 
+  /// Fetches all product images from the nomenklatura-image endpoint
+  /// and saves them to local database for offline access.
+  Future<List<ProductImage>> syncProductImages({
+    bool forceRefresh = false,
+  }) async {
+    try {
+      if (!forceRefresh) {
+        final hasImages = await _dbService.hasProductImages();
+        if (hasImages) {
+          return await _dbService.getAllProductImages();
+        }
+      }
+
+      return await _syncProductImagesFromServer();
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: Error syncing product images: $e');
+      }
+      // Return cached images on error
+      return await _dbService.getAllProductImages();
+    }
+  }
+
+  Future<List<ProductImage>> _syncProductImagesFromServer() async {
+    try {
+      // Get REST API service and token
+      final restApiService = sl<RestApiService>();
+      final tokenService = sl<TokenService>();
+      
+      final token = await tokenService.getValidAccessToken();
+      if (token == null || token.isEmpty) {
+        if (kDebugMode) {
+          print('DataSyncService: No auth token for product images sync');
+        }
+        return [];
+      }
+
+      // Fetch all product images from server
+      final rawImages = await restApiService.getAllProductImages(
+        authToken: token,
+        onProgress: (fetched, total) {
+          if (kDebugMode) {
+            print('DataSyncService: Product images progress: $fetched / ${total ?? "?"}');
+          }
+        },
+      );
+
+      if (rawImages.isEmpty) {
+        if (kDebugMode) {
+          print('DataSyncService: No product images received from server');
+        }
+        return [];
+      }
+
+      // Convert to ProductImage models
+      final images = <ProductImage>[];
+      for (final raw in rawImages) {
+        // Extract product code from nomenklatura field
+        final nomenklaturaId = raw['nomenklatura'];
+        String productCode = '';
+        
+        // Get product code - it might be in the response or we need to look it up
+        if (raw['nomenklatura_code'] != null) {
+          productCode = raw['nomenklatura_code'].toString();
+        } else if (nomenklaturaId != null) {
+          // Use nomenklatura ID as fallback - the API might return numeric ID
+          productCode = nomenklaturaId.toString();
+        }
+
+        if (productCode.isNotEmpty) {
+          images.add(ProductImage.fromApiResponse(raw, productCode));
+        }
+      }
+
+      if (kDebugMode) {
+        print('DataSyncService: Saving ${images.length} product images to database');
+      }
+
+      // Clear existing and save new images
+      await _dbService.clearProductImages();
+      await _dbService.saveProductImages(images);
+
+      if (kDebugMode) {
+        print('DataSyncService: Product images sync completed: ${images.length} images');
+      }
+
+      return images;
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: Error fetching product images from server: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Get cached product images for a specific product
+  Future<List<ProductImage>> getCachedProductImages(String productCode) async {
+    return await _dbService.getProductImages(productCode);
+  }
+
+  /// Get main product image for a specific product
+  Future<ProductImage?> getMainProductImage(String productCode) async {
+    return await _dbService.getMainProductImage(productCode);
   }
 }
 

@@ -1,0 +1,865 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
+/// Page for creating a new client (trading point)
+/// Beautiful, user-friendly form with all required fields
+class CreateClientPage extends StatefulWidget {
+  const CreateClientPage({super.key});
+
+  @override
+  State<CreateClientPage> createState() => _CreateClientPageState();
+}
+
+class _CreateClientPageState extends State<CreateClientPage> with SingleTickerProviderStateMixin {
+  final _formKey = GlobalKey<FormState>();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  
+  // Form controllers
+  final _nameController = TextEditingController();
+  final _signboardController = TextEditingController();
+  final _innController = TextEditingController();
+  final _contactPersonController = TextEditingController();
+  final _contactPhoneController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _addressDeliveryController = TextEditingController();
+  final _referencePointController = TextEditingController();
+  final _responsiblePhoneController = TextEditingController();
+  final _directorController = TextEditingController();
+  final _mfoController = TextEditingController();
+  final _bankAccountController = TextEditingController();
+
+  // Location
+  double? _latitude;
+  double? _longitude;
+  bool _isGettingLocation = false;
+  
+  // Region selection
+  List<BusinessRegion> _regions = [];
+  BusinessRegion? _selectedRegion;
+  bool _isLoadingRegions = true;
+  
+  // Trade point type
+  String? _selectedTradePointType;
+  List<String> _tradePointTypes = [];
+  bool _isLoadingTypes = true;
+  
+  // Fallback types if database is empty
+  static const List<String> _defaultTradePointTypes = [
+    'Supermarket',
+    'Mini market',
+    'Do\'kon',
+    'Ulgurji',
+    'Restoran',
+    'Kafe',
+    'Mehmonxona',
+    'Boshqa',
+  ];
+  
+  // Submission state
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+    _animationController.forward();
+    
+    _loadRegions();
+    _loadTradePointTypes();
+    _getCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _nameController.dispose();
+    _signboardController.dispose();
+    _innController.dispose();
+    _contactPersonController.dispose();
+    _contactPhoneController.dispose();
+    _addressController.dispose();
+    _addressDeliveryController.dispose();
+    _referencePointController.dispose();
+    _responsiblePhoneController.dispose();
+    _directorController.dispose();
+    _mfoController.dispose();
+    _bankAccountController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadRegions() async {
+    try {
+      final dbService = sl<ApiDatabaseService>();
+      final regions = await dbService.getBusinessRegions();
+      
+      if (mounted) {
+        setState(() {
+          _regions = regions;
+          _isLoadingRegions = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingRegions = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hududlarni yuklashda xatolik: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Load unique trade point types from existing clients
+  /// Uses SQL DISTINCT - O(n) scan, most efficient for this task
+  Future<void> _loadTradePointTypes() async {
+    try {
+      final dbService = sl<ApiDatabaseService>();
+      final types = await dbService.getUniqueTradePointTypes();
+      
+      if (mounted) {
+        setState(() {
+          // Use database types if available, otherwise fallback to defaults
+          _tradePointTypes = types.isNotEmpty ? types : List.from(_defaultTradePointTypes);
+          _isLoadingTypes = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          // Fallback to default types on error
+          _tradePointTypes = List.from(_defaultTradePointTypes);
+          _isLoadingTypes = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isGettingLocation = true);
+    
+    try {
+      // Check if location service is available
+      final locationService = sl<LocationService>();
+      final storedLocation = locationService.getStoredLocation();
+      
+      if (storedLocation != null) {
+        setState(() {
+          _latitude = storedLocation['latitude'] as double?;
+          _longitude = storedLocation['longitude'] as double?;
+          _isGettingLocation = false;
+        });
+        return;
+      }
+      
+      // Try to get fresh location
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+      
+      if (mounted) {
+        setState(() {
+          _latitude = position.latitude;
+          _longitude = position.longitude;
+          _isGettingLocation = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isGettingLocation = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Joylashuvni olishda xatolik: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    if (_selectedRegion == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Iltimos, hududni tanlang'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    if (_selectedTradePointType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Iltimos, savdo nuqtasi turini tanlang'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    if (_latitude == null || _longitude == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Joylashuv ma\'lumotlari topilmadi'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Check internet connection
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity == ConnectivityResult.none) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Internet aloqasi yo\'q. Iltimos, internetga ulaning'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final prefs = sl<SharedPreferencesService>();
+      final soapService = sl<SoapApiService>();
+      
+      final userCode = prefs.getUserCode() ?? '';
+      
+      if (userCode.isEmpty) {
+        throw Exception('Foydalanuvchi kodi topilmadi');
+      }
+
+      final result = await soapService.setClient(
+        name: _nameController.text.trim(),
+        signboard: _signboardController.text.trim(),
+        inn: _innController.text.trim(),
+        tradePointType: _selectedTradePointType!,
+        contactPerson: _contactPersonController.text.trim(),
+        contactPersonPhone: _contactPhoneController.text.trim(),
+        address: _addressController.text.trim(),
+        addressDelivery: _addressDeliveryController.text.trim().isEmpty 
+            ? _addressController.text.trim() 
+            : _addressDeliveryController.text.trim(),
+        referencePoint: _referencePointController.text.trim(),
+        responsiblePersonPhone: _responsiblePhoneController.text.trim().isEmpty
+            ? _contactPhoneController.text.trim()
+            : _responsiblePhoneController.text.trim(),
+        longitude: _longitude!,
+        latitude: _latitude!,
+        codeUser: userCode,
+        codeRegion: _selectedRegion!.code,
+        director: _directorController.text.trim(),
+        mfo: _mfoController.text.trim(),
+        bankAccount: _bankAccountController.text.trim(),
+      );
+
+      if (result['success'] == true) {
+        // Show success message
+        if (mounted) {
+          _showSuccessDialog(result['clientCode']);
+        }
+      } else {
+        throw Exception(result['message'] ?? 'Noma\'lum xatolik');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Xatolik: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showSuccessDialog(String? clientCode) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle,
+                color: Colors.green.shade600,
+                size: 64,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Mijoz yaratildi!',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _nameController.text,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (clientCode != null && clientCode.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Kod: $clientCode',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+            Text(
+              'Ma\'lumotlar sinxronlanmoqda...',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Sync data and return
+    _syncAndReturn(clientCode);
+  }
+
+  Future<void> _syncAndReturn(String? clientCode) async {
+    try {
+      final dataSyncService = sl<DataSyncService>();
+      final prefs = sl<SharedPreferencesService>();
+      final userCode = prefs.getUserCode() ?? '';
+      final password = prefs.getPassword() ?? '';
+      
+      if (userCode.isNotEmpty && password.isNotEmpty) {
+        // Sync clients
+        await dataSyncService.syncClients(
+          userCode: userCode,
+          password: password,
+          forceRefresh: true,
+        );
+      }
+    } catch (e) {
+      // Ignore sync errors
+    }
+
+    if (mounted) {
+      Navigator.of(context).pop(); // Close dialog
+      Navigator.of(context).pop(clientCode); // Return to previous page with client code
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('Yangi mijoz'),
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: colorScheme.onSurface,
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                colorScheme.primaryContainer.withOpacity(0.1),
+                colorScheme.surface,
+              ],
+            ),
+          ),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Header card with location
+                _buildLocationCard(theme, colorScheme),
+                const SizedBox(height: 20),
+                
+                // Basic info section
+                _buildSectionHeader(theme, 'Asosiy ma\'lumotlar', Icons.store),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _nameController,
+                  label: 'Mijoz nomi',
+                  hint: 'Do\'kon yoki korxona nomi',
+                  icon: Icons.business,
+                  isRequired: true,
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _signboardController,
+                  label: 'Viveska (belgi)',
+                  hint: 'Tashqi ko\'rinishdagi nomi',
+                  icon: Icons.signpost,
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _innController,
+                  label: 'INN (STIR)',
+                  hint: '9 yoki 14 raqamli',
+                  icon: Icons.numbers,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  maxLength: 14,
+                ),
+                const SizedBox(height: 12),
+                _buildTradePointTypeSelector(theme, colorScheme),
+                const SizedBox(height: 12),
+                _buildRegionSelector(theme, colorScheme),
+                
+                const SizedBox(height: 24),
+                
+                // Contact info section
+                _buildSectionHeader(theme, 'Aloqa ma\'lumotlari', Icons.contact_phone),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _contactPersonController,
+                  label: 'Aloqa shaxsi',
+                  hint: 'Mas\'ul shaxs ismi',
+                  icon: Icons.person,
+                  isRequired: true,
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _contactPhoneController,
+                  label: 'Telefon raqami',
+                  hint: '+998 XX XXX XX XX',
+                  icon: Icons.phone,
+                  isRequired: true,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _responsiblePhoneController,
+                  label: 'Mas\'ul shaxs telefoni',
+                  hint: 'Qo\'shimcha telefon (ixtiyoriy)',
+                  icon: Icons.phone_android,
+                  keyboardType: TextInputType.phone,
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Address section
+                _buildSectionHeader(theme, 'Manzil', Icons.location_on),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _addressController,
+                  label: 'Manzil',
+                  hint: 'To\'liq manzil',
+                  icon: Icons.home,
+                  isRequired: true,
+                  maxLines: 2,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _addressDeliveryController,
+                  label: 'Yetkazib berish manzili',
+                  hint: 'Boshqacha bo\'lsa (ixtiyoriy)',
+                  icon: Icons.local_shipping,
+                  maxLines: 2,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _referencePointController,
+                  label: 'Mo\'ljal',
+                  hint: 'Yaqin atrofdagi taniqli joy',
+                  icon: Icons.place,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Bank details section (optional)
+                _buildSectionHeader(theme, 'Bank ma\'lumotlari (ixtiyoriy)', Icons.account_balance),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _directorController,
+                  label: 'Direktor',
+                  hint: 'F.I.O',
+                  icon: Icons.person_outline,
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _mfoController,
+                  label: 'MFO',
+                  hint: '5 raqamli bank kodi',
+                  icon: Icons.account_balance_wallet,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  maxLength: 5,
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: _bankAccountController,
+                  label: 'Hisob raqami',
+                  hint: '20 raqamli',
+                  icon: Icons.credit_card,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  maxLength: 20,
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Submit button
+                _buildSubmitButton(theme, colorScheme),
+                
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationCard(ThemeData theme, ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primaryContainer,
+            colorScheme.primaryContainer.withOpacity(0.7),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: _isGettingLocation
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.primary,
+                    ),
+                  )
+                : Icon(
+                    _latitude != null ? Icons.location_on : Icons.location_off,
+                    color: _latitude != null ? Colors.green : Colors.orange,
+                    size: 24,
+                  ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Joylashuv',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _latitude != null && _longitude != null
+                      ? '${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}'
+                      : _isGettingLocation
+                          ? 'Aniqlanmoqda...'
+                          : 'Joylashuv topilmadi',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: _isGettingLocation ? null : _getCurrentLocation,
+            icon: Icon(
+              Icons.refresh,
+              color: colorScheme.onPrimaryContainer,
+            ),
+            tooltip: 'Yangilash',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(ThemeData theme, String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool isRequired = false,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
+    int maxLines = 1,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      maxLength: maxLength,
+      maxLines: maxLines,
+      textCapitalization: textCapitalization,
+      style: TextStyle(color: colorScheme.onSurface),
+      decoration: InputDecoration(
+        labelText: isRequired ? '$label *' : label,
+        hintText: hint,
+        prefixIcon: Icon(icon, color: colorScheme.primary),
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.error),
+        ),
+        counterText: '',
+      ),
+      validator: isRequired
+          ? (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Bu maydon to\'ldirilishi shart';
+              }
+              return null;
+            }
+          : null,
+    );
+  }
+
+  Widget _buildTradePointTypeSelector(ThemeData theme, ColorScheme colorScheme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedTradePointType,
+        decoration: InputDecoration(
+          labelText: 'Savdo nuqtasi turi *',
+          prefixIcon: Icon(Icons.category, color: colorScheme.primary),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        items: _tradePointTypes.map((type) {
+          return DropdownMenuItem(value: type, child: Text(type));
+        }).toList(),
+        onChanged: (value) => setState(() => _selectedTradePointType = value),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Savdo nuqtasi turini tanlang';
+          }
+          return null;
+        },
+        isExpanded: true,
+        icon: Icon(Icons.keyboard_arrow_down, color: colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+
+  Widget _buildRegionSelector(ThemeData theme, ColorScheme colorScheme) {
+    if (_isLoadingRegions) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.map, color: colorScheme.primary),
+            const SizedBox(width: 16),
+            const Expanded(child: Text('Hududlar yuklanmoqda...')),
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+      ),
+      child: DropdownButtonFormField<BusinessRegion>(
+        value: _selectedRegion,
+        decoration: InputDecoration(
+          labelText: 'Hudud *',
+          prefixIcon: Icon(Icons.map, color: colorScheme.primary),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        items: _regions.map((region) {
+          return DropdownMenuItem(
+            value: region,
+            child: Text(region.name, overflow: TextOverflow.ellipsis),
+          );
+        }).toList(),
+        onChanged: (value) => setState(() => _selectedRegion = value),
+        validator: (value) {
+          if (value == null) {
+            return 'Hududni tanlang';
+          }
+          return null;
+        },
+        isExpanded: true,
+        icon: Icon(Icons.keyboard_arrow_down, color: colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton(ThemeData theme, ColorScheme colorScheme) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitForm,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: _isSubmitting ? 0 : 4,
+          shadowColor: colorScheme.primary.withOpacity(0.4),
+        ),
+        child: _isSubmitting
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Yaratilmoqda...'),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.add_business),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Mijozni yaratish',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onPrimary,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}

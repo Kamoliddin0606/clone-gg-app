@@ -8,8 +8,8 @@ import 'package:gloria_marketing_flutter/src/core/services/api_database_service.
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/searchable_client_dialog.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
@@ -80,8 +80,8 @@ class _CreateContractFormState extends State<CreateContractForm>
   
   // Data state
   List<ContractType> _contractTypes = [];
-  List<BusinessRegion> _businessRegions = [];
-  BusinessRegion? _selectedBusinessRegion;
+  List<DistrictContracting> _districtContracting = [];
+  DistrictContracting? _selectedDistrict;
   bool _isLoadingTypes = true;
   bool _isSubmitting = false;
   String? _errorMessage;
@@ -91,7 +91,7 @@ class _CreateContractFormState extends State<CreateContractForm>
     super.initState();
     _initAnimations();
     _loadContractTypes();
-    _loadBusinessRegions();
+    _loadDistrictContracting();
     _initPreSelectedClient();
   }
 
@@ -228,20 +228,44 @@ class _CreateContractFormState extends State<CreateContractForm>
     }
   }
 
-  /// Load business regions from cache
-  Future<void> _loadBusinessRegions() async {
+  /// Load district contracting data from cache or server
+  Future<void> _loadDistrictContracting({bool forceRefresh = false}) async {
     try {
-      final repository = sl<AgentRepository>();
-      final regions = await repository.getCachedBusinessRegions();
+      final prefs = sl<SharedPreferencesService>();
+      final dataSyncService = sl<DataSyncService>();
+      
+      final userCode = prefs.getUserCode() ?? '';
+      final codeProject = prefs.getCodeProject() ?? '';
+      
+      // Try to get from cache first (unless force refresh)
+      var districts = forceRefresh ? <DistrictContracting>[] : await dataSyncService.getCachedDistrictContracting();
+      
+      // If cache is empty or force refresh, fetch from server
+      if (districts.isEmpty && userCode.isNotEmpty && codeProject.isNotEmpty) {
+        if (kDebugMode) {
+          print('CreateContractForm: ${forceRefresh ? "Force refreshing" : "No cached"} districts, fetching from server');
+        }
+        try {
+          districts = await dataSyncService.syncDistrictContracting(
+            userCode: userCode,
+            codeProject: codeProject,
+            forceRefresh: true,
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            print('CreateContractForm: Error fetching districts from server: $e');
+          }
+        }
+      }
       
       if (mounted) {
         setState(() {
-          _businessRegions = regions;
+          _districtContracting = districts;
         });
       }
     } catch (e) {
       if (kDebugMode) {
-        print('CreateContractForm: Error loading business regions: $e');
+        print('CreateContractForm: Error loading district contracting: $e');
       }
     }
   }
@@ -274,8 +298,8 @@ class _CreateContractFormState extends State<CreateContractForm>
     final termPassport = _termPassport != null ? dateFormat.format(_termPassport!) : '';
     final certificateUnlimited = _certificateUnlimited ? 1 : 0;
     final codeClient = _selectedClient?.id ?? '';
-    final psCodeDistrict = _selectedBusinessRegion?.code ?? '';
-    final psNameDistrict = _selectedBusinessRegion?.name ?? '';
+    final psCodeDistrict = _selectedDistrict?.codeDistrict ?? '';
+    final psNameDistrict = _selectedDistrict?.nameDistrict ?? '';
     
     return '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
@@ -383,23 +407,25 @@ class _CreateContractFormState extends State<CreateContractForm>
       
       // Format dates for API
       final dateFormat = DateFormat('yyyy-MM-dd');
+      // Default minimal date for 1C (SQL Server minimum date)
+      const defaultMinimalDate = '1753-01-01';
       
       final result = await soapService.setContract(
         dateOfContract: dateFormat.format(_contractDate),
         codeUser: userCode,
         codeClient: _selectedClient!.id,
         sumOfContract: double.tryParse(_sumController.text.replaceAll(' ', '')) ?? 0.0,
-        termReference: _termReference != null ? dateFormat.format(_termReference!) : null,
-        termCertificate: _termCertificate != null ? dateFormat.format(_termCertificate!) : null,
+        termReference: _termReference != null ? dateFormat.format(_termReference!) : defaultMinimalDate,
+        termCertificate: _termCertificate != null ? dateFormat.format(_termCertificate!) : defaultMinimalDate,
         numbReference: _numbReferenceController.text.isEmpty ? null : _numbReferenceController.text,
         numbCertificate: _numbCertificateController.text.isEmpty ? null : _numbCertificateController.text,
         typeOfContract: _selectedContractType!,
         numbPassport: _numbPassportController.text.isEmpty ? null : _numbPassportController.text,
-        termPassport: _termPassport != null ? dateFormat.format(_termPassport!) : null,
+        termPassport: _termPassport != null ? dateFormat.format(_termPassport!) : defaultMinimalDate,
         certificateUnlimited: _certificateUnlimited,
         psCodeProject: codeProject,
-        psCodeDistrict: _selectedBusinessRegion?.code,
-        psNameDistrict: _selectedBusinessRegion?.name,
+        psCodeDistrict: _selectedDistrict?.codeDistrict,
+        psNameDistrict: _selectedDistrict?.nameDistrict,
       );
 
       if (result['success'] == true) {
@@ -685,8 +711,8 @@ class _CreateContractFormState extends State<CreateContractForm>
                         
                         const SizedBox(height: 16),
                         
-                        // Business region dropdown (NameDistrict va CodeDistrict)
-                        _buildBusinessRegionSelector(theme, colorScheme),
+                        // District contracting dropdown (NameDistrict va CodeDistrict)
+                        _buildDistrictContractingSelector(theme, colorScheme),
                         
                         const SizedBox(height: 32),
                         
@@ -943,13 +969,13 @@ class _CreateContractFormState extends State<CreateContractForm>
     );
   }
 
-  /// Build business region selector dropdown
-  Widget _buildBusinessRegionSelector(ThemeData theme, ColorScheme colorScheme) {
+  /// Build district contracting selector dropdown
+  Widget _buildDistrictContractingSelector(ThemeData theme, ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Biznes region',
+          'Shahar/Tuman',
           style: theme.textTheme.labelLarge?.copyWith(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.w600,
@@ -958,7 +984,7 @@ class _CreateContractFormState extends State<CreateContractForm>
         const SizedBox(height: 8),
         Row(
           children: [
-            // Region dropdown
+            // District dropdown
             Expanded(
               flex: 2,
               child: Container(
@@ -966,42 +992,42 @@ class _CreateContractFormState extends State<CreateContractForm>
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: colorScheme.outline.withValues(alpha: 0.5)),
                 ),
-                child: _businessRegions.isEmpty
+                child: _districtContracting.isEmpty
                     ? Container(
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
-                            Icon(Icons.business, size: 20, color: colorScheme.onSurfaceVariant),
+                            Icon(Icons.location_city, size: 20, color: colorScheme.onSurfaceVariant),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Regionlar yuklanmoqda...',
+                                'Shahar/Tuman yuklanmoqda...',
                                 style: TextStyle(color: colorScheme.onSurfaceVariant),
                               ),
                             ),
                           ],
                         ),
                       )
-                    : DropdownButtonFormField<BusinessRegion>(
-                        value: _selectedBusinessRegion,
+                    : DropdownButtonFormField<DistrictContracting>(
+                        value: _selectedDistrict,
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.business, color: colorScheme.primary),
+                          prefixIcon: Icon(Icons.location_city, color: colorScheme.primary),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          hintText: 'Regionni tanlang',
+                          hintText: 'Shahar/Tumanni tanlang',
                         ),
-                        items: _businessRegions.map((region) {
-                          return DropdownMenuItem<BusinessRegion>(
-                            value: region,
+                        items: _districtContracting.map((district) {
+                          return DropdownMenuItem<DistrictContracting>(
+                            value: district,
                             child: Text(
-                              region.name,
+                              district.nameDistrict,
                               overflow: TextOverflow.ellipsis,
                             ),
                           );
                         }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            _selectedBusinessRegion = value;
+                            _selectedDistrict = value;
                           });
                         },
                         isExpanded: true,
@@ -1010,7 +1036,7 @@ class _CreateContractFormState extends State<CreateContractForm>
               ),
             ),
             const SizedBox(width: 12),
-            // Region code (auto-filled, read-only display)
+            // District code (auto-filled, read-only display)
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
@@ -1025,12 +1051,12 @@ class _CreateContractFormState extends State<CreateContractForm>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _selectedBusinessRegion?.code ?? 'Kod',
+                        _selectedDistrict?.codeDistrict ?? 'Kod',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: _selectedBusinessRegion != null 
+                          color: _selectedDistrict != null 
                               ? colorScheme.onSurface 
                               : colorScheme.onSurfaceVariant,
-                          fontWeight: _selectedBusinessRegion != null 
+                          fontWeight: _selectedDistrict != null 
                               ? FontWeight.w600 
                               : FontWeight.normal,
                         ),
@@ -1042,7 +1068,7 @@ class _CreateContractFormState extends State<CreateContractForm>
             ),
           ],
         ),
-        if (_selectedBusinessRegion != null)
+        if (_selectedDistrict != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
@@ -1174,12 +1200,15 @@ class _CreateContractFormState extends State<CreateContractForm>
               ),
             ),
             IconButton(
-              onPressed: _isLoadingTypes ? null : () => _loadContractTypes(forceRefresh: true),
+              onPressed: _isLoadingTypes ? null : () async {
+                await _loadContractTypes(forceRefresh: true);
+                await _loadDistrictContracting(forceRefresh: true);
+              },
               icon: Icon(
                 Icons.refresh,
                 color: _isLoadingTypes ? colorScheme.onSurfaceVariant : colorScheme.primary,
               ),
-              tooltip: 'Serverdan yangilash',
+              tooltip: 'Shartnoma turi va hudud ma\'lumotlarini yangilash',
               style: IconButton.styleFrom(
                 backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
               ),

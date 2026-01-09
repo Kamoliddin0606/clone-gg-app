@@ -34,6 +34,7 @@ import 'map_pages/map_detail_page_osm.dart';
 import 'map_pages/map_detail_page_yandex.dart';
 import 'visit_steps_page.dart';
 import 'client_images_page.dart';
+import 'create_client_page.dart';
 import '../widgets/client_balance_widget_v2.dart';
 import 'dart:ui'; 
 import 'dart:async';
@@ -223,6 +224,12 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     // PageStorage bucket for state persistence
     late final PageStorageBucket _storageBucket;
 
+    // Client creation permission
+    bool _canCreateClient = false;
+    
+    // Newly created client code for highlighting
+    String? _newlyCreatedClientCode;
+
   @override
   void initState() {
     super.initState();
@@ -302,6 +309,25 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         dataSyncService: dataSyncService,
         prefs: prefs,
       );
+
+      // Load client creation permission
+      final permissions = await _permissionsService?.getPermissions();
+      if (kDebugMode) {
+        print('DEBUG FAB: permissions object: $permissions');
+        print('DEBUG FAB: mounted: $mounted');
+        if (permissions != null) {
+          print('DEBUG FAB: allowCreatingPointOfSale value: ${permissions.allowCreatingPointOfSale}');
+        }
+      }
+      
+      if (mounted) {
+        setState(() {
+          _canCreateClient = permissions?.allowCreatingPointOfSale ?? false;
+        });
+        if (kDebugMode) {
+          print('DEBUG FAB: _canCreateClient set to: $_canCreateClient');
+        }
+      }
 
       if (kDebugMode) {
         print('PermissionsService initialized successfully');
@@ -662,6 +688,23 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       _sortByDistance();
     } else {
       _sortAlphabetically();
+    }
+    
+    // Put newly created client at the top
+    _moveNewClientToTop();
+  }
+  
+  /// Move newly created client to the top of the list
+  void _moveNewClientToTop() {
+    if (_newlyCreatedClientCode == null || _newlyCreatedClientCode!.isEmpty) return;
+    
+    final newClientIndex = _filteredTradingPoints.indexWhere(
+      (tp) => tp.tradingPoint.id == _newlyCreatedClientCode,
+    );
+    
+    if (newClientIndex > 0) {
+      final newClient = _filteredTradingPoints.removeAt(newClientIndex);
+      _filteredTradingPoints.insert(0, newClient);
     }
   }
 
@@ -1458,6 +1501,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                         itemBuilder: (context, index) {
                           final tp = _filteredTradingPoints[index];
                           // LIST: eski ExpansionTile kartamiz, lekin leading – foto
+                          final isNewClient = _newlyCreatedClientCode != null && 
+                              tp.tradingPoint.id == _newlyCreatedClientCode;
                           return TradingPointCard(
                             tradingPoint: tp.tradingPoint,
                             onCall: () => _makeCall(tp.tradingPoint.phone),
@@ -1475,9 +1520,10 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                             expanded: _expandedIndex == index,
                             onExpand: (open) {
                               setState(() {
-                                _expandedIndex = open ? index : null; // faqat bittasi ochiq bo‘ladi
+                                _expandedIndex = open ? index : null; // faqat bittasi ochiq bo'ladi
                               });
                             },
+                            isNewClient: isNewClient,
                           );
                         },
                       ),
@@ -1530,8 +1576,64 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       // bottomNavigationBar: const AgentBottomNavBar(
       //   initialIndex: 2,
       // ),
+
+      // Floating action button for creating new client
+      floatingActionButton: (() {
+        if (kDebugMode) print('DEBUG FAB BUILD: _canCreateClient = $_canCreateClient');
+        return _canCreateClient;
+      }())
+          ? FloatingActionButton.extended(
+              onPressed: _navigateToCreateClient,
+              icon: const Icon(Icons.add),
+              label: Text(AppLocalizations.of(context)?.newClient ?? 'Yangi mijoz'),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              elevation: 4,
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
+  }
+
+  /// Navigate to create client page
+  Future<void> _navigateToCreateClient() async {
+    final result = await Navigator.push<String?>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CreateClientPage(),
+      ),
+    );
+
+    // If a new client was created, reload data and highlight the new client
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        _newlyCreatedClientCode = result;
+      });
+      
+      // Reload trading points to include the new client
+      await _loadTradingPoints();
+      
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Yangi mijoz muvaffaqiyatli yaratildi!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+
+      // Clear highlight after some time
+      Future.delayed(const Duration(seconds: 10), () {
+        if (mounted) {
+          setState(() {
+            _newlyCreatedClientCode = null;
+          });
+        }
+      });
+    }
   }
 }
 
@@ -1642,6 +1744,7 @@ class TradingPointCard extends StatelessWidget {
   final LocationService? locationService;
   final SalesReqPermissions? permissions;
   final MapProvider mapProvider;
+  final bool isNewClient;
   const TradingPointCard({
     super.key,
     required this.tradingPoint,
@@ -1659,6 +1762,7 @@ class TradingPointCard extends StatelessWidget {
     this.locationService,
     this.permissions,
     required this.mapProvider,
+    this.isNewClient = false,
   });
 
   @override
@@ -1668,11 +1772,22 @@ class TradingPointCard extends StatelessWidget {
 
     final visitedColor = tradingPoint.isVisited ? Colors.green : Colors.orange;
     final visitedIcon = tradingPoint.isVisited ? Icons.check_circle : Icons.location_on;
+    
+    // Highlight color for newly created clients
+    final cardColor = isNewClient 
+        ? Colors.green.shade50 
+        : cs.surface;
+    final borderColor = isNewClient 
+        ? Colors.green.shade400 
+        : Colors.transparent;
 
     return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: cs.surface,
+      elevation: isNewClient ? 2 : 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: borderColor, width: isNewClient ? 2 : 0),
+      ),
+      color: cardColor,
       child: GestureDetector(
         onTap: () {
           final newExpanded = !(expanded ?? false);

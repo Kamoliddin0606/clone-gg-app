@@ -509,4 +509,172 @@ class RestApiService {
       throw Exception('Rasmlarni yuklashda kutilmagan xatolik: $e');
     }
   }
+
+  /// Fetch product images from the media server REST API (nomenklatura-image).
+  ///
+  /// This retrieves images for products (nomenklatura) from the media server.
+  /// The response is returned as a list of raw maps to keep this service
+  /// independent from UI/database model classes.
+  ///
+  /// Endpoint:
+  /// - GET http://178.218.200.120:1596/api/v1/nomenklatura-image/
+  ///
+  /// Query params:
+  /// - nomenklatura (optional) - Product code_1c filter
+  /// - is_main (optional) - Filter main images only
+  /// - category (optional) - Filter by category
+  /// - page (optional) - Page number for pagination
+  ///
+  /// Auth:
+  /// - Requires Bearer token.
+  Future<List<Map<String, dynamic>>> getProductImages({
+    required String authToken,
+    String? productCode,
+    bool? isMain,
+    String? category,
+    int? page,
+  }) async {
+    const String baseUrl = 'http://178.218.200.120:1596';
+    final endpoint = '$baseUrl/api/v1/nomenklatura-image/';
+
+    try {
+      if (authToken.isEmpty) {
+        throw ArgumentError('Authentication token cannot be empty');
+      }
+
+      final query = <String, dynamic>{};
+      if (productCode != null && productCode.trim().isNotEmpty) {
+        query['nomenklatura'] = productCode;
+      }
+      if (isMain != null) {
+        query['is_main'] = isMain;
+      }
+      if (category != null && category.trim().isNotEmpty) {
+        query['category'] = category;
+      }
+      if (page != null && page > 0) {
+        query['page'] = page;
+      }
+
+      if (kDebugMode) {
+        print('RestApiService: Fetching product images from $endpoint');
+        print('RestApiService: Query params: $query');
+      }
+
+      final response = await _dio.get(
+        endpoint,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $authToken',
+          },
+        ),
+        queryParameters: query.isEmpty ? null : query,
+      );
+
+      final raw = response.data;
+      List<Map<String, dynamic>> results = [];
+
+      if (raw is List) {
+        results = List<Map<String, dynamic>>.from(raw);
+      } else if (raw is Map<String, dynamic>) {
+        // Handle paginated response
+        final data = raw['results'] ?? raw['data'] ?? raw['images'];
+        if (data is List) {
+          results = List<Map<String, dynamic>>.from(data);
+        }
+      }
+
+      if (kDebugMode) {
+        print('RestApiService: Fetched ${results.length} product images');
+      }
+
+      return results;
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: DioException while fetching product images: ${e.message}');
+        print('RestApiService: Response status: ${e.response?.statusCode}');
+        print('RestApiService: Response data: ${e.response?.data}');
+      }
+      throw Exception('Mahsulot rasmlarini olishda xatolik: ${e.error}');
+    } catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: Unexpected error while fetching product images: $e');
+      }
+      throw Exception('Mahsulot rasmlarini qayta ishlashda xatolik: $e');
+    }
+  }
+
+  /// Fetch all product images with pagination support
+  ///
+  /// This method fetches all pages of product images from the server.
+  /// Useful for initial sync of all product images.
+  ///
+  /// @param authToken The authentication token for API access
+  /// @param onProgress Optional callback for progress updates
+  /// @return Future<List<Map<String, dynamic>>> All product images
+  Future<List<Map<String, dynamic>>> getAllProductImages({
+    required String authToken,
+    void Function(int fetched, int? total)? onProgress,
+  }) async {
+    const String baseUrl = 'http://178.218.200.120:1596';
+    final endpoint = '$baseUrl/api/v1/nomenklatura-image/';
+    final allResults = <Map<String, dynamic>>[];
+    int page = 1;
+    int? totalCount;
+    bool hasMore = true;
+
+    try {
+      while (hasMore) {
+        if (kDebugMode) {
+          print('RestApiService: Fetching product images page $page');
+        }
+
+        final response = await _dio.get(
+          endpoint,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $authToken',
+            },
+          ),
+          queryParameters: {'page': page},
+        );
+
+        final raw = response.data;
+        List<Map<String, dynamic>> pageResults = [];
+
+        if (raw is Map<String, dynamic>) {
+          totalCount = raw['count'] as int?;
+          final data = raw['results'] ?? raw['data'];
+          if (data is List) {
+            pageResults = List<Map<String, dynamic>>.from(data);
+          }
+          hasMore = raw['next'] != null;
+        } else if (raw is List) {
+          pageResults = List<Map<String, dynamic>>.from(raw);
+          hasMore = false;
+        }
+
+        allResults.addAll(pageResults);
+        onProgress?.call(allResults.length, totalCount);
+
+        if (pageResults.isEmpty) {
+          hasMore = false;
+        }
+
+        page++;
+      }
+
+      if (kDebugMode) {
+        print('RestApiService: Fetched total ${allResults.length} product images');
+      }
+
+      return allResults;
+    } catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: Error fetching all product images: $e');
+      }
+      // Return what we have so far
+      return allResults;
+    }
+  }
 }

@@ -30,6 +30,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_o
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
 
 class ApiDatabaseService {
   static final ApiDatabaseService _instance = ApiDatabaseService._internal();
@@ -44,7 +46,7 @@ class ApiDatabaseService {
     return _database!;
   }
 
-  /// Initialize database with version 23
+  /// Initialize database with version 29
   /// Database schema initialization
   Future<Database> _initDatabase() async {
     final dbPath = await getDatabasesPath();
@@ -52,7 +54,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 27, // Incremented to version 27 for contract_types table
+      version: 29, // Incremented to version 29 for product_images table
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -1005,6 +1007,74 @@ class ApiDatabaseService {
         print('ApiDatabaseService: Created contract_types table (version 27)');
       }
     }
+
+    // =========================================================================
+    // Version 28: District Contracting table for contract city/district data
+    // =========================================================================
+    if (oldVersion < 28) {
+      // Create district_contracting table for caching district data from server
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS district_contracting (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code_district TEXT UNIQUE NOT NULL,
+          name_district TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      // Create index for district_contracting table
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_district_contracting_code ON district_contracting(code_district)');
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Created district_contracting table (version 28)');
+      }
+    }
+
+    // =========================================================================
+    // Version 29: Product Images table for nomenklatura images from REST API
+    // =========================================================================
+    if (oldVersion < 29) {
+      // Create product_images table for caching product images from server
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS product_images (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          server_id INTEGER,
+          product_code TEXT NOT NULL,
+          nomenklatura_id INTEGER,
+          image TEXT,
+          image_url TEXT,
+          image_sm_url TEXT,
+          image_md_url TEXT,
+          image_lg_url TEXT,
+          image_thumbnail_url TEXT,
+          image_dimensions TEXT,
+          image_sm_dimensions TEXT,
+          image_md_dimensions TEXT,
+          image_lg_dimensions TEXT,
+          image_thumbnail_dimensions TEXT,
+          is_main INTEGER DEFAULT 0,
+          category TEXT,
+          note TEXT,
+          status TEXT,
+          source TEXT,
+          created_at_server TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (product_code) REFERENCES products (code) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create indexes for product_images table
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_product_code ON product_images(product_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_server_id ON product_images(server_id)');
+      await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_product_images_product_code_server_id ON product_images(product_code, server_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_is_main ON product_images(is_main)');
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Created product_images table (version 29)');
+      }
+    }
   }
 
   Future<void> _createTables(Database db) async {
@@ -1770,6 +1840,60 @@ class ApiDatabaseService {
     // Contract Types indekslari
     await db.execute('CREATE INDEX IF NOT EXISTS idx_contract_types_code ON contract_types(code)');
 
+    // =========================================================================
+    // District Contracting table - Shartnoma uchun shahar/tuman ma'lumotlari
+    // =========================================================================
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS district_contracting (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code_district TEXT UNIQUE NOT NULL,
+        name_district TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // District Contracting indekslari
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_district_contracting_code ON district_contracting(code_district)');
+
+    // =========================================================================
+    // Product Images table - Mahsulot rasmlari uchun (REST API)
+    // =========================================================================
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS product_images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        server_id INTEGER,
+        product_code TEXT NOT NULL,
+        nomenklatura_id INTEGER,
+        image TEXT,
+        image_url TEXT,
+        image_sm_url TEXT,
+        image_md_url TEXT,
+        image_lg_url TEXT,
+        image_thumbnail_url TEXT,
+        image_dimensions TEXT,
+        image_sm_dimensions TEXT,
+        image_md_dimensions TEXT,
+        image_lg_dimensions TEXT,
+        image_thumbnail_dimensions TEXT,
+        is_main INTEGER DEFAULT 0,
+        category TEXT,
+        note TEXT,
+        status TEXT,
+        source TEXT,
+        created_at_server TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (product_code) REFERENCES products (code) ON DELETE CASCADE
+      )
+    ''');
+
+    // Product Images indekslari
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_product_code ON product_images(product_code)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_server_id ON product_images(server_id)');
+    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_product_images_product_code_server_id ON product_images(product_code, server_id)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_is_main ON product_images(is_main)');
+
     if (kDebugMode) print('API cache database tables created successfully');
   }
 
@@ -1984,6 +2108,16 @@ class ApiDatabaseService {
         .toList();
   }
 
+  /// Get unique trade point types from existing clients
+  /// Uses SQL DISTINCT for O(n) efficiency - fastest way to get unique values
+  Future<List<String>> getUniqueTradePointTypes() async {
+    final db = await database;
+    final result = await db.rawQuery(
+      "SELECT DISTINCT trade_point_type FROM clients WHERE trade_point_type IS NOT NULL AND trade_point_type != '' ORDER BY trade_point_type ASC"
+    );
+    return result.map((row) => row['trade_point_type'] as String).toList();
+  }
+
   // Products methods
   Future<void> saveProducts(List<ProductData> products) async {
     final db = await database;
@@ -2055,6 +2189,51 @@ class ApiDatabaseService {
           ),
         )
         .toList();
+  }
+
+  /// Get a single product by its code
+  /// 
+  /// Returns ProductData if found, null otherwise.
+  /// Used for displaying product details in promotion product/bonus cards.
+  Future<ProductData?> getProductByCode(String productCode) async {
+    if (productCode.isEmpty) return null;
+    
+    try {
+      final db = await database;
+      final result = await db.query(
+        'products',
+        where: 'code = ?',
+        whereArgs: [productCode],
+        limit: 1,
+      );
+
+      if (result.isEmpty) return null;
+
+      final row = result.first;
+      return ProductData(
+        code: row['code'] as String,
+        name: row['name'] as String,
+        unit: row['unit'] as String,
+        quantity: (row['quantity'] as num?)?.toDouble() ?? 0.0,
+        reserved: (row['reserved'] as num?)?.toDouble() ?? 0.0,
+        available: (row['available'] as num?)?.toDouble() ?? 0.0,
+        category: row['category'] as String? ?? '',
+        barcode: row['barcode'] as String? ?? '',
+        have: (row['have'] as int?) ?? 0,
+        warehouseCode: row['warehouse_code'] as String? ?? '',
+        weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
+        capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
+        vendorCode: row['vendor_code'] as String? ?? '',
+        productBrand: row['product_brand'] as String? ?? '',
+        productSeries: row['product_series'] as String? ?? '',
+        codeProject: row['code_project'] as String? ?? '',
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting product by code $productCode: $e');
+      }
+      return null;
+    }
   }
 
   // Price types methods
@@ -7005,6 +7184,356 @@ class ApiDatabaseService {
     } catch (e) {
       if (kDebugMode) {
         print('ApiDatabaseService: Error clearing contract types: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Save district contracting data to cache
+  /// 
+  /// Parameters:
+  /// - [districts] - List of DistrictContracting objects
+  Future<void> saveDistrictContracting(List<DistrictContracting> districts) async {
+    try {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Saving ${districts.length} district contracting records');
+      }
+
+      final db = await database;
+      final now = DateTime.now().toIso8601String();
+
+      // Ensure table exists (fallback for migration issues)
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS district_contracting (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code_district TEXT UNIQUE NOT NULL,
+          name_district TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_district_contracting_code ON district_contracting(code_district)');
+
+      await db.transaction((txn) async {
+        await txn.delete('district_contracting');
+
+        for (final district in districts) {
+          await txn.insert(
+            'district_contracting',
+            {
+              'code_district': district.codeDistrict,
+              'name_district': district.nameDistrict,
+              'created_at': now,
+              'updated_at': now,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      });
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Successfully saved ${districts.length} district contracting records');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error saving district contracting: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Get all cached district contracting data
+  /// 
+  /// Returns a list of DistrictContracting objects.
+  /// Returns empty list if no districts are cached.
+  Future<List<DistrictContracting>> getDistrictContracting() async {
+    try {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Getting cached district contracting data');
+      }
+
+      final db = await database;
+      final results = await db.query(
+        'district_contracting',
+        columns: ['code_district', 'name_district', 'created_at', 'updated_at'],
+        orderBy: 'name_district ASC',
+      );
+
+      final districts = results.map((row) => DistrictContracting(
+        codeDistrict: row['code_district'] as String,
+        nameDistrict: row['name_district'] as String,
+        createdAt: row['created_at'] != null ? DateTime.tryParse(row['created_at'] as String) : null,
+        updatedAt: row['updated_at'] != null ? DateTime.tryParse(row['updated_at'] as String) : null,
+      )).toList();
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Retrieved ${districts.length} cached district contracting records');
+      }
+
+      return districts;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting district contracting: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Check if district contracting data is cached
+  /// 
+  /// Returns true if there are cached districts, false otherwise.
+  Future<bool> hasDistrictContracting() async {
+    try {
+      final db = await database;
+      final result = await db.rawQuery('SELECT COUNT(*) FROM district_contracting');
+      final count = Sqflite.firstIntValue(result) ?? 0;
+      return count > 0;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error checking district contracting: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Clear all cached district contracting data
+  Future<void> clearDistrictContracting() async {
+    try {
+      final db = await database;
+      await db.delete('district_contracting');
+      if (kDebugMode) {
+        print('ApiDatabaseService: Cleared district contracting cache');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error clearing district contracting: $e');
+      }
+      rethrow;
+    }
+  }
+
+  // =========================================================================
+  // Product Images CRUD Methods
+  // =========================================================================
+
+  /// Save product images to cache
+  /// 
+  /// Parameters:
+  /// - [images] - List of ProductImage objects to save
+  /// - [productCode] - Optional product code to delete existing images for before saving
+  Future<void> saveProductImages(List<ProductImage> images, {String? productCode}) async {
+    try {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Saving ${images.length} product images${productCode != null ? " for product $productCode" : ""}');
+      }
+
+      final db = await database;
+
+      // Ensure table exists (fallback for migration issues)
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS product_images (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          server_id INTEGER,
+          product_code TEXT NOT NULL,
+          nomenklatura_id INTEGER,
+          image TEXT,
+          image_url TEXT,
+          image_sm_url TEXT,
+          image_md_url TEXT,
+          image_lg_url TEXT,
+          image_thumbnail_url TEXT,
+          image_dimensions TEXT,
+          image_sm_dimensions TEXT,
+          image_md_dimensions TEXT,
+          image_lg_dimensions TEXT,
+          image_thumbnail_dimensions TEXT,
+          is_main INTEGER DEFAULT 0,
+          category TEXT,
+          note TEXT,
+          status TEXT,
+          source TEXT,
+          created_at_server TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (product_code) REFERENCES products (code) ON DELETE CASCADE
+        )
+      ''');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_product_code ON product_images(product_code)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_server_id ON product_images(server_id)');
+
+      await db.transaction((txn) async {
+        // Delete existing images for product if specified
+        if (productCode != null) {
+          await txn.delete(
+            'product_images',
+            where: 'product_code = ?',
+            whereArgs: [productCode],
+          );
+        }
+
+        for (final image in images) {
+          final map = image.toMap();
+          map.remove('id'); // Remove id for insertion
+          await txn.insert(
+            'product_images',
+            map,
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      });
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Successfully saved ${images.length} product images');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error saving product images: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Get all product images for a specific product
+  /// 
+  /// Returns a list of ProductImage objects ordered by is_main DESC, created_at DESC.
+  Future<List<ProductImage>> getProductImages(String productCode) async {
+    try {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Getting product images for $productCode');
+      }
+
+      final db = await database;
+      final results = await db.query(
+        'product_images',
+        where: 'product_code = ?',
+        whereArgs: [productCode],
+        orderBy: 'is_main DESC, created_at DESC',
+      );
+
+      return results.map((row) => ProductImage.fromMap(row)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting product images: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Get main product image for a specific product
+  /// 
+  /// Returns the main ProductImage if found, null otherwise.
+  Future<ProductImage?> getMainProductImage(String productCode) async {
+    try {
+      final db = await database;
+      final results = await db.query(
+        'product_images',
+        where: 'product_code = ? AND is_main = 1',
+        whereArgs: [productCode],
+        limit: 1,
+      );
+
+      if (results.isEmpty) {
+        // Fallback to any image if no main image
+        final anyResults = await db.query(
+          'product_images',
+          where: 'product_code = ?',
+          whereArgs: [productCode],
+          orderBy: 'created_at DESC',
+          limit: 1,
+        );
+        if (anyResults.isEmpty) return null;
+        return ProductImage.fromMap(anyResults.first);
+      }
+
+      return ProductImage.fromMap(results.first);
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting main product image: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Get all cached product images
+  /// 
+  /// Returns a list of all ProductImage objects in the database.
+  Future<List<ProductImage>> getAllProductImages() async {
+    try {
+      final db = await database;
+      final results = await db.query(
+        'product_images',
+        orderBy: 'product_code ASC, is_main DESC',
+      );
+
+      return results.map((row) => ProductImage.fromMap(row)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting all product images: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Check if product images exist in cache
+  Future<bool> hasProductImages() async {
+    try {
+      final db = await database;
+      final result = await db.rawQuery('SELECT COUNT(*) FROM product_images');
+      final count = Sqflite.firstIntValue(result) ?? 0;
+      return count > 0;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error checking product images: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Get product images count
+  Future<int> getProductImagesCount() async {
+    try {
+      final db = await database;
+      final result = await db.rawQuery('SELECT COUNT(*) FROM product_images');
+      return Sqflite.firstIntValue(result) ?? 0;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting product images count: $e');
+      }
+      return 0;
+    }
+  }
+
+  /// Clear all cached product images
+  Future<void> clearProductImages() async {
+    try {
+      final db = await database;
+      await db.delete('product_images');
+      if (kDebugMode) {
+        print('ApiDatabaseService: Cleared product images cache');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error clearing product images: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Delete product images for a specific product
+  Future<void> deleteProductImages(String productCode) async {
+    try {
+      final db = await database;
+      await db.delete(
+        'product_images',
+        where: 'product_code = ?',
+        whereArgs: [productCode],
+      );
+      if (kDebugMode) {
+        print('ApiDatabaseService: Deleted product images for $productCode');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error deleting product images: $e');
       }
       rethrow;
     }

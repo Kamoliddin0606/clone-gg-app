@@ -9,6 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dar
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:gloria_marketing_flutter/src/core/services/address_resolver_service.dart';
 
 /// Page for creating a new client (trading point)
 /// Beautiful, user-friendly form with all required fields
@@ -67,6 +68,9 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
   
   // Submission state
   bool _isSubmitting = false;
+  
+  // Track if addresses were auto-filled
+  bool _addressAutoFilled = false;
 
   @override
   void initState() {
@@ -163,33 +167,32 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
       final locationService = sl<LocationService>();
       final storedLocation = locationService.getStoredLocation();
       
+      double? lat, lng;
+      
       if (storedLocation != null) {
-        setState(() {
-          _latitude = storedLocation['latitude'] as double?;
-          _longitude = storedLocation['longitude'] as double?;
-          _isGettingLocation = false;
-        });
-        return;
+        lat = storedLocation['latitude'] as double?;
+        lng = storedLocation['longitude'] as double?;
+      } else {
+        // Try to get fresh location
+        final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 10),
+        );
+        lat = position.latitude;
+        lng = position.longitude;
       }
       
-      // Try to get fresh location
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
-      );
-      
-      if (mounted) {
+      if (mounted && lat != null && lng != null) {
         setState(() {
-          _latitude = position.latitude;
-          _longitude = position.longitude;
-          _isGettingLocation = false;
+          _latitude = lat;
+          _longitude = lng;
         });
+        
+        // Resolve address from coordinates
+        await _resolveAddressFromCoordinates(lat, lng);
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isGettingLocation = false;
-        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Joylashuvni olishda xatolik: $e'),
@@ -197,6 +200,44 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() => _isGettingLocation = false);
+      }
+    }
+  }
+
+  /// Resolve address from coordinates using AddressResolverService
+  Future<void> _resolveAddressFromCoordinates(double lat, double lng) async {
+    try {
+      final prefs = sl<SharedPreferencesService>();
+      final resolver = AddressResolverService(
+        yandexApiKey: prefs.getYandexMapsToken(),
+        googleApiKey: prefs.getGoogleMapsToken(),
+      );
+      
+      final address = await resolver.resolveAddress(lat, lng);
+      
+      if (mounted && address.confidence > 0.3) {
+        final formattedAddress = address.toFormattedString();
+        setState(() {
+          // Auto-fill both address fields with formatted address
+          _addressController.text = formattedAddress;
+          _addressDeliveryController.text = formattedAddress;
+          _addressAutoFilled = true;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Manzil aniqlandi va avtomatik to\'ldirildi'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      // Silent fail - address resolution is optional
+      debugPrint('Address resolution failed: $e');
     }
   }
 
@@ -424,6 +465,10 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                // Warning banner about territory
+                _buildTerritoryWarningBanner(colorScheme),
+                const SizedBox(height: 16),
+                
                 // Header card with location
                 _buildLocationCard(theme, colorScheme),
                 const SizedBox(height: 20),
@@ -507,6 +552,8 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
                 ),
+                if (_addressAutoFilled)
+                  _buildAutoFillHelperText(),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _addressDeliveryController,
@@ -516,6 +563,8 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
                 ),
+                if (_addressAutoFilled)
+                  _buildAutoFillHelperText(),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _referencePointController,
@@ -568,6 +617,86 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAutoFillHelperText() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, top: 4),
+      child: Row(
+        children: [
+          Icon(
+            Icons.auto_fix_high,
+            size: 12,
+            color: Colors.red.shade600,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              'Avtomatik to\'ldirildi. Zarurat bo\'lsa o\'zgartiring.',
+              style: TextStyle(
+                color: Colors.red.shade600,
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTerritoryWarningBanner(ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.shade300),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange.shade700,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Muhim eslatma!',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange.shade800,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Mijoz faqat sizning savdo hududingiz ichida yaratilishi kerak. '
+                  'Aks holda buyurtma olish va yetkazib berishda muammolar yuzaga kelishi mumkin.',
+                  style: TextStyle(
+                    color: Colors.orange.shade900,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

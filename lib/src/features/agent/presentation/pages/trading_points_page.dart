@@ -1578,19 +1578,15 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       // ),
 
       // Floating action button for creating new client
-      floatingActionButton: (() {
-        if (kDebugMode) print('DEBUG FAB BUILD: _canCreateClient = $_canCreateClient');
-        return _canCreateClient;
-      }())
-          ? FloatingActionButton.extended(
-              onPressed: _navigateToCreateClient,
-              icon: const Icon(Icons.add),
-              label: Text(AppLocalizations.of(context)?.newClient ?? 'Yangi mijoz'),
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              elevation: 4,
-            )
-          : null,
+      // Always show FAB - permission check handled in _navigateToCreateClient
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _navigateToCreateClient,
+        icon: const Icon(Icons.add),
+        label: Text(AppLocalizations.of(context)?.newClient ?? 'Yangi mijoz'),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        elevation: 4,
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );

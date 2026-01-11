@@ -10,7 +10,8 @@ import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:latlong2/latlong.dart' as osm_latlong;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
+    as model;
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
@@ -20,6 +21,7 @@ import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 
 // Constants for map configuration
@@ -41,10 +43,7 @@ const String kUserAgent = 'uz.gg.gloria_marketing';
 class MapDetailPageOsm extends StatefulWidget {
   final model.TradingPoint tradingPoint;
 
-  const MapDetailPageOsm({
-    super.key,
-    required this.tradingPoint,
-  });
+  const MapDetailPageOsm({super.key, required this.tradingPoint});
 
   @override
   State<MapDetailPageOsm> createState() => _MapDetailPageOsmState();
@@ -153,7 +152,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   void _initializeMapData() {
     // Create client point from trading point coordinates
     _clientPoint = osm_latlong.LatLng(
-      widget.tradingPoint.latitude ?? 41.2995, // Default to Tashkent if no coordinates
+      widget.tradingPoint.latitude ??
+          41.2995, // Default to Tashkent if no coordinates
       widget.tradingPoint.longitude ?? 69.2401,
     );
 
@@ -163,11 +163,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       height: 40.0,
       alignment: Alignment.bottomCenter,
       point: _clientPoint,
-      child: const Icon(
-        Icons.location_on,
-        color: Colors.red,
-        size: 40,
-      ),
+      child: const Icon(Icons.location_on, color: Colors.red, size: 40),
     );
     _markers = [clientMarker];
   }
@@ -204,7 +200,12 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
             print('Location permission denied');
           }
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Joylashuv ruxsatnomasi berilmadi')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.locationPermissionDenied ??
+                    'Joylashuv ruxsatnomasi berilmadi',
+              ),
+            ),
           );
         }
       }
@@ -213,11 +214,14 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         print('Error checking location permission: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ruxsatnoma tekshirishda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
-
 
   /// Handle connectivity changes
   void _onConnectivityChanged(List<ConnectivityResult> results) {
@@ -252,14 +256,20 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       _updateUserMarker();
 
       if (kDebugMode) {
-        print('User location obtained: ${position.latitude}, ${position.longitude}');
+        print(
+          'User location obtained: ${position.latitude}, ${position.longitude}',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error getting user location: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Joylashuvni aniqlashda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -273,24 +283,24 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       height: 30.0,
       alignment: Alignment.bottomCenter,
       point: _userPoint!,
-      child: const Icon(
-        Icons.my_location,
-        color: Colors.blue,
-        size: 30,
-      ),
+      child: const Icon(Icons.my_location, color: Colors.blue, size: 30),
     );
 
     setState(() {
       // Remove existing user marker if any (identified by blue color icon)
-      _markers.removeWhere((marker) =>
-          marker.child is Icon &&
-          (marker.child as Icon).icon == Icons.my_location);
+      _markers.removeWhere(
+        (marker) =>
+            marker.child is Icon &&
+            (marker.child as Icon).icon == Icons.my_location,
+      );
       // Add new user marker
       _markers.add(userMarker);
     });
 
     if (kDebugMode) {
-      print('User marker updated at: ${_userPoint!.latitude}, ${_userPoint!.longitude}');
+      print(
+        'User marker updated at: ${_userPoint!.latitude}, ${_userPoint!.longitude}',
+      );
     }
   }
 
@@ -301,7 +311,12 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   Future<void> _calculateRoute() async {
     if (_userPoint == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.userLocationNotFound ??
+                'Foydalanuvchi joylashuvi aniqlanmadi',
+          ),
+        ),
       );
       return;
     }
@@ -312,7 +327,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
     try {
       if (kDebugMode) {
-        print('Calculating route from user to client using OpenRouteService: ${widget.tradingPoint.name}');
+        print(
+          'Calculating route from user to client using OpenRouteService: ${widget.tradingPoint.name}',
+        );
         print('Transport mode: $_selectedTransportMode');
       }
 
@@ -325,10 +342,12 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
       if (routeData != null && routeData['coordinates'] != null) {
         // Use decoded coordinates directly
-        final routePoints = routeData['coordinates'] as List<osm_latlong.LatLng>;
+        final routePoints =
+            routeData['coordinates'] as List<osm_latlong.LatLng>;
 
         // Extract way points for start/end markers
-        final wayPoints = routeData['way_points'] as List<osm_latlong.LatLng>? ?? [];
+        final wayPoints =
+            routeData['way_points'] as List<osm_latlong.LatLng>? ?? [];
         osm_latlong.LatLng? startPoint;
         osm_latlong.LatLng? endPoint;
 
@@ -340,7 +359,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         }
 
         // Extract instructions
-        final instructions = routeData['instructions'] as List<Map<String, dynamic>>? ?? [];
+        final instructions =
+            routeData['instructions'] as List<Map<String, dynamic>>? ?? [];
 
         setState(() {
           _currentRoute = routePoints;
@@ -355,18 +375,26 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         _fitRouteBoundsFromApi(routeData['bbox']);
 
         // Calculate distance and time from API response
-        final distanceKm = (routeData['summary']['distance'] as num?)?.toDouble() ?? 0.0;
-        final durationSec = (routeData['summary']['duration'] as num?)?.toDouble() ?? 0.0;
+        final distanceKm =
+            (routeData['summary']['distance'] as num?)?.toDouble() ?? 0.0;
+        final durationSec =
+            (routeData['summary']['duration'] as num?)?.toDouble() ?? 0.0;
 
         final distance = distanceKm / 1000; // Convert to km
         final estimatedTime = _formatDuration(durationSec);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}')),
+          SnackBar(
+            content: Text(
+              'Marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}',
+            ),
+          ),
         );
 
         if (kDebugMode) {
-          print('Route calculated successfully with ${routePoints.length} points, ${instructions.length} instructions');
+          print(
+            'Route calculated successfully with ${routePoints.length} points, ${instructions.length} instructions',
+          );
         }
       } else {
         // Fallback to straight line route if API fails
@@ -399,7 +427,11 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     final estimatedTime = _estimateTravelTime(distance);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('To\'g\'ri chiziq marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}')),
+      SnackBar(
+        content: Text(
+          'To\'g\'ri chiziq marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}',
+        ),
+      ),
     );
   }
 
@@ -416,8 +448,10 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         print("Requesting route with profile: $profile");
       }
 
-      final url = 'https://api.openrouteservice.org/v2/directions/$profile/geojson';
-      final apiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImNiNDlhOTk0OGRhOTQ5ZjRiMWQ5ZGVhYWJiMDVkODg3IiwiaCI6Im11cm11cjY0In0='; // Replace with actual API key
+      final url =
+          'https://api.openrouteservice.org/v2/directions/$profile/geojson';
+      final apiKey =
+          'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImNiNDlhOTk0OGRhOTQ5ZjRiMWQ5ZGVhYWJiMDVkODg3IiwiaCI6Im11cm11cjY0In0='; // Replace with actual API key
 
       final startCoords = [start.longitude, start.latitude];
       final endCoords = [end.longitude, end.latitude];
@@ -475,7 +509,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
           // Extract turn-by-turn instructions
           List<Map<String, dynamic>> instructions = [];
-          if (properties['segments'] != null && properties['segments'].isNotEmpty) {
+          if (properties['segments'] != null &&
+              properties['segments'].isNotEmpty) {
             final segments = properties['segments'] as List;
             final segment = segments[0];
             if (segment['steps'] != null) {
@@ -491,7 +526,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
             }
           }
           if (kDebugMode) {
-            print("________________API dan olingan ma'lumotlar_____________________");
+            print(
+              "________________API dan olingan ma'lumotlar_____________________",
+            );
             print(decodedPoints);
             print(wayPoints);
             print(instructions);
@@ -543,13 +580,20 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       _osmController.move(points.first, 16.0);
       _lastZoom = 16.0;
       if (kDebugMode) {
-        print('Fitted camera to single point: ${points.first.latitude}, ${points.first.longitude} with zoom: 16.0');
+        print(
+          'Fitted camera to single point: ${points.first.latitude}, ${points.first.longitude} with zoom: 16.0',
+        );
       }
       return;
     }
 
     final bounds = osm.LatLngBounds.fromPoints(points);
-    const padding = EdgeInsets.fromLTRB(16, 120, 16, 100); // Account for overlays
+    const padding = EdgeInsets.fromLTRB(
+      16,
+      120,
+      16,
+      100,
+    ); // Account for overlays
 
     // Calculate center and zoom manually for compatibility
     final centerLat = (bounds.north + bounds.south) / 2;
@@ -561,21 +605,28 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     final maxDiff = max(latDiff.abs(), lngDiff.abs());
 
     // Adjust for padding (approximate)
-    final adjustedLatDiff = latDiff + (padding.top + padding.bottom) / 111000; // meters to degrees approx
+    final adjustedLatDiff =
+        latDiff +
+        (padding.top + padding.bottom) / 111000; // meters to degrees approx
     final adjustedLngDiff = lngDiff + (padding.left + padding.right) / 111000;
     final adjustedMaxDiff = max(adjustedLatDiff.abs(), adjustedLngDiff.abs());
 
     // Calculate zoom: smaller area = higher zoom
     double zoom;
-    if (adjustedMaxDiff < 0.001) { // Very close points (< 100m approx)
+    if (adjustedMaxDiff < 0.001) {
+      // Very close points (< 100m approx)
       zoom = 18.0;
-    } else if (adjustedMaxDiff < 0.01) { // Close points (< 1km approx)
+    } else if (adjustedMaxDiff < 0.01) {
+      // Close points (< 1km approx)
       zoom = 16.0;
-    } else if (adjustedMaxDiff < 0.1) { // Medium distance (< 10km approx)
+    } else if (adjustedMaxDiff < 0.1) {
+      // Medium distance (< 10km approx)
       zoom = 14.0;
-    } else if (adjustedMaxDiff < 1.0) { // Large distance (< 100km approx)
+    } else if (adjustedMaxDiff < 1.0) {
+      // Large distance (< 100km approx)
       zoom = 12.0;
-    } else { // Very large distance
+    } else {
+      // Very large distance
       zoom = 10.0;
     }
 
@@ -586,7 +637,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     _lastZoom = zoom;
 
     if (kDebugMode) {
-      print('Fitted bounds for ${points.length} points, zoom: $zoom, center: $centerLat, $centerLng');
+      print(
+        'Fitted bounds for ${points.length} points, zoom: $zoom, center: $centerLat, $centerLng',
+      );
     }
   }
 
@@ -603,15 +656,22 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   }
 
   /// Calculate distance between two points using Haversine formula
-  double _calculateDistance(osm_latlong.LatLng point1, osm_latlong.LatLng point2) {
+  double _calculateDistance(
+    osm_latlong.LatLng point1,
+    osm_latlong.LatLng point2,
+  ) {
     const double earthRadius = 6371; // km
     final lat1Rad = point1.latitude * pi / 180;
     final lat2Rad = point2.latitude * pi / 180;
     final deltaLatRad = (point2.latitude - point1.latitude) * pi / 180;
     final deltaLngRad = (point2.longitude - point1.longitude) * pi / 180;
 
-    final a = sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
-        cos(lat1Rad) * cos(lat2Rad) * sin(deltaLngRad / 2) * sin(deltaLngRad / 2);
+    final a =
+        sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
+        cos(lat1Rad) *
+            cos(lat2Rad) *
+            sin(deltaLngRad / 2) *
+            sin(deltaLngRad / 2);
     final c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
     return earthRadius * c;
@@ -659,14 +719,20 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       _lastZoom = targetZoom;
 
       if (kDebugMode) {
-        print('Camera moved to: ${point.latitude}, ${point.longitude} with zoom: $targetZoom');
+        print(
+          'Camera moved to: ${point.latitude}, ${point.longitude} with zoom: $targetZoom',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error moving camera: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kamera harakatida xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -680,17 +746,26 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       final userCode = _prefs.getUserCode();
       if (userCode == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foydalanuvchi ma\'lumotlari topilmadi')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.userDataNotFound ??
+                  'Foydalanuvchi ma\'lumotlari topilmadi',
+            ),
+          ),
         );
         return;
       }
 
       // Get user permissions from data sync service
-      final permissions = await _dataSyncService.getCachedSalesReqPermissions(userCode);
+      final permissions = await _dataSyncService.getCachedSalesReqPermissions(
+        userCode,
+      );
       if (permissions == null || !permissions.editClientCoordinates) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Sizda mijoz joylashuvini o\'zgartirish uchun ruxsat yo\'q'),
+            content: Text(
+              'Sizda mijoz joylashuvini o\'zgartirish uchun ruxsat yo\'q',
+            ),
             duration: Duration(seconds: 3),
           ),
         );
@@ -719,7 +794,11 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         print('Error checking permissions for edit location mode: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ruxsatlarni tekshirishda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -791,26 +870,41 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   Future<void> _openGoogleMaps() async {
     if (_userPoint == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.userLocationNotFound ??
+                'Foydalanuvchi joylashuvi aniqlanmadi',
+          ),
+        ),
       );
       return;
     }
 
     final origin = '${_userPoint!.latitude},${_userPoint!.longitude}';
     final destination = '${_clientPoint.latitude},${_clientPoint.longitude}';
-    final url = 'https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&travelmode=driving';
+    final url =
+        'https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&travelmode=driving';
 
     try {
       if (await canLaunchUrl(Uri.parse(url))) {
         await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Google Maps ochib bo\'lmadi')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.errorOccurredPrefix ??
+                  'Google Maps ochib bo\'lmadi',
+            ),
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -819,7 +913,12 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   Future<void> _openYandexMaps() async {
     if (_userPoint == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.userLocationNotFound ??
+                'Foydalanuvchi joylashuvi aniqlanmadi',
+          ),
+        ),
       );
       return;
     }
@@ -838,8 +937,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       try {
         final uri = Uri.parse(url);
         //if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          return; // Success, exit the loop
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return; // Success, exit the loop
         //}
       } catch (e) {
         // Continue to next URL
@@ -849,7 +948,12 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
     // If all URLs failed
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Yandex Maps ochib bo\'lmadi')),
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context)?.errorOccurredPrefix ??
+              'Yandex Maps ochib bo\'lmadi',
+        ),
+      ),
     );
   }
 
@@ -894,7 +998,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     _updateClientMarkerPosition(point);
 
     if (kDebugMode) {
-      print('Precise location selected via long press: ${point.latitude}, ${point.longitude}');
+      print(
+        'Precise location selected via long press: ${point.latitude}, ${point.longitude}',
+      );
     }
   }
 
@@ -904,7 +1010,10 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     // This is a simplified version - in production you'd use proper coordinate conversion
     setState(() {
       _showTapFeedback = true;
-      _tapPosition = const Offset(100, 100); // Placeholder - would need proper conversion
+      _tapPosition = const Offset(
+        100,
+        100,
+      ); // Placeholder - would need proper conversion
     });
 
     // Hide feedback after animation
@@ -926,11 +1035,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
           height: 40.0,
           alignment: Alignment.bottomCenter,
           point: point,
-          child: const Icon(
-            Icons.location_on,
-            color: Colors.red,
-            size: 40,
-          ),
+          child: const Icon(Icons.location_on, color: Colors.red, size: 40),
         ),
       ];
     });
@@ -948,14 +1053,19 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Joylashuvni tasdiqlash'),
+        title: Text(
+          AppLocalizations.of(context)?.confirmLocationTitle ??
+              'Joylashuvni tasdiqlash',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             //Text('Manzil: ${addressInfo['address'] ?? 'Aniqlanmadi'}'),
             const SizedBox(height: 8),
-            Text('Uzunlik: ${_newClientLocation!.longitude.toStringAsFixed(6)}'),
+            Text(
+              'Uzunlik: ${_newClientLocation!.longitude.toStringAsFixed(6)}',
+            ),
             Text('Kenglik: ${_newClientLocation!.latitude.toStringAsFixed(6)}'),
             const SizedBox(height: 16),
             Text(
@@ -970,14 +1080,14 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
               Navigator.of(context).pop();
               _cancelLocationChange();
             },
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
               await _saveNewLocation();
             },
-            child: const Text('Tasdiqlash'),
+            child: Text(AppLocalizations.of(context)?.confirm ?? 'Tasdiqlash'),
           ),
         ],
       ),
@@ -1007,7 +1117,12 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     try {
       // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Joylashuv yangilanmoqda...')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.loading ??
+                'Joylashuv yangilanmoqda...',
+          ),
+        ),
       );
 
       // Call API to update client coordinates
@@ -1022,7 +1137,12 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mijoz joylashuvi muvaffaqiyatli yangilandi')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.clientLocationUpdated ??
+                'Mijoz joylashuvi muvaffaqiyatli yangilandi',
+          ),
+        ),
       );
 
       if (kDebugMode) {
@@ -1033,35 +1153,47 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
         print('Error saving new location: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Joylashuvni yangilashda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
 
   /// Get address information from coordinates using Nominatim (OpenStreetMap) API
-  Future<Map<String, String>> _getAddressFromCoordinates(osm_latlong.LatLng point) async {
+  Future<Map<String, String>> _getAddressFromCoordinates(
+    osm_latlong.LatLng point,
+  ) async {
     try {
       // Nominatim API request (OpenStreetMap's geocoding service)
       final url = 'https://nominatim.openstreetmap.org/reverse';
-      final response = await Dio().get(url, queryParameters: {
-        'format': 'json',
-        'lat': point.latitude,
-        'lon': point.longitude,
-        'addressdetails': 1,
-        'accept-language': 'uz',
-        'zoom': 18, // Higher zoom for more detailed address
-      });
-      debugPrint("Kordinatalar asosida manzil aniqlash so'rovi natijasi_______________:");
+      final response = await Dio().get(
+        url,
+        queryParameters: {
+          'format': 'json',
+          'lat': point.latitude,
+          'lon': point.longitude,
+          'addressdetails': 1,
+          'accept-language': 'uz',
+          'zoom': 18, // Higher zoom for more detailed address
+        },
+      );
+      debugPrint(
+        "Kordinatalar asosida manzil aniqlash so'rovi natijasi_______________:",
+      );
       if (response.statusCode == 200) {
         final data = response.data;
         final address = data['address'] ?? {};
 
         // Extract city information
-        String city = address['city'] ??
-                     address['town'] ??
-                     address['village'] ??
-                     address['municipality'] ??
-                     '';
+        String city =
+            address['city'] ??
+            address['town'] ??
+            address['village'] ??
+            address['municipality'] ??
+            '';
 
         // Build full address
         String fullAddress = data['display_name'] ?? 'Aniqlanmadi';
@@ -1076,7 +1208,6 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
       if (kDebugMode) print('No geocoding results found');
       return _getFallbackAddress();
-
     } catch (e) {
       if (kDebugMode) print('Nominatim Geocoding API error: $e');
 
@@ -1084,14 +1215,17 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       try {
         return await _getAddressFromGoogleAPI(point);
       } catch (googleError) {
-        if (kDebugMode) print('Google Geocoding API fallback also failed: $googleError');
+        if (kDebugMode)
+          print('Google Geocoding API fallback also failed: $googleError');
         return _getFallbackAddress();
       }
     }
   }
 
   /// Get address using Google Geocoding API (fallback)
-  Future<Map<String, String>> _getAddressFromGoogleAPI(osm_latlong.LatLng point) async {
+  Future<Map<String, String>> _getAddressFromGoogleAPI(
+    osm_latlong.LatLng point,
+  ) async {
     try {
       final apiKey = _prefs.getGoogleMapsToken();
       if (apiKey == null || apiKey.isEmpty) {
@@ -1099,11 +1233,14 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       }
 
       final url = 'https://maps.googleapis.com/maps/api/geocode/json';
-      final response = await Dio().get(url, queryParameters: {
-        'latlng': '${point.latitude},${point.longitude}',
-        'key': apiKey,
-        'language': 'uz',
-      });
+      final response = await Dio().get(
+        url,
+        queryParameters: {
+          'latlng': '${point.latitude},${point.longitude}',
+          'key': apiKey,
+          'language': 'uz',
+        },
+      );
 
       if (response.statusCode == 200 && response.data['status'] == 'OK') {
         final result = response.data['results'][0];
@@ -1130,7 +1267,6 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       }
 
       return _getFallbackAddress();
-
     } catch (e) {
       if (kDebugMode) print('Google Geocoding API error: $e');
       return _getFallbackAddress();
@@ -1148,7 +1284,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   }
 
   /// Update client coordinates in database and via API
-  Future<void> _updateClientCoordinatesInDatabase(osm_latlong.LatLng newLocation) async {
+  Future<void> _updateClientCoordinatesInDatabase(
+    osm_latlong.LatLng newLocation,
+  ) async {
     try {
       // Get user code from preferences
       final userCode = _prefs.getUserCode();
@@ -1165,7 +1303,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       );
 
       if (kDebugMode) {
-        print('Client coordinates updated successfully: ${newLocation.latitude}, ${newLocation.longitude}');
+        print(
+          'Client coordinates updated successfully: ${newLocation.latitude}, ${newLocation.longitude}',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -1188,11 +1328,17 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
             initialZoom: kDefaultZoom,
             onMapReady: () {
               if (kDebugMode) {
-                print('OSM map is ready for client: ${widget.tradingPoint.name}');
+                print(
+                  'OSM map is ready for client: ${widget.tradingPoint.name}',
+                );
               }
             },
-            onTap: _isEditMode ? (tapPosition, point) => _onMapTap(point) : null,
-            onLongPress: _isEditMode ? (tapPosition, point) => _onMapLongPress(point) : null,
+            onTap: _isEditMode
+                ? (tapPosition, point) => _onMapTap(point)
+                : null,
+            onLongPress: _isEditMode
+                ? (tapPosition, point) => _onMapLongPress(point)
+                : null,
           ),
           children: [
             osm.TileLayer(
@@ -1214,7 +1360,10 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                   width: 40.0,
                   height: 40.0,
                   alignment: Alignment.bottomCenter,
-                  point: osm_latlong.LatLng(_clientPoint.latitude, _clientPoint.longitude),
+                  point: osm_latlong.LatLng(
+                    _clientPoint.latitude,
+                    _clientPoint.longitude,
+                  ),
                   child: const Icon(
                     Icons.location_on,
                     color: Colors.red,
@@ -1227,7 +1376,10 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                     width: 30.0,
                     height: 30.0,
                     alignment: Alignment.bottomCenter,
-                    point: osm_latlong.LatLng(_userPoint!.latitude, _userPoint!.longitude),
+                    point: osm_latlong.LatLng(
+                      _userPoint!.latitude,
+                      _userPoint!.longitude,
+                    ),
                     child: const Icon(
                       Icons.my_location,
                       color: Colors.blue,
@@ -1303,11 +1455,7 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                 color: Colors.green.withOpacity(0.3),
                 border: Border.all(color: Colors.green, width: 2),
               ),
-              child: const Icon(
-                Icons.check,
-                color: Colors.white,
-                size: 24,
-              ),
+              child: const Icon(Icons.check, color: Colors.white, size: 24),
             ),
           ),
       ],
@@ -1337,7 +1485,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: cs.surface.withOpacity(isDark ? 0.95 : 0.9).withOpacity(0.8),
+                color: cs.surface
+                    .withOpacity(isDark ? 0.95 : 0.9)
+                    .withOpacity(0.8),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: cs.outline.withOpacity(0.2),
@@ -1393,7 +1543,10 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                 children: [
                   // Current transport mode indicator
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
                       color: cs.primaryContainer,
@@ -1436,7 +1589,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                         ),
                         tooltip: 'Mashina',
                         style: IconButton.styleFrom(
-                          backgroundColor: _selectedTransportMode == 'driving-car'
+                          backgroundColor:
+                              _selectedTransportMode == 'driving-car'
                               ? cs.primary.withOpacity(0.1)
                               : Colors.transparent,
                         ),
@@ -1454,7 +1608,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                         ),
                         tooltip: 'Piyoda',
                         style: IconButton.styleFrom(
-                          backgroundColor: _selectedTransportMode == 'foot-walking'
+                          backgroundColor:
+                              _selectedTransportMode == 'foot-walking'
                               ? cs.primary.withOpacity(0.1)
                               : Colors.transparent,
                         ),
@@ -1462,7 +1617,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
                       // Bicycle mode
                       IconButton(
-                        onPressed: () => _selectTransportMode('cycling-regular'),
+                        onPressed: () =>
+                            _selectTransportMode('cycling-regular'),
                         icon: Icon(
                           Icons.directions_bike,
                           size: 20,
@@ -1472,7 +1628,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                         ),
                         tooltip: 'Velosiped',
                         style: IconButton.styleFrom(
-                          backgroundColor: _selectedTransportMode == 'cycling-regular'
+                          backgroundColor:
+                              _selectedTransportMode == 'cycling-regular'
                               ? cs.primary.withOpacity(0.1)
                               : Colors.transparent,
                         ),
@@ -1511,21 +1668,33 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                         PopupMenuButton<String>(
                           onSelected: _selectTransportMode,
                           itemBuilder: (context) => [
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'cycling-regular',
-                              child: Text('Oddiy velosiped'),
+                              child: Text(
+                                AppLocalizations.of(context)?.cyclingRegular ??
+                                    'Oddiy velosiped',
+                              ),
                             ),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'cycling-road',
-                              child: Text('Yo\'l velosipedi'),
+                              child: Text(
+                                AppLocalizations.of(context)?.cyclingRoad ??
+                                    'Yo\'l velosipedi',
+                              ),
                             ),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'cycling-mountain',
-                              child: Text('Tog\' velosipedi'),
+                              child: Text(
+                                AppLocalizations.of(context)?.cyclingMountain ??
+                                    'Tog\' velosipedi',
+                              ),
                             ),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'cycling-safe',
-                              child: Text('Xavfsiz velosiped'),
+                              child: Text(
+                                AppLocalizations.of(context)?.cyclingSafe ??
+                                    'Xavfsiz velosiped',
+                              ),
                             ),
                           ],
                           child: Icon(
@@ -1572,17 +1741,21 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                   ],
                 ),
                 child: IconButton(
-                  onPressed: _locationPermissionGranted ? () async {
-                    if (_userPoint != null) {
-                      _osmController.move(_userPoint!, 16.0);
-                      _lastZoom = 16.0;
-                      if (kDebugMode) {
-                        print('Moved to user location: ${_userPoint!.latitude}, ${_userPoint!.longitude} with zoom: 16.0');
-                      }
-                    } else {
-                      await _getUserLocation();
-                    }
-                  } : null,
+                  onPressed: _locationPermissionGranted
+                      ? () async {
+                          if (_userPoint != null) {
+                            _osmController.move(_userPoint!, 16.0);
+                            _lastZoom = 16.0;
+                            if (kDebugMode) {
+                              print(
+                                'Moved to user location: ${_userPoint!.latitude}, ${_userPoint!.longitude} with zoom: 16.0',
+                              );
+                            }
+                          } else {
+                            await _getUserLocation();
+                          }
+                        }
+                      : null,
                   iconSize: iconSize,
                   icon: Icon(
                     Icons.my_location,
@@ -1622,7 +1795,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                     _osmController.move(_clientPoint, 16.0);
                     _lastZoom = 16.0;
                     if (kDebugMode) {
-                      print('Moved to client location: ${_clientPoint.latitude}, ${_clientPoint.longitude} with zoom: 16.0');
+                      print(
+                        'Moved to client location: ${_clientPoint.latitude}, ${_clientPoint.longitude} with zoom: 16.0',
+                      );
                     }
                   },
                   iconSize: iconSize,
@@ -1663,7 +1838,9 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                           if (_isCalculatingRoute) {
                             // Show loading state
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Marshrut hisoblanmoqda...')),
+                              const SnackBar(
+                                content: Text('Marshrut hisoblanmoqda...'),
+                              ),
                             );
                           } else {
                             // Toggle transport modes when route button is pressed
@@ -1679,7 +1856,11 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                           }
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+                            const SnackBar(
+                              content: Text(
+                                'Foydalanuvchi joylashuvi aniqlanmadi',
+                              ),
+                            ),
                           );
                         }
                       },
@@ -1691,10 +1872,11 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Icon(Icons.route, color: cs.primary),
-                      tooltip: _isRouteVisible ? 'Marshrutni yopish' : 'Marshrut (foydalanuvchidan mijozgacha)',
+                      tooltip: _isRouteVisible
+                          ? 'Marshrutni yopish'
+                          : 'Marshrut (foydalanuvchidan mijozgacha)',
                     ),
                   ),
-
                 ],
               ),
 
@@ -1727,12 +1909,16 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                   iconSize: iconSize,
                   icon: Icon(
                     _isEditMode
-                        ? (_isConfirmingLocation ? Icons.check : Icons.edit_location)
+                        ? (_isConfirmingLocation
+                              ? Icons.check
+                              : Icons.edit_location)
                         : Icons.edit_location_outlined,
                     color: _isEditMode ? Colors.green : cs.primary,
                   ),
                   tooltip: _isEditMode
-                      ? (_isConfirmingLocation ? 'Joylashuvni tasdiqlash' : 'Joylashuvni o\'zgartirish')
+                      ? (_isConfirmingLocation
+                            ? 'Joylashuvni tasdiqlash'
+                            : 'Joylashuvni o\'zgartirish')
                       : 'Mijoz joylashuvini o\'zgartirish',
                 ),
               ),
@@ -1768,7 +1954,10 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
               ),
               child: Row(
                 children: [
-                  Icon(_getTransportModeIcon(_selectedTransportMode), color: cs.primary),
+                  Icon(
+                    _getTransportModeIcon(_selectedTransportMode),
+                    color: cs.primary,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -1793,8 +1982,11 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                     ),
                   ),
                   IconButton(
-                    onPressed:_clearRoute,
-                    icon: Icon(Icons.close, color: cs.onSurface.withOpacity(0.7)),
+                    onPressed: _clearRoute,
+                    icon: Icon(
+                      Icons.close,
+                      color: cs.onSurface.withOpacity(0.7),
+                    ),
                     tooltip: 'Marshrutni yopish',
                     style: IconButton.styleFrom(
                       backgroundColor: cs.surfaceVariant.withOpacity(0.5),
@@ -1887,8 +2079,8 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                           _isConfirmingLocation
                               ? 'Yangi joylashuvni tasdiqlang'
                               : _isPreciseMode
-                                  ? 'Aniq joylashuv tanlandi - tasdiqlang'
-                                  : 'Kamerani siljiting yoki uzun bosing',
+                              ? 'Aniq joylashuv tanlandi - tasdiqlang'
+                              : 'Kamerani siljiting yoki uzun bosing',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: cs.onSurface,
@@ -1897,8 +2089,13 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
                       ),
                       IconButton(
                         onPressed: _cancelLocationChange,
-                        icon: Icon(Icons.close, color: cs.onSurface.withOpacity(0.7)),
-                        tooltip: 'Tahrirlash rejimini yopish',
+                        icon: Icon(
+                          Icons.close,
+                          color: cs.onSurface.withOpacity(0.7),
+                        ),
+                        tooltip:
+                            AppLocalizations.of(context)?.closeEditMode ??
+                            'Tahrirlash rejimini yopish',
                         style: IconButton.styleFrom(
                           backgroundColor: cs.surfaceVariant.withOpacity(0.5),
                           foregroundColor: cs.onSurface,
@@ -1931,8 +2128,6 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _buildOsmMapWidget(),
-    );
+    return Scaffold(body: _buildOsmMapWidget());
   }
 }

@@ -148,7 +148,7 @@ abstract class AppLocalizations {
   /// No description provided for @tradingPoints.
   ///
   /// In en, this message translates to:
-  /// **'Trading Points'**
+  /// **'Trading points'**
   String get tradingPoints;
 
   /// No description provided for @tradingPointsFilter.
@@ -580,7 +580,7 @@ abstract class AppLocalizations {
   /// No description provided for @unknownError.
   ///
   /// In en, this message translates to:
-  /// **'Unknown error occurred'**
+  /// **'Unknown error'**
   String get unknownError;
 
   /// No description provided for @tryAgain.
@@ -886,7 +886,7 @@ abstract class AppLocalizations {
   /// No description provided for @contractDetails.
   ///
   /// In en, this message translates to:
-  /// **'Contract Details'**
+  /// **'Contract details'**
   String get contractDetails;
 
   /// No description provided for @contractCode.
@@ -2554,8 +2554,8 @@ abstract class AppLocalizations {
   /// No description provided for @orderNumber.
   ///
   /// In en, this message translates to:
-  /// **'Order number'**
-  String get orderNumber;
+  /// **'Order № {number}'**
+  String orderNumber(String number);
 
   /// No description provided for @dataSaveError.
   ///
@@ -2686,7 +2686,7 @@ abstract class AppLocalizations {
   /// No description provided for @imageLoadError.
   ///
   /// In en, this message translates to:
-  /// **'Error loading images'**
+  /// **'Error loading image'**
   String get imageLoadError;
 
   /// No description provided for @disableVisitTodayFilter.
@@ -3202,8 +3202,8 @@ abstract class AppLocalizations {
   /// No description provided for @contractsCount.
   ///
   /// In en, this message translates to:
-  /// **'Contracts Count'**
-  String get contractsCount;
+  /// **'Contracts count: {count}'**
+  String contractsCount(int count);
 
   /// No description provided for @contract.
   ///
@@ -3658,7 +3658,7 @@ abstract class AppLocalizations {
   /// No description provided for @newContract.
   ///
   /// In en, this message translates to:
-  /// **'New Contract'**
+  /// **'New contract'**
   String get newContract;
 
   /// No description provided for @createContract.
@@ -3808,7 +3808,7 @@ abstract class AppLocalizations {
   /// No description provided for @noInternetConnection.
   ///
   /// In en, this message translates to:
-  /// **'No internet connection'**
+  /// **'No internet connection. Please connect to the internet'**
   String get noInternetConnection;
 
   /// No description provided for @createClientTitle.
@@ -4174,7 +4174,7 @@ abstract class AppLocalizations {
   /// No description provided for @innLabel.
   ///
   /// In en, this message translates to:
-  /// **'INN: {inn}'**
+  /// **'INN'**
   String innLabel(String inn);
 
   /// No description provided for @ownerLabel.
@@ -4324,7 +4324,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorOccurred.
   ///
   /// In en, this message translates to:
-  /// **'Error occurred: {error}'**
+  /// **'An error occurred'**
   String errorOccurred(String error);
 
   /// No description provided for @cameraPermissionDenied.
@@ -5298,6 +5298,624 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Change Period'**
   String get changePeriod;
+
+  /// No description provided for @server.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get server;
+
+  /// No description provided for @addImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Image'**
+  String get addImage;
+
+  /// No description provided for @takePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo'**
+  String get takePhoto;
+
+  /// No description provided for @deleteImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Image'**
+  String get deleteImage;
+
+  /// No description provided for @deleteImageConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this image?'**
+  String get deleteImageConfirm;
+
+  /// No description provided for @noReportsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No reports available'**
+  String get noReportsAvailable;
+
+  /// No description provided for @tables.
+  ///
+  /// In en, this message translates to:
+  /// **'Tables'**
+  String get tables;
+
+  /// No description provided for @sendPdfLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Send PDF'**
+  String get sendPdfLabel;
+
+  /// No description provided for @warehouse.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse'**
+  String get warehouse;
+
+  /// No description provided for @takePhotoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get takePhotoTooltip;
+
+  /// No description provided for @changeShippingDateTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Change shipping date'**
+  String get changeShippingDateTooltip;
+
+  /// No description provided for @sendReportViaTelegram.
+  ///
+  /// In en, this message translates to:
+  /// **'Send report via Telegram bot'**
+  String get sendReportViaTelegram;
+
+  /// No description provided for @fullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Fullscreen'**
+  String get fullscreen;
+
+  /// No description provided for @updateCoordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'Update coordinates'**
+  String get updateCoordinates;
+
+  /// No description provided for @list.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get list;
+
+  /// No description provided for @grid.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get grid;
+
+  /// No description provided for @every1Hour.
+  ///
+  /// In en, this message translates to:
+  /// **'Every 1 hour'**
+  String get every1Hour;
+
+  /// No description provided for @every4Hours.
+  ///
+  /// In en, this message translates to:
+  /// **'Every 4 hours'**
+  String get every4Hours;
+
+  /// No description provided for @every6Hours.
+  ///
+  /// In en, this message translates to:
+  /// **'Every 6 hours'**
+  String get every6Hours;
+
+  /// No description provided for @every12Hours.
+  ///
+  /// In en, this message translates to:
+  /// **'Every 12 hours'**
+  String get every12Hours;
+
+  /// No description provided for @daily24h.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily (24h)'**
+  String get daily24h;
+
+  /// No description provided for @weekly1Week.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly (1 week)'**
+  String get weekly1Week;
+
+  /// No description provided for @customIntervalMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Interval (Minutes)'**
+  String get customIntervalMinutes;
+
+  /// No description provided for @organizationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization'**
+  String get organizationLabel;
+
+  /// No description provided for @codeLabel2.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get codeLabel2;
+
+  /// No description provided for @regionsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading regions...'**
+  String get regionsLoading;
+
+  /// No description provided for @cyclingRegular.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular bicycle'**
+  String get cyclingRegular;
+
+  /// No description provided for @cyclingRoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Road bicycle'**
+  String get cyclingRoad;
+
+  /// No description provided for @cyclingMountain.
+  ///
+  /// In en, this message translates to:
+  /// **'Mountain bicycle'**
+  String get cyclingMountain;
+
+  /// No description provided for @cyclingSafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe bicycle'**
+  String get cyclingSafe;
+
+  /// No description provided for @productsPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Products Page'**
+  String get productsPage;
+
+  /// No description provided for @quantityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'0 to {stock}'**
+  String quantityHint(int stock);
+
+  /// No description provided for @minimum60Minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum 60 minutes'**
+  String get minimum60Minutes;
+
+  /// No description provided for @enterQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter quantity'**
+  String get enterQuantity;
+
+  /// No description provided for @maxAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum available: {stock} pieces'**
+  String maxAvailable(int stock);
+
+  /// No description provided for @imageNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Image {number}'**
+  String imageNumber(int number);
+
+  /// No description provided for @selectPriceType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select price type'**
+  String get selectPriceType;
+
+  /// No description provided for @selectPriceTypeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Click the filter button above to select a price type from the filter panel'**
+  String get selectPriceTypeHint;
+
+  /// No description provided for @productsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Products count: {count}'**
+  String productsCount(int count);
+
+  /// No description provided for @categories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categories;
+
+  /// No description provided for @selectBrandFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Select brand first'**
+  String get selectBrandFirst;
+
+  /// No description provided for @reportsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports section'**
+  String get reportsSection;
+
+  /// No description provided for @tasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get tasks;
+
+  /// No description provided for @locationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error getting location: {error}'**
+  String locationError(String error);
+
+  /// No description provided for @addressDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Address detected and auto-filled'**
+  String get addressDetected;
+
+  /// No description provided for @pleaseSelectRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a region'**
+  String get pleaseSelectRegion;
+
+  /// No description provided for @pleaseSelectTradePointType.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a trade point type'**
+  String get pleaseSelectTradePointType;
+
+  /// No description provided for @locationDataNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Location data not found'**
+  String get locationDataNotFound;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @closeEditMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Close edit mode'**
+  String get closeEditMode;
+
+  /// No description provided for @activeClients.
+  ///
+  /// In en, this message translates to:
+  /// **'Active clients'**
+  String get activeClients;
+
+  /// No description provided for @activeClientsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Clients with active orders today'**
+  String get activeClientsTooltip;
+
+  /// No description provided for @cashless.
+  ///
+  /// In en, this message translates to:
+  /// **'Cashless'**
+  String get cashless;
+
+  /// No description provided for @ordersTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders total'**
+  String get ordersTotal;
+
+  /// No description provided for @visitedTradingPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Visited t.p.'**
+  String get visitedTradingPoints;
+
+  /// No description provided for @visitedTradingPointsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of visited trading points'**
+  String get visitedTradingPointsTooltip;
+
+  /// No description provided for @territoryOKB.
+  ///
+  /// In en, this message translates to:
+  /// **'Territory OKB'**
+  String get territoryOKB;
+
+  /// No description provided for @territoryOKBTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Coverage of customer base by territory'**
+  String get territoryOKBTooltip;
+
+  /// No description provided for @todayMainIndicators.
+  ///
+  /// In en, this message translates to:
+  /// **'Today — main indicators'**
+  String get todayMainIndicators;
+
+  /// No description provided for @last7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get last7Days;
+
+  /// No description provided for @last30Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get last30Days;
+
+  /// No description provided for @monthlyPlanFactForecast.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly plan / Fact / Forecast'**
+  String get monthlyPlanFactForecast;
+
+  /// No description provided for @monthlyOkbAkb.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly OKB/AKB'**
+  String get monthlyOkbAkb;
+
+  /// No description provided for @contractsNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Contracts not found'**
+  String get contractsNotFound;
+
+  /// No description provided for @contractsListRefreshed.
+  ///
+  /// In en, this message translates to:
+  /// **'Contracts list refreshed'**
+  String get contractsListRefreshed;
+
+  /// No description provided for @contractAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract amount'**
+  String get contractAmount;
+
+  /// No description provided for @contractDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract document'**
+  String get contractDocument;
+
+  /// No description provided for @clientOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s orders'**
+  String clientOrders(String name);
+
+  /// No description provided for @filterApplyError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error applying filter'**
+  String get filterApplyError;
+
+  /// No description provided for @main.
+  ///
+  /// In en, this message translates to:
+  /// **'Main'**
+  String get main;
+
+  /// No description provided for @contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Contents'**
+  String get contents;
+
+  /// No description provided for @mainReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Main reports'**
+  String get mainReports;
+
+  /// No description provided for @mainReportsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'KPI indicators and main statistics'**
+  String get mainReportsDescription;
+
+  /// No description provided for @visitsReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits report'**
+  String get visitsReport;
+
+  /// No description provided for @visitsReportDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Information about visits to clients'**
+  String get visitsReportDescription;
+
+  /// No description provided for @completedVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed visits'**
+  String get completedVisits;
+
+  /// No description provided for @plannedVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned visits'**
+  String get plannedVisits;
+
+  /// No description provided for @visitEfficiency.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit efficiency'**
+  String get visitEfficiency;
+
+  /// No description provided for @lastVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Last visits'**
+  String get lastVisits;
+
+  /// No description provided for @dataLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Data loading...'**
+  String get dataLoading;
+
+  /// No description provided for @successful.
+  ///
+  /// In en, this message translates to:
+  /// **'Successful'**
+  String get successful;
+
+  /// No description provided for @orderPlaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Order placed'**
+  String get orderPlaced;
+
+  /// No description provided for @rejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get rejected;
+
+  /// No description provided for @reportDataRefreshed.
+  ///
+  /// In en, this message translates to:
+  /// **'Report data refreshed successfully'**
+  String get reportDataRefreshed;
+
+  /// No description provided for @apiKeySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'API key saved successfully'**
+  String get apiKeySaved;
+
+  /// No description provided for @saveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Save error: {error}'**
+  String saveError(String error);
+
+  /// No description provided for @userDataLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading user data: {error}'**
+  String userDataLoadError(String error);
+
+  /// No description provided for @warehouseDataLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading warehouse data: {error}'**
+  String warehouseDataLoadError(String error);
+
+  /// No description provided for @justSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Just saved'**
+  String get justSaved;
+
+  /// No description provided for @savedMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {minutes} minutes ago'**
+  String savedMinutesAgo(int minutes);
+
+  /// No description provided for @savedHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {hours} hours ago'**
+  String savedHoursAgo(int hours);
+
+  /// No description provided for @notSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Not saved'**
+  String get notSaved;
+
+  /// No description provided for @selectDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date range'**
+  String get selectDateRange;
+
+  /// No description provided for @selectPeriodTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select period'**
+  String get selectPeriodTitle;
+
+  /// No description provided for @selectedPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected period'**
+  String get selectedPeriod;
+
+  /// No description provided for @selectTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Select table'**
+  String get selectTable;
+
+  /// No description provided for @selectRegionValidator.
+  ///
+  /// In en, this message translates to:
+  /// **'Select region'**
+  String get selectRegionValidator;
+
+  /// No description provided for @selectTradePointTypeValidator.
+  ///
+  /// In en, this message translates to:
+  /// **'Select trade point type'**
+  String get selectTradePointTypeValidator;
+
+  /// No description provided for @currentMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Current month'**
+  String get currentMonth;
+
+  /// No description provided for @selectReportDatesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Set start and end dates for the report'**
+  String get selectReportDatesHint;
+
+  /// No description provided for @offlineCannotRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot refresh data in offline mode'**
+  String get offlineCannotRefresh;
+
+  /// No description provided for @distanceRequirementMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You need to meet the distance requirement to visit {name}.'**
+  String distanceRequirementMessage(String name);
+
+  /// No description provided for @requiredDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Required distance: {distance}m'**
+  String requiredDistance(int distance);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

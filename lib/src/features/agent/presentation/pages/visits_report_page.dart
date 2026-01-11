@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 class VisitsReportPage extends StatefulWidget {
   const VisitsReportPage({super.key});
@@ -30,7 +31,7 @@ class _VisitsReportPageState extends State<VisitsReportPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Vizitlar hisoboti',
+              AppLocalizations.of(context)?.visitsReport ?? 'Vizitlar hisoboti',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
@@ -39,7 +40,8 @@ class _VisitsReportPageState extends State<VisitsReportPage> {
             const SizedBox(height: 16),
 
             _buildStatCard(
-              'Amalga oshirilgan vizitlar',
+              AppLocalizations.of(context)?.completedVisits ??
+                  'Amalga oshirilgan vizitlar',
               '32',
               Icons.location_on,
               colorScheme.primary,
@@ -47,7 +49,8 @@ class _VisitsReportPageState extends State<VisitsReportPage> {
             const SizedBox(height: 12),
 
             _buildStatCard(
-              'Rejalashtirilgan vizitlar',
+              AppLocalizations.of(context)?.plannedVisits ??
+                  'Rejalashtirilgan vizitlar',
               '18',
               Icons.schedule,
               colorScheme.secondary,
@@ -55,7 +58,8 @@ class _VisitsReportPageState extends State<VisitsReportPage> {
             const SizedBox(height: 12),
 
             _buildStatCard(
-              'Vizit samaradorligi',
+              AppLocalizations.of(context)?.visitEfficiency ??
+                  'Vizit samaradorligi',
               '78%',
               Icons.percent,
               colorScheme.tertiary,
@@ -65,7 +69,7 @@ class _VisitsReportPageState extends State<VisitsReportPage> {
 
             // Visits List
             Text(
-              'Oxirgi vizitlar',
+              AppLocalizations.of(context)?.lastVisits ?? 'Oxirgi vizitlar',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
@@ -73,18 +77,38 @@ class _VisitsReportPageState extends State<VisitsReportPage> {
             ),
             const SizedBox(height: 12),
 
-            _buildVisitItem('Magazin "Central"', 'Bugun 14:30', 'Muvaffaqiyatli', colorScheme.primary),
+            _buildVisitItem(
+              'Magazin "Central"',
+              'Bugun 14:30',
+              'Muvaffaqiyatli',
+              colorScheme.primary,
+            ),
             const SizedBox(height: 8),
-            _buildVisitItem('Dokon "Yangi"', 'Kecha 16:45', 'Buyurtma berildi', colorScheme.secondary),
+            _buildVisitItem(
+              'Dokon "Yangi"',
+              'Kecha 16:45',
+              'Buyurtma berildi',
+              colorScheme.secondary,
+            ),
             const SizedBox(height: 8),
-            _buildVisitItem('Supermarket "Mega"', '2 kun oldin', 'Rad etildi', colorScheme.error),
+            _buildVisitItem(
+              'Supermarket "Mega"',
+              '2 kun oldin',
+              'Rad etildi',
+              colorScheme.error,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     final theme = Theme.of(context);
 
     return Card(
@@ -123,7 +147,12 @@ class _VisitsReportPageState extends State<VisitsReportPage> {
     );
   }
 
-  Widget _buildVisitItem(String name, String time, String status, Color statusColor) {
+  Widget _buildVisitItem(
+    String name,
+    String time,
+    String status,
+    Color statusColor,
+  ) {
     final theme = Theme.of(context);
 
     return Card(

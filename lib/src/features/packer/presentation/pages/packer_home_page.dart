@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 class PackerHomePage extends StatelessWidget {
   const PackerHomePage({super.key});
@@ -11,7 +12,9 @@ class PackerHomePage extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Packing Dashboard'),
+        title: Text(
+          AppLocalizations.of(context)?.packingDashboard ?? 'Packing Dashboard',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
@@ -141,10 +144,7 @@ class PackerHomePage extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       itemCount: status == 'completed' ? 5 : 8,
       itemBuilder: (context, index) {
-        return _PackingOrderItem(
-          index: index,
-          status: status,
-        );
+        return _PackingOrderItem(index: index, status: status);
       },
     );
   }
@@ -179,7 +179,9 @@ class PackerHomePage extends StatelessWidget {
           CircularProgressIndicator(
             value: 0.78,
             backgroundColor: theme.colorScheme.onPrimary.withOpacity(0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              theme.colorScheme.onPrimary,
+            ),
           ),
         ],
       ),
@@ -191,16 +193,21 @@ class PackerHomePage extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Chiqish'),
-          content: const Text('Haqiqatan ham ilovadan chiqmoqchimisiz?'),
+          title: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
+          content: Text(
+            AppLocalizations.of(context)?.confirmLogout ??
+                'Haqiqatan ham ilovadan chiqmoqchimisiz?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Bekor qilish'),
+              child: Text(
+                AppLocalizations.of(context)?.cancel ?? 'Bekor qilish',
+              ),
             ),
             FilledButton(
               onPressed: () => _logout(context),
-              child: const Text('Chiqish'),
+              child: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
             ),
           ],
         );
@@ -216,7 +223,7 @@ class PackerHomePage extends StatelessWidget {
     } catch (e) {
       // SharedPreferences not ready, continue with logout
     }
-    
+
     if (context.mounted) {
       Navigator.of(context).pop(); // Close dialog
       Navigator.pushNamedAndRemoveUntil(
@@ -313,19 +320,16 @@ class _PackingOrderItem extends StatelessWidget {
   final int index;
   final String status;
 
-  const _PackingOrderItem({
-    required this.index,
-    required this.status,
-  });
+  const _PackingOrderItem({required this.index, required this.status});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     Color statusColor;
     IconData statusIcon;
     String statusText;
-    
+
     switch (status) {
       case 'to_pack':
         statusColor = Colors.orange;
@@ -356,7 +360,9 @@ class _PackingOrderItem extends StatelessWidget {
           child: Icon(statusIcon, color: Colors.white, size: 20),
         ),
         title: Text('Order #ORD${1000 + index}'),
-        subtitle: Text('${(index + 1) * 3} items • Priority: ${index % 2 == 0 ? 'High' : 'Normal'}'),
+        subtitle: Text(
+          '${(index + 1) * 3} items • Priority: ${index % 2 == 0 ? 'High' : 'Normal'}',
+        ),
         trailing: Text(
           statusText,
           style: TextStyle(
@@ -371,7 +377,10 @@ class _PackingOrderItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Order Details:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Order Details:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -398,7 +407,9 @@ class _PackingOrderItem extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Deadline:'),
-                    Text('${DateTime.now().add(Duration(days: index + 1)).day}/${DateTime.now().month}'),
+                    Text(
+                      '${DateTime.now().add(Duration(days: index + 1)).day}/${DateTime.now().month}',
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -416,10 +427,7 @@ class _PackingOrderItem extends StatelessWidget {
                         child: const Text('Start Packing'),
                       ),
                     ] else if (status == 'in_progress') ...[
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text('Pause'),
-                      ),
+                      TextButton(onPressed: () {}, child: const Text('Pause')),
                       const SizedBox(width: 8),
                       FilledButton(
                         onPressed: () {},

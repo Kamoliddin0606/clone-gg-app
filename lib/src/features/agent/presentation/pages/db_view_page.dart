@@ -64,9 +64,11 @@ class _DbViewPageState extends State<DbViewPage> {
 
   List<TableInfo> get _filteredTables {
     return _tablesMetadata.where((table) {
-      final matchesSearch = _searchQuery.isEmpty ||
+      final matchesSearch =
+          _searchQuery.isEmpty ||
           table.name.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesFilter = _selectedDbFilter == null || table.dbType == _selectedDbFilter;
+      final matchesFilter =
+          _selectedDbFilter == null || table.dbType == _selectedDbFilter;
       return matchesSearch && matchesFilter;
     }).toList();
   }
@@ -75,8 +77,12 @@ class _DbViewPageState extends State<DbViewPage> {
     final filtered = _filteredTables;
     return {
       DbSource.main: filtered.where((t) => t.dbType == DbSource.main).toList(),
-      DbSource.cache: filtered.where((t) => t.dbType == DbSource.cache).toList(),
-      DbSource.preferences: filtered.where((t) => t.dbType == DbSource.preferences).toList(),
+      DbSource.cache: filtered
+          .where((t) => t.dbType == DbSource.cache)
+          .toList(),
+      DbSource.preferences: filtered
+          .where((t) => t.dbType == DbSource.preferences)
+          .toList(),
     };
   }
 
@@ -90,44 +96,58 @@ class _DbViewPageState extends State<DbViewPage> {
       final List<TableInfo> allTables = [];
 
       final mainDb = await _dbHelper.database;
-      final mainTables = await mainDb.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+      final mainTables = await mainDb.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+      );
       for (var table in mainTables) {
         final tableName = table['name'] as String;
         final columns = await mainDb.rawQuery("PRAGMA table_info($tableName)");
-        final countResult = await mainDb.rawQuery("SELECT COUNT(*) as count FROM $tableName");
+        final countResult = await mainDb.rawQuery(
+          "SELECT COUNT(*) as count FROM $tableName",
+        );
         final rowCount = countResult.first['count'] as int? ?? 0;
-        allTables.add(TableInfo(
-          name: tableName,
-          displayName: tableName,
-          dbType: DbSource.main,
-          columns: columns.map((c) => c['name'] as String).toList(),
-          rowCount: rowCount,
-        ));
+        allTables.add(
+          TableInfo(
+            name: tableName,
+            displayName: tableName,
+            dbType: DbSource.main,
+            columns: columns.map((c) => c['name'] as String).toList(),
+            rowCount: rowCount,
+          ),
+        );
       }
 
       final cacheDb = await _dbService.database;
-      final cacheTables = await cacheDb.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+      final cacheTables = await cacheDb.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+      );
       for (var table in cacheTables) {
         final tableName = table['name'] as String;
         final columns = await cacheDb.rawQuery("PRAGMA table_info($tableName)");
-        final countResult = await cacheDb.rawQuery("SELECT COUNT(*) as count FROM $tableName");
+        final countResult = await cacheDb.rawQuery(
+          "SELECT COUNT(*) as count FROM $tableName",
+        );
         final rowCount = countResult.first['count'] as int? ?? 0;
-        allTables.add(TableInfo(
-          name: tableName,
-          displayName: tableName,
-          dbType: DbSource.cache,
-          columns: columns.map((c) => c['name'] as String).toList(),
-          rowCount: rowCount,
-        ));
+        allTables.add(
+          TableInfo(
+            name: tableName,
+            displayName: tableName,
+            dbType: DbSource.cache,
+            columns: columns.map((c) => c['name'] as String).toList(),
+            rowCount: rowCount,
+          ),
+        );
       }
 
-      allTables.add(TableInfo(
-        name: 'preferences',
-        displayName: 'Preferences',
-        dbType: DbSource.preferences,
-        columns: ['Key', 'Value'],
-        rowCount: 8,
-      ));
+      allTables.add(
+        TableInfo(
+          name: 'preferences',
+          displayName: 'Preferences',
+          dbType: DbSource.preferences,
+          columns: ['Key', 'Value'],
+          rowCount: 8,
+        ),
+      );
 
       allTables.sort((a, b) => a.name.compareTo(b.name));
 
@@ -143,7 +163,10 @@ class _DbViewPageState extends State<DbViewPage> {
     }
   }
 
-  Future<void> _loadTableData(TableInfo table, {VoidCallback? onComplete}) async {
+  Future<void> _loadTableData(
+    TableInfo table, {
+    VoidCallback? onComplete,
+  }) async {
     if (_tableData.containsKey(table.displayName)) {
       setState(() => _selectedTable = table);
       onComplete?.call();
@@ -177,7 +200,9 @@ class _DbViewPageState extends State<DbViewPage> {
             'languageCode': _prefsService.getLanguageCode(),
             'isOfflineMode': _prefsService.isOfflineMode(),
           };
-          data = prefs.entries.map((e) => {'Key': e.key, 'Value': e.value.toString()}).toList();
+          data = prefs.entries
+              .map((e) => {'Key': e.key, 'Value': e.value.toString()})
+              .toList();
           break;
       }
 
@@ -188,7 +213,9 @@ class _DbViewPageState extends State<DbViewPage> {
       onComplete?.call();
     } catch (e) {
       setState(() {
-        _tableData[table.displayName] = [{'Error': e.toString()}];
+        _tableData[table.displayName] = [
+          {'Error': e.toString()},
+        ];
         _isLoadingTableData = false;
       });
       onComplete?.call();
@@ -198,12 +225,17 @@ class _DbViewPageState extends State<DbViewPage> {
   Future<void> _saveOrderDraftToFile() async {
     try {
       final cacheDb = await _dbService.database;
-      final results = await cacheDb.query('visit_steps_data', where: 'data_type = ?', whereArgs: ['order_draft']);
-      
+      final results = await cacheDb.query(
+        'visit_steps_data',
+        where: 'data_type = ?',
+        whereArgs: ['order_draft'],
+      );
+
       final directory = await getApplicationDocumentsDirectory();
-      final fileName = 'orderdraft_${DateTime.now().millisecondsSinceEpoch}.txt';
+      final fileName =
+          'orderdraft_${DateTime.now().millisecondsSinceEpoch}.txt';
       final filePath = '${directory.path}/$fileName';
-      
+
       final jsonData = jsonEncode(results);
       final file = File(filePath);
       await file.writeAsString(jsonData);
@@ -212,12 +244,22 @@ class _DbViewPageState extends State<DbViewPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Order Draft saved: $fileName'),
-            action: SnackBarAction(label: 'Open', onPressed: () => OpenFile.open(filePath)),
+            action: SnackBarAction(
+              label: 'Open',
+              onPressed: () => OpenFile.open(filePath),
+            ),
           ),
         );
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Error'}: $e',
+            ),
+          ),
+        );
     }
   }
 
@@ -290,22 +332,22 @@ class _DbViewPageState extends State<DbViewPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? Center(child: Text(_errorMessage!))
-              : isWideScreen
-                  ? Row(
-                      children: [
-                        Container(
-                          width: 280,
-                          decoration: BoxDecoration(
-                            color: cs.surfaceContainerLow,
-                            border: Border(right: BorderSide(color: cs.outlineVariant)),
-                          ),
-                          child: _buildTableSelectorPanel(),
-                        ),
-                        Expanded(child: _buildTableDataPanel()),
-                      ],
-                    )
-                  : _buildTableDataPanel(),
+          ? Center(child: Text(_errorMessage!))
+          : isWideScreen
+          ? Row(
+              children: [
+                Container(
+                  width: 280,
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerLow,
+                    border: Border(right: BorderSide(color: cs.outlineVariant)),
+                  ),
+                  child: _buildTableSelectorPanel(),
+                ),
+                Expanded(child: _buildTableDataPanel()),
+              ],
+            )
+          : _buildTableDataPanel(),
     );
   }
 
@@ -327,7 +369,10 @@ class _DbViewPageState extends State<DbViewPage> {
                 children: [
                   Text('Jadvallar', style: Theme.of(ctx).textTheme.titleLarge),
                   const Spacer(),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
                 ],
               ),
             ),
@@ -343,7 +388,10 @@ class _DbViewPageState extends State<DbViewPage> {
     );
   }
 
-  Widget _buildTableSelectorPanel({ScrollController? scrollController, VoidCallback? onTableSelected}) {
+  Widget _buildTableSelectorPanel({
+    ScrollController? scrollController,
+    VoidCallback? onTableSelected,
+  }) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
@@ -354,7 +402,9 @@ class _DbViewPageState extends State<DbViewPage> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Jadval qidirish...',
+              hintText:
+                  AppLocalizations.of(context)?.searchHint ??
+                  'Jadval qidirish...',
               prefixIcon: const Icon(Icons.search, size: 20),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
@@ -366,8 +416,13 @@ class _DbViewPageState extends State<DbViewPage> {
                     )
                   : null,
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               filled: true,
               fillColor: cs.surface,
             ),
@@ -396,13 +451,20 @@ class _DbViewPageState extends State<DbViewPage> {
             alignment: Alignment.centerLeft,
             child: Text(
               '${_filteredTables.length} jadval',
-              style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
             ),
           ),
         ),
         const SizedBox(height: 8),
         const Divider(height: 1),
-        Expanded(child: _buildTableList(scrollController: scrollController, onTableSelected: onTableSelected)),
+        Expanded(
+          child: _buildTableList(
+            scrollController: scrollController,
+            onTableSelected: onTableSelected,
+          ),
+        ),
       ],
     );
   }
@@ -416,15 +478,26 @@ class _DbViewPageState extends State<DbViewPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.table_chart_outlined, size: 64, color: cs.onSurfaceVariant.withOpacity(0.5)),
+            Icon(
+              Icons.table_chart_outlined,
+              size: 64,
+              color: cs.onSurfaceVariant.withOpacity(0.5),
+            ),
             const SizedBox(height: 16),
-            Text('Jadval tanlang', style: theme.textTheme.titleMedium?.copyWith(color: cs.onSurfaceVariant)),
+            Text(
+              'Jadval tanlang',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: 8),
             if (MediaQuery.of(context).size.width <= 600)
               FilledButton.icon(
                 onPressed: () => _showTableSelectorSheet(context),
                 icon: const Icon(Icons.list),
-                label: const Text('Jadvallar'),
+                label: Text(
+                  AppLocalizations.of(context)?.tables ?? 'Jadvallar',
+                ),
               ),
           ],
         ),
@@ -456,7 +529,10 @@ class _DbViewPageState extends State<DbViewPage> {
     );
   }
 
-  Widget _buildTableList({ScrollController? scrollController, VoidCallback? onTableSelected}) {
+  Widget _buildTableList({
+    ScrollController? scrollController,
+    VoidCallback? onTableSelected,
+  }) {
     final grouped = _groupedTables;
 
     return ListView(
@@ -464,16 +540,32 @@ class _DbViewPageState extends State<DbViewPage> {
       padding: const EdgeInsets.only(bottom: 16),
       children: [
         if (grouped[DbSource.main]!.isNotEmpty)
-          _buildTableGroup(DbSource.main, grouped[DbSource.main]!, onTableSelected),
+          _buildTableGroup(
+            DbSource.main,
+            grouped[DbSource.main]!,
+            onTableSelected,
+          ),
         if (grouped[DbSource.cache]!.isNotEmpty)
-          _buildTableGroup(DbSource.cache, grouped[DbSource.cache]!, onTableSelected),
+          _buildTableGroup(
+            DbSource.cache,
+            grouped[DbSource.cache]!,
+            onTableSelected,
+          ),
         if (grouped[DbSource.preferences]!.isNotEmpty)
-          _buildTableGroup(DbSource.preferences, grouped[DbSource.preferences]!, onTableSelected),
+          _buildTableGroup(
+            DbSource.preferences,
+            grouped[DbSource.preferences]!,
+            onTableSelected,
+          ),
       ],
     );
   }
 
-  Widget _buildTableGroup(DbSource source, List<TableInfo> tables, VoidCallback? onTableSelected) {
+  Widget _buildTableGroup(
+    DbSource source,
+    List<TableInfo> tables,
+    VoidCallback? onTableSelected,
+  ) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final color = _getDbSourceColor(source);
@@ -496,7 +588,10 @@ class _DbViewPageState extends State<DbViewPage> {
               const SizedBox(width: 8),
               Text(
                 _getDbSourceLabel(source),
-                style: theme.textTheme.labelMedium?.copyWith(color: color, fontWeight: FontWeight.bold),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const Spacer(),
               Container(
@@ -505,7 +600,10 @@ class _DbViewPageState extends State<DbViewPage> {
                   color: cs.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text('${tables.length}', style: theme.textTheme.labelSmall),
+                child: Text(
+                  '${tables.length}',
+                  style: theme.textTheme.labelSmall,
+                ),
               ),
             ],
           ),
@@ -521,13 +619,20 @@ class _DbViewPageState extends State<DbViewPage> {
     final isSelected = _selectedTable?.displayName == table.displayName;
 
     return Material(
-      color: isSelected ? cs.primaryContainer.withOpacity(0.5) : Colors.transparent,
+      color: isSelected
+          ? cs.primaryContainer.withOpacity(0.5)
+          : Colors.transparent,
       child: InkWell(
         onTap: () => _loadTableData(table, onComplete: onTableSelected),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            border: Border(left: BorderSide(color: isSelected ? cs.primary : Colors.transparent, width: 3)),
+            border: Border(
+              left: BorderSide(
+                color: isSelected ? cs.primary : Colors.transparent,
+                width: 3,
+              ),
+            ),
           ),
           child: Row(
             children: [
@@ -538,7 +643,9 @@ class _DbViewPageState extends State<DbViewPage> {
                     Text(
                       table.name,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -546,12 +653,16 @@ class _DbViewPageState extends State<DbViewPage> {
                     const SizedBox(height: 2),
                     Text(
                       '${table.rowCount} qator • ${table.columns.length} ustun',
-                      style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant, fontSize: 11),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
               ),
-              if (isSelected) Icon(Icons.chevron_right, size: 18, color: cs.primary),
+              if (isSelected)
+                Icon(Icons.chevron_right, size: 18, color: cs.primary),
             ],
           ),
         ),
@@ -586,13 +697,19 @@ class _DbViewPageState extends State<DbViewPage> {
                       color: _getDbSourceColor(table.dbType).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(_getDbSourceIcon(table.dbType), size: 18, color: _getDbSourceColor(table.dbType)),
+                    child: Icon(
+                      _getDbSourceIcon(table.dbType),
+                      size: 18,
+                      color: _getDbSourceColor(table.dbType),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       table.name,
-                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -607,7 +724,10 @@ class _DbViewPageState extends State<DbViewPage> {
                   _buildInfoChip('${table.columns.length} ustun'),
                   ActionChip(
                     avatar: const Icon(Icons.view_column, size: 14),
-                    label: const Text('Ustunlar', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      'Ustunlar',
+                      style: TextStyle(fontSize: 12),
+                    ),
                     onPressed: () => _showColumnsDialog(table),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -621,42 +741,67 @@ class _DbViewPageState extends State<DbViewPage> {
           child: _isLoadingTableData
               ? const Center(child: CircularProgressIndicator())
               : data.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.inbox_outlined, size: 48, color: cs.onSurfaceVariant.withOpacity(0.5)),
-                          const SizedBox(height: 8),
-                          Text("Jadval bo'sh", style: theme.textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant)),
-                        ],
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.inbox_outlined,
+                        size: 48,
+                        color: cs.onSurfaceVariant.withOpacity(0.5),
                       ),
-                    )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SingleChildScrollView(
-                        child: DataTable(
-                          columns: table.columns
-                              .map((col) => DataColumn(label: Text(col, style: const TextStyle(fontWeight: FontWeight.bold))))
-                              .toList(),
-                          rows: data.map((row) {
-                            return DataRow(
-                              cells: table.columns.map((col) {
-                                final value = row[col]?.toString() ?? 'null';
-                                return DataCell(
-                                  ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 200),
-                                    child: Text(value, overflow: TextOverflow.ellipsis),
-                                  ),
-                                  onTap: value.length > 30 ? () => _showCellDialog(col, value) : null,
-                                );
-                              }).toList(),
-                            );
-                          }).toList(),
-                          columnSpacing: 24,
-                          horizontalMargin: 16,
+                      const SizedBox(height: 8),
+                      Text(
+                        "Jadval bo'sh",
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: cs.onSurfaceVariant,
                         ),
                       ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SingleChildScrollView(
+                    child: DataTable(
+                      columns: table.columns
+                          .map(
+                            (col) => DataColumn(
+                              label: Text(
+                                col,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      rows: data.map((row) {
+                        return DataRow(
+                          cells: table.columns.map((col) {
+                            final value = row[col]?.toString() ?? 'null';
+                            return DataCell(
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 200,
+                                ),
+                                child: Text(
+                                  value,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              onTap: value.length > 30
+                                  ? () => _showCellDialog(col, value)
+                                  : null,
+                            );
+                          }).toList(),
+                        );
+                      }).toList(),
+                      columnSpacing: 24,
+                      horizontalMargin: 16,
                     ),
+                  ),
+                ),
         ),
       ],
     );
@@ -670,7 +815,10 @@ class _DbViewPageState extends State<DbViewPage> {
         color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(label, style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+      ),
     );
   }
 
@@ -686,14 +834,25 @@ class _DbViewPageState extends State<DbViewPage> {
             itemCount: table.columns.length,
             itemBuilder: (context, index) {
               return ListTile(
-                leading: CircleAvatar(radius: 12, child: Text('${index + 1}', style: const TextStyle(fontSize: 10))),
+                leading: CircleAvatar(
+                  radius: 12,
+                  child: Text(
+                    '${index + 1}',
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                ),
                 title: Text(table.columns[index]),
                 dense: true,
               );
             },
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Yopish'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)?.close ?? 'Yopish'),
+          ),
+        ],
       ),
     );
   }
@@ -704,7 +863,12 @@ class _DbViewPageState extends State<DbViewPage> {
       builder: (context) => AlertDialog(
         title: Text(column),
         content: SingleChildScrollView(child: SelectableText(value)),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Yopish'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)?.close ?? 'Yopish'),
+          ),
+        ],
       ),
     );
   }

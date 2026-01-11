@@ -13,13 +13,12 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart';
 import '../../../../core/services/reports_sync_service.dart';
 
-
 /// Animated Percentage Widget - Barcha percent elementlar uchun umumiy widget
 enum PercentageDisplayType {
-  circular,    // Dial gauge (doiraviy progress)
-  linear,      // Chiziqli progress bar
-  text,        // Faqat matn ko'rinishida
-  number,      // Raqamlar uchun animatsiya
+  circular, // Dial gauge (doiraviy progress)
+  linear, // Chiziqli progress bar
+  text, // Faqat matn ko'rinishida
+  number, // Raqamlar uchun animatsiya
 }
 
 class AnimatedPercentageWidget extends StatefulWidget {
@@ -45,7 +44,8 @@ class AnimatedPercentageWidget extends StatefulWidget {
   });
 
   @override
-  State<AnimatedPercentageWidget> createState() => _AnimatedPercentageWidgetState();
+  State<AnimatedPercentageWidget> createState() =>
+      _AnimatedPercentageWidgetState();
 }
 
 class _AnimatedPercentageWidgetState extends State<AnimatedPercentageWidget>
@@ -60,13 +60,16 @@ class _AnimatedPercentageWidgetState extends State<AnimatedPercentageWidget>
       vsync: this,
       duration: widget.animationDuration,
     );
-    _animation = Tween<double>(
-      begin: 0.0,
-      end: widget.percentage.clamp(0.0, 1.0),
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _animation =
+        Tween<double>(
+          begin: 0.0,
+          end: widget.percentage.clamp(0.0, 1.0),
+        ).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     // Sahifa yuklanganda animatsiyani boshlash
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,13 +81,16 @@ class _AnimatedPercentageWidgetState extends State<AnimatedPercentageWidget>
   void didUpdateWidget(AnimatedPercentageWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.percentage != widget.percentage) {
-      _animation = Tween<double>(
-        begin: _animation.value,
-        end: widget.percentage.clamp(0.0, 1.0),
-      ).animate(CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutCubic,
-      ));
+      _animation =
+          Tween<double>(
+            begin: _animation.value,
+            end: widget.percentage.clamp(0.0, 1.0),
+          ).animate(
+            CurvedAnimation(
+              parent: _animationController,
+              curve: Curves.easeOutCubic,
+            ),
+          );
       _animationController.forward(from: 0);
     }
   }
@@ -125,11 +131,14 @@ class _AnimatedPercentageWidgetState extends State<AnimatedPercentageWidget>
             painter: _CircularProgressPainter(
               progress: _animation.value,
               color: widget.color,
-              backgroundColor: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.4),
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.outlineVariant.withOpacity(0.4),
             ),
             child: Center(
               child: Text(
-                widget.valueText ?? '${(_animation.value * 100).toStringAsFixed(1)}%',
+                widget.valueText ??
+                    '${(_animation.value * 100).toStringAsFixed(1)}%',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: widget.color,
@@ -158,10 +167,7 @@ class _AnimatedPercentageWidgetState extends State<AnimatedPercentageWidget>
         if (widget.label != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              widget.label!,
-              style: theme.textTheme.labelMedium,
-            ),
+            child: Text(widget.label!, style: theme.textTheme.labelMedium),
           ),
         Container(
           height: 8,
@@ -207,7 +213,10 @@ class _AnimatedPercentageWidgetState extends State<AnimatedPercentageWidget>
 
   Widget _buildNumberProgress() {
     return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: double.tryParse(widget.numberValue ?? '0') ?? 0),
+      tween: Tween(
+        begin: 0,
+        end: double.tryParse(widget.numberValue ?? '0') ?? 0,
+      ),
       duration: widget.animationDuration,
       builder: (_, value, __) => Text(
         widget.valueText ?? value.toStringAsFixed(0),
@@ -329,8 +338,10 @@ class _MainReportPageState extends State<MainReportPage>
           forceRefresh: false,
         );
         final mainReport = reportData['mainReport'] as MainReport;
-        final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
-        final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
+        final businessRegionReports =
+            reportData['businessRegionReports'] as List<BusinessRegionReport>;
+        final akbByCategories =
+            reportData['akbByCategories'] as List<AKBByCategory>;
 
         // Convert to maps for UI
         final akbByRegion = <String, int>{};
@@ -353,7 +364,6 @@ class _MainReportPageState extends State<MainReportPage>
             _selectedRange = DateTimeRange(
               start: report!.dateStart!,
               end: report!.dateEnd!,
-
             );
           }
         });
@@ -387,8 +397,11 @@ class _MainReportPageState extends State<MainReportPage>
   //   );
   // }
   // ESKI: _showEnhancedCalendarDialog(...) chaqirardi
-// YANGI: reports_page.dart dagidek Material date range picker dan foydalanamiz
-  void _showReportPeriodCalendar(BuildContext context, MainReport? report) async {
+  // YANGI: reports_page.dart dagidek Material date range picker dan foydalanamiz
+  void _showReportPeriodCalendar(
+    BuildContext context,
+    MainReport? report,
+  ) async {
     // 2-fayldagi parametrlar bilan bir xil: initialDateRange, firstDate, lastDate
     // initialDateRange ni tekshirib, agar end lastDate dan keyin bo'lsa, uni lastDate ga teng qilish
     DateTimeRange? safeInitialRange = _selectedRange;
@@ -422,12 +435,12 @@ class _MainReportPageState extends State<MainReportPage>
       } else {
         _showErrorSnackBar(
           context,
-          "Offline rejimda ma'lumotlarni yangilashning imkoni yo'q",
+          AppLocalizations.of(context)?.offlineCannotRefresh ??
+              "Offline rejimda ma'lumotlarni yangilashning imkoni yo'q",
         );
       }
     }
   }
-
 
   /// Enhanced calendar dialog with modern UI effects and animations
   void _showEnhancedCalendarDialog(
@@ -452,7 +465,8 @@ class _MainReportPageState extends State<MainReportPage>
       CurvedAnimation(parent: animationController, curve: Curves.easeOut),
     );
 
-    DateTimeRange? selectedRange = currentRange ??
+    DateTimeRange? selectedRange =
+        currentRange ??
         DateTimeRange(
           start: DateTime.now().subtract(const Duration(days: 30)),
           end: DateTime.now(),
@@ -522,7 +536,10 @@ class _MainReportPageState extends State<MainReportPage>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Davrni tanlang',
+                                    AppLocalizations.of(
+                                          context,
+                                        )?.selectPeriodTitle ??
+                                        'Davrni tanlang',
                                     style: theme.textTheme.titleLarge?.copyWith(
                                       color: colorScheme.onPrimary,
                                       fontWeight: FontWeight.bold,
@@ -530,9 +547,14 @@ class _MainReportPageState extends State<MainReportPage>
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Hisobot uchun boshlanish va tugash sanalarini belgilang',
+                                    AppLocalizations.of(
+                                          context,
+                                        )?.selectReportDatesHint ??
+                                        'Hisobot uchun boshlanish va tugash sanalarini belgilang',
                                     style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: colorScheme.onPrimary.withOpacity(0.8),
+                                      color: colorScheme.onPrimary.withOpacity(
+                                        0.8,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -544,7 +566,9 @@ class _MainReportPageState extends State<MainReportPage>
                                 Icons.close,
                                 color: colorScheme.onPrimary,
                               ),
-                              tooltip: 'Yopish',
+                              tooltip:
+                                  AppLocalizations.of(context)?.close ??
+                                  'Yopish',
                             ),
                           ],
                         ),
@@ -566,10 +590,12 @@ class _MainReportPageState extends State<MainReportPage>
                                     child: Container(
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                        color: colorScheme.primaryContainer.withOpacity(0.1),
+                                        color: colorScheme.primaryContainer
+                                            .withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(
-                                          color: colorScheme.primary.withOpacity(0.2),
+                                          color: colorScheme.primary
+                                              .withOpacity(0.2),
                                           width: 1,
                                         ),
                                       ),
@@ -583,22 +609,36 @@ class _MainReportPageState extends State<MainReportPage>
                                           const SizedBox(width: 12),
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  'Tanlangan davr',
-                                                  style: theme.textTheme.bodySmall?.copyWith(
-                                                    color: colorScheme.onSurfaceVariant,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
+                                                  AppLocalizations.of(
+                                                        context,
+                                                      )?.selectedPeriod ??
+                                                      'Tanlangan davr',
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodySmall
+                                                      ?.copyWith(
+                                                        color: colorScheme
+                                                            .onSurfaceVariant,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   '${DateFormat('dd.MM.yyyy').format(selectedRange!.start)} - ${DateFormat('dd.MM.yyyy').format(selectedRange!.end)}',
-                                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                                    color: colorScheme.onSurface,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
+                                                  style: theme
+                                                      .textTheme
+                                                      .bodyLarge
+                                                      ?.copyWith(
+                                                        color: colorScheme
+                                                            .onSurface,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
                                                 ),
                                               ],
                                             ),
@@ -623,7 +663,8 @@ class _MainReportPageState extends State<MainReportPage>
                                         color: colorScheme.surface,
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(
-                                          color: colorScheme.outline.withOpacity(0.3),
+                                          color: colorScheme.outline
+                                              .withOpacity(0.3),
                                           width: 1,
                                         ),
                                       ),
@@ -637,7 +678,9 @@ class _MainReportPageState extends State<MainReportPage>
                                             // For single date selection, create a range
                                             selectedRange = DateTimeRange(
                                               start: date,
-                                              end: date.add(const Duration(days: 30)),
+                                              end: date.add(
+                                                const Duration(days: 30),
+                                              ),
                                             );
                                           },
                                         ),
@@ -656,7 +699,8 @@ class _MainReportPageState extends State<MainReportPage>
                                 children: [
                                   _buildQuickSelectButton(
                                     context,
-                                    'Bugun',
+                                    AppLocalizations.of(context)?.today ??
+                                        'Bugun',
                                     DateTimeRange(
                                       start: DateTime.now(),
                                       end: DateTime.now(),
@@ -666,9 +710,12 @@ class _MainReportPageState extends State<MainReportPage>
                                   ),
                                   _buildQuickSelectButton(
                                     context,
-                                    'Oxirgi 7 kun',
+                                    AppLocalizations.of(context)?.last7Days ??
+                                        'Oxirgi 7 kun',
                                     DateTimeRange(
-                                      start: DateTime.now().subtract(const Duration(days: 7)),
+                                      start: DateTime.now().subtract(
+                                        const Duration(days: 7),
+                                      ),
                                       end: DateTime.now(),
                                     ),
                                     selectedRange,
@@ -676,9 +723,12 @@ class _MainReportPageState extends State<MainReportPage>
                                   ),
                                   _buildQuickSelectButton(
                                     context,
-                                    'Oxirgi 30 kun',
+                                    AppLocalizations.of(context)?.last30Days ??
+                                        'Oxirgi 30 kun',
                                     DateTimeRange(
-                                      start: DateTime.now().subtract(const Duration(days: 30)),
+                                      start: DateTime.now().subtract(
+                                        const Duration(days: 30),
+                                      ),
                                       end: DateTime.now(),
                                     ),
                                     selectedRange,
@@ -686,9 +736,16 @@ class _MainReportPageState extends State<MainReportPage>
                                   ),
                                   _buildQuickSelectButton(
                                     context,
-                                    'Joriy oy',
+                                    AppLocalizations.of(
+                                          context,
+                                        )?.currentMonth ??
+                                        'Joriy oy',
                                     DateTimeRange(
-                                      start: DateTime(DateTime.now().year, DateTime.now().month, 1),
+                                      start: DateTime(
+                                        DateTime.now().year,
+                                        DateTime.now().month,
+                                        1,
+                                      ),
                                       end: DateTime.now(),
                                     ),
                                     selectedRange,
@@ -704,13 +761,21 @@ class _MainReportPageState extends State<MainReportPage>
                                 children: [
                                   Expanded(
                                     child: OutlinedButton.icon(
-                                      onPressed: () => Navigator.of(context).pop(),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
                                       icon: const Icon(Icons.cancel),
-                                      label: const Text('Bekor qilish'),
+                                      label: Text(
+                                        AppLocalizations.of(context)?.cancel ??
+                                            'Bekor qilish',
+                                      ),
                                       style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -723,27 +788,43 @@ class _MainReportPageState extends State<MainReportPage>
                                         Navigator.of(context).pop();
 
                                         // Trigger report sync based on server selection
-                                        final dataSyncService = _dataSyncService;
-                                        final reportsSyncService = _dbReportService;
+                                        final dataSyncService =
+                                            _dataSyncService;
+                                        final reportsSyncService =
+                                            _dbReportService;
 
-                                        if (dataSyncService.isEvyapServerSelected()) {
+                                        if (dataSyncService
+                                            .isEvyapServerSelected()) {
                                           // Sync reports for Evyap server
                                           reportsSyncService.syncReportByPeriod(
-                                            userCode: _prefs.getUserCode() ?? '',
-                                            dateStart: selectedRange!.start.toIso8601String().split('T')[0],
-                                            dateEnd: selectedRange!.end.toIso8601String().split('T')[0],
+                                            userCode:
+                                                _prefs.getUserCode() ?? '',
+                                            dateStart: selectedRange!.start
+                                                .toIso8601String()
+                                                .split('T')[0],
+                                            dateEnd: selectedRange!.end
+                                                .toIso8601String()
+                                                .split('T')[0],
                                           );
-                                        } else if (dataSyncService.isAvonServerSelected()) {
+                                        } else if (dataSyncService
+                                            .isAvonServerSelected()) {
                                           // Sync promotions for Avon server
                                           dataSyncService.syncPromotions();
                                         }
                                       },
                                       icon: const Icon(Icons.check),
-                                      label: const Text('Tasdiqlash'),
+                                      label: Text(
+                                        AppLocalizations.of(context)?.confirm ??
+                                            'Tasdiqlash',
+                                      ),
                                       style: FilledButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -781,7 +862,8 @@ class _MainReportPageState extends State<MainReportPage>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final isSelected = selectedRange != null &&
+    final isSelected =
+        selectedRange != null &&
         selectedRange.start == range.start &&
         selectedRange.end == range.end;
 
@@ -827,7 +909,10 @@ class _MainReportPageState extends State<MainReportPage>
     );
   }
 
-  Future<void> _performBackgroundDataSync(DateTimeRange selectedRange, BuildContext context) async {
+  Future<void> _performBackgroundDataSync(
+    DateTimeRange selectedRange,
+    BuildContext context,
+  ) async {
     try {
       // Get user code from preferences
       final userCode = _prefs.getUserCode();
@@ -857,9 +942,14 @@ class _MainReportPageState extends State<MainReportPage>
       // Parse the reportData and update the report object
       if (mounted) {
         final mainReport = reportData['mainReport'] as MainReport;
-        final businessRegionReports = reportData['businessRegionReports'] as List<BusinessRegionReport>;
-        final akbByCategories = reportData['akbByCategories'] as List<AKBByCategory>;
-        if (kDebugMode) print('malumotlarni saqlashdan oldin to\'liq main report qismlar ${reportData}');
+        final businessRegionReports =
+            reportData['businessRegionReports'] as List<BusinessRegionReport>;
+        final akbByCategories =
+            reportData['akbByCategories'] as List<AKBByCategory>;
+        if (kDebugMode)
+          print(
+            'malumotlarni saqlashdan oldin to\'liq main report qismlar ${reportData}',
+          );
         // Convert business region reports to map
         final akbByRegion = <String, int>{};
         for (final regionReport in businessRegionReports) {
@@ -888,14 +978,16 @@ class _MainReportPageState extends State<MainReportPage>
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Hisobot ma\'lumotlari muvaffaqiyatli yangilandi'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.reportDataRefreshed ??
+                  'Hisobot ma\'lumotlari muvaffaqiyatli yangilandi',
+            ),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
         );
       }
-
     } catch (e) {
       if (kDebugMode) {
         print('Error during background data sync: $e');
@@ -930,7 +1022,10 @@ class _MainReportPageState extends State<MainReportPage>
   void _updateLoadingDialog(BuildContext context, String message) {
     // Find the current dialog and update its content
     Navigator.of(context).pop(); // Close current dialog
-    _showLoadingDialog(context, message); // Show new dialog with updated message
+    _showLoadingDialog(
+      context,
+      message,
+    ); // Show new dialog with updated message
   }
 
   void _hideLoadingDialog(BuildContext context) {
@@ -972,222 +1067,293 @@ class _MainReportPageState extends State<MainReportPage>
       child: Stack(
         children: [
           CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Report Period Display - Prominent UI element
-                  GestureDetector(
-                    onDoubleTap: () => _showReportPeriodCalendar(context, report),
-                    child: Card(
-                      elevation: 4,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              cs.primary.withOpacity(0.1),
-                              cs.primaryContainer.withOpacity(0.05),
-                            ],
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Report Period Display - Prominent UI element
+                      GestureDetector(
+                        onDoubleTap: () =>
+                            _showReportPeriodCalendar(context, report),
+                        child: Card(
+                          elevation: 4,
+                          margin: const EdgeInsets.only(bottom: 20),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              color: cs.primary,
-                              size: 28,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        AppLocalizations.of(context)!.reportPeriod,
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: cs.onSurface,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Icon(
-                                        Icons.touch_app,
-                                        size: 16,
-                                        color: cs.onSurfaceVariant.withOpacity(0.6),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  if (_selectedRange != null)
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              ' ${DateFormat('yyyy-MM-dd').format(_selectedRange!.start)} dan ${DateFormat('yyyy-MM-dd').format(_selectedRange!.end)} gacha',
-                                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color: cs.primary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 2),
-                                      ],
-                                    )
-                                  else if (report?.dateStart != null && report?.dateEnd != null)
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              ' ${DateFormat('yyyy-MM-dd').format(report!.dateStart!)} dan ${DateFormat('yyyy-MM-dd').format(report!.dateEnd!)} gacha',
-                                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color: cs.primary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 2),
-                                      ],
-                                    )
-                                  else
-                                    Text(
-                                      report?.dateStart?.toLocal().toString().split(' ')[0] ?? 'No Data',
-                                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: cs.primary,
-                                        fontFeatures: const [FontFeature.tabularFigures()],
-                                      ),
-                                    ),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  cs.primary.withOpacity(0.1),
+                                  cs.primaryContainer.withOpacity(0.05),
                                 ],
                               ),
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            Icon(
-                              Icons.info_outline,
-                              color: cs.onSurfaceVariant,
-                              size: 20,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  color: cs.primary,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            AppLocalizations.of(
+                                              context,
+                                            )!.reportPeriod,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: cs.onSurface,
+                                                ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Icon(
+                                            Icons.touch_app,
+                                            size: 16,
+                                            color: cs.onSurfaceVariant
+                                                .withOpacity(0.6),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      if (_selectedRange != null)
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  ' ${DateFormat('yyyy-MM-dd').format(_selectedRange!.start)} dan ${DateFormat('yyyy-MM-dd').format(_selectedRange!.end)} gacha',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: cs.primary,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 2),
+                                          ],
+                                        )
+                                      else if (report?.dateStart != null &&
+                                          report?.dateEnd != null)
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  ' ${DateFormat('yyyy-MM-dd').format(report!.dateStart!)} dan ${DateFormat('yyyy-MM-dd').format(report!.dateEnd!)} gacha',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: cs.primary,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 2),
+                                          ],
+                                        )
+                                      else
+                                        Text(
+                                          report?.dateStart
+                                                  ?.toLocal()
+                                                  .toString()
+                                                  .split(' ')[0] ??
+                                              'No Data',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineSmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w700,
+                                                color: cs.primary,
+                                                fontFeatures: const [
+                                                  FontFeature.tabularFigures(),
+                                                ],
+                                              ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.info_outline,
+                                  color: cs.onSurfaceVariant,
+                                  size: 20,
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+
+                      _SectionTitle(
+                        icon: Icons.groups_2_outlined,
+                        title:
+                            AppLocalizations.of(context)?.monthlyOkbAkb ??
+                            'Oylik OKB/AKB',
+                      ),
+                      const SizedBox(height: 8),
+                      _OkbAkbMonthly(report: report),
+
+                      const SizedBox(height: 20),
+                      _SectionTitle(
+                        icon: Icons.ssid_chart_rounded,
+                        title:
+                            AppLocalizations.of(
+                              context,
+                            )?.monthlyPlanFactForecast ??
+                            'Oylik reja / Fakt / Bashorat',
+                      ),
+                      const SizedBox(height: 8),
+                      _PlanFactForecast(report: report),
+                      const SizedBox(height: 20),
+                      _SectionTitle(
+                        icon: Icons.analytics_outlined,
+                        title:
+                            AppLocalizations.of(context)?.todayMainIndicators ??
+                            'Bugun — asosiy ko\'rsatkichlar',
+                      ),
+                      const SizedBox(height: 8),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          return Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: [
+                              _StatCard(
+                                label:
+                                    AppLocalizations.of(
+                                      context,
+                                    )?.territoryOKB ??
+                                    'Hudud OKB',
+                                value: (report?.countOKB ?? 0).toString(),
+                                icon: Icons.map_outlined,
+                                tooltip:
+                                    AppLocalizations.of(
+                                      context,
+                                    )?.territoryOKBTooltip ??
+                                    'Hudud bo\'yicha mijozlar bazasini qamrab olish',
+                              ),
+                              _StatCard(
+                                label:
+                                    AppLocalizations.of(
+                                      context,
+                                    )?.visitedTradingPoints ??
+                                    'Tashrif buyurilgan s.n.',
+                                value: (report?.countVisited ?? 0).toString(),
+                                icon: Icons.store_mall_directory_outlined,
+                                tooltip:
+                                    AppLocalizations.of(
+                                      context,
+                                    )?.visitedTradingPointsTooltip ??
+                                    'Tashrif buyurilgan savdo nuqtalari soni',
+                              ),
+                              _StatCard(
+                                label:
+                                    AppLocalizations.of(
+                                      context,
+                                    )?.activeClients ??
+                                    'Faol mijozlar',
+                                value: (report?.countAKB ?? 0).toString(),
+                                icon: Icons.check_circle,
+                                tooltip:
+                                    AppLocalizations.of(
+                                      context,
+                                    )?.activeClientsTooltip ??
+                                    'Bugun faol buyurtmalari bo\'lgan mijozlar',
+                              ),
+                              _MoneyCard(
+                                label:
+                                    AppLocalizations.of(context)?.cash ??
+                                    'Naqd',
+                                amount: report?.cash ?? 0.0,
+                                icon: Icons.payments_outlined,
+                              ),
+                              _MoneyCard(
+                                label:
+                                    AppLocalizations.of(context)?.cashless ??
+                                    'Naqdsiz',
+                                amount: report?.transfer ?? 0.0,
+                                icon: Icons.account_balance_outlined,
+                              ),
+                              _MoneyCard(
+                                label:
+                                    AppLocalizations.of(context)?.ordersTotal ??
+                                    'Buyurtmalar jami',
+                                amount: report?.sum ?? 0.0,
+                                icon: Icons.receipt_long_outlined,
+                                highlight: true,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+                      _SectionTitle(
+                        icon: Icons.map_outlined,
+                        title: 'Hududlar bo\'yicha AKB',
+                      ),
+                      const SizedBox(height: 8),
+                      _RegionChips(regions: _akbByRegion),
+
+                      const SizedBox(height: 20),
+                      _SectionTitle(
+                        icon: Icons.category_outlined,
+                        title: 'Tovar kategoriyalari bo\'yicha AKB',
+                      ),
+                      const SizedBox(height: 8),
+                      _CategoryList(categories: _categories),
+
+                      // const SizedBox(height: 28),
+                      // _FooterNote(),
+                      const SizedBox(height: 32),
+                    ],
                   ),
-
-                  _SectionTitle(icon: Icons.groups_2_outlined, title: 'Oylik OKB/AKB'),
-                  const SizedBox(height: 8),
-                  _OkbAkbMonthly(report: report),
-
-                  const SizedBox(height: 20),
-                  _SectionTitle(icon: Icons.ssid_chart_rounded, title: 'Oylik reja / Fakt / Bashorat'),
-                  const SizedBox(height: 8),
-                  _PlanFactForecast(report: report),
-                  const SizedBox(height: 20),
-                  _SectionTitle(icon: Icons.analytics_outlined, title: 'Bugun — asosiy ko\'rsatkichlar'),
-                  const SizedBox(height: 8),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _StatCard(
-                            label: 'Hudud OKB',
-                            value: (report?.countOKB ?? 0).toString(),
-                            icon: Icons.map_outlined,
-                            tooltip: 'Hudud bo\'yicha mijozlar bazasini qamrab olish',
-                          ),
-                          _StatCard(
-                            label: 'Tashrif buyurilgan s.n.',
-                            value: (report?.countVisited ?? 0).toString(),
-                            icon: Icons.store_mall_directory_outlined,
-                            tooltip: 'Tashrif buyurilgan savdo nuqtalari soni',
-                          ),
-                          _StatCard(
-                            label: 'Faol mijozlar',
-                            value: (report?.countAKB ?? 0).toString(),
-                            icon: Icons.check_circle,
-                            tooltip: 'Bugun faol buyurtmalari bo\'lgan mijozlar',
-                          ),
-                          _MoneyCard(
-                            label: 'Naqd',
-                            amount: report?.cash ?? 0.0,
-                            icon: Icons.payments_outlined,
-                          ),
-                          _MoneyCard(
-                            label: 'Naqdsiz',
-                            amount: report?.transfer ?? 0.0,
-                            icon: Icons.account_balance_outlined,
-                          ),
-                          _MoneyCard(
-                            label: 'Buyurtmalar jami',
-                            amount: report?.sum ?? 0.0,
-                            icon: Icons.receipt_long_outlined,
-                            highlight: true,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-
-
-
-                  const SizedBox(height: 20),
-                  _SectionTitle(icon: Icons.map_outlined, title: 'Hududlar bo\'yicha AKB'),
-                  const SizedBox(height: 8),
-                  _RegionChips(regions: _akbByRegion),
-
-                  const SizedBox(height: 20),
-                  _SectionTitle(icon: Icons.category_outlined, title: 'Tovar kategoriyalari bo\'yicha AKB'),
-                  const SizedBox(height: 8),
-                  _CategoryList(categories: _categories),
-
-
-
-                  // const SizedBox(height: 28),
-                  // _FooterNote(),
-                  const SizedBox(height: 32),
-                ],
+                ),
               ),
-            ),
+              // Loading overlay
+              if (_isLoading)
+                Container(
+                  color: Colors.black.withOpacity(0.3),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+            ],
           ),
-          // Loading overlay
-          if (_isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.3),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
         ],
-
       ),
-     ]
-    ),
     );
-
-
   }
 }
-
 
 class _SectionTitle extends StatelessWidget {
   final IconData icon;
@@ -1203,9 +1369,9 @@ class _SectionTitle extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     );
@@ -1258,7 +1424,7 @@ class _StatCard extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -1313,7 +1479,7 @@ class _MoneyCard extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -1342,14 +1508,17 @@ class _GlassCard extends StatelessWidget {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 12,
             offset: const Offset(0, 6),
-          )
+          ),
         ],
         gradient: highlight
             ? LinearGradient(
-          colors: [cs.primary.withOpacity(0.06), cs.surface.withOpacity(0.0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        )
+                colors: [
+                  cs.primary.withOpacity(0.06),
+                  cs.surface.withOpacity(0.0),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
             : null,
       ),
       child: child,
@@ -1365,7 +1534,12 @@ class _PlanFactForecast extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    Widget buildBar({required String label, required double percent, required Color color, String? value}) {
+    Widget buildBar({
+      required String label,
+      required double percent,
+      required Color color,
+      String? value,
+    }) {
       percent = percent.clamp(0, 1);
       return _GlassCard(
         child: Column(
@@ -1373,12 +1547,24 @@ class _PlanFactForecast extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Text(label, style: Theme.of(context).textTheme.labelMedium),
                 const Spacer(),
                 if (value != null)
-                  Text(value, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    value,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 8),
@@ -1396,21 +1582,21 @@ class _PlanFactForecast extends StatelessWidget {
       children: [
         if (report != null) ...[
           buildBar(
-            label: 'Fakt',
+            label: AppLocalizations.of(context)?.fact ?? 'Fakt',
             percent: report!.sum / (report!.sum == 0 ? 1 : report!.sum),
             color: cs.primary,
             value: formatCurrencyUz(report!.sum),
           ),
           const SizedBox(height: 10),
           buildBar(
-            label: 'Naqd',
+            label: AppLocalizations.of(context)?.cash ?? 'Naqd',
             percent: report!.cash / (report!.sum == 0 ? 1 : report!.sum),
             color: cs.tertiary,
             value: formatCurrencyUz(report!.cash),
           ),
           const SizedBox(height: 10),
           buildBar(
-            label: 'Naqdsiz',
+            label: AppLocalizations.of(context)?.cashless ?? 'Naqdsiz',
             percent: report!.transfer / (report!.sum == 0 ? 1 : report!.sum),
             color: cs.secondary,
             value: formatCurrencyUz(report!.transfer),
@@ -1427,7 +1613,8 @@ class _RegionChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entries = regions.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final entries = regions.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -1449,7 +1636,8 @@ class _CategoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final items = categories.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final items = categories.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
     return Column(
       children: [
@@ -1472,10 +1660,16 @@ class _CategoryList extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(e.key, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                        Text(
+                          e.key,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
                         const SizedBox(height: 6),
                         AnimatedPercentageWidget(
-                          percentage: e.value / (items.first.value == 0 ? 1 : items.first.value),
+                          percentage:
+                              e.value /
+                              (items.first.value == 0 ? 1 : items.first.value),
                           type: PercentageDisplayType.linear,
                           color: cs.secondary,
                         ),
@@ -1485,12 +1679,15 @@ class _CategoryList extends StatelessWidget {
                   const SizedBox(width: 12),
                   CircleAvatar(
                     radius: 16,
-                    child: Text('${e.value}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text(
+                      '${e.value}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ],
               ),
             ),
-          )
+          ),
       ],
     );
   }
@@ -1507,7 +1704,9 @@ class _OkbAkbMonthly extends StatelessWidget {
     if (report == null) {
       return const SizedBox.shrink();
     }
-    final akbPercent = report!.countAKB > 0 ? (report!.countAKB / report!.countOKB * 100) : 0.0;
+    final akbPercent = report!.countAKB > 0
+        ? (report!.countAKB / report!.countOKB * 100)
+        : 0.0;
     return Row(
       children: [
         Expanded(
@@ -1544,14 +1743,17 @@ class _OkbAkbMonthly extends StatelessWidget {
   Widget _kv(BuildContext context, String k, String v) {
     return Row(
       children: [
-        Expanded(child: Text(k, style: const TextStyle(fontWeight: FontWeight.w600))),
-        Text(v, style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()])),
+        Expanded(
+          child: Text(k, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ),
+        Text(
+          v,
+          style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
+        ),
       ],
     );
   }
 }
-
-
 
 class _FooterNote extends StatelessWidget {
   @override
@@ -1562,7 +1764,10 @@ class _FooterNote extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: [cs.primary.withOpacity(0.08), cs.surfaceVariant.withOpacity(0.2)],
+          colors: [
+            cs.primary.withOpacity(0.08),
+            cs.surfaceVariant.withOpacity(0.2),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1586,10 +1791,7 @@ class _CustomRangeCalendar extends StatefulWidget {
   final DateTime startDate;
   final DateTime endDate;
 
-  const _CustomRangeCalendar({
-    required this.startDate,
-    required this.endDate,
-  });
+  const _CustomRangeCalendar({required this.startDate, required this.endDate});
 
   @override
   State<_CustomRangeCalendar> createState() => _CustomRangeCalendarState();
@@ -1610,8 +1812,8 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
 
   bool _isDateInRange(DateTime date) {
     return date.isAtSameMomentAs(_startDate) ||
-           date.isAtSameMomentAs(_endDate) ||
-           (date.isAfter(_startDate) && date.isBefore(_endDate));
+        date.isAtSameMomentAs(_endDate) ||
+        (date.isAfter(_startDate) && date.isBefore(_endDate));
   }
 
   bool _isStartDate(DateTime date) {
@@ -1637,8 +1839,15 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final daysInMonth = DateUtils.getDaysInMonth(_currentMonth.year, _currentMonth.month);
-    final firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
+    final daysInMonth = DateUtils.getDaysInMonth(
+      _currentMonth.year,
+      _currentMonth.month,
+    );
+    final firstDayOfMonth = DateTime(
+      _currentMonth.year,
+      _currentMonth.month,
+      1,
+    );
     final firstWeekday = firstDayOfMonth.weekday; // 1 = Monday, 7 = Sunday
 
     // Adjust for Monday as first day of week
@@ -1656,9 +1865,9 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
             ),
             Text(
               DateFormat('MMMM yyyy', 'uz').format(_currentMonth),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             IconButton(
               onPressed: _nextMonth,
@@ -1670,17 +1879,21 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
 
         // Weekday headers
         Row(
-          children: ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'].map((day) => Expanded(
-            child: Center(
-              child: Text(
-                day,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: cs.onSurfaceVariant,
+          children: ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya']
+              .map(
+                (day) => Expanded(
+                  child: Center(
+                    child: Text(
+                      day,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          )).toList(),
+              )
+              .toList(),
         ),
         const SizedBox(height: 8),
 
@@ -1711,16 +1924,14 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
 
             return Container(
               decoration: BoxDecoration(
-                color: isInRange
-                    ? cs.primary.withOpacity(0.2)
-                    : cs.surface,
+                color: isInRange ? cs.primary.withOpacity(0.2) : cs.surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isStart || isEnd
                       ? cs.primary
                       : isInRange
-                          ? cs.primary.withOpacity(0.5)
-                          : Colors.transparent,
+                      ? cs.primary.withOpacity(0.5)
+                      : Colors.transparent,
                   width: 2,
                 ),
               ),
@@ -1728,7 +1939,9 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                 child: Text(
                   dayOffset.toString(),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: isStart || isEnd ? FontWeight.w800 : FontWeight.w500,
+                    fontWeight: isStart || isEnd
+                        ? FontWeight.w800
+                        : FontWeight.w500,
                     color: isInRange ? cs.primary : cs.onSurface,
                   ),
                 ),
@@ -1742,9 +1955,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
         // Legend
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildLegendItem(cs.primary, 'Hisobot davri'),
-          ],
+          children: [_buildLegendItem(cs.primary, 'Hisobot davri')],
         ),
       ],
     );
@@ -1765,9 +1976,9 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
         const SizedBox(width: 8),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
         ),
       ],
     );

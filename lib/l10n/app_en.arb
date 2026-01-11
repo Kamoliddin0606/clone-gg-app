@@ -1469,5 +1469,258 @@
   "creating": "Creating...",
   "refreshLabel": "Refresh",
   "refreshing": "Refreshing...",
-  "changePeriod": "Change Period"
+  "changePeriod": "Change Period",
+  "server": "Server",
+  "addImage": "Add Image",
+  "takePhoto": "Take Photo",
+  "deleteImage": "Delete Image",
+  "deleteImageConfirm": "Are you sure you want to delete this image?",
+  "noReportsAvailable": "No reports available",
+  "tables": "Tables",
+  "sendPdfLabel": "Send PDF",
+  "warehouse": "Warehouse",
+  "viewPanel": "View panel",
+  "menu": "Menu",
+  "takePhotoTooltip": "Take photo",
+  "changeShippingDateTooltip": "Change shipping date",
+  "manageClientImages": "Manage client images",
+  "sendReportViaTelegram": "Send report via Telegram bot",
+  "fullscreen": "Fullscreen",
+  "updateCoordinates": "Update coordinates",
+  "list": "List",
+  "grid": "Grid",
+  "every1Hour": "Every 1 hour",
+  "every4Hours": "Every 4 hours",
+  "every6Hours": "Every 6 hours",
+  "every12Hours": "Every 12 hours",
+  "daily24h": "Daily (24h)",
+  "weekly1Week": "Weekly (1 week)",
+  "customIntervalMinutes": "Custom Interval (Minutes)",
+  "organizationLabel": "Organization",
+  "codeLabel2": "Code",
+  "regionsLoading": "Loading regions...",
+  "errorPrefix": "Error",
+  "noData": "No data",
+  "innLabel": "INN",
+  "cyclingRegular": "Regular bicycle",
+  "cyclingRoad": "Road bicycle",
+  "cyclingMountain": "Mountain bicycle",
+  "cyclingSafe": "Safe bicycle",
+  "productsPage": "Products Page",
+  "quantityHint": "0 to {stock}",
+  "@quantityHint": {
+    "placeholders": {
+      "stock": {
+        "type": "int"
+      }
+    }
+  },
+  "minimum60Minutes": "Minimum 60 minutes",
+  "enterQuantity": "Enter quantity",
+  "maxAvailable": "Maximum available: {stock} pieces",
+  "@maxAvailable": {
+    "placeholders": {
+      "stock": {
+        "type": "int"
+      }
+    }
+  },
+  "imageNumber": "Image {number}",
+  "@imageNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "prices": "Prices",
+  "selectPriceType": "Select price type",
+  "selectPriceTypeHint": "Click the filter button above to select a price type from the filter panel",
+  "productsCount": "Products count: {count}",
+  "@productsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "categories": "Categories",
+  "selectBrandFirst": "Select brand first",
+  "reports": "Reports",
+  "reportsSection": "Reports section",
+  "tasks": "Tasks",
+  "tradingPoints": "Trading points",
+  "regionsLoadError": "Error loading regions: {error}",
+  "@regionsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationError": "Error getting location: {error}",
+  "@locationError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addressDetected": "Address detected and auto-filled",
+  "pleaseSelectRegion": "Please select a region",
+  "pleaseSelectTradePointType": "Please select a trade point type",
+  "locationDataNotFound": "Location data not found",
+  "noInternetConnection": "No internet connection. Please connect to the internet",
+  "all": "All",
+  "closeEditMode": "Close edit mode",
+  "editFeatureComingSoon": "Edit feature coming soon",
+  "active": "Active",
+  "inactive": "Inactive",
+  "activeClients": "Active clients",
+  "activeClientsTooltip": "Clients with active orders today",
+  "cash": "Cash",
+  "cashless": "Cashless",
+  "ordersTotal": "Orders total",
+  "fact": "Fact",
+  "visitedTradingPoints": "Visited t.p.",
+  "visitedTradingPointsTooltip": "Number of visited trading points",
+  "territoryOKB": "Territory OKB",
+  "territoryOKBTooltip": "Coverage of customer base by territory",
+  "today": "Today",
+  "todayMainIndicators": "Today — main indicators",
+  "last7Days": "Last 7 days",
+  "last30Days": "Last 30 days",
+  "monthlyPlanFactForecast": "Monthly plan / Fact / Forecast",
+  "monthlyOkbAkb": "Monthly OKB/AKB",
+  "contracts": "Contracts",
+  "contractsNotFound": "Contracts not found",
+  "newContract": "New contract",
+  "contractsListRefreshed": "Contracts list refreshed",
+  "contractsCount": "Contracts count: {count}",
+  "@contractsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contractDetails": "Contract details",
+  "contractAmount": "Contract amount",
+  "contractDocument": "Contract document",
+  "clientOrders": "{name}'s orders",
+  "@clientOrders": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderNumber": "Order № {number}",
+  "@orderNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "orders": "Orders",
+  "filter": "Filter",
+  "filterApplyError": "Error applying filter",
+  "main": "Main",
+  "contents": "Contents",
+  "mainReports": "Main reports",
+  "mainReportsDescription": "KPI indicators and main statistics",
+  "visitsReport": "Visits report",
+  "visitsReportDescription": "Information about visits to clients",
+  "completedVisits": "Completed visits",
+  "plannedVisits": "Planned visits",
+  "visitEfficiency": "Visit efficiency",
+  "lastVisits": "Last visits",
+  "dataLoading": "Data loading...",
+  "successful": "Successful",
+  "orderPlaced": "Order placed",
+  "rejected": "Rejected",
+  "reportDataRefreshed": "Report data refreshed successfully",
+  "imagesUploadedCount": "{count} images uploaded successfully",
+  "@imagesUploadedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clientLocationUpdated": "Client location updated successfully",
+  "apiKeySaved": "API key saved successfully",
+  "errorOccurred": "An error occurred",
+  "unknownError": "Unknown error",
+  "imageLoadError": "Error loading image",
+  "dataLoadError": "Error loading data",
+  "saveError": "Save error: {error}",
+  "@saveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "userDataLoadError": "Error loading user data: {error}",
+  "@userDataLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseDataLoadError": "Error loading warehouse data: {error}",
+  "@warehouseDataLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "justSaved": "Just saved",
+  "savedMinutesAgo": "Saved {minutes} minutes ago",
+  "@savedMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "savedHoursAgo": "Saved {hours} hours ago",
+  "@savedHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "notSaved": "Not saved",
+  "selectDateRange": "Select date range",
+  "selectPeriodTitle": "Select period",
+  "selectedPeriod": "Selected period",
+  "selectTable": "Select table",
+  "selectRegionValidator": "Select region",
+  "selectTradePointTypeValidator": "Select trade point type",
+  "currentMonth": "Current month",
+  "selectReportDatesHint": "Set start and end dates for the report",
+  "offlineCannotRefresh": "Cannot refresh data in offline mode",
+  "manageClientImages": "Manage client images",
+  "distanceRequirementMessage": "You need to meet the distance requirement to visit {name}.",
+  "@distanceRequirementMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "requiredDistance": "Required distance: {distance}m",
+  "@requiredDistance": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -7,7 +7,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as google_maps;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
+    as model;
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
@@ -18,6 +19,7 @@ import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 
 // Constants for map configuration
@@ -30,10 +32,7 @@ const double kRouteZoom = 16.0;
 class MapDetailPageGoogle extends StatefulWidget {
   final model.TradingPoint tradingPoint;
 
-  const MapDetailPageGoogle({
-    super.key,
-    required this.tradingPoint,
-  });
+  const MapDetailPageGoogle({super.key, required this.tradingPoint});
 
   @override
   State<MapDetailPageGoogle> createState() => _MapDetailPageGoogleState();
@@ -132,7 +131,8 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
   void _initializeMapData() {
     // Create client point from trading point coordinates
     _clientPoint = google_maps.LatLng(
-      widget.tradingPoint.latitude ?? 41.2995, // Default to Tashkent if no coordinates
+      widget.tradingPoint.latitude ??
+          41.2995, // Default to Tashkent if no coordinates
       widget.tradingPoint.longitude ?? 69.2401,
     );
 
@@ -140,7 +140,9 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
     final clientMarker = google_maps.Marker(
       markerId: const google_maps.MarkerId('client'),
       position: _clientPoint,
-      icon: google_maps.BitmapDescriptor.defaultMarkerWithHue(google_maps.BitmapDescriptor.hueRed),
+      icon: google_maps.BitmapDescriptor.defaultMarkerWithHue(
+        google_maps.BitmapDescriptor.hueRed,
+      ),
       infoWindow: google_maps.InfoWindow(
         title: widget.tradingPoint.name,
         snippet: widget.tradingPoint.address,
@@ -181,7 +183,12 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
             print('Location permission denied');
           }
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Joylashuv ruxsatnomasi berilmadi')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.locationPermissionDenied ??
+                    'Joylashuv ruxsatnomasi berilmadi',
+              ),
+            ),
           );
         }
       }
@@ -190,7 +197,11 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
         print('Error checking location permission: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ruxsatnoma tekshirishda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -228,14 +239,20 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
       _updateUserMarker();
 
       if (kDebugMode) {
-        print('User location obtained: ${position.latitude}, ${position.longitude}');
+        print(
+          'User location obtained: ${position.latitude}, ${position.longitude}',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error getting user location: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Joylashuvni aniqlashda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -247,10 +264,10 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
     final userMarker = google_maps.Marker(
       markerId: const google_maps.MarkerId('user'),
       position: _userPoint!,
-      icon: google_maps.BitmapDescriptor.defaultMarkerWithHue(google_maps.BitmapDescriptor.hueBlue),
-      infoWindow: const google_maps.InfoWindow(
-        title: 'Sizning joylashuvingiz',
+      icon: google_maps.BitmapDescriptor.defaultMarkerWithHue(
+        google_maps.BitmapDescriptor.hueBlue,
       ),
+      infoWindow: const google_maps.InfoWindow(title: 'Sizning joylashuvingiz'),
     );
 
     setState(() {
@@ -261,7 +278,9 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
     });
 
     if (kDebugMode) {
-      print('User marker updated at: ${_userPoint!.latitude}, ${_userPoint!.longitude}');
+      print(
+        'User marker updated at: ${_userPoint!.latitude}, ${_userPoint!.longitude}',
+      );
     }
   }
 
@@ -270,12 +289,19 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
   Future<void> _calculateRoute() async {
     try {
       if (kDebugMode) {
-        print('Creating route from user to client: ${widget.tradingPoint.name}');
+        print(
+          'Creating route from user to client: ${widget.tradingPoint.name}',
+        );
       }
 
       if (_userPoint == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.userLocationNotFound ??
+                  'Foydalanuvchi joylashuvi aniqlanmadi',
+            ),
+          ),
         );
         return;
       }
@@ -305,7 +331,11 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
       final estimatedTime = _estimateTravelTime(distance);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}')),
+        SnackBar(
+          content: Text(
+            'Marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}',
+          ),
+        ),
       );
 
       if (kDebugMode) {
@@ -316,14 +346,21 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
         print('Error creating route: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Marshrut yaratishda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
 
   /// Fit camera to show route bounds
   Future<void> _fitRouteBounds() async {
-    if (_currentRoute == null || _currentRoute!.isEmpty || _googleController == null) return;
+    if (_currentRoute == null ||
+        _currentRoute!.isEmpty ||
+        _googleController == null)
+      return;
 
     try {
       // Calculate bounds from route points
@@ -361,15 +398,22 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
   }
 
   /// Calculate distance between two points using Haversine formula
-  double _calculateDistance(google_maps.LatLng point1, google_maps.LatLng point2) {
+  double _calculateDistance(
+    google_maps.LatLng point1,
+    google_maps.LatLng point2,
+  ) {
     const double earthRadius = 6371; // km
     final lat1Rad = point1.latitude * pi / 180;
     final lat2Rad = point2.latitude * pi / 180;
     final deltaLatRad = (point2.latitude - point1.latitude) * pi / 180;
     final deltaLngRad = (point2.longitude - point1.longitude) * pi / 180;
 
-    final a = sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
-        cos(lat1Rad) * cos(lat2Rad) * sin(deltaLngRad / 2) * sin(deltaLngRad / 2);
+    final a =
+        sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
+        cos(lat1Rad) *
+            cos(lat2Rad) *
+            sin(deltaLngRad / 2) *
+            sin(deltaLngRad / 2);
     final c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
     return earthRadius * c;
@@ -411,10 +455,7 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
 
       _googleController?.animateCamera(
         google_maps.CameraUpdate.newCameraPosition(
-          google_maps.CameraPosition(
-            target: targetPosition,
-            zoom: targetZoom,
-          ),
+          google_maps.CameraPosition(target: targetPosition, zoom: targetZoom),
         ),
       );
 
@@ -422,14 +463,20 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
       _lastZoom = targetZoom;
 
       if (kDebugMode) {
-        print('Camera moved to: ${point.latitude}, ${point.longitude} with zoom: $targetZoom');
+        print(
+          'Camera moved to: ${point.latitude}, ${point.longitude} with zoom: $targetZoom',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error moving camera: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kamera harakatida xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -443,17 +490,26 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
       final userCode = _prefs.getUserCode();
       if (userCode == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foydalanuvchi ma\'lumotlari topilmadi')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.userDataNotFound ??
+                  'Foydalanuvchi ma\'lumotlari topilmadi',
+            ),
+          ),
         );
         return;
       }
 
       // Get user permissions from data sync service
-      final permissions = await _dataSyncService.getCachedSalesReqPermissions(userCode);
+      final permissions = await _dataSyncService.getCachedSalesReqPermissions(
+        userCode,
+      );
       if (permissions == null || !permissions.editClientCoordinates) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Sizda mijoz joylashuvini o\'zgartirish uchun ruxsat yo\'q'),
+            content: Text(
+              'Sizda mijoz joylashuvini o\'zgartirish uchun ruxsat yo\'q',
+            ),
             duration: Duration(seconds: 3),
           ),
         );
@@ -485,7 +541,11 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
         print('Error checking permissions for edit location mode: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ruxsatlarni tekshirishda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -512,7 +572,8 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
 
   /// Handle camera move in edit mode - update preview location to camera center
   void _onCameraMove(google_maps.CameraPosition position) {
-    if (!_isEditMode || _isPreciseMode) return; // Aniqlik rejimida kamera harakatini ignore qilish
+    if (!_isEditMode || _isPreciseMode)
+      return; // Aniqlik rejimida kamera harakatini ignore qilish
 
     // Update preview location to camera center
     final centerPoint = position.target;
@@ -525,7 +586,9 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
     _updateClientMarkerPosition(centerPoint);
 
     if (kDebugMode) {
-      print('Camera moved, marker updated to center: ${centerPoint.latitude}, ${centerPoint.longitude}');
+      print(
+        'Camera moved, marker updated to center: ${centerPoint.latitude}, ${centerPoint.longitude}',
+      );
     }
   }
 
@@ -550,7 +613,9 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
     _updateClientMarkerPosition(point);
 
     if (kDebugMode) {
-      print('Precise location selected via long press: ${point.latitude}, ${point.longitude}');
+      print(
+        'Precise location selected via long press: ${point.latitude}, ${point.longitude}',
+      );
     }
   }
 
@@ -560,7 +625,10 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
     // This is a simplified version - in production you'd use proper coordinate conversion
     setState(() {
       _showTapFeedback = true;
-      _tapPosition = const Offset(100, 100); // Placeholder - would need proper conversion
+      _tapPosition = const Offset(
+        100,
+        100,
+      ); // Placeholder - would need proper conversion
     });
 
     // Hide feedback after animation
@@ -580,7 +648,9 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
         google_maps.Marker(
           markerId: const google_maps.MarkerId('client'),
           position: point,
-          icon: google_maps.BitmapDescriptor.defaultMarkerWithHue(google_maps.BitmapDescriptor.hueRed),
+          icon: google_maps.BitmapDescriptor.defaultMarkerWithHue(
+            google_maps.BitmapDescriptor.hueRed,
+          ),
           infoWindow: google_maps.InfoWindow(
             title: widget.tradingPoint.name,
             snippet: widget.tradingPoint.address,
@@ -601,14 +671,19 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Joylashuvni tasdiqlash'),
+        title: Text(
+          AppLocalizations.of(context)?.confirmLocationTitle ??
+              'Joylashuvni tasdiqlash',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Manzil: ${addressInfo['address'] ?? 'Aniqlanmadi'}'),
             const SizedBox(height: 8),
-            Text('Uzunlik: ${_newClientLocation!.longitude.toStringAsFixed(6)}'),
+            Text(
+              'Uzunlik: ${_newClientLocation!.longitude.toStringAsFixed(6)}',
+            ),
             Text('Kenglik: ${_newClientLocation!.latitude.toStringAsFixed(6)}'),
             const SizedBox(height: 16),
             Text(
@@ -623,14 +698,14 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
               Navigator.of(context).pop();
               _cancelLocationChange();
             },
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
               await _saveNewLocation();
             },
-            child: const Text('Tasdiqlash'),
+            child: Text(AppLocalizations.of(context)?.confirm ?? 'Tasdiqlash'),
           ),
         ],
       ),
@@ -660,7 +735,12 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
     try {
       // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Joylashuv yangilanmoqda...')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.loading ??
+                'Joylashuv yangilanmoqda...',
+          ),
+        ),
       );
 
       // Update local database and call API
@@ -675,7 +755,12 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mijoz joylashuvi muvaffaqiyatli yangilandi')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.clientLocationUpdated ??
+                'Mijoz joylashuvi muvaffaqiyatli yangilandi',
+          ),
+        ),
       );
 
       if (kDebugMode) {
@@ -686,13 +771,19 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
         print('Error saving new location: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Joylashuvni yangilashda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
 
   /// Get address information from coordinates using Google Geocoding API
-  Future<Map<String, String>> _getAddressFromCoordinates(google_maps.LatLng point) async {
+  Future<Map<String, String>> _getAddressFromCoordinates(
+    google_maps.LatLng point,
+  ) async {
     try {
       // Get Google API key from preferences
       final apiKey = _prefs.getGoogleMapsToken();
@@ -703,12 +794,17 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
 
       // Google Geocoding API request
       final url = 'https://maps.googleapis.com/maps/api/geocode/json';
-      final response = await Dio().get(url, queryParameters: {
-        'latlng': '${point.latitude},${point.longitude}',
-        'key': apiKey,
-        'language': 'uz',
-      });
-      debugPrint("Kordinatalar asosida manzil aniqlash so'rovi natijasi_______________:");
+      final response = await Dio().get(
+        url,
+        queryParameters: {
+          'latlng': '${point.latitude},${point.longitude}',
+          'key': apiKey,
+          'language': 'uz',
+        },
+      );
+      debugPrint(
+        "Kordinatalar asosida manzil aniqlash so'rovi natijasi_______________:",
+      );
       if (response.statusCode == 200 && response.data['status'] == 'OK') {
         final result = response.data['results'][0];
         final addressComponents = result['address_components'] as List;
@@ -735,7 +831,6 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
 
       if (kDebugMode) print('No geocoding results found');
       return _getFallbackAddress();
-
     } catch (e) {
       if (kDebugMode) print('Google Geocoding API error: $e');
 
@@ -743,14 +838,17 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
       try {
         return await _getAddressFromYandexAPI(point);
       } catch (yandexError) {
-        if (kDebugMode) print('Yandex Geocoding API fallback also failed: $yandexError');
+        if (kDebugMode)
+          print('Yandex Geocoding API fallback also failed: $yandexError');
         return _getFallbackAddress();
       }
     }
   }
 
   /// Get address using Yandex Geocoding API (fallback)
-  Future<Map<String, String>> _getAddressFromYandexAPI(google_maps.LatLng point) async {
+  Future<Map<String, String>> _getAddressFromYandexAPI(
+    google_maps.LatLng point,
+  ) async {
     try {
       final apiKey = _prefs.getYandexMapsToken();
       if (apiKey == null || apiKey.isEmpty) {
@@ -759,13 +857,16 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
 
       // Yandex Geocoding API request
       final url = 'https://geocode-maps.yandex.ru/1.x/';
-      final response = await Dio().get(url, queryParameters: {
-        'apikey': apiKey,
-        'format': 'json',
-        'geocode': '${point.longitude},${point.latitude}',
-        'lang': 'uz_UZ', // Uzbek language
-        'results': 1,
-      });
+      final response = await Dio().get(
+        url,
+        queryParameters: {
+          'apikey': apiKey,
+          'format': 'json',
+          'geocode': '${point.longitude},${point.latitude}',
+          'lang': 'uz_UZ', // Uzbek language
+          'results': 1,
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -798,7 +899,6 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
       }
 
       return _getFallbackAddress();
-
     } catch (e) {
       if (kDebugMode) print('Yandex Geocoding API error: $e');
       return _getFallbackAddress();
@@ -816,7 +916,9 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
   }
 
   /// Update client coordinates in database and via API
-  Future<void> _updateClientCoordinatesInDatabase(google_maps.LatLng newLocation) async {
+  Future<void> _updateClientCoordinatesInDatabase(
+    google_maps.LatLng newLocation,
+  ) async {
     try {
       // Get user code from preferences
       final userCode = _prefs.getUserCode();
@@ -833,7 +935,9 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
       );
 
       if (kDebugMode) {
-        print('Client coordinates updated successfully: ${newLocation.latitude}, ${newLocation.longitude}');
+        print(
+          'Client coordinates updated successfully: ${newLocation.latitude}, ${newLocation.longitude}',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -859,7 +963,9 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
           onMapCreated: (controller) {
             _googleController = controller;
             if (kDebugMode) {
-              print('Google Map is ready for client: ${widget.tradingPoint.name}');
+              print(
+                'Google Map is ready for client: ${widget.tradingPoint.name}',
+              );
             }
           },
           onTap: _isEditMode ? _onMapTap : null,
@@ -900,7 +1006,9 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: cs.surface.withOpacity(isDark ? 0.95 : 0.9).withOpacity(0.8),
+                color: cs.surface
+                    .withOpacity(isDark ? 0.95 : 0.9)
+                    .withOpacity(0.8),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: cs.outline.withOpacity(0.2),
@@ -957,20 +1065,22 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
                   ],
                 ),
                 child: IconButton(
-                  onPressed: _locationPermissionGranted ? () async {
-                    if (_userPoint != null && _googleController != null) {
-                      _googleController!.animateCamera(
-                        google_maps.CameraUpdate.newCameraPosition(
-                          google_maps.CameraPosition(
-                            target: _userPoint!,
-                            zoom: kRouteZoom,
-                          ),
-                        ),
-                      );
-                    } else {
-                      await _getUserLocation();
-                    }
-                  } : null,
+                  onPressed: _locationPermissionGranted
+                      ? () async {
+                          if (_userPoint != null && _googleController != null) {
+                            _googleController!.animateCamera(
+                              google_maps.CameraUpdate.newCameraPosition(
+                                google_maps.CameraPosition(
+                                  target: _userPoint!,
+                                  zoom: kRouteZoom,
+                                ),
+                              ),
+                            );
+                          } else {
+                            await _getUserLocation();
+                          }
+                        }
+                      : null,
                   iconSize: iconSize,
                   icon: Icon(
                     Icons.my_location,
@@ -1053,7 +1163,14 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
                       await _calculateRoute();
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(
+                                  context,
+                                )?.userLocationNotFound ??
+                                'Foydalanuvchi joylashuvi aniqlanmadi',
+                          ),
+                        ),
                       );
                     }
                   },
@@ -1092,12 +1209,16 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
                   iconSize: iconSize,
                   icon: Icon(
                     _isEditMode
-                        ? (_isConfirmingLocation ? Icons.check : Icons.edit_location)
+                        ? (_isConfirmingLocation
+                              ? Icons.check
+                              : Icons.edit_location)
                         : Icons.edit_location_outlined,
                     color: _isEditMode ? Colors.green : cs.primary,
                   ),
                   tooltip: _isEditMode
-                      ? (_isConfirmingLocation ? 'Joylashuvni tasdiqlash' : 'Joylashuvni o\'zgartirish')
+                      ? (_isConfirmingLocation
+                            ? 'Joylashuvni tasdiqlash'
+                            : 'Joylashuvni o\'zgartirish')
                       : 'Mijoz joylashuvini o\'zgartirish',
                 ),
               ),
@@ -1159,7 +1280,10 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
                   ),
                   IconButton(
                     onPressed: _clearRoute,
-                    icon: Icon(Icons.close, color: cs.onSurface.withOpacity(0.7)),
+                    icon: Icon(
+                      Icons.close,
+                      color: cs.onSurface.withOpacity(0.7),
+                    ),
                     tooltip: 'Marshrutni yopish',
                     style: IconButton.styleFrom(
                       backgroundColor: cs.surfaceVariant.withOpacity(0.5),
@@ -1208,8 +1332,8 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
                           _isConfirmingLocation
                               ? 'Yangi joylashuvni tasdiqlang'
                               : _isPreciseMode
-                                  ? 'Aniq joylashuv tanlandi - tasdiqlang'
-                                  : 'Kamerani siljiting yoki uzun bosing',
+                              ? 'Aniq joylashuv tanlandi - tasdiqlang'
+                              : 'Kamerani siljiting yoki uzun bosing',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: cs.onSurface,
@@ -1218,8 +1342,13 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
                       ),
                       IconButton(
                         onPressed: _cancelLocationChange,
-                        icon: Icon(Icons.close, color: cs.onSurface.withOpacity(0.7)),
-                        tooltip: 'Tahrirlash rejimini yopish',
+                        icon: Icon(
+                          Icons.close,
+                          color: cs.onSurface.withOpacity(0.7),
+                        ),
+                        tooltip:
+                            AppLocalizations.of(context)?.closeEditMode ??
+                            'Tahrirlash rejimini yopish',
                         style: IconButton.styleFrom(
                           backgroundColor: cs.surfaceVariant.withOpacity(0.5),
                           foregroundColor: cs.onSurface,
@@ -1252,8 +1381,6 @@ class _MapDetailPageGoogleState extends State<MapDetailPageGoogle> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _buildGoogleMapWidget(),
-    );
+    return Scaffold(body: _buildGoogleMapWidget());
   }
 }

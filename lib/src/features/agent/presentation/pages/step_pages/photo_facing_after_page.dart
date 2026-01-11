@@ -95,7 +95,12 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.errorOccurred(e.toString()) ?? 'Xatolik yuz berdi: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.errorOccurred(e.toString()) ??
+                  'Xatolik yuz berdi: $e',
+            ),
+          ),
         );
       }
     } finally {
@@ -112,10 +117,7 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
       vsync: this,
     );
     _fabAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _fabAnimationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _fabAnimationController, curve: Curves.easeInOut),
     );
     _fabAnimationController.forward();
   }
@@ -128,7 +130,12 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
       if (status != PermissionStatus.granted) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)?.cameraPermissionDenied ?? 'Kamera ruxsati berilmadi')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.cameraPermissionDenied ??
+                    'Kamera ruxsati berilmadi',
+              ),
+            ),
           );
         }
         return;
@@ -142,7 +149,12 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
       debugPrint('Camera initialization error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.cameraInitError(e.toString()) ?? 'Kamera ishga tushirishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.cameraInitError(e.toString()) ??
+                  'Kamera ishga tushirishda xatolik: $e',
+            ),
+          ),
         );
       }
     }
@@ -162,7 +174,9 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
 
       // Check if initialization was successful
       if (_cameraController!.value.hasError) {
-        throw Exception('Camera initialization failed: ${_cameraController!.value.errorDescription}');
+        throw Exception(
+          'Camera initialization failed: ${_cameraController!.value.errorDescription}',
+        );
       }
 
       // Add error listener for camera errors
@@ -175,7 +189,12 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
       debugPrint('Camera controller initialization error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.cameraInitError(e.toString()) ?? 'Kamera ishga tushirishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.cameraInitError(e.toString()) ??
+                  'Kamera ishga tushirishda xatolik: $e',
+            ),
+          ),
         );
       }
     }
@@ -193,7 +212,12 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
           _handleCameraEviction();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)?.cameraError(error ?? '') ?? 'Kamera xatoligi: ${error ?? ''}')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.cameraError(error ?? '') ??
+                    'Kamera xatoligi: ${error ?? ''}',
+              ),
+            ),
           );
 
           // Try to reinitialize camera if possible
@@ -225,7 +249,10 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
       setState(() => _isCameraInitialized = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)?.cameraInUseMessage ?? 'Kamera boshqa ilova tomonidan ishlatilmoqda. Qayta ulanishga harakat qilinmoqda...'),
+          content: Text(
+            AppLocalizations.of(context)?.cameraInUseMessage ??
+                'Kamera boshqa ilova tomonidan ishlatilmoqda. Qayta ulanishga harakat qilinmoqda...',
+          ),
           duration: Duration(seconds: 3),
         ),
       );
@@ -242,7 +269,10 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
   /// Load existing photos for this step
   Future<void> _loadPhotos() async {
     try {
-      final stepPhotos = await _dataService.getStepPhotos(widget.visitId, widget.stepCode);
+      final stepPhotos = await _dataService.getStepPhotos(
+        widget.visitId,
+        widget.stepCode,
+      );
       final photos = <Map<String, dynamic>>[];
 
       for (final photo in stepPhotos) {
@@ -294,13 +324,23 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.imageSavedSuccessfully ?? 'Rasm muvaffaqiyatli saqlandi')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imageSavedSuccessfully ??
+                  'Rasm muvaffaqiyatli saqlandi',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.imageSaveError(e.toString()) ?? 'Rasm saqlashda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imageSaveError(e.toString()) ??
+                  'Rasm saqlashda xatolik: $e',
+            ),
+          ),
         );
       }
     }
@@ -328,18 +368,26 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.imageDeleted ?? 'Rasm o\'chirildi')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imageDeleted ?? 'Rasm o\'chirildi',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.imageDeleteError(e.toString()) ?? 'Rasm o\'chirishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imageDeleteError(e.toString()) ??
+                  'Rasm o\'chirishda xatolik: $e',
+            ),
+          ),
         );
       }
     }
   }
-
 
   /// Open camera page
   void _openCameraPage() async {
@@ -348,7 +396,12 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
       await _initializeCameras();
       if (_cameraController == null || !_isCameraInitialized) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.cameraNotReady ?? 'Kamera tayyor emas')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.cameraNotReady ??
+                  'Kamera tayyor emas',
+            ),
+          ),
         );
         return;
       }
@@ -359,7 +412,12 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
         !_cameraController!.value.isInitialized ||
         _cameraController!.value.hasError) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)?.cameraNotAvailable ?? 'Kamera mavjud emas yoki ishlamayapti')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.cameraNotAvailable ??
+                'Kamera mavjud emas yoki ishlamayapti',
+          ),
+        ),
       );
       return;
     }
@@ -409,10 +467,14 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
               ),
               onPressed: () {
                 setState(() {
-                  _viewMode = _viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid;
+                  _viewMode = _viewMode == ViewMode.grid
+                      ? ViewMode.list
+                      : ViewMode.grid;
                 });
               },
-              tooltip: _viewMode == ViewMode.grid ? 'Ro\'yxat ko\'rinishi' : 'Panjara ko\'rinishi',
+              tooltip: _viewMode == ViewMode.grid
+                  ? 'Ro\'yxat ko\'rinishi'
+                  : 'Panjara ko\'rinishi',
             ),
           ],
           if (widget.readOnly) ...[
@@ -429,7 +491,9 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _buildPhotoContent(theme, l10n),
-      floatingActionButton: widget.readOnly ? null : _buildFloatingActionButton(),
+      floatingActionButton: widget.readOnly
+          ? null
+          : _buildFloatingActionButton(),
       bottomNavigationBar: _buildBottomBar(theme, l10n),
     );
   }
@@ -465,7 +529,8 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
           const SizedBox(height: 8),
           Text(
             widget.readOnly
-                ? (l10n?.stepCompletedReadOnly ?? 'Bu step yakunlangan. Faqat ko\'rish rejimida.')
+                ? (l10n?.stepCompletedReadOnly ??
+                      'Bu step yakunlangan. Faqat ko\'rish rejimida.')
                 : (l10n?.photosNotLoadedYet ?? 'Rasmlar hali yuklanmagan'),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -507,7 +572,11 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
   }
 
   /// Build photo card for grid view
-  Widget _buildPhotoCard(Map<String, dynamic> photo, int index, ThemeData theme) {
+  Widget _buildPhotoCard(
+    Map<String, dynamic> photo,
+    int index,
+    ThemeData theme,
+  ) {
     return GestureDetector(
       onTap: () => _openFullScreenViewer(index),
       child: Card(
@@ -541,7 +610,11 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
   }
 
   /// Build photo list item
-  Widget _buildPhotoListItem(Map<String, dynamic> photo, int index, ThemeData theme) {
+  Widget _buildPhotoListItem(
+    Map<String, dynamic> photo,
+    int index,
+    ThemeData theme,
+  ) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
@@ -553,20 +626,23 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               image: DecorationImage(
-                image: FileImage(File(photo['thumbnailPath'] ?? photo['imagePath'])),
+                image: FileImage(
+                  File(photo['thumbnailPath'] ?? photo['imagePath']),
+                ),
                 fit: BoxFit.cover,
               ),
             ),
           ),
         ),
         title: Text(
-          'Rasm ${index + 1}',
+          AppLocalizations.of(context)?.imageNumber(index + 1) ??
+              'Rasm ${index + 1}',
           style: theme.textTheme.titleMedium,
         ),
         subtitle: Text(
           photo['timestamp'] != null
               ? _formatDateTime(photo['timestamp'])
-              : 'Vaqt noma\'lum',
+              : AppLocalizations.of(context)?.timeUnknown ?? 'Vaqt noma\'lum',
         ),
         trailing: widget.readOnly
             ? null
@@ -636,8 +712,13 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)?.deleteImageTitle ?? 'Rasmni o\'chirish'),
-        content: Text(AppLocalizations.of(context)?.deleteImageConfirmation ?? 'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+        title: Text(
+          AppLocalizations.of(context)?.deleteImageTitle ?? 'Rasmni o\'chirish',
+        ),
+        content: Text(
+          AppLocalizations.of(context)?.deleteImageConfirmation ??
+              'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -648,9 +729,7 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
               Navigator.of(context).pop();
               _deletePhoto(index);
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: Text(AppLocalizations.of(context)?.delete ?? 'O\'chirish'),
           ),
         ],
@@ -664,7 +743,9 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${widget.stepName} ${(l10n?.completed ?? 'completed').toLowerCase()}'),
+        title: Text(
+          '${widget.stepName} ${(l10n?.completed ?? 'completed').toLowerCase()}',
+        ),
         // content: Column(
         //   mainAxisSize: MainAxisSize.min,
         //   children: [
@@ -705,10 +786,10 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
   String _formatDateTime(dynamic timestamp) {
     if (timestamp is DateTime) {
       return '${timestamp.day.toString().padLeft(2, '0')}.'
-             '${timestamp.month.toString().padLeft(2, '0')}.'
-             '${timestamp.year} '
-             '${timestamp.hour.toString().padLeft(2, '0')}:'
-             '${timestamp.minute.toString().padLeft(2, '0')}';
+          '${timestamp.month.toString().padLeft(2, '0')}.'
+          '${timestamp.year} '
+          '${timestamp.hour.toString().padLeft(2, '0')}:'
+          '${timestamp.minute.toString().padLeft(2, '0')}';
     }
     return AppLocalizations.of(context)?.timeUnknown ?? 'Vaqt noma\'lum';
   }
@@ -760,14 +841,21 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
       appBar: AppBar(
         backgroundColor: Colors.black.withOpacity(0.7),
         foregroundColor: Colors.white,
-        title: Text(AppLocalizations.of(context)?.imageCounter(_currentIndex + 1, widget.photos.length) ?? '${_currentIndex + 1} / ${widget.photos.length}'),
+        title: Text(
+          AppLocalizations.of(
+                context,
+              )?.imageCounter(_currentIndex + 1, widget.photos.length) ??
+              '${_currentIndex + 1} / ${widget.photos.length}',
+        ),
         actions: widget.readOnly
             ? null
             : [
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: _showDeleteConfirmation,
-                  tooltip: AppLocalizations.of(context)?.deleteImageTitle ?? 'Rasmni o\'chirish',
+                  tooltip:
+                      AppLocalizations.of(context)?.deleteImageTitle ??
+                      'Rasmni o\'chirish',
                 ),
               ],
       ),
@@ -784,9 +872,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
           );
         },
         itemCount: widget.photos.length,
-        loadingBuilder: (context, event) => const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
+        loadingBuilder: (context, event) =>
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
         pageController: _pageController,
         onPageChanged: (index) {
           setState(() => _currentIndex = index);
@@ -800,8 +887,13 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rasmni o\'chirish'),
-        content: const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+        title: Text(
+          AppLocalizations.of(context)?.deleteImage ?? 'Rasmni o\'chirish',
+        ),
+        content: Text(
+          AppLocalizations.of(context)?.deleteImageConfirm ??
+              'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -822,10 +914,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                 setState(() {});
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('O\'chirish'),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(AppLocalizations.of(context)?.delete ?? 'O\'chirish'),
           ),
         ],
       ),
@@ -847,10 +937,12 @@ class CameraFullScreenImageViewer extends StatefulWidget {
   });
 
   @override
-  State<CameraFullScreenImageViewer> createState() => _CameraFullScreenImageViewerState();
+  State<CameraFullScreenImageViewer> createState() =>
+      _CameraFullScreenImageViewerState();
 }
 
-class _CameraFullScreenImageViewerState extends State<CameraFullScreenImageViewer> {
+class _CameraFullScreenImageViewerState
+    extends State<CameraFullScreenImageViewer> {
   late PageController _pageController;
   late int _currentIndex;
 
@@ -877,7 +969,12 @@ class _CameraFullScreenImageViewerState extends State<CameraFullScreenImageViewe
       appBar: AppBar(
         backgroundColor: Colors.black.withOpacity(0.7),
         foregroundColor: Colors.white,
-        title: Text(AppLocalizations.of(context)?.imageCounter(_currentIndex + 1, widget.photos.length) ?? '${_currentIndex + 1} / ${widget.photos.length}'),
+        title: Text(
+          AppLocalizations.of(
+                context,
+              )?.imageCounter(_currentIndex + 1, widget.photos.length) ??
+              '${_currentIndex + 1} / ${widget.photos.length}',
+        ),
         actions: widget.onDeletePhoto != null
             ? [
                 IconButton(
@@ -900,9 +997,8 @@ class _CameraFullScreenImageViewerState extends State<CameraFullScreenImageViewe
           );
         },
         itemCount: widget.photos.length,
-        loadingBuilder: (context, event) => const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
+        loadingBuilder: (context, event) =>
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
         pageController: _pageController,
         onPageChanged: (index) {
           setState(() => _currentIndex = index);
@@ -916,8 +1012,13 @@ class _CameraFullScreenImageViewerState extends State<CameraFullScreenImageViewe
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rasmni o\'chirish'),
-        content: const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+        title: Text(
+          AppLocalizations.of(context)?.deleteImage ?? 'Rasmni o\'chirish',
+        ),
+        content: Text(
+          AppLocalizations.of(context)?.deleteImageConfirm ??
+              'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -938,15 +1039,11 @@ class _CameraFullScreenImageViewerState extends State<CameraFullScreenImageViewe
                 setState(() {});
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-              child: const Text('O\'chirish'),
-            ),
-          ],
-        ),
-
-
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(AppLocalizations.of(context)?.delete ?? 'O\'chirish'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -996,10 +1093,14 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       debugPrint('Camera error in capture page: $error');
 
       if (mounted) {
-
         setState(() => _isCameraAvailable = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.cameraError(error ?? '') ?? 'Kamera xatoligi: ${error ?? ''}')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.cameraError(error ?? '') ??
+                  'Kamera xatoligi: ${error ?? ''}',
+            ),
+          ),
         );
 
         // Try to reinitialize camera after error
@@ -1028,8 +1129,13 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rasmni o\'chirish'),
-        content: const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+        title: Text(
+          AppLocalizations.of(context)?.deleteImage ?? 'Rasmni o\'chirish',
+        ),
+        content: Text(
+          AppLocalizations.of(context)?.deleteImageConfirm ??
+              'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -1043,10 +1149,8 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
               // Also remove from main photos list if it exists there
               // This will be handled by the parent widget when we return
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('O\'chirish'),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(AppLocalizations.of(context)?.delete ?? 'O\'chirish'),
           ),
         ],
       ),
@@ -1068,12 +1172,14 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       try {
         await _photoStorageService.deletePhoto(
           '', // visitId - empty since we're in camera mode
-          0,  // stepCode - 0 since we're in camera mode
+          0, // stepCode - 0 since we're in camera mode
           photoPath,
         );
       } catch (e) {
         // Ignore errors if photo wasn't saved to service yet
-        debugPrint('Photo not found in service storage, continuing with file deletion: $e');
+        debugPrint(
+          'Photo not found in service storage, continuing with file deletion: $e',
+        );
       }
 
       // Clear image cache for this specific image
@@ -1092,7 +1198,9 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)?.imageDeleted ?? 'Rasm o\'chirildi'),
+            content: Text(
+              AppLocalizations.of(context)?.imageDeleted ?? 'Rasm o\'chirildi',
+            ),
             duration: Duration(seconds: 1),
           ),
         );
@@ -1101,7 +1209,11 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       debugPrint('Error deleting photo from camera slider: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rasm o\'chirishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+            ),
+          ),
         );
       }
     }
@@ -1114,9 +1226,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       body: Stack(
         children: [
           // Full screen camera preview
-          Positioned.fill(
-            child: CameraPreview(widget.cameraController),
-          ),
+          Positioned.fill(child: CameraPreview(widget.cameraController)),
 
           // Bottom spacing for safe area (moved to bottom of stack)
           Positioned(
@@ -1129,10 +1239,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                 ),
               ),
             ),
@@ -1145,7 +1252,9 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
             right: 0,
             child: Center(
               child: GestureDetector(
-                onTap: (_isCapturing || !_isCameraAvailable) ? null : _capturePhoto,
+                onTap: (_isCapturing || !_isCameraAvailable)
+                    ? null
+                    : _capturePhoto,
                 child: Container(
                   width: 80,
                   height: 80,
@@ -1155,14 +1264,14 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                     color: _isCapturing
                         ? Colors.grey
                         : !_isCameraAvailable
-                            ? Colors.red.withOpacity(0.5)
-                            : Colors.transparent,
+                        ? Colors.red.withOpacity(0.5)
+                        : Colors.transparent,
                   ),
                   child: _isCapturing
                       ? const CircularProgressIndicator(color: Colors.white)
                       : !_isCameraAvailable
-                          ? const Icon(Icons.error, color: Colors.white)
-                          : Container(), // Empty circle with white border
+                      ? const Icon(Icons.error, color: Colors.white)
+                      : Container(), // Empty circle with white border
                 ),
               ),
             ),
@@ -1251,10 +1360,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                 ),
               ),
               child: Row(
@@ -1270,7 +1376,10 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.5),
                           borderRadius: BorderRadius.circular(16),
@@ -1286,7 +1395,9 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                             ? () => Navigator.of(context).pop()
                             : null,
                         icon: const Icon(Icons.check),
-                        label: Text(AppLocalizations.of(context)?.finish ?? 'Yakunlash'),
+                        label: Text(
+                          AppLocalizations.of(context)?.finish ?? 'Yakunlash',
+                        ),
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.green,
                         ),
@@ -1317,7 +1428,10 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
 
   /// Capture photo from camera
   Future<void> _capturePhoto() async {
-    if (kDebugMode) print("Rasmga olinyapti yoki kamera mavjud emas: ${_isCapturing} ${_isCameraAvailable}");
+    if (kDebugMode)
+      print(
+        "Rasmga olinyapti yoki kamera mavjud emas: ${_isCapturing} ${_isCameraAvailable}",
+      );
     if (_isCapturing || !_isCameraAvailable) return;
 
     setState(() => _isCapturing = true);
@@ -1348,7 +1462,9 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n?.imageCapturedSuccessfully ?? 'Rasm muvaffaqiyatli olingan'),
+            content: Text(
+              l10n?.imageCapturedSuccessfully ?? 'Rasm muvaffaqiyatli olingan',
+            ),
             duration: const Duration(seconds: 1),
           ),
         );
@@ -1358,7 +1474,12 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       if (mounted) {
         setState(() => _isCameraAvailable = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.imageCaptureError(e.toString()) ?? 'Rasm olishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imageCaptureError(e.toString()) ??
+                  'Rasm olishda xatolik: $e',
+            ),
+          ),
         );
       }
     } finally {

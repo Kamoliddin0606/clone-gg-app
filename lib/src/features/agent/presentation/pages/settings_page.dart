@@ -20,13 +20,17 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMixin {
+class _SettingsPageState extends State<SettingsPage>
+    with TickerProviderStateMixin {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this); // Changed from 3 to 4
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+    ); // Changed from 3 to 4
   }
 
   @override
@@ -64,11 +68,11 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
               labelColor: colorScheme.primary,
               unselectedLabelColor: colorScheme.onSurfaceVariant,
               tabs: [
-                 Tab(text: l10n.permissions),
-                 Tab(text: l10n.maps),
-                 Tab(text: l10n.dataSync),
-                 Tab(text: l10n.interfaceSettings),
-               ],
+                Tab(text: l10n.permissions),
+                Tab(text: l10n.maps),
+                Tab(text: l10n.dataSync),
+                Tab(text: l10n.interfaceSettings),
+              ],
             ),
           ),
 
@@ -77,11 +81,11 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
             child: TabBarView(
               controller: _tabController,
               children: [
-                 const PermissionsTab(),
-                 const MapsTab(),
-                 const DataSyncTab(), // NEW TAB CONTENT
-                 InterfaceSettingsTab(),
-               ],
+                const PermissionsTab(),
+                const MapsTab(),
+                const DataSyncTab(), // NEW TAB CONTENT
+                InterfaceSettingsTab(),
+              ],
             ),
           ),
         ],
@@ -97,7 +101,8 @@ class UserProfileSection extends StatefulWidget {
   State<UserProfileSection> createState() => _UserProfileSectionState();
 }
 
-class _UserProfileSectionState extends State<UserProfileSection> with TickerProviderStateMixin {
+class _UserProfileSectionState extends State<UserProfileSection>
+    with TickerProviderStateMixin {
   bool _isEditing = false;
   bool _isLoading = true;
   String? _errorMessage;
@@ -194,9 +199,7 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
             bottomRight: Radius.circular(24),
           ),
         ),
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -229,10 +232,7 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loadUserData,
-                child: Text(l10n.retry),
-              ),
+              ElevatedButton(onPressed: _loadUserData, child: Text(l10n.retry)),
             ],
           ),
         ),
@@ -263,7 +263,9 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
                 radius: 40,
                 backgroundColor: colorScheme.primary,
                 child: Text(
-                  _userName?.isNotEmpty == true ? _userName![0].toUpperCase() : '?',
+                  _userName?.isNotEmpty == true
+                      ? _userName![0].toUpperCase()
+                      : '?',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -295,7 +297,9 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
                       Text(
                         'Sklad: $_warehouseCode',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onPrimaryContainer.withOpacity(0.7),
+                          color: colorScheme.onPrimaryContainer.withOpacity(
+                            0.7,
+                          ),
                         ),
                       ),
                   ],
@@ -341,7 +345,9 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            controller: TextEditingController(text: _telegramID),
+                            controller: TextEditingController(
+                              text: _telegramID,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           TextField(
@@ -379,9 +385,6 @@ class _UserProfileSectionState extends State<UserProfileSection> with TickerProv
   }
 }
 
-
-
-
 class PermissionsTab extends StatefulWidget {
   const PermissionsTab({super.key});
 
@@ -410,7 +413,8 @@ class _PermissionsTabState extends State<PermissionsTab> {
       // Get user code from shared preferences
       final prefs = context.read<SharedPreferencesService>();
       final userCode = prefs.getUserCode();
-      if (kDebugMode) print('__________Setting permisionsda User code: $userCode');
+      if (kDebugMode)
+        print('__________Setting permisionsda User code: $userCode');
       if (userCode == null) {
         setState(() {
           _errorMessage = AppLocalizations.of(context)!.userCodeNotFound;
@@ -421,7 +425,9 @@ class _PermissionsTabState extends State<PermissionsTab> {
 
       // Get permissions from data sync service
       final dataSyncService = context.read<DataSyncService>();
-      final permissions = await dataSyncService.getCachedSalesReqPermissions(userCode);
+      final permissions = await dataSyncService.getCachedSalesReqPermissions(
+        userCode,
+      );
 
       setState(() {
         _permissions = permissions;
@@ -429,7 +435,8 @@ class _PermissionsTabState extends State<PermissionsTab> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = '${AppLocalizations.of(context)!.errorLoadingPermissions}: $e';
+        _errorMessage =
+            '${AppLocalizations.of(context)!.errorLoadingPermissions}: $e';
         _isLoading = false;
       });
     }
@@ -499,7 +506,11 @@ class _PermissionsTabState extends State<PermissionsTab> {
     }
   }
 
-  Color _getCategoryColor(String category, AppLocalizations l10n, ColorScheme colorScheme) {
+  Color _getCategoryColor(
+    String category,
+    AppLocalizations l10n,
+    ColorScheme colorScheme,
+  ) {
     switch (category) {
       case 'dataValidation':
         return colorScheme.primary;
@@ -564,7 +575,10 @@ class _PermissionsTabState extends State<PermissionsTab> {
   }
 
   // Visit Steps section
-  Widget _buildVisitStepsSection(AppLocalizations l10n, ColorScheme colorScheme) {
+  Widget _buildVisitStepsSection(
+    AppLocalizations l10n,
+    ColorScheme colorScheme,
+  ) {
     if (_permissions == null || _permissions!.visitSteps.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -592,54 +606,66 @@ class _PermissionsTabState extends State<PermissionsTab> {
               ],
             ),
             const SizedBox(height: 16),
-            ..._permissions!.visitSteps.map((step) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${step.stepCode}',
-                        style: TextStyle(
-                          color: colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
+            ..._permissions!.visitSteps.map(
+              (step) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${step.stepCode}',
+                          style: TextStyle(
+                            color: colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          step.stepName,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w500,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            step.stepName,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.w500),
                           ),
-                        ),
-                        Text(
-                          step.stepRequired ? AppLocalizations.of(context)!.mandatoryExecution : AppLocalizations.of(context)!.optional,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: step.stepRequired ? colorScheme.error : colorScheme.secondary,
+                          Text(
+                            step.stepRequired
+                                ? AppLocalizations.of(
+                                    context,
+                                  )!.mandatoryExecution
+                                : AppLocalizations.of(context)!.optional,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: step.stepRequired
+                                      ? colorScheme.error
+                                      : colorScheme.secondary,
+                                ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  Icon(
-                    step.stepRequired ? Icons.check_circle : Icons.radio_button_unchecked,
-                    color: step.stepRequired ? colorScheme.error : colorScheme.secondary,
-                  ),
-                ],
+                    Icon(
+                      step.stepRequired
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      color: step.stepRequired
+                          ? colorScheme.error
+                          : colorScheme.secondary,
+                    ),
+                  ],
+                ),
               ),
-            )),
+            ),
           ],
         ),
       ),
@@ -653,9 +679,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_errorMessage != null) {
@@ -705,7 +729,9 @@ class _PermissionsTabState extends State<PermissionsTab> {
           // Permissions Overview
           Card(
             elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -713,7 +739,11 @@ class _PermissionsTabState extends State<PermissionsTab> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.security, color: colorScheme.primary, size: 28),
+                      Icon(
+                        Icons.security,
+                        color: colorScheme.primary,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       Text(
                         l10n.agentPermissions,
@@ -749,12 +779,18 @@ class _PermissionsTabState extends State<PermissionsTab> {
           ..._groupedPermissions.entries.map((entry) {
             final category = entry.key;
             final permissions = entry.value;
-            final categoryColor = _getCategoryColor(category, l10n, colorScheme);
+            final categoryColor = _getCategoryColor(
+              category,
+              l10n,
+              colorScheme,
+            );
 
             return Card(
               elevation: 2,
               margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -769,11 +805,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.category,
-                          color: categoryColor,
-                          size: 20,
-                        ),
+                        Icon(Icons.category, color: categoryColor, size: 20),
                         const SizedBox(width: 8),
                         Text(
                           category,
@@ -784,7 +816,10 @@ class _PermissionsTabState extends State<PermissionsTab> {
                         ),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: categoryColor,
                             borderRadius: BorderRadius.circular(12),
@@ -806,22 +841,30 @@ class _PermissionsTabState extends State<PermissionsTab> {
                       title: Text(
                         _getPermissionLabel(permissionKey, l10n),
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: isEnabled ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                          color: isEnabled
+                              ? colorScheme.onSurface
+                              : colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      subtitle: isEnabled ? null : Text(
-                        AppLocalizations.of(context)!.permissionDenied,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.error,
-                        ),
-                      ),
+                      subtitle: isEnabled
+                          ? null
+                          : Text(
+                              AppLocalizations.of(context)!.permissionDenied,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.error,
+                              ),
+                            ),
                       leading: Icon(
                         _getPermissionIcon(permissionKey),
-                        color: isEnabled ? categoryColor : colorScheme.onSurfaceVariant,
+                        color: isEnabled
+                            ? categoryColor
+                            : colorScheme.onSurfaceVariant,
                       ),
                       trailing: Icon(
                         isEnabled ? Icons.check_circle : Icons.cancel,
-                        color: isEnabled ? colorScheme.primary : colorScheme.error,
+                        color: isEnabled
+                            ? colorScheme.primary
+                            : colorScheme.error,
                       ),
                     );
                   }),
@@ -874,9 +917,7 @@ class _SecurityBadge extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: color,
-            ),
+            style: theme.textTheme.bodySmall?.copyWith(color: color),
             textAlign: TextAlign.center,
           ),
         ],
@@ -983,7 +1024,9 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
           // Language Settings Card
           Card(
             elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -991,7 +1034,11 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.language, color: colorScheme.primary, size: 28),
+                      Icon(
+                        Icons.language,
+                        color: colorScheme.primary,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       Text(
                         l10n.interfaceSettings,
@@ -1074,7 +1121,9 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
           // Additional Interface Settings
           Card(
             elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -1093,7 +1142,11 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
                   ListTile(
                     leading: Icon(Icons.palette, color: colorScheme.primary),
                     title: Text(l10n.theme),
-                    subtitle: Text(ThemeController.I.mode.value == ThemeMode.dark ? l10n.dark : l10n.light),
+                    subtitle: Text(
+                      ThemeController.I.mode.value == ThemeMode.dark
+                          ? l10n.dark
+                          : l10n.light,
+                    ),
                     trailing: SizedBox(
                       width: 80,
                       child: ThemeToggle(
@@ -1101,7 +1154,11 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
                         onChanged: ThemeController.I.set,
                       ),
                     ),
-                    onTap: () => ThemeController.I.set(ThemeController.I.mode.value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark),
+                    onTap: () => ThemeController.I.set(
+                      ThemeController.I.mode.value == ThemeMode.dark
+                          ? ThemeMode.light
+                          : ThemeMode.dark,
+                    ),
                   ),
                 ],
               ),
@@ -1173,19 +1230,30 @@ class _MapsTabState extends State<MapsTab> {
       // Fallback: try to get from context
       try {
         _apiKeyService = ApiKeyService.instance;
-        await _apiKeyService.initialize(context.read<SharedPreferencesService>());
+        await _apiKeyService.initialize(
+          context.read<SharedPreferencesService>(),
+        );
         await _loadApiKeys();
       } catch (fallbackError) {
-        if (kDebugMode) print('Fallback API key service initialization failed: $fallbackError');
+        if (kDebugMode)
+          print(
+            'Fallback API key service initialization failed: $fallbackError',
+          );
       }
     }
   }
 
   Future<void> _loadApiKeys() async {
     try {
-      final googleKey = await _apiKeyService.getApiKey(ApiKeyService.googleMapsApiKey);
-      final yandexKey = await _apiKeyService.getApiKey(ApiKeyService.yandexMapsApiKey);
-      final osmKey = await _apiKeyService.getApiKey(ApiKeyService.openStreetMapsApiKey);
+      final googleKey = await _apiKeyService.getApiKey(
+        ApiKeyService.googleMapsApiKey,
+      );
+      final yandexKey = await _apiKeyService.getApiKey(
+        ApiKeyService.yandexMapsApiKey,
+      );
+      final osmKey = await _apiKeyService.getApiKey(
+        ApiKeyService.openStreetMapsApiKey,
+      );
 
       setState(() {
         _googleApiKeyController.text = googleKey ?? '';
@@ -1243,7 +1311,10 @@ class _MapsTabState extends State<MapsTab> {
     if (confirmed == true) {
       try {
         final prefs = context.read<SharedPreferencesService>();
-        await prefs.preferences.setString('default_map_provider', provider.toString());
+        await prefs.preferences.setString(
+          'default_map_provider',
+          provider.toString(),
+        );
 
         setState(() {
           _selectedProvider = provider;
@@ -1286,11 +1357,15 @@ class _MapsTabState extends State<MapsTab> {
     try {
       switch (provider) {
         case MapProvider.google:
-          final hasKey = await _apiKeyService.hasApiKey(ApiKeyService.googleMapsApiKey);
+          final hasKey = await _apiKeyService.hasApiKey(
+            ApiKeyService.googleMapsApiKey,
+          );
           if (kDebugMode) print('hasKey: $hasKey');
           return hasKey ? 'sozlangan' : 'sozlanmagan';
         case MapProvider.yandex:
-          final hasKey = await _apiKeyService.hasApiKey(ApiKeyService.yandexMapsApiKey);
+          final hasKey = await _apiKeyService.hasApiKey(
+            ApiKeyService.yandexMapsApiKey,
+          );
           if (kDebugMode) print('hasKey: $hasKey');
           return hasKey ? 'sozlangan' : 'sozlanmagan';
         case MapProvider.openStreetMap:
@@ -1304,12 +1379,18 @@ class _MapsTabState extends State<MapsTab> {
 
   Future<void> _saveApiKey(String keyType, String apiKey) async {
     try {
-      final result = await _apiKeyService.storeAndValidateApiKey(keyType, apiKey);
+      final result = await _apiKeyService.storeAndValidateApiKey(
+        keyType,
+        apiKey,
+      );
       if (result.success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('API kaliti muvaffaqiyatli saqlandi'),
+              content: Text(
+                AppLocalizations.of(context)?.apiKeySaved ??
+                    'API kaliti muvaffaqiyatli saqlandi',
+              ),
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
@@ -1318,7 +1399,9 @@ class _MapsTabState extends State<MapsTab> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Xatolik: ${result.errorMessage}'),
+              content: Text(
+                '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: ${result.errorMessage}',
+              ),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -1408,9 +1491,7 @@ class _MapsTabState extends State<MapsTab> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return SingleChildScrollView(
@@ -1421,7 +1502,9 @@ class _MapsTabState extends State<MapsTab> {
           // Map Settings Header
           Card(
             elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -1456,7 +1539,9 @@ class _MapsTabState extends State<MapsTab> {
           // Current Map Provider
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -1478,7 +1563,10 @@ class _MapsTabState extends State<MapsTab> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.map_outlined, color: colorScheme.onPrimaryContainer),
+                        Icon(
+                          Icons.map_outlined,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -1489,10 +1577,7 @@ class _MapsTabState extends State<MapsTab> {
                             ),
                           ),
                         ),
-                        Icon(
-                          Icons.check_circle,
-                          color: colorScheme.primary,
-                        ),
+                        Icon(Icons.check_circle, color: colorScheme.primary),
                       ],
                     ),
                   ),
@@ -1511,13 +1596,21 @@ class _MapsTabState extends State<MapsTab> {
             ),
           ),
           const SizedBox(height: 12),
-          ...MapProvider.values.map((provider) => _buildMapProviderCard(provider, l10n, theme, colorScheme)),
+          ...MapProvider.values.map(
+            (provider) =>
+                _buildMapProviderCard(provider, l10n, theme, colorScheme),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMapProviderCard(MapProvider provider, AppLocalizations l10n, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildMapProviderCard(
+    MapProvider provider,
+    AppLocalizations l10n,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
     final isSelected = provider == _selectedProvider;
 
     return FutureBuilder<String>(
@@ -1528,7 +1621,9 @@ class _MapsTabState extends State<MapsTab> {
         return Card(
           elevation: 1,
           margin: const EdgeInsets.only(bottom: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: InkWell(
             onTap: () => _changeDefaultMap(provider),
             borderRadius: BorderRadius.circular(12),
@@ -1544,10 +1639,7 @@ class _MapsTabState extends State<MapsTab> {
                       color: colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Icon(
-                      Icons.map,
-                      color: colorScheme.primary,
-                    ),
+                    child: Icon(Icons.map, color: colorScheme.primary),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1576,12 +1668,14 @@ class _MapsTabState extends State<MapsTab> {
                               apiKeyStatus == 'kalit_shart_emas'
                                   ? l10n.apiKeyNotRequired
                                   : apiKeyStatus == 'sozlangan'
-                                      ? l10n.apiKeyConfigured
-                                      : apiKeyStatus == 'sozlanmagan'
-                                          ? l10n.apiKeyNotConfigured
-                                          : l10n.error,
+                                  ? l10n.apiKeyConfigured
+                                  : apiKeyStatus == 'sozlanmagan'
+                                  ? l10n.apiKeyNotConfigured
+                                  : l10n.error,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: apiKeyStatus == 'sozlangan' || apiKeyStatus == 'kalit_shart_emas'
+                                color:
+                                    apiKeyStatus == 'sozlangan' ||
+                                        apiKeyStatus == 'kalit_shart_emas'
                                     ? colorScheme.primary
                                     : colorScheme.error,
                                 fontWeight: FontWeight.w500,
@@ -1604,10 +1698,7 @@ class _MapsTabState extends State<MapsTab> {
                     ),
                   ),
                   if (isSelected)
-                    Icon(
-                      Icons.check_circle,
-                      color: colorScheme.primary,
-                    ),
+                    Icon(Icons.check_circle, color: colorScheme.primary),
                 ],
               ),
             ),
@@ -1685,10 +1776,7 @@ class _LanguageOption extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: colorScheme.primary,
-              ),
+              Icon(Icons.check_circle, color: colorScheme.primary),
           ],
         ),
       ),

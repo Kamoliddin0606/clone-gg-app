@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
@@ -50,7 +51,12 @@ class _WarehousesPageState extends State<WarehousesPage> {
         setState(() => _isLoading = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Foydalanuvchi ma\'lumotlari mavjud emas')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.userDataNotFound ??
+                    'Foydalanuvchi ma\'lumotlari mavjud emas',
+              ),
+            ),
           );
         }
         return;
@@ -61,7 +67,11 @@ class _WarehousesPageState extends State<WarehousesPage> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Xatolik: $e')),
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+            ),
+          ),
         );
       }
     }
@@ -83,7 +93,12 @@ class _WarehousesPageState extends State<WarehousesPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Skladlar ma\'lumotlarini yuklashda xatolik: $e'),
+            content: Text(
+              AppLocalizations.of(
+                    context,
+                  )?.warehouseDataLoadError(e.toString()) ??
+                  'Skladlar ma\'lumotlarini yuklashda xatolik: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -99,8 +114,8 @@ class _WarehousesPageState extends State<WarehousesPage> {
         final qLower = query.toLowerCase();
         _filteredWarehouses = _allWarehouses.where((warehouse) {
           return warehouse.name.toLowerCase().contains(qLower) ||
-                 warehouse.code.toLowerCase().contains(qLower) ||
-                 warehouse.organization.toLowerCase().contains(qLower);
+              warehouse.code.toLowerCase().contains(qLower) ||
+              warehouse.organization.toLowerCase().contains(qLower);
         }).toList();
       }
     });
@@ -112,7 +127,12 @@ class _WarehousesPageState extends State<WarehousesPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Skladlar', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        title: Text(
+          'Skladlar',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         centerTitle: false,
       ),
       body: Container(
@@ -143,19 +163,21 @@ class _WarehousesPageState extends State<WarehousesPage> {
                 duration: const Duration(milliseconds: 220),
                 child: _showViewBar
                     ? _ViewToolbar(
-                  count: _filteredWarehouses.length,
-                  mode: _viewMode,
-                  onModeChanged: (m) => setState(() => _viewMode = m),
-                  onCollapse: () => setState(() => _showViewBar = false),
-                )
+                        count: _filteredWarehouses.length,
+                        mode: _viewMode,
+                        onModeChanged: (m) => setState(() => _viewMode = m),
+                        onCollapse: () => setState(() => _showViewBar = false),
+                      )
                     : Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    tooltip: 'Ko\'rinish paneli',
-                    onPressed: () => setState(() => _showViewBar = true),
-                    icon: const Icon(Icons.tune),
-                  ),
-                ),
+                        alignment: Alignment.centerRight,
+                        child: IconButton(
+                          tooltip:
+                              AppLocalizations.of(context)?.viewPanel ??
+                              'Ko\'rinish paneli',
+                          onPressed: () => setState(() => _showViewBar = true),
+                          icon: const Icon(Icons.tune),
+                        ),
+                      ),
               ),
             ),
             // Content
@@ -163,48 +185,48 @@ class _WarehousesPageState extends State<WarehousesPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _filteredWarehouses.isEmpty
-                      ? const _EmptyState()
-                      : (_viewMode == _ViewMode.list
-                      ? RefreshIndicator(
-                    onRefresh: _loadUserData,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                      itemCount: _filteredWarehouses.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final warehouse = _filteredWarehouses[index];
-                        return WarehouseCard(
-                          warehouse: warehouse,
-                          expanded: _expandedIndex == index,
-                          onExpand: (open) {
-                            setState(() {
-                              _expandedIndex = open ? index : null;
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  )
-                      : RefreshIndicator(
-                    onRefresh: _loadUserData,
-                    child: GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
-                        childAspectRatio: 0.8,
-                      ),
-                      itemCount: _filteredWarehouses.length,
-                      itemBuilder: (context, index) {
-                        final warehouse = _filteredWarehouses[index];
-                        return WarehouseGridTile(
-                          warehouse: warehouse,
-                        );
-                      },
-                    ),
-                  )),
-            )
+                  ? const _EmptyState()
+                  : (_viewMode == _ViewMode.list
+                        ? RefreshIndicator(
+                            onRefresh: _loadUserData,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                              itemCount: _filteredWarehouses.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final warehouse = _filteredWarehouses[index];
+                                return WarehouseCard(
+                                  warehouse: warehouse,
+                                  expanded: _expandedIndex == index,
+                                  onExpand: (open) {
+                                    setState(() {
+                                      _expandedIndex = open ? index : null;
+                                    });
+                                  },
+                                );
+                              },
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _loadUserData,
+                            child: GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing: 8,
+                                    crossAxisSpacing: 8,
+                                    childAspectRatio: 0.8,
+                                  ),
+                              itemCount: _filteredWarehouses.length,
+                              itemBuilder: (context, index) {
+                                final warehouse = _filteredWarehouses[index];
+                                return WarehouseGridTile(warehouse: warehouse);
+                              },
+                            ),
+                          )),
+            ),
           ],
         ),
       ),
@@ -226,18 +248,25 @@ class _SearchField extends StatelessWidget {
         color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: cs.primary.withOpacity(.06), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(
+            color: cs.primary.withOpacity(.06),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
         ],
         border: Border.all(color: cs.outlineVariant),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        decoration: const InputDecoration(
-          hintText: 'Qidirish...',
-          prefixIcon: Icon(Icons.search),
+        decoration: InputDecoration(
+          hintText: AppLocalizations.of(context)?.searchHint ?? 'Qidirish...',
+          prefixIcon: const Icon(Icons.search),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 14,
+          ),
         ),
       ),
     );
@@ -257,7 +286,12 @@ class _EmptyState extends StatelessWidget {
         children: [
           Icon(Icons.warehouse_outlined, size: 48, color: theme.hintColor),
           const SizedBox(height: 8),
-          Text('Skladlar topilmadi', style: theme.textTheme.titleMedium?.copyWith(color: theme.hintColor)),
+          Text(
+            'Skladlar topilmadi',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.hintColor,
+            ),
+          ),
         ],
       ),
     );
@@ -321,7 +355,7 @@ class _ViewToolbar extends StatelessWidget {
         ),
         const SizedBox(width: 6),
         IconButton(
-          tooltip: 'Yopish',
+          tooltip: AppLocalizations.of(context)?.close ?? 'Yopish',
           onPressed: onCollapse,
           icon: const Icon(Icons.close),
         ),
@@ -362,15 +396,21 @@ class WarehouseCard extends StatelessWidget {
           onExpansionChanged: null,
           tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          collapsedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           leading: CircleAvatar(
             backgroundColor: cs.primaryContainer,
             child: const Icon(Icons.warehouse, color: Colors.white),
           ),
           title: Text(
             warehouse.name,
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -379,7 +419,12 @@ class WarehouseCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _line(context, Icons.code, 'Kod: ${warehouse.code}', soft: true),
+                _line(
+                  context,
+                  Icons.code,
+                  'Kod: ${warehouse.code}',
+                  soft: true,
+                ),
                 const SizedBox(height: 2),
                 _line(context, Icons.business, warehouse.organization),
               ],
@@ -390,7 +435,11 @@ class WarehouseCard extends StatelessWidget {
               children: [
                 const Icon(Icons.business, size: 16),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Tashkilot: ${warehouse.organization}')),
+                Expanded(
+                  child: Text(
+                    '${AppLocalizations.of(context)?.organizationLabel ?? 'Tashkilot'}: ${warehouse.organization}',
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -398,7 +447,11 @@ class WarehouseCard extends StatelessWidget {
               children: [
                 const Icon(Icons.code, size: 16),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Kod: ${warehouse.code}')),
+                Expanded(
+                  child: Text(
+                    '${AppLocalizations.of(context)?.codeLabel2 ?? 'Kod'}: ${warehouse.code}',
+                  ),
+                ),
               ],
             ),
             if (warehouse.createdAt != null) ...[
@@ -407,7 +460,11 @@ class WarehouseCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.calendar_today, size: 16),
                   const SizedBox(width: 8),
-                  Expanded(child: Text('Yaratilgan: ${warehouse.createdAt!.toLocal().toString().split(' ')[0]}')),
+                  Expanded(
+                    child: Text(
+                      'Yaratilgan: ${warehouse.createdAt!.toLocal().toString().split(' ')[0]}',
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -417,7 +474,11 @@ class WarehouseCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.update, size: 16),
                   const SizedBox(width: 8),
-                  Expanded(child: Text('Yangilangan: ${warehouse.updatedAt!.toLocal().toString().split(' ')[0]}')),
+                  Expanded(
+                    child: Text(
+                      'Yangilangan: ${warehouse.updatedAt!.toLocal().toString().split(' ')[0]}',
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -427,18 +488,19 @@ class WarehouseCard extends StatelessWidget {
     );
   }
 
-  Widget _line(BuildContext context, IconData icon, String text, {bool soft = false}) {
+  Widget _line(
+    BuildContext context,
+    IconData icon,
+    String text, {
+    bool soft = false,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(icon, size: 16, color: soft ? null : Colors.grey),
         const SizedBox(width: 6),
         Expanded(
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
       ],
     );
@@ -459,9 +521,7 @@ class WarehouseGridTile extends StatelessWidget {
       elevation: 6,
       shadowColor: Colors.black.withOpacity(.15),
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
@@ -478,7 +538,9 @@ class WarehouseGridTile extends StatelessWidget {
               height: 120,
               child: Container(
                 color: cs.primaryContainer,
-                child: const Center(child: Icon(Icons.warehouse, size: 40, color: Colors.white)),
+                child: const Center(
+                  child: Icon(Icons.warehouse, size: 40, color: Colors.white),
+                ),
               ),
             ),
             // Details
@@ -492,21 +554,27 @@ class WarehouseGridTile extends StatelessWidget {
                     maxLines: 2,
                     softWrap: true,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Kod: ${warehouse.code}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     warehouse.organization,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),

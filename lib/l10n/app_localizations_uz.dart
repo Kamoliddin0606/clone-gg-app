@@ -96,7 +96,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get loading => 'Yuklanmoqda...';
 
   @override
-  String get noData => 'Ma\'lumotlar yo\'q';
+  String get noData => 'Ma\'lumot yo\'q';
 
   @override
   String get retry => 'Qayta urinib ko\'ring';
@@ -249,7 +249,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get fileNotFound => 'Fayl topilmadi';
 
   @override
-  String get unknownError => 'Noma\'lum xatolik yuz berdi';
+  String get unknownError => 'Noma\'lum xatolik';
 
   @override
   String get tryAgain => 'Iltimos, qayta urinib ko\'ring';
@@ -573,7 +573,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get kpiReport => 'KPI hisoboti';
 
   @override
-  String get cash => 'Kassa';
+  String get cash => 'Naqd';
 
   @override
   String get nonCash => 'Naqdsiz';
@@ -1238,7 +1238,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get visitFinishing => 'Tashrif yakunlanmoqda...';
 
   @override
-  String get orderNumber => 'Buyurtma raqami';
+  String orderNumber(String number) {
+    return 'Buyurtma № $number';
+  }
 
   @override
   String get dataSaveError => 'Ma\'lumotlarni saqlashda xatolik yuz berdi';
@@ -1304,7 +1306,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get clientImagesLoaded => 'Mijoz rasmlari yuklandi';
 
   @override
-  String get imageLoadError => 'Rasm yuklashda xatolik';
+  String get imageLoadError => 'Rasmni yuklashda xatolik';
 
   @override
   String get disableVisitTodayFilter => 'Bugungi tashrif filtrini o\'chirish';
@@ -1568,7 +1570,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get statistics => 'Statistika';
 
   @override
-  String get contractsCount => 'Shartnomalar soni';
+  String contractsCount(int count) {
+    return 'Shartnomalar soni: $count';
+  }
 
   @override
   String get contract => 'Shartnoma';
@@ -1893,7 +1897,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get serverTimeout => 'Server bilan bog\'lanishda vaqt tugadi';
 
   @override
-  String get noInternetConnection => 'Internet aloqasi yo\'q';
+  String get noInternetConnection => 'Internet aloqasi yo\'q. Iltimos, internetga ulaning';
 
   @override
   String get createClientTitle => 'Yangi mijoz';
@@ -2083,7 +2087,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String innLabel(String inn) {
-    return 'INN: $inn';
+    return 'INN';
   }
 
   @override
@@ -2188,7 +2192,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String errorOccurred(String error) {
-    return 'Xatolik yuz berdi: $error';
+    return 'Xatolik yuz berdi';
   }
 
   @override
@@ -2750,4 +2754,339 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get changePeriod => 'Davrni o\'zgartirish';
+
+  @override
+  String get server => 'Server';
+
+  @override
+  String get addImage => 'Rasm qo\'shish';
+
+  @override
+  String get takePhoto => 'Rasmga olish';
+
+  @override
+  String get deleteImage => 'Rasmni o\'chirish';
+
+  @override
+  String get deleteImageConfirm => 'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?';
+
+  @override
+  String get noReportsAvailable => 'Hisobot mavjud emas';
+
+  @override
+  String get tables => 'Jadvallar';
+
+  @override
+  String get sendPdfLabel => 'PDF yuborish';
+
+  @override
+  String get warehouse => 'Ombor';
+
+  @override
+  String get takePhotoTooltip => 'Rasmga olish';
+
+  @override
+  String get changeShippingDateTooltip => 'Yetkazib berish sanasini o\'zgartirish';
+
+  @override
+  String get sendReportViaTelegram => 'Telegram bot orqali hisobot yuborish';
+
+  @override
+  String get fullscreen => 'To\'liq ekran';
+
+  @override
+  String get updateCoordinates => 'Koordinatalarni yangilash';
+
+  @override
+  String get list => 'Ro\'yxat';
+
+  @override
+  String get grid => 'Katak';
+
+  @override
+  String get every1Hour => 'Har 1 soatda';
+
+  @override
+  String get every4Hours => 'Har 4 soatda';
+
+  @override
+  String get every6Hours => 'Har 6 soatda';
+
+  @override
+  String get every12Hours => 'Har 12 soatda';
+
+  @override
+  String get daily24h => 'Kunlik (24 soat)';
+
+  @override
+  String get weekly1Week => 'Haftalik (1 hafta)';
+
+  @override
+  String get customIntervalMinutes => 'Maxsus interval (daqiqalar)';
+
+  @override
+  String get organizationLabel => 'Tashkilot';
+
+  @override
+  String get codeLabel2 => 'Kod';
+
+  @override
+  String get regionsLoading => 'Hududlar yuklanmoqda...';
+
+  @override
+  String get cyclingRegular => 'Oddiy velosiped';
+
+  @override
+  String get cyclingRoad => 'Yo\'l velosipedi';
+
+  @override
+  String get cyclingMountain => 'Tog\' velosipedi';
+
+  @override
+  String get cyclingSafe => 'Xavfsiz velosiped';
+
+  @override
+  String get productsPage => 'Mahsulotlar sahifasi';
+
+  @override
+  String quantityHint(int stock) {
+    return '0 dan $stock gacha';
+  }
+
+  @override
+  String get minimum60Minutes => 'Minimum 60 daqiqa';
+
+  @override
+  String get enterQuantity => 'Miqdorni kiriting';
+
+  @override
+  String maxAvailable(int stock) {
+    return 'Maksimal mavjud: $stock dona';
+  }
+
+  @override
+  String imageNumber(int number) {
+    return 'Rasm $number';
+  }
+
+  @override
+  String get selectPriceType => 'Narx turini tanlang';
+
+  @override
+  String get selectPriceTypeHint => 'Filtr panelidan narx turini tanlash uchun yuqoridagi filtr tugmasini bosing';
+
+  @override
+  String productsCount(int count) {
+    return 'Mahsulotlar soni: $count';
+  }
+
+  @override
+  String get categories => 'Kategoriyalar';
+
+  @override
+  String get selectBrandFirst => 'Avval brand tanlang';
+
+  @override
+  String get reportsSection => 'Hisobotlar bo\'limi';
+
+  @override
+  String get tasks => 'Vazifalar';
+
+  @override
+  String locationError(String error) {
+    return 'Joylashuvni olishda xatolik: $error';
+  }
+
+  @override
+  String get addressDetected => 'Manzil aniqlandi va avtomatik to\'ldirildi';
+
+  @override
+  String get pleaseSelectRegion => 'Iltimos, hududni tanlang';
+
+  @override
+  String get pleaseSelectTradePointType => 'Iltimos, savdo nuqtasi turini tanlang';
+
+  @override
+  String get locationDataNotFound => 'Joylashuv ma\'lumotlari topilmadi';
+
+  @override
+  String get all => 'Barchasi';
+
+  @override
+  String get closeEditMode => 'Tahrirlash rejimini yopish';
+
+  @override
+  String get activeClients => 'Faol mijozlar';
+
+  @override
+  String get activeClientsTooltip => 'Bugun faol buyurtmalari bo\'lgan mijozlar';
+
+  @override
+  String get cashless => 'Naqdsiz';
+
+  @override
+  String get ordersTotal => 'Buyurtmalar jami';
+
+  @override
+  String get visitedTradingPoints => 'Tashrif buyurilgan s.n.';
+
+  @override
+  String get visitedTradingPointsTooltip => 'Tashrif buyurilgan savdo nuqtalari soni';
+
+  @override
+  String get territoryOKB => 'Hudud OKB';
+
+  @override
+  String get territoryOKBTooltip => 'Hudud bo\'yicha mijozlar bazasini qamrab olish';
+
+  @override
+  String get todayMainIndicators => 'Bugun — asosiy ko\'rsatkichlar';
+
+  @override
+  String get last7Days => 'Oxirgi 7 kun';
+
+  @override
+  String get last30Days => 'Oxirgi 30 kun';
+
+  @override
+  String get monthlyPlanFactForecast => 'Oylik reja / Fakt / Bashorat';
+
+  @override
+  String get monthlyOkbAkb => 'Oylik OKB/AKB';
+
+  @override
+  String get contractsNotFound => 'Shartnomalar topilmadi';
+
+  @override
+  String get contractsListRefreshed => 'Shartnomalar ro\'yxati yangilandi';
+
+  @override
+  String get contractAmount => 'Shartnoma summasi';
+
+  @override
+  String get contractDocument => 'Shartnoma hujjati';
+
+  @override
+  String clientOrders(String name) {
+    return '$name mijozining buyurtmalari';
+  }
+
+  @override
+  String get filterApplyError => 'Filtr qo\'llashda xatolik yuz berdi';
+
+  @override
+  String get main => 'Asosiy';
+
+  @override
+  String get contents => 'Tarkibi';
+
+  @override
+  String get mainReports => 'Asosiy hisobotlar';
+
+  @override
+  String get mainReportsDescription => 'KPI ko\'rsatkichlari va asosiy statistikalar';
+
+  @override
+  String get visitsReport => 'Vizitlar hisoboti';
+
+  @override
+  String get visitsReportDescription => 'Mijozlarga qilingan tashriflar haqida ma\'lumot';
+
+  @override
+  String get completedVisits => 'Amalga oshirilgan vizitlar';
+
+  @override
+  String get plannedVisits => 'Rejalashtirilgan vizitlar';
+
+  @override
+  String get visitEfficiency => 'Vizit samaradorligi';
+
+  @override
+  String get lastVisits => 'Oxirgi vizitlar';
+
+  @override
+  String get dataLoading => 'Ma\'lumotlar yuklanmoqda...';
+
+  @override
+  String get successful => 'Muvaffaqiyatli';
+
+  @override
+  String get orderPlaced => 'Buyurtma berildi';
+
+  @override
+  String get rejected => 'Rad etildi';
+
+  @override
+  String get reportDataRefreshed => 'Hisobot ma\'lumotlari muvaffaqiyatli yangilandi';
+
+  @override
+  String get apiKeySaved => 'API kaliti muvaffaqiyatli saqlandi';
+
+  @override
+  String saveError(String error) {
+    return 'Saqlashda xatolik: $error';
+  }
+
+  @override
+  String userDataLoadError(String error) {
+    return 'Foydalanuvchi ma\'lumotlarini yuklashda xatolik: $error';
+  }
+
+  @override
+  String warehouseDataLoadError(String error) {
+    return 'Skladlar ma\'lumotlarini yuklashda xatolik: $error';
+  }
+
+  @override
+  String get justSaved => 'Hozir saqlandi';
+
+  @override
+  String savedMinutesAgo(int minutes) {
+    return '$minutes daqiqa oldin saqlandi';
+  }
+
+  @override
+  String savedHoursAgo(int hours) {
+    return '$hours soat oldin saqlandi';
+  }
+
+  @override
+  String get notSaved => 'Saqlanmagan';
+
+  @override
+  String get selectDateRange => 'Sana oralig\'ini tanlang';
+
+  @override
+  String get selectPeriodTitle => 'Davrni tanlang';
+
+  @override
+  String get selectedPeriod => 'Tanlangan davr';
+
+  @override
+  String get selectTable => 'Jadval tanlang';
+
+  @override
+  String get selectRegionValidator => 'Hududni tanlang';
+
+  @override
+  String get selectTradePointTypeValidator => 'Savdo nuqtasi turini tanlang';
+
+  @override
+  String get currentMonth => 'Joriy oy';
+
+  @override
+  String get selectReportDatesHint => 'Hisobot uchun boshlanish va tugash sanalarini belgilang';
+
+  @override
+  String get offlineCannotRefresh => 'Offline rejimda ma\'lumotlarni yangilashning imkoni yo\'q';
+
+  @override
+  String distanceRequirementMessage(String name) {
+    return '$name ga tashrif uchun masofa talabiga javob berishingiz kerak.';
+  }
+
+  @override
+  String requiredDistance(int distance) {
+    return 'Talab qilingan masofa: ${distance}m';
+  }
 }

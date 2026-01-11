@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 class WarehouseManagerHomePage extends StatelessWidget {
   const WarehouseManagerHomePage({super.key});
@@ -240,7 +241,9 @@ class WarehouseManagerHomePage extends StatelessWidget {
           CircularProgressIndicator(
             value: 0.78,
             backgroundColor: theme.colorScheme.onPrimary.withOpacity(0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              theme.colorScheme.onPrimary,
+            ),
           ),
         ],
       ),
@@ -252,16 +255,21 @@ class WarehouseManagerHomePage extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Chiqish'),
-          content: const Text('Haqiqatan ham ilovadan chiqmoqchimisiz?'),
+          title: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
+          content: Text(
+            AppLocalizations.of(context)?.confirmLogout ??
+                'Haqiqatan ham ilovadan chiqmoqchimisiz?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Bekor qilish'),
+              child: Text(
+                AppLocalizations.of(context)?.cancel ?? 'Bekor qilish',
+              ),
             ),
             FilledButton(
               onPressed: () => _logout(context),
-              child: const Text('Chiqish'),
+              child: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
             ),
           ],
         );
@@ -277,7 +285,7 @@ class WarehouseManagerHomePage extends StatelessWidget {
     } catch (e) {
       // SharedPreferences not ready, continue with logout
     }
-    
+
     if (context.mounted) {
       Navigator.of(context).pop(); // Close dialog
       Navigator.pushNamedAndRemoveUntil(
@@ -379,7 +387,7 @@ class _InventoryItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isLowStock = index % 5 == 0;
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: ListTile(
@@ -392,7 +400,9 @@ class _InventoryItem extends StatelessWidget {
           ),
         ),
         title: Text('Product ${index + 1}'),
-        subtitle: Text('SKU: PRD${1000 + index} • Location: A${index % 10 + 1}-${index % 5 + 1}'),
+        subtitle: Text(
+          'SKU: PRD${1000 + index} • Location: A${index % 10 + 1}-${index % 5 + 1}',
+        ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -407,10 +417,7 @@ class _InventoryItem extends StatelessWidget {
             if (isLowStock)
               const Text(
                 'Low Stock',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.red, fontSize: 12),
               ),
           ],
         ),
@@ -437,7 +444,9 @@ class _IncomingItem extends StatelessWidget {
           child: Icon(Icons.arrow_downward, color: Colors.white, size: 20),
         ),
         title: Text('Incoming #IN${1000 + index}'),
-        subtitle: Text('Supplier: Supplier ${index + 1} • ETA: ${DateTime.now().add(Duration(days: index + 1)).day}/${DateTime.now().month}'),
+        subtitle: Text(
+          'Supplier: Supplier ${index + 1} • ETA: ${DateTime.now().add(Duration(days: index + 1)).day}/${DateTime.now().month}',
+        ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -478,7 +487,9 @@ class _OutgoingItem extends StatelessWidget {
           child: Icon(Icons.arrow_upward, color: Colors.white, size: 20),
         ),
         title: Text('Outgoing #OUT${1000 + index}'),
-        subtitle: Text('Customer: Customer ${index + 1} • Due: ${DateTime.now().add(Duration(days: index + 1)).day}/${DateTime.now().month}'),
+        subtitle: Text(
+          'Customer: Customer ${index + 1} • Due: ${DateTime.now().add(Duration(days: index + 1)).day}/${DateTime.now().month}',
+        ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -488,9 +499,17 @@ class _OutgoingItem extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             Text(
-              index % 3 == 0 ? 'Ready' : index % 3 == 1 ? 'Picking' : 'Packed',
+              index % 3 == 0
+                  ? 'Ready'
+                  : index % 3 == 1
+                  ? 'Picking'
+                  : 'Packed',
               style: TextStyle(
-                color: index % 3 == 0 ? Colors.green : index % 3 == 1 ? Colors.orange : Colors.blue,
+                color: index % 3 == 0
+                    ? Colors.green
+                    : index % 3 == 1
+                    ? Colors.orange
+                    : Colors.blue,
                 fontSize: 12,
               ),
             ),

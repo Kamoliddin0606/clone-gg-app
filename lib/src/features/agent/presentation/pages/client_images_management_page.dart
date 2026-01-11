@@ -63,10 +63,12 @@ class ClientImagesManagementPage extends StatefulWidget {
   });
 
   @override
-  State<ClientImagesManagementPage> createState() => _ClientImagesManagementPageState();
+  State<ClientImagesManagementPage> createState() =>
+      _ClientImagesManagementPageState();
 }
 
-class _ClientImagesManagementPageState extends State<ClientImagesManagementPage> {
+class _ClientImagesManagementPageState
+    extends State<ClientImagesManagementPage> {
   final RestApiService _restApiService = sl<RestApiService>();
   final ClientImagesService _clientImagesService = sl<ClientImagesService>();
   final TokenService _tokenService = sl<TokenService>();
@@ -94,7 +96,9 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
   Future<void> _loadServerImages() async {
     try {
       setState(() => _isLoading = true);
-      final images = await _clientImagesService.getClientImages(widget.clientCode);
+      final images = await _clientImagesService.getClientImages(
+        widget.clientCode,
+      );
       setState(() {
         _serverImages = images;
         _isLoading = false;
@@ -102,7 +106,14 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Server rasmlarini yuklashda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(
+                    context,
+                  )?.serverImagesLoadError(e.toString()) ??
+                  'Server rasmlarini yuklashda xatolik: $e',
+            ),
+          ),
         );
         setState(() => _isLoading = false);
       }
@@ -119,7 +130,14 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Galereyadan rasm tanlashda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(
+                    context,
+                  )?.gallerySelectionError(e.toString()) ??
+                  'Galereyadan rasm tanlashda xatolik: $e',
+            ),
+          ),
         );
       }
     }
@@ -135,7 +153,12 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kameradan rasm olishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.cameraCaptureError(e.toString()) ??
+                  'Kameradan rasm olishda xatolik: $e',
+            ),
+          ),
         );
       }
     }
@@ -152,16 +175,19 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
 
     try {
       setState(() => _isUploading = true);
-      
+
       // Ensure valid token using complete auth flow:
       // 1. Check access token validity
       // 2. Refresh if expired
       // 3. Re-authenticate if refresh fails
       final token = await _tokenService.ensureValidToken();
       if (token == null || token.isEmpty) {
-        throw Exception('Autentifikatsiya muddati tugadi. Iltimos, qayta kiring.');
+        throw Exception(
+          AppLocalizations.of(context)?.sessionExpired ??
+              'Autentifikatsiya muddati tugadi. Iltimos, qayta kiring.',
+        );
       }
-      
+
       final files = _pendingImages.map((xfile) => File(xfile.path)).toList();
       final urls = await _restApiService.uploadClientImagesBulk(
         clientCode: widget.clientCode,
@@ -176,7 +202,12 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rasmlar muvaffaqiyatli yuklandi')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imagesUploadedSuccessfully ??
+                  'Rasmlar muvaffaqiyatli yuklandi',
+            ),
+          ),
         );
         // Return success to refresh parent
         Navigator.of(context).pop(true);
@@ -185,7 +216,12 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
       setState(() => _isUploading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rasmlarni yuklashda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imagesUploadError(e.toString()) ??
+                  'Rasmlarni yuklashda xatolik: $e',
+            ),
+          ),
         );
       }
     }
@@ -201,7 +237,7 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
           children: [
             ListTile(
               leading: const Icon(Icons.camera),
-              title: const Text('Kamera'),
+              title: Text(AppLocalizations.of(context)?.camera ?? 'Kamera'),
               onTap: () {
                 Navigator.of(context).pop();
                 _captureFromCamera();
@@ -209,7 +245,7 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('Galereya'),
+              title: Text(AppLocalizations.of(context)?.gallery ?? 'Galereya'),
               onTap: () {
                 Navigator.of(context).pop();
                 _pickFromGallery();
@@ -243,7 +279,10 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.clientName} - Rasmlar'),
+        title: Text(
+          l10n?.clientImagesTitle(widget.clientName) ??
+              '${widget.clientName} - Rasmlar',
+        ),
         centerTitle: true,
       ),
       body: _isLoading
@@ -252,7 +291,7 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddImageOptions,
         child: const Icon(Icons.add_a_photo),
-        tooltip: 'Rasm qo\'shish',
+        tooltip: l10n?.clickPlusToAddImage ?? 'Rasm qo\'shish',
       ),
       bottomNavigationBar: _pendingImages.isNotEmpty
           ? Container(
@@ -266,9 +305,12 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.cloud_upload),
-                label: Text(_isUploading 
-                    ? (l10n?.syncing ?? 'Yuklanmoqda...') 
-                    : (l10n?.sendToServer.replaceAll('{count}', _pendingImages.length.toString()) ?? 'Serverga yuborish')),
+                label: Text(
+                  _isUploading
+                      ? (l10n?.syncing ?? 'Yuklanmoqda...')
+                      : (l10n?.sendToServer(_pendingImages.length) ??
+                            'Serverga yuborish (${_pendingImages.length} ta rasm)'),
+                ),
               ),
             )
           : null,
@@ -277,6 +319,7 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
 
   /// Build grid view of images
   Widget _buildImageGrid(ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     final allImages = _serverImages.length + _pendingImages.length;
     if (allImages == 0) {
       return Center(
@@ -291,8 +334,11 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
             ),
             const SizedBox(height: 8),
             Text(
-              l10n?.clickPlusToAddImage ?? 'Yangi rasm qo\'shish uchun + tugmasini bosing',
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              l10n?.clickPlusToAddImage ??
+                  'Yangi rasm qo\'shish uchun + tugmasini bosing',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -341,6 +387,7 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
     required int index,
     required ThemeData theme,
   }) {
+    final l10n = AppLocalizations.of(context);
     final provider = isServer ? _clientImageProviderFromUrl(imageUrl) : null;
     return GestureDetector(
       onTap: () => _openFullScreenViewer(index, isServer),
@@ -352,18 +399,22 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
               aspectRatio: 1.0,
               child: isServer
                   ? (provider == null
-                      ? Container(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          child: const Center(child: Icon(Icons.broken_image)),
-                        )
-                      : Image(
-                          image: provider,
-                          fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) => Container(
+                        ? Container(
                             color: theme.colorScheme.surfaceContainerHighest,
-                            child: const Center(child: Icon(Icons.broken_image)),
-                          ),
-                        ))
+                            child: const Center(
+                              child: Icon(Icons.broken_image),
+                            ),
+                          )
+                        : Image(
+                            image: provider,
+                            fit: BoxFit.cover,
+                            errorBuilder: (c, e, s) => Container(
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: const Center(
+                                child: Icon(Icons.broken_image),
+                              ),
+                            ),
+                          ))
                   : Image.file(
                       file!,
                       fit: BoxFit.cover,
@@ -390,14 +441,17 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
                 top: 8,
                 right: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.blue.withOpacity(0.8),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'Server',
-                    style: TextStyle(color: Colors.white, fontSize: 10),
+                  child: Text(
+                    l10n?.server ?? 'Server',
+                    style: const TextStyle(color: Colors.white, fontSize: 10),
                   ),
                 ),
               ),
@@ -457,7 +511,9 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: _showDeleteConfirmation,
-                  tooltip: 'Rasmni o\'chirish',
+                  tooltip:
+                      AppLocalizations.of(context)?.deleteImageTitle ??
+                      'Rasmni o\'chirish',
                 ),
               ]
             : null,
@@ -473,7 +529,11 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
             if (provider == null) {
               return PhotoViewGalleryPageOptions.customChild(
                 child: const Center(
-                  child: Icon(Icons.broken_image, color: Colors.white, size: 64),
+                  child: Icon(
+                    Icons.broken_image,
+                    color: Colors.white,
+                    size: 64,
+                  ),
                 ),
                 initialScale: PhotoViewComputedScale.contained,
                 minScale: PhotoViewComputedScale.contained,
@@ -497,9 +557,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
           }
         },
         itemCount: widget.images.length,
-        loadingBuilder: (context, event) => const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
+        loadingBuilder: (context, event) =>
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
         pageController: _pageController,
         onPageChanged: (index) {
           setState(() => _currentIndex = index);
@@ -513,12 +572,17 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rasmni o\'chirish'),
-        content: const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+        title: Text(
+          AppLocalizations.of(context)?.deleteImageTitle ?? 'Rasmni o\'chirish',
+        ),
+        content: Text(
+          AppLocalizations.of(context)?.deleteImageConfirmation ??
+              'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           FilledButton(
             onPressed: () {
@@ -535,10 +599,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                 setState(() {});
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('O\'chirish'),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(AppLocalizations.of(context)?.delete ?? 'O\'chirish'),
           ),
         ],
       ),

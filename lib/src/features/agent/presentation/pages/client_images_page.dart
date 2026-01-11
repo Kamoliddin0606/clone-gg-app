@@ -60,10 +60,7 @@ String? _bestClientImageFullscreenUrl(ClientImage img) {
 class ClientImagesPage extends StatefulWidget {
   final TradingPointWithPermissions tradingPoint;
 
-  const ClientImagesPage({
-    super.key,
-    required this.tradingPoint,
-  });
+  const ClientImagesPage({super.key, required this.tradingPoint});
 
   @override
   State<ClientImagesPage> createState() => _ClientImagesPageState();
@@ -150,10 +147,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       vsync: this,
     );
     _fabAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _fabAnimationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _fabAnimationController, curve: Curves.easeInOut),
     );
     _fabAnimationController.forward();
   }
@@ -166,7 +160,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       if (status != PermissionStatus.granted) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kamera ruxsati berilmadi')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.cameraPermissionDenied ??
+                    'Kamera ruxsati berilmadi',
+              ),
+            ),
           );
         }
         return;
@@ -180,7 +179,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       debugPrint('Camera initialization error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kamera ishga tushirishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.cameraInitError(e.toString()) ??
+                  'Kamera ishga tushirishda xatolik: $e',
+            ),
+          ),
         );
       }
     }
@@ -199,7 +203,9 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       await _cameraController!.initialize();
 
       if (_cameraController!.value.hasError) {
-        throw Exception('Camera initialization failed: ${_cameraController!.value.errorDescription}');
+        throw Exception(
+          'Camera initialization failed: ${_cameraController!.value.errorDescription}',
+        );
       }
 
       _cameraController!.addListener(_onCameraError);
@@ -211,7 +217,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       debugPrint('Camera controller initialization error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kamera ishga tushirishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.cameraInitError(e.toString()) ??
+                  'Kamera ishga tushirishda xatolik: $e',
+            ),
+          ),
         );
       }
     }
@@ -229,7 +240,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
           _handleCameraEviction();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Kamera xatoligi: $error')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.cameraError(error ?? '') ??
+                    'Kamera xatoligi: $error',
+              ),
+            ),
           );
           _reinitializeCamera();
         }
@@ -256,8 +272,11 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     if (mounted) {
       setState(() => _isCameraInitialized = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Kamera boshqa ilova tomonidan ishlatilmoqda. Qayta ulanishga harakat qilinmoqda...'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.cameraInUseMessage ??
+                'Kamera boshqa ilova tomonidan ishlatilmoqda. Qayta ulanishga harakat qilinmoqda...',
+          ),
           duration: Duration(seconds: 3),
         ),
       );
@@ -286,7 +305,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sahifa yuklanishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.errorOccurredPrefix ??
+                  'Sahifa yuklanishda xatolik: $e',
+            ),
+          ),
         );
       }
     } finally {
@@ -313,7 +337,9 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       });
 
       if (kDebugMode) {
-        print('ClientImagesPage: Loaded ${images.length} server images from DB for client $_clientCode');
+        print(
+          'ClientImagesPage: Loaded ${images.length} server images from DB for client $_clientCode',
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -335,12 +361,16 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   /// - checks token availability
   /// - calls `ClientImagesService.fetchAndSaveClientImages`
   /// - reloads the images from DB
-  Future<void> _syncServerImagesFromApiIfPossible({bool replaceExisting = true}) async {
+  Future<void> _syncServerImagesFromApiIfPossible({
+    bool replaceExisting = true,
+  }) async {
     try {
       final token = await _tokenService.getValidAccessToken();
       if (token == null || token.isEmpty) {
         if (kDebugMode) {
-          print('ClientImagesPage: Skipping server images sync - no valid access token');
+          print(
+            'ClientImagesPage: Skipping server images sync - no valid access token',
+          );
         }
         return;
       }
@@ -380,11 +410,14 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       if (success) {
         // Reload images from local database to reflect changes
         await _loadServerImagesFromDatabase();
-        
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rasm asosiy qilib belgilandi'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imageSavedSuccessfully ??
+                  'Rasm asosiy qilib belgilandi',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -393,7 +426,10 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Asosiy rasmni o\'zgartirishda xatolik: $e'),
+          content: Text(
+            AppLocalizations.of(context)?.errorOccurredPrefix ??
+                'Asosiy rasmni o\'zgartirishda xatolik: $e',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -421,20 +457,25 @@ class _ClientImagesPageState extends State<ClientImagesPage>
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Rasm muvaffaqiyatli o\'chirildi'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.imageDeleted ??
+                'Rasm muvaffaqiyatli o\'chirildi',
+          ),
           backgroundColor: Colors.green,
         ),
       );
 
       // Reload images from database
       await _loadServerImagesFromDatabase();
-
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Rasmni o\'chirishda xatolik: $e'),
+          content: Text(
+            AppLocalizations.of(context)?.imageDeleteError(e.toString()) ??
+                'Rasmni o\'chirishda xatolik: $e',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -450,12 +491,17 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rasmni o\'chirish'),
+        title: Text(
+          AppLocalizations.of(context)?.deleteImageTitle ?? 'Rasmni o\'chirish',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+            Text(
+              AppLocalizations.of(context)?.deleteImageConfirmation ??
+                  'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?',
+            ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(8),
@@ -482,17 +528,15 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop();
               _deleteServerImage(image);
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('O\'chirish'),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(AppLocalizations.of(context)?.delete ?? 'O\'chirish'),
           ),
         ],
       ),
@@ -503,12 +547,16 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   /// Loads photos from photo storage service with client-specific logic
   Future<void> _loadClientPhotos() async {
     try {
-      final clientPhotos = await _photoStorageService.getClientPhotos(_clientCode);
+      final clientPhotos = await _photoStorageService.getClientPhotos(
+        _clientCode,
+      );
       if (!mounted) return;
       setState(() => _photos = clientPhotos);
 
       if (kDebugMode) {
-        print('ClientImagesPage: Loaded ${clientPhotos.length} local photos for client $_clientCode');
+        print(
+          'ClientImagesPage: Loaded ${clientPhotos.length} local photos for client $_clientCode',
+        );
       }
     } catch (e) {
       debugPrint('Error loading client photos: $e');
@@ -520,7 +568,8 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   /// Save captured photo for client
   Future<void> _saveCapturedPhoto(File imageFile) async {
     try {
-      final clientVisitId = 'client_${_clientCode}_${DateTime.now().millisecondsSinceEpoch}';
+      final clientVisitId =
+          'client_${_clientCode}_${DateTime.now().millisecondsSinceEpoch}';
 
       final result = await _photoStorageService.savePhoto(
         visitId: clientVisitId,
@@ -546,12 +595,22 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       setState(() => _photos.add(newPhoto));
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rasm muvaffaqiyatli saqlandi')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.imageSavedSuccessfully ??
+                'Rasm muvaffaqiyatli saqlandi',
+          ),
+        ),
       );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rasm saqlashda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imageSaveError(e.toString()) ??
+                  'Rasm saqlashda xatolik: $e',
+            ),
+          ),
         );
       }
     }
@@ -564,23 +623,28 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       final imagePath = photo['imagePath'];
       final visitId = photo['visitId'];
 
-      await _photoStorageService.deletePhoto(
-        visitId,
-        999,
-        imagePath,
-      );
+      await _photoStorageService.deletePhoto(visitId, 999, imagePath);
 
       if (!mounted) return;
 
       setState(() => _photos.removeAt(index));
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rasm o\'chirildi')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.imageDeleted ?? 'Rasm o\'chirildi',
+          ),
+        ),
       );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rasm o\'chirishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imageDeleteError(e.toString()) ??
+                  'Rasm o\'chirishda xatolik: $e',
+            ),
+          ),
         );
       }
     }
@@ -612,7 +676,9 @@ class _ClientImagesPageState extends State<ClientImagesPage>
           if (await thumbFile.exists()) {
             await thumbFile.delete();
             if (kDebugMode) {
-              print('ClientImagesPage: Deleted local thumbnail: $thumbnailPath');
+              print(
+                'ClientImagesPage: Deleted local thumbnail: $thumbnailPath',
+              );
             }
           }
         }
@@ -639,7 +705,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     if (_photos.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Yuklash uchun rasm yo\'q')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.noImagesAvailable ??
+                  'Yuklash uchun rasm yo\'q',
+            ),
+          ),
         );
       }
       return;
@@ -662,11 +733,13 @@ class _ClientImagesPageState extends State<ClientImagesPage>
 
       // Use ensureValidToken for complete auth flow:
       // 1. Check access token validity
-      // 2. Refresh if expired  
+      // 2. Refresh if expired
       // 3. Re-authenticate if refresh fails
       final accessToken = await _tokenService.ensureValidToken();
       if (accessToken == null) {
-        throw Exception('Autentifikatsiya muddati tugadi. Iltimos, qayta kiring.');
+        throw Exception(
+          'Autentifikatsiya muddati tugadi. Iltimos, qayta kiring.',
+        );
       }
 
       final uploadedUrls = await _restApiService.uploadClientImagesBulk(
@@ -683,7 +756,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${uploadedUrls.length} ta rasm muvaffaqiyatli yuklandi'),
+          content: Text(
+            AppLocalizations.of(
+                  context,
+                )?.imagesUploadedCount(uploadedUrls.length) ??
+                '${uploadedUrls.length} ta rasm muvaffaqiyatli yuklandi',
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -695,7 +773,10 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Rasmlarni yuklashda xatolik: $e'),
+            content: Text(
+              AppLocalizations.of(context)?.imagesUploadError(e.toString()) ??
+                  'Rasmlarni yuklashda xatolik: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -714,7 +795,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       if (_cameraController == null || !_isCameraInitialized) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kamera tayyor emas')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.cameraNotReady ??
+                    'Kamera tayyor emas',
+              ),
+            ),
           );
         }
         return;
@@ -726,7 +812,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         _cameraController!.value.hasError) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kamera mavjud emas yoki ishlamayapti')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.cameraNotAvailable ??
+                  'Kamera mavjud emas yoki ishlamayapti',
+            ),
+          ),
         );
       }
       return;
@@ -779,7 +870,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
           appBar: AppBar(
             backgroundColor: Colors.black.withOpacity(0.7),
             foregroundColor: Colors.white,
-            title: const Text('Rasm'),
+            title: Text(AppLocalizations.of(context)?.image ?? 'Rasm'),
           ),
           body: PhotoView(
             imageProvider: provider,
@@ -803,7 +894,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.tradingPoint.tradingPoint.name} - Rasmlar'),
+        title: Text(
+          AppLocalizations.of(
+                context,
+              )?.clientImagesTitle(widget.tradingPoint.tradingPoint.name) ??
+              '${widget.tradingPoint.tradingPoint.name} - Rasmlar',
+        ),
         centerTitle: true,
         actions: [
           if (_photos.isNotEmpty) ...[
@@ -813,10 +909,14 @@ class _ClientImagesPageState extends State<ClientImagesPage>
               ),
               onPressed: () {
                 setState(() {
-                  _viewMode = _viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid;
+                  _viewMode = _viewMode == ViewMode.grid
+                      ? ViewMode.list
+                      : ViewMode.grid;
                 });
               },
-              tooltip: _viewMode == ViewMode.grid ? 'Ro\'yxat ko\'rinishi' : 'Panjara ko\'rinishi',
+              tooltip: _viewMode == ViewMode.grid
+                  ? 'Ro\'yxat ko\'rinishi'
+                  : 'Panjara ko\'rinishi',
             ),
           ],
         ],
@@ -877,11 +977,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.photo_camera,
-            size: 64,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(Icons.photo_camera, size: 64, color: theme.colorScheme.primary),
           const SizedBox(height: 16),
           Text(
             l10n?.clientPhotosTitle ?? 'Mijoz rasmlari',
@@ -890,8 +986,10 @@ class _ClientImagesPageState extends State<ClientImagesPage>
           ),
           const SizedBox(height: 8),
           Text(
-            l10n != null 
-                ? l10n.clientPhotosDescription(widget.tradingPoint.tradingPoint.name)
+            l10n != null
+                ? l10n.clientPhotosDescription(
+                    widget.tradingPoint.tradingPoint.name,
+                  )
                 : 'Bu yerda ${widget.tradingPoint.tradingPoint.name} mijoziga tegishli rasmlar ko\'rsatiladi',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -951,7 +1049,11 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   }
 
   /// Build server image card for grid view
-  Widget _buildServerImageCard(ClientImage image, ThemeData theme, AppLocalizations? l10n) {
+  Widget _buildServerImageCard(
+    ClientImage image,
+    ThemeData theme,
+    AppLocalizations? l10n,
+  ) {
     final previewUrl = _bestClientImagePreviewUrl(image);
     final previewProvider = _clientImageProviderFromUrl(previewUrl);
 
@@ -974,7 +1076,9 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                       width: double.infinity,
                       loadingBuilder: (c, child, progress) {
                         if (progress == null) return child;
-                        return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                        return const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        );
                       },
                       errorBuilder: (c, e, s) {
                         return Container(
@@ -989,7 +1093,10 @@ class _ClientImagesPageState extends State<ClientImagesPage>
               left: 8,
               child: image.isMain
                   ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green.withOpacity(0.85),
                         borderRadius: BorderRadius.circular(8),
@@ -1001,7 +1108,11 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                           SizedBox(width: 4),
                           Text(
                             'Main',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
@@ -1016,10 +1127,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                 children: [
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: _isDeletingServerImage 
-                        ? null 
+                    onPressed: _isDeletingServerImage
+                        ? null
                         : () => _showServerImageDeleteConfirmation(image),
-                    tooltip: l10n != null ? l10n.deleteImageTitle : 'Rasmni o\'chirish',
+                    tooltip: l10n != null
+                        ? l10n.deleteImageTitle
+                        : 'Rasmni o\'chirish',
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withOpacity(0.8),
                     ),
@@ -1029,7 +1142,9 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                     IconButton(
                       icon: const Icon(Icons.star_border, color: Colors.amber),
                       onPressed: () => _requestSetAsMain(image),
-                      tooltip: l10n != null ? l10n.setAsMainImage : 'Asosiy rasmga o\'zgartirish',
+                      tooltip: l10n != null
+                          ? l10n.setAsMainImage
+                          : 'Asosiy rasmga o\'zgartirish',
                       style: IconButton.styleFrom(
                         backgroundColor: Colors.white.withOpacity(0.8),
                       ),
@@ -1045,7 +1160,11 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   }
 
   /// Build server image list item
-  Widget _buildServerImageListItem(ClientImage image, ThemeData theme, AppLocalizations? l10n) {
+  Widget _buildServerImageListItem(
+    ClientImage image,
+    ThemeData theme,
+    AppLocalizations? l10n,
+  ) {
     final previewUrl = _bestClientImagePreviewUrl(image);
     final previewProvider = _clientImageProviderFromUrl(previewUrl);
 
@@ -1061,10 +1180,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
               borderRadius: BorderRadius.circular(8),
               image: previewProvider == null
                   ? null
-                  : DecorationImage(
-                      image: previewProvider,
-                      fit: BoxFit.cover,
-                    ),
+                  : DecorationImage(image: previewProvider, fit: BoxFit.cover),
             ),
             child: previewProvider == null
                 ? const Center(child: Icon(Icons.broken_image))
@@ -1072,14 +1188,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
           ),
         ),
         title: Text(
-          image.isMain 
-              ? (l10n?.mainImage ?? 'Asosiy rasm') 
+          image.isMain
+              ? (l10n?.mainImage ?? 'Asosiy rasm')
               : (l10n?.image ?? 'Rasm'),
           style: theme.textTheme.titleMedium,
         ),
-        subtitle: Text(
-          image.createdAtServer ?? 'Server vaqti noma\'lum',
-        ),
+        subtitle: Text(image.createdAtServer ?? 'Server vaqti noma\'lum'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1088,15 +1202,23 @@ class _ClientImagesPageState extends State<ClientImagesPage>
               onPressed: _isDeletingServerImage
                   ? null
                   : () => _showServerImageDeleteConfirmation(image),
-              tooltip: l10n != null ? l10n.deleteImageTitle : 'Rasmni o\'chirish',
+              tooltip: l10n != null
+                  ? l10n.deleteImageTitle
+                  : 'Rasmni o\'chirish',
             ),
             if (image.isMain)
               const Icon(Icons.star, color: Colors.green)
             else
               IconButton(
-                icon: const Icon(Icons.star_border, color: Colors.amber, size: 20),
+                icon: const Icon(
+                  Icons.star_border,
+                  color: Colors.amber,
+                  size: 20,
+                ),
                 onPressed: () => _requestSetAsMain(image),
-                tooltip: l10n != null ? l10n.setAsMainImage : 'Asosiy rasmga o\'zgartirish',
+                tooltip: l10n != null
+                    ? l10n.setAsMainImage
+                    : 'Asosiy rasmga o\'zgartirish',
               ),
           ],
         ),
@@ -1106,7 +1228,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   }
 
   /// Build local photo card for grid view
-  Widget _buildLocalPhotoCard(Map<String, dynamic> photo, int index, ThemeData theme, AppLocalizations? l10n) {
+  Widget _buildLocalPhotoCard(
+    Map<String, dynamic> photo,
+    int index,
+    ThemeData theme,
+    AppLocalizations? l10n,
+  ) {
     return GestureDetector(
       onTap: () => _openFullScreenViewer(index),
       child: Card(
@@ -1133,11 +1260,19 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 14),
+                    const Icon(
+                      Icons.cloud_upload_outlined,
+                      color: Colors.white,
+                      size: 14,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       l10n?.notSent ?? 'Yuborilmagan',
-                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -1161,7 +1296,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   }
 
   /// Build photo list item
-  Widget _buildPhotoListItem(Map<String, dynamic> photo, int index, ThemeData theme, AppLocalizations? l10n) {
+  Widget _buildPhotoListItem(
+    Map<String, dynamic> photo,
+    int index,
+    ThemeData theme,
+    AppLocalizations? l10n,
+  ) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
@@ -1175,7 +1315,9 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   image: DecorationImage(
-                    image: FileImage(File(photo['thumbnailPath'] ?? photo['imagePath'])),
+                    image: FileImage(
+                      File(photo['thumbnailPath'] ?? photo['imagePath']),
+                    ),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -1193,7 +1335,11 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                       bottomRight: Radius.circular(8),
                     ),
                   ),
-                  child: const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 12),
+                  child: const Icon(
+                    Icons.cloud_upload_outlined,
+                    color: Colors.white,
+                    size: 12,
+                  ),
                 ),
               ),
             ],
@@ -1202,7 +1348,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         title: Row(
           children: [
             Text(
-              'Rasm ${index + 1}',
+              '${l10n?.image ?? 'Rasm'} ${index + 1}',
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(width: 8),
@@ -1216,7 +1362,11 @@ class _ClientImagesPageState extends State<ClientImagesPage>
               ),
               child: Text(
                 l10n?.notSent ?? 'Yuborilmagan',
-                style: TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: Colors.orange,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -1224,12 +1374,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         subtitle: Text(
           photo['timestamp'] != null
               ? _formatDateTime(photo['timestamp'])
-              : 'Vaqt noma\'lum',
+              : AppLocalizations.of(context)?.timeUnknown ?? 'Vaqt noma\'lum',
         ),
         trailing: IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () => _showDeleteConfirmation(index),
-          ),
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: () => _showDeleteConfirmation(index),
+        ),
         onTap: () => _openFullScreenViewer(index),
       ),
     );
@@ -1259,7 +1409,10 @@ class _ClientImagesPageState extends State<ClientImagesPage>
             : FilledButton.icon(
                 onPressed: _photos.isEmpty ? null : _uploadImagesToServer,
                 icon: const Icon(Icons.cloud_upload),
-                label: Text('Serverga yuborish (${_photos.length} ta rasm)'),
+                label: Text(
+                  l10n?.sendToServer(_photos.length) ??
+                      'Serverga yuborish (${_photos.length} ta rasm)',
+                ),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 18),
                 ),
@@ -1273,22 +1426,25 @@ class _ClientImagesPageState extends State<ClientImagesPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rasmni o\'chirish'),
-        content: const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+        title: Text(
+          AppLocalizations.of(context)?.deleteImageTitle ?? 'Rasmni o\'chirish',
+        ),
+        content: Text(
+          AppLocalizations.of(context)?.deleteImageConfirmation ??
+              'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop();
               _deletePhoto(index);
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('O\'chirish'),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(AppLocalizations.of(context)?.delete ?? 'O\'chirish'),
           ),
         ],
       ),
@@ -1299,10 +1455,10 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   String _formatDateTime(dynamic timestamp) {
     if (timestamp is DateTime) {
       return '${timestamp.day.toString().padLeft(2, '0')}.'
-            '${timestamp.month.toString().padLeft(2, '0')}.'
-            '${timestamp.year} '
-            '${timestamp.hour.toString().padLeft(2, '0')}:'
-            '${timestamp.minute.toString().padLeft(2, '0')}';
+          '${timestamp.month.toString().padLeft(2, '0')}.'
+          '${timestamp.year} '
+          '${timestamp.hour.toString().padLeft(2, '0')}:'
+          '${timestamp.minute.toString().padLeft(2, '0')}';
     }
     return 'Vaqt noma\'lum';
   }
@@ -1361,7 +1517,9 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: _showDeleteConfirmation,
-                  tooltip: 'Rasmni o\'chirish',
+                  tooltip:
+                      AppLocalizations.of(context)?.deleteImageTitle ??
+                      'Rasmni o\'chirish',
                 ),
               ],
       ),
@@ -1378,9 +1536,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
           );
         },
         itemCount: widget.photos.length,
-        loadingBuilder: (context, event) => const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
+        loadingBuilder: (context, event) =>
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
         pageController: _pageController,
         onPageChanged: (index) {
           setState(() => _currentIndex = index);
@@ -1394,12 +1551,17 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rasmni o\'chirish'),
-        content: const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+        title: Text(
+          AppLocalizations.of(context)?.deleteImageTitle ?? 'Rasmni o\'chirish',
+        ),
+        content: Text(
+          AppLocalizations.of(context)?.deleteImageConfirmation ??
+              'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           FilledButton(
             onPressed: () {
@@ -1416,10 +1578,8 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                 setState(() {});
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('O\'chirish'),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(AppLocalizations.of(context)?.delete ?? 'O\'chirish'),
           ),
         ],
       ),
@@ -1473,7 +1633,11 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       if (mounted) {
         setState(() => _isCameraAvailable = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kamera xatoligi: $error')),
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)?.cameraError ?? 'Kamera xatoligi'}: $error',
+            ),
+          ),
         );
       }
     }
@@ -1486,9 +1650,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       body: Stack(
         children: [
           // Full screen camera preview
-          Positioned.fill(
-            child: CameraPreview(widget.cameraController),
-          ),
+          Positioned.fill(child: CameraPreview(widget.cameraController)),
 
           // Bottom spacing for safe area (moved to bottom of stack)
           Positioned(
@@ -1501,10 +1663,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                 ),
               ),
             ),
@@ -1517,7 +1676,9 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
             right: 0,
             child: Center(
               child: GestureDetector(
-                onTap: (_isCapturing || !_isCameraAvailable) ? null : _capturePhoto,
+                onTap: (_isCapturing || !_isCameraAvailable)
+                    ? null
+                    : _capturePhoto,
                 child: Container(
                   width: 80,
                   height: 80,
@@ -1527,14 +1688,14 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                     color: _isCapturing
                         ? Colors.grey
                         : !_isCameraAvailable
-                            ? Colors.red.withOpacity(0.5)
-                            : Colors.transparent,
+                        ? Colors.red.withOpacity(0.5)
+                        : Colors.transparent,
                   ),
                   child: _isCapturing
                       ? const CircularProgressIndicator(color: Colors.white)
                       : !_isCameraAvailable
-                          ? const Icon(Icons.error, color: Colors.white)
-                          : Container(), // Empty circle with white border
+                      ? const Icon(Icons.error, color: Colors.white)
+                      : Container(), // Empty circle with white border
                 ),
               ),
             ),
@@ -1599,10 +1760,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                 ),
               ),
               child: Row(
@@ -1618,7 +1776,10 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.5),
                           borderRadius: BorderRadius.circular(16),
@@ -1634,7 +1795,9 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                             ? () => Navigator.of(context).pop()
                             : null,
                         icon: const Icon(Icons.check),
-                        label: const Text('Yakunlash'),
+                        label: Text(
+                          AppLocalizations.of(context)?.finish ?? 'Yakunlash',
+                        ),
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.green,
                         ),
@@ -1692,9 +1855,12 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       // Show success feedback
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rasm muvaffaqiyatli olingan'),
-            duration: Duration(seconds: 1),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imageCapturedSuccessfully ??
+                  'Rasm muvaffaqiyatli olingan',
+            ),
+            duration: const Duration(seconds: 1),
           ),
         );
       }
@@ -1703,7 +1869,12 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       if (mounted) {
         setState(() => _isCameraAvailable = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rasm olishda xatolik: $e')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.imageCaptureError(e.toString()) ??
+                  'Rasm olishda xatolik: $e',
+            ),
+          ),
         );
       }
     } finally {
@@ -1726,10 +1897,12 @@ class CameraFullScreenImageViewer extends StatefulWidget {
   });
 
   @override
-  State<CameraFullScreenImageViewer> createState() => _CameraFullScreenImageViewerState();
+  State<CameraFullScreenImageViewer> createState() =>
+      _CameraFullScreenImageViewerState();
 }
 
-class _CameraFullScreenImageViewerState extends State<CameraFullScreenImageViewer> {
+class _CameraFullScreenImageViewerState
+    extends State<CameraFullScreenImageViewer> {
   late PageController _pageController;
   late int _currentIndex;
 
@@ -1769,9 +1942,8 @@ class _CameraFullScreenImageViewerState extends State<CameraFullScreenImageViewe
           );
         },
         itemCount: widget.photos.length,
-        loadingBuilder: (context, event) => const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
+        loadingBuilder: (context, event) =>
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
         pageController: _pageController,
         onPageChanged: (index) {
           setState(() => _currentIndex = index);

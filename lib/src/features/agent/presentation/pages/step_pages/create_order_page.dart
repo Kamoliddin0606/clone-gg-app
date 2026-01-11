@@ -30,7 +30,7 @@ enum ViewMode {
   grid,
 
   /// Large image view - focus on product images
-  largeImage
+  largeImage,
 }
 
 /// Create order page
@@ -71,15 +71,18 @@ class CreateOrderPage extends StatefulWidget {
   State<CreateOrderPage> createState() => _CreateOrderPageState();
 }
 
-class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderStateMixin {
-   final VisitStepDataService _dataService = sl<VisitStepDataService>();
-   final OrderDraftService _draftService = sl<OrderDraftService>();
-   final DataSyncService _syncService = sl<DataSyncService>();
-   final ApiDatabaseService _dbService = sl<ApiDatabaseService>();
-   final SharedPreferencesService _prefs = sl<SharedPreferencesService>();
-   final LocationService _locationService = sl<LocationService>();
-   final VisitDataRepository _visitDataRepository = VisitDataRepository(sl<ApiDatabaseService>());
-   final TextEditingController _notesController = TextEditingController();
+class _CreateOrderPageState extends State<CreateOrderPage>
+    with TickerProviderStateMixin {
+  final VisitStepDataService _dataService = sl<VisitStepDataService>();
+  final OrderDraftService _draftService = sl<OrderDraftService>();
+  final DataSyncService _syncService = sl<DataSyncService>();
+  final ApiDatabaseService _dbService = sl<ApiDatabaseService>();
+  final SharedPreferencesService _prefs = sl<SharedPreferencesService>();
+  final LocationService _locationService = sl<LocationService>();
+  final VisitDataRepository _visitDataRepository = VisitDataRepository(
+    sl<ApiDatabaseService>(),
+  );
+  final TextEditingController _notesController = TextEditingController();
 
   // UI state
   bool _isSettingsPanelVisible = false;
@@ -129,10 +132,18 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   bool _isAutoSaveEnabled = false;
 
   // Summary data
-  int get _totalItems => _selectedProducts.fold(0, (sum, product) => sum + product.amount);
-  double get _totalValue => _selectedProducts.fold(0.0, (sum, product) => sum + product.total);
-  double get _totalWeight => _selectedProducts.fold(0.0, (sum, product) => sum + (product.weight * product.amount));
-  double get _totalVolume => _selectedProducts.fold(0.0, (sum, product) => sum + (product.capacity * product.amount));
+  int get _totalItems =>
+      _selectedProducts.fold(0, (sum, product) => sum + product.amount);
+  double get _totalValue =>
+      _selectedProducts.fold(0.0, (sum, product) => sum + product.total);
+  double get _totalWeight => _selectedProducts.fold(
+    0.0,
+    (sum, product) => sum + (product.weight * product.amount),
+  );
+  double get _totalVolume => _selectedProducts.fold(
+    0.0,
+    (sum, product) => sum + (product.capacity * product.amount),
+  );
 
   @override
   void initState() {
@@ -142,32 +153,41 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       vsync: this,
     );
     _settingsAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _settingsAnimationController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _settingsAnimationController,
+        curve: Curves.easeInOut,
+      ),
     );
     _summaryAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _summaryAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _summaryAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _summaryAnimation =
+        Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _summaryAnimationController,
+            curve: Curves.easeInOut,
+          ),
+        );
     _viewModeToggleAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _viewModeToggleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _viewModeToggleAnimationController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _viewModeToggleAnimationController,
+        curve: Curves.easeInOut,
+      ),
     );
     _tuneAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _tuneAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _tuneAnimationController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _tuneAnimationController,
+        curve: Curves.easeInOut,
+      ),
     );
     _loadInitialData();
   }
@@ -176,7 +196,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Saves current order state including products, settings, and notes
   Future<void> _saveOrderDraft() async {
     try {
-      debugPrint('CreateOrderPage: Saving order draft for visit ${widget.visitId}, step ${widget.stepCode}');
+      debugPrint(
+        'CreateOrderPage: Saving order draft for visit ${widget.visitId}, step ${widget.stepCode}',
+      );
 
       await _draftService.saveOrderDraft(
         visitId: widget.visitId,
@@ -209,7 +231,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)?.dataSaveError ?? 'Error saving data'),
+            content: Text(
+              AppLocalizations.of(context)?.dataSaveError ??
+                  'Error saving data',
+            ),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 2),
           ),
@@ -245,7 +270,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         clientCode: widget.tradingPoint.tradingPoint.id,
       );
       _isAutoSaveEnabled = true;
-      debugPrint('CreateOrderPage: Auto-save enabled for visit ${widget.visitId}, step ${widget.stepCode} with clientCode: ${widget.tradingPoint.tradingPoint.id}');
+      debugPrint(
+        'CreateOrderPage: Auto-save enabled for visit ${widget.visitId}, step ${widget.stepCode} with clientCode: ${widget.tradingPoint.tradingPoint.id}',
+      );
     }
   }
 
@@ -270,19 +297,22 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Get formatted save status text for UI display
   String _getSaveStatusText() {
     if (_lastSaveError != null) {
-      return 'Saqlashda xatolik: $_lastSaveError';
+      return AppLocalizations.of(context)?.saveError(_lastSaveError ?? '') ??
+          'Saqlashda xatolik: $_lastSaveError';
     } else if (_lastSaveTime != null) {
       final now = DateTime.now();
       final diff = now.difference(_lastSaveTime!);
       if (diff.inMinutes < 1) {
-        return 'Hozir saqlandi';
+        return AppLocalizations.of(context)?.justSaved ?? 'Hozir saqlandi';
       } else if (diff.inHours < 1) {
-        return '${diff.inMinutes} daqiqa oldin saqlandi';
+        return AppLocalizations.of(context)?.savedMinutesAgo(diff.inMinutes) ??
+            '${diff.inMinutes} daqiqa oldin saqlandi';
       } else {
-        return '${diff.inHours} soat oldin saqlandi';
+        return AppLocalizations.of(context)?.savedHoursAgo(diff.inHours) ??
+            '${diff.inHours} soat oldin saqlandi';
       }
     } else {
-      return 'Saqlanmagan';
+      return AppLocalizations.of(context)?.notSaved ?? 'Saqlanmagan';
     }
   }
 
@@ -293,11 +323,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     try {
       if (widget.readOnly) {
         // In read-only mode, load order data from visit step completion data
-        debugPrint('CreateOrderPage: Loading order data from completion for visit ${widget.visitId}, step ${widget.stepCode}');
+        debugPrint(
+          'CreateOrderPage: Loading order data from completion for visit ${widget.visitId}, step ${widget.stepCode}',
+        );
         await _loadOrderFromCompletionData();
       } else {
         // In edit mode, load from draft
-        debugPrint('CreateOrderPage: Loading saved order draft for visit ${widget.visitId}, step ${widget.stepCode}');
+        debugPrint(
+          'CreateOrderPage: Loading saved order draft for visit ${widget.visitId}, step ${widget.stepCode}',
+        );
         await _loadOrderFromDraft();
       }
     } catch (e, stackTrace) {
@@ -310,11 +344,18 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Load order data from visit step completion data (for read-only mode)
   Future<void> _loadOrderFromCompletionData() async {
     try {
-      final stepData = await _visitDataRepository.getVisitStepDataByStep(widget.visitId, widget.stepCode);
-      final completionData = stepData.where((d) => d.dataType == 'completion').toList();
+      final stepData = await _visitDataRepository.getVisitStepDataByStep(
+        widget.visitId,
+        widget.stepCode,
+      );
+      final completionData = stepData
+          .where((d) => d.dataType == 'completion')
+          .toList();
 
       if (completionData.isEmpty) {
-        debugPrint('CreateOrderPage: No completion data found for step ${widget.stepCode}');
+        debugPrint(
+          'CreateOrderPage: No completion data found for step ${widget.stepCode}',
+        );
         return;
       }
 
@@ -322,7 +363,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       completionData.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       final latestCompletion = completionData.first;
 
-      final parsedData = jsonDecode(latestCompletion.dataContent) as Map<String, dynamic>;
+      final parsedData =
+          jsonDecode(latestCompletion.dataContent) as Map<String, dynamic>;
 
       // Extract order data from completion data
       final orderData = parsedData['order'] as Map<String, dynamic>?;
@@ -342,16 +384,22 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         _selectedProducts = productsJson
             .map((p) => CreateOrderProduct.fromJson(p as Map<String, dynamic>))
             .toList();
-        debugPrint('CreateOrderPage: Restored ${_selectedProducts.length} products from completion data');
+        debugPrint(
+          'CreateOrderPage: Restored ${_selectedProducts.length} products from completion data',
+        );
         _updateAddButtonStates();
       }
 
       // Restore notes
       _notesController.text = parsedData['notes'] as String? ?? '';
 
-      debugPrint('CreateOrderPage: Successfully loaded order data from completion');
+      debugPrint(
+        'CreateOrderPage: Successfully loaded order data from completion',
+      );
     } catch (e, stackTrace) {
-      debugPrint('CreateOrderPage: Error loading order from completion data: $e');
+      debugPrint(
+        'CreateOrderPage: Error loading order from completion data: $e',
+      );
       debugPrint('CreateOrderPage: Stack trace: $stackTrace');
       rethrow;
     }
@@ -360,13 +408,17 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Load order data from draft (for edit mode)
   Future<void> _loadOrderFromDraft() async {
     try {
-      final draftData = await _draftService.loadOrderDraft(widget.visitId, widget.stepCode);
+      final draftData = await _draftService.loadOrderDraft(
+        widget.visitId,
+        widget.stepCode,
+      );
       if (draftData != null) {
         // Restore selections
         _selectedOrganization = draftData['selectedOrganization'] as String?;
         _selectedWarehouse = draftData['selectedWarehouse'] as String?;
         _selectedPriceType = draftData['selectedPriceType'] as String?;
-        _selectedOrganizationcode = draftData['selectedOrganizationcode'] as String?;
+        _selectedOrganizationcode =
+            draftData['selectedOrganizationcode'] as String?;
         _selectedWarehousecode = draftData['selectedWarehousecode'] as String?;
         _selectedPriceTypecode = draftData['selectedPriceTypecode'] as String?;
         _shippingDate = draftData['shippingDate'] != null
@@ -377,18 +429,28 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         final productsJson = draftData['products'] as List<dynamic>?;
         if (productsJson != null) {
           _selectedProducts = productsJson
-              .map((p) => CreateOrderProduct.fromJson(p as Map<String, dynamic>))
+              .map(
+                (p) => CreateOrderProduct.fromJson(p as Map<String, dynamic>),
+              )
               .toList();
-          debugPrint('CreateOrderPage: Restored ${_selectedProducts.length} products from draft');
-          debugPrint('CreateOrderPage: Available products count: ${_availableProducts.length}');
+          debugPrint(
+            'CreateOrderPage: Restored ${_selectedProducts.length} products from draft',
+          );
+          debugPrint(
+            'CreateOrderPage: Available products count: ${_availableProducts.length}',
+          );
           _updateAddButtonStates(); // Update disabled states
-          debugPrint('CreateOrderPage: Updated add button states after loading draft');
+          debugPrint(
+            'CreateOrderPage: Updated add button states after loading draft',
+          );
         }
 
         // Restore notes
         _notesController.text = draftData['notes'] as String? ?? '';
 
-        debugPrint('CreateOrderPage: Successfully loaded saved order draft with ${_selectedProducts.length} products');
+        debugPrint(
+          'CreateOrderPage: Successfully loaded saved order draft with ${_selectedProducts.length} products',
+        );
       } else {
         debugPrint('CreateOrderPage: No saved order draft found');
       }
@@ -458,18 +520,27 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       // Set default selections based on loaded data (only if no saved data)
       if (_selectedOrganization == null && _organizations.isNotEmpty) {
         _selectedOrganization = _organizations.first.code;
-        _selectedOrganizationcode = _organizations.first.code; // Set default organization code
-        debugPrint('CreateOrderPage: Default organization set to: $_selectedOrganization');
+        _selectedOrganizationcode =
+            _organizations.first.code; // Set default organization code
+        debugPrint(
+          'CreateOrderPage: Default organization set to: $_selectedOrganization',
+        );
       }
       if (_selectedWarehouse == null && _warehouses.isNotEmpty) {
         _selectedWarehouse = _warehouses.first.code;
-        _selectedWarehousecode = _warehouses.first.code; // Set default warehouse code
-        debugPrint('CreateOrderPage: Default warehouse set to: $_selectedWarehouse');
+        _selectedWarehousecode =
+            _warehouses.first.code; // Set default warehouse code
+        debugPrint(
+          'CreateOrderPage: Default warehouse set to: $_selectedWarehouse',
+        );
       }
       if (_selectedPriceType == null && _priceTypes.isNotEmpty) {
         _selectedPriceType = _priceTypes.first.code;
-        _selectedPriceTypecode = _priceTypes.first.code; // Set default price type code
-        debugPrint('CreateOrderPage: Default price type set to: $_selectedPriceType');
+        _selectedPriceTypecode =
+            _priceTypes.first.code; // Set default price type code
+        debugPrint(
+          'CreateOrderPage: Default price type set to: $_selectedPriceType',
+        );
       }
 
       // Load products if we have required data
@@ -480,7 +551,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       // Enable auto-save after initial data is loaded
       _enableAutoSave();
 
-      debugPrint('CreateOrderPage: Initial data loading completed successfully');
+      debugPrint(
+        'CreateOrderPage: Initial data loading completed successfully',
+      );
     } catch (e, stackTrace) {
       debugPrint('CreateOrderPage: Error loading initial data: $e');
       debugPrint('CreateOrderPage: Stack trace: $stackTrace');
@@ -489,7 +562,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)?.dataLoadError ?? "Error loading data"}: ${e.toString()}'),
+            content: Text(
+              '${AppLocalizations.of(context)?.dataLoadError ?? "Error loading data"}: ${e.toString()}',
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -506,15 +581,21 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       // Get current user code from preferences
       final userCode = _prefs.getUserCode();
       if (userCode == null) {
-        debugPrint('CreateOrderPage: No user code found, cannot load organizations');
+        debugPrint(
+          'CreateOrderPage: No user code found, cannot load organizations',
+        );
         _organizations = [];
         if (mounted) setState(() {});
         return;
       }
 
       // Load organizations using sync service (cache-first approach)
-      _organizations = await _syncService.syncUserOrganizations(userCode: userCode);
-      debugPrint('CreateOrderPage: Loaded ${_organizations.length} organizations');
+      _organizations = await _syncService.syncUserOrganizations(
+        userCode: userCode,
+      );
+      debugPrint(
+        'CreateOrderPage: Loaded ${_organizations.length} organizations',
+      );
       if (mounted) setState(() {});
     } catch (e, stackTrace) {
       debugPrint('CreateOrderPage: Error loading organizations: $e');
@@ -587,22 +668,30 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Load products with prices based on selected price type and warehouse
   Future<void> _loadProducts() async {
     if (_selectedPriceType == null || _selectedWarehouse == null) {
-      debugPrint('CreateOrderPage: Cannot load products - missing price type or warehouse');
+      debugPrint(
+        'CreateOrderPage: Cannot load products - missing price type or warehouse',
+      );
       return;
     }
 
     if (mounted) setState(() => _isLoadingProducts = true);
     try {
-      debugPrint('CreateOrderPage: Loading products for price type: $_selectedPriceType, warehouse: $_selectedWarehouse');
+      debugPrint(
+        'CreateOrderPage: Loading products for price type: $_selectedPriceType, warehouse: $_selectedWarehouse',
+      );
       final products = await _syncService.getCachedProductsWithPrices(
         priceTypeCode: _selectedPriceType!,
         warehouseCodes: [_selectedWarehouse!],
       );
       _availableProducts = products;
-      debugPrint('CreateOrderPage: Loaded ${_availableProducts.length} products');
+      debugPrint(
+        'CreateOrderPage: Loaded ${_availableProducts.length} products',
+      );
       // Update add button states after products are loaded
       _updateAddButtonStates();
-      debugPrint('CreateOrderPage: Updated add button states after loading products');
+      debugPrint(
+        'CreateOrderPage: Updated add button states after loading products',
+      );
     } catch (e, stackTrace) {
       debugPrint('CreateOrderPage: Error loading products: $e');
       debugPrint('CreateOrderPage: Stack trace: $stackTrace');
@@ -612,7 +701,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)?.productsLoadError ?? "Error loading products"}: ${e.toString()}'),
+            content: Text(
+              '${AppLocalizations.of(context)?.productsLoadError ?? "Error loading products"}: ${e.toString()}',
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -642,7 +733,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       await _loadProducts();
       _updateSelectedProductsPrices();
       _updateAddButtonStates(); // Update disabled states based on new stock levels
-      debugPrint('CreateOrderPage: Selected products prices updated successfully');
+      debugPrint(
+        'CreateOrderPage: Selected products prices updated successfully',
+      );
       _markAsChanged();
     } catch (e, stackTrace) {
       debugPrint('CreateOrderPage: Error updating settings: $e');
@@ -652,7 +745,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)?.settingsUpdateError ?? "Error updating settings"}: ${e.toString()}'),
+            content: Text(
+              '${AppLocalizations.of(context)?.settingsUpdateError ?? "Error updating settings"}: ${e.toString()}',
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -703,7 +798,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
         // If price is zero or null, set quantity to zero
         if (newPrice <= 0) {
-          debugPrint('CreateOrderPage: Product ${selectedProduct.codeProduct} has zero price, setting quantity to 0');
+          debugPrint(
+            'CreateOrderPage: Product ${selectedProduct.codeProduct} has zero price, setting quantity to 0',
+          );
           _selectedProducts[i] = selectedProduct.copyWith(
             price: newPrice,
             amount: 0,
@@ -716,16 +813,22 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             price: newPrice,
             total: newTotal,
           );
-          debugPrint('CreateOrderPage: Updated product ${selectedProduct.codeProduct} price to $newPrice, total: $newTotal');
+          debugPrint(
+            'CreateOrderPage: Updated product ${selectedProduct.codeProduct} price to $newPrice, total: $newTotal',
+          );
         }
       }
 
       // Trigger UI update
       if (mounted) setState(() {});
 
-      debugPrint('CreateOrderPage: Selected products prices updated successfully');
+      debugPrint(
+        'CreateOrderPage: Selected products prices updated successfully',
+      );
     } catch (e, stackTrace) {
-      debugPrint('CreateOrderPage: Error updating selected products prices: $e');
+      debugPrint(
+        'CreateOrderPage: Error updating selected products prices: $e',
+      );
       debugPrint('CreateOrderPage: Stack trace: $stackTrace');
 
       // Continue with existing data - don't crash the app
@@ -771,7 +874,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   }
 
   void _updateProductQuantity(String codeProduct, int newAmount) {
-    final index = _selectedProducts.indexWhere((p) => p.codeProduct == codeProduct);
+    final index = _selectedProducts.indexWhere(
+      (p) => p.codeProduct == codeProduct,
+    );
     if (index >= 0) {
       if (newAmount <= 0) {
         _selectedProducts.removeAt(index);
@@ -814,7 +919,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Updates the disabled state of add buttons based on current quantities and stock
   /// Should be called after any quantity change to ensure UI consistency
   void _updateAddButtonStates() {
-    debugPrint('CreateOrderPage: Updating add button states. Selected products: ${_selectedProducts.length}, Available products: ${_availableProducts.length}');
+    debugPrint(
+      'CreateOrderPage: Updating add button states. Selected products: ${_selectedProducts.length}, Available products: ${_availableProducts.length}',
+    );
     final toEnable = <String>{};
     final toDisable = <String>{};
 
@@ -823,7 +930,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       final isAtMax = product.amount >= stock;
       final isDisabled = _disabledAddProducts.contains(product.codeProduct);
 
-      debugPrint('CreateOrderPage: Product ${product.codeProduct}: amount=${product.amount}, stock=$stock, isAtMax=$isAtMax, isDisabled=$isDisabled');
+      debugPrint(
+        'CreateOrderPage: Product ${product.codeProduct}: amount=${product.amount}, stock=$stock, isAtMax=$isAtMax, isDisabled=$isDisabled',
+      );
 
       if (isAtMax && !isDisabled) {
         toDisable.add(product.codeProduct);
@@ -839,7 +948,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         _disabledAddProducts.addAll(toDisable);
         _disabledAddProducts.removeAll(toEnable);
       });
-      debugPrint('CreateOrderPage: Disabled products after update: $_disabledAddProducts');
+      debugPrint(
+        'CreateOrderPage: Disabled products after update: $_disabledAddProducts',
+      );
     } else {
       debugPrint('CreateOrderPage: No changes to disabled states');
     }
@@ -934,7 +1045,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Miqdorni kiriting',
+              AppLocalizations.of(context)?.enterQuantity ??
+                  'Miqdorni kiriting',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
@@ -942,16 +1054,19 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               controller: controller,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'Miqdor',
-                hintText: '0 dan ${stock} gacha',
-                border: OutlineInputBorder(),
+                labelText: AppLocalizations.of(context)?.quantity ?? 'Miqdor',
+                hintText:
+                    AppLocalizations.of(context)?.quantityHint(stock) ??
+                    '0 dan $stock gacha',
+                border: const OutlineInputBorder(),
               ),
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               autofocus: true,
             ),
             const SizedBox(height: 8),
             Text(
-              'Maksimal mavjud: $stock dona',
+              AppLocalizations.of(context)?.maxAvailable(stock) ??
+                  'Maksimal mavjud: $stock dona',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
@@ -960,7 +1075,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor'),
+                    child: Text(
+                      AppLocalizations.of(context)?.cancel ?? 'Bekor',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -974,8 +1091,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Miqdor 1 dan $stock gacha bo\'lishi kerak'),
-                            backgroundColor: Theme.of(context).colorScheme.error,
+                            content: Text(
+                              'Miqdor 1 dan $stock gacha bo\'lishi kerak',
+                            ),
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.error,
                           ),
                         );
                       }
@@ -997,9 +1118,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        child: InteractiveViewer(
-          child: Image.asset(imagePath),
-        ),
+        child: InteractiveViewer(child: Image.asset(imagePath)),
       ),
     );
   }
@@ -1009,9 +1128,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       title: GestureDetector(
         onVerticalDragEnd: (details) {
           final velocity = details.velocity.pixelsPerSecond.dy;
-          if (velocity < -100) { // dragging up on title
+          if (velocity < -100) {
+            // dragging up on title
             _hideViewModeToggle();
-          } else if (velocity > 100) { // dragging down on title
+          } else if (velocity > 100) {
+            // dragging down on title
             _showViewModeToggle();
           }
         },
@@ -1070,12 +1191,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   duration: const Duration(milliseconds: 300),
                   width: 48 + (_tuneAnimation.value * 20),
                   child: IconButton(
-                    icon: Icon(
-                      Icons.delete,
-                      color: Colors.redAccent,
-                    ),
-                    onPressed: _selectedProducts.isEmpty ? null : _showClearConfirmationDialog,
-                    tooltip: AppLocalizations.of(context)?.clearOrder ?? 'Clear order',
+                    icon: Icon(Icons.delete, color: Colors.redAccent),
+                    onPressed: _selectedProducts.isEmpty
+                        ? null
+                        : _showClearConfirmationDialog,
+                    tooltip:
+                        AppLocalizations.of(context)?.clearOrder ??
+                        'Clear order',
                   ),
                 ),
 
@@ -1085,54 +1207,54 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   duration: const Duration(milliseconds: 300),
                   width: 48 + (_tuneAnimation.value * 20),
                   child: IconButton(
-                    icon: Icon(
-                      Icons.lightbulb_outline,
-                      color: Colors.yellow,
-                    ),
+                    icon: Icon(Icons.lightbulb_outline, color: Colors.yellow),
                     onPressed: () {
                       // TODO: Show suggested orders
                     },
-                    tooltip: AppLocalizations.of(context)?.suggestedOrders ?? 'Suggested orders',
+                    tooltip:
+                        AppLocalizations.of(context)?.suggestedOrders ??
+                        'Suggested orders',
                   ),
                 ),
 
               // Settings icon with visual indicator - always show in tune mode
               if (!widget.readOnly)
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 48 + (_tuneAnimation.value * 20),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.settings,
-                    color: _isSettingsPanelVisible
-                        ? theme.colorScheme.primary
-                        : Colors.green,
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 48 + (_tuneAnimation.value * 20),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.settings,
+                      color: _isSettingsPanelVisible
+                          ? theme.colorScheme.primary
+                          : Colors.green,
+                    ),
+                    onPressed: _toggleSettingsPanel,
+                    tooltip:
+                        AppLocalizations.of(context)?.settings ?? 'Sozlamalar',
                   ),
-                  onPressed: _toggleSettingsPanel,
-                  tooltip: AppLocalizations.of(context)?.settings ?? 'Sozlamalar',
                 ),
-              ),
             ],
 
             // Tune icon - always visible
             if (!widget.readOnly)
-            IconButton(
-              icon: Icon(
-                Icons.tune,
-                color: _isTuneMode ? theme.colorScheme.primary : null,
+              IconButton(
+                icon: Icon(
+                  Icons.tune,
+                  color: _isTuneMode ? theme.colorScheme.primary : null,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isTuneMode = !_isTuneMode;
+                    if (_isTuneMode) {
+                      _tuneAnimationController.forward();
+                    } else {
+                      _tuneAnimationController.reverse();
+                    }
+                  });
+                },
+                tooltip: 'Tune mode',
               ),
-              onPressed: () {
-                setState(() {
-                  _isTuneMode = !_isTuneMode;
-                  if (_isTuneMode) {
-                    _tuneAnimationController.forward();
-                  } else {
-                    _tuneAnimationController.reverse();
-                  }
-                });
-              },
-              tooltip: 'Tune mode',
-            ),
 
             // Read-only indicators
             if (widget.readOnly) ...[
@@ -1157,9 +1279,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        border: Border(
-          bottom: BorderSide(color: theme.dividerColor),
-        ),
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1177,12 +1297,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               DropdownButtonFormField<String>(
                 value: _selectedOrganization,
                 decoration: InputDecoration(
-                  labelText: 'Tashkilot',
+                  labelText:
+                      AppLocalizations.of(context)?.organization ?? 'Tashkilot',
                   border: const OutlineInputBorder(),
                   // Visual indication when disabled
                   filled: _selectedProducts.isNotEmpty,
                   fillColor: _selectedProducts.isNotEmpty
-                      ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest.withOpacity(0.5)
                       : null,
                 ),
                 items: _organizations.map((org) {
@@ -1207,12 +1330,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               DropdownButtonFormField<String>(
                 value: _selectedWarehouse,
                 decoration: InputDecoration(
-                  labelText: 'Ombor',
+                  labelText: AppLocalizations.of(context)?.warehouse ?? 'Ombor',
                   border: const OutlineInputBorder(),
                   // Visual indication when disabled
                   filled: _selectedProducts.isNotEmpty,
                   fillColor: _selectedProducts.isNotEmpty
-                      ? Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest.withOpacity(0.5)
                       : null,
                 ),
                 items: _warehouses.map((warehouse) {
@@ -1236,9 +1361,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               // Price type dropdown
               DropdownButtonFormField<String>(
                 value: _selectedPriceType,
-                decoration: const InputDecoration(
-                  labelText: 'Narx turi',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText:
+                      AppLocalizations.of(context)?.priceTypeLabel ??
+                      'Narx turi',
+                  border: const OutlineInputBorder(),
                 ),
                 items: _priceTypes.map((priceType) {
                   return DropdownMenuItem(
@@ -1271,7 +1398,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             return SizeTransition(
               sizeFactor: _viewModeToggleAnimation,
               axisAlignment: -1.0,
-              child: _isViewModeToggleVisible ? _buildViewModeToggle(theme) : const SizedBox.shrink(),
+              child: _isViewModeToggleVisible
+                  ? _buildViewModeToggle(theme)
+                  : const SizedBox.shrink(),
             );
           },
         ),
@@ -1281,13 +1410,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           child: _isLoadingProducts
               ? const Center(child: CircularProgressIndicator())
               : _selectedProducts.isEmpty
-                  ? _buildEmptyState(theme, context)
-                  : _buildProductsList(theme),
+              ? _buildEmptyState(theme, context)
+              : _buildProductsList(theme),
         ),
       ],
     );
   }
-
 
   Widget _buildViewModeToggle(ThemeData theme) {
     return Container(
@@ -1302,14 +1430,21 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               onTap: () => setState(() => _currentViewMode = mode),
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: isSelected ? theme.colorScheme.primaryContainer : Colors.transparent,
+                  color: isSelected
+                      ? theme.colorScheme.primaryContainer
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   _getViewModeIcon(mode),
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
               ),
@@ -1351,7 +1486,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           ),
           const SizedBox(height: 8),
           Text(
-            l10n?.clickPlusToAddProduct ?? 'Mahsulot qo\'shish uchun + tugmasini bosing',
+            l10n?.clickPlusToAddProduct ??
+                'Mahsulot qo\'shish uchun + tugmasini bosing',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
             ),
@@ -1432,10 +1568,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           color: theme.colorScheme.primaryContainer,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(
-          Icons.image,
-          color: theme.colorScheme.primary,
-        ),
+        child: Icon(Icons.image, color: theme.colorScheme.primary),
       ),
       secondaryBackground: Container(
         alignment: Alignment.centerRight,
@@ -1444,16 +1577,17 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           color: theme.colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(
-          Icons.delete,
-          color: theme.colorScheme.error,
-        ),
+        child: Icon(Icons.delete, color: theme.colorScheme.error),
       ),
       onDismissed: (direction) {
         if (direction == DismissDirection.endToStart) {
           _removeProduct(product.codeProduct);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${product.codeProduct} o\'chirildi')),
+            SnackBar(
+              content: Text(
+                '${product.codeProduct} ${AppLocalizations.of(context)?.delete ?? 'o\'chirildi'}',
+              ),
+            ),
           );
         }
       },
@@ -1510,13 +1644,26 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   // Quantity controls
                   IconButton(
                     icon: const Icon(Icons.remove),
-                    onPressed: widget.readOnly ? null : () => _updateProductQuantity(product.codeProduct, product.amount - 1),
+                    onPressed: widget.readOnly
+                        ? null
+                        : () => _updateProductQuantity(
+                            product.codeProduct,
+                            product.amount - 1,
+                          ),
                   ),
                   InkWell(
-                    onTap: widget.readOnly ? null : () => _showQuantityInputDialog(product.codeProduct, product.amount),
+                    onTap: widget.readOnly
+                        ? null
+                        : () => _showQuantityInputDialog(
+                            product.codeProduct,
+                            product.amount,
+                          ),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: theme.dividerColor),
                         borderRadius: BorderRadius.circular(8),
@@ -1530,13 +1677,22 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   IconButton(
                     icon: Icon(
                       Icons.add,
-                      color: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
+                      color:
+                          (widget.readOnly ||
+                              _disabledAddProducts.contains(
+                                product.codeProduct,
+                              ))
                           ? theme.disabledColor
                           : null,
                     ),
-                    onPressed: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
+                    onPressed:
+                        (widget.readOnly ||
+                            _disabledAddProducts.contains(product.codeProduct))
                         ? null
-                        : () => _handleAddProduct(product.codeProduct, product.amount),
+                        : () => _handleAddProduct(
+                            product.codeProduct,
+                            product.amount,
+                          ),
                   ),
                 ],
               ),
@@ -1592,7 +1748,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                           errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.image_outlined,
                             size: 40,
-                            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withOpacity(0.5),
                           ),
                         ),
                       ),
@@ -1686,7 +1843,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     icon: const Icon(Icons.remove, size: 20),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    onPressed: widget.readOnly ? null : () => _updateProductQuantity(product.codeProduct, product.amount - 1),
+                    onPressed: widget.readOnly
+                        ? null
+                        : () => _updateProductQuantity(
+                            product.codeProduct,
+                            product.amount - 1,
+                          ),
                   ),
                   // Text(
                   //   '${product.amount}',
@@ -1695,10 +1857,18 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   //   ),
                   // ),
                   InkWell(
-                    onTap: widget.readOnly ? null : () => _showQuantityInputDialog(product.codeProduct, product.amount),
+                    onTap: widget.readOnly
+                        ? null
+                        : () => _showQuantityInputDialog(
+                            product.codeProduct,
+                            product.amount,
+                          ),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: theme.dividerColor),
                         borderRadius: BorderRadius.circular(8),
@@ -1713,15 +1883,24 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     icon: Icon(
                       Icons.add,
                       size: 20,
-                      color: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
+                      color:
+                          (widget.readOnly ||
+                              _disabledAddProducts.contains(
+                                product.codeProduct,
+                              ))
                           ? theme.disabledColor
                           : null,
                     ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    onPressed: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
+                    onPressed:
+                        (widget.readOnly ||
+                            _disabledAddProducts.contains(product.codeProduct))
                         ? null
-                        : () => _handleAddProduct(product.codeProduct, product.amount),
+                        : () => _handleAddProduct(
+                            product.codeProduct,
+                            product.amount,
+                          ),
                   ),
                 ],
               ),
@@ -1747,7 +1926,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
   /// Builds a full-screen detailed product card for large image view
   /// Provides immersive product details with enhanced visual hierarchy
-  Widget _buildLargeImageProductCard(ThemeData theme, CreateOrderProduct product) {
+  Widget _buildLargeImageProductCard(
+    ThemeData theme,
+    CreateOrderProduct product,
+  ) {
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -1809,11 +1991,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Article and stock info
-
               const SizedBox(height: 8),
               // Price display
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
@@ -1832,8 +2016,17 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.remove, size: 22, color: Colors.white),
-                    onPressed: widget.readOnly ? null : () => _updateProductQuantity(product.codeProduct, product.amount - 1),
+                    icon: const Icon(
+                      Icons.remove,
+                      size: 22,
+                      color: Colors.white,
+                    ),
+                    onPressed: widget.readOnly
+                        ? null
+                        : () => _updateProductQuantity(
+                            product.codeProduct,
+                            product.amount - 1,
+                          ),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withOpacity(0.2),
                       padding: const EdgeInsets.all(16),
@@ -1841,10 +2034,18 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   ),
                   const SizedBox(width: 12),
                   InkWell(
-                    onTap: widget.readOnly ? null : () => _showQuantityInputDialog(product.codeProduct, product.amount),
+                    onTap: widget.readOnly
+                        ? null
+                        : () => _showQuantityInputDialog(
+                            product.codeProduct,
+                            product.amount,
+                          ),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(12),
@@ -1863,13 +2064,22 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     icon: Icon(
                       Icons.add,
                       size: 22,
-                      color: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
+                      color:
+                          (widget.readOnly ||
+                              _disabledAddProducts.contains(
+                                product.codeProduct,
+                              ))
                           ? Colors.grey
                           : Colors.white,
                     ),
-                    onPressed: (widget.readOnly || _disabledAddProducts.contains(product.codeProduct))
+                    onPressed:
+                        (widget.readOnly ||
+                            _disabledAddProducts.contains(product.codeProduct))
                         ? null
-                        : () => _handleAddProduct(product.codeProduct, product.amount),
+                        : () => _handleAddProduct(
+                            product.codeProduct,
+                            product.amount,
+                          ),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withOpacity(0.2),
                       padding: const EdgeInsets.all(16),
@@ -1956,9 +2166,11 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       },
       onVerticalDragEnd: (details) {
         final velocity = details.velocity.pixelsPerSecond.dy;
-        if (velocity < -300) { // dragging up
+        if (velocity < -300) {
+          // dragging up
           _showSummary();
-        } else if (velocity > 300) { // dragging down
+        } else if (velocity > 300) {
+          // dragging down
           _hideSummary();
         }
       },
@@ -1968,9 +2180,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          border: Border(
-            top: BorderSide(color: theme.dividerColor),
-          ),
+          border: Border(top: BorderSide(color: theme.dividerColor)),
         ),
         child: SafeArea(
           child: Column(
@@ -1984,10 +2194,30 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildSummaryItem(theme, l10n?.productsLabel ?? 'Mahsulotlar', '$_totalItems ta', context),
-                      _buildSummaryItem(theme, l10n?.totalValueLabel ?? 'Jami qiymat', _totalValue, context),
-                      _buildSummaryItem(theme, l10n?.weight ?? 'Og\'irlik', '${_totalWeight.toStringAsFixed(2)} kg', context),
-                      _buildSummaryItem(theme, l10n?.volume ?? 'Hajm', '${_totalVolume.toStringAsFixed(2)} m³', context),
+                      _buildSummaryItem(
+                        theme,
+                        l10n?.productsLabel ?? 'Mahsulotlar',
+                        '$_totalItems ta',
+                        context,
+                      ),
+                      _buildSummaryItem(
+                        theme,
+                        l10n?.totalValueLabel ?? 'Jami qiymat',
+                        _totalValue,
+                        context,
+                      ),
+                      _buildSummaryItem(
+                        theme,
+                        l10n?.weight ?? 'Og\'irlik',
+                        '${_totalWeight.toStringAsFixed(2)} kg',
+                        context,
+                      ),
+                      _buildSummaryItem(
+                        theme,
+                        l10n?.volume ?? 'Hajm',
+                        '${_totalVolume.toStringAsFixed(2)} m³',
+                        context,
+                      ),
                     ],
                   ),
                 ),
@@ -1997,9 +2227,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               // Complete button
               if (!widget.readOnly)
                 FilledButton.icon(
-                  onPressed: _selectedProducts.isEmpty ? null : () => _showCompleteDialog(context),
+                  onPressed: _selectedProducts.isEmpty
+                      ? null
+                      : () => _showCompleteDialog(context),
                   icon: const Icon(Icons.check),
-                  label: Text(AppLocalizations.of(context)?.completeStep ?? 'Complete Step'),
+                  label: Text(
+                    AppLocalizations.of(context)?.completeStep ??
+                        'Complete Step',
+                  ),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size(double.infinity, 48),
                   ),
@@ -2011,12 +2246,19 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     );
   }
 
-  Widget _buildSummaryItem(ThemeData theme, String label, dynamic value, BuildContext context) {
+  Widget _buildSummaryItem(
+    ThemeData theme,
+    String label,
+    dynamic value,
+    BuildContext context,
+  ) {
     final l10n = AppLocalizations.of(context);
     String displayValue;
     String? tooltipMessage;
 
-    if ((label == (l10n?.totalValueLabel ?? 'Jami qiymat') || label == 'Jami qiymat') && value is double) {
+    if ((label == (l10n?.totalValueLabel ?? 'Jami qiymat') ||
+            label == 'Jami qiymat') &&
+        value is double) {
       displayValue = _formatTotalValue(value);
       tooltipMessage = uzsFormat.format(value);
     } else {
@@ -2043,11 +2285,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     );
 
     if (tooltipMessage != null) {
-      debugPrint('CreateOrderPage: Creating tooltip for $label with message: $tooltipMessage');
+      debugPrint(
+        'CreateOrderPage: Creating tooltip for $label with message: $tooltipMessage',
+      );
       return Tooltip(
         message: tooltipMessage,
         preferBelow: false, // Show tooltip above the widget
-        onTriggered: () => debugPrint('CreateOrderPage: Tooltip triggered for $label'),
+        onTriggered: () =>
+            debugPrint('CreateOrderPage: Tooltip triggered for $label'),
         child: column,
       );
     } else {
@@ -2059,7 +2304,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Opens a new page for selecting products with quantity controls
   void _navigateToProductSelection() async {
     try {
-      debugPrint('CreateOrderPage: Navigating to product selection page, mounted: $mounted');
+      debugPrint(
+        'CreateOrderPage: Navigating to product selection page, mounted: $mounted',
+      );
 
       final result = await Navigator.of(context).push<List<CreateOrderProduct>>(
         MaterialPageRoute(
@@ -2073,11 +2320,15 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         ),
       );
 
-      debugPrint('CreateOrderPage: Navigation completed, mounted: $mounted, result: ${result?.length ?? 0}');
+      debugPrint(
+        'CreateOrderPage: Navigation completed, mounted: $mounted, result: ${result?.length ?? 0}',
+      );
 
       // Handle the result from the product selection page
       if (result != null && result.isNotEmpty) {
-        debugPrint('CreateOrderPage: Received ${result.length} products from selection page');
+        debugPrint(
+          'CreateOrderPage: Received ${result.length} products from selection page',
+        );
         setState(() {
           _selectedProducts = result;
           _updateAddButtonStates();
@@ -2089,7 +2340,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         _enableAutoSave();
 
         // Show success message
-        debugPrint('CreateOrderPage: About to show success snackbar, mounted: $mounted');
+        debugPrint(
+          'CreateOrderPage: About to show success snackbar, mounted: $mounted',
+        );
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -2100,22 +2353,31 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           );
           debugPrint('CreateOrderPage: Success snackbar shown');
         } else {
-          debugPrint('CreateOrderPage: Widget not mounted, skipping success snackbar');
+          debugPrint(
+            'CreateOrderPage: Widget not mounted, skipping success snackbar',
+          );
         }
       } else {
-        debugPrint('CreateOrderPage: No products selected or operation cancelled');
+        debugPrint(
+          'CreateOrderPage: No products selected or operation cancelled',
+        );
       }
     } catch (e, stackTrace) {
       debugPrint('CreateOrderPage: Error navigating to product selection: $e');
       debugPrint('CreateOrderPage: Stack trace: $stackTrace');
-      debugPrint('CreateOrderPage: About to show error snackbar, mounted: $mounted');
+      debugPrint(
+        'CreateOrderPage: About to show error snackbar, mounted: $mounted',
+      );
 
       // Show error message
       if (mounted) {
         try {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)?.productSelectionError ?? 'Error navigating to product selection'),
+              content: Text(
+                AppLocalizations.of(context)?.productSelectionError ??
+                    'Error navigating to product selection',
+              ),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -2124,7 +2386,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           debugPrint('CreateOrderPage: Error showing snackbar: $snackbarError');
         }
       } else {
-        debugPrint('CreateOrderPage: Widget not mounted, skipping error snackbar');
+        debugPrint(
+          'CreateOrderPage: Widget not mounted, skipping error snackbar',
+        );
       }
     }
   }
@@ -2143,32 +2407,34 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             child: _availableProducts.isEmpty
                 ? Center(child: Text(l10n.noProductsAvailable))
                 : ListView.builder(
-                  itemCount: _availableProducts.length,
-                  itemBuilder: (context, index) {
-                    final product = _availableProducts[index];
-                    final isSelected = _selectedProducts.any((p) => p.codeProduct == product.productCode);
+                    itemCount: _availableProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = _availableProducts[index];
+                      final isSelected = _selectedProducts.any(
+                        (p) => p.codeProduct == product.productCode,
+                      );
 
-                    return ListTile(
-                      title: Text(product.productName),
-                      subtitle: Text(
-                        'Art: ${product.vendorCode} • Mavjud: ${product.stock} • ${uzsFormat.format(product.price)}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface,
+                      return ListTile(
+                        title: Text(product.productName),
+                        subtitle: Text(
+                          'Art: ${product.vendorCode} • Mavjud: ${product.stock} • ${uzsFormat.format(product.price)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                          ),
                         ),
-                      ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check, color: Colors.green)
-                          : const Icon(Icons.add),
-                      onTap: () {
-                        if (!isSelected) {
-                          _addProductToOrder(product);
-                          // Navigator.of(context).pop();
-                        }
-                      },
-                    );
-                  },
-                ),
-        ),
+                        trailing: isSelected
+                            ? const Icon(Icons.check, color: Colors.green)
+                            : const Icon(Icons.add),
+                        onTap: () {
+                          if (!isSelected) {
+                            _addProductToOrder(product);
+                            // Navigator.of(context).pop();
+                          }
+                        },
+                      );
+                    },
+                  ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -2176,7 +2442,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             ),
           ],
         );
-      }
+      },
     );
   }
 
@@ -2186,9 +2452,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)?.clearOrderConfirmTitle ?? 'Clear order'),
+        title: Text(
+          AppLocalizations.of(context)?.clearOrderConfirmTitle ?? 'Clear order',
+        ),
         content: Text(
-          AppLocalizations.of(context)?.clearOrderConfirmMessage ?? 'All selected products and related data will be deleted. Settings will be preserved. Do you want to continue?',
+          AppLocalizations.of(context)?.clearOrderConfirmMessage ??
+              'All selected products and related data will be deleted. Settings will be preserved. Do you want to continue?',
         ),
         actions: [
           TextButton(
@@ -2248,7 +2517,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)?.orderDataCleared ?? 'Order data cleared'),
+            content: Text(
+              AppLocalizations.of(context)?.orderDataCleared ??
+                  'Order data cleared',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -2261,7 +2533,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)?.dataClearError ?? "Error clearing data"}: ${e.toString()}'),
+            content: Text(
+              '${AppLocalizations.of(context)?.dataClearError ?? "Error clearing data"}: ${e.toString()}',
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -2278,13 +2552,21 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('${widget.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
+          title: Text(
+            '${widget.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}',
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n?.totalProductsCount(_totalItems) ?? 'Jami mahsulotlar: $_totalItems ta'),
-              Text(l10n?.totalAmount(uzsFormat.format(_totalValue)) ?? 'Jami qiymat: ${uzsFormat.format(_totalValue)}'),
+              Text(
+                l10n?.totalProductsCount(_totalItems) ??
+                    'Jami mahsulotlar: $_totalItems ta',
+              ),
+              Text(
+                l10n?.totalAmount(uzsFormat.format(_totalValue)) ??
+                    'Jami qiymat: ${uzsFormat.format(_totalValue)}',
+              ),
               const SizedBox(height: 16),
               // Shipping Date Picker
               InkWell(
@@ -2304,7 +2586,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     final localL10n = AppLocalizations.of(ctx);
                     return InputDecorator(
                       decoration: InputDecoration(
-                        labelText: localL10n?.shippingDate ?? 'Yetkazib berish sanasi',
+                        labelText:
+                            localL10n?.shippingDate ?? 'Yetkazib berish sanasi',
                         border: const OutlineInputBorder(),
                         suffixIcon: const Icon(Icons.calendar_today),
                       ),
@@ -2351,27 +2634,44 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   try {
                     final locationData = _locationService.getStoredLocation();
                     if (locationData != null) {
-                      longitude = (locationData['longitude'] as num?)?.toDouble() ?? 0.0;
-                      latitude = (locationData['latitude'] as num?)?.toDouble() ?? 0.0;
+                      longitude =
+                          (locationData['longitude'] as num?)?.toDouble() ??
+                          0.0;
+                      latitude =
+                          (locationData['latitude'] as num?)?.toDouble() ?? 0.0;
                     }
                   } catch (e) {
-                    debugPrint('CreateOrderPage: Error getting location data: $e');
+                    debugPrint(
+                      'CreateOrderPage: Error getting location data: $e',
+                    );
                     // Continue with default values
                   }
-                  debugPrint('CreateOrderPage: location - longitude: $longitude, latitude: $latitude');
+                  debugPrint(
+                    'CreateOrderPage: location - longitude: $longitude, latitude: $latitude',
+                  );
 
                   // Get codeProject from user preferences
                   final codeProject = _prefs.getCodeProject() ?? '';
                   debugPrint('CreateOrderPage: codeProject: "$codeProject"');
 
                   // Calculate hasPromo from selected products
-                  final hasPromo = _selectedProducts.any((product) => product.promo);
+                  final hasPromo = _selectedProducts.any(
+                    (product) => product.promo,
+                  );
                   debugPrint('CreateOrderPage: hasPromo: $hasPromo');
 
-                  debugPrint('CreateOrderPage: _selectedPriceTypecode: "${_selectedPriceTypecode ?? ''}"');
-                  debugPrint('CreateOrderPage: _selectedOrganizationcode: "${_selectedOrganizationcode ?? ''}"');
-                  debugPrint('CreateOrderPage: _selectedWarehousecode: "${_selectedWarehousecode ?? ''}"');
-                  debugPrint('CreateOrderPage: widget.tradingPoint.tradingPoint.id: "${widget.tradingPoint.tradingPoint.id}"');
+                  debugPrint(
+                    'CreateOrderPage: _selectedPriceTypecode: "${_selectedPriceTypecode ?? ''}"',
+                  );
+                  debugPrint(
+                    'CreateOrderPage: _selectedOrganizationcode: "${_selectedOrganizationcode ?? ''}"',
+                  );
+                  debugPrint(
+                    'CreateOrderPage: _selectedWarehousecode: "${_selectedWarehousecode ?? ''}"',
+                  );
+                  debugPrint(
+                    'CreateOrderPage: widget.tradingPoint.tradingPoint.id: "${widget.tradingPoint.tradingPoint.id}"',
+                  );
 
                   Navigator.of(context).pop(); // Close dialog
                   Navigator.of(context).pop({
@@ -2406,7 +2706,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${AppLocalizations.of(context)?.orderCreationError ?? "Error creating order"}: ${e.toString()}'),
+                        content: Text(
+                          '${AppLocalizations.of(context)?.orderCreationError ?? "Error creating order"}: ${e.toString()}',
+                        ),
                         backgroundColor: Theme.of(context).colorScheme.error,
                       ),
                     );
@@ -2425,7 +2727,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
   /// Allows updating the shipping date of a completed order
   void _showShippingDateChangeDialog() async {
     try {
-      debugPrint('CreateOrderPage: Showing shipping date change dialog for read-only mode');
+      debugPrint(
+        'CreateOrderPage: Showing shipping date change dialog for read-only mode',
+      );
 
       // Get current shipping date, default to today if not set
       DateTime currentDate = _shippingDate ?? DateTime.now();
@@ -2448,13 +2752,18 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)?.deliveryDateChangedSuccess ?? 'Delivery date changed successfully'),
+              content: Text(
+                AppLocalizations.of(context)?.deliveryDateChangedSuccess ??
+                    'Delivery date changed successfully',
+              ),
               backgroundColor: Colors.green,
             ),
           );
         }
 
-        debugPrint('CreateOrderPage: Shipping date updated to ${pickedDate.toIso8601String()}');
+        debugPrint(
+          'CreateOrderPage: Shipping date updated to ${pickedDate.toIso8601String()}',
+        );
       }
     } catch (e, stackTrace) {
       debugPrint('CreateOrderPage: Error changing shipping date: $e');
@@ -2464,7 +2773,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)?.dateChangeError ?? "Error changing date"}: ${e.toString()}'),
+            content: Text(
+              '${AppLocalizations.of(context)?.dateChangeError ?? "Error changing date"}: ${e.toString()}',
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -2474,13 +2785,22 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
 
   /// Update shipping date in the visit step completion data
   /// This ensures the change persists and is reflected in the visit history
-  Future<void> _updateShippingDateInCompletionData(DateTime newShippingDate) async {
+  Future<void> _updateShippingDateInCompletionData(
+    DateTime newShippingDate,
+  ) async {
     try {
-      debugPrint('CreateOrderPage: Updating shipping date in completion data for visit ${widget.visitId}, step ${widget.stepCode}');
+      debugPrint(
+        'CreateOrderPage: Updating shipping date in completion data for visit ${widget.visitId}, step ${widget.stepCode}',
+      );
 
       // Get existing completion data
-      final stepData = await _visitDataRepository.getVisitStepDataByStep(widget.visitId, widget.stepCode);
-      final completionData = stepData.where((d) => d.dataType == 'completion').toList();
+      final stepData = await _visitDataRepository.getVisitStepDataByStep(
+        widget.visitId,
+        widget.stepCode,
+      );
+      final completionData = stepData
+          .where((d) => d.dataType == 'completion')
+          .toList();
 
       if (completionData.isEmpty) {
         debugPrint('CreateOrderPage: No completion data found to update');
@@ -2492,7 +2812,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
       final latestCompletion = completionData.first;
 
       // Parse existing data
-      final parsedData = jsonDecode(latestCompletion.dataContent) as Map<String, dynamic>;
+      final parsedData =
+          jsonDecode(latestCompletion.dataContent) as Map<String, dynamic>;
 
       // Update the order's shipping date
       final orderData = parsedData['order'] as Map<String, dynamic>?;
@@ -2516,12 +2837,16 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         // Save updated data
         await _visitDataRepository.saveVisitStepData(updatedVisitData);
 
-        debugPrint('CreateOrderPage: Shipping date updated in completion data successfully');
+        debugPrint(
+          'CreateOrderPage: Shipping date updated in completion data successfully',
+        );
       } else {
         debugPrint('CreateOrderPage: No order data found in completion data');
       }
     } catch (e, stackTrace) {
-      debugPrint('CreateOrderPage: Error updating shipping date in completion data: $e');
+      debugPrint(
+        'CreateOrderPage: Error updating shipping date in completion data: $e',
+      );
       debugPrint('CreateOrderPage: Stack trace: $stackTrace');
       rethrow;
     }
@@ -2560,9 +2885,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 ),
 
                 // Content area
-                Expanded(
-                  child: _buildContentArea(theme),
-                ),
+                Expanded(child: _buildContentArea(theme)),
 
                 // Bottom summary
                 _buildBottomSummary(theme, context),
@@ -2577,7 +2900,9 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 child: FloatingActionButton(
                   onPressed: _navigateToProductSelection,
                   child: const Icon(Icons.add),
-                  tooltip: AppLocalizations.of(context)?.addProduct ?? 'Mahsulot qo\'shish',
+                  tooltip:
+                      AppLocalizations.of(context)?.addProduct ??
+                      'Mahsulot qo\'shish',
                 ),
               ),
           ],

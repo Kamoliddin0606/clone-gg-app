@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
@@ -35,7 +36,8 @@ class ContractsPage extends StatefulWidget {
   State<ContractsPage> createState() => _ContractsPageState();
 }
 
-class _ContractsPageState extends State<ContractsPage> with TickerProviderStateMixin {
+class _ContractsPageState extends State<ContractsPage>
+    with TickerProviderStateMixin {
   // Controllers and state variables
   final TextEditingController _searchController = TextEditingController();
   late TabController _tabController;
@@ -68,13 +70,12 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _filterAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _filterAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _filterAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _filterAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
     _loadData();
   }
 
@@ -115,7 +116,9 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       if (contracts.isEmpty) {
         setState(() {
           _isLoading = true;
-          _errorMessage = 'Ma\'lumotlar yuklanmoqda...';
+          _errorMessage =
+              AppLocalizations.of(context)?.dataLoading ??
+              'Ma\'lumotlar yuklanmoqda...';
         });
 
         try {
@@ -150,7 +153,9 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       await _loadTradingPoints();
 
       // Apply initial client filter after data is loaded
-      if (widget.initialClientFilter != null && widget.initialClientName != null && !_initialFilterApplied) {
+      if (widget.initialClientFilter != null &&
+          widget.initialClientName != null &&
+          !_initialFilterApplied) {
         _applyInitialClientFilter();
         _initialFilterApplied = true;
       }
@@ -194,15 +199,20 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
   void _applyInitialClientFilter() {
     try {
       // Validate that we have the required parameters
-      if (widget.initialClientFilter == null || widget.initialClientFilter!.isEmpty) {
+      if (widget.initialClientFilter == null ||
+          widget.initialClientFilter!.isEmpty) {
         if (kDebugMode) {
-          print('Warning: initialClientFilter is null or empty, skipping filter application');
+          print(
+            'Warning: initialClientFilter is null or empty, skipping filter application',
+          );
         }
         return;
       }
 
       if (kDebugMode) {
-        print('Applying initial client filter: ID=${widget.initialClientFilter}, Name=${widget.initialClientName}');
+        print(
+          'Applying initial client filter: ID=${widget.initialClientFilter}, Name=${widget.initialClientName}',
+        );
       }
 
       // Use client ID for filtering as it matches contract.codeClient
@@ -219,18 +229,25 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       // Verify that filtering worked by checking filtered results
       final filteredContracts = _getFilteredContracts();
       if (kDebugMode) {
-        print('Filtered contracts count after applying filter: ${filteredContracts.length}');
+        print(
+          'Filtered contracts count after applying filter: ${filteredContracts.length}',
+        );
         if (filteredContracts.isNotEmpty) {
-          print('Sample contract codeClient: ${filteredContracts.first.codeClient}');
+          print(
+            'Sample contract codeClient: ${filteredContracts.first.codeClient}',
+          );
         }
       }
 
       // Show user feedback with appropriate display name
       if (mounted) {
-        final displayName = widget.initialClientName ?? widget.initialClientFilter;
+        final displayName =
+            widget.initialClientName ?? widget.initialClientFilter;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$displayName mijozining shartnomalari (${filteredContracts.length} ta)'),
+            content: Text(
+              '$displayName mijozining shartnomalari (${filteredContracts.length} ta)',
+            ),
             backgroundColor: Theme.of(context).colorScheme.primary,
             duration: const Duration(seconds: 3),
           ),
@@ -250,7 +267,10 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Filtr qo\'llashda xatolik yuz berdi'),
+            content: Text(
+              AppLocalizations.of(context)?.filterApplyError ??
+                  'Filtr qo\'llashda xatolik yuz berdi',
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
             duration: const Duration(seconds: 2),
           ),
@@ -266,10 +286,12 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
     // Apply trading points filter
 
-    if (kDebugMode) print('_filters.tradingPointCodes: ${_filters.tradingPointCodes}');
+    if (kDebugMode)
+      print('_filters.tradingPointCodes: ${_filters.tradingPointCodes}');
     if (_filters.tradingPointCodes.isNotEmpty) {
       filtered = filtered.where((contract) {
-        if (kDebugMode) print('_filters.tradingPointCodes: ${_filters.tradingPointCodes}');
+        if (kDebugMode)
+          print('_filters.tradingPointCodes: ${_filters.tradingPointCodes}');
         if (kDebugMode) print('contracts code clients:${contract.codeClient}');
         return _filters.tradingPointCodes.contains(contract.codeClient);
       }).toList();
@@ -279,8 +301,12 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
     if (_filters.dateRange != null) {
       filtered = filtered.where((contract) {
         if (contract.dateOfContract == null) return false;
-        return contract.dateOfContract!.isAfter(_filters.dateRange!.start.subtract(const Duration(days: 1))) &&
-               contract.dateOfContract!.isBefore(_filters.dateRange!.end.add(const Duration(days: 1)));
+        return contract.dateOfContract!.isAfter(
+              _filters.dateRange!.start.subtract(const Duration(days: 1)),
+            ) &&
+            contract.dateOfContract!.isBefore(
+              _filters.dateRange!.end.add(const Duration(days: 1)),
+            );
       }).toList();
     }
 
@@ -307,9 +333,9 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
     if (searchQuery.isNotEmpty) {
       filtered = filtered.where((contract) {
         return matchesSearch(contract.codeContract, searchQuery) ||
-                matchesSearch(contract.codeClient, searchQuery) ||
-                matchesSearch(contract.status, searchQuery) ||
-                matchesSearch(contract.sumOfContract.toString(), searchQuery);
+            matchesSearch(contract.codeClient, searchQuery) ||
+            matchesSearch(contract.status, searchQuery) ||
+            matchesSearch(contract.sumOfContract.toString(), searchQuery);
       }).toList();
     }
 
@@ -323,7 +349,9 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       case 0: // Все
         return allFiltered;
       case 1: // Действует
-        return allFiltered.where((c) => c.status == 'Действует' && c.active).toList();
+        return allFiltered
+            .where((c) => c.status == 'Действует' && c.active)
+            .toList();
       case 2: // Истек
         return allFiltered.where((c) => c.status == 'Истек').toList();
       case 3: // Приостановлен
@@ -342,13 +370,18 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Shartnomalar', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        title: Text(
+          AppLocalizations.of(context)?.contracts ?? 'Shartnomalar',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _toggleFilterPanel,
-            tooltip: 'Filtr',
+            tooltip: AppLocalizations.of(context)?.filter ?? 'Filtr',
           ),
         ],
         bottom: TabBar(
@@ -389,7 +422,9 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
               sizeFactor: _filterAnimation,
               child: Card(
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 color: colorScheme.surfaceContainerHighest,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Padding(
@@ -402,7 +437,9 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
                         availableTradingPoints: _tradingPoints,
                         onChange: _onFiltersChanged,
                         onPickDateRange: _pickDateRange,
-                        onClearDateRange: () => _onFiltersChanged(_filters.copyWith(dateRange: null)),
+                        onClearDateRange: () => _onFiltersChanged(
+                          _filters.copyWith(dateRange: null),
+                        ),
                       ),
                     ),
                   ),
@@ -417,19 +454,19 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
                 duration: const Duration(milliseconds: 220),
                 child: _showViewBar
                     ? _ViewToolbar(
-                  count: _getContractsForTab(_tabController.index).length,
-                  mode: _viewMode,
-                  onModeChanged: (m) => setState(() => _viewMode = m),
-                  onCollapse: () => setState(() => _showViewBar = false),
-                )
+                        count: _getContractsForTab(_tabController.index).length,
+                        mode: _viewMode,
+                        onModeChanged: (m) => setState(() => _viewMode = m),
+                        onCollapse: () => setState(() => _showViewBar = false),
+                      )
                     : Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    tooltip: 'Ko\'rinish paneli',
-                    onPressed: () => setState(() => _showViewBar = true),
-                    icon: const Icon(Icons.tune),
-                  ),
-                ),
+                        alignment: Alignment.centerRight,
+                        child: IconButton(
+                          tooltip: 'Ko\'rinish paneli',
+                          onPressed: () => setState(() => _showViewBar = true),
+                          icon: const Icon(Icons.tune),
+                        ),
+                      ),
               ),
             ),
 
@@ -442,76 +479,101 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
                   return _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : _errorMessage != null
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.error, size: 48, color: Colors.red),
-                                  const SizedBox(height: 16),
-                                  Text(_errorMessage!),
-                                  const SizedBox(height: 16),
-                                  ElevatedButton(
-                                    onPressed: _loadData,
-                                    child: const Text('Qayta urinish'),
-                                  ),
-                                ],
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error,
+                                size: 48,
+                                color: Colors.red,
                               ),
-                            )
-                          : tabContracts.isEmpty
-                              ? Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.description,
-                                        size: 64,
-                                        color: colorScheme.outline,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'Shartnomalar topilmadi',
-                                        style: theme.textTheme.headlineSmall?.copyWith(
-                                          color: colorScheme.onSurface,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
+                              const SizedBox(height: 16),
+                              Text(_errorMessage!),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadData,
+                                child: Text(
+                                  AppLocalizations.of(context)?.retry ??
+                                      'Qayta urinish',
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : tabContracts.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.description,
+                                size: 64,
+                                color: colorScheme.outline,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                AppLocalizations.of(
+                                      context,
+                                    )?.contractsNotFound ??
+                                    'Shartnomalar topilmadi',
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  color: colorScheme.onSurface,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadData,
+                          child: _viewMode == _ViewMode.list
+                              ? ListView.separated(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    8,
+                                    12,
+                                    12,
                                   ),
+                                  itemCount: tabContracts.length,
+                                  separatorBuilder: (_, _) =>
+                                      const SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    final contract = tabContracts[index];
+                                    return ContractCard(
+                                      contract: contract,
+                                      onTap: () =>
+                                          _navigateToContractDetail(contract),
+                                      onDoubleTap: () =>
+                                          _navigateToContractDetail(contract),
+                                    );
+                                  },
                                 )
-                              : RefreshIndicator(
-                    onRefresh: _loadData,
-                    child: _viewMode == _ViewMode.list
-                        ? ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                      itemCount: tabContracts.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final contract = tabContracts[index];
-                        return ContractCard(
-                          contract: contract,
-                          onTap: () => _navigateToContractDetail(contract),
-                          onDoubleTap: () => _navigateToContractDetail(contract),
+                              : GridView.builder(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    8,
+                                    12,
+                                    12,
+                                  ),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        mainAxisSpacing: 8,
+                                        crossAxisSpacing: 8,
+                                        childAspectRatio: 0.7,
+                                      ),
+                                  itemCount: tabContracts.length,
+                                  itemBuilder: (context, index) {
+                                    final contract = tabContracts[index];
+                                    return ContractGridTile(
+                                      contract: contract,
+                                      onTap: () =>
+                                          _navigateToContractDetail(contract),
+                                    );
+                                  },
+                                ),
                         );
-                      },
-                    )
-                        : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
-                        childAspectRatio: 0.7,
-                      ),
-                      itemCount: tabContracts.length,
-                      itemBuilder: (context, index) {
-                        final contract = tabContracts[index];
-                        return ContractGridTile(
-                          contract: contract,
-                          onTap: () => _navigateToContractDetail(contract),
-                        );
-                      },
-                    ),
-                  );
                 }),
               ),
             ),
@@ -525,9 +587,9 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
         elevation: 6,
         icon: const Icon(Icons.add),
-        label: const Text(
-          'Yangi shartnoma',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        label: Text(
+          AppLocalizations.of(context)?.newContract ?? 'Yangi shartnoma',
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -559,7 +621,8 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
       setState(() {
         _tradingPoints = filteredTradingPoints;
-        _allTradingPoints = allTradingPoints; // Store ALL clients for create form
+        _allTradingPoints =
+            allTradingPoints; // Store ALL clients for create form
       });
     } catch (e) {
       // Log error but don't fail the entire page load
@@ -571,19 +634,22 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
   Future<void> _pickDateRange() async {
     final now = DateTime.now();
-    final initial = _filters.dateRange ?? DateTimeRange(start: now.subtract(const Duration(days: 7)), end: now);
+    final initial =
+        _filters.dateRange ??
+        DateTimeRange(start: now.subtract(const Duration(days: 7)), end: now);
     final picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime(now.year - 2),
       lastDate: DateTime(now.year + 2),
       initialDateRange: initial,
-      helpText: 'Sana oralig\'ini tanlang',
+      helpText:
+          AppLocalizations.of(context)?.selectDateRange ??
+          'Sana oralig\'ini tanlang',
     );
     if (picked != null) {
       _onFiltersChanged(_filters.copyWith(dateRange: picked));
     }
   }
-
 
   void _navigateToContractDetail(ClientContractWithName contract) {
     Navigator.push(
@@ -600,7 +666,7 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
     // Determine if we have a pre-selected client (from filter)
     String? preSelectedClientCode;
     String? preSelectedClientName;
-    
+
     // If filtered by a single client, use that client as pre-selected
     if (_filters.tradingPointCodes.length == 1) {
       preSelectedClientCode = _filters.tradingPointCodes.first;
@@ -645,7 +711,8 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       builder: (context) => CreateContractForm(
         preSelectedClientCode: preSelectedClientCode,
         preSelectedClientName: preSelectedClientName,
-        availableClients: _allTradingPoints, // Use ALL clients, not just those with contracts
+        availableClients:
+            _allTradingPoints, // Use ALL clients, not just those with contracts
         onContractCreated: () {
           // Close the form
           Navigator.of(context).pop();
@@ -666,20 +733,23 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
 
       final prefs = sl<SharedPreferencesService>();
       final userCode = prefs.getUserCode();
-      
+
       if (userCode == null || userCode.isEmpty) {
         throw Exception('User code not found');
       }
 
       final dataSyncService = sl<DataSyncService>();
       final repository = sl<AgentRepository>();
-      
+
       // Sync contracts from server using DataSyncService
-      await dataSyncService.syncClientContracts(userCode: userCode, forceRefresh: true);
-      
+      await dataSyncService.syncClientContracts(
+        userCode: userCode,
+        forceRefresh: true,
+      );
+
       // Reload contracts
       final contracts = await repository.getCachedClientContractsWithNames();
-      
+
       setState(() {
         _contracts = contracts;
         _isLoading = false;
@@ -695,12 +765,17 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
               children: [
                 const Icon(Icons.check_circle, color: Colors.white),
                 const SizedBox(width: 12),
-                const Text('Shartnomalar ro\'yxati yangilandi'),
+                Text(
+                  AppLocalizations.of(context)?.contractsListRefreshed ??
+                      'Shartnomalar ro\'yxati yangilandi',
+                ),
               ],
             ),
             backgroundColor: Colors.green.shade600,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             margin: const EdgeInsets.all(16),
           ),
         );
@@ -712,7 +787,7 @@ class _ContractsPageState extends State<ContractsPage> with TickerProviderStateM
       setState(() {
         _isLoading = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -739,18 +814,25 @@ class _SearchField extends StatelessWidget {
         color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: cs.primary.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(
+            color: cs.primary.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
         ],
         border: Border.all(color: cs.outlineVariant),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        decoration: const InputDecoration(
-          hintText: 'Qidirish...',
-          prefixIcon: Icon(Icons.search),
+        decoration: InputDecoration(
+          hintText: AppLocalizations.of(context)?.searchHint ?? 'Qidirish...',
+          prefixIcon: const Icon(Icons.search),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 14,
+          ),
         ),
       ),
     );
@@ -782,7 +864,8 @@ class _ViewToolbar extends StatelessWidget {
       children: [
         // Shartnomalar soni
         Text(
-          'Shartnomalar soni: $count',
+          AppLocalizations.of(context)?.contractsCount(count) ??
+              'Shartnomalar soni: $count',
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -821,7 +904,7 @@ class _ViewToolbar extends StatelessWidget {
         const SizedBox(width: 6),
         // Yopish
         IconButton(
-          tooltip: 'Yopish',
+          tooltip: AppLocalizations.of(context)?.close ?? 'Yopish',
           onPressed: onCollapse,
           icon: const Icon(Icons.close),
         ),
@@ -881,19 +964,27 @@ class _ContractCardState extends State<ContractCard> {
                       children: [
                         Text(
                           widget.contract.codeContract,
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.business, size: 16, color: cs.onSurfaceVariant),
+                            Icon(
+                              Icons.business,
+                              size: 16,
+                              color: cs.onSurfaceVariant,
+                            ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 'Mijoz: ${widget.contract.clientName ?? widget.contract.codeClient}',
-                                style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -903,22 +994,34 @@ class _ContractCardState extends State<ContractCard> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.calendar_today, size: 16, color: cs.onSurfaceVariant),
+                            Icon(
+                              Icons.calendar_today,
+                              size: 16,
+                              color: cs.onSurfaceVariant,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               'Boshlanish: ${widget.contract.dateOfContract != null ? DateFormat('dd.MM.yyyy').format(widget.contract.dateOfContract!) : 'Noma\'lum'}',
-                              style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.event_busy, size: 16, color: cs.onSurfaceVariant),
+                            Icon(
+                              Icons.event_busy,
+                              size: 16,
+                              color: cs.onSurfaceVariant,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               'Tugash: ${widget.contract.termOfContract != null ? DateFormat('dd.MM.yyyy').format(widget.contract.termOfContract!) : 'Noma\'lum'}',
-                              style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -938,22 +1041,35 @@ class _ContractCardState extends State<ContractCard> {
                       ),
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: widget.contract.active ? cs.primaryContainer : cs.errorContainer,
+                          color: widget.contract.active
+                              ? cs.primaryContainer
+                              : cs.errorContainer,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          widget.contract.active ? 'Faol' : 'Faol emas',
+                          widget.contract.active
+                              ? (AppLocalizations.of(context)?.active ?? 'Faol')
+                              : (AppLocalizations.of(context)?.inactive ??
+                                    'Faol emas'),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: widget.contract.active ? cs.onPrimaryContainer : cs.onErrorContainer,
+                            color: widget.contract.active
+                                ? cs.onPrimaryContainer
+                                : cs.onErrorContainer,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: _getStatusColor(widget.contract.status, cs),
                           borderRadius: BorderRadius.circular(12),
@@ -961,7 +1077,10 @@ class _ContractCardState extends State<ContractCard> {
                         child: Text(
                           widget.contract.status,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: _getStatusTextColor(widget.contract.status, cs),
+                            color: _getStatusTextColor(
+                              widget.contract.status,
+                              cs,
+                            ),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -984,7 +1103,9 @@ class _ContractCardState extends State<ContractCard> {
                 const SizedBox(height: 4),
                 Text(
                   'Cheklangan sertifikat: ${widget.contract.certificateUnlimited == 1 ? 'Ha' : 'Yo\'q'}',
-                  style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
                 ),
               ],
             ],
@@ -1025,11 +1146,7 @@ class ContractGridTile extends StatelessWidget {
   final ClientContractWithName contract;
   final VoidCallback? onTap;
 
-  const ContractGridTile({
-    super.key,
-    required this.contract,
-    this.onTap,
-  });
+  const ContractGridTile({super.key, required this.contract, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1040,9 +1157,7 @@ class ContractGridTile extends StatelessWidget {
       elevation: 6,
       shadowColor: Colors.black.withValues(alpha: 0.15),
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -1071,14 +1186,18 @@ class ContractGridTile extends StatelessWidget {
                     maxLines: 2,
                     softWrap: true,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Mijoz: ${contract.clientName ?? contract.codeClient}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -1086,22 +1205,32 @@ class ContractGridTile extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: cs.primary,
                       fontWeight: FontWeight.w800,
-                      fontSize: 14
+                      fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: contract.active ? cs.primaryContainer : cs.errorContainer,
+                          color: contract.active
+                              ? cs.primaryContainer
+                              : cs.errorContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          contract.active ? 'Faol' : 'Faol emas',
+                          contract.active
+                              ? (AppLocalizations.of(context)?.active ?? 'Faol')
+                              : (AppLocalizations.of(context)?.inactive ??
+                                    'Faol emas'),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: contract.active ? cs.onPrimaryContainer : cs.onErrorContainer,
+                            color: contract.active
+                                ? cs.onPrimaryContainer
+                                : cs.onErrorContainer,
                             fontWeight: FontWeight.w600,
                             fontSize: 10,
                           ),
@@ -1110,7 +1239,10 @@ class ContractGridTile extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: _getStatusColor(contract.status, cs),
                             borderRadius: BorderRadius.circular(8),

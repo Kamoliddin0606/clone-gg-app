@@ -33,7 +33,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orders => 'Orders';
 
   @override
-  String get tradingPoints => 'Trading Points';
+  String get tradingPoints => 'Trading points';
 
   @override
   String get tradingPointsFilter => 'Trading Points';
@@ -249,7 +249,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileNotFound => 'File not found';
 
   @override
-  String get unknownError => 'Unknown error occurred';
+  String get unknownError => 'Unknown error';
 
   @override
   String get tryAgain => 'Please try again';
@@ -402,7 +402,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kg => 'kg';
 
   @override
-  String get contractDetails => 'Contract Details';
+  String get contractDetails => 'Contract details';
 
   @override
   String get contractCode => 'Contract Code';
@@ -1238,7 +1238,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get visitFinishing => 'Finishing visit...';
 
   @override
-  String get orderNumber => 'Order number';
+  String orderNumber(String number) {
+    return 'Order № $number';
+  }
 
   @override
   String get dataSaveError => 'Error saving data';
@@ -1304,7 +1306,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientImagesLoaded => 'Client images loaded';
 
   @override
-  String get imageLoadError => 'Error loading images';
+  String get imageLoadError => 'Error loading image';
 
   @override
   String get disableVisitTodayFilter => 'Disable today\'s visit filter';
@@ -1568,7 +1570,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statistics => 'Statistics';
 
   @override
-  String get contractsCount => 'Contracts Count';
+  String contractsCount(int count) {
+    return 'Contracts count: $count';
+  }
 
   @override
   String get contract => 'Contract';
@@ -1818,7 +1822,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logoutConfirmMessage => 'Are you sure you want to log out?';
 
   @override
-  String get newContract => 'New Contract';
+  String get newContract => 'New contract';
 
   @override
   String get createContract => 'Create Contract';
@@ -1893,7 +1897,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverTimeout => 'Server connection timed out';
 
   @override
-  String get noInternetConnection => 'No internet connection';
+  String get noInternetConnection => 'No internet connection. Please connect to the internet';
 
   @override
   String get createClientTitle => 'New Client';
@@ -2083,7 +2087,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String innLabel(String inn) {
-    return 'INN: $inn';
+    return 'INN';
   }
 
   @override
@@ -2188,7 +2192,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String errorOccurred(String error) {
-    return 'Error occurred: $error';
+    return 'An error occurred';
   }
 
   @override
@@ -2750,4 +2754,339 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get changePeriod => 'Change Period';
+
+  @override
+  String get server => 'Server';
+
+  @override
+  String get addImage => 'Add Image';
+
+  @override
+  String get takePhoto => 'Take Photo';
+
+  @override
+  String get deleteImage => 'Delete Image';
+
+  @override
+  String get deleteImageConfirm => 'Are you sure you want to delete this image?';
+
+  @override
+  String get noReportsAvailable => 'No reports available';
+
+  @override
+  String get tables => 'Tables';
+
+  @override
+  String get sendPdfLabel => 'Send PDF';
+
+  @override
+  String get warehouse => 'Warehouse';
+
+  @override
+  String get takePhotoTooltip => 'Take photo';
+
+  @override
+  String get changeShippingDateTooltip => 'Change shipping date';
+
+  @override
+  String get sendReportViaTelegram => 'Send report via Telegram bot';
+
+  @override
+  String get fullscreen => 'Fullscreen';
+
+  @override
+  String get updateCoordinates => 'Update coordinates';
+
+  @override
+  String get list => 'List';
+
+  @override
+  String get grid => 'Grid';
+
+  @override
+  String get every1Hour => 'Every 1 hour';
+
+  @override
+  String get every4Hours => 'Every 4 hours';
+
+  @override
+  String get every6Hours => 'Every 6 hours';
+
+  @override
+  String get every12Hours => 'Every 12 hours';
+
+  @override
+  String get daily24h => 'Daily (24h)';
+
+  @override
+  String get weekly1Week => 'Weekly (1 week)';
+
+  @override
+  String get customIntervalMinutes => 'Custom Interval (Minutes)';
+
+  @override
+  String get organizationLabel => 'Organization';
+
+  @override
+  String get codeLabel2 => 'Code';
+
+  @override
+  String get regionsLoading => 'Loading regions...';
+
+  @override
+  String get cyclingRegular => 'Regular bicycle';
+
+  @override
+  String get cyclingRoad => 'Road bicycle';
+
+  @override
+  String get cyclingMountain => 'Mountain bicycle';
+
+  @override
+  String get cyclingSafe => 'Safe bicycle';
+
+  @override
+  String get productsPage => 'Products Page';
+
+  @override
+  String quantityHint(int stock) {
+    return '0 to $stock';
+  }
+
+  @override
+  String get minimum60Minutes => 'Minimum 60 minutes';
+
+  @override
+  String get enterQuantity => 'Enter quantity';
+
+  @override
+  String maxAvailable(int stock) {
+    return 'Maximum available: $stock pieces';
+  }
+
+  @override
+  String imageNumber(int number) {
+    return 'Image $number';
+  }
+
+  @override
+  String get selectPriceType => 'Select price type';
+
+  @override
+  String get selectPriceTypeHint => 'Click the filter button above to select a price type from the filter panel';
+
+  @override
+  String productsCount(int count) {
+    return 'Products count: $count';
+  }
+
+  @override
+  String get categories => 'Categories';
+
+  @override
+  String get selectBrandFirst => 'Select brand first';
+
+  @override
+  String get reportsSection => 'Reports section';
+
+  @override
+  String get tasks => 'Tasks';
+
+  @override
+  String locationError(String error) {
+    return 'Error getting location: $error';
+  }
+
+  @override
+  String get addressDetected => 'Address detected and auto-filled';
+
+  @override
+  String get pleaseSelectRegion => 'Please select a region';
+
+  @override
+  String get pleaseSelectTradePointType => 'Please select a trade point type';
+
+  @override
+  String get locationDataNotFound => 'Location data not found';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get closeEditMode => 'Close edit mode';
+
+  @override
+  String get activeClients => 'Active clients';
+
+  @override
+  String get activeClientsTooltip => 'Clients with active orders today';
+
+  @override
+  String get cashless => 'Cashless';
+
+  @override
+  String get ordersTotal => 'Orders total';
+
+  @override
+  String get visitedTradingPoints => 'Visited t.p.';
+
+  @override
+  String get visitedTradingPointsTooltip => 'Number of visited trading points';
+
+  @override
+  String get territoryOKB => 'Territory OKB';
+
+  @override
+  String get territoryOKBTooltip => 'Coverage of customer base by territory';
+
+  @override
+  String get todayMainIndicators => 'Today — main indicators';
+
+  @override
+  String get last7Days => 'Last 7 days';
+
+  @override
+  String get last30Days => 'Last 30 days';
+
+  @override
+  String get monthlyPlanFactForecast => 'Monthly plan / Fact / Forecast';
+
+  @override
+  String get monthlyOkbAkb => 'Monthly OKB/AKB';
+
+  @override
+  String get contractsNotFound => 'Contracts not found';
+
+  @override
+  String get contractsListRefreshed => 'Contracts list refreshed';
+
+  @override
+  String get contractAmount => 'Contract amount';
+
+  @override
+  String get contractDocument => 'Contract document';
+
+  @override
+  String clientOrders(String name) {
+    return '$name\'s orders';
+  }
+
+  @override
+  String get filterApplyError => 'Error applying filter';
+
+  @override
+  String get main => 'Main';
+
+  @override
+  String get contents => 'Contents';
+
+  @override
+  String get mainReports => 'Main reports';
+
+  @override
+  String get mainReportsDescription => 'KPI indicators and main statistics';
+
+  @override
+  String get visitsReport => 'Visits report';
+
+  @override
+  String get visitsReportDescription => 'Information about visits to clients';
+
+  @override
+  String get completedVisits => 'Completed visits';
+
+  @override
+  String get plannedVisits => 'Planned visits';
+
+  @override
+  String get visitEfficiency => 'Visit efficiency';
+
+  @override
+  String get lastVisits => 'Last visits';
+
+  @override
+  String get dataLoading => 'Data loading...';
+
+  @override
+  String get successful => 'Successful';
+
+  @override
+  String get orderPlaced => 'Order placed';
+
+  @override
+  String get rejected => 'Rejected';
+
+  @override
+  String get reportDataRefreshed => 'Report data refreshed successfully';
+
+  @override
+  String get apiKeySaved => 'API key saved successfully';
+
+  @override
+  String saveError(String error) {
+    return 'Save error: $error';
+  }
+
+  @override
+  String userDataLoadError(String error) {
+    return 'Error loading user data: $error';
+  }
+
+  @override
+  String warehouseDataLoadError(String error) {
+    return 'Error loading warehouse data: $error';
+  }
+
+  @override
+  String get justSaved => 'Just saved';
+
+  @override
+  String savedMinutesAgo(int minutes) {
+    return 'Saved $minutes minutes ago';
+  }
+
+  @override
+  String savedHoursAgo(int hours) {
+    return 'Saved $hours hours ago';
+  }
+
+  @override
+  String get notSaved => 'Not saved';
+
+  @override
+  String get selectDateRange => 'Select date range';
+
+  @override
+  String get selectPeriodTitle => 'Select period';
+
+  @override
+  String get selectedPeriod => 'Selected period';
+
+  @override
+  String get selectTable => 'Select table';
+
+  @override
+  String get selectRegionValidator => 'Select region';
+
+  @override
+  String get selectTradePointTypeValidator => 'Select trade point type';
+
+  @override
+  String get currentMonth => 'Current month';
+
+  @override
+  String get selectReportDatesHint => 'Set start and end dates for the report';
+
+  @override
+  String get offlineCannotRefresh => 'Cannot refresh data in offline mode';
+
+  @override
+  String distanceRequirementMessage(String name) {
+    return 'You need to meet the distance requirement to visit $name.';
+  }
+
+  @override
+  String requiredDistance(int distance) {
+    return 'Required distance: ${distance}m';
+  }
 }

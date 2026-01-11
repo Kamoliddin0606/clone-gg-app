@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 class CollectorHomePage extends StatelessWidget {
   const CollectorHomePage({super.key});
@@ -82,7 +83,9 @@ class CollectorHomePage extends StatelessWidget {
   Widget _buildFilterSection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(8.0),
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withOpacity(0.5),
       child: Row(
         children: [
           Expanded(
@@ -90,13 +93,16 @@ class CollectorHomePage extends StatelessWidget {
               decoration: const InputDecoration(
                 labelText: 'Status',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               items: ['All', 'Pending', 'Collected', 'Delivered']
-                  .map((label) => DropdownMenuItem(
-                        value: label,
-                        child: Text(label),
-                      ))
+                  .map(
+                    (label) =>
+                        DropdownMenuItem(value: label, child: Text(label)),
+                  )
                   .toList(),
               onChanged: (value) {},
             ),
@@ -107,13 +113,16 @@ class CollectorHomePage extends StatelessWidget {
               decoration: const InputDecoration(
                 labelText: 'Route',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               items: ['All Routes', 'Route A', 'Route B', 'Route C']
-                  .map((label) => DropdownMenuItem(
-                        value: label,
-                        child: Text(label),
-                      ))
+                  .map(
+                    (label) =>
+                        DropdownMenuItem(value: label, child: Text(label)),
+                  )
                   .toList(),
               onChanged: (value) {},
             ),
@@ -153,16 +162,21 @@ class CollectorHomePage extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Chiqish'),
-          content: const Text('Haqiqatan ham ilovadan chiqmoqchimisiz?'),
+          title: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
+          content: Text(
+            AppLocalizations.of(context)?.confirmLogout ??
+                'Haqiqatan ham ilovadan chiqmoqchimisiz?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Bekor qilish'),
+              child: Text(
+                AppLocalizations.of(context)?.cancel ?? 'Bekor qilish',
+              ),
             ),
             FilledButton(
               onPressed: () => _logout(context),
-              child: const Text('Chiqish'),
+              child: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
             ),
           ],
         );
@@ -178,7 +192,7 @@ class CollectorHomePage extends StatelessWidget {
     } catch (e) {
       // SharedPreferences not ready, continue with logout
     }
-    
+
     if (context.mounted) {
       Navigator.of(context).pop(); // Close dialog
       Navigator.pushNamedAndRemoveUntil(
@@ -241,7 +255,7 @@ class _CollectionListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isCollected = index % 3 != 0;
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ExpansionTile(
@@ -253,7 +267,9 @@ class _CollectionListItem extends StatelessWidget {
           ),
         ),
         title: Text('Collection Point #${index + 1}'),
-        subtitle: Text('Address: Street ${index + 1}, District ${(index % 5) + 1}'),
+        subtitle: Text(
+          'Address: Street ${index + 1}, District ${(index % 5) + 1}',
+        ),
         trailing: Text(
           isCollected ? 'Collected' : 'Pending',
           style: TextStyle(
@@ -267,7 +283,10 @@ class _CollectionListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Collection Details:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Collection Details:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -295,10 +314,7 @@ class _CollectionListItem extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     if (!isCollected) ...[
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text('Skip'),
-                      ),
+                      TextButton(onPressed: () {}, child: const Text('Skip')),
                       const SizedBox(width: 8),
                       FilledButton(
                         onPressed: () {},

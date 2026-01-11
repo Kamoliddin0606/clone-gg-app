@@ -42,7 +42,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get warehouses => 'Склады';
 
   @override
-  String get contracts => 'Контракты';
+  String get contracts => 'Договоры';
 
   @override
   String get reports => 'Отчеты';
@@ -249,7 +249,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get fileNotFound => 'Файл не найден';
 
   @override
-  String get unknownError => 'Произошла неизвестная ошибка';
+  String get unknownError => 'Неизвестная ошибка';
 
   @override
   String get tryAgain => 'Пожалуйста, попробуйте еще раз';
@@ -402,7 +402,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get kg => 'кг';
 
   @override
-  String get contractDetails => 'Детали контракта';
+  String get contractDetails => 'Детали договора';
 
   @override
   String get contractCode => 'Код контракта';
@@ -573,7 +573,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get kpiReport => 'Отчет KPI';
 
   @override
-  String get cash => 'Касса';
+  String get cash => 'Наличные';
 
   @override
   String get nonCash => 'Безналичные';
@@ -1238,7 +1238,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get visitFinishing => 'Завершение визита...';
 
   @override
-  String get orderNumber => 'Номер заказа';
+  String orderNumber(String number) {
+    return 'Заказ № $number';
+  }
 
   @override
   String get dataSaveError => 'Ошибка сохранения данных';
@@ -1304,7 +1306,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clientImagesLoaded => 'Изображения клиента загружены';
 
   @override
-  String get imageLoadError => 'Ошибка загрузки изображений';
+  String get imageLoadError => 'Ошибка загрузки изображения';
 
   @override
   String get disableVisitTodayFilter => 'Отключить фильтр сегодняшних посещений';
@@ -1568,7 +1570,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get statistics => 'Статистика';
 
   @override
-  String get contractsCount => 'Количество договоров';
+  String contractsCount(int count) {
+    return 'Количество договоров: $count';
+  }
 
   @override
   String get contract => 'Договор';
@@ -1818,7 +1822,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get logoutConfirmMessage => 'Вы действительно хотите выйти из системы?';
 
   @override
-  String get newContract => 'Новый контракт';
+  String get newContract => 'Новый договор';
 
   @override
   String get createContract => 'Создать контракт';
@@ -1893,7 +1897,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get serverTimeout => 'Время подключения к серверу истекло';
 
   @override
-  String get noInternetConnection => 'Нет подключения к интернету';
+  String get noInternetConnection => 'Нет подключения к интернету. Пожалуйста, подключитесь к интернету';
 
   @override
   String get createClientTitle => 'Новый клиент';
@@ -2083,7 +2087,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String innLabel(String inn) {
-    return 'ИНН: $inn';
+    return 'ИНН';
   }
 
   @override
@@ -2188,7 +2192,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String errorOccurred(String error) {
-    return 'Произошла ошибка: $error';
+    return 'Произошла ошибка';
   }
 
   @override
@@ -2426,7 +2430,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reportSentTitle => 'Отчет отправлен';
 
   @override
-  String get editFeatureComingSoon => 'Функция редактирования скоро будет добавлена';
+  String get editFeatureComingSoon => 'Функция редактирования скоро появится';
 
   @override
   String get sendPdf => 'Отправить PDF';
@@ -2750,4 +2754,339 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get changePeriod => 'Изменить период';
+
+  @override
+  String get server => 'Сервер';
+
+  @override
+  String get addImage => 'Добавить изображение';
+
+  @override
+  String get takePhoto => 'Сделать фото';
+
+  @override
+  String get deleteImage => 'Удалить изображение';
+
+  @override
+  String get deleteImageConfirm => 'Вы уверены, что хотите удалить это изображение?';
+
+  @override
+  String get noReportsAvailable => 'Отчеты недоступны';
+
+  @override
+  String get tables => 'Таблицы';
+
+  @override
+  String get sendPdfLabel => 'Отправить PDF';
+
+  @override
+  String get warehouse => 'Склад';
+
+  @override
+  String get takePhotoTooltip => 'Сделать фото';
+
+  @override
+  String get changeShippingDateTooltip => 'Изменить дату доставки';
+
+  @override
+  String get sendReportViaTelegram => 'Отправить отчет через Telegram бот';
+
+  @override
+  String get fullscreen => 'Полный экран';
+
+  @override
+  String get updateCoordinates => 'Обновить координаты';
+
+  @override
+  String get list => 'Список';
+
+  @override
+  String get grid => 'Сетка';
+
+  @override
+  String get every1Hour => 'Каждый 1 час';
+
+  @override
+  String get every4Hours => 'Каждые 4 часа';
+
+  @override
+  String get every6Hours => 'Каждые 6 часов';
+
+  @override
+  String get every12Hours => 'Каждые 12 часов';
+
+  @override
+  String get daily24h => 'Ежедневно (24ч)';
+
+  @override
+  String get weekly1Week => 'Еженедельно (1 неделя)';
+
+  @override
+  String get customIntervalMinutes => 'Пользовательский интервал (минуты)';
+
+  @override
+  String get organizationLabel => 'Организация';
+
+  @override
+  String get codeLabel2 => 'Код';
+
+  @override
+  String get regionsLoading => 'Загрузка регионов...';
+
+  @override
+  String get cyclingRegular => 'Обычный велосипед';
+
+  @override
+  String get cyclingRoad => 'Шоссейный велосипед';
+
+  @override
+  String get cyclingMountain => 'Горный велосипед';
+
+  @override
+  String get cyclingSafe => 'Безопасный велосипед';
+
+  @override
+  String get productsPage => 'Страница товаров';
+
+  @override
+  String quantityHint(int stock) {
+    return 'От 0 до $stock';
+  }
+
+  @override
+  String get minimum60Minutes => 'Минимум 60 минут';
+
+  @override
+  String get enterQuantity => 'Введите количество';
+
+  @override
+  String maxAvailable(int stock) {
+    return 'Максимально доступно: $stock шт.';
+  }
+
+  @override
+  String imageNumber(int number) {
+    return 'Изображение $number';
+  }
+
+  @override
+  String get selectPriceType => 'Выберите тип цены';
+
+  @override
+  String get selectPriceTypeHint => 'Нажмите кнопку фильтра выше, чтобы выбрать тип цены из панели фильтров';
+
+  @override
+  String productsCount(int count) {
+    return 'Количество товаров: $count';
+  }
+
+  @override
+  String get categories => 'Категории';
+
+  @override
+  String get selectBrandFirst => 'Сначала выберите бренд';
+
+  @override
+  String get reportsSection => 'Раздел отчетов';
+
+  @override
+  String get tasks => 'Задачи';
+
+  @override
+  String locationError(String error) {
+    return 'Ошибка получения местоположения: $error';
+  }
+
+  @override
+  String get addressDetected => 'Адрес определен и автоматически заполнен';
+
+  @override
+  String get pleaseSelectRegion => 'Пожалуйста, выберите регион';
+
+  @override
+  String get pleaseSelectTradePointType => 'Пожалуйста, выберите тип торговой точки';
+
+  @override
+  String get locationDataNotFound => 'Данные о местоположении не найдены';
+
+  @override
+  String get all => 'Все';
+
+  @override
+  String get closeEditMode => 'Закрыть режим редактирования';
+
+  @override
+  String get activeClients => 'Активные клиенты';
+
+  @override
+  String get activeClientsTooltip => 'Клиенты с активными заказами сегодня';
+
+  @override
+  String get cashless => 'Безналичные';
+
+  @override
+  String get ordersTotal => 'Всего заказов';
+
+  @override
+  String get visitedTradingPoints => 'Посещенные т.т.';
+
+  @override
+  String get visitedTradingPointsTooltip => 'Количество посещенных торговых точек';
+
+  @override
+  String get territoryOKB => 'Территория ОКБ';
+
+  @override
+  String get territoryOKBTooltip => 'Охват клиентской базы по территории';
+
+  @override
+  String get todayMainIndicators => 'Сегодня — основные показатели';
+
+  @override
+  String get last7Days => 'Последние 7 дней';
+
+  @override
+  String get last30Days => 'Последние 30 дней';
+
+  @override
+  String get monthlyPlanFactForecast => 'Месячный план / Факт / Прогноз';
+
+  @override
+  String get monthlyOkbAkb => 'Ежемесячный ОКБ/АКБ';
+
+  @override
+  String get contractsNotFound => 'Договоры не найдены';
+
+  @override
+  String get contractsListRefreshed => 'Список договоров обновлен';
+
+  @override
+  String get contractAmount => 'Сумма договора';
+
+  @override
+  String get contractDocument => 'Документ договора';
+
+  @override
+  String clientOrders(String name) {
+    return 'Заказы клиента $name';
+  }
+
+  @override
+  String get filterApplyError => 'Ошибка применения фильтра';
+
+  @override
+  String get main => 'Основной';
+
+  @override
+  String get contents => 'Содержимое';
+
+  @override
+  String get mainReports => 'Основные отчеты';
+
+  @override
+  String get mainReportsDescription => 'KPI показатели и основная статистика';
+
+  @override
+  String get visitsReport => 'Отчет о визитах';
+
+  @override
+  String get visitsReportDescription => 'Информация о визитах к клиентам';
+
+  @override
+  String get completedVisits => 'Выполненные визиты';
+
+  @override
+  String get plannedVisits => 'Запланированные визиты';
+
+  @override
+  String get visitEfficiency => 'Эффективность визитов';
+
+  @override
+  String get lastVisits => 'Последние визиты';
+
+  @override
+  String get dataLoading => 'Данные загружаются...';
+
+  @override
+  String get successful => 'Успешно';
+
+  @override
+  String get orderPlaced => 'Заказ размещен';
+
+  @override
+  String get rejected => 'Отклонено';
+
+  @override
+  String get reportDataRefreshed => 'Данные отчета успешно обновлены';
+
+  @override
+  String get apiKeySaved => 'API ключ успешно сохранен';
+
+  @override
+  String saveError(String error) {
+    return 'Ошибка сохранения: $error';
+  }
+
+  @override
+  String userDataLoadError(String error) {
+    return 'Ошибка загрузки данных пользователя: $error';
+  }
+
+  @override
+  String warehouseDataLoadError(String error) {
+    return 'Ошибка загрузки данных склада: $error';
+  }
+
+  @override
+  String get justSaved => 'Только что сохранено';
+
+  @override
+  String savedMinutesAgo(int minutes) {
+    return 'Сохранено $minutes минут назад';
+  }
+
+  @override
+  String savedHoursAgo(int hours) {
+    return 'Сохранено $hours часов назад';
+  }
+
+  @override
+  String get notSaved => 'Не сохранено';
+
+  @override
+  String get selectDateRange => 'Выберите диапазон дат';
+
+  @override
+  String get selectPeriodTitle => 'Выберите период';
+
+  @override
+  String get selectedPeriod => 'Выбранный период';
+
+  @override
+  String get selectTable => 'Выберите таблицу';
+
+  @override
+  String get selectRegionValidator => 'Выберите регион';
+
+  @override
+  String get selectTradePointTypeValidator => 'Выберите тип торговой точки';
+
+  @override
+  String get currentMonth => 'Текущий месяц';
+
+  @override
+  String get selectReportDatesHint => 'Укажите даты начала и окончания для отчета';
+
+  @override
+  String get offlineCannotRefresh => 'Невозможно обновить данные в офлайн режиме';
+
+  @override
+  String distanceRequirementMessage(String name) {
+    return 'Вам нужно соответствовать требованию расстояния для посещения $name.';
+  }
+
+  @override
+  String requiredDistance(int distance) {
+    return 'Требуемое расстояние: $distanceм';
+  }
 }

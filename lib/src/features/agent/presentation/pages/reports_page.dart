@@ -18,7 +18,8 @@ class ReportsPage extends StatefulWidget {
   State<ReportsPage> createState() => _ReportsPageState();
 }
 
-class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin {
+class _ReportsPageState extends State<ReportsPage>
+    with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String _selectedReport = 'asosiy_hisobotlar';
   DateTimeRange? _selectedDateRange;
@@ -28,8 +29,8 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
   bool _isReportSentToTelegram = false;
   String? _errorMessage;
   late AnimationController _menuAnimationController;
-  late Animation<double> _menuSlide;     // -1..0 (menu)
-  late Animation<double> _contentSlide;  // 0..0.8 (main content)
+  late Animation<double> _menuSlide; // -1..0 (menu)
+  late Animation<double> _contentSlide; // 0..0.8 (main content)
   late AnimationController _headerAnimationController;
   late Animation<double> _headerScale;
   late Animation<double> _headerOpacity;
@@ -41,16 +42,55 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
   late final userCode = prefs.getUserCode() ?? '';
   late final password = prefs.getPassword() ?? '';
 
-
   final List<Map<String, dynamic>> _reportItems = [
-    {'key': 'asosiy_hisobotlar', 'title': 'Asosiy hisobotlar(EVYAP uchun)', 'icon': Icons.bar_chart, 'description': 'KPI ko\'rsatkichlari va asosiy statistikalar'},
-    {'key': 'vizitlar_hisobot', 'title': 'Vizitlar bo\'yicha hisobot', 'icon': Icons.location_on, 'description': 'Mijozlarga qilingan tashriflar haqida ma\'lumot'},
-    {'key': 'akb_client', 'title': 'AKB Client', 'icon': Icons.people, 'description': 'AKB mijozlari bo\'yicha hisobot'},
-    {'key': 'akb_sum', 'title': 'AKB Sum', 'icon': Icons.attach_money, 'description': 'AKB summalari bo\'yicha moliyaviy hisobot'},
-    {'key': 'akb_product', 'title': 'AKB Product', 'icon': Icons.inventory, 'description': 'AKB mahsulotlari bo\'yicha hisobot'},
-    {'key': 'category_hisobotlari', 'title': 'Category hisobotlari', 'icon': Icons.category, 'description': 'Kategoriyalar bo\'yicha savdo tahlili'},
-    {'key': 'oylik_natijalar', 'title': 'Oylik natijalar', 'icon': Icons.calendar_month, 'description': 'Oylik savdo natijalari va tendensiyalar'},
-    {'key': 'oylik_kpi', 'title': 'Oylik KPI (maosh)', 'icon': Icons.trending_up, 'description': 'Oylik KPI bajarilishi va maosh hisoboti'},
+    {
+      'key': 'asosiy_hisobotlar',
+      'title': 'Asosiy hisobotlar(EVYAP uchun)',
+      'icon': Icons.bar_chart,
+      'description': 'KPI ko\'rsatkichlari va asosiy statistikalar',
+    },
+    {
+      'key': 'vizitlar_hisobot',
+      'title': 'Vizitlar bo\'yicha hisobot',
+      'icon': Icons.location_on,
+      'description': 'Mijozlarga qilingan tashriflar haqida ma\'lumot',
+    },
+    {
+      'key': 'akb_client',
+      'title': 'AKB Client',
+      'icon': Icons.people,
+      'description': 'AKB mijozlari bo\'yicha hisobot',
+    },
+    {
+      'key': 'akb_sum',
+      'title': 'AKB Sum',
+      'icon': Icons.attach_money,
+      'description': 'AKB summalari bo\'yicha moliyaviy hisobot',
+    },
+    {
+      'key': 'akb_product',
+      'title': 'AKB Product',
+      'icon': Icons.inventory,
+      'description': 'AKB mahsulotlari bo\'yicha hisobot',
+    },
+    {
+      'key': 'category_hisobotlari',
+      'title': 'Category hisobotlari',
+      'icon': Icons.category,
+      'description': 'Kategoriyalar bo\'yicha savdo tahlili',
+    },
+    {
+      'key': 'oylik_natijalar',
+      'title': 'Oylik natijalar',
+      'icon': Icons.calendar_month,
+      'description': 'Oylik savdo natijalari va tendensiyalar',
+    },
+    {
+      'key': 'oylik_kpi',
+      'title': 'Oylik KPI (maosh)',
+      'icon': Icons.trending_up,
+      'description': 'Oylik KPI bajarilishi va maosh hisoboti',
+    },
   ];
 
   @override
@@ -63,10 +103,16 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
       vsync: this,
     );
     _menuSlide = Tween<double>(begin: -1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _menuAnimationController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _menuAnimationController,
+        curve: Curves.easeInOut,
+      ),
     );
     _contentSlide = Tween<double>(begin: 0.0, end: 0.8).animate(
-      CurvedAnimation(parent: _menuAnimationController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _menuAnimationController,
+        curve: Curves.easeInOut,
+      ),
     );
 
     _headerAnimationController = AnimationController(
@@ -88,15 +134,13 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
       ),
     );
 
-    _headerSlide = Tween<Offset>(
-      begin: const Offset(0.0, -0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _headerAnimationController,
-        curve: Curves.elasticOut,
-      ),
-    );
+    _headerSlide =
+        Tween<Offset>(begin: const Offset(0.0, -0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _headerAnimationController,
+            curve: Curves.elasticOut,
+          ),
+        );
 
     // Start with header visible
     _headerAnimationController.value = 1.0;
@@ -127,7 +171,10 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
             animation: _contentSlide,
             builder: (context, child) {
               return Transform.translate(
-                offset: Offset(_contentSlide.value * MediaQuery.of(context).size.width, 0),
+                offset: Offset(
+                  _contentSlide.value * MediaQuery.of(context).size.width,
+                  0,
+                ),
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -159,7 +206,8 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                                 progress: _menuAnimationController,
                               ),
                               onPressed: _toggleMenu,
-                              tooltip: 'Menyu',
+                              tooltip:
+                                  AppLocalizations.of(context)?.menu ?? 'Menyu',
                             ),
                           ],
                         ),
@@ -167,43 +215,54 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                           onTap: _toggleHeaderVisibility,
                           onDoubleTap: _toggleHeaderVisibility,
                           child: Text(
-                            'Hisobotlar',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            AppLocalizations.of(context)?.reports ??
+                                'Hisobotlar',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ),
-                        flexibleSpace: _isHeaderVisible ? AnimatedBuilder(
-                          animation: _headerAnimationController,
-                          builder: (context, child) {
-                            return GestureDetector(
-                              onDoubleTap: _toggleHeaderVisibility,
-                              child: Transform.scale(
-                                scale: _headerScale.value,
-                                child: Opacity(
-                                  opacity: _headerOpacity.value,
-                                  child: SlideTransition(
-                                    position: _headerSlide,
-                                    child: _buildHeader(context),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ) : null,
+                        flexibleSpace: _isHeaderVisible
+                            ? AnimatedBuilder(
+                                animation: _headerAnimationController,
+                                builder: (context, child) {
+                                  return GestureDetector(
+                                    onDoubleTap: _toggleHeaderVisibility,
+                                    child: Transform.scale(
+                                      scale: _headerScale.value,
+                                      child: Opacity(
+                                        opacity: _headerOpacity.value,
+                                        child: SlideTransition(
+                                          position: _headerSlide,
+                                          child: _buildHeader(context),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : null,
                         actions: [
                           IconButton(
-                            tooltip: 'Headerni ${_isHeaderVisible ? "yashirish" : "ko\'rsatish"}',
+                            tooltip:
+                                'Headerni ${_isHeaderVisible ? "yashirish" : "ko\'rsatish"}',
                             onPressed: _toggleHeaderVisibility,
-                            icon: Icon(_isHeaderVisible ? Icons.visibility_off : Icons.visibility),
+                            icon: Icon(
+                              _isHeaderVisible
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
                           ),
                           if (prefs.getServerName() == 'Evyap')
-
                             IconButton(
-                              tooltip: 'Telegram bot orqali hisobot yuborish',
+                              tooltip:
+                                  AppLocalizations.of(
+                                    context,
+                                  )?.sendReportViaTelegram ??
+                                  'Telegram bot orqali hisobot yuborish',
                               onPressed: () async {
                                 if (!_isReportSentToTelegram) {
-                                  final success = await telegramBotService.sendReportToTelegram(context);
+                                  final success = await telegramBotService
+                                      .sendReportToTelegram(context);
                                   if (success) {
                                     setState(() {
                                       _isReportSentToTelegram = true;
@@ -215,26 +274,47 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                                     context: context,
                                     builder: (BuildContext dialogContext) {
                                       return AlertDialog(
-                                        title: const Text('Hisobot yuborilgan'),
+                                        title: Text(
+                                          AppLocalizations.of(
+                                                context,
+                                              )?.success ??
+                                              'Hisobot yuborilgan',
+                                        ),
                                         content: const Text(
                                           'Hisobot allaqachon sizning Telegram guruhingizga  yuborilgan. Qayta yuborishni xohlaysizmi?',
                                         ),
                                         actions: [
                                           TextButton(
-                                            onPressed: () => Navigator.of(dialogContext).pop(),
-                                            child: Text(AppLocalizations.of(context)!.cancel),
+                                            onPressed: () => Navigator.of(
+                                              dialogContext,
+                                            ).pop(),
+                                            child: Text(
+                                              AppLocalizations.of(
+                                                context,
+                                              )!.cancel,
+                                            ),
                                           ),
                                           FilledButton(
                                             onPressed: () async {
                                               Navigator.of(dialogContext).pop();
-                                              final success = await telegramBotService.sendReportToTelegram(context);
+                                              final success =
+                                                  await telegramBotService
+                                                      .sendReportToTelegram(
+                                                        context,
+                                                      );
                                               if (success) {
                                                 setState(() {
-                                                  _isReportSentToTelegram = true;
+                                                  _isReportSentToTelegram =
+                                                      true;
                                                 });
                                               }
                                             },
-                                            child: const Text('Qayta yuborish'),
+                                            child: Text(
+                                              AppLocalizations.of(
+                                                    context,
+                                                  )?.retry ??
+                                                  'Qayta yuborish',
+                                            ),
                                           ),
                                         ],
                                       );
@@ -242,10 +322,16 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                                   );
                                 }
                               },
-                              icon: Icon(Icons.telegram_outlined, color: _isReportSentToTelegram ? Colors.grey : Colors.blue),
+                              icon: Icon(
+                                Icons.telegram_outlined,
+                                color: _isReportSentToTelegram
+                                    ? Colors.grey
+                                    : Colors.blue,
+                              ),
                             ),
                           IconButton(
-                            tooltip: 'Filtr',
+                            tooltip:
+                                AppLocalizations.of(context)?.filter ?? 'Filtr',
                             onPressed: _showDateFilterDialog,
                             icon: const Icon(Icons.filter_list),
                           ),
@@ -253,7 +339,9 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                       ),
                       SliverToBoxAdapter(
                         child: SizedBox(
-                          height: MediaQuery.of(context).size.height - 200, // Adjust height as needed
+                          height:
+                              MediaQuery.of(context).size.height -
+                              200, // Adjust height as needed
                           child: _isLoading
                               ? const Center(child: CircularProgressIndicator())
                               : _errorMessage != null
@@ -304,7 +392,11 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
     final colorScheme = theme.colorScheme;
     final selectedReport = _reportItems.firstWhere(
       (item) => item['key'] == _selectedReport,
-      orElse: () => {'title': 'Hisobotlar', 'icon': Icons.bar_chart, 'description': 'Hisobotlar bo\'limi'},
+      orElse: () => {
+        'title': 'Hisobotlar',
+        'icon': Icons.bar_chart,
+        'description': 'Hisobotlar bo\'limi',
+      },
     );
 
     return FlexibleSpaceBar(
@@ -313,10 +405,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              colorScheme.primary,
-              colorScheme.primaryContainer,
-            ],
+            colors: [colorScheme.primary, colorScheme.primaryContainer],
           ),
         ),
         padding: const EdgeInsets.fromLTRB(16, 56, 16, 16),
@@ -365,7 +454,6 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
     );
   }
 
-
   Widget _buildSlideMenu(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -374,7 +462,10 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
       animation: _menuSlide,
       builder: (context, child) {
         return Transform.translate(
-          offset: Offset(_menuSlide.value * MediaQuery.of(context).size.width * 0.8, 0),
+          offset: Offset(
+            _menuSlide.value * MediaQuery.of(context).size.width * 0.8,
+            0,
+          ),
           child: Container(
             width: MediaQuery.of(context).size.width * 0.8,
             color: colorScheme.surface,
@@ -438,7 +529,9 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                             _isMenuOpen = false;
                             _menuAnimationController.reverse();
                           });
-                          final index = _reportItems.indexWhere((i) => i['key'] == item['key']);
+                          final index = _reportItems.indexWhere(
+                            (i) => i['key'] == item['key'],
+                          );
                           if (index >= 0) {
                             _pageController.animateToPage(
                               index,
@@ -459,9 +552,6 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
     );
   }
 
-
-
-
   void _showDateFilterDialog() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -474,7 +564,8 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        DateTimeRange? selectedRange = _selectedDateRange ??
+        DateTimeRange? selectedRange =
+            _selectedDateRange ??
             DateTimeRange(
               start: DateTime.now().subtract(const Duration(days: 30)),
               end: DateTime.now(),
@@ -497,7 +588,10 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                   // Date range ribbon display
                   if (selectedRange != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: colorScheme.primaryContainer.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12),
@@ -554,7 +648,10 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Bekor qilish'),
+                          child: Text(
+                            AppLocalizations.of(context)?.cancel ??
+                                'Bekor qilish',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -580,22 +677,29 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                             final password = prefs.getPassword();
 
                             if (selectedRange == null) {
-                               _showErrorSnackBar(context, "Davr tanlanmadi");
+                              _showErrorSnackBar(context, "Davr tanlanmadi");
 
                               return;
                             }
                             if ((userCode == null || userCode.isEmpty) ||
                                 (password == null || password.isEmpty)) {
-                              _showErrorSnackBar(context, "Foydalanuvchi ma'lumotlari topilmadi");
+                              _showErrorSnackBar(
+                                context,
+                                "Foydalanuvchi ma'lumotlari topilmadi",
+                              );
 
                               return;
                             }
 
                             // 2) Progress ko‘rsatish
-                            _showLoadingDialog(context, "Ma'lumotlar sinxronlanmoqda...");
+                            _showLoadingDialog(
+                              context,
+                              "Ma'lumotlar sinxronlanmoqda...",
+                            );
 
                             try {
-                              final reportSyncService = sl<ReportsSyncService>();
+                              final reportSyncService =
+                                  sl<ReportsSyncService>();
 
                               // 3) Asosiy chaqiruv — TO‘LIQ va await bilan
                               await reportSyncService.syncAllReportsWithProgress(
@@ -605,7 +709,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                                 dateEnd: selectedRange!.end,
                                 // agar metodda callback bo‘lsa, qo‘ying:
                                 // onProgress: (p) => setState(() => _progress = p),
-                              ) ;
+                              );
 
                               // 4) Tanlangan davrni saqlaymiz va sahifalarni yangilaymiz
                               setState(() {
@@ -615,17 +719,24 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                               //await reportSyncService.syncAllReports(userCode: userCode, password: password); // <= sizda mavjud yuklash metod(lar)i: masalan _loadMainReports(), _loadSummary() va h.k.
 
                               _hideLoadingDialog(context);
-                              Navigator.pop(context); // date-range dialogni yopish
-                              _showSuccessSnackBar(context, "Hisobotlar yangilandi");
+                              Navigator.pop(
+                                context,
+                              ); // date-range dialogni yopish
+                              _showSuccessSnackBar(
+                                context,
+                                "Hisobotlar yangilandi",
+                              );
                             } catch (e) {
                               _hideLoadingDialog(context);
-                              _showErrorSnackBar(context, "Sinxronizatsiya xatosi: $e");
+                              _showErrorSnackBar(
+                                context,
+                                "Sinxronizatsiya xatosi: $e",
+                              );
                             }
                           },
                           child: const Text("Qo'llash"),
                         ),
-                      )
-
+                      ),
                     ],
                   ),
                 ],
@@ -636,7 +747,6 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
       },
     );
   }
-
 
   int _getCurrentPageIndex() {
     return _reportItems.indexWhere((item) => item['key'] == _selectedReport);
@@ -649,6 +759,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
       });
     }
   }
+
   void _showLoadingDialog(BuildContext context, String message) {
     showDialog(
       context: context,
@@ -671,7 +782,10 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
   void _updateLoadingDialog(BuildContext context, String message) {
     // Find the current dialog and update its content
     Navigator.of(context).pop(); // Close current dialog
-    _showLoadingDialog(context, message); // Show new dialog with updated message
+    _showLoadingDialog(
+      context,
+      message,
+    ); // Show new dialog with updated message
   }
 
   void _hideLoadingDialog(BuildContext context) {
@@ -694,6 +808,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
       ),
     );
   }
+
   void _showSuccessSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -710,6 +825,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
       ),
     );
   }
+
   Widget _buildErrorState(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -723,14 +839,12 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 48, color: colorScheme.error),
             const SizedBox(height: 16),
             Text(
-              'Xatolik yuz berdi',
+              (AppLocalizations.of(context)?.errorOccurred ??
+                      'Xatolik yuz berdi')
+                  .toString(),
               style: theme.textTheme.titleLarge?.copyWith(
                 color: colorScheme.error,
                 fontWeight: FontWeight.bold,
@@ -738,7 +852,9 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage ?? 'Noma\'lum xatolik',
+              _errorMessage ??
+                  (AppLocalizations.of(context)?.unknownError ??
+                      'Noma\'lum xatolik'),
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
@@ -752,7 +868,9 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                   _isLoading = false;
                 });
               },
-              child: const Text('Qayta urinish'),
+              child: Text(
+                AppLocalizations.of(context)?.retry ?? 'Qayta urinish',
+              ),
             ),
           ],
         ),
@@ -783,44 +901,99 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
         return GenericReportPage(
           title: 'AKB Sum hisoboti',
           stats: [
-            {'title': 'AKB summasi', 'value': '780 000 UZS', 'icon': Icons.attach_money, 'color': Colors.green},
-            {'title': 'AKB rejasi', 'value': '1 000 000 UZS', 'icon': Icons.flag, 'color': Colors.blue},
+            {
+              'title': 'AKB summasi',
+              'value': '780 000 UZS',
+              'icon': Icons.attach_money,
+              'color': Colors.green,
+            },
+            {
+              'title': 'AKB rejasi',
+              'value': '1 000 000 UZS',
+              'icon': Icons.flag,
+              'color': Colors.blue,
+            },
           ],
         );
       case 'akb_product':
         return GenericReportPage(
           title: 'AKB Product hisoboti',
           stats: [
-            {'title': 'AKB mahsulotlar', 'value': '156', 'icon': Icons.inventory, 'color': Colors.orange},
-            {'title': 'Mahsulot turlari', 'value': '23', 'icon': Icons.category, 'color': Colors.purple},
+            {
+              'title': 'AKB mahsulotlar',
+              'value': '156',
+              'icon': Icons.inventory,
+              'color': Colors.orange,
+            },
+            {
+              'title': 'Mahsulot turlari',
+              'value': '23',
+              'icon': Icons.category,
+              'color': Colors.purple,
+            },
           ],
         );
       case 'category_hisobotlari':
         return GenericReportPage(
           title: 'Category hisobotlari',
           stats: [
-            {'title': 'Kategoriyalar soni', 'value': '12', 'icon': Icons.category, 'color': Colors.teal},
-            {'title': 'Eng ko\'p sotilgan', 'value': 'Kosmetika', 'icon': Icons.star, 'color': Colors.amber},
+            {
+              'title': 'Kategoriyalar soni',
+              'value': '12',
+              'icon': Icons.category,
+              'color': Colors.teal,
+            },
+            {
+              'title': 'Eng ko\'p sotilgan',
+              'value': 'Kosmetika',
+              'icon': Icons.star,
+              'color': Colors.amber,
+            },
           ],
         );
       case 'oylik_natijalar':
         return GenericReportPage(
           title: 'Oylik natijalar',
           stats: [
-            {'title': 'Oylik savdo', 'value': '15 500 000 UZS', 'icon': Icons.calendar_month, 'color': Colors.indigo},
-            {'title': 'Oylik o\'sish', 'value': '+15.3%', 'icon': Icons.trending_up, 'color': Colors.green},
+            {
+              'title': 'Oylik savdo',
+              'value': '15 500 000 UZS',
+              'icon': Icons.calendar_month,
+              'color': Colors.indigo,
+            },
+            {
+              'title': 'Oylik o\'sish',
+              'value': '+15.3%',
+              'icon': Icons.trending_up,
+              'color': Colors.green,
+            },
           ],
         );
       case 'oylik_kpi':
         return GenericReportPage(
           title: 'Oylik KPI (maosh)',
           stats: [
-            {'title': 'KPI bajarilishi', 'value': '85%', 'icon': Icons.trending_up, 'color': Colors.blue},
-            {'title': 'Maosh miqdori', 'value': '2 500 000 UZS', 'icon': Icons.attach_money, 'color': Colors.green},
+            {
+              'title': 'KPI bajarilishi',
+              'value': '85%',
+              'icon': Icons.trending_up,
+              'color': Colors.blue,
+            },
+            {
+              'title': 'Maosh miqdori',
+              'value': '2 500 000 UZS',
+              'icon': Icons.attach_money,
+              'color': Colors.green,
+            },
           ],
         );
       default:
-        return const Center(child: Text('Hisobot mavjud emas'));
+        return Center(
+          child: Text(
+            AppLocalizations.of(context)?.noReportsAvailable ??
+                'Hisobot mavjud emas',
+          ),
+        );
     }
   }
 }

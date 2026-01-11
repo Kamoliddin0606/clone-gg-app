@@ -1468,5 +1468,258 @@
   "creating": "Yaratilmoqda...",
   "refreshLabel": "Yangilash",
   "refreshing": "Yangilanmoqda...",
-  "changePeriod": "Davrni o'zgartirish"
+  "changePeriod": "Davrni o'zgartirish",
+  "server": "Server",
+  "addImage": "Rasm qo'shish",
+  "takePhoto": "Rasmga olish",
+  "deleteImage": "Rasmni o'chirish",
+  "deleteImageConfirm": "Haqiqatan ham bu rasmni o'chirmoqchimisiz?",
+  "noReportsAvailable": "Hisobot mavjud emas",
+  "tables": "Jadvallar",
+  "sendPdfLabel": "PDF yuborish",
+  "warehouse": "Ombor",
+  "viewPanel": "Ko'rinish paneli",
+  "menu": "Menyu",
+  "takePhotoTooltip": "Rasmga olish",
+  "changeShippingDateTooltip": "Yetkazib berish sanasini o'zgartirish",
+  "manageClientImages": "Mijoz rasmlarini boshqarish",
+  "sendReportViaTelegram": "Telegram bot orqali hisobot yuborish",
+  "fullscreen": "To'liq ekran",
+  "updateCoordinates": "Koordinatalarni yangilash",
+  "list": "Ro'yxat",
+  "grid": "Katak",
+  "every1Hour": "Har 1 soatda",
+  "every4Hours": "Har 4 soatda",
+  "every6Hours": "Har 6 soatda",
+  "every12Hours": "Har 12 soatda",
+  "daily24h": "Kunlik (24 soat)",
+  "weekly1Week": "Haftalik (1 hafta)",
+  "customIntervalMinutes": "Maxsus interval (daqiqalar)",
+  "organizationLabel": "Tashkilot",
+  "codeLabel2": "Kod",
+  "regionsLoading": "Hududlar yuklanmoqda...",
+  "noData": "Ma'lumot yo'q",
+  "errorPrefix": "Xatolik",
+  "innLabel": "INN",
+  "cyclingRegular": "Oddiy velosiped",
+  "cyclingRoad": "Yo'l velosipedi",
+  "cyclingMountain": "Tog' velosipedi",
+  "cyclingSafe": "Xavfsiz velosiped",
+  "productsPage": "Mahsulotlar sahifasi",
+  "quantityHint": "0 dan {stock} gacha",
+  "@quantityHint": {
+    "placeholders": {
+      "stock": {
+        "type": "int"
+      }
+    }
+  },
+  "minimum60Minutes": "Minimum 60 daqiqa",
+  "enterQuantity": "Miqdorni kiriting",
+  "maxAvailable": "Maksimal mavjud: {stock} dona",
+  "@maxAvailable": {
+    "placeholders": {
+      "stock": {
+        "type": "int"
+      }
+    }
+  },
+  "imageNumber": "Rasm {number}",
+  "@imageNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "prices": "Narxlar",
+  "selectPriceType": "Narx turini tanlang",
+  "selectPriceTypeHint": "Filtr panelidan narx turini tanlash uchun yuqoridagi filtr tugmasini bosing",
+  "productsCount": "Mahsulotlar soni: {count}",
+  "@productsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "categories": "Kategoriyalar",
+  "selectBrandFirst": "Avval brand tanlang",
+  "reports": "Hisobotlar",
+  "reportsSection": "Hisobotlar bo'limi",
+  "tasks": "Vazifalar",
+  "tradingPoints": "Savdo nuqtalari",
+  "regionsLoadError": "Hududlarni yuklashda xatolik: {error}",
+  "@regionsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationError": "Joylashuvni olishda xatolik: {error}",
+  "@locationError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addressDetected": "Manzil aniqlandi va avtomatik to'ldirildi",
+  "pleaseSelectRegion": "Iltimos, hududni tanlang",
+  "pleaseSelectTradePointType": "Iltimos, savdo nuqtasi turini tanlang",
+  "locationDataNotFound": "Joylashuv ma'lumotlari topilmadi",
+  "noInternetConnection": "Internet aloqasi yo'q. Iltimos, internetga ulaning",
+  "all": "Barchasi",
+  "closeEditMode": "Tahrirlash rejimini yopish",
+  "editFeatureComingSoon": "Tahrirlash funksiyasi tez orada qo'shiladi",
+  "active": "Faol",
+  "inactive": "Faol emas",
+  "activeClients": "Faol mijozlar",
+  "activeClientsTooltip": "Bugun faol buyurtmalari bo'lgan mijozlar",
+  "cash": "Naqd",
+  "cashless": "Naqdsiz",
+  "ordersTotal": "Buyurtmalar jami",
+  "fact": "Fakt",
+  "visitedTradingPoints": "Tashrif buyurilgan s.n.",
+  "visitedTradingPointsTooltip": "Tashrif buyurilgan savdo nuqtalari soni",
+  "territoryOKB": "Hudud OKB",
+  "territoryOKBTooltip": "Hudud bo'yicha mijozlar bazasini qamrab olish",
+  "today": "Bugun",
+  "todayMainIndicators": "Bugun — asosiy ko'rsatkichlar",
+  "last7Days": "Oxirgi 7 kun",
+  "last30Days": "Oxirgi 30 kun",
+  "monthlyPlanFactForecast": "Oylik reja / Fakt / Bashorat",
+  "monthlyOkbAkb": "Oylik OKB/AKB",
+  "contracts": "Shartnomalar",
+  "contractsNotFound": "Shartnomalar topilmadi",
+  "newContract": "Yangi shartnoma",
+  "contractsListRefreshed": "Shartnomalar ro'yxati yangilandi",
+  "contractsCount": "Shartnomalar soni: {count}",
+  "@contractsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contractDetails": "Shartnoma tafsilotlari",
+  "contractAmount": "Shartnoma summasi",
+  "contractDocument": "Shartnoma hujjati",
+  "clientOrders": "{name} mijozining buyurtmalari",
+  "@clientOrders": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderNumber": "Buyurtma № {number}",
+  "@orderNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "orders": "Buyurtmalar",
+  "filter": "Filtr",
+  "filterApplyError": "Filtr qo'llashda xatolik yuz berdi",
+  "main": "Asosiy",
+  "contents": "Tarkibi",
+  "mainReports": "Asosiy hisobotlar",
+  "mainReportsDescription": "KPI ko'rsatkichlari va asosiy statistikalar",
+  "visitsReport": "Vizitlar hisoboti",
+  "visitsReportDescription": "Mijozlarga qilingan tashriflar haqida ma'lumot",
+  "completedVisits": "Amalga oshirilgan vizitlar",
+  "plannedVisits": "Rejalashtirilgan vizitlar",
+  "visitEfficiency": "Vizit samaradorligi",
+  "lastVisits": "Oxirgi vizitlar",
+  "dataLoading": "Ma'lumotlar yuklanmoqda...",
+  "successful": "Muvaffaqiyatli",
+  "orderPlaced": "Buyurtma berildi",
+  "rejected": "Rad etildi",
+  "reportDataRefreshed": "Hisobot ma'lumotlari muvaffaqiyatli yangilandi",
+  "imagesUploadedCount": "{count} ta rasm muvaffaqiyatli yuklandi",
+  "@imagesUploadedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clientLocationUpdated": "Mijoz joylashuvi muvaffaqiyatli yangilandi",
+  "apiKeySaved": "API kaliti muvaffaqiyatli saqlandi",
+  "errorOccurred": "Xatolik yuz berdi",
+  "unknownError": "Noma'lum xatolik",
+  "imageLoadError": "Rasmni yuklashda xatolik",
+  "dataLoadError": "Ma'lumotlarni yuklashda xatolik yuz berdi",
+  "saveError": "Saqlashda xatolik: {error}",
+  "@saveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "userDataLoadError": "Foydalanuvchi ma'lumotlarini yuklashda xatolik: {error}",
+  "@userDataLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseDataLoadError": "Skladlar ma'lumotlarini yuklashda xatolik: {error}",
+  "@warehouseDataLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "justSaved": "Hozir saqlandi",
+  "savedMinutesAgo": "{minutes} daqiqa oldin saqlandi",
+  "@savedMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "savedHoursAgo": "{hours} soat oldin saqlandi",
+  "@savedHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "notSaved": "Saqlanmagan",
+  "selectDateRange": "Sana oralig'ini tanlang",
+  "selectPeriodTitle": "Davrni tanlang",
+  "selectedPeriod": "Tanlangan davr",
+  "selectTable": "Jadval tanlang",
+  "selectRegionValidator": "Hududni tanlang",
+  "selectTradePointTypeValidator": "Savdo nuqtasi turini tanlang",
+  "currentMonth": "Joriy oy",
+  "selectReportDatesHint": "Hisobot uchun boshlanish va tugash sanalarini belgilang",
+  "offlineCannotRefresh": "Offline rejimda ma'lumotlarni yangilashning imkoni yo'q",
+  "manageClientImages": "Mijoz rasmlarini boshqarish",
+  "distanceRequirementMessage": "{name} ga tashrif uchun masofa talabiga javob berishingiz kerak.",
+  "@distanceRequirementMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "requiredDistance": "Talab qilingan masofa: {distance}m",
+  "@requiredDistance": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      }
+    }
+  }
 }

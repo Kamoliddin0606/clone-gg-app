@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 class ForwarderHomePage extends StatelessWidget {
   const ForwarderHomePage({super.key});
@@ -44,7 +45,9 @@ class ForwarderHomePage extends StatelessWidget {
   Widget _buildFilterSection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(8.0),
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withOpacity(0.5),
       child: Row(
         children: [
           Expanded(
@@ -52,13 +55,16 @@ class ForwarderHomePage extends StatelessWidget {
               decoration: const InputDecoration(
                 labelText: 'Status',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               items: ['All', 'Pending', 'Delivered']
-                  .map((label) => DropdownMenuItem(
-                        value: label,
-                        child: Text(label),
-                      ))
+                  .map(
+                    (label) =>
+                        DropdownMenuItem(value: label, child: Text(label)),
+                  )
                   .toList(),
               onChanged: (value) {},
             ),
@@ -69,13 +75,16 @@ class ForwarderHomePage extends StatelessWidget {
               decoration: const InputDecoration(
                 labelText: 'Date',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               items: ['Today', 'This Week', 'Custom']
-                  .map((label) => DropdownMenuItem(
-                        value: label,
-                        child: Text(label),
-                      ))
+                  .map(
+                    (label) =>
+                        DropdownMenuItem(value: label, child: Text(label)),
+                  )
                   .toList(),
               onChanged: (value) {},
             ),
@@ -107,16 +116,21 @@ class ForwarderHomePage extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Chiqish'),
-          content: const Text('Haqiqatan ham ilovadan chiqmoqchimisiz?'),
+          title: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
+          content: Text(
+            AppLocalizations.of(context)?.confirmLogout ??
+                'Haqiqatan ham ilovadan chiqmoqchimisiz?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Bekor qilish'),
+              child: Text(
+                AppLocalizations.of(context)?.cancel ?? 'Bekor qilish',
+              ),
             ),
             FilledButton(
               onPressed: () => _logout(context),
-              child: const Text('Chiqish'),
+              child: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
             ),
           ],
         );
@@ -132,7 +146,7 @@ class ForwarderHomePage extends StatelessWidget {
     } catch (e) {
       // SharedPreferences not ready, continue with logout
     }
-    
+
     if (context.mounted) {
       Navigator.of(context).pop(); // Close dialog
       Navigator.pushNamedAndRemoveUntil(
@@ -166,10 +180,7 @@ class _DeliveryListItem extends StatelessWidget {
                 const SizedBox(height: 8),
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Order Amount:'),
-                    Text('\$123.45'),
-                  ],
+                  children: [Text('Order Amount:'), Text('\$123.45')],
                 ),
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -184,12 +195,15 @@ class _DeliveryListItem extends StatelessWidget {
                   children: [
                     TextButton(onPressed: () {}, child: const Text('Details')),
                     const SizedBox(width: 8),
-                    FilledButton(onPressed: () {}, child: const Text('Mark as Delivered')),
+                    FilledButton(
+                      onPressed: () {},
+                      child: const Text('Mark as Delivered'),
+                    ),
                   ],
-                )
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

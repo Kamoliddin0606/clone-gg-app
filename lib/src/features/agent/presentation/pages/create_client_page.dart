@@ -21,11 +21,12 @@ class CreateClientPage extends StatefulWidget {
   State<CreateClientPage> createState() => _CreateClientPageState();
 }
 
-class _CreateClientPageState extends State<CreateClientPage> with SingleTickerProviderStateMixin {
+class _CreateClientPageState extends State<CreateClientPage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  
+
   // Form controllers
   final _nameController = TextEditingController();
   final _signboardController = TextEditingController();
@@ -44,17 +45,17 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
   double? _latitude;
   double? _longitude;
   bool _isGettingLocation = false;
-  
+
   // Region selection
   List<BusinessRegion> _regions = [];
   BusinessRegion? _selectedRegion;
   bool _isLoadingRegions = true;
-  
+
   // Trade point type
   String? _selectedTradePointType;
   List<String> _tradePointTypes = [];
   bool _isLoadingTypes = true;
-  
+
   // Fallback types if database is empty
   static const List<String> _defaultTradePointTypes = [
     'Supermarket',
@@ -66,10 +67,10 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
     'Mehmonxona',
     'Boshqa',
   ];
-  
+
   // Submission state
   bool _isSubmitting = false;
-  
+
   // Track if addresses were auto-filled
   bool _addressAutoFilled = false;
 
@@ -85,7 +86,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
       curve: Curves.easeInOut,
     );
     _animationController.forward();
-    
+
     _loadRegions();
     _loadTradePointTypes();
     _getCurrentLocation();
@@ -113,7 +114,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
     try {
       final dbService = sl<ApiDatabaseService>();
       final regions = await dbService.getBusinessRegions();
-      
+
       if (mounted) {
         setState(() {
           _regions = regions;
@@ -127,7 +128,10 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Hududlarni yuklashda xatolik: $e'),
+            content: Text(
+              AppLocalizations.of(context)?.regionsLoadError(e.toString()) ??
+                  'Hududlarni yuklashda xatolik: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -141,11 +145,13 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
     try {
       final dbService = sl<ApiDatabaseService>();
       final types = await dbService.getUniqueTradePointTypes();
-      
+
       if (mounted) {
         setState(() {
           // Use database types if available, otherwise fallback to defaults
-          _tradePointTypes = types.isNotEmpty ? types : List.from(_defaultTradePointTypes);
+          _tradePointTypes = types.isNotEmpty
+              ? types
+              : List.from(_defaultTradePointTypes);
           _isLoadingTypes = false;
         });
       }
@@ -162,14 +168,14 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
 
   Future<void> _getCurrentLocation() async {
     setState(() => _isGettingLocation = true);
-    
+
     try {
       // Check if location service is available
       final locationService = sl<LocationService>();
       final storedLocation = locationService.getStoredLocation();
-      
+
       double? lat, lng;
-      
+
       if (storedLocation != null) {
         lat = storedLocation['latitude'] as double?;
         lng = storedLocation['longitude'] as double?;
@@ -182,13 +188,13 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
         lat = position.latitude;
         lng = position.longitude;
       }
-      
+
       if (mounted && lat != null && lng != null) {
         setState(() {
           _latitude = lat;
           _longitude = lng;
         });
-        
+
         // Resolve address from coordinates
         await _resolveAddressFromCoordinates(lat, lng);
       }
@@ -196,7 +202,10 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Joylashuvni olishda xatolik: $e'),
+            content: Text(
+              AppLocalizations.of(context)?.locationError(e.toString()) ??
+                  'Joylashuvni olishda xatolik: $e',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -216,9 +225,9 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
         yandexApiKey: prefs.getYandexMapsToken(),
         googleApiKey: prefs.getGoogleMapsToken(),
       );
-      
+
       final address = await resolver.resolveAddress(lat, lng);
-      
+
       if (mounted && address.confidence > 0.3) {
         final formattedAddress = address.toFormattedString();
         setState(() {
@@ -227,10 +236,13 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
           _addressDeliveryController.text = formattedAddress;
           _addressAutoFilled = true;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Manzil aniqlandi va avtomatik to\'ldirildi'),
+            content: Text(
+              AppLocalizations.of(context)?.addressDetected ??
+                  'Manzil aniqlandi va avtomatik to\'ldirildi',
+            ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
           ),
@@ -244,31 +256,40 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_selectedRegion == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Iltimos, hududni tanlang'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.pleaseSelectRegion ??
+                'Iltimos, hududni tanlang',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
       return;
     }
-    
+
     if (_selectedTradePointType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Iltimos, savdo nuqtasi turini tanlang'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.pleaseSelectTradePointType ??
+                'Iltimos, savdo nuqtasi turini tanlang',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
       return;
     }
-    
+
     if (_latitude == null || _longitude == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Joylashuv ma\'lumotlari topilmadi'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.locationDataNotFound ??
+                'Joylashuv ma\'lumotlari topilmadi',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -279,8 +300,11 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
     final connectivity = await Connectivity().checkConnectivity();
     if (connectivity == ConnectivityResult.none) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Internet aloqasi yo\'q. Iltimos, internetga ulaning'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.noInternetConnection ??
+                'Internet aloqasi yo\'q. Iltimos, internetga ulaning',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -294,9 +318,9 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
     try {
       final prefs = sl<SharedPreferencesService>();
       final soapService = sl<SoapApiService>();
-      
+
       final userCode = prefs.getUserCode() ?? '';
-      
+
       if (userCode.isEmpty) {
         throw Exception('Foydalanuvchi kodi topilmadi');
       }
@@ -309,8 +333,8 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
         contactPerson: _contactPersonController.text.trim(),
         contactPersonPhone: _contactPhoneController.text.trim(),
         address: _addressController.text.trim(),
-        addressDelivery: _addressDeliveryController.text.trim().isEmpty 
-            ? _addressController.text.trim() 
+        addressDelivery: _addressDeliveryController.text.trim().isEmpty
+            ? _addressController.text.trim()
             : _addressDeliveryController.text.trim(),
         referencePoint: _referencePointController.text.trim(),
         responsiblePersonPhone: _responsiblePhoneController.text.trim().isEmpty
@@ -340,7 +364,9 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Xatolik: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -372,9 +398,9 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
             const SizedBox(height: 24),
             Text(
               'Mijoz yaratildi!',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -415,7 +441,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
       final prefs = sl<SharedPreferencesService>();
       final userCode = prefs.getUserCode() ?? '';
       final password = prefs.getPassword() ?? '';
-      
+
       if (userCode.isNotEmpty && password.isNotEmpty) {
         // Sync clients
         await dataSyncService.syncClients(
@@ -430,7 +456,9 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
 
     if (mounted) {
       Navigator.of(context).pop(); // Close dialog
-      Navigator.of(context).pop(clientCode); // Return to previous page with client code
+      Navigator.of(
+        context,
+      ).pop(clientCode); // Return to previous page with client code
     }
   }
 
@@ -470,13 +498,17 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 // Warning banner about territory
                 _buildTerritoryWarningBanner(colorScheme, l10n),
                 const SizedBox(height: 16),
-                
+
                 // Header card with location
                 _buildLocationCard(theme, colorScheme),
                 const SizedBox(height: 20),
-                
+
                 // Basic info section
-                _buildSectionHeader(theme, l10n.createClientBasicInfo, Icons.store),
+                _buildSectionHeader(
+                  theme,
+                  l10n.createClientBasicInfo,
+                  Icons.store,
+                ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _nameController,
@@ -508,11 +540,15 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 _buildTradePointTypeSelector(theme, colorScheme),
                 const SizedBox(height: 12),
                 _buildRegionSelector(theme, colorScheme),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Contact info section
-                _buildSectionHeader(theme, l10n.createClientContactInfo, Icons.contact_phone),
+                _buildSectionHeader(
+                  theme,
+                  l10n.createClientContactInfo,
+                  Icons.contact_phone,
+                ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _contactPersonController,
@@ -539,11 +575,15 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                   icon: Icons.phone_android,
                   keyboardType: TextInputType.phone,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Address section
-                _buildSectionHeader(theme, l10n.createClientAddressInfo, Icons.location_on),
+                _buildSectionHeader(
+                  theme,
+                  l10n.createClientAddressInfo,
+                  Icons.location_on,
+                ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _addressController,
@@ -554,8 +594,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                if (_addressAutoFilled)
-                  _buildAutoFillHelperText(l10n),
+                if (_addressAutoFilled) _buildAutoFillHelperText(l10n),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _addressDeliveryController,
@@ -565,8 +604,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                if (_addressAutoFilled)
-                  _buildAutoFillHelperText(l10n),
+                if (_addressAutoFilled) _buildAutoFillHelperText(l10n),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _referencePointController,
@@ -575,11 +613,15 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                   icon: Icons.place,
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Bank details section (optional)
-                _buildSectionHeader(theme, l10n.createClientBankInfo, Icons.account_balance),
+                _buildSectionHeader(
+                  theme,
+                  l10n.createClientBankInfo,
+                  Icons.account_balance,
+                ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   controller: _directorController,
@@ -608,12 +650,12 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   maxLength: 20,
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Submit button
                 _buildSubmitButton(theme, colorScheme),
-                
+
                 const SizedBox(height: 32),
               ],
             ),
@@ -628,11 +670,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
       padding: const EdgeInsets.only(left: 12, top: 4),
       child: Row(
         children: [
-          Icon(
-            Icons.auto_fix_high,
-            size: 12,
-            color: Colors.red.shade600,
-          ),
+          Icon(Icons.auto_fix_high, size: 12, color: Colors.red.shade600),
           const SizedBox(width: 4),
           Expanded(
             child: Text(
@@ -649,7 +687,10 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
     );
   }
 
-  Widget _buildTerritoryWarningBanner(ColorScheme colorScheme, AppLocalizations l10n) {
+  Widget _buildTerritoryWarningBanner(
+    ColorScheme colorScheme,
+    AppLocalizations l10n,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -767,10 +808,13 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                           _latitude != null && _longitude != null
                               ? '${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}'
                               : _isGettingLocation
-                                  ? (l10n?.creatingLocation ?? 'Aniqlanmoqda...')
-                                  : (l10n?.locationNotFound ?? 'Joylashuv topilmadi'),
+                              ? (l10n?.creatingLocation ?? 'Aniqlanmoqda...')
+                              : (l10n?.locationNotFound ??
+                                    'Joylashuv topilmadi'),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                            color: colorScheme.onPrimaryContainer.withOpacity(
+                              0.8,
+                            ),
                           ),
                         ),
                       ],
@@ -782,11 +826,8 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
           ),
           IconButton(
             onPressed: _isGettingLocation ? null : _getCurrentLocation,
-            icon: Icon(
-              Icons.refresh,
-              color: colorScheme.onPrimaryContainer,
-            ),
-            tooltip: 'Yangilash',
+            icon: Icon(Icons.refresh, color: colorScheme.onPrimaryContainer),
+            tooltip: AppLocalizations.of(context)?.refreshLabel ?? 'Yangilash',
           ),
         ],
       ),
@@ -822,7 +863,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
     TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -866,7 +907,10 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
     );
   }
 
-  Widget _buildTradePointTypeSelector(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildTradePointTypeSelector(
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
@@ -879,7 +923,10 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
           labelText: 'Savdo nuqtasi turi *',
           prefixIcon: Icon(Icons.category, color: colorScheme.primary),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
         ),
         items: _tradePointTypes.map((type) {
           return DropdownMenuItem(value: type, child: Text(type));
@@ -892,7 +939,10 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
           return null;
         },
         isExpanded: true,
-        icon: Icon(Icons.keyboard_arrow_down, color: colorScheme.onSurfaceVariant),
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
@@ -910,7 +960,12 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
           children: [
             Icon(Icons.map, color: colorScheme.primary),
             const SizedBox(width: 16),
-            const Expanded(child: Text('Hududlar yuklanmoqda...')),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)?.regionsLoading ??
+                    'Hududlar yuklanmoqda...',
+              ),
+            ),
             const SizedBox(
               width: 20,
               height: 20,
@@ -933,7 +988,10 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
           labelText: 'Hudud *',
           prefixIcon: Icon(Icons.map, color: colorScheme.primary),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
         ),
         items: _regions.map((region) {
           return DropdownMenuItem(
@@ -949,7 +1007,10 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
           return null;
         },
         isExpanded: true,
-        icon: Icon(Icons.keyboard_arrow_down, color: colorScheme.onSurfaceVariant),
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }

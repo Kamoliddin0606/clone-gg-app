@@ -1468,5 +1468,258 @@
   "creating": "Создание...",
   "refreshLabel": "Обновить",
   "refreshing": "Обновление...",
-  "changePeriod": "Изменить период"
+  "changePeriod": "Изменить период",
+  "server": "Сервер",
+  "addImage": "Добавить изображение",
+  "takePhoto": "Сделать фото",
+  "deleteImage": "Удалить изображение",
+  "deleteImageConfirm": "Вы уверены, что хотите удалить это изображение?",
+  "noReportsAvailable": "Отчеты недоступны",
+  "tables": "Таблицы",
+  "sendPdfLabel": "Отправить PDF",
+  "warehouse": "Склад",
+  "viewPanel": "Панель просмотра",
+  "menu": "Меню",
+  "takePhotoTooltip": "Сделать фото",
+  "changeShippingDateTooltip": "Изменить дату доставки",
+  "manageClientImages": "Управление изображениями клиента",
+  "sendReportViaTelegram": "Отправить отчет через Telegram бот",
+  "fullscreen": "Полный экран",
+  "updateCoordinates": "Обновить координаты",
+  "list": "Список",
+  "grid": "Сетка",
+  "every1Hour": "Каждый 1 час",
+  "every4Hours": "Каждые 4 часа",
+  "every6Hours": "Каждые 6 часов",
+  "every12Hours": "Каждые 12 часов",
+  "daily24h": "Ежедневно (24ч)",
+  "weekly1Week": "Еженедельно (1 неделя)",
+  "customIntervalMinutes": "Пользовательский интервал (минуты)",
+  "organizationLabel": "Организация",
+  "codeLabel2": "Код",
+  "regionsLoading": "Загрузка регионов...",
+  "errorPrefix": "Ошибка",
+  "noData": "Нет данных",
+  "innLabel": "ИНН",
+  "cyclingRegular": "Обычный велосипед",
+  "cyclingRoad": "Шоссейный велосипед",
+  "cyclingMountain": "Горный велосипед",
+  "cyclingSafe": "Безопасный велосипед",
+  "productsPage": "Страница товаров",
+  "quantityHint": "От 0 до {stock}",
+  "@quantityHint": {
+    "placeholders": {
+      "stock": {
+        "type": "int"
+      }
+    }
+  },
+  "minimum60Minutes": "Минимум 60 минут",
+  "enterQuantity": "Введите количество",
+  "maxAvailable": "Максимально доступно: {stock} шт.",
+  "@maxAvailable": {
+    "placeholders": {
+      "stock": {
+        "type": "int"
+      }
+    }
+  },
+  "imageNumber": "Изображение {number}",
+  "@imageNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "prices": "Цены",
+  "selectPriceType": "Выберите тип цены",
+  "selectPriceTypeHint": "Нажмите кнопку фильтра выше, чтобы выбрать тип цены из панели фильтров",
+  "productsCount": "Количество товаров: {count}",
+  "@productsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "categories": "Категории",
+  "selectBrandFirst": "Сначала выберите бренд",
+  "reports": "Отчеты",
+  "reportsSection": "Раздел отчетов",
+  "tasks": "Задачи",
+  "tradingPoints": "Торговые точки",
+  "regionsLoadError": "Ошибка загрузки регионов: {error}",
+  "@regionsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationError": "Ошибка получения местоположения: {error}",
+  "@locationError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addressDetected": "Адрес определен и автоматически заполнен",
+  "pleaseSelectRegion": "Пожалуйста, выберите регион",
+  "pleaseSelectTradePointType": "Пожалуйста, выберите тип торговой точки",
+  "locationDataNotFound": "Данные о местоположении не найдены",
+  "noInternetConnection": "Нет подключения к интернету. Пожалуйста, подключитесь к интернету",
+  "all": "Все",
+  "closeEditMode": "Закрыть режим редактирования",
+  "editFeatureComingSoon": "Функция редактирования скоро появится",
+  "active": "Активный",
+  "inactive": "Неактивный",
+  "activeClients": "Активные клиенты",
+  "activeClientsTooltip": "Клиенты с активными заказами сегодня",
+  "cash": "Наличные",
+  "cashless": "Безналичные",
+  "ordersTotal": "Всего заказов",
+  "fact": "Факт",
+  "visitedTradingPoints": "Посещенные т.т.",
+  "visitedTradingPointsTooltip": "Количество посещенных торговых точек",
+  "territoryOKB": "Территория ОКБ",
+  "territoryOKBTooltip": "Охват клиентской базы по территории",
+  "today": "Сегодня",
+  "todayMainIndicators": "Сегодня — основные показатели",
+  "last7Days": "Последние 7 дней",
+  "last30Days": "Последние 30 дней",
+  "monthlyPlanFactForecast": "Месячный план / Факт / Прогноз",
+  "monthlyOkbAkb": "Ежемесячный ОКБ/АКБ",
+  "contracts": "Договоры",
+  "contractsNotFound": "Договоры не найдены",
+  "newContract": "Новый договор",
+  "contractsListRefreshed": "Список договоров обновлен",
+  "contractsCount": "Количество договоров: {count}",
+  "@contractsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contractDetails": "Детали договора",
+  "contractAmount": "Сумма договора",
+  "contractDocument": "Документ договора",
+  "clientOrders": "Заказы клиента {name}",
+  "@clientOrders": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderNumber": "Заказ № {number}",
+  "@orderNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "orders": "Заказы",
+  "filter": "Фильтр",
+  "filterApplyError": "Ошибка применения фильтра",
+  "main": "Основной",
+  "contents": "Содержимое",
+  "mainReports": "Основные отчеты",
+  "mainReportsDescription": "KPI показатели и основная статистика",
+  "visitsReport": "Отчет о визитах",
+  "visitsReportDescription": "Информация о визитах к клиентам",
+  "completedVisits": "Выполненные визиты",
+  "plannedVisits": "Запланированные визиты",
+  "visitEfficiency": "Эффективность визитов",
+  "lastVisits": "Последние визиты",
+  "dataLoading": "Данные загружаются...",
+  "successful": "Успешно",
+  "orderPlaced": "Заказ размещен",
+  "rejected": "Отклонено",
+  "reportDataRefreshed": "Данные отчета успешно обновлены",
+  "imagesUploadedCount": "{count} изображений успешно загружено",
+  "@imagesUploadedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clientLocationUpdated": "Местоположение клиента успешно обновлено",
+  "apiKeySaved": "API ключ успешно сохранен",
+  "errorOccurred": "Произошла ошибка",
+  "unknownError": "Неизвестная ошибка",
+  "imageLoadError": "Ошибка загрузки изображения",
+  "dataLoadError": "Ошибка загрузки данных",
+  "saveError": "Ошибка сохранения: {error}",
+  "@saveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "userDataLoadError": "Ошибка загрузки данных пользователя: {error}",
+  "@userDataLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "warehouseDataLoadError": "Ошибка загрузки данных склада: {error}",
+  "@warehouseDataLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "justSaved": "Только что сохранено",
+  "savedMinutesAgo": "Сохранено {minutes} минут назад",
+  "@savedMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "savedHoursAgo": "Сохранено {hours} часов назад",
+  "@savedHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "notSaved": "Не сохранено",
+  "selectDateRange": "Выберите диапазон дат",
+  "selectPeriodTitle": "Выберите период",
+  "selectedPeriod": "Выбранный период",
+  "selectTable": "Выберите таблицу",
+  "selectRegionValidator": "Выберите регион",
+  "selectTradePointTypeValidator": "Выберите тип торговой точки",
+  "currentMonth": "Текущий месяц",
+  "selectReportDatesHint": "Укажите даты начала и окончания для отчета",
+  "offlineCannotRefresh": "Невозможно обновить данные в офлайн режиме",
+  "manageClientImages": "Управление изображениями клиента",
+  "distanceRequirementMessage": "Вам нужно соответствовать требованию расстояния для посещения {name}.",
+  "@distanceRequirementMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "requiredDistance": "Требуемое расстояние: {distance}м",
+  "@requiredDistance": {
+    "placeholders": {
+      "distance": {
+        "type": "int"
+      }
+    }
+  }
 }

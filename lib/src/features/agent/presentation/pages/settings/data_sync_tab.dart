@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_config.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -42,13 +43,14 @@ class _DataSyncTabState extends State<DataSyncTab>
   bool _isRefreshingCounts = false;
   double _lastScrollPosition = 0.0;
   DateTime? _lastRefreshTime;
-  
+
   // Background Sync Settings state
   bool _bgSyncEnabled = false;
   int _bgSyncInterval = 6;
   int? _bgSyncCustomMinutes;
-  final TextEditingController _customMinutesController = TextEditingController();
-  
+  final TextEditingController _customMinutesController =
+      TextEditingController();
+
   // Client Balance Cache state
   int _balanceCacheCount = 0;
   bool _isClearingBalanceCache = false;
@@ -59,7 +61,7 @@ class _DataSyncTabState extends State<DataSyncTab>
     _orchestrator = sl<DataSyncOrchestrator>();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
-    
+
     // Auto-refresh metadata on entry
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshMetadata();
@@ -91,7 +93,7 @@ class _DataSyncTabState extends State<DataSyncTab>
   /// Check if enough time has passed since last refresh (debounce)
   bool _shouldRefreshCounts() {
     if (_lastRefreshTime == null) return true;
-    
+
     final timeSinceLastRefresh = DateTime.now().difference(_lastRefreshTime!);
     return timeSinceLastRefresh.inSeconds >= 3; // Refresh every 3 seconds max
   }
@@ -126,17 +128,17 @@ class _DataSyncTabState extends State<DataSyncTab>
       _orchestrator.loadMetadata(),
       _orchestrator.refreshRecordCounts(),
     ]);
-    
+
     // Load background sync settings
     final prefs = sl<SharedPreferencesService>();
     _bgSyncEnabled = prefs.isBgSyncEnabled();
     _bgSyncInterval = prefs.getBgSyncInterval();
     _bgSyncCustomMinutes = prefs.getBgSyncCustomMinutes();
-    
+
     if (_bgSyncCustomMinutes != null) {
       _customMinutesController.text = _bgSyncCustomMinutes.toString();
     }
-    
+
     // Load balance cache count
     if (sl.isRegistered<ClientBalanceService>()) {
       _balanceCacheCount = await sl<ClientBalanceService>().getBalanceCount();
@@ -146,7 +148,7 @@ class _DataSyncTabState extends State<DataSyncTab>
       setState(() {});
     }
   }
-  
+
   /// Clear all client balance cache
   Future<void> _clearBalanceCache() async {
     final confirmed = await showDialog<bool>(
@@ -156,7 +158,9 @@ class _DataSyncTabState extends State<DataSyncTab>
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange),
             SizedBox(width: 8),
-            Text('Balans keshini tozalash'),
+            Text(
+              AppLocalizations.of(context)?.clear ?? 'Balans keshini tozalash',
+            ),
           ],
         ),
         content: Text(
@@ -166,26 +170,29 @@ class _DataSyncTabState extends State<DataSyncTab>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Tozalash', style: TextStyle(color: Colors.white)),
+            child: Text(
+              AppLocalizations.of(context)?.clear ?? 'Tozalash',
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
     );
-    
+
     if (confirmed != true) return;
-    
+
     setState(() => _isClearingBalanceCache = true);
-    
+
     try {
       if (sl.isRegistered<ClientBalanceService>()) {
         await sl<ClientBalanceService>().clearAllBalances();
         _balanceCacheCount = 0;
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -199,7 +206,9 @@ class _DataSyncTabState extends State<DataSyncTab>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Xatolik: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -215,17 +224,19 @@ class _DataSyncTabState extends State<DataSyncTab>
   Future<void> _onToggleBgSync(bool value) async {
     final prefs = sl<SharedPreferencesService>();
     await prefs.setBgSyncEnabled(value);
-    
+
     final syncService = sl<DataSyncService>();
     await syncService.toggleBackgroundSync(value);
-    
+
     setState(() {
       _bgSyncEnabled = value;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(value ? 'Background sync enabled' : 'Background sync disabled'),
+        content: Text(
+          value ? 'Background sync enabled' : 'Background sync disabled',
+        ),
         backgroundColor: value ? Colors.green : Colors.grey,
         duration: Duration(seconds: 2),
       ),
@@ -235,15 +246,17 @@ class _DataSyncTabState extends State<DataSyncTab>
   /// Update sync interval
   Future<void> _onIntervalChanged(int? value) async {
     if (value == null) return;
-    
+
     final prefs = sl<SharedPreferencesService>();
     await prefs.setBgSyncInterval(value);
-    
+
     if (_bgSyncEnabled) {
       final syncService = sl<DataSyncService>();
-      await syncService.toggleBackgroundSync(true); // Re-register with new interval
+      await syncService.toggleBackgroundSync(
+        true,
+      ); // Re-register with new interval
     }
-    
+
     setState(() {
       _bgSyncInterval = value;
     });
@@ -254,19 +267,22 @@ class _DataSyncTabState extends State<DataSyncTab>
     final minutes = int.tryParse(value);
     if (minutes != null && minutes < 60) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Minimum interval is 60 minutes'), backgroundColor: Colors.orange),
+        SnackBar(
+          content: Text('Minimum interval is 60 minutes'),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
 
     final prefs = sl<SharedPreferencesService>();
     await prefs.setBgSyncCustomMinutes(minutes);
-    
+
     if (_bgSyncEnabled) {
       final syncService = sl<DataSyncService>();
       await syncService.toggleBackgroundSync(true); // Re-register
     }
-    
+
     setState(() {
       _bgSyncCustomMinutes = minutes;
     });
@@ -409,7 +425,9 @@ class _DataSyncTabState extends State<DataSyncTab>
                         Text(
                           'Last sync: ${_getRelativeTime(overallStatus.lastSyncTime!)}',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                            color: colorScheme.onPrimaryContainer.withOpacity(
+                              0.8,
+                            ),
                           ),
                         ),
                       ],
@@ -432,7 +450,10 @@ class _DataSyncTabState extends State<DataSyncTab>
                               : Icon(Icons.sync, size: 20),
                           label: Text(
                             _isSyncingAll ? 'Syncing...' : 'Sync All Data',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           onPressed: _isSyncingAll ? null : _syncAll,
                           style: ElevatedButton.styleFrom(
@@ -454,14 +475,17 @@ class _DataSyncTabState extends State<DataSyncTab>
                           Icon(
                             Icons.info_outline,
                             size: 16,
-                            color: colorScheme.onPrimaryContainer.withOpacity(0.7),
+                            color: colorScheme.onPrimaryContainer.withOpacity(
+                              0.7,
+                            ),
                           ),
                           SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               'This will sync all tables in dependency order',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onPrimaryContainer.withOpacity(0.7),
+                                color: colorScheme.onPrimaryContainer
+                                    .withOpacity(0.7),
                               ),
                             ),
                           ),
@@ -478,7 +502,11 @@ class _DataSyncTabState extends State<DataSyncTab>
                   padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Row(
                     children: [
-                      Icon(Icons.folder_open, color: colorScheme.primary, size: 20),
+                      Icon(
+                        Icons.folder_open,
+                        color: colorScheme.primary,
+                        size: 20,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Data Groups',
@@ -489,7 +517,10 @@ class _DataSyncTabState extends State<DataSyncTab>
                       ),
                       SizedBox(width: 8),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
@@ -509,16 +540,14 @@ class _DataSyncTabState extends State<DataSyncTab>
 
               // Group cards list
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final group = groups[index];
-                    return GroupSyncCard(
-                      group: group,
-                      initiallyExpanded: index == 0, // Expand first group by default
-                    );
-                  },
-                  childCount: groups.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final group = groups[index];
+                  return GroupSyncCard(
+                    group: group,
+                    initiallyExpanded:
+                        index == 0, // Expand first group by default
+                  );
+                }, childCount: groups.length),
               ),
 
               // Background sync settings
@@ -532,9 +561,7 @@ class _DataSyncTabState extends State<DataSyncTab>
               ),
 
               // Bottom padding
-              SliverToBoxAdapter(
-                child: SizedBox(height: 32),
-              ),
+              SliverToBoxAdapter(child: SizedBox(height: 32)),
             ],
           ),
         );
@@ -557,7 +584,11 @@ class _DataSyncTabState extends State<DataSyncTab>
         children: [
           Row(
             children: [
-              Icon(Icons.account_balance_wallet_outlined, color: colorScheme.primary, size: 24),
+              Icon(
+                Icons.account_balance_wallet_outlined,
+                color: colorScheme.primary,
+                size: 24,
+              ),
               SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -603,7 +634,9 @@ class _DataSyncTabState extends State<DataSyncTab>
                   : Icon(Icons.delete_outline, color: Colors.red),
               label: Text(
                 _isClearingBalanceCache ? 'Tozalanmoqda...' : 'Keshni tozalash',
-                style: TextStyle(color: _isClearingBalanceCache ? null : Colors.red),
+                style: TextStyle(
+                  color: _isClearingBalanceCache ? null : Colors.red,
+                ),
               ),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: Colors.red.withOpacity(0.5)),
@@ -615,7 +648,10 @@ class _DataSyncTabState extends State<DataSyncTab>
     );
   }
 
-  Widget _buildBackgroundSyncSettings(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildBackgroundSyncSettings(
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
     return Container(
       margin: EdgeInsets.all(16),
       padding: EdgeInsets.all(16),
@@ -639,10 +675,7 @@ class _DataSyncTabState extends State<DataSyncTab>
                   ),
                 ),
               ),
-              Switch(
-                value: _bgSyncEnabled,
-                onChanged: _onToggleBgSync,
-              ),
+              Switch(value: _bgSyncEnabled, onChanged: _onToggleBgSync),
             ],
           ),
           SizedBox(height: 8),
@@ -666,22 +699,62 @@ class _DataSyncTabState extends State<DataSyncTab>
               decoration: InputDecoration(
                 filled: true,
                 fillColor: colorScheme.surface,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               items: [
-                DropdownMenuItem(value: 1, child: Text('Every 1 hour')),
-                DropdownMenuItem(value: 4, child: Text('Every 4 hours')),
-                DropdownMenuItem(value: 6, child: Text('Every 6 hours')),
-                DropdownMenuItem(value: 12, child: Text('Every 12 hours')),
-                DropdownMenuItem(value: 24, child: Text('Daily (24h)')),
-                DropdownMenuItem(value: 168, child: Text('Weekly (1 week)')),
+                DropdownMenuItem(
+                  value: 1,
+                  child: Text(
+                    AppLocalizations.of(context)?.every1Hour ?? 'Every 1 hour',
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 4,
+                  child: Text(
+                    AppLocalizations.of(context)?.every4Hours ??
+                        'Every 4 hours',
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 6,
+                  child: Text(
+                    AppLocalizations.of(context)?.every6Hours ??
+                        'Every 6 hours',
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 12,
+                  child: Text(
+                    AppLocalizations.of(context)?.every12Hours ??
+                        'Every 12 hours',
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 24,
+                  child: Text(
+                    AppLocalizations.of(context)?.daily24h ?? 'Daily (24h)',
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 168,
+                  child: Text(
+                    AppLocalizations.of(context)?.weekly1Week ??
+                        'Weekly (1 week)',
+                  ),
+                ),
               ],
               onChanged: _onIntervalChanged,
             ),
             SizedBox(height: 16),
             Text(
-              'Custom Interval (Minutes)',
+              AppLocalizations.of(context)?.customIntervalMinutes ??
+                  'Custom Interval (Minutes)',
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -691,11 +764,18 @@ class _DataSyncTabState extends State<DataSyncTab>
               controller: _customMinutesController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                hintText: 'Minimum 60 minutes',
+                hintText:
+                    AppLocalizations.of(context)?.minimum60Minutes ??
+                    'Minimum 60 minutes',
                 filled: true,
                 fillColor: colorScheme.surface,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 suffixText: 'min',
               ),
               onSubmitted: _onCustomMinutesSubmitted,
@@ -713,7 +793,6 @@ class _DataSyncTabState extends State<DataSyncTab>
       ),
     );
   }
-
 
   /// Get relative time string
   String _getRelativeTime(DateTime dateTime) {

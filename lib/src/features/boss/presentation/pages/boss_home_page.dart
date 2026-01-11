@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 class BossHomePage extends StatelessWidget {
   const BossHomePage({super.key});
@@ -112,10 +113,26 @@ class BossHomePage extends StatelessWidget {
             const Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _OverviewItem(title: 'Total Sales', value: '2.5M', color: Colors.green),
-                _OverviewItem(title: 'Active Agents', value: '45', color: Colors.blue),
-                _OverviewItem(title: 'Orders', value: '1,234', color: Colors.orange),
-                _OverviewItem(title: 'Revenue', value: '98%', color: Colors.purple),
+                _OverviewItem(
+                  title: 'Total Sales',
+                  value: '2.5M',
+                  color: Colors.green,
+                ),
+                _OverviewItem(
+                  title: 'Active Agents',
+                  value: '45',
+                  color: Colors.blue,
+                ),
+                _OverviewItem(
+                  title: 'Orders',
+                  value: '1,234',
+                  color: Colors.orange,
+                ),
+                _OverviewItem(
+                  title: 'Revenue',
+                  value: '98%',
+                  color: Colors.purple,
+                ),
               ],
             ),
           ],
@@ -222,16 +239,21 @@ class BossHomePage extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Chiqish'),
-          content: const Text('Haqiqatan ham ilovadan chiqmoqchimisiz?'),
+          title: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
+          content: Text(
+            AppLocalizations.of(context)?.confirmLogout ??
+                'Haqiqatan ham ilovadan chiqmoqchimisiz?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Bekor qilish'),
+              child: Text(
+                AppLocalizations.of(context)?.cancel ?? 'Bekor qilish',
+              ),
             ),
             FilledButton(
               onPressed: () => _logout(context),
-              child: const Text('Chiqish'),
+              child: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
             ),
           ],
         );
@@ -247,7 +269,7 @@ class BossHomePage extends StatelessWidget {
     } catch (e) {
       // SharedPreferences not ready, continue with logout
     }
-    
+
     if (context.mounted) {
       Navigator.of(context).pop(); // Close dialog
       Navigator.pushNamedAndRemoveUntil(
@@ -263,7 +285,7 @@ class _OverviewItem extends StatelessWidget {
   final String title;
   final String value;
   final Color color;
-  
+
   const _OverviewItem({
     required this.title,
     required this.value,
@@ -330,10 +352,7 @@ class _ActionCard extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.1),
-                color.withOpacity(0.05),
-              ],
+              colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
             ),
           ),
           child: Column(

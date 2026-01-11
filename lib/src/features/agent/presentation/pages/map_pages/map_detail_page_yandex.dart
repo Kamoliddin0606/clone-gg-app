@@ -9,7 +9,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:yandex_maps_mapkit/yandex_map.dart' as yandex_map;
 import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
 import 'package:yandex_maps_mapkit/mapkit_factory.dart' as mkf;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
+    as model;
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
@@ -19,7 +20,9 @@ import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
+
 // Constants for map configuration
 const double kDefaultZoom = 15.0;
 const double kRouteZoom = 16.0;
@@ -30,10 +33,7 @@ const double kRouteZoom = 16.0;
 class MapDetailPageYandex extends StatefulWidget {
   final model.TradingPoint tradingPoint;
 
-  const MapDetailPageYandex({
-    super.key,
-    required this.tradingPoint,
-  });
+  const MapDetailPageYandex({super.key, required this.tradingPoint});
 
   @override
   State<MapDetailPageYandex> createState() => _MapDetailPageYandexState();
@@ -132,7 +132,9 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
   void _initializeMapData() {
     // Create client point from trading point coordinates
     _clientPoint = mk.Point(
-      latitude: widget.tradingPoint.latitude ?? 41.2995, // Default to Tashkent if no coordinates
+      latitude:
+          widget.tradingPoint.latitude ??
+          41.2995, // Default to Tashkent if no coordinates
       longitude: widget.tradingPoint.longitude ?? 69.2401,
     );
 
@@ -172,7 +174,12 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
             print('Location permission denied');
           }
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Joylashuv ruxsatnomasi berilmadi')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.locationPermissionDenied ??
+                    'Joylashuv ruxsatnomasi berilmadi',
+              ),
+            ),
           );
         }
       }
@@ -181,7 +188,11 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
         print('Error checking location permission: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ruxsatnoma tekshirishda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -214,19 +225,28 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       );
 
       setState(() {
-        _userPoint = mk.Point(latitude: position.latitude, longitude: position.longitude);
+        _userPoint = mk.Point(
+          latitude: position.latitude,
+          longitude: position.longitude,
+        );
       });
       _addUserMarker();
 
       if (kDebugMode) {
-        print('User location obtained: ${position.latitude}, ${position.longitude}');
+        print(
+          'User location obtained: ${position.latitude}, ${position.longitude}',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error getting user location: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Joylashuvni aniqlashda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -270,12 +290,19 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
   Future<void> _calculateRoute() async {
     try {
       if (kDebugMode) {
-        print('Creating straight line route from user to client: ${widget.tradingPoint.name}');
+        print(
+          'Creating straight line route from user to client: ${widget.tradingPoint.name}',
+        );
       }
 
       if (_userPoint == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.userLocationNotFound ??
+                  'Foydalanuvchi joylashuvi aniqlanmadi',
+            ),
+          ),
         );
         return;
       }
@@ -299,7 +326,11 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       final estimatedTime = _estimateTravelTime(distance);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('To\'g\'ri chiziq marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}')),
+        SnackBar(
+          content: Text(
+            'To\'g\'ri chiziq marshrut: ${distance.toStringAsFixed(1)} km, taxminiy ${estimatedTime}',
+          ),
+        ),
       );
 
       if (kDebugMode) {
@@ -310,7 +341,11 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
         print('Error creating route: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Marshrut yaratishda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -334,7 +369,10 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
 
   /// Fit camera to show route bounds
   Future<void> _fitRouteBounds() async {
-    if (_currentRoute == null || _currentRoute!.isEmpty || _yandexController == null) return;
+    if (_currentRoute == null ||
+        _currentRoute!.isEmpty ||
+        _yandexController == null)
+      return;
 
     try {
       // Calculate bounds from route points
@@ -388,8 +426,12 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
     final deltaLatRad = (point2.latitude - point1.latitude) * pi / 180;
     final deltaLngRad = (point2.longitude - point1.longitude) * pi / 180;
 
-    final a = sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
-        cos(lat1Rad) * cos(lat2Rad) * sin(deltaLngRad / 2) * sin(deltaLngRad / 2);
+    final a =
+        sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
+        cos(lat1Rad) *
+            cos(lat2Rad) *
+            sin(deltaLngRad / 2) *
+            sin(deltaLngRad / 2);
     final c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
     return earthRadius * c;
@@ -462,14 +504,20 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       _lastZoom = targetZoom;
 
       if (kDebugMode) {
-        print('Camera moved to: ${point.latitude}, ${point.longitude} with zoom: $targetZoom');
+        print(
+          'Camera moved to: ${point.latitude}, ${point.longitude} with zoom: $targetZoom',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error moving camera: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kamera harakatida xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -483,17 +531,26 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       final userCode = _prefs.getUserCode();
       if (userCode == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foydalanuvchi ma\'lumotlari topilmadi')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.userDataNotFound ??
+                  'Foydalanuvchi ma\'lumotlari topilmadi',
+            ),
+          ),
         );
         return;
       }
 
       // Get user permissions from data sync service
-      final permissions = await _dataSyncService.getCachedSalesReqPermissions(userCode);
+      final permissions = await _dataSyncService.getCachedSalesReqPermissions(
+        userCode,
+      );
       if (permissions == null || !permissions.editClientCoordinates) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Sizda mijoz joylashuvini o\'zgartirish uchun ruxsat yo\'q'),
+            content: Text(
+              'Sizda mijoz joylashuvini o\'zgartirish uchun ruxsat yo\'q',
+            ),
             duration: Duration(seconds: 3),
           ),
         );
@@ -522,7 +579,11 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
         print('Error checking permissions for edit location mode: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ruxsatlarni tekshirishda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -568,7 +629,9 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
     _updateClientMarkerPosition(point);
 
     if (kDebugMode) {
-      print('Precise location selected via long press: ${point.latitude}, ${point.longitude}');
+      print(
+        'Precise location selected via long press: ${point.latitude}, ${point.longitude}',
+      );
     }
   }
 
@@ -578,7 +641,10 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
     // This is a simplified version - in production you'd use proper coordinate conversion
     setState(() {
       _showTapFeedback = true;
-      _tapPosition = const Offset(100, 100); // Placeholder - would need proper conversion
+      _tapPosition = const Offset(
+        100,
+        100,
+      ); // Placeholder - would need proper conversion
     });
 
     // Hide feedback after animation
@@ -609,14 +675,19 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Joylashuvni tasdiqlash'),
+        title: Text(
+          AppLocalizations.of(context)?.confirmLocationTitle ??
+              'Joylashuvni tasdiqlash',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Manzil: ${addressInfo['address'] ?? 'Aniqlanmadi'}'),
             const SizedBox(height: 8),
-            Text('Uzunlik: ${_newClientLocation!.longitude.toStringAsFixed(6)}'),
+            Text(
+              'Uzunlik: ${_newClientLocation!.longitude.toStringAsFixed(6)}',
+            ),
             Text('Kenglik: ${_newClientLocation!.latitude.toStringAsFixed(6)}'),
             const SizedBox(height: 16),
             Text(
@@ -631,14 +702,14 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
               Navigator.of(context).pop();
               _cancelLocationChange();
             },
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
               await _saveNewLocation();
             },
-            child: const Text('Tasdiqlash'),
+            child: Text(AppLocalizations.of(context)?.confirm ?? 'Tasdiqlash'),
           ),
         ],
       ),
@@ -668,7 +739,12 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
     try {
       // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Joylashuv yangilanmoqda...')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.loading ??
+                'Joylashuv yangilanmoqda...',
+          ),
+        ),
       );
 
       // Call API to update client coordinates
@@ -683,7 +759,12 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mijoz joylashuvi muvaffaqiyatli yangilandi')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.clientLocationUpdated ??
+                'Mijoz joylashuvi muvaffaqiyatli yangilandi',
+          ),
+        ),
       );
 
       if (kDebugMode) {
@@ -694,7 +775,11 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
         print('Error saving new location: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Joylashuvni yangilashda xatolik: $e')),
+        SnackBar(
+          content: Text(
+            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+          ),
+        ),
       );
     }
   }
@@ -711,13 +796,16 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
 
       // Yandex Geocoding API request
       final url = 'https://geocode-maps.yandex.ru/1.x/';
-      final response = await Dio().get(url, queryParameters: {
-        'apikey': apiKey,
-        'format': 'json',
-        'geocode': '${point.longitude},${point.latitude}',
-        'lang': 'uz_UZ', // Uzbek language
-        'results': 1,
-      });
+      final response = await Dio().get(
+        url,
+        queryParameters: {
+          'apikey': apiKey,
+          'format': 'json',
+          'geocode': '${point.longitude},${point.latitude}',
+          'lang': 'uz_UZ', // Uzbek language
+          'results': 1,
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -756,7 +844,6 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
 
       if (kDebugMode) print('No geocoding results found');
       return _getFallbackAddress();
-
     } catch (e) {
       if (kDebugMode) print('Yandex Geocoding API error: $e');
 
@@ -764,7 +851,8 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       try {
         return await _getAddressFromGoogleAPI(point);
       } catch (googleError) {
-        if (kDebugMode) print('Google Geocoding API fallback also failed: $googleError');
+        if (kDebugMode)
+          print('Google Geocoding API fallback also failed: $googleError');
         return _getFallbackAddress();
       }
     }
@@ -779,11 +867,14 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       }
 
       final url = 'https://maps.googleapis.com/maps/api/geocode/json';
-      final response = await Dio().get(url, queryParameters: {
-        'latlng': '${point.latitude},${point.longitude}',
-        'key': apiKey,
-        'language': 'uz',
-      });
+      final response = await Dio().get(
+        url,
+        queryParameters: {
+          'latlng': '${point.latitude},${point.longitude}',
+          'key': apiKey,
+          'language': 'uz',
+        },
+      );
 
       if (response.statusCode == 200 && response.data['status'] == 'OK') {
         final result = response.data['results'][0];
@@ -810,7 +901,6 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       }
 
       return _getFallbackAddress();
-
     } catch (e) {
       if (kDebugMode) print('Google Geocoding API error: $e');
       return _getFallbackAddress();
@@ -845,7 +935,9 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       );
 
       if (kDebugMode) {
-        print('Client coordinates updated successfully: ${newLocation.latitude}, ${newLocation.longitude}');
+        print(
+          'Client coordinates updated successfully: ${newLocation.latitude}, ${newLocation.longitude}',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -910,11 +1002,7 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
                 color: Colors.green.withOpacity(0.3),
                 border: Border.all(color: Colors.green, width: 2),
               ),
-              child: const Icon(
-                Icons.check,
-                color: Colors.white,
-                size: 24,
-              ),
+              child: const Icon(Icons.check, color: Colors.white, size: 24),
             ),
           ),
       ],
@@ -944,7 +1032,9 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: cs.surface.withOpacity(isDark ? 0.95 : 0.9).withOpacity(0.8),
+                color: cs.surface
+                    .withOpacity(isDark ? 0.95 : 0.9)
+                    .withOpacity(0.8),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: cs.outline.withOpacity(0.2),
@@ -1001,13 +1091,15 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
                   ],
                 ),
                 child: IconButton(
-                  onPressed: _locationPermissionGranted ? () async {
-                    if (_userPoint != null && _yandexController != null) {
-                      _moveCameraToPoint(_userPoint!, zoom: kRouteZoom);
-                    } else {
-                      await _getUserLocation();
-                    }
-                  } : null,
+                  onPressed: _locationPermissionGranted
+                      ? () async {
+                          if (_userPoint != null && _yandexController != null) {
+                            _moveCameraToPoint(_userPoint!, zoom: kRouteZoom);
+                          } else {
+                            await _getUserLocation();
+                          }
+                        }
+                      : null,
                   iconSize: iconSize,
                   icon: Icon(
                     Icons.my_location,
@@ -1083,7 +1175,14 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
                       await _calculateRoute();
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Foydalanuvchi joylashuvi aniqlanmadi')),
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(
+                                  context,
+                                )?.userLocationNotFound ??
+                                'Foydalanuvchi joylashuvi aniqlanmadi',
+                          ),
+                        ),
                       );
                     }
                   },
@@ -1122,12 +1221,16 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
                   iconSize: iconSize,
                   icon: Icon(
                     _isEditMode
-                        ? (_isConfirmingLocation ? Icons.check : Icons.edit_location)
+                        ? (_isConfirmingLocation
+                              ? Icons.check
+                              : Icons.edit_location)
                         : Icons.edit_location_outlined,
                     color: _isEditMode ? Colors.green : cs.primary,
                   ),
                   tooltip: _isEditMode
-                      ? (_isConfirmingLocation ? 'Joylashuvni tasdiqlash' : 'Joylashuvni o\'zgartirish')
+                      ? (_isConfirmingLocation
+                            ? 'Joylashuvni tasdiqlash'
+                            : 'Joylashuvni o\'zgartirish')
                       : 'Mijoz joylashuvini o\'zgartirish',
                 ),
               ),
@@ -1189,7 +1292,10 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
                   ),
                   IconButton(
                     onPressed: _clearRoute,
-                    icon: Icon(Icons.close, color: cs.onSurface.withOpacity(0.7)),
+                    icon: Icon(
+                      Icons.close,
+                      color: cs.onSurface.withOpacity(0.7),
+                    ),
                     tooltip: 'Marshrutni yopish',
                     style: IconButton.styleFrom(
                       backgroundColor: cs.surfaceVariant.withOpacity(0.5),
@@ -1238,8 +1344,8 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
                           _isConfirmingLocation
                               ? 'Yangi joylashuvni tasdiqlang'
                               : _isPreciseMode
-                                  ? 'Aniq joylashuv tanlandi - tasdiqlang'
-                                  : 'Kamerani siljiting yoki uzun bosing',
+                              ? 'Aniq joylashuv tanlandi - tasdiqlang'
+                              : 'Kamerani siljiting yoki uzun bosing',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: cs.onSurface,
@@ -1248,8 +1354,13 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
                       ),
                       IconButton(
                         onPressed: _cancelLocationChange,
-                        icon: Icon(Icons.close, color: cs.onSurface.withOpacity(0.7)),
-                        tooltip: 'Tahrirlash rejimini yopish',
+                        icon: Icon(
+                          Icons.close,
+                          color: cs.onSurface.withOpacity(0.7),
+                        ),
+                        tooltip:
+                            AppLocalizations.of(context)?.closeEditMode ??
+                            'Tahrirlash rejimini yopish',
                         style: IconButton.styleFrom(
                           backgroundColor: cs.surfaceVariant.withOpacity(0.5),
                           foregroundColor: cs.onSurface,
@@ -1282,8 +1393,6 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _buildYandexMapWidget(),
-    );
+    return Scaffold(body: _buildYandexMapWidget());
   }
 }

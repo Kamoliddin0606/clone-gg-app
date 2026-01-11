@@ -10,6 +10,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/formatters.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/create_order_page.dart';
+
 // Local copy of matchesSearch function for transliteration search
 bool matchesSearch(String text, String query) {
   if (query.isEmpty) return true;
@@ -28,16 +29,72 @@ String normalizeForSearch(String text) {
 
 String transliterateToLatin(String text) {
   const cyrillicToLatin = {
-    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
-    'ж': 'j', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
-    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-    'ф': 'f', 'х': 'x', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
-    'ъ': '\'', 'ы': 'y', 'ь': '\'', 'э': 'e', 'ю': 'yu', 'я': 'ya',
-    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
-    'Ж': 'J', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
-    'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
-    'Ф': 'F', 'Х': 'X', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch',
-    'Ъ': '\'', 'Ы': 'Y', 'Ь': '\'', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+    'а': 'a',
+    'б': 'b',
+    'в': 'v',
+    'г': 'g',
+    'д': 'd',
+    'е': 'e',
+    'ё': 'yo',
+    'ж': 'j',
+    'з': 'z',
+    'и': 'i',
+    'й': 'y',
+    'к': 'k',
+    'л': 'l',
+    'м': 'm',
+    'н': 'n',
+    'о': 'o',
+    'п': 'p',
+    'р': 'r',
+    'с': 's',
+    'т': 't',
+    'у': 'u',
+    'ф': 'f',
+    'х': 'x',
+    'ц': 'ts',
+    'ч': 'ch',
+    'ш': 'sh',
+    'щ': 'shch',
+    'ъ': '\'',
+    'ы': 'y',
+    'ь': '\'',
+    'э': 'e',
+    'ю': 'yu',
+    'я': 'ya',
+    'А': 'A',
+    'Б': 'B',
+    'В': 'V',
+    'Г': 'G',
+    'Д': 'D',
+    'Е': 'E',
+    'Ё': 'Yo',
+    'Ж': 'J',
+    'З': 'Z',
+    'И': 'I',
+    'Й': 'Y',
+    'К': 'K',
+    'Л': 'L',
+    'М': 'M',
+    'Н': 'N',
+    'О': 'O',
+    'П': 'P',
+    'Р': 'R',
+    'С': 'S',
+    'Т': 'T',
+    'У': 'U',
+    'Ф': 'F',
+    'Х': 'X',
+    'Ц': 'Ts',
+    'Ч': 'Ch',
+    'Ш': 'Sh',
+    'Щ': 'Shch',
+    'Ъ': '\'',
+    'Ы': 'Y',
+    'Ь': '\'',
+    'Э': 'E',
+    'Ю': 'Yu',
+    'Я': 'Ya',
   };
   String result = text;
   cyrillicToLatin.forEach((cyr, lat) {
@@ -48,20 +105,70 @@ String transliterateToLatin(String text) {
 
 String transliterateToCyrillic(String text) {
   const latinToCyrillic = {
-    'a': 'а', 'b': 'б', 'v': 'в', 'g': 'г', 'd': 'д', 'e': 'е', 'yo': 'ё',
-    'j': 'ж', 'z': 'з', 'i': 'и', 'y': 'й', 'k': 'к', 'l': 'л', 'm': 'м',
-    'n': 'н', 'o': 'о', 'p': 'п', 'r': 'р', 's': 'с', 't': 'т', 'u': 'у',
-    'f': 'ф', 'x': 'х', 'ts': 'ц', 'ch': 'ч', 'sh': 'ш', 'shch': 'щ',
-    '\'': 'ъ', 'yu': 'ю', 'ya': 'я',
-    'A': 'А', 'B': 'Б', 'V': 'В', 'G': 'Г', 'D': 'Д', 'E': 'Е', 'Yo': 'Ё',
-    'J': 'Ж', 'Z': 'З', 'I': 'И', 'Y': 'Й', 'K': 'К', 'L': 'Л', 'M': 'М',
-    'N': 'Н', 'O': 'О', 'P': 'П', 'R': 'Р', 'S': 'С', 'T': 'Т', 'U': 'У',
-    'F': 'Ф', 'X': 'Х', 'Ts': 'Ц', 'Ch': 'Ч', 'Sh': 'Ш', 'Shch': 'Щ',
-    'Yu': 'Ю', 'Ya': 'Я',
+    'a': 'а',
+    'b': 'б',
+    'v': 'в',
+    'g': 'г',
+    'd': 'д',
+    'e': 'е',
+    'yo': 'ё',
+    'j': 'ж',
+    'z': 'з',
+    'i': 'и',
+    'y': 'й',
+    'k': 'к',
+    'l': 'л',
+    'm': 'м',
+    'n': 'н',
+    'o': 'о',
+    'p': 'п',
+    'r': 'р',
+    's': 'с',
+    't': 'т',
+    'u': 'у',
+    'f': 'ф',
+    'x': 'х',
+    'ts': 'ц',
+    'ch': 'ч',
+    'sh': 'ш',
+    'shch': 'щ',
+    '\'': 'ъ',
+    'yu': 'ю',
+    'ya': 'я',
+    'A': 'А',
+    'B': 'Б',
+    'V': 'В',
+    'G': 'Г',
+    'D': 'Д',
+    'E': 'Е',
+    'Yo': 'Ё',
+    'J': 'Ж',
+    'Z': 'З',
+    'I': 'И',
+    'Y': 'Й',
+    'K': 'К',
+    'L': 'Л',
+    'M': 'М',
+    'N': 'Н',
+    'O': 'О',
+    'P': 'П',
+    'R': 'Р',
+    'S': 'С',
+    'T': 'Т',
+    'U': 'У',
+    'F': 'Ф',
+    'X': 'Х',
+    'Ts': 'Ц',
+    'Ch': 'Ч',
+    'Sh': 'Ш',
+    'Shch': 'Щ',
+    'Yu': 'Ю',
+    'Ya': 'Я',
   };
   String result = text;
   // Sort by length descending to handle multi-char first
-  final sortedKeys = latinToCyrillic.keys.toList()..sort((a, b) => b.length.compareTo(a.length));
+  final sortedKeys = latinToCyrillic.keys.toList()
+    ..sort((a, b) => b.length.compareTo(a.length));
   for (final lat in sortedKeys) {
     result = result.replaceAll(lat, latinToCyrillic[lat]!);
   }
@@ -102,43 +209,44 @@ class ProductSelectionPage extends StatefulWidget {
   State<ProductSelectionPage> createState() => _ProductSelectionPageState();
 }
 
-class _ProductSelectionPageState extends State<ProductSelectionPage> with TickerProviderStateMixin {
-   /// Current product selections with quantities
-   /// Key: productCode, Value: CreateOrderProduct
-   late Map<String, CreateOrderProduct> _productSelections;
+class _ProductSelectionPageState extends State<ProductSelectionPage>
+    with TickerProviderStateMixin {
+  /// Current product selections with quantities
+  /// Key: productCode, Value: CreateOrderProduct
+  late Map<String, CreateOrderProduct> _productSelections;
 
-   /// Loading state for UI feedback
-   bool _isLoading = false;
+  /// Loading state for UI feedback
+  bool _isLoading = false;
 
-   /// Error message for user feedback
-   String? _errorMessage;
+  /// Error message for user feedback
+  String? _errorMessage;
 
-   /// UI state for summary panel
-   bool _isSummaryVisible = false;
-   double _dragStartY = 0;
-   late AnimationController _summaryAnimationController;
-   late Animation<Offset> _summaryAnimation;
+  /// UI state for summary panel
+  bool _isSummaryVisible = false;
+  double _dragStartY = 0;
+  late AnimationController _summaryAnimationController;
+  late Animation<Offset> _summaryAnimation;
 
-   /// UI state for view mode toggle
-   bool _isViewModeToggleVisible = false;
-   ViewMode _currentViewMode = ViewMode.list;
-   late AnimationController _viewModeToggleAnimationController;
-   late Animation<double> _viewModeToggleAnimation;
+  /// UI state for view mode toggle
+  bool _isViewModeToggleVisible = false;
+  ViewMode _currentViewMode = ViewMode.list;
+  late AnimationController _viewModeToggleAnimationController;
+  late Animation<double> _viewModeToggleAnimation;
 
-   /// UI state for full screen mode
-   bool _isFullScreen = false;
+  /// UI state for full screen mode
+  bool _isFullScreen = false;
 
-   /// Search and filter state
-   final TextEditingController _searchController = TextEditingController();
-   late AnimationController _filterAnimationController;
-   late Animation<double> _filterAnimation;
-   bool _isFilterPanelVisible = false;
-   List<String> _selectedBrands = [];
-   List<String> _selectedCategories = [];
-   List<ProductBrand> _brands = [];
-   List<ProductSeries> _categories = [];
-   bool _isBrandFilterExpanded = false;
-   bool _isCategoryFilterExpanded = false;
+  /// Search and filter state
+  final TextEditingController _searchController = TextEditingController();
+  late AnimationController _filterAnimationController;
+  late Animation<double> _filterAnimation;
+  bool _isFilterPanelVisible = false;
+  List<String> _selectedBrands = [];
+  List<String> _selectedCategories = [];
+  List<ProductBrand> _brands = [];
+  List<ProductSeries> _categories = [];
+  bool _isBrandFilterExpanded = false;
+  bool _isCategoryFilterExpanded = false;
 
   @override
   void initState() {
@@ -149,37 +257,41 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _summaryAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _summaryAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _summaryAnimation =
+        Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _summaryAnimationController,
+            curve: Curves.easeInOut,
+          ),
+        );
 
     _viewModeToggleAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _viewModeToggleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _viewModeToggleAnimationController, curve: Curves.easeInOut),
+      CurvedAnimation(
+        parent: _viewModeToggleAnimationController,
+        curve: Curves.easeInOut,
+      ),
     );
 
     _filterAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _filterAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _filterAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _filterAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _filterAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
     _initializeProductSelections();
     _loadFilterData();
-    debugPrint('ProductSelectionPage: Initialized with ${widget.availableProducts.length} available products and ${widget.selectedProducts.length} selected products');
+    debugPrint(
+      'ProductSelectionPage: Initialized with ${widget.availableProducts.length} available products and ${widget.selectedProducts.length} selected products',
+    );
   }
 
   @override
@@ -200,12 +312,18 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       // Add existing selected products with their quantities
       for (final selectedProduct in widget.selectedProducts) {
         _productSelections[selectedProduct.codeProduct] = selectedProduct;
-        debugPrint('ProductSelectionPage: Pre-filled product ${selectedProduct.codeProduct} with quantity ${selectedProduct.amount}');
+        debugPrint(
+          'ProductSelectionPage: Pre-filled product ${selectedProduct.codeProduct} with quantity ${selectedProduct.amount}',
+        );
       }
 
-      debugPrint('ProductSelectionPage: Initialized ${_productSelections.length} product selections');
+      debugPrint(
+        'ProductSelectionPage: Initialized ${_productSelections.length} product selections',
+      );
     } catch (e, stackTrace) {
-      debugPrint('ProductSelectionPage: Error initializing product selections: $e');
+      debugPrint(
+        'ProductSelectionPage: Error initializing product selections: $e',
+      );
       debugPrint('ProductSelectionPage: Stack trace: $stackTrace');
       _errorMessage = 'Ma\'lumotlarni yuklashda xatolik yuz berdi';
     }
@@ -271,7 +389,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       final allCategories = <ProductSeries>[];
 
       for (final brandName in brandNames) {
-        final brandCategories = await repository.getCachedProductSeries(brandName: brandName);
+        final brandCategories = await repository.getCachedProductSeries(
+          brandName: brandName,
+        );
         allCategories.addAll(brandCategories);
       }
 
@@ -307,16 +427,18 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
 
     // Apply brand filtering
     if (_selectedBrands.isNotEmpty) {
-      filtered = filtered.where((product) =>
-        _selectedBrands.contains(product.productBrand)
-      ).toList();
+      filtered = filtered
+          .where((product) => _selectedBrands.contains(product.productBrand))
+          .toList();
     }
 
     // Apply category (series) filtering
     if (_selectedCategories.isNotEmpty) {
-      filtered = filtered.where((product) =>
-        _selectedCategories.contains(product.productSeries)
-      ).toList();
+      filtered = filtered
+          .where(
+            (product) => _selectedCategories.contains(product.productSeries),
+          )
+          .toList();
     }
 
     // Apply search filtering
@@ -324,10 +446,10 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
     if (searchQuery.isNotEmpty) {
       filtered = filtered.where((item) {
         return matchesSearch(item.productName, searchQuery) ||
-               matchesSearch(item.productCode, searchQuery) ||
-               matchesSearch(item.vendorCode, searchQuery) ||
-               matchesSearch(item.stock.toString(), searchQuery) ||
-               matchesSearch(item.price.toString(), searchQuery);
+            matchesSearch(item.productCode, searchQuery) ||
+            matchesSearch(item.vendorCode, searchQuery) ||
+            matchesSearch(item.stock.toString(), searchQuery) ||
+            matchesSearch(item.price.toString(), searchQuery);
       }).toList();
     }
 
@@ -375,7 +497,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       );
       return product.stock;
     } catch (e) {
-      debugPrint('ProductSelectionPage: Error getting product stock for $productCode: $e');
+      debugPrint(
+        'ProductSelectionPage: Error getting product stock for $productCode: $e',
+      );
       return 0;
     }
   }
@@ -415,24 +539,35 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       );
       return product.price ?? 0.0;
     } catch (e) {
-      debugPrint('ProductSelectionPage: Error getting product price for $productCode: $e');
+      debugPrint(
+        'ProductSelectionPage: Error getting product price for $productCode: $e',
+      );
       return 0.0;
     }
   }
 
   /// Summary calculation getters
   /// Total number of items selected across all products
-  int get _totalItems => _productSelections.values.fold(0, (sum, product) => sum + product.amount);
+  int get _totalItems =>
+      _productSelections.values.fold(0, (sum, product) => sum + product.amount);
 
   /// Total value of all selected products
-  double get _totalValue => _productSelections.values.fold(0.0, (sum, product) => sum + product.total);
+  double get _totalValue => _productSelections.values.fold(
+    0.0,
+    (sum, product) => sum + product.total,
+  );
 
   /// Total weight of all selected products
-  double get _totalWeight => _productSelections.values.fold(0.0, (sum, product) => sum + (product.weight * product.amount));
+  double get _totalWeight => _productSelections.values.fold(
+    0.0,
+    (sum, product) => sum + (product.weight * product.amount),
+  );
 
   /// Total volume of all selected products
-  double get _totalVolume => _productSelections.values.fold(0.0, (sum, product) => sum + (product.capacity * product.amount));
-
+  double get _totalVolume => _productSelections.values.fold(
+    0.0,
+    (sum, product) => sum + (product.capacity * product.amount),
+  );
 
   /// Update product quantity with validation
   /// Handles adding/removing products from selection
@@ -443,12 +578,16 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
 
       // Validate quantity
       if (newQuantity < 0) {
-        debugPrint('ProductSelectionPage: Invalid quantity $newQuantity for product $productCode');
+        debugPrint(
+          'ProductSelectionPage: Invalid quantity $newQuantity for product $productCode',
+        );
         return;
       }
 
       if (newQuantity > stock) {
-        debugPrint('ProductSelectionPage: Quantity $newQuantity exceeds stock $stock for product $productCode');
+        debugPrint(
+          'ProductSelectionPage: Quantity $newQuantity exceeds stock $stock for product $productCode',
+        );
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -461,7 +600,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
 
       // Check price validation for adding products
       if (newQuantity > 0 && price <= 0) {
-        debugPrint('ProductSelectionPage: Cannot add product $productCode with price $price');
+        debugPrint(
+          'ProductSelectionPage: Cannot add product $productCode with price $price',
+        );
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -476,7 +617,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
         if (newQuantity == 0) {
           // Remove product from selection
           _productSelections.remove(productCode);
-          debugPrint('ProductSelectionPage: Removed product $productCode from selection');
+          debugPrint(
+            'ProductSelectionPage: Removed product $productCode from selection',
+          );
         } else {
           // Update or add product to selection
           final existingProduct = _productSelections[productCode];
@@ -486,7 +629,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
               amount: newQuantity,
               total: newQuantity * price,
             );
-            debugPrint('ProductSelectionPage: Updated product $productCode quantity to $newQuantity');
+            debugPrint(
+              'ProductSelectionPage: Updated product $productCode quantity to $newQuantity',
+            );
           } else {
             // Add new product
             final product = widget.availableProducts.firstWhere(
@@ -510,7 +655,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
             );
 
             _productSelections[productCode] = orderProduct;
-            debugPrint('ProductSelectionPage: Added new product $productCode with quantity $newQuantity');
+            debugPrint(
+              'ProductSelectionPage: Added new product $productCode with quantity $newQuantity',
+            );
           }
         }
       });
@@ -592,7 +739,8 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Miqdorni kiriting',
+              AppLocalizations.of(context)?.enterQuantity ??
+                  'Miqdorni kiriting',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
@@ -600,8 +748,10 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
               controller: controller,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'Miqdor',
-                hintText: '0 dan $stock gacha',
+                labelText: AppLocalizations.of(context)?.quantity ?? 'Miqdor',
+                hintText:
+                    AppLocalizations.of(context)?.quantityHint(stock) ??
+                    '0 dan $stock gacha',
                 border: const OutlineInputBorder(),
               ),
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -609,7 +759,8 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
             ),
             const SizedBox(height: 8),
             Text(
-              'Maksimal mavjud: $stock dona',
+              AppLocalizations.of(context)?.maxAvailable(stock) ??
+                  'Maksimal mavjud: $stock dona',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
@@ -618,7 +769,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor'),
+                    child: Text(
+                      AppLocalizations.of(context)?.cancel ?? 'Bekor',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -634,12 +787,16 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(l10n.maxQuantityMessage(stock)),
-                            backgroundColor: Theme.of(context).colorScheme.error,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.error,
                           ),
                         );
                       }
                     },
-                    child: Text(AppLocalizations.of(context)?.save ?? 'Saqlash'),
+                    child: Text(
+                      AppLocalizations.of(context)?.save ?? 'Saqlash',
+                    ),
                   ),
                 ),
               ],
@@ -696,9 +853,13 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       setState(() => _isLoading = true);
 
       // Get all selected products (quantity > 0)
-      final selectedProducts = _productSelections.values.where((p) => p.amount > 0).toList();
+      final selectedProducts = _productSelections.values
+          .where((p) => p.amount > 0)
+          .toList();
 
-      debugPrint('ProductSelectionPage: Confirming selection with ${selectedProducts.length} products');
+      debugPrint(
+        'ProductSelectionPage: Confirming selection with ${selectedProducts.length} products',
+      );
 
       // Return the selected products to the calling page
       Navigator.of(context).pop(selectedProducts);
@@ -728,9 +889,11 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       },
       onVerticalDragEnd: (details) {
         final velocity = details.velocity.pixelsPerSecond.dy;
-        if (velocity < -300) { // dragging up
+        if (velocity < -300) {
+          // dragging up
           _showSummary();
-        } else if (velocity > 300) { // dragging down
+        } else if (velocity > 300) {
+          // dragging down
           _hideSummary();
         }
       },
@@ -740,9 +903,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          border: Border(
-            top: BorderSide(color: theme.dividerColor),
-          ),
+          border: Border(top: BorderSide(color: theme.dividerColor)),
         ),
         child: SafeArea(
           child: Column(
@@ -756,10 +917,28 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildSummaryItem(theme, 'Mahsulotlar', '$_totalItems ta'),
-                      _buildSummaryItem(theme, 'Jami qiymat', _totalValue),
-                      _buildSummaryItem(theme, 'Og\'irlik', '${_totalWeight.toStringAsFixed(2)} kg'),
-                      _buildSummaryItem(theme, 'Hajm', '${_totalVolume.toStringAsFixed(2)} m³'),
+                      _buildSummaryItem(
+                        theme,
+                        AppLocalizations.of(context)?.productsLabel ??
+                            'Mahsulotlar',
+                        '$_totalItems ta',
+                      ),
+                      _buildSummaryItem(
+                        theme,
+                        AppLocalizations.of(context)?.totalValueLabel ??
+                            'Jami qiymat',
+                        _totalValue,
+                      ),
+                      _buildSummaryItem(
+                        theme,
+                        AppLocalizations.of(context)?.weight ?? 'Og\'irlik',
+                        '${_totalWeight.toStringAsFixed(2)} kg',
+                      ),
+                      _buildSummaryItem(
+                        theme,
+                        AppLocalizations.of(context)?.volume ?? 'Hajm',
+                        '${_totalVolume.toStringAsFixed(2)} m³',
+                      ),
                     ],
                   ),
                 ),
@@ -776,7 +955,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check),
-                label: Text(AppLocalizations.of(context)?.confirm ?? 'Tasdiqlash'),
+                label: Text(
+                  AppLocalizations.of(context)?.confirm ?? 'Tasdiqlash',
+                ),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
                 ),
@@ -844,14 +1025,21 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
               onTap: () => setState(() => _currentViewMode = mode),
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: isSelected ? theme.colorScheme.primaryContainer : Colors.transparent,
+                  color: isSelected
+                      ? theme.colorScheme.primaryContainer
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   _getViewModeIcon(mode),
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
               ),
@@ -885,15 +1073,15 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
             return SizeTransition(
               sizeFactor: _viewModeToggleAnimation,
               axisAlignment: -1.0,
-              child: _isViewModeToggleVisible ? _buildViewModeToggle(theme) : const SizedBox.shrink(),
+              child: _isViewModeToggleVisible
+                  ? _buildViewModeToggle(theme)
+                  : const SizedBox.shrink(),
             );
           },
         ),
 
         // Products list/grid
-        Expanded(
-          child: _buildProductsList(theme),
-        ),
+        Expanded(child: _buildProductsList(theme)),
       ],
     );
   }
@@ -1014,21 +1202,26 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                 // Quantity controls
                 IconButton(
                   icon: const Icon(Icons.remove),
-                  onPressed: quantity > 0 ? () => _updateProductQuantity(product.productCode, quantity - 1) : null,
+                  onPressed: quantity > 0
+                      ? () => _updateProductQuantity(
+                          product.productCode,
+                          quantity - 1,
+                        )
+                      : null,
                 ),
                 InkWell(
                   onTap: () => _showQuantityInputDialog(product.productCode),
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: theme.dividerColor),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      '$quantity',
-                      style: theme.textTheme.bodyLarge,
-                    ),
+                    child: Text('$quantity', style: theme.textTheme.bodyLarge),
                   ),
                 ),
                 IconButton(
@@ -1036,7 +1229,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                     Icons.add,
                     color: canAdd ? null : theme.disabledColor,
                   ),
-                  onPressed: canAdd ? () => _handleAddProduct(product.productCode) : null,
+                  onPressed: canAdd
+                      ? () => _handleAddProduct(product.productCode)
+                      : null,
                 ),
               ],
             ),
@@ -1095,7 +1290,8 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                           errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.image_outlined,
                             size: 40,
-                            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withOpacity(0.5),
                           ),
                         ),
                       ),
@@ -1189,13 +1385,21 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                     icon: const Icon(Icons.remove, size: 20),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    onPressed: quantity > 0 ? () => _updateProductQuantity(product.productCode, quantity - 1) : null,
+                    onPressed: quantity > 0
+                        ? () => _updateProductQuantity(
+                            product.productCode,
+                            quantity - 1,
+                          )
+                        : null,
                   ),
                   InkWell(
                     onTap: () => _showQuantityInputDialog(product.productCode),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: theme.dividerColor),
                         borderRadius: BorderRadius.circular(8),
@@ -1214,7 +1418,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                     ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    onPressed: canAdd ? () => _handleAddProduct(product.productCode) : null,
+                    onPressed: canAdd
+                        ? () => _handleAddProduct(product.productCode)
+                        : null,
                   ),
                 ],
               ),
@@ -1239,7 +1445,10 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
   }
 
   /// Build full-screen detailed product card for large image view
-  Widget _buildLargeImageProductCard(ThemeData theme, ProductWithPrice product) {
+  Widget _buildLargeImageProductCard(
+    ThemeData theme,
+    ProductWithPrice product,
+  ) {
     final quantity = _getProductQuantity(product.productCode);
     final stock = product.stock;
     final price = product.price ?? 0.0;
@@ -1309,7 +1518,10 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
               const SizedBox(height: 8),
               // Price display
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
@@ -1328,8 +1540,17 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.remove, size: 22, color: Colors.white),
-                    onPressed: quantity > 0 ? () => _updateProductQuantity(product.productCode, quantity - 1) : null,
+                    icon: const Icon(
+                      Icons.remove,
+                      size: 22,
+                      color: Colors.white,
+                    ),
+                    onPressed: quantity > 0
+                        ? () => _updateProductQuantity(
+                            product.productCode,
+                            quantity - 1,
+                          )
+                        : null,
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withOpacity(0.2),
                       padding: const EdgeInsets.all(16),
@@ -1340,7 +1561,10 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                     onTap: () => _showQuantityInputDialog(product.productCode),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(12),
@@ -1361,7 +1585,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                       size: 22,
                       color: canAdd ? Colors.white : Colors.grey,
                     ),
-                    onPressed: canAdd ? () => _handleAddProduct(product.productCode) : null,
+                    onPressed: canAdd
+                        ? () => _handleAddProduct(product.productCode)
+                        : null,
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withOpacity(0.2),
                       padding: const EdgeInsets.all(16),
@@ -1408,7 +1634,6 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       ],
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -1487,9 +1712,14 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                     sizeFactor: _filterAnimation,
                     child: Card(
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       color: theme.colorScheme.surfaceContainerHighest,
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: SingleChildScrollView(
@@ -1502,9 +1732,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                     ),
                   ),
                   // Content area with view mode toggle and products
-                  Expanded(
-                    child: _buildContentArea(theme),
-                  ),
+                  Expanded(child: _buildContentArea(theme)),
 
                   // Bottom summary with drag gestures
                   _buildBottomSummary(theme),
@@ -1522,18 +1750,25 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: colorScheme.primary.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(
+            color: colorScheme.primary.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
         ],
         border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: TextField(
         controller: _searchController,
         onChanged: (value) => setState(() {}),
-        decoration: const InputDecoration(
-          hintText: 'Qidirish...',
-          prefixIcon: Icon(Icons.search),
+        decoration: InputDecoration(
+          hintText: AppLocalizations.of(context)?.searchHint ?? 'Qidirish...',
+          prefixIcon: const Icon(Icons.search),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 14,
+          ),
         ),
       ),
     );
@@ -1582,8 +1817,13 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                   child: Builder(
                     builder: (context) {
                       final half = (_brands.length / 2).ceil();
-                      final firstHalf = _brands.sublist(0, half < _brands.length ? half : _brands.length);
-                      final secondHalf = _brands.length > half ? _brands.sublist(half) : <ProductBrand>[];
+                      final firstHalf = _brands.sublist(
+                        0,
+                        half < _brands.length ? half : _brands.length,
+                      );
+                      final secondHalf = _brands.length > half
+                          ? _brands.sublist(half)
+                          : <ProductBrand>[];
                       return Column(
                         children: [
                           if (firstHalf.isNotEmpty)
@@ -1592,14 +1832,18 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                               child: ListView(
                                 scrollDirection: Axis.horizontal,
                                 children: firstHalf.map((brand) {
-                                  final isSelected = _selectedBrands.contains(brand.name);
+                                  final isSelected = _selectedBrands.contains(
+                                    brand.name,
+                                  );
                                   return Padding(
                                     padding: const EdgeInsets.only(right: 8),
                                     child: FilterChip(
                                       label: Text(brand.name),
                                       selected: isSelected,
                                       onSelected: (selected) {
-                                        final newSelection = List<String>.from(_selectedBrands);
+                                        final newSelection = List<String>.from(
+                                          _selectedBrands,
+                                        );
                                         if (selected) {
                                           newSelection.add(brand.name);
                                         } else {
@@ -1607,9 +1851,12 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                                         }
                                         _onBrandsChanged(newSelection);
                                       },
-                                      backgroundColor: colorScheme.surfaceContainerHighest,
-                                      selectedColor: colorScheme.primaryContainer,
-                                      checkmarkColor: colorScheme.onPrimaryContainer,
+                                      backgroundColor:
+                                          colorScheme.surfaceContainerHighest,
+                                      selectedColor:
+                                          colorScheme.primaryContainer,
+                                      checkmarkColor:
+                                          colorScheme.onPrimaryContainer,
                                     ),
                                   );
                                 }).toList(),
@@ -1621,14 +1868,18 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                               child: ListView(
                                 scrollDirection: Axis.horizontal,
                                 children: secondHalf.map((brand) {
-                                  final isSelected = _selectedBrands.contains(brand.name);
+                                  final isSelected = _selectedBrands.contains(
+                                    brand.name,
+                                  );
                                   return Padding(
                                     padding: const EdgeInsets.only(right: 8),
                                     child: FilterChip(
                                       label: Text(brand.name),
                                       selected: isSelected,
                                       onSelected: (selected) {
-                                        final newSelection = List<String>.from(_selectedBrands);
+                                        final newSelection = List<String>.from(
+                                          _selectedBrands,
+                                        );
                                         if (selected) {
                                           newSelection.add(brand.name);
                                         } else {
@@ -1636,9 +1887,12 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                                         }
                                         _onBrandsChanged(newSelection);
                                       },
-                                      backgroundColor: colorScheme.surfaceContainerHighest,
-                                      selectedColor: colorScheme.primaryContainer,
-                                      checkmarkColor: colorScheme.onPrimaryContainer,
+                                      backgroundColor:
+                                          colorScheme.surfaceContainerHighest,
+                                      selectedColor:
+                                          colorScheme.primaryContainer,
+                                      checkmarkColor:
+                                          colorScheme.onPrimaryContainer,
                                     ),
                                   );
                                 }).toList(),
@@ -1663,7 +1917,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
             child: Row(
               children: [
                 Text(
-                  'Kategoriyalar',
+                  AppLocalizations.of(context)?.categories ?? 'Kategoriyalar',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: colorScheme.onSurface,
@@ -1691,8 +1945,13 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                   child: Builder(
                     builder: (context) {
                       final half = (_categories.length / 2).ceil();
-                      final firstHalf = _categories.sublist(0, half < _categories.length ? half : _categories.length);
-                      final secondHalf = _categories.length > half ? _categories.sublist(half) : <ProductSeries>[];
+                      final firstHalf = _categories.sublist(
+                        0,
+                        half < _categories.length ? half : _categories.length,
+                      );
+                      final secondHalf = _categories.length > half
+                          ? _categories.sublist(half)
+                          : <ProductSeries>[];
                       return Column(
                         children: [
                           if (firstHalf.isNotEmpty)
@@ -1701,14 +1960,17 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                               child: ListView(
                                 scrollDirection: Axis.horizontal,
                                 children: firstHalf.map((category) {
-                                  final isSelected = _selectedCategories.contains(category.name);
+                                  final isSelected = _selectedCategories
+                                      .contains(category.name);
                                   return Padding(
                                     padding: const EdgeInsets.only(right: 8),
                                     child: FilterChip(
                                       label: Text(category.name),
                                       selected: isSelected,
                                       onSelected: (selected) {
-                                        final newSelection = List<String>.from(_selectedCategories);
+                                        final newSelection = List<String>.from(
+                                          _selectedCategories,
+                                        );
                                         if (selected) {
                                           newSelection.add(category.name);
                                         } else {
@@ -1716,9 +1978,12 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                                         }
                                         _onCategoriesChanged(newSelection);
                                       },
-                                      backgroundColor: colorScheme.surfaceContainerHighest,
-                                      selectedColor: colorScheme.primaryContainer,
-                                      checkmarkColor: colorScheme.onPrimaryContainer,
+                                      backgroundColor:
+                                          colorScheme.surfaceContainerHighest,
+                                      selectedColor:
+                                          colorScheme.primaryContainer,
+                                      checkmarkColor:
+                                          colorScheme.onPrimaryContainer,
                                     ),
                                   );
                                 }).toList(),
@@ -1730,14 +1995,17 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                               child: ListView(
                                 scrollDirection: Axis.horizontal,
                                 children: secondHalf.map((category) {
-                                  final isSelected = _selectedCategories.contains(category.name);
+                                  final isSelected = _selectedCategories
+                                      .contains(category.name);
                                   return Padding(
                                     padding: const EdgeInsets.only(right: 8),
                                     child: FilterChip(
                                       label: Text(category.name),
                                       selected: isSelected,
                                       onSelected: (selected) {
-                                        final newSelection = List<String>.from(_selectedCategories);
+                                        final newSelection = List<String>.from(
+                                          _selectedCategories,
+                                        );
                                         if (selected) {
                                           newSelection.add(category.name);
                                         } else {
@@ -1745,9 +2013,12 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                                         }
                                         _onCategoriesChanged(newSelection);
                                       },
-                                      backgroundColor: colorScheme.surfaceContainerHighest,
-                                      selectedColor: colorScheme.primaryContainer,
-                                      checkmarkColor: colorScheme.onPrimaryContainer,
+                                      backgroundColor:
+                                          colorScheme.surfaceContainerHighest,
+                                      selectedColor:
+                                          colorScheme.primaryContainer,
+                                      checkmarkColor:
+                                          colorScheme.onPrimaryContainer,
                                     ),
                                   );
                                 }).toList(),
@@ -1759,17 +2030,18 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                   ),
                 )
               : _isCategoryFilterExpanded
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    AppLocalizations.of(context)?.selectBrandFirst ??
                         'Avval brand tanlang',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
       ],
     );
@@ -1777,18 +2049,24 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
 
   /// Build app bar with drag gestures for view mode toggle and filter button
   PreferredSizeWidget _buildAppBar(ThemeData theme) {
-    final hasActiveFilters = _selectedBrands.isNotEmpty || _selectedCategories.isNotEmpty;
+    final hasActiveFilters =
+        _selectedBrands.isNotEmpty || _selectedCategories.isNotEmpty;
     return AppBar(
       title: GestureDetector(
         onVerticalDragEnd: (details) {
           final velocity = details.velocity.pixelsPerSecond.dy;
-          if (velocity < -100) { // dragging up on title
+          if (velocity < -100) {
+            // dragging up on title
             _hideViewModeToggle();
-          } else if (velocity > 100) { // dragging down on title
+          } else if (velocity > 100) {
+            // dragging down on title
             _showViewModeToggle();
           }
         },
-        child: Text(AppLocalizations.of(context)?.productSelectionTitle ?? 'Mahsulot tanlash'),
+        child: Text(
+          AppLocalizations.of(context)?.productSelectionTitle ??
+              'Mahsulot tanlash',
+        ),
       ),
       centerTitle: true,
       actions: [
@@ -1803,7 +2081,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
             color: hasActiveFilters ? theme.colorScheme.primary : null,
           ),
           onPressed: _toggleFilterPanel,
-          tooltip: 'Filtr',
+          tooltip: AppLocalizations.of(context)?.filter ?? 'Filtr',
         ),
       ],
     );

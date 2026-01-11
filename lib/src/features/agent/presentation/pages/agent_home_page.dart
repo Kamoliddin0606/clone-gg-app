@@ -10,6 +10,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../../../navbars/agent_bottom_nav_bar.dart';
 import 'agent_home_modern.dart';
 
@@ -20,7 +21,8 @@ class AgentHomePage extends StatefulWidget {
   State<AgentHomePage> createState() => _AgentHomePageState();
 }
 
-class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+class _AgentHomePageState extends State<AgentHomePage>
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   KpiData? _kpiData;
   String userName = "Agent User";
   String userCode = "";
@@ -109,9 +111,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
 
       final prefsUserCode = userCode;
       final prefsUserName = userName;
-      if (! prefs.isOfflineMode()) {
-
-
+      if (!prefs.isOfflineMode()) {
         if (dbUser != null &&
             dbUser['code'] == prefsUserCode &&
             dbUser['username'] == prefsUserName) {
@@ -121,7 +121,6 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
             await _updateUserDataInPreferences();
             // Check if user data needs to be synced
             await _checkAndSyncUserData();
-
           }
         } else {
           // User doesn't match, clear cache and load new data
@@ -135,19 +134,16 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
             await _checkAndSyncUserData();
           }
 
-            await repository.savePrefsToUsers();
-
+          await repository.savePrefsToUsers();
+        }
+      } else {
+        if (userCode.isNotEmpty && password.isNotEmpty) {
+          // Update user data in preferences (ensure it's current)
+          await _updateUserDataInPreferences();
+          // Check if user data needs to be synced
+          await _checkAndSyncUserData();
         }
       }
-      else{
-          if (userCode.isNotEmpty && password.isNotEmpty) {
-            // Update user data in preferences (ensure it's current)
-            await _updateUserDataInPreferences();
-            // Check if user data needs to be synced
-            await _checkAndSyncUserData();
-          }
-      }
-
     } catch (e) {
       if (kDebugMode) print('Error loading user data: $e');
     }
@@ -172,7 +168,9 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
       );
 
       if (kDebugMode) {
-        print('User data updated in preferences: $userCode, $userName, $warehouseCode, $codeProject');
+        print(
+          'User data updated in preferences: $userCode, $userName, $warehouseCode, $codeProject',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -259,7 +257,10 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('KPI ma\'lumotlarini yuklashda xatolik: $e'),
+            content: Text(
+              AppLocalizations.of(context)?.kpiDataUpdateError ??
+                  'KPI ma\'lumotlarini yuklashda xatolik: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -271,20 +272,35 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
     final prefs = sl<SharedPreferencesService>();
     if (prefs.isOfflineMode()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Siz offline rejimdasiz. Malumotlarni yangilash imkoni mavjud emas')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.offlineMode ??
+                'Siz offline rejimdasiz. Malumotlarni yangilash imkoni mavjud emas',
+          ),
+        ),
       );
       return;
-      return ;
+      return;
     }
     if (userCode.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Foydalanuvchi ma\'lumotlari mavjud emas')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.userDataNotFound ??
+                'Foydalanuvchi ma\'lumotlari mavjud emas',
+          ),
+        ),
       );
       return;
     }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('KPI ma\'lumotlari yangilanmoqda...')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.dataUpdating ??
+                'KPI ma\'lumotlari yangilanmoqda...',
+          ),
+        ),
       );
     }
 
@@ -308,8 +324,11 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('KPI ma\'lumotlari yangilandi'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.syncComplete ??
+                  'KPI ma\'lumotlari yangilandi',
+            ),
             backgroundColor: successColor,
           ),
         );
@@ -322,7 +341,10 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('KPI ma\'lumotlarini yangilashda xatolik: $e'),
+            content: Text(
+              AppLocalizations.of(context)?.kpiDataUpdateError ??
+                  'KPI ma\'lumotlarini yangilashda xatolik: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -356,7 +378,8 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
               okb: _kpiData?.okb,
             ),
             onRefresh: _refreshKpi,
-            onSettings: () => Navigator.pushNamed(context, AppRouter.settingsRoute),
+            onSettings: () =>
+                Navigator.pushNamed(context, AppRouter.settingsRoute),
             onLogout: () => _showLogoutDialog(),
           ),
 
@@ -383,12 +406,10 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(colors: [
-            Colors.white.withOpacity(0.7),
-            primaryColor,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          gradient: LinearGradient(
+            colors: [Colors.white.withOpacity(0.7), primaryColor],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
           color: Colors.white,
           boxShadow: [
@@ -406,11 +427,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
               CircleAvatar(
                 radius: 36,
                 backgroundColor: primaryColor,
-                child: const Icon(
-                  Icons.person,
-                  size: 40,
-                  color: Colors.white,
-                ),
+                child: const Icon(Icons.person, size: 40, color: Colors.white),
               ),
               const SizedBox(width: 20),
               Expanded(
@@ -486,16 +503,19 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
                   children: [
                     Expanded(
                       child: TweenAnimationBuilder<double>(
-                        tween: Tween<double>(
-                          begin: 0,
-                          end: plan.toDouble(),
-                        ),
+                        tween: Tween<double>(begin: 0, end: plan.toDouble()),
                         duration: const Duration(milliseconds: 900),
                         builder: (context, value, child) {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text("Plan", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                              const Text(
+                                "Plan",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
                               Text(
                                 formatSum(value),
                                 style: TextStyle(
@@ -512,16 +532,19 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
                     const SizedBox(width: 16),
                     Expanded(
                       child: TweenAnimationBuilder<double>(
-                        tween: Tween<double>(
-                          begin: 0,
-                          end: fact.toDouble(),
-                        ),
+                        tween: Tween<double>(begin: 0, end: fact.toDouble()),
                         duration: const Duration(milliseconds: 900),
                         builder: (context, value, child) {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text("Fact", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                              const Text(
+                                "Fact",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
                               Text(
                                 formatSum(value),
                                 style: TextStyle(
@@ -545,7 +568,9 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
                       value: percent * _planFactController.value,
                       minHeight: 10,
                       backgroundColor: Colors.grey[200],
-                      valueColor: AlwaysStoppedAnimation<Color>(successColorText),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        successColorText,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     );
                   },
@@ -664,7 +689,6 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
             ],
           ),
         ],
-
       ),
     );
   }
@@ -672,24 +696,21 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
   Widget _buildBottomSection(ThemeData theme) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [
-          Colors.white.withOpacity(0.7),
-          Colors.transparent,
-        ],
+        gradient: LinearGradient(
+          colors: [Colors.white.withOpacity(0.7), Colors.transparent],
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
         ),
       ),
 
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // _buildRefreshButton(theme),
-              // const SizedBox(height: 12),
-              _buildActionButtons(context),
-            ],
-          ),
-
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // _buildRefreshButton(theme),
+          // const SizedBox(height: 12),
+          _buildActionButtons(context),
+        ],
+      ),
     );
   }
 
@@ -698,58 +719,64 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
       duration: const Duration(milliseconds: 400),
       child: _isLoadingKpi
           ? Card(
-        key: const ValueKey('loading'),
-        elevation: 4,
-        color: primaryColorText,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          ),
-        ),
-      )
-          : Card(
-        key: const ValueKey('button'),
-        elevation: 4,
-        color: primaryColorText,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: _refreshKpi,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.refresh, color: Colors.white),
-                const SizedBox(width: 8),
-                Text(
-                  'Yangilash',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+              key: const ValueKey('loading'),
+              elevation: 4,
+              color: primaryColorText,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 ),
-              ],
+              ),
+            )
+          : Card(
+              key: const ValueKey('button'),
+              elevation: 4,
+              color: primaryColorText,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: _refreshKpi,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.refresh, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(
+                        AppLocalizations.of(context)?.refreshLabel ??
+                            'Yangilash',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
   Widget _buildActionButtons(BuildContext context) {
     return Container(
-
       child: Row(
         children: [
           Expanded(
             child: _AnimatedActionCard(
-              title: 'Vazifalar',
-              subtitle: 'Savdo nuqtalari',
+              title: AppLocalizations.of(context)?.tasks ?? 'Vazifalar',
+              subtitle:
+                  AppLocalizations.of(context)?.tradingPoints ??
+                  'Savdo nuqtalari',
               color: successColor,
               icon: Icons.list_alt,
               onTap: () {
@@ -760,13 +787,19 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
           const SizedBox(width: 12),
           Expanded(
             child: _AnimatedActionCard(
-              title: 'Shartnomalar',
-              subtitle: 'Shartnomalar',
+              title: AppLocalizations.of(context)?.contracts ?? 'Shartnomalar',
+              subtitle:
+                  AppLocalizations.of(context)?.contracts ?? 'Shartnomalar',
               color: primaryColor,
               icon: Icons.assignment,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Shartnomalar sahifasi hali tayyor emas')),
+                  SnackBar(
+                    content: Text(
+                      AppLocalizations.of(context)?.pageInDevelopment ??
+                          'Shartnomalar sahifasi hali tayyor emas',
+                    ),
+                  ),
                 );
               },
             ),
@@ -781,16 +814,21 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Chiqish'),
-          content: const Text('Haqiqatan ham ilovadan chiqmoqchimisiz?'),
+          title: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
+          content: Text(
+            AppLocalizations.of(context)?.confirmLogout ??
+                'Haqiqatan ham ilovadan chiqmoqchimisiz?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Bekor qilish'),
+              child: Text(
+                AppLocalizations.of(context)?.cancel ?? 'Bekor qilish',
+              ),
             ),
             FilledButton(
               onPressed: () => _logout(context),
-              child: const Text('Chiqish'),
+              child: Text(AppLocalizations.of(context)?.logout ?? 'Chiqish'),
             ),
           ],
         );
@@ -809,7 +847,7 @@ class _AgentHomePageState extends State<AgentHomePage> with TickerProviderStateM
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRouter.loginRoute,
-            (route) => false,
+        (route) => false,
       );
     }
   }
@@ -940,10 +978,7 @@ class _AnimatedActionCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 10,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 10),
                 textAlign: TextAlign.center,
               ),
             ],

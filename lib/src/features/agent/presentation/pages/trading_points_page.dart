@@ -6,7 +6,8 @@ import 'package:flutter_map/flutter_map.dart' as osm;
 import 'package:latlong2/latlong.dart' as osm_latlong;
 import 'package:geolocator/geolocator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart' as model;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
+    as model;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
@@ -17,11 +18,14 @@ import 'package:gloria_marketing_flutter/src/core/services/permissions_service.d
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
-import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart' hide MapType;
+import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart'
+    hide MapType;
 import 'package:gloria_marketing_flutter/src/core/maps/services/map_cache_service.dart';
-import 'package:gloria_marketing_flutter/src/core/maps/models/map_marker.dart' hide MarkerClusterConfig;
+import 'package:gloria_marketing_flutter/src/core/maps/models/map_marker.dart'
+    hide MarkerClusterConfig;
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_point.dart';
-import 'package:gloria_marketing_flutter/src/core/maps/managers/marker_manager.dart' as marker_manager;
+import 'package:gloria_marketing_flutter/src/core/maps/managers/marker_manager.dart'
+    as marker_manager;
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/trading_points_filters_panel.dart';
@@ -36,7 +40,7 @@ import 'visit_steps_page.dart';
 import 'client_images_page.dart';
 import 'create_client_page.dart';
 import '../widgets/client_balance_widget_v2.dart';
-import 'dart:ui'; 
+import 'dart:ui';
 import 'dart:async';
 import 'dart:io';
 
@@ -56,20 +60,77 @@ import '../../../../core/services/location_service.dart';
 /// Transliterate Cyrillic characters to Latin (Uzbek standard)
 String transliterateToLatin(String text) {
   const cyrillicToLatin = {
-    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
-    'ж': 'j', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
-    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-    'ф': 'f', 'х': 'x', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
-    'ъ': "'", 'ы': 'y', 'ь': "'", 'э': 'e', 'ю': 'yu', 'я': 'ya',
-    'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
-    'Ж': 'J', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
-    'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
-    'Ф': 'F', 'Х': 'X', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch',
-    'Ъ': "'", 'Ы': 'Y', 'Ь': "'", 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+    'а': 'a',
+    'б': 'b',
+    'в': 'v',
+    'г': 'g',
+    'д': 'd',
+    'е': 'e',
+    'ё': 'yo',
+    'ж': 'j',
+    'з': 'z',
+    'и': 'i',
+    'й': 'y',
+    'к': 'k',
+    'л': 'l',
+    'м': 'm',
+    'н': 'n',
+    'о': 'o',
+    'п': 'p',
+    'р': 'r',
+    'с': 's',
+    'т': 't',
+    'у': 'u',
+    'ф': 'f',
+    'х': 'x',
+    'ц': 'ts',
+    'ч': 'ch',
+    'ш': 'sh',
+    'щ': 'shch',
+    'ъ': "'",
+    'ы': 'y',
+    'ь': "'",
+    'э': 'e',
+    'ю': 'yu',
+    'я': 'ya',
+    'А': 'A',
+    'Б': 'B',
+    'В': 'V',
+    'Г': 'G',
+    'Д': 'D',
+    'Е': 'E',
+    'Ё': 'Yo',
+    'Ж': 'J',
+    'З': 'Z',
+    'И': 'I',
+    'Й': 'Y',
+    'К': 'K',
+    'Л': 'L',
+    'М': 'M',
+    'Н': 'N',
+    'О': 'O',
+    'П': 'P',
+    'Р': 'R',
+    'С': 'S',
+    'Т': 'T',
+    'У': 'U',
+    'Ф': 'F',
+    'Х': 'X',
+    'Ц': 'Ts',
+    'Ч': 'Ch',
+    'Ш': 'Sh',
+    'Щ': 'Shch',
+    'Ъ': "'",
+    'Ы': 'Y',
+    'Ь': "'",
+    'Э': 'E',
+    'Ю': 'Yu',
+    'Я': 'Ya',
   };
 
   return text.split('').map((char) => cyrillicToLatin[char] ?? char).join('');
 }
+
 // (ixtiyoriy) agar Light/Dark toggle qo‘ymoqchi bo‘lsangiz, quyidagini oching:
 // import '../../../../theme/theme_controller.dart';
 // import '../../../../theme/theme_toggle.dart';
@@ -87,10 +148,10 @@ enum _ViewMode { list, grid }
 /// O'rtacha sifat, detail ko'rinishi uchun optimal
 String? _getMediumImageUrl(ClientImage img) {
   final candidates = <String?>[
-    img.imageMdUrl,         // Birinchi - Medium
-    img.imageSmUrl,         // Fallback - Small
-    img.imageUrl,           // Fallback - Original
-    img.imageThumbnailUrl,  // Fallback - Thumbnail
+    img.imageMdUrl, // Birinchi - Medium
+    img.imageSmUrl, // Fallback - Small
+    img.imageUrl, // Fallback - Original
+    img.imageThumbnailUrl, // Fallback - Thumbnail
     img.image,
   ];
   for (final s in candidates) {
@@ -103,10 +164,10 @@ String? _getMediumImageUrl(ClientImage img) {
 /// Eng yuqori sifat, katta rasmlar uchun
 String? _getLargeImageUrl(ClientImage img) {
   final candidates = <String?>[
-    img.imageUrl,           // Birinchi - Original/Large
-    img.imageMdUrl,         // Fallback - Medium
-    img.imageSmUrl,         // Fallback - Small
-    img.imageThumbnailUrl,  // Fallback - Thumbnail
+    img.imageUrl, // Birinchi - Original/Large
+    img.imageMdUrl, // Fallback - Medium
+    img.imageSmUrl, // Fallback - Small
+    img.imageThumbnailUrl, // Fallback - Thumbnail
     img.image,
   ];
   for (final s in candidates) {
@@ -114,7 +175,6 @@ String? _getLargeImageUrl(ClientImage img) {
   }
   return null;
 }
-
 
 ImageProvider? _clientImageProvider(String? url) {
   if (url == null) return null;
@@ -163,72 +223,76 @@ class TradingPointsPage extends StatefulWidget {
 }
 
 class _TradingPointsPageState extends State<TradingPointsPage> {
-    // PageStorage keys for state persistence
-    static const String _searchTextKey = 'trading_points_search';
-    static const String _filtersKey = 'trading_points_filters';
-    static const String _viewModeKey = 'trading_points_view_mode';
-    static const String _showFiltersKey = 'trading_points_show_filters';
-    static const String _showViewBarKey = 'trading_points_show_view_bar';
-    static const String _expandedIndexKey = 'trading_points_expanded_index';
-    static const String _isAlphabeticalSortKey = 'trading_points_alphabetical_sort';
-    static const String _isDistanceSortKey = 'trading_points_distance_sort';
-    static const String _showVisitTodayOnlyKey = 'trading_points_visit_today_filter';
+  // PageStorage keys for state persistence
+  static const String _searchTextKey = 'trading_points_search';
+  static const String _filtersKey = 'trading_points_filters';
+  static const String _viewModeKey = 'trading_points_view_mode';
+  static const String _showFiltersKey = 'trading_points_show_filters';
+  static const String _showViewBarKey = 'trading_points_show_view_bar';
+  static const String _expandedIndexKey = 'trading_points_expanded_index';
+  static const String _isAlphabeticalSortKey =
+      'trading_points_alphabetical_sort';
+  static const String _isDistanceSortKey = 'trading_points_distance_sort';
+  static const String _showVisitTodayOnlyKey =
+      'trading_points_visit_today_filter';
 
-    final TextEditingController _searchController = TextEditingController();
-    List<TradingPointWithPermissions> _allTradingPoints = [];
-    List<TradingPointWithPermissions> _filteredTradingPoints = [];
-    bool _isLoading = true;
-    String userCode = "";
-    String password = "";
-    int? _expandedIndex;
-    bool _showViewBar = false;               // ADD: view panel visibility state
-    _ViewMode _viewMode = _ViewMode.list;    // ADD: current view mode
-    Map<String, String> _regionNames = {};   // Business region code to name mapping
+  final TextEditingController _searchController = TextEditingController();
+  List<TradingPointWithPermissions> _allTradingPoints = [];
+  List<TradingPointWithPermissions> _filteredTradingPoints = [];
+  bool _isLoading = true;
+  String userCode = "";
+  String password = "";
+  int? _expandedIndex;
+  bool _showViewBar = false; // ADD: view panel visibility state
+  _ViewMode _viewMode = _ViewMode.list; // ADD: current view mode
+  Map<String, String> _regionNames = {}; // Business region code to name mapping
 
-    // Permissions service
-    PermissionsService? _permissionsService;
+  // Permissions service
+  PermissionsService? _permissionsService;
 
-    // Sorting related
-    bool _isAlphabeticalSort = true; // true = A-Z, false = Z-A
-    bool _isDistanceSort = false; // true = distance sort, false = alphabetical
-    Timer? _distanceUpdateTimer;
-    LocationService? _locationService;
+  // Sorting related
+  bool _isAlphabeticalSort = true; // true = A-Z, false = Z-A
+  bool _isDistanceSort = false; // true = distance sort, false = alphabetical
+  Timer? _distanceUpdateTimer;
+  LocationService? _locationService;
 
-    // Permission related
-    AppPermissionStatus _locationPermissionStatus = AppPermissionStatus.unknown;
+  // Permission related
+  AppPermissionStatus _locationPermissionStatus = AppPermissionStatus.unknown;
 
-    // Distance calculation cache for performance
-    Map<String, double?> _distanceCache = {};
-    Timer? _locationCheckTimer;
+  // Distance calculation cache for performance
+  Map<String, double?> _distanceCache = {};
+  Timer? _locationCheckTimer;
 
-    // Filter related
-    bool _showFilters = false; // Filter panel visibility
-    TradingPointsFilterState _filters = TradingPointsFilterState(); // Filter state
-    List<String> _availableTradePointTypes = []; // Available trade point types for filtering
-    bool _showVisitTodayOnly = false; // Visit today filter state
+  // Filter related
+  bool _showFilters = false; // Filter panel visibility
+  TradingPointsFilterState _filters =
+      TradingPointsFilterState(); // Filter state
+  List<String> _availableTradePointTypes =
+      []; // Available trade point types for filtering
+  bool _showVisitTodayOnly = false; // Visit today filter state
 
-    // Map provider settings
-    MapProvider _defaultMapProvider = MapProvider.google; // Default map provider
+  // Map provider settings
+  MapProvider _defaultMapProvider = MapProvider.google; // Default map provider
 
-    // Map rotation tracking removed - markers are naturally upright in all map providers
+  // Map rotation tracking removed - markers are naturally upright in all map providers
 
-    // Offline caching
-    MapCacheService? _mapCacheService;
-    late Connectivity _connectivity;
-    bool _isOnline = true;
+  // Offline caching
+  MapCacheService? _mapCacheService;
+  late Connectivity _connectivity;
+  bool _isOnline = true;
 
-    // Image service for client images
-    ClientImagesService? _clientImagesService;
-    bool _isFetchingClientImages = false;
+  // Image service for client images
+  ClientImagesService? _clientImagesService;
+  bool _isFetchingClientImages = false;
 
-    // PageStorage bucket for state persistence
-    late final PageStorageBucket _storageBucket;
+  // PageStorage bucket for state persistence
+  late final PageStorageBucket _storageBucket;
 
-    // Client creation permission
-    bool _canCreateClient = false;
-    
-    // Newly created client code for highlighting
-    String? _newlyCreatedClientCode;
+  // Client creation permission
+  bool _canCreateClient = false;
+
+  // Newly created client code for highlighting
+  String? _newlyCreatedClientCode;
 
   @override
   void initState() {
@@ -280,7 +344,12 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           // Show snackbar to inform user about disabled location services
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)?.locationServicesDisabledSortingNotWork ?? 'Location services are disabled. Distance sorting will not work.'),
+              content: Text(
+                AppLocalizations.of(
+                      context,
+                    )?.locationServicesDisabledSortingNotWork ??
+                    'Location services are disabled. Distance sorting will not work.',
+              ),
               duration: const Duration(seconds: 3),
             ),
           );
@@ -316,10 +385,12 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         print('DEBUG FAB: permissions object: $permissions');
         print('DEBUG FAB: mounted: $mounted');
         if (permissions != null) {
-          print('DEBUG FAB: allowCreatingPointOfSale value: ${permissions.allowCreatingPointOfSale}');
+          print(
+            'DEBUG FAB: allowCreatingPointOfSale value: ${permissions.allowCreatingPointOfSale}',
+          );
         }
       }
-      
+
       if (mounted) {
         setState(() {
           _canCreateClient = permissions?.allowCreatingPointOfSale ?? false;
@@ -380,7 +451,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       await _mapCacheService!.initialize();
 
       if (kDebugMode) {
-        print('Offline support initialized. Online: $_isOnline, MapCacheService initialized: ${_mapCacheService != null}');
+        print(
+          'Offline support initialized. Online: $_isOnline, MapCacheService initialized: ${_mapCacheService != null}',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -398,14 +471,22 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _isOnline = result != ConnectivityResult.none;
 
     if (kDebugMode) {
-      print('Connectivity changed: ${wasOnline ? 'online' : 'offline'} -> ${_isOnline ? 'online' : 'offline'}');
+      print(
+        'Connectivity changed: ${wasOnline ? 'online' : 'offline'} -> ${_isOnline ? 'online' : 'offline'}',
+      );
     }
 
     // Notify user about connectivity changes
     if (mounted && wasOnline != _isOnline) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isOnline ? (AppLocalizations.of(context)?.connectedToInternet ?? 'Connected to internet') : (AppLocalizations.of(context)?.offlineModeActive ?? 'Offline mode')),
+          content: Text(
+            _isOnline
+                ? (AppLocalizations.of(context)?.connectedToInternet ??
+                      'Connected to internet')
+                : (AppLocalizations.of(context)?.offlineModeActive ??
+                      'Offline mode'),
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -427,7 +508,12 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         setState(() => _isLoading = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)?.userDataNotFound ?? 'User data not found')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.userDataNotFound ??
+                    'User data not found',
+              ),
+            ),
           );
         }
         return;
@@ -440,7 +526,11 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppLocalizations.of(context)?.error ?? "Error"}: $e')),
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)?.error ?? "Error"}: $e',
+            ),
+          ),
         );
       }
     }
@@ -476,7 +566,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _locationCheckTimer?.cancel();
     _locationService?.dispose();
     if (kDebugMode) {
-      print('Disposing TradingPointsPage, _permissionsService is null: ${_permissionsService == null}, _mapCacheService is null: ${_mapCacheService == null}');
+      print(
+        'Disposing TradingPointsPage, _permissionsService is null: ${_permissionsService == null}, _mapCacheService is null: ${_mapCacheService == null}',
+      );
     }
     _permissionsService?.dispose();
     _mapCacheService?.dispose();
@@ -510,7 +602,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   void _restoreState() {
     try {
       final savedSearch = _storageBucket.readState(context) as String?;
-      final savedFilters = _storageBucket.readState(context) as TradingPointsFilterState?;
+      final savedFilters =
+          _storageBucket.readState(context) as TradingPointsFilterState?;
       final savedViewMode = _storageBucket.readState(context) as _ViewMode?;
       final savedShowFilters = _storageBucket.readState(context) as bool?;
       final savedShowViewBar = _storageBucket.readState(context) as bool?;
@@ -588,18 +681,25 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       _regionNames = {for (final region in regions) region.code: region.name};
 
       // Get trading points with permissions and visit data using efficient JOIN query
-      final tradingPointsWithPermissions = await dbService.getTradingPointsWithPermissions(userCode);
+      final tradingPointsWithPermissions = await dbService
+          .getTradingPointsWithPermissions(userCode);
 
       if (kDebugMode) {
-        print('Loaded ${tradingPointsWithPermissions.length} trading points with permissions');
+        print(
+          'Loaded ${tradingPointsWithPermissions.length} trading points with permissions',
+        );
 
         // Bugungi kun uchun planned routes sonini hisoblash
-        final todayPlannedCount = tradingPointsWithPermissions.where((tp) => tp.visitToday).length;
+        final todayPlannedCount = tradingPointsWithPermissions
+            .where((tp) => tp.visitToday)
+            .length;
         print('Bugungi kun uchun planned routes: $todayPlannedCount ta mijoz');
 
         if (tradingPointsWithPermissions.isNotEmpty) {
           final sample = tradingPointsWithPermissions.first;
-          print('Sample trading point: ${sample.tradingPoint.name}, visitToday: ${sample.visitToday}, visitStepNumber: ${sample.visitStepNumber}');
+          print(
+            'Sample trading point: ${sample.tradingPoint.name}, visitToday: ${sample.visitToday}, visitStepNumber: ${sample.visitStepNumber}',
+          );
         }
       }
 
@@ -607,15 +707,18 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       _filteredTradingPoints = List.from(_allTradingPoints);
 
       // Extract available trade point types for filtering
-      _availableTradePointTypes = _allTradingPoints
-          .map((tp) => tp.tradingPoint.tradePointType)
-          .where((type) => type != null && type.isNotEmpty)
-          .toSet()
-          .toList()
-        ..sort();
+      _availableTradePointTypes =
+          _allTradingPoints
+              .map((tp) => tp.tradingPoint.tradePointType)
+              .where((type) => type != null && type.isNotEmpty)
+              .toSet()
+              .toList()
+            ..sort();
 
       _clearDistanceCache(); // Clear cache for fresh calculations
-      _filterTradingPoints(_searchController.text); // Re-apply current filters including visit_today
+      _filterTradingPoints(
+        _searchController.text,
+      ); // Re-apply current filters including visit_today
       _applySorting(); // Apply initial sorting
       setState(() => _isLoading = false);
     } catch (e) {
@@ -626,7 +729,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)?.clientDataLoadError ?? "Error loading client data"}: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)?.clientDataLoadError ?? "Error loading client data"}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -636,27 +741,42 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
   void _filterTradingPoints(String query) {
     setState(() {
-      if (query.isEmpty && _filters.tradePointTypes.isEmpty && _filters.businessRegions.isEmpty && !_showVisitTodayOnly) {
+      if (query.isEmpty &&
+          _filters.tradePointTypes.isEmpty &&
+          _filters.businessRegions.isEmpty &&
+          !_showVisitTodayOnly) {
         _filteredTradingPoints = List.from(_allTradingPoints);
       } else {
         final qLatin = transliterateToLatin(query).toLowerCase();
         _filteredTradingPoints = _allTradingPoints.where((tp) {
           // Search filter
-          final regionName = _regionNames[tp.tradingPoint.codeRegion]?.toLowerCase() ?? '';
-          final searchMatch = query.isEmpty ||
-              transliterateToLatin(tp.tradingPoint.name).toLowerCase().contains(qLatin) ||
-              transliterateToLatin(tp.tradingPoint.address).toLowerCase().contains(qLatin) ||
-              transliterateToLatin(tp.tradingPoint.contactPerson).toLowerCase().contains(qLatin) ||
-              transliterateToLatin(tp.tradingPoint.ownerName).toLowerCase().contains(qLatin) ||
+          final regionName =
+              _regionNames[tp.tradingPoint.codeRegion]?.toLowerCase() ?? '';
+          final searchMatch =
+              query.isEmpty ||
+              transliterateToLatin(
+                tp.tradingPoint.name,
+              ).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(
+                tp.tradingPoint.address,
+              ).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(
+                tp.tradingPoint.contactPerson,
+              ).toLowerCase().contains(qLatin) ||
+              transliterateToLatin(
+                tp.tradingPoint.ownerName,
+              ).toLowerCase().contains(qLatin) ||
               transliterateToLatin(regionName).contains(qLatin) ||
               tp.tradingPoint.inn.contains(query);
 
           // Trade point type filter
-          final typeMatch = _filters.tradePointTypes.isEmpty ||
+          final typeMatch =
+              _filters.tradePointTypes.isEmpty ||
               _filters.tradePointTypes.contains(tp.tradingPoint.tradePointType);
 
           // Business region filter
-          final regionMatch = _filters.businessRegions.isEmpty ||
+          final regionMatch =
+              _filters.businessRegions.isEmpty ||
               _filters.businessRegions.contains(tp.tradingPoint.codeRegion);
 
           // Visit today filter
@@ -689,19 +809,20 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     } else {
       _sortAlphabetically();
     }
-    
+
     // Put newly created client at the top
     _moveNewClientToTop();
   }
-  
+
   /// Move newly created client to the top of the list
   void _moveNewClientToTop() {
-    if (_newlyCreatedClientCode == null || _newlyCreatedClientCode!.isEmpty) return;
-    
+    if (_newlyCreatedClientCode == null || _newlyCreatedClientCode!.isEmpty)
+      return;
+
     final newClientIndex = _filteredTradingPoints.indexWhere(
       (tp) => tp.tradingPoint.id == _newlyCreatedClientCode,
     );
-    
+
     if (newClientIndex > 0) {
       final newClient = _filteredTradingPoints.removeAt(newClientIndex);
       _filteredTradingPoints.insert(0, newClient);
@@ -712,7 +833,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     _filteredTradingPoints.sort((a, b) {
       final aName = transliterateToLatin(a.tradingPoint.name).toLowerCase();
       final bName = transliterateToLatin(b.tradingPoint.name).toLowerCase();
-      return _isAlphabeticalSort ? aName.compareTo(bName) : bName.compareTo(aName);
+      return _isAlphabeticalSort
+          ? aName.compareTo(bName)
+          : bName.compareTo(aName);
     });
   }
 
@@ -736,12 +859,16 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   double? _getCachedDistance(TradingPointWithPermissions tp) {
     if (_locationService == null) return null; // Safety check
 
-    final cacheKey = '${tp.tradingPoint.id}_${tp.tradingPoint.latitude}_${tp.tradingPoint.longitude}';
+    final cacheKey =
+        '${tp.tradingPoint.id}_${tp.tradingPoint.latitude}_${tp.tradingPoint.longitude}';
     if (_distanceCache.containsKey(cacheKey)) {
       return _distanceCache[cacheKey];
     }
 
-    final distance = _locationService!.getDistanceToTradingPoint(tp.tradingPoint.latitude, tp.tradingPoint.longitude);
+    final distance = _locationService!.getDistanceToTradingPoint(
+      tp.tradingPoint.latitude,
+      tp.tradingPoint.longitude,
+    );
     _distanceCache[cacheKey] = distance;
     return distance;
   }
@@ -785,7 +912,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         // Note: LocationService already handles background updates every 10 seconds
         // This is just a fallback check
         if (kDebugMode) {
-          print('User location not available or not recent, waiting for background update');
+          print(
+            'User location not available or not recent, waiting for background update',
+          );
         }
       }
     } catch (e) {
@@ -829,7 +958,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   /// Ensure location permission is granted before enabling distance sorting
   Future<bool> _ensureLocationPermissionForSorting() async {
     final permissionManager = sl<PermissionManager>();
-    final hasPermission = await permissionManager.showLocationPermissionDialog(context);
+    final hasPermission = await permissionManager.showLocationPermissionDialog(
+      context,
+    );
 
     // Update local permission status
     if (mounted) {
@@ -855,7 +986,8 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         return theme.colorScheme.primary;
       } else if (_locationPermissionStatus == AppPermissionStatus.denied) {
         return Colors.orange;
-      } else if (_locationPermissionStatus == AppPermissionStatus.permanentlyDenied) {
+      } else if (_locationPermissionStatus ==
+          AppPermissionStatus.permanentlyDenied) {
         return Colors.red;
       }
     }
@@ -866,11 +998,16 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   String _getSortButtonTooltip() {
     if (_isDistanceSort) {
       if (_locationPermissionStatus != AppPermissionStatus.granted) {
-        return AppLocalizations.of(context)?.sortByDistanceRequiresPermission ?? 'Location permission required for distance sorting';
+        return AppLocalizations.of(context)?.sortByDistanceRequiresPermission ??
+            'Location permission required for distance sorting';
       }
       return AppLocalizations.of(context)?.sortByDistance ?? 'Sort by distance';
     }
-    return _isAlphabeticalSort ? (AppLocalizations.of(context)?.sortAlphabeticalAZ ?? 'Sort alphabetically (A-Z)') : (AppLocalizations.of(context)?.sortAlphabeticalZA ?? 'Sort alphabetically (Z-A)');
+    return _isAlphabeticalSort
+        ? (AppLocalizations.of(context)?.sortAlphabeticalAZ ??
+              'Sort alphabetically (A-Z)')
+        : (AppLocalizations.of(context)?.sortAlphabeticalZA ??
+              'Sort alphabetically (Z-A)');
   }
 
   /// Ensure user location is available before enabling distance sorting
@@ -900,7 +1037,12 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   Future<void> _makeCall(String phoneNumber) async {
     if (phoneNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)?.phoneNumberNotSpecified ?? 'Phone number not specified')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.phoneNumberNotSpecified ??
+                'Phone number not specified',
+          ),
+        ),
       );
       return;
     }
@@ -911,20 +1053,36 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.phoneCallFailed ?? 'Phone call failed')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.phoneCallFailed ??
+                  'Phone call failed',
+            ),
+          ),
         );
       }
     }
   }
 
   /// Handle visit client with distance validation
-  Future<void> _handleVisitClient(BuildContext context, TradingPointWithPermissions tradingPointWithPermissions) async {
+  Future<void> _handleVisitClient(
+    BuildContext context,
+    TradingPointWithPermissions tradingPointWithPermissions,
+  ) async {
     try {
       if (kDebugMode) {
-        print('_handleVisitClient: Starting for ${tradingPointWithPermissions.tradingPoint.name}');
-        print('_handleVisitClient: visitToday=${tradingPointWithPermissions.visitToday}');
-        print('_handleVisitClient: permissions=${tradingPointWithPermissions.permissions}');
-        print('_handleVisitClient: clientZoneAccess=${tradingPointWithPermissions.permissions?.clientZoneAccess}');
+        print(
+          '_handleVisitClient: Starting for ${tradingPointWithPermissions.tradingPoint.name}',
+        );
+        print(
+          '_handleVisitClient: visitToday=${tradingPointWithPermissions.visitToday}',
+        );
+        print(
+          '_handleVisitClient: permissions=${tradingPointWithPermissions.permissions}',
+        );
+        print(
+          '_handleVisitClient: clientZoneAccess=${tradingPointWithPermissions.permissions?.clientZoneAccess}',
+        );
       }
 
       // Check if visitToday is true
@@ -943,17 +1101,24 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       );
 
       if (kDebugMode) {
-        print('_handleVisitClient: distanceKm=$distanceKm, _locationService=$_locationService');
+        print(
+          '_handleVisitClient: distanceKm=$distanceKm, _locationService=$_locationService',
+        );
       }
 
       if (distanceKm == null) {
         // No location available
         if (kDebugMode) {
-          print('_handleVisitClient: ABORT - distanceKm is null, showing snackbar');
+          print(
+            '_handleVisitClient: ABORT - distanceKm is null, showing snackbar',
+          );
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)?.locationNotAvailable ?? 'Location data not available. Visit cannot be completed.'),
+            content: Text(
+              AppLocalizations.of(context)?.locationNotAvailable ??
+                  'Location data not available. Visit cannot be completed.',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -961,35 +1126,45 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       }
 
       final distanceMeters = (distanceKm * 1000).round();
-      final clientZoneAccess = tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
+      final clientZoneAccess =
+          tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
 
       if (kDebugMode) {
-        print('_handleVisitClient: distanceMeters=$distanceMeters, clientZoneAccess=$clientZoneAccess');
-        print('_handleVisitClient: Condition check - clientZoneAccess==0: ${clientZoneAccess == 0}, distanceMeters<=clientZoneAccess: ${distanceMeters <= clientZoneAccess}');
+        print(
+          '_handleVisitClient: distanceMeters=$distanceMeters, clientZoneAccess=$clientZoneAccess',
+        );
+        print(
+          '_handleVisitClient: Condition check - clientZoneAccess==0: ${clientZoneAccess == 0}, distanceMeters<=clientZoneAccess: ${distanceMeters <= clientZoneAccess}',
+        );
       }
 
       // If clientZoneAccess is 0, skip distance check and proceed directly
       if (clientZoneAccess == 0 || distanceMeters <= clientZoneAccess) {
         // Distance requirement met or no check required, proceed with visit
         if (kDebugMode) {
-          print('_handleVisitClient: Proceeding directly to _informVisit (no dialog needed)');
+          print(
+            '_handleVisitClient: Proceeding directly to _informVisit (no dialog needed)',
+          );
         }
         await _informVisit(tradingPointWithPermissions);
       } else {
         // Distance requirement not met, show dialog
         if (kDebugMode) {
-          print('_handleVisitClient: Distance requirement NOT met, showing DistanceValidationDialog');
+          print(
+            '_handleVisitClient: Distance requirement NOT met, showing DistanceValidationDialog',
+          );
           print('_handleVisitClient: mounted=$mounted, context=$context');
         }
         if (mounted) {
           // Close any open bottom sheet before showing dialog
           // This ensures the dialog is visible and not hidden behind the bottom sheet
           Navigator.of(context).popUntil((route) => route is! PopupRoute);
-          
+
           showDialog(
             context: context,
             barrierDismissible: false,
-            useRootNavigator: true, // Show dialog on top of everything including bottom sheets
+            useRootNavigator:
+                true, // Show dialog on top of everything including bottom sheets
             builder: (dialogContext) => DistanceValidationDialog(
               tradingPointWithPermissions: tradingPointWithPermissions,
               locationService: _locationService,
@@ -1007,7 +1182,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           }
         } else {
           if (kDebugMode) {
-            print('_handleVisitClient: ABORT - widget not mounted, cannot show dialog');
+            print(
+              '_handleVisitClient: ABORT - widget not mounted, cannot show dialog',
+            );
           }
         }
       }
@@ -1019,7 +1196,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)?.errorOccurredPrefix ?? "Error occurred"}: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)?.errorOccurredPrefix ?? "Error occurred"}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -1027,20 +1206,25 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     }
   }
 
-  Future<void> _informVisit(TradingPointWithPermissions tradingPointWithPermissions) async {
+  Future<void> _informVisit(
+    TradingPointWithPermissions tradingPointWithPermissions,
+  ) async {
     final tradingPoint = tradingPointWithPermissions.tradingPoint;
 
     // Navigate to visit steps page instead of showing simple dialog
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VisitStepsPage(tradingPoint: tradingPointWithPermissions),
+        builder: (_) =>
+            VisitStepsPage(tradingPoint: tradingPointWithPermissions),
       ),
     ).then((result) {
       if (result == true && mounted) {
         // Visit completed successfully, update the trading point status
         setState(() {
-          final index = _allTradingPoints.indexWhere((tp) => tp.tradingPoint.id == tradingPoint.id);
+          final index = _allTradingPoints.indexWhere(
+            (tp) => tp.tradingPoint.id == tradingPoint.id,
+          );
           if (index != -1) {
             final updatedTradingPoint = tradingPoint.copyWith(isVisited: true);
             _allTradingPoints[index] = TradingPointWithPermissions(
@@ -1053,7 +1237,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${tradingPoint.name} ${AppLocalizations.of(context)?.visitCompletedFor ?? "visit completed successfully"}'),
+            content: Text(
+              '${tradingPoint.name} ${AppLocalizations.of(context)?.visitCompletedFor ?? "visit completed successfully"}',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -1086,7 +1272,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       // This marks the client as visited and refreshes the UI
       if (result == true) {
         setState(() {
-          final index = _allTradingPoints.indexWhere((tp) => tp.tradingPoint.id == tradingPoint.id);
+          final index = _allTradingPoints.indexWhere(
+            (tp) => tp.tradingPoint.id == tradingPoint.id,
+          );
           if (index != -1) {
             final updatedTradingPoint = tradingPoint.copyWith(isVisited: true);
             _allTradingPoints[index] = TradingPointWithPermissions(
@@ -1099,30 +1287,36 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       }
     });
   }
-    void _viewClinetOrders(TradingPointWithPermissions tradingPointWithPermissions) {
-      final tradingPoint = tradingPointWithPermissions.tradingPoint;
-      _saveState(); // Save state
-      // Navigate to orders page with client parameters
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OrdersPage(
-            initialClientFilter: tradingPoint.id,
-            initialClientName: tradingPoint.name,
-          ),
+
+  void _viewClinetOrders(
+    TradingPointWithPermissions tradingPointWithPermissions,
+  ) {
+    final tradingPoint = tradingPointWithPermissions.tradingPoint;
+    _saveState(); // Save state
+    // Navigate to orders page with client parameters
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OrdersPage(
+          initialClientFilter: tradingPoint.id,
+          initialClientName: tradingPoint.name,
         ),
-      ).then((_) {
-        // State is automatically restored when returning
-        _restoreState();
-      });
-    }
+      ),
+    ).then((_) {
+      // State is automatically restored when returning
+      _restoreState();
+    });
+  }
+
   void _viewContracts(TradingPointWithPermissions tradingPointWithPermissions) {
     final tradingPoint = tradingPointWithPermissions.tradingPoint;
     try {
       _saveState(); // Save current state before navigation
 
       if (kDebugMode) {
-        print('Navigating to contracts page for client: ${tradingPoint.name} (ID: ${tradingPoint.id})');
+        print(
+          'Navigating to contracts page for client: ${tradingPoint.name} (ID: ${tradingPoint.id})',
+        );
       }
 
       Navigator.push(
@@ -1151,7 +1345,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)?.contractsPageError ?? "Error navigating to contracts page"}: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)?.contractsPageError ?? "Error navigating to contracts page"}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -1159,7 +1355,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     }
   }
 
-  void _showRefusalDialog(TradingPointWithPermissions tradingPointWithPermissions) {
+  void _showRefusalDialog(
+    TradingPointWithPermissions tradingPointWithPermissions,
+  ) {
     final tradingPoint = tradingPointWithPermissions.tradingPoint;
     showDialog(
       context: context,
@@ -1168,7 +1366,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         onRefusalSent: (reason) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${tradingPoint.name} ${AppLocalizations.of(context)?.refusalReasonSent ?? "refusal reason sent"}: $reason'),
+              content: Text(
+                '${tradingPoint.name} ${AppLocalizations.of(context)?.refusalReasonSent ?? "refusal reason sent"}: $reason',
+              ),
               backgroundColor: Colors.orange,
             ),
           );
@@ -1216,20 +1416,29 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   /// Handle double-tap on client card to fetch images and open details
   /// This method fetches all client images from DB, if not available fetches from server,
   /// saves to DB, loads to cache, and then opens the client details with swipeable images
-  Future<void> _handleDoubleTapFetchImages(TradingPointWithPermissions tp) async {
+  Future<void> _handleDoubleTapFetchImages(
+    TradingPointWithPermissions tp,
+  ) async {
     try {
       if (_isFetchingClientImages) {
         return;
       }
       _isFetchingClientImages = true;
       if (kDebugMode) {
-        print('TradingPointsPage: Handling double-tap for client ${tp.tradingPoint.name} (${tp.tradingPoint.id})');
+        print(
+          'TradingPointsPage: Handling double-tap for client ${tp.tradingPoint.name} (${tp.tradingPoint.id})',
+        );
       }
 
       // Show loading indicator
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.loadingClientImages ?? 'Loading client images...')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.loadingClientImages ??
+                  'Loading client images...',
+            ),
+          ),
         );
       }
 
@@ -1237,7 +1446,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       ClientImagesService? clientImagesService = _clientImagesService;
       if (clientImagesService == null) {
         if (kDebugMode) {
-          print('TradingPointsPage: ClientImagesService not initialized, trying to initialize...');
+          print(
+            'TradingPointsPage: ClientImagesService not initialized, trying to initialize...',
+          );
         }
 
         // Try to initialize the service
@@ -1249,16 +1460,23 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           _clientImagesService = clientImagesService; // Cache it for future use
 
           if (kDebugMode) {
-            print('TradingPointsPage: ClientImagesService initialized successfully on demand');
+            print(
+              'TradingPointsPage: ClientImagesService initialized successfully on demand',
+            );
           }
         } catch (e) {
           if (kDebugMode) {
-            print('TradingPointsPage: Failed to initialize ClientImagesService: $e');
+            print(
+              'TradingPointsPage: Failed to initialize ClientImagesService: $e',
+            );
           }
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)?.imageServiceNotAvailable ?? 'Image service not available'),
+                content: Text(
+                  AppLocalizations.of(context)?.imageServiceNotAvailable ??
+                      'Image service not available',
+                ),
                 backgroundColor: Colors.red,
               ),
             );
@@ -1268,11 +1486,15 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       }
 
       // Check if client images are already in database
-      final cachedImages = await clientImagesService.getClientImages(tp.tradingPoint.id);
+      final cachedImages = await clientImagesService.getClientImages(
+        tp.tradingPoint.id,
+      );
 
       if (cachedImages.isEmpty) {
         if (kDebugMode) {
-          print('TradingPointsPage: No cached images found, fetching from server');
+          print(
+            'TradingPointsPage: No cached images found, fetching from server',
+          );
         }
 
         // Fetch images from server and save to database
@@ -1283,7 +1505,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         }
       } else {
         if (kDebugMode) {
-          print('TradingPointsPage: Using cached images (${cachedImages.length} images)');
+          print(
+            'TradingPointsPage: Using cached images (${cachedImages.length} images)',
+          );
         }
       }
 
@@ -1292,7 +1516,12 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)?.clientImagesLoaded ?? 'Client images loaded')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.clientImagesLoaded ??
+                  'Client images loaded',
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -1306,7 +1535,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)?.imageLoadError ?? "Error loading images"}: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)?.imageLoadError ?? "Error loading images"}: $e',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -1325,7 +1556,12 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       child: Scaffold(
         // AppBar — Material 3, AgentHome uslubi
         appBar: AppBar(
-          title: Text(AppLocalizations.of(context)?.tradingPoints ?? 'Trading Points', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+          title: Text(
+            AppLocalizations.of(context)?.tradingPoints ?? 'Trading Points',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           centerTitle: false,
           actions: [
             // Filter button
@@ -1333,9 +1569,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
               onPressed: _toggleFilters,
               icon: Icon(
                 Icons.filter_alt_rounded,
-                color: _showFilters
-                    ? theme.colorScheme.primary
-                    : null,
+                color: _showFilters ? theme.colorScheme.primary : null,
               ),
               tooltip: 'Filter',
             ),
@@ -1352,14 +1586,22 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                 Icons.today_outlined,
                 color: _showVisitTodayOnly ? theme.colorScheme.primary : null,
               ),
-              tooltip: _showVisitTodayOnly ? (AppLocalizations.of(context)?.disableVisitTodayFilter ?? 'Disable today\'s visit filter') : (AppLocalizations.of(context)?.showVisitTodayOnly ?? 'Show only today\'s visit clients'),
+              tooltip: _showVisitTodayOnly
+                  ? (AppLocalizations.of(context)?.disableVisitTodayFilter ??
+                        'Disable today\'s visit filter')
+                  : (AppLocalizations.of(context)?.showVisitTodayOnly ??
+                        'Show only today\'s visit clients'),
             ),
 
             // Sorting button
             IconButton(
               onPressed: _toggleSorting,
               icon: Icon(
-                _isDistanceSort ? Icons.location_on : (_isAlphabeticalSort ? Icons.sort_by_alpha : Icons.sort_by_alpha_sharp),
+                _isDistanceSort
+                    ? Icons.location_on
+                    : (_isAlphabeticalSort
+                          ? Icons.sort_by_alpha
+                          : Icons.sort_by_alpha_sharp),
                 color: _getSortButtonColor(theme),
               ),
               tooltip: _getSortButtonTooltip(),
@@ -1369,7 +1611,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
               onSelected: (value) {
                 switch (value) {
                   case 'orders':
-                  // TODO
+                    // TODO
                     break;
                   case 'new_client':
                     // TODO
@@ -1396,7 +1638,9 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                     children: [
                       const Icon(Icons.add_business),
                       const SizedBox(width: 8),
-                      Text(AppLocalizations.of(context)?.newClient ?? 'New client'),
+                      Text(
+                        AppLocalizations.of(context)?.newClient ?? 'New client',
+                      ),
                     ],
                   ),
                 ),
@@ -1406,7 +1650,10 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                     children: [
                       const Icon(Icons.history),
                       const SizedBox(width: 8),
-                      Text(AppLocalizations.of(context)?.orderHistory ?? 'Order history'),
+                      Text(
+                        AppLocalizations.of(context)?.orderHistory ??
+                            'Order history',
+                      ),
                     ],
                   ),
                 ),
@@ -1415,179 +1662,211 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
           ],
         ),
 
-      // BODY — gradient fon + yuqorida qidiruv, pastda ro‘yxat
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              theme.colorScheme.primary.withOpacity(.08),
-              theme.colorScheme.primaryContainer.withOpacity(.06),
+        // BODY — gradient fon + yuqorida qidiruv, pastda ro‘yxat
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                theme.colorScheme.primary.withOpacity(.08),
+                theme.colorScheme.primaryContainer.withOpacity(.06),
+              ],
+            ),
+          ),
+          child: Column(
+            children: [
+              // Search bar (M3 style, soft shadow)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: _SearchField(
+                  controller: _searchController,
+                  onChanged: _filterTradingPoints,
+                ),
+              ),
+              // === ADD: collapsible panel (count + list/grid buttons) ===
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: _showViewBar
+                      ? _ViewToolbar(
+                          count: _filteredTradingPoints.length,
+                          mode: _viewMode,
+                          onModeChanged: (m) => setState(() => _viewMode = m),
+                          onCollapse: () =>
+                              setState(() => _showViewBar = false),
+                        )
+                      : Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            tooltip:
+                                AppLocalizations.of(context)?.viewPanel ??
+                                'View panel',
+                            onPressed: () =>
+                                setState(() => _showViewBar = true),
+                            icon: const Icon(
+                              Icons.tune,
+                            ), // biriktirilgan namunadagi kabi "tune" tugma
+                          ),
+                        ),
+                ),
+              ),
+
+              // Filters panel
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: _showFilters
+                    ? Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        child: TradingPointsFiltersPanel(
+                          state: _filters,
+                          availableTradePointTypes: _availableTradePointTypes,
+                          regionNames: _regionNames,
+                          onChange: _onFiltersChanged,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+
+              // List
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _filteredTradingPoints.isEmpty
+                    ? const _EmptyState()
+                    : (_viewMode == _ViewMode.list
+                          ? NotificationListener<ScrollStartNotification>(
+                              onNotification: (notification) {
+                                if (_showFilters) {
+                                  setState(() => _showFilters = false);
+                                }
+                                return false;
+                              },
+                              child: RefreshIndicator(
+                                onRefresh: _loadUserData,
+                                child: ListView.separated(
+                                  key: const PageStorageKey<String>(
+                                    'tp_list_scroll',
+                                  ),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    8,
+                                    12,
+                                    12,
+                                  ),
+                                  itemCount: _filteredTradingPoints.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    final tp = _filteredTradingPoints[index];
+                                    // LIST: eski ExpansionTile kartamiz, lekin leading – foto
+                                    final isNewClient =
+                                        _newlyCreatedClientCode != null &&
+                                        tp.tradingPoint.id ==
+                                            _newlyCreatedClientCode;
+                                    return TradingPointCard(
+                                      tradingPoint: tp.tradingPoint,
+                                      onCall: () =>
+                                          _makeCall(tp.tradingPoint.phone),
+                                      onInformVisit: () =>
+                                          _handleVisitClient(context, tp),
+                                      onCreateOrder: () => _createOrder(tp),
+                                      onViewClientOrders: () =>
+                                          _viewClinetOrders(tp),
+                                      onViewContracts: () => _viewContracts(tp),
+                                      onRefusal: () => _showRefusalDialog(tp),
+                                      onOpenDetails: () => _openTpDetails(tp),
+                                      onDoubleTapFetchImages: () =>
+                                          _handleDoubleTapFetchImages(tp),
+                                      regionNames: _regionNames,
+                                      locationService: _locationService,
+                                      permissions: tp.permissions,
+                                      mapProvider: _defaultMapProvider,
+                                      expanded: _expandedIndex == index,
+                                      onExpand: (open) {
+                                        setState(() {
+                                          _expandedIndex = open
+                                              ? index
+                                              : null; // faqat bittasi ochiq bo'ladi
+                                        });
+                                      },
+                                      isNewClient: isNewClient,
+                                    );
+                                  },
+                                ),
+                              ),
+                            )
+                          : NotificationListener<ScrollStartNotification>(
+                              onNotification: (notification) {
+                                if (_showFilters) {
+                                  setState(() => _showFilters = false);
+                                }
+                                return false;
+                              },
+                              child: RefreshIndicator(
+                                onRefresh: _loadUserData,
+                                child: GridView.builder(
+                                  key: const PageStorageKey<String>(
+                                    'tp_grid_scroll',
+                                  ),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    8,
+                                    12,
+                                    12,
+                                  ),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        mainAxisSpacing: 8,
+                                        crossAxisSpacing: 8,
+                                        childAspectRatio: 0.60,
+                                        // mainAxisExtent: 300,
+                                      ),
+                                  itemCount: _filteredTradingPoints.length,
+                                  itemBuilder: (context, index) {
+                                    final tp = _filteredTradingPoints[index];
+                                    // GRID: foto yuqorida, qolgan ma’lumotlar bitta ustunda pastda
+                                    return _TradingPointGridTile(
+                                      tp: tp,
+                                      onCall: () =>
+                                          _makeCall(tp.tradingPoint.phone),
+                                      onInformVisit: () =>
+                                          _handleVisitClient(context, tp),
+                                      onCreateOrder: () => _createOrder(tp),
+                                      onViewContracts: () => _viewContracts(tp),
+                                      onRefusal: () => _showRefusalDialog(tp),
+                                      onOpenDetails: () => _openTpDetails(tp),
+                                      locationService: _locationService,
+                                      permissions: tp.permissions,
+                                    );
+                                  },
+                                ),
+                              ),
+                            )),
+              ),
             ],
           ),
         ),
-        child: Column(
-          children: [
-            // Search bar (M3 style, soft shadow)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: _SearchField(
-                controller: _searchController,
-                onChanged: _filterTradingPoints,
-              ),
-            ),
-            // === ADD: collapsible panel (count + list/grid buttons) ===
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                child: _showViewBar
-                    ? _ViewToolbar(
-                  count: _filteredTradingPoints.length,
-                  mode: _viewMode,
-                  onModeChanged: (m) => setState(() => _viewMode = m),
-                  onCollapse: () => setState(() => _showViewBar = false),
-                )
-                    : Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    tooltip: AppLocalizations.of(context)?.viewPanel ?? 'View panel',
-                    onPressed: () => setState(() => _showViewBar = true),
-                    icon: const Icon(Icons.tune), // biriktirilgan namunadagi kabi "tune" tugma
-                  ),
-                ),
-              ),
-            ),
 
-            // Filters panel
-            AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              child: _showFilters
-                  ? Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: TradingPointsFiltersPanel(
-                  state: _filters,
-                  availableTradePointTypes: _availableTradePointTypes,
-                  regionNames: _regionNames,
-                  onChange: _onFiltersChanged,
-                ),
-              )
-                  : const SizedBox.shrink(),
-            ),
-            // List
+        // Pastki menyu — mavjud nav bar (o‘zgarmagan)
+        // bottomNavigationBar: const AgentBottomNavBar(
+        //   initialIndex: 2,
+        // ),
 
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _filteredTradingPoints.isEmpty
-                  ? const _EmptyState()
-                  : (_viewMode == _ViewMode.list
-                  ? NotificationListener<ScrollStartNotification>(
-                    onNotification: (notification) {
-                      if (_showFilters) {
-                        setState(() => _showFilters = false);
-                      }
-                      return false;
-                    },
-                    child: RefreshIndicator(
-                      onRefresh: _loadUserData,
-                      child: ListView.separated(
-                        key: const PageStorageKey<String>('tp_list_scroll'),
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                        itemCount: _filteredTradingPoints.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final tp = _filteredTradingPoints[index];
-                          // LIST: eski ExpansionTile kartamiz, lekin leading – foto
-                          final isNewClient = _newlyCreatedClientCode != null && 
-                              tp.tradingPoint.id == _newlyCreatedClientCode;
-                          return TradingPointCard(
-                            tradingPoint: tp.tradingPoint,
-                            onCall: () => _makeCall(tp.tradingPoint.phone),
-                            onInformVisit: () => _handleVisitClient(context, tp),
-                            onCreateOrder: () => _createOrder(tp),
-                            onViewClientOrders: () => _viewClinetOrders(tp),
-                            onViewContracts: () => _viewContracts(tp),
-                            onRefusal: () => _showRefusalDialog(tp),
-                            onOpenDetails: () => _openTpDetails(tp),
-                            onDoubleTapFetchImages: () => _handleDoubleTapFetchImages(tp),
-                            regionNames: _regionNames,
-                            locationService: _locationService,
-                            permissions: tp.permissions,
-                            mapProvider: _defaultMapProvider,
-                            expanded: _expandedIndex == index,
-                            onExpand: (open) {
-                              setState(() {
-                                _expandedIndex = open ? index : null; // faqat bittasi ochiq bo'ladi
-                              });
-                            },
-                            isNewClient: isNewClient,
-                          );
-                        },
-                      ),
-                    ),
-                  )
-                  : NotificationListener<ScrollStartNotification>(
-                    onNotification: (notification) {
-                      if (_showFilters) {
-                        setState(() => _showFilters = false);
-                      }
-                      return false;
-                    },
-                    child: RefreshIndicator(
-                      onRefresh: _loadUserData,
-                      child: GridView.builder(
-                        key: const PageStorageKey<String>('tp_grid_scroll'),
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          childAspectRatio: 0.60,
-                          // mainAxisExtent: 300,
-                        ),
-                        itemCount: _filteredTradingPoints.length,
-                        itemBuilder: (context, index) {
-                          final tp = _filteredTradingPoints[index];
-                          // GRID: foto yuqorida, qolgan ma’lumotlar bitta ustunda pastda
-                          return _TradingPointGridTile(
-                            tp: tp,
-                            onCall: () => _makeCall(tp.tradingPoint.phone),
-                            onInformVisit: () => _handleVisitClient(context, tp),
-                            onCreateOrder: () => _createOrder(tp),
-                            onViewContracts: () => _viewContracts(tp),
-                            onRefusal: () => _showRefusalDialog(tp),
-                            onOpenDetails: () => _openTpDetails(tp),
-                            locationService: _locationService,
-                            permissions: tp.permissions,
-                          );
-                        },
-                      ),
-                    ),
-                  )),
-            )
-          ],
+        // Floating action button for creating new client
+        // Always show FAB - permission check handled in _navigateToCreateClient
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _navigateToCreateClient,
+          icon: const Icon(Icons.add),
+          label: Text(AppLocalizations.of(context)?.newClient ?? 'Yangi mijoz'),
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+          elevation: 4,
         ),
-      ),
-
-      // Pastki menyu — mavjud nav bar (o‘zgarmagan)
-      // bottomNavigationBar: const AgentBottomNavBar(
-      //   initialIndex: 2,
-      // ),
-
-      // Floating action button for creating new client
-      // Always show FAB - permission check handled in _navigateToCreateClient
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToCreateClient,
-        icon: const Icon(Icons.add),
-        label: Text(AppLocalizations.of(context)?.newClient ?? 'Yangi mijoz'),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        elevation: 4,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
   }
@@ -1596,9 +1875,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   Future<void> _navigateToCreateClient() async {
     final result = await Navigator.push<String?>(
       context,
-      MaterialPageRoute(
-        builder: (_) => const CreateClientPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const CreateClientPage()),
     );
 
     // If a new client was created, reload data and highlight the new client
@@ -1606,10 +1883,10 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       setState(() {
         _newlyCreatedClientCode = result;
       });
-      
+
       // Reload trading points to include the new client
       await _loadTradingPoints();
-      
+
       // Show success message
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
@@ -1651,7 +1928,11 @@ class _SearchField extends StatelessWidget {
         color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: cs.primary.withOpacity(.06), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(
+            color: cs.primary.withOpacity(.06),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
         ],
         border: Border.all(color: cs.outlineVariant),
       ),
@@ -1663,7 +1944,10 @@ class _SearchField extends StatelessWidget {
             hintText: AppLocalizations.of(ctx)?.searchHint ?? 'Qidirish...',
             prefixIcon: const Icon(Icons.search),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 14,
+            ),
           ),
         ),
       ),
@@ -1686,7 +1970,8 @@ class _EmptyStateState extends State<_EmptyState> {
     return RefreshIndicator(
       onRefresh: () async {
         // Access TradingPointsPage state through context
-        final state = context.findAncestorStateOfType<_TradingPointsPageState>();
+        final state = context
+            .findAncestorStateOfType<_TradingPointsPageState>();
         if (state != null) {
           await state._loadUserData();
         }
@@ -1699,23 +1984,36 @@ class _EmptyStateState extends State<_EmptyState> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.find_in_page_outlined, size: 48, color: theme.hintColor),
+                Icon(
+                  Icons.find_in_page_outlined,
+                  size: 48,
+                  color: theme.hintColor,
+                ),
                 const SizedBox(height: 8),
                 Text(
-                  AppLocalizations.of(context)?.tradingPointsNotFound ?? 'Trading points not found',
-                  style: theme.textTheme.titleMedium?.copyWith(color: theme.hintColor),
+                  AppLocalizations.of(context)?.tradingPointsNotFound ??
+                      'Trading points not found',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.hintColor,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  AppLocalizations.of(context)?.swipeToRefresh ?? 'Pastga surib yangilash uchun urinib ko\'ring!',
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor.withOpacity(0.7)),
+                  AppLocalizations.of(context)?.swipeToRefresh ??
+                      'Pastga surib yangilash uchun urinib ko\'ring!',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.hintColor.withOpacity(0.7),
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  AppLocalizations.of(context)?.ifSwipeNotWorking ?? 'Pastga surish ish bermasa sozlamalar menyusida joylashgan "barcha ma\'lumotlarni yangilash amalini bajaring"',
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor.withOpacity(0.7)),
+                  AppLocalizations.of(context)?.ifSwipeNotWorking ??
+                      'Pastga surish ish bermasa sozlamalar menyusida joylashgan "barcha ma\'lumotlarni yangilash amalini bajaring"',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.hintColor.withOpacity(0.7),
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -1770,14 +2068,14 @@ class TradingPointCard extends StatelessWidget {
     final cs = theme.colorScheme;
 
     final visitedColor = tradingPoint.isVisited ? Colors.green : Colors.orange;
-    final visitedIcon = tradingPoint.isVisited ? Icons.check_circle : Icons.location_on;
-    
+    final visitedIcon = tradingPoint.isVisited
+        ? Icons.check_circle
+        : Icons.location_on;
+
     // Highlight color for newly created clients
-    final cardColor = isNewClient 
-        ? Colors.green.shade50 
-        : cs.surface;
-    final borderColor = isNewClient 
-        ? Colors.green.shade400 
+    final cardColor = isNewClient ? Colors.green.shade50 : cs.surface;
+    final borderColor = isNewClient
+        ? Colors.green.shade400
         : Colors.transparent;
 
     return Card(
@@ -1794,103 +2092,153 @@ class TradingPointCard extends StatelessWidget {
         },
         onDoubleTap: onDoubleTapFetchImages ?? onOpenDetails,
         child: ExpansionTile(
-
-          key: PageStorageKey<String>('tp_expand_${tradingPoint.id}'), // FIXED: alohida kalit faqat ExpansionTile uchun
-          initiallyExpanded: expanded ?? false,                       // NEW: tashqaridan boshqariladi
+          key: PageStorageKey<String>(
+            'tp_expand_${tradingPoint.id}',
+          ), // FIXED: alohida kalit faqat ExpansionTile uchun
+          initiallyExpanded: expanded ?? false, // NEW: tashqaridan boshqariladi
           onExpansionChanged: null,
           tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          leading:  _AvatarLeading(tp: tradingPoint, visited: tradingPoint.isVisited),
+          collapsedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          leading: _AvatarLeading(
+            tp: tradingPoint,
+            visited: tradingPoint.isVisited,
+          ),
 
-      title: Row(
-        children: [
-          Expanded(
-            child: _buildScrollableText(
-              tradingPoint.name,
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-              maxLines: 3,
-            ),
-          ),
-          const SizedBox(width: 8),
-          VisitIndicators(
-            visitToday: tradingPoint.visitToday,
-            isVisited: tradingPoint.isVisited,
-            visitStepNumber: tradingPoint.visitStepNumber,
-          ),
-        ],
-      ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          title: Row(
             children: [
-              _line(context, Icons.place_outlined, tradingPoint.address, soft: true, maxLines: 3, scrollable: true),
-              const SizedBox(height: 2),
-              _line(context, Icons.badge_outlined, 'INN: ${tradingPoint.inn}', maxLines: 2),
-              // Add distance display for list view
-              
-              if (locationService != null) ...[
-                const SizedBox(height: 2),
-                //Text('location servise ishladi'),
-                _buildDistanceDisplayForList(context, tradingPoint, locationService!),
-              ],
-              if (locationService == null) ...[
-                //Text('location servise ishlamadi')
-              ]
-            ],
-          ),
-        ),
-        children: [
-          // Kontaktlar
-          Row(
-            children: [
-              const Icon(Icons.location_city_outlined, size: 16),
-              const SizedBox(width: 8),
-              Expanded(child: Text(AppLocalizations.of(context)?.businessRegionLabel(regionNames[tradingPoint.codeRegion] ?? AppLocalizations.of(context)?.unknown ?? 'Noma\'lum') ?? 'Biznes region: ${regionNames[tradingPoint.codeRegion] ?? 'Noma\'lum'}')),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.person, size: 16),
-              const SizedBox(width: 8),
-              Expanded(child: Text(AppLocalizations.of(context)?.contactLabel(tradingPoint.contactPerson) ?? 'Aloqa: ${tradingPoint.contactPerson}')),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.phone, size: 16),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: onCall,
-                borderRadius: BorderRadius.circular(6),
-                child: Text(
-                  tradingPoint.phone,
-                  style: TextStyle(
-                    color: cs.primary,
-                    decoration: TextDecoration.underline,
+              Expanded(
+                child: _buildScrollableText(
+                  tradingPoint.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
+                  maxLines: 3,
                 ),
+              ),
+              const SizedBox(width: 8),
+              VisitIndicators(
+                visitToday: tradingPoint.visitToday,
+                isVisited: tradingPoint.isVisited,
+                visitStepNumber: tradingPoint.visitStepNumber,
               ),
             ],
           ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _line(
+                  context,
+                  Icons.place_outlined,
+                  tradingPoint.address,
+                  soft: true,
+                  maxLines: 3,
+                  scrollable: true,
+                ),
+                const SizedBox(height: 2),
+                _line(
+                  context,
+                  Icons.badge_outlined,
+                  'INN: ${tradingPoint.inn}',
+                  maxLines: 2,
+                ),
 
-          const SizedBox(height: 12),
-          // Actions — Material 3 uslub: Filled, Tonal, Outlined kombinatsiyasi
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: _buildActionButtons(context, tradingPoint),
+                // Add distance display for list view
+                if (locationService != null) ...[
+                  const SizedBox(height: 2),
+                  //Text('location servise ishladi'),
+                  _buildDistanceDisplayForList(
+                    context,
+                    tradingPoint,
+                    locationService!,
+                  ),
+                ],
+                if (locationService == null) ...[
+                  //Text('location servise ishlamadi')
+                ],
+              ],
+            ),
           ),
-        ],
+          children: [
+            // Kontaktlar
+            Row(
+              children: [
+                const Icon(Icons.location_city_outlined, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context)?.businessRegionLabel(
+                          regionNames[tradingPoint.codeRegion] ??
+                              AppLocalizations.of(context)?.unknown ??
+                              'Noma\'lum',
+                        ) ??
+                        'Biznes region: ${regionNames[tradingPoint.codeRegion] ?? 'Noma\'lum'}',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.person, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(
+                          context,
+                        )?.contactLabel(tradingPoint.contactPerson) ??
+                        'Aloqa: ${tradingPoint.contactPerson}',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.phone, size: 16),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: onCall,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Text(
+                    tradingPoint.phone,
+                    style: TextStyle(
+                      color: cs.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+            // Actions — Material 3 uslub: Filled, Tonal, Outlined kombinatsiyasi
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _buildActionButtons(context, tradingPoint),
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
-  Widget _line(BuildContext context, IconData icon, String text, {bool soft = false, int maxLines = 2, bool scrollable = false}) {
+  Widget _line(
+    BuildContext context,
+    IconData icon,
+    String text, {
+    bool soft = false,
+    int maxLines = 2,
+    bool scrollable = false,
+  }) {
     Widget textWidget;
     if (scrollable) {
       textWidget = SizedBox(
@@ -1899,10 +2247,7 @@ class TradingPointCard extends StatelessWidget {
           behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Text(
-              text,
-              softWrap: false,
-            ),
+            child: Text(text, softWrap: false),
           ),
         ),
       );
@@ -1914,18 +2259,22 @@ class TradingPointCard extends StatelessWidget {
       );
     }
     return Row(
-      crossAxisAlignment: scrollable ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: scrollable
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       children: [
         Icon(icon, size: 16, color: soft ? null : Colors.grey),
         const SizedBox(width: 6),
-        Expanded(
-          child: textWidget,
-        ),
+        Expanded(child: textWidget),
       ],
     );
   }
 
-  Widget _buildScrollableText(String text, {TextStyle? style, int maxLines = 2}) {
+  Widget _buildScrollableText(
+    String text, {
+    TextStyle? style,
+    int maxLines = 2,
+  }) {
     return SizedBox(
       height: maxLines * 20.0, // Approximate height for maxLines
       child: SingleChildScrollView(
@@ -1941,7 +2290,10 @@ class TradingPointCard extends StatelessWidget {
   }
 
   /// Build action buttons with localization and configuration
-  List<Widget> _buildActionButtons(BuildContext context, TradingPoint tradingPoint) {
+  List<Widget> _buildActionButtons(
+    BuildContext context,
+    TradingPoint tradingPoint,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
@@ -1950,7 +2302,9 @@ class TradingPointCard extends StatelessWidget {
       print('DEBUG: Building action buttons for ${tradingPoint.name}');
       print('DEBUG: permissions object: ${tradingPoint}');
       print('DEBUG: permissions?.visit: ${permissions?.visit}');
-      print('DEBUG: permissions?.unplannedOrder: ${permissions?.unplannedOrder}');
+      print(
+        'DEBUG: permissions?.unplannedOrder: ${permissions?.unplannedOrder}',
+      );
     }
 
     return [
@@ -1969,16 +2323,20 @@ class TradingPointCard extends StatelessWidget {
           ),
         ),
       // Unplanned order button - only enabled if user has unplannedOrder permission
-     if(permissions?.visit == true && permissions?.unplannedOrder == true && tradingPoint.visitToday == false)
-      FilledButton.tonalIcon(
-        onPressed: onCreateOrder ,
-        icon: const Icon(Icons.shopping_cart, size: 18),
-        label: Text(l10n.unplannedOrder),
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+      if (permissions?.visit == true &&
+          permissions?.unplannedOrder == true &&
+          tradingPoint.visitToday == false)
+        FilledButton.tonalIcon(
+          onPressed: onCreateOrder,
+          icon: const Icon(Icons.shopping_cart, size: 18),
+          label: Text(l10n.unplannedOrder),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
-      ),
       // Contracts button - only enabled if trading point has contract
       OutlinedButton.icon(
         onPressed: tradingPoint.hasContract ? onViewContracts : null,
@@ -1986,7 +2344,9 @@ class TradingPointCard extends StatelessWidget {
         label: Text(l10n.contracts),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+          textStyle: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       // Orders button
@@ -1996,7 +2356,9 @@ class TradingPointCard extends StatelessWidget {
         label: Text(l10n.orders),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+          textStyle: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       // Route button
@@ -2008,7 +2370,8 @@ class TradingPointCard extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MapDetailPageGoogle(tradingPoint: tradingPoint),
+                  builder: (_) =>
+                      MapDetailPageGoogle(tradingPoint: tradingPoint),
                 ),
               );
               break;
@@ -2024,7 +2387,8 @@ class TradingPointCard extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MapDetailPageYandex(tradingPoint: tradingPoint),
+                  builder: (_) =>
+                      MapDetailPageYandex(tradingPoint: tradingPoint),
                 ),
               );
               break;
@@ -2034,7 +2398,9 @@ class TradingPointCard extends StatelessWidget {
         label: Text(l10n.route),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+          textStyle: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     ];
@@ -2043,10 +2409,20 @@ class TradingPointCard extends StatelessWidget {
   /// Builds the distance display widget for list view items.
   /// Shows distance in meters for distances less than 1km, otherwise in kilometers.
   /// Example: 0.9km displays as "900m", 1.5km displays as "1.5km"
-  Widget _buildDistanceDisplayForList(BuildContext context, TradingPoint tp, LocationService locationService) {
+  Widget _buildDistanceDisplayForList(
+    BuildContext context,
+    TradingPoint tp,
+    LocationService locationService,
+  ) {
     // Debug logging for distance calculation
-    if (kDebugMode) print("tp.latitude: ${tp.latitude}, tp.longitude: ${tp.longitude} ${tp.name}");
-    final distance = locationService.getDistanceToTradingPoint(tp.latitude, tp.longitude);
+    if (kDebugMode)
+      print(
+        "tp.latitude: ${tp.latitude}, tp.longitude: ${tp.longitude} ${tp.name}",
+      );
+    final distance = locationService.getDistanceToTradingPoint(
+      tp.latitude,
+      tp.longitude,
+    );
     if (kDebugMode) print('Trading points distance ${distance}');
 
     // Return empty widget if distance cannot be calculated
@@ -2134,13 +2510,15 @@ class _RefusalDialogState extends State<RefusalDialog> {
         children: [
           Text(l10n.selectRefusalReasonFor(widget.tradingPoint.name)),
           const SizedBox(height: 12),
-          ..._refusalReasons.map((reason) => RadioListTile<String>(
-            title: Text(reason),
-            value: reason,
-            groupValue: _selectedReason,
-            activeColor: cs.primary,
-            onChanged: (value) => setState(() => _selectedReason = value),
-          )),
+          ..._refusalReasons.map(
+            (reason) => RadioListTile<String>(
+              title: Text(reason),
+              value: reason,
+              groupValue: _selectedReason,
+              activeColor: cs.primary,
+              onChanged: (value) => setState(() => _selectedReason = value),
+            ),
+          ),
         ],
       ),
       actions: [
@@ -2149,15 +2527,22 @@ class _RefusalDialogState extends State<RefusalDialog> {
           child: Text(l10n.cancel),
         ),
         FilledButton(
-          onPressed: _isLoading || _selectedReason == null ? null : _sendRefusal,
+          onPressed: _isLoading || _selectedReason == null
+              ? null
+              : _sendRefusal,
           child: _isLoading
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : Text(l10n.send),
         ),
       ],
     );
   }
 }
+
 // ADD: View toolbar panel (count + list/grid buttons + close icon)
 class _ViewToolbar extends StatelessWidget {
   final int count;
@@ -2222,7 +2607,7 @@ class _ViewToolbar extends StatelessWidget {
         const SizedBox(width: 6),
         // Yopish
         IconButton(
-          tooltip: 'Yopish',
+          tooltip: AppLocalizations.of(context)?.close ?? 'Yopish',
           onPressed: onCollapse,
           icon: const Icon(Icons.close),
         ),
@@ -2230,7 +2615,6 @@ class _ViewToolbar extends StatelessWidget {
     );
   }
 }
-
 
 class TradingPointGridCard extends StatelessWidget {
   final TradingPoint tradingPoint;
@@ -2289,22 +2673,22 @@ class TradingPointGridCard extends StatelessWidget {
                   aspectRatio: 16 / 10,
                   child: url == null
                       ? Container(
-                    color: cs.surfaceContainerHighest,
-                    child: const Icon(Icons.storefront, size: 40),
-                  )
+                          color: cs.surfaceContainerHighest,
+                          child: const Icon(Icons.storefront, size: 40),
+                        )
                       : ImageFiltered(
-                    imageFilter: tradingPoint.isVisited
-                        ? ImageFilter.blur(sigmaX: 3, sigmaY: 3)
-                        : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                    child: Image(
-                      image: _clientImageProvider(url)!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: cs.surfaceContainerHighest,
-                        child: const Icon(Icons.storefront, size: 40),
-                      ),
-                    ),
-                  ),
+                          imageFilter: tradingPoint.isVisited
+                              ? ImageFilter.blur(sigmaX: 3, sigmaY: 3)
+                              : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                          child: Image(
+                            image: _clientImageProvider(url)!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: cs.surfaceContainerHighest,
+                              child: const Icon(Icons.storefront, size: 40),
+                            ),
+                          ),
+                        ),
                 ),
                 if (tradingPoint.isVisited)
                   Container(
@@ -2326,14 +2710,22 @@ class TradingPointGridCard extends StatelessWidget {
                   tradingPoint.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     const Icon(Icons.place_outlined, size: 16),
                     const SizedBox(width: 6),
-                    Expanded(child: Text(tradingPoint.address, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                    Expanded(
+                      child: Text(
+                        tradingPoint.address,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -2341,7 +2733,13 @@ class TradingPointGridCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.badge_outlined, size: 16),
                     const SizedBox(width: 6),
-                    Expanded(child: Text('INN: ${tradingPoint.inn}', maxLines: 2, overflow: TextOverflow.ellipsis)),
+                    Expanded(
+                      child: Text(
+                        'INN: ${tradingPoint.inn}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -2350,18 +2748,23 @@ class TradingPointGridCard extends StatelessWidget {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    if (permissions?.visit == true && tradingPoint.visitToday == true)
-                    FilledButton.icon(
-                          onPressed: onInformVisit,
-                          icon: const Icon(Icons.storefront, size: 16),
-                          label: Text(AppLocalizations.of(context)!.visitClient),
+                    if (permissions?.visit == true &&
+                        tradingPoint.visitToday == true)
+                      FilledButton.icon(
+                        onPressed: onInformVisit,
+                        icon: const Icon(Icons.storefront, size: 16),
+                        label: Text(AppLocalizations.of(context)!.visitClient),
+                      ),
+                    if (permissions?.visit == true &&
+                        permissions?.unplannedOrder == true &&
+                        tradingPoint.visitToday == false)
+                      FilledButton.tonalIcon(
+                        onPressed: onCreateOrder,
+                        icon: const Icon(Icons.list_alt, size: 16),
+                        label: Text(
+                          AppLocalizations.of(context)!.unplannedOrder,
                         ),
-                    if(permissions?.visit == true && permissions?.unplannedOrder == true && tradingPoint.visitToday == false)
-                    FilledButton.tonalIcon(
-                      onPressed: onCreateOrder,
-                      icon: const Icon(Icons.list_alt, size: 16),
-                      label: Text(AppLocalizations.of(context)!.unplannedOrder),
-                    ),
+                      ),
 
                     OutlinedButton.icon(
                       onPressed: onCreateOrder,
@@ -2369,11 +2772,13 @@ class TradingPointGridCard extends StatelessWidget {
                       label: Text(AppLocalizations.of(context)!.orders),
                     ),
                     //if (tradingPoint.hasContract)
-                      OutlinedButton.icon(
-                        onPressed: tradingPoint.hasContract ? onViewContracts : null,
-                        icon: const Icon(Icons.description, size: 16),
-                        label: Text(AppLocalizations.of(context)!.contracts),
-                      ),
+                    OutlinedButton.icon(
+                      onPressed: tradingPoint.hasContract
+                          ? onViewContracts
+                          : null,
+                      icon: const Icon(Icons.description, size: 16),
+                      label: Text(AppLocalizations.of(context)!.contracts),
+                    ),
 
                     OutlinedButton.icon(
                       onPressed: onRefusal,
@@ -2402,10 +2807,11 @@ class _AvatarLeading extends StatelessWidget {
 
     Widget img = ClipOval(
       child: SizedBox(
-        width: 56, height: 56,
+        width: 56,
+        height: 56,
         child: url == null
-            ? _DefaultAvatar(name: tp.name)               // default avatar
-            : _NetAvatar(url: url, visited: visited),      // network avatar
+            ? _DefaultAvatar(name: tp.name) // default avatar
+            : _NetAvatar(url: url, visited: visited), // network avatar
       ),
     );
 
@@ -2414,17 +2820,19 @@ class _AvatarLeading extends StatelessWidget {
       img = ColorFiltered(
         colorFilter: const ColorFilter.matrix(<double>[
           // grayscale matrix
-          0.2126,0.7152,0.0722,0,0,
-          0.2126,0.7152,0.0722,0,0,
-          0.2126,0.7152,0.0722,0,0,
-          0,     0,     0,     1,0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0, 0, 0, 1, 0,
         ]),
-        child: Stack(children: [
-          img,
-          Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(0.22)),
-          ),
-        ]),
+        child: Stack(
+          children: [
+            img,
+            Positioned.fill(
+              child: Container(color: Colors.black.withOpacity(0.22)),
+            ),
+          ],
+        ),
       );
     }
     return SizedBox(width: 56, height: 56, child: img);
@@ -2448,7 +2856,10 @@ class _NetAvatar extends StatelessWidget {
           );
     // Yengil blur ham qo‘shmoqchi bo‘lsangiz (visited payti):
     return visited
-        ? ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5), child: image)
+        ? ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
+            child: image,
+          )
         : image;
   }
 }
@@ -2462,16 +2873,26 @@ class _DefaultAvatar extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final initials = (name ?? '').trim().isEmpty
         ? '??'
-        : name!.trim().split(RegExp(r'\s+')).take(2).map((e) => e[0]).join().toUpperCase();
+        : name!
+              .trim()
+              .split(RegExp(r'\s+'))
+              .take(2)
+              .map((e) => e[0])
+              .join()
+              .toUpperCase();
 
     return Container(
       color: cs.primaryContainer,
       child: Center(
-        child: Text(initials, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        child: Text(
+          initials,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+        ),
       ),
     );
   }
 }
+
 /// Auto-scrolling Client Image Carousel Widget
 /// Displays client images with automatic scrolling every 2 seconds
 /// Supports manual scrolling by swiping/dragging
@@ -2487,15 +2908,18 @@ class _AutoScrollClientImageCarousel extends StatefulWidget {
   });
 
   @override
-  State<_AutoScrollClientImageCarousel> createState() => _AutoScrollClientImageCarouselState();
+  State<_AutoScrollClientImageCarousel> createState() =>
+      _AutoScrollClientImageCarouselState();
 }
 
-class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCarousel> {
+class _AutoScrollClientImageCarouselState
+    extends State<_AutoScrollClientImageCarousel> {
   final PageController _pageController = PageController();
   Timer? _autoScrollTimer;
   int _currentPage = 0;
-  List<String> _imageUrls = [];        // Medium o'lchamli rasmlar (carousel uchun)
-  List<String> _largeImageUrls = [];   // Large o'lchamli rasmlar (to'liq ekran uchun)
+  List<String> _imageUrls = []; // Medium o'lchamli rasmlar (carousel uchun)
+  List<String> _largeImageUrls =
+      []; // Large o'lchamli rasmlar (to'liq ekran uchun)
   bool _isLoading = true;
   bool _userIsScrolling = false;
 
@@ -2518,8 +2942,10 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
       await sl.isReady<ClientImagesService>();
       final clientImagesService = sl<ClientImagesService>();
 
-      final clientImages = await clientImagesService.getClientImages(widget.clientCode);
-      
+      final clientImages = await clientImagesService.getClientImages(
+        widget.clientCode,
+      );
+
       if (mounted) {
         setState(() {
           // Client detail uchun MEDIUM o'lchamli rasmlarni yuklash
@@ -2529,7 +2955,7 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
               .whereType<String>()
               .where((u) => u.trim().isNotEmpty)
               .toList();
-          
+
           // To'liq ekran ko'rish uchun LARGE o'lchamli rasmlarni yuklash
           // Eng yuqori sifatli rasmlar
           _largeImageUrls = clientImages
@@ -2537,7 +2963,7 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
               .whereType<String>()
               .where((u) => u.trim().isNotEmpty)
               .toList();
-          
+
           _isLoading = false;
         });
 
@@ -2600,7 +3026,7 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
     setState(() {
       _userIsScrolling = false;
     });
-    
+
     // Resume auto-scroll after 3 seconds of inactivity
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted && !_userIsScrolling && _imageUrls.length > 1) {
@@ -2614,36 +3040,38 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
   void _openFullScreenViewer(int initialIndex) {
     // Auto-scroll ni to'xtatish
     _stopAutoScroll();
-    
+
     // Agar large rasmlar bo'sh bo'lsa, medium rasmlardan foydalanish
-    final imagesToShow = _largeImageUrls.isNotEmpty ? _largeImageUrls : _imageUrls;
-    
+    final imagesToShow = _largeImageUrls.isNotEmpty
+        ? _largeImageUrls
+        : _imageUrls;
+
     if (imagesToShow.isEmpty) return;
-    
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.black87,
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return _FullScreenImageViewer(
-            imageUrls: imagesToShow,
-            initialIndex: initialIndex,
-            clientName: null, // Mijoz nomini keyinroq qo'shish mumkin
-          );
-        },
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
-      ),
-    ).then((_) {
-      // Qaytib kelganda auto-scroll ni qayta boshlash
-      if (mounted && _imageUrls.length > 1) {
-        _startAutoScroll();
-      }
-    });
+
+    Navigator.of(context)
+        .push(
+          PageRouteBuilder(
+            opaque: false,
+            barrierColor: Colors.black87,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return _FullScreenImageViewer(
+                imageUrls: imagesToShow,
+                initialIndex: initialIndex,
+                clientName: null, // Mijoz nomini keyinroq qo'shish mumkin
+              );
+            },
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+          ),
+        )
+        .then((_) {
+          // Qaytib kelganda auto-scroll ni qayta boshlash
+          if (mounted && _imageUrls.length > 1) {
+            _startAutoScroll();
+          }
+        });
   }
 
   @override
@@ -2659,9 +3087,7 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
           color: cs.surfaceContainerHighest,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         ),
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -2673,9 +3099,7 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
           color: cs.surfaceContainerHighest,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         ),
-        child: const Center(
-          child: Icon(Icons.storefront, size: 40),
-        ),
+        child: const Center(child: Icon(Icons.storefront, size: 40)),
       );
     }
 
@@ -2708,7 +3132,9 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
                   // Double-tap orqali to'liq ekran rasm ko'rish
                   onDoubleTap: () => _openFullScreenViewer(index),
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -2731,16 +3157,17 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
                           ),
                         // Overlay for visited state
                         if (widget.isVisited)
-                          Container(
-                            color: Colors.black.withOpacity(0.22),
-                          ),
+                          Container(color: Colors.black.withOpacity(0.22)),
                         // Double-tap ko'rsatma (rasm bor bo'lganda)
                         if (provider != null)
                           Positioned(
                             bottom: 8,
                             right: 8,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.black.withOpacity(0.5),
                                 borderRadius: BorderRadius.circular(8),
@@ -2748,11 +3175,18 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.fullscreen, color: Colors.white70, size: 14),
+                                  Icon(
+                                    Icons.fullscreen,
+                                    color: Colors.white70,
+                                    size: 14,
+                                  ),
                                   SizedBox(width: 4),
                                   Text(
                                     '2x bosing',
-                                    style: TextStyle(color: Colors.white70, fontSize: 10),
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -2821,7 +3255,11 @@ class _AutoScrollClientImageCarouselState extends State<_AutoScrollClientImageCa
 /// Trading Point Grid Tile with auto-scrolling client image carousel
 class _TradingPointGridTile extends StatelessWidget {
   final TradingPointWithPermissions tp;
-  final VoidCallback onCall, onInformVisit, onCreateOrder, onViewContracts, onRefusal;
+  final VoidCallback onCall,
+      onInformVisit,
+      onCreateOrder,
+      onViewContracts,
+      onRefusal;
   final VoidCallback onOpenDetails;
   final LocationService? locationService;
   final SalesReqPermissions? permissions;
@@ -2845,129 +3283,150 @@ class _TradingPointGridTile extends StatelessWidget {
     return Card(
       // onTap: onOpenDetails,
       // borderRadius: BorderRadius.circular(16),
-      elevation: 6,                                // CHANGED: nice shadow
-      shadowColor: Colors.black.withOpacity(.15),  // CHANGED: soft shadow
-      surfaceTintColor: Colors.transparent,        // CHANGED: disable M3 tint
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      elevation: 6, // CHANGED: nice shadow
+      shadowColor: Colors.black.withOpacity(.15), // CHANGED: soft shadow
+      surfaceTintColor: Colors.transparent, // CHANGED: disable M3 tint
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
 
-
-        child: InkWell(
-          onTap: onOpenDetails,
-          borderRadius: BorderRadius.circular(16),
-          splashColor: cs.primary.withOpacity(.10),
-          highlightColor: cs.primary.withOpacity(.10),
+      child: InkWell(
+        onTap: onOpenDetails,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: cs.primary.withOpacity(.10),
+        highlightColor: cs.primary.withOpacity(.10),
 
         child: Column(
-
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // TOP: Auto-scrolling client image carousel
-          Stack(
-            children: [
-              // Auto-scrolling carousel widget
-              _AutoScrollClientImageCarousel(
-                clientCode: tp.tradingPoint.id,
-                height: 120,
-                isVisited: tp.tradingPoint.isVisited,
-              ),
-              
-              // Distance info overlay (bottom-right corner)
-              if (locationService != null)
-                Positioned(
-                  bottom: 4,
-                  right: 4,
-                  child: _buildDistanceOverlay(tp.tradingPoint, locationService!),
-                ),
-              
-              // Visit indicators (top-right corner)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: VisitIndicators(
-                  visitToday: tp.visitToday,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // TOP: Auto-scrolling client image carousel
+            Stack(
+              children: [
+                // Auto-scrolling carousel widget
+                _AutoScrollClientImageCarousel(
+                  clientCode: tp.tradingPoint.id,
+                  height: 120,
                   isVisited: tp.tradingPoint.isVisited,
-                  visitStepNumber: tp.visitStepNumber,
                 ),
-              ),
-              
-              // Edit icon for client images (top-left corner)
-              Positioned(
-                top: 8,
-                left: 8,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8),
-                    shape: BoxShape.circle,
+
+                // Distance info overlay (bottom-right corner)
+                if (locationService != null)
+                  Positioned(
+                    bottom: 4,
+                    right: 4,
+                    child: _buildDistanceOverlay(
+                      tp.tradingPoint,
+                      locationService!,
+                    ),
                   ),
-                  child: IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ClientImagesPage(tradingPoint: tp),
-                        ),
-                      );
-                    },
-                    tooltip: AppLocalizations.of(context)?.manageClientImages ?? 'Manage client images',
-                    iconSize: 20,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
+
+                // Visit indicators (top-right corner)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: VisitIndicators(
+                    visitToday: tp.visitToday,
+                    isVisited: tp.tradingPoint.isVisited,
+                    visitStepNumber: tp.visitStepNumber,
+                  ),
+                ),
+
+                // Edit icon for client images (top-left corner)
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.edit,
+                        color: Colors.blue,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ClientImagesPage(tradingPoint: tp),
+                          ),
+                        );
+                      },
+                      tooltip:
+                          AppLocalizations.of(context)?.manageClientImages ??
+                          'Manage client images',
+                      iconSize: 20,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          // BODY: data in single column
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildScrollableText(tp.tradingPoint.name,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                    maxLines: 3),
-                const SizedBox(height: 4),
-                // _line(Icons.place_outlined, tp.address),
-                // const SizedBox(height: 2),
-                // _line(Icons.badge_outlined, 'INN: ${tp.inn}'),
-
-                // NEW:
-                _lineMultiline(context, Icons.place_outlined, tp.tradingPoint.address, maxLines: 2, scrollable: true),     // CHANGED
-                const SizedBox(height: 2),
-                _lineMultiline(context, Icons.badge_outlined, 'INN: ${tp.tradingPoint.inn}', maxLines: 2), // CHANGED
-                // Add distance display
-                // if (locationService != null) ...[
-                //   const SizedBox(height: 2),
-                //   _buildDistanceDisplay(context, tp, locationService!),
-                // ],
               ],
             ),
-          ),
-          // const Spacer(),
-          const SizedBox(height: 6),
-          // // ACTIONS
-          // Padding(
-          //   padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          //   child: Wrap(
-          //     spacing: 8, runSpacing: 8,
-          //     children: [
-          //       if (!tp.isVisited) FilledButton.icon(onPressed: onInformVisit, icon: const Icon(Icons.location_on, size: 18), label: const Text('Tashrif')),
-          //       FilledButton.tonalIcon(onPressed: onCreateOrder, icon: const Icon(Icons.shopping_cart, size: 18), label: const Text('Buyurtma')),
-          //       if (tp.hasContract) OutlinedButton.icon(onPressed: onViewContracts, icon: const Icon(Icons.description, size: 18), label: const Text('Shartnoma')),
-          //       OutlinedButton.icon(onPressed: onRefusal, icon: const Icon(Icons.cancel, size: 18), label: const Text('Rad etish')),
-          //     ],
-          //   ),
-          // ),
-        ],
+            // BODY: data in single column
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildScrollableText(
+                    tp.tradingPoint.name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 4),
+                  // _line(Icons.place_outlined, tp.address),
+                  // const SizedBox(height: 2),
+                  // _line(Icons.badge_outlined, 'INN: ${tp.inn}'),
+
+                  // NEW:
+                  _lineMultiline(
+                    context,
+                    Icons.place_outlined,
+                    tp.tradingPoint.address,
+                    maxLines: 2,
+                    scrollable: true,
+                  ), // CHANGED
+                  const SizedBox(height: 2),
+                  _lineMultiline(
+                    context,
+                    Icons.badge_outlined,
+                    'INN: ${tp.tradingPoint.inn}',
+                    maxLines: 2,
+                  ), // CHANGED
+                  // Add distance display
+                  // if (locationService != null) ...[
+                  //   const SizedBox(height: 2),
+                  //   _buildDistanceDisplay(context, tp, locationService!),
+                  // ],
+                ],
+              ),
+            ),
+            // const Spacer(),
+            const SizedBox(height: 6),
+            // // ACTIONS
+            // Padding(
+            //   padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            //   child: Wrap(
+            //     spacing: 8, runSpacing: 8,
+            //     children: [
+            //       if (!tp.isVisited) FilledButton.icon(onPressed: onInformVisit, icon: const Icon(Icons.location_on, size: 18), label: const Text('Tashrif')),
+            //       FilledButton.tonalIcon(onPressed: onCreateOrder, icon: const Icon(Icons.shopping_cart, size: 18), label: const Text('Buyurtma')),
+            //       if (tp.hasContract) OutlinedButton.icon(onPressed: onViewContracts, icon: const Icon(Icons.description, size: 18), label: const Text('Shartnoma')),
+            //       OutlinedButton.icon(onPressed: onRefusal, icon: const Icon(Icons.cancel, size: 18), label: const Text('Rad etish')),
+            //     ],
+            //   ),
+            // ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _line(IconData icon, String text) => Row(
@@ -2979,19 +3438,20 @@ class _TradingPointGridTile extends StatelessWidget {
   );
 
   // ADD: ko‘p qatorli helper
-  Widget _lineMultiline(BuildContext context, IconData icon, String text, {int maxLines = 3, bool scrollable = false}) {
+  Widget _lineMultiline(
+    BuildContext context,
+    IconData icon,
+    String text, {
+    int maxLines = 3,
+    bool scrollable = false,
+  }) {
     Widget textWidget;
     if (scrollable) {
       textWidget = SizedBox(
         height: maxLines * 20.0, // Approximate height
         child: ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-          child: SingleChildScrollView(
-            child: Text(
-              text,
-              softWrap: true,
-            ),
-          ),
+          child: SingleChildScrollView(child: Text(text, softWrap: true)),
         ),
       );
     } else {
@@ -3007,15 +3467,20 @@ class _TradingPointGridTile extends StatelessWidget {
       children: [
         Icon(icon, size: 16),
         const SizedBox(width: 6),
-        Expanded(
-          child: textWidget,
-        ),
+        Expanded(child: textWidget),
       ],
     );
   }
 
-  Widget _buildDistanceDisplay(BuildContext context, TradingPoint tp, LocationService locationService) {
-    final distance = locationService.getDistanceToTradingPoint(tp.latitude, tp.longitude);
+  Widget _buildDistanceDisplay(
+    BuildContext context,
+    TradingPoint tp,
+    LocationService locationService,
+  ) {
+    final distance = locationService.getDistanceToTradingPoint(
+      tp.latitude,
+      tp.longitude,
+    );
     if (distance == null) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
@@ -3054,8 +3519,14 @@ class _TradingPointGridTile extends StatelessWidget {
   /// Builds distance overlay widget for grid view image bottom-right corner.
   /// Shows distance in meters for distances less than 1km, otherwise in kilometers.
   /// Example: 0.9km displays as "900m", 1.5km displays as "1.5km"
-  Widget _buildDistanceOverlay(TradingPoint tp, LocationService locationService) {
-    final distance = locationService.getDistanceToTradingPoint(tp.latitude, tp.longitude);
+  Widget _buildDistanceOverlay(
+    TradingPoint tp,
+    LocationService locationService,
+  ) {
+    final distance = locationService.getDistanceToTradingPoint(
+      tp.latitude,
+      tp.longitude,
+    );
     if (distance == null) return const SizedBox.shrink();
 
     // Format distance: show in meters for <1km, km for >=1km
@@ -3086,7 +3557,11 @@ class _TradingPointGridTile extends StatelessWidget {
     );
   }
 
-  Widget _buildScrollableText(String text, {TextStyle? style, int maxLines = 3}) {
+  Widget _buildScrollableText(
+    String text, {
+    TextStyle? style,
+    int maxLines = 3,
+  }) {
     return SizedBox(
       height: maxLines * 20.0, // Approximate height for maxLines
       child: SingleChildScrollView(
@@ -3100,8 +3575,8 @@ class _TradingPointGridTile extends StatelessWidget {
       ),
     );
   }
-
 }
+
 // ADD: Grid detail oynasi (modal bottom-sheet)
 class _TradingPointDetailsSheet extends StatefulWidget {
   final TradingPoint tradingPoint;
@@ -3129,7 +3604,8 @@ class _TradingPointDetailsSheet extends StatefulWidget {
   });
 
   @override
-  State<_TradingPointDetailsSheet> createState() => _TradingPointDetailsSheetState();
+  State<_TradingPointDetailsSheet> createState() =>
+      _TradingPointDetailsSheetState();
 }
 
 class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
@@ -3170,13 +3646,13 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
               children: [
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 300),
-                  left: _currentPage == 0 ? 0 : MediaQuery.of(context).size.width / 2,
+                  left: _currentPage == 0
+                      ? 0
+                      : MediaQuery.of(context).size.width / 2,
                   top: 0,
                   bottom: 0,
                   width: MediaQuery.of(context).size.width / 2,
-                  child: Container(
-                    color: cs.primary,
-                  ),
+                  child: Container(color: cs.primary),
                 ),
               ],
             ),
@@ -3234,7 +3710,6 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   List<ClientImage> _clientImages = [];
   bool _isLoadingImages = true;
 
-
   @override
   void initState() {
     super.initState();
@@ -3260,7 +3735,9 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
         return;
       }
 
-      final images = await clientImagesService.getClientImages(widget.tradingPoint.id);
+      final images = await clientImagesService.getClientImages(
+        widget.tradingPoint.id,
+      );
       if (mounted) {
         setState(() {
           _clientImages = images;
@@ -3291,12 +3768,19 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     const double defaultLat = 41.2995;
     const double defaultLng = 69.2401;
 
-    bool isValid = latitude >= minLat && latitude <= maxLat &&
-                   longitude >= minLng && longitude <= maxLng &&
-                   latitude != 0.0 && longitude != 0.0;
+    bool isValid =
+        latitude >= minLat &&
+        latitude <= maxLat &&
+        longitude >= minLng &&
+        longitude <= maxLng &&
+        latitude != 0.0 &&
+        longitude != 0.0;
 
     if (!isValid) {
-      if (kDebugMode) print('Warning: Invalid coordinates for $clientName: lat=$latitude, lng=$longitude. Using default location.');
+      if (kDebugMode)
+        print(
+          'Warning: Invalid coordinates for $clientName: lat=$latitude, lng=$longitude. Using default location.',
+        );
       return const LatLng(defaultLat, defaultLng);
     }
 
@@ -3334,14 +3818,13 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     }
   }
 
-
   /// Build map widget based on selected provider with marker rotation support
   /// This ensures markers remain fixed at their geographic coordinates regardless of map rotation
   Widget _buildMapWidget(LatLng position, String title, String markerId) {
     // Use the default map provider from settings
     switch (_defaultMapProvider) {
       case MapProvider.google:
-      // Google Maps — kalit AndroidManifest/Info.plist da.
+        // Google Maps — kalit AndroidManifest/Info.plist da.
         final camera = CameraPosition(target: position, zoom: 15);
 
         return Stack(
@@ -3350,7 +3833,8 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               mapType: MapType.hybrid,
               initialCameraPosition: camera,
               myLocationEnabled: _locationPermissionGranted,
-              myLocationButtonEnabled: false, // Disable default button to use custom icons
+              myLocationButtonEnabled:
+                  false, // Disable default button to use custom icons
               compassEnabled: true,
               tiltGesturesEnabled: true,
               rotateGesturesEnabled: true,
@@ -3377,7 +3861,6 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-
                   // Fullscreen icon
                   Container(
                     width: 44,
@@ -3397,28 +3880,28 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                       icon: const Icon(Icons.fullscreen, color: Colors.black),
                       onPressed: () {
                         // Navigate to fullscreen map detail page
-                        if (_defaultMapProvider == MapProvider.openStreetMap){
+                        if (_defaultMapProvider == MapProvider.openStreetMap) {
                           Navigator.pushNamed(
                             context,
                             '/map-detail-osm-fullscreen',
                             arguments: widget.tradingPoint,
                           );
                         }
-                        if (_defaultMapProvider == MapProvider.yandex){
+                        if (_defaultMapProvider == MapProvider.yandex) {
                           Navigator.pushNamed(
                             context,
                             '/map-detail-yandex-fullscreen',
                             arguments: widget.tradingPoint,
-                            );
+                          );
                         }
-                        if (_defaultMapProvider == MapProvider.google){
+                        if (_defaultMapProvider == MapProvider.google) {
                           Navigator.pushNamed(
                             context,
                             '/map-detail-google-fullscreen',
                             arguments: widget.tradingPoint,
                           );
                         }
-                        },
+                      },
                       tooltip: 'Fullscreen',
                       iconSize: 24,
                     ),
@@ -3449,7 +3932,14 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                   onPressed: () {
                     // TODO: Open page to update client coordinates and send to server
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppLocalizations.of(context)?.updateCoordinatesNotImplemented ?? 'Update coordinates - functionality to be implemented')),
+                      SnackBar(
+                        content: Text(
+                          AppLocalizations.of(
+                                context,
+                              )?.updateCoordinatesNotImplemented ??
+                              'Update coordinates - functionality to be implemented',
+                        ),
+                      ),
                     );
                   },
                   tooltip: 'Update coordinates',
@@ -3483,7 +3973,8 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               longitude: position.longitude,
               markers: markers, // Yangi API
               clusterConfig: const marker_manager.MarkerClusterConfig(
-                enableClustering: false, // Bitta marker uchun clustering kerak emas
+                enableClustering:
+                    false, // Bitta marker uchun clustering kerak emas
               ),
               // initHook: ymk_init.initMapkit(apiKey: 'YOUR_REAL_YANDEX_API_KEY'),
             ),
@@ -3494,7 +3985,6 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-
                   // Fullscreen icon
                   Container(
                     width: 44,
@@ -3550,7 +4040,14 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                   onPressed: () {
                     // TODO: Open page to update client coordinates and send to server
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppLocalizations.of(context)?.updateCoordinatesNotImplemented ?? 'Update coordinates - functionality to be implemented')),
+                      SnackBar(
+                        content: Text(
+                          AppLocalizations.of(
+                                context,
+                              )?.updateCoordinatesNotImplemented ??
+                              'Update coordinates - functionality to be implemented',
+                        ),
+                      ),
                     );
                   },
                   tooltip: 'Update coordinates',
@@ -3568,7 +4065,10 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             children: [
               osm.FlutterMap(
                 options: osm.MapOptions(
-                  initialCenter: osm_latlong.LatLng(position.latitude, position.longitude),
+                  initialCenter: osm_latlong.LatLng(
+                    position.latitude,
+                    position.longitude,
+                  ),
                   initialZoom: 15.0,
                   // Enhanced rotation handling for OSM with proper tracking
                   onPositionChanged: (position, hasGesture) {
@@ -3577,12 +4077,13 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                 ),
                 children: [
                   osm.TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     subdomains: const [],
                     userAgentPackageName: 'uz.gg.gloria_marketing',
                     maxZoom: 19,
                     minZoom: 1,
-                   // attributionBuilder: (_) => const Text('© OpenStreetMap contributors'),
+                    // attributionBuilder: (_) => const Text('© OpenStreetMap contributors'),
                     // Add error handling for missing tiles
                     errorTileCallback: (tile, error, stackTrace) {
                       if (kDebugMode) {
@@ -3607,7 +4108,10 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                         width: 40.0,
                         height: 40.0,
                         alignment: Alignment.bottomCenter,
-                        point: osm_latlong.LatLng(position.latitude, position.longitude),
+                        point: osm_latlong.LatLng(
+                          position.latitude,
+                          position.longitude,
+                        ),
                         // OSM markers should stay upright regardless of map rotation
                         // No rotation needed - flutter_map markers are automatically fixed
                         child: const Icon(
@@ -3628,7 +4132,6 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-
                     Container(
                       width: 44,
                       height: 44,
@@ -3684,10 +4187,16 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                       // TODO: Open page to update client coordinates and send to server
                       final l10n = AppLocalizations.of(context)!;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.updateCoordinatesNotImplemented)),
+                        SnackBar(
+                          content: Text(l10n.updateCoordinatesNotImplemented),
+                        ),
                       );
                     },
-                    tooltip: AppLocalizations.of(context)?.updateCoordinatesNotImplemented ?? 'Update coordinates',
+                    tooltip:
+                        AppLocalizations.of(
+                          context,
+                        )?.updateCoordinatesNotImplemented ??
+                        'Update coordinates',
                     iconSize: 24,
                   ),
                 ),
@@ -3697,17 +4206,12 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
         } catch (e) {
           // Fallback if OSM fails
           final l10n = AppLocalizations.of(context)!;
-          return Center(
-            child: Text(l10n.osmNotLoadedFallback),
-          );
+          return Center(child: Text(l10n.osmNotLoadedFallback));
         }
       default:
         // Fallback to Google Maps
         return GoogleMap(
-          initialCameraPosition: CameraPosition(
-            target: position,
-            zoom: 15,
-          ),
+          initialCameraPosition: CameraPosition(target: position, zoom: 15),
           markers: {
             Marker(
               markerId: MarkerId(markerId),
@@ -3738,7 +4242,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             margin: const EdgeInsets.only(bottom: 16),
             child: _locationPermissionGranted
                 ? _buildMapWidget(
-                    _getValidLatLng(widget.tradingPoint.latitude, widget.tradingPoint.longitude, widget.tradingPoint.name),
+                    _getValidLatLng(
+                      widget.tradingPoint.latitude,
+                      widget.tradingPoint.longitude,
+                      widget.tradingPoint.name,
+                    ),
                     widget.tradingPoint.name,
                     widget.tradingPoint.id,
                   )
@@ -3746,9 +4254,19 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.location_off, size: 48, color: Colors.grey),
+                        const Icon(
+                          Icons.location_off,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 8),
-                        Text('Joylashuv ruxsati berilmagan', style: theme.textTheme.bodyMedium),
+                        Text(
+                          AppLocalizations.of(
+                                context,
+                              )?.locationPermissionDenied ??
+                              'Joylashuv ruxsati berilmagan',
+                          style: theme.textTheme.bodyMedium,
+                        ),
                       ],
                     ),
                   ),
@@ -3756,7 +4274,9 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
 
           Text(
             widget.tradingPoint.name,
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -3767,7 +4287,14 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             children: [
               const Icon(Icons.place_outlined, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text(widget.tradingPoint.address, style: theme.textTheme.bodyMedium, maxLines: 3, overflow: TextOverflow.ellipsis)),
+              Expanded(
+                child: Text(
+                  widget.tradingPoint.address,
+                  style: theme.textTheme.bodyMedium,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -3777,7 +4304,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             children: [
               const Icon(Icons.badge_outlined, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text('INN: ${widget.tradingPoint.inn}')),
+              Expanded(
+                child: Text(
+                  '${AppLocalizations.of(context)?.innLabel ?? 'INN'}: ${widget.tradingPoint.inn}',
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -3788,7 +4319,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               children: [
                 const Icon(Icons.person, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Egasi: ${widget.tradingPoint.ownerName}')),
+                Expanded(
+                  child: Text(
+                    '${AppLocalizations.of(context)?.ownerName ?? 'Egasi'}: ${widget.tradingPoint.ownerName}',
+                  ),
+                ),
               ],
             ),
           const SizedBox(height: 6),
@@ -3798,7 +4333,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             children: [
               const Icon(Icons.person_outline, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text('Aloqa: ${widget.tradingPoint.contactPerson}')),
+              Expanded(
+                child: Text(
+                  '${AppLocalizations.of(context)?.contactPerson ?? 'Aloqa'}: ${widget.tradingPoint.contactPerson}',
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -3829,7 +4368,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               children: [
                 const Icon(Icons.account_circle_outlined, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Mas\'ul: ${widget.tradingPoint.responsiblePerson}')),
+                Expanded(
+                  child: Text(
+                    'Mas\'ul: ${widget.tradingPoint.responsiblePerson}',
+                  ),
+                ),
               ],
             ),
           const SizedBox(height: 6),
@@ -3840,7 +4383,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               children: [
                 const Icon(Icons.phone_android_outlined, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Mas\'ul tel: ${widget.tradingPoint.responsiblePersonPhone}')),
+                Expanded(
+                  child: Text(
+                    'Mas\'ul tel: ${widget.tradingPoint.responsiblePersonPhone}',
+                  ),
+                ),
               ],
             ),
           const SizedBox(height: 6),
@@ -3851,7 +4398,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               children: [
                 const Icon(Icons.storefront_outlined, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Turi: ${widget.tradingPoint.tradePointType}')),
+                Expanded(
+                  child: Text(
+                    '${AppLocalizations.of(context)?.tradePointType ?? 'Turi'}: ${widget.tradingPoint.tradePointType}',
+                  ),
+                ),
               ],
             ),
           const SizedBox(height: 6),
@@ -3861,7 +4412,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             children: [
               const Icon(Icons.location_city_outlined, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text('${widget.tradingPoint.region}, ${widget.tradingPoint.district}')),
+              Expanded(
+                child: Text(
+                  '${widget.tradingPoint.region}, ${widget.tradingPoint.district}',
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -3872,7 +4427,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               children: [
                 const Icon(Icons.signpost_outlined, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Belgi: ${widget.tradingPoint.signboard}')),
+                Expanded(
+                  child: Text(
+                    '${AppLocalizations.of(context)?.signboard ?? 'Belgi'}: ${widget.tradingPoint.signboard}',
+                  ),
+                ),
               ],
             ),
           const SizedBox(height: 6),
@@ -3883,7 +4442,11 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               children: [
                 const Icon(Icons.gps_fixed_outlined, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Mo\'ljal: ${widget.tradingPoint.referencePoint}')),
+                Expanded(
+                  child: Text(
+                    'Mo\'ljal: ${widget.tradingPoint.referencePoint}',
+                  ),
+                ),
               ],
             ),
         ],
@@ -3906,7 +4469,8 @@ class DistanceValidationDialog extends StatefulWidget {
   });
 
   @override
-  State<DistanceValidationDialog> createState() => _DistanceValidationDialogState();
+  State<DistanceValidationDialog> createState() =>
+      _DistanceValidationDialogState();
 }
 
 class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
@@ -3917,7 +4481,7 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
   double? _userLon;
   bool _isRefreshing = false;
   final osm.MapController _mapController = osm.MapController();
-  
+
   /// Flag to track if dialog is fully initialized and rendered
   /// This prevents calling onConditionsMet() before the dialog is visible
   bool _isDialogReady = false;
@@ -3925,27 +4489,29 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initial distance/accuracy update without condition check
     // This only populates the UI values, doesn't trigger navigation
     _updateDistanceAndAccuracy(checkConditions: false);
-    
+
     // Wait for the first frame to be rendered before checking conditions
     // This ensures the dialog is fully visible before any auto-close logic
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() => _isDialogReady = true);
-        
+
         // Now safe to check conditions after dialog is rendered
         if (_areConditionsMet()) {
           if (kDebugMode) {
-            print('DistanceValidationDialog: Conditions met after dialog rendered, proceeding...');
+            print(
+              'DistanceValidationDialog: Conditions met after dialog rendered, proceeding...',
+            );
           }
           widget.onConditionsMet();
         }
       }
     });
-    
+
     // Update every 2 seconds as required
     _updateTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (mounted && _isDialogReady) {
@@ -3962,14 +4528,16 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
   }
 
   /// Updates distance and accuracy values from LocationService
-  /// 
+  ///
   /// [checkConditions] - If true, will check if distance conditions are met
   /// and trigger onConditionsMet callback. Set to false during initState
   /// to prevent premature dialog closure before it's fully rendered.
   void _updateDistanceAndAccuracy({bool checkConditions = true}) {
     if (widget.locationService == null) {
       if (kDebugMode) {
-        print('DistanceValidationDialog: LocationService is null, cannot update distance');
+        print(
+          'DistanceValidationDialog: LocationService is null, cannot update distance',
+        );
       }
       return;
     }
@@ -3997,9 +4565,18 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
       // Check if conditions are now met (only if dialog is ready and checkConditions is true)
       if (checkConditions && _isDialogReady && _areConditionsMet()) {
         if (kDebugMode) {
-          final distanceMeters = distance != null ? (distance * 1000).round() : null;
-          final clientZoneAccess = widget.tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
-          print('DistanceValidationDialog: Conditions met! Distance: ${distanceMeters}m, Required: ${clientZoneAccess}m');
+          final distanceMeters = distance != null
+              ? (distance * 1000).round()
+              : null;
+          final clientZoneAccess =
+              widget
+                  .tradingPointWithPermissions
+                  .permissions
+                  ?.clientZoneAccess ??
+              0;
+          print(
+            'DistanceValidationDialog: Conditions met! Distance: ${distanceMeters}m, Required: ${clientZoneAccess}m',
+          );
         }
         widget.onConditionsMet();
       }
@@ -4015,7 +4592,7 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
   Future<void> _manualRefresh() async {
     if (_isRefreshing) return;
     setState(() => _isRefreshing = true);
-    
+
     try {
       // Request fresh location from GPS
       await widget.locationService?.refreshLocation();
@@ -4033,18 +4610,19 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
   }
 
   /// Checks if distance conditions are met for visit
-  /// 
+  ///
   /// Returns true if:
   /// - Current distance is available (not null)
   /// - Distance in meters is less than or equal to clientZoneAccess
-  /// 
+  ///
   /// Note: If clientZoneAccess is 0, this will return false since
   /// no distance can be <= 0. However, clientZoneAccess=0 cases
   /// are handled in _handleVisitClient to skip the dialog entirely.
   bool _areConditionsMet() {
     if (_currentDistanceKm == null) return false;
     final distanceMeters = (_currentDistanceKm! * 1000).round();
-    final clientZoneAccess = widget.tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
+    final clientZoneAccess =
+        widget.tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
     return distanceMeters <= clientZoneAccess;
   }
 
@@ -4064,9 +4642,13 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    final clientZoneAccess = widget.tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
-    final distanceMeters = _currentDistanceKm != null ? (_currentDistanceKm! * 1000).round() : null;
-    final isCompliant = distanceMeters != null && distanceMeters <= clientZoneAccess;
+    final clientZoneAccess =
+        widget.tradingPointWithPermissions.permissions?.clientZoneAccess ?? 0;
+    final distanceMeters = _currentDistanceKm != null
+        ? (_currentDistanceKm! * 1000).round()
+        : null;
+    final isCompliant =
+        distanceMeters != null && distanceMeters <= clientZoneAccess;
     // final isCompliant = distanceMeters != null && distanceMeters <= clientZoneAccess && clientZoneAccess!=0;
 
     return AlertDialog(
@@ -4086,216 +4668,282 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
         ],
       ),
       content: SizedBox(
-        width: 300, // Fixed width to avoid LayoutBuilder intrinsic dimension issues with FlutterMap
+        width:
+            300, // Fixed width to avoid LayoutBuilder intrinsic dimension issues with FlutterMap
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          Text(
-            '${widget.tradingPointWithPermissions.tradingPoint.name} ga tashrif uchun masofa talabiga javob berishingiz kerak.',
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 16),
+            Text(
+              AppLocalizations.of(context)?.distanceRequirementMessage(
+                    widget.tradingPointWithPermissions.tradingPoint.name,
+                  ) ??
+                  '${widget.tradingPointWithPermissions.tradingPoint.name} ga tashrif uchun masofa talabiga javob berishingiz kerak.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
 
-          // Distance requirement
-          Row(
-            children: [
-              Icon(Icons.location_on, size: 20, color: cs.primary),
-              const SizedBox(width: 8),
-              Text(
-                'Talab qilingan masofa: ${clientZoneAccess}m',
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Current distance
-          Row(
-            children: [
-              Icon(
-                Icons.gps_fixed,
-                size: 20,
-                color: isCompliant ? Colors.green : Colors.red,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Joriy masofa: ${distanceMeters != null ? '${distanceMeters}m' : 'Noma\'lum'}',
+            // Distance requirement
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 20, color: cs.primary),
+                const SizedBox(width: 8),
+                Text(
+                  AppLocalizations.of(
+                        context,
+                      )?.requiredDistance(clientZoneAccess) ??
+                      'Talab qilingan masofa: ${clientZoneAccess}m',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isCompliant ? Colors.green : Colors.red,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // GPS accuracy with refresh button
-          Row(
-            children: [
-              Icon(Icons.gps_not_fixed, size: 20, color: cs.secondary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'GPS aniqligi: ${_currentAccuracy != null ? '${_currentAccuracy!.toStringAsFixed(1)}m' : 'Noma\'lum'}',
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ),
-              // Manual refresh button
-              SizedBox(
-                height: 32,
-                child: OutlinedButton.icon(
-                  onPressed: _isRefreshing ? null : _manualRefresh,
-                  icon: _isRefreshing
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh, size: 16),
-                  label: Builder(
-                    builder: (ctx) {
-                      final l10n = AppLocalizations.of(ctx);
-                      return Text(_isRefreshing ? (l10n?.refreshing ?? 'Yangilanmoqda...') : (l10n?.refreshLabel ?? 'Yangilash'));
-                    },
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    textStyle: const TextStyle(fontSize: 12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Mini map showing user and client positions
-          if (_userLat != null && _userLon != null)
-            Container(
-              height: 180,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cs.outline.withOpacity(0.3)),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: osm.FlutterMap(
-                mapController: _mapController,
-                options: osm.MapOptions(
-                  initialCenter: osm_latlong.LatLng(
-                    (_userLat! + widget.tradingPointWithPermissions.tradingPoint.latitude) / 2,
-                    (_userLon! + widget.tradingPointWithPermissions.tradingPoint.longitude) / 2,
-                  ),
-                  initialZoom: _calculateZoomForDistance(distanceMeters ?? 1000),
-                  interactionOptions: const osm.InteractionOptions(
-                    flags: osm.InteractiveFlag.pinchZoom | osm.InteractiveFlag.drag,
-                  ),
-                ),
-                children: [
-                  osm.TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.gloria.marketing',
-                  ),
-                  // Circle showing the allowed distance zone around trading point
-                  // Green if user is inside, Red if user is outside
-                  osm.CircleLayer(
-                    circles: [
-                      osm.CircleMarker(
-                        point: osm_latlong.LatLng(
-                          widget.tradingPointWithPermissions.tradingPoint.latitude,
-                          widget.tradingPointWithPermissions.tradingPoint.longitude,
-                        ),
-                        radius: clientZoneAccess.toDouble(), // Radius in meters
-                        useRadiusInMeter: true,
-                        color: (isCompliant ? Colors.green : Colors.red).withValues(alpha: 0.15),
-                        borderColor: isCompliant ? Colors.green : Colors.red,
-                        borderStrokeWidth: 2,
-                      ),
-                    ],
-                  ),
-                  osm.MarkerLayer(
-                    markers: [
-                      // User marker (blue)
-                      osm.Marker(
-                        point: osm_latlong.LatLng(_userLat!, _userLon!),
-                        width: 40,
-                        height: 40,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.blue, width: 2),
-                          ),
-                          child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 24),
-                        ),
-                      ),
-                      // Client marker (red/green based on compliance)
-                      osm.Marker(
-                        point: osm_latlong.LatLng(
-                          widget.tradingPointWithPermissions.tradingPoint.latitude,
-                          widget.tradingPointWithPermissions.tradingPoint.longitude,
-                        ),
-                        width: 40,
-                        height: 40,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: (isCompliant ? Colors.green : Colors.red).withOpacity(0.2),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: isCompliant ? Colors.green : Colors.red, width: 2),
-                          ),
-                          child: Icon(Icons.storefront, color: isCompliant ? Colors.green : Colors.red, size: 20),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Draw line between user and client
-                  osm.PolylineLayer(
-                    polylines: [
-                      osm.Polyline(
-                        points: [
-                          osm_latlong.LatLng(_userLat!, _userLon!),
-                          osm_latlong.LatLng(
-                            widget.tradingPointWithPermissions.tradingPoint.latitude,
-                            widget.tradingPointWithPermissions.tradingPoint.longitude,
-                          ),
-                        ],
-                        color: isCompliant ? Colors.green.withOpacity(0.7) : Colors.red.withOpacity(0.7),
-                        strokeWidth: 3,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              ],
             ),
-          if (_userLat == null || _userLon == null)
-            Container(
-              height: 100,
-              decoration: BoxDecoration(
-                color: cs.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+            const SizedBox(height: 8),
+
+            // Current distance
+            Row(
+              children: [
+                Icon(
+                  Icons.gps_fixed,
+                  size: 20,
+                  color: isCompliant ? Colors.green : Colors.red,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Joriy masofa: ${distanceMeters != null ? '${distanceMeters}m' : 'Noma\'lum'}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: isCompliant ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // GPS accuracy with refresh button
+            Row(
+              children: [
+                Icon(Icons.gps_not_fixed, size: 20, color: cs.secondary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'GPS aniqligi: ${_currentAccuracy != null ? '${_currentAccuracy!.toStringAsFixed(1)}m' : 'Noma\'lum'}',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+                // Manual refresh button
+                SizedBox(
+                  height: 32,
+                  child: OutlinedButton.icon(
+                    onPressed: _isRefreshing ? null : _manualRefresh,
+                    icon: _isRefreshing
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh, size: 16),
+                    label: Builder(
+                      builder: (ctx) {
+                        final l10n = AppLocalizations.of(ctx);
+                        return Text(
+                          _isRefreshing
+                              ? (l10n?.refreshing ?? 'Yangilanmoqda...')
+                              : (l10n?.refreshLabel ?? 'Yangilash'),
+                        );
+                      },
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      textStyle: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Mini map showing user and client positions
+            if (_userLat != null && _userLon != null)
+              Container(
+                height: 180,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: cs.outline.withOpacity(0.3)),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: osm.FlutterMap(
+                  mapController: _mapController,
+                  options: osm.MapOptions(
+                    initialCenter: osm_latlong.LatLng(
+                      (_userLat! +
+                              widget
+                                  .tradingPointWithPermissions
+                                  .tradingPoint
+                                  .latitude) /
+                          2,
+                      (_userLon! +
+                              widget
+                                  .tradingPointWithPermissions
+                                  .tradingPoint
+                                  .longitude) /
+                          2,
+                    ),
+                    initialZoom: _calculateZoomForDistance(
+                      distanceMeters ?? 1000,
+                    ),
+                    interactionOptions: const osm.InteractionOptions(
+                      flags:
+                          osm.InteractiveFlag.pinchZoom |
+                          osm.InteractiveFlag.drag,
+                    ),
+                  ),
                   children: [
-                    Icon(Icons.location_off, color: cs.outline, size: 32),
-                    const SizedBox(height: 8),
-                    Text('Joylashuv ma\'lumotlari kutilmoqda...', style: theme.textTheme.bodySmall),
+                    osm.TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.gloria.marketing',
+                    ),
+                    // Circle showing the allowed distance zone around trading point
+                    // Green if user is inside, Red if user is outside
+                    osm.CircleLayer(
+                      circles: [
+                        osm.CircleMarker(
+                          point: osm_latlong.LatLng(
+                            widget
+                                .tradingPointWithPermissions
+                                .tradingPoint
+                                .latitude,
+                            widget
+                                .tradingPointWithPermissions
+                                .tradingPoint
+                                .longitude,
+                          ),
+                          radius: clientZoneAccess
+                              .toDouble(), // Radius in meters
+                          useRadiusInMeter: true,
+                          color: (isCompliant ? Colors.green : Colors.red)
+                              .withValues(alpha: 0.15),
+                          borderColor: isCompliant ? Colors.green : Colors.red,
+                          borderStrokeWidth: 2,
+                        ),
+                      ],
+                    ),
+                    osm.MarkerLayer(
+                      markers: [
+                        // User marker (blue)
+                        osm.Marker(
+                          point: osm_latlong.LatLng(_userLat!, _userLon!),
+                          width: 40,
+                          height: 40,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.blue, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.person_pin_circle,
+                              color: Colors.blue,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                        // Client marker (red/green based on compliance)
+                        osm.Marker(
+                          point: osm_latlong.LatLng(
+                            widget
+                                .tradingPointWithPermissions
+                                .tradingPoint
+                                .latitude,
+                            widget
+                                .tradingPointWithPermissions
+                                .tradingPoint
+                                .longitude,
+                          ),
+                          width: 40,
+                          height: 40,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: (isCompliant ? Colors.green : Colors.red)
+                                  .withOpacity(0.2),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isCompliant ? Colors.green : Colors.red,
+                                width: 2,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.storefront,
+                              color: isCompliant ? Colors.green : Colors.red,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Draw line between user and client
+                    osm.PolylineLayer(
+                      polylines: [
+                        osm.Polyline(
+                          points: [
+                            osm_latlong.LatLng(_userLat!, _userLon!),
+                            osm_latlong.LatLng(
+                              widget
+                                  .tradingPointWithPermissions
+                                  .tradingPoint
+                                  .latitude,
+                              widget
+                                  .tradingPointWithPermissions
+                                  .tradingPoint
+                                  .longitude,
+                            ),
+                          ],
+                          color: isCompliant
+                              ? Colors.green.withOpacity(0.7)
+                              : Colors.red.withOpacity(0.7),
+                          strokeWidth: 3,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-            ),
-          const SizedBox(height: 16),
+            if (_userLat == null || _userLon == null)
+              Container(
+                height: 100,
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.location_off, color: cs.outline, size: 32),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Joylashuv ma\'lumotlari kutilmoqda...',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 16),
 
-          // Progress bar for distance compliance
-          if (distanceMeters != null)
-            DistanceComplianceProgressBar(
-              currentDistance: distanceMeters,
-              requiredDistance: clientZoneAccess,
-              tradingPointId: widget.tradingPointWithPermissions.tradingPoint.id,
-            ),
-        ],
+            // Progress bar for distance compliance
+            if (distanceMeters != null)
+              DistanceComplianceProgressBar(
+                currentDistance: distanceMeters,
+                requiredDistance: clientZoneAccess,
+                tradingPointId:
+                    widget.tradingPointWithPermissions.tradingPoint.id,
+              ),
+          ],
         ),
       ),
       actions: [
@@ -4306,7 +4954,9 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
         if (isCompliant)
           FilledButton(
             onPressed: widget.onConditionsMet,
-            child: Text(AppLocalizations.of(context)?.continueAction ?? 'Davom etish'),
+            child: Text(
+              AppLocalizations.of(context)?.continueAction ?? 'Davom etish',
+            ),
           ),
       ],
     );
@@ -4344,7 +4994,9 @@ class DistanceComplianceProgressBar extends StatelessWidget {
       children: [
         Text(
           'Masofa mosligi',
-          style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 4),
         LinearProgressIndicator(
@@ -4417,7 +5069,9 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
     try {
       // Get ClientImagesService from service locator
       final clientImagesService = sl<ClientImagesService>();
-      final images = await clientImagesService.getClientImages(widget.tradingPoint.id);
+      final images = await clientImagesService.getClientImages(
+        widget.tradingPoint.id,
+      );
       if (mounted) {
         setState(() {
           _clientImages = images;
@@ -4448,12 +5102,19 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
     const double defaultLat = 41.2995;
     const double defaultLng = 69.2401;
 
-    bool isValid = latitude >= minLat && latitude <= maxLat &&
-                   longitude >= minLng && longitude <= maxLng &&
-                   latitude != 0.0 && longitude != 0.0;
+    bool isValid =
+        latitude >= minLat &&
+        latitude <= maxLat &&
+        longitude >= minLng &&
+        longitude <= maxLng &&
+        latitude != 0.0 &&
+        longitude != 0.0;
 
     if (!isValid) {
-      if (kDebugMode) print('Warning: Invalid coordinates for $clientName: lat=$latitude, lng=$longitude. Using default location.');
+      if (kDebugMode)
+        print(
+          'Warning: Invalid coordinates for $clientName: lat=$latitude, lng=$longitude. Using default location.',
+        );
       return const LatLng(defaultLat, defaultLng);
     }
 
@@ -4467,6 +5128,7 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
       _locationPermissionGranted = status == AppPermissionStatus.granted;
     });
   }
+
   Future<void> confirmAndCall(BuildContext context, String rawPhone) async {
     // tel: URI uchun raqamni tozalaymiz
     final phone = rawPhone.replaceAll(RegExp(r'[^\d+]'), '');
@@ -4480,8 +5142,14 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
         title: Text(l10n.callClientTitle),
         content: Text(l10n.callClientConfirmation(rawPhone)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.callClientTitle)),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.callClientTitle),
+          ),
         ],
       ),
     );
@@ -4490,12 +5158,13 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.dialerNotAvailable)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.dialerNotAvailable)));
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -4518,61 +5187,64 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (widget.permissions?.visit == true && widget.tradingPoint.visitToday == true)
-              FilledButton.icon(
-                  onPressed:  widget.onInformVisit,
-                  icon: const Icon(Icons.storefront, size: 18),
-                  label: Text(AppLocalizations.of(context)!.visitClient),
-                ),
-              if (widget.permissions?.visit == true && widget.permissions?.unplannedOrder == true && widget.tradingPoint.visitToday == false)
-              FilledButton.icon(
-                onPressed:  widget.onCreateOrder,
-                icon: const Icon(Icons.shopping_cart, size: 18),
-                label: Text(AppLocalizations.of(context)!.unplannedOrder),
-              ),
-              OutlinedButton.icon(
-                onPressed: widget.onViewClientOrders,
-                icon: const Icon(Icons.list_alt, size: 18),
-                label: Text(AppLocalizations.of(context)!.orders),
-              ),
-              //if (widget.tradingPoint.hasContract)
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (widget.permissions?.visit == true &&
+                    widget.tradingPoint.visitToday == true)
+                  FilledButton.icon(
+                    onPressed: widget.onInformVisit,
+                    icon: const Icon(Icons.storefront, size: 18),
+                    label: Text(AppLocalizations.of(context)!.visitClient),
+                  ),
+                if (widget.permissions?.visit == true &&
+                    widget.permissions?.unplannedOrder == true &&
+                    widget.tradingPoint.visitToday == false)
+                  FilledButton.icon(
+                    onPressed: widget.onCreateOrder,
+                    icon: const Icon(Icons.shopping_cart, size: 18),
+                    label: Text(AppLocalizations.of(context)!.unplannedOrder),
+                  ),
                 OutlinedButton.icon(
-                  onPressed: widget.tradingPoint.hasContract?widget.onViewContracts:null,
+                  onPressed: widget.onViewClientOrders,
+                  icon: const Icon(Icons.list_alt, size: 18),
+                  label: Text(AppLocalizations.of(context)!.orders),
+                ),
+                //if (widget.tradingPoint.hasContract)
+                OutlinedButton.icon(
+                  onPressed: widget.tradingPoint.hasContract
+                      ? widget.onViewContracts
+                      : null,
                   icon: const Icon(Icons.description, size: 18),
                   label: Text(AppLocalizations.of(context)!.contracts),
                 ),
 
-              // TODO: Add reports, debit-credit, graph buttons
-              OutlinedButton.icon(
-                onPressed: () {}, // TODO: Navigate to reports
-                icon: const Icon(Icons.bar_chart, size: 18),
-                label: Text(AppLocalizations.of(context)!.reports),
-              ),
-              OutlinedButton.icon(
-                onPressed: () {}, // TODO: Debit-credit
-                icon: const Icon(Icons.account_balance, size: 18),
-                label: Text(AppLocalizations.of(context)!.debitCredit),
-              ),
-              // OutlinedButton.icon(
-              //   onPressed: () {}, // TODO: Graph
-              //   icon: const Icon(Icons.show_chart, size: 18),
-              //   label: Text(AppLocalizations.of(context)!),
-              // ),
-            ],
+                // TODO: Add reports, debit-credit, graph buttons
+                OutlinedButton.icon(
+                  onPressed: () {}, // TODO: Navigate to reports
+                  icon: const Icon(Icons.bar_chart, size: 18),
+                  label: Text(AppLocalizations.of(context)!.reports),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {}, // TODO: Debit-credit
+                  icon: const Icon(Icons.account_balance, size: 18),
+                  label: Text(AppLocalizations.of(context)!.debitCredit),
+                ),
+                // OutlinedButton.icon(
+                //   onPressed: () {}, // TODO: Graph
+                //   icon: const Icon(Icons.show_chart, size: 18),
+                //   label: Text(AppLocalizations.of(context)!),
+                // ),
+              ],
+            ),
           ),
-        ),
 
           // Mijoz balansi bo'limi
           // Bu widget mijoz balansini ko'rsatadi va detallarga o'tish imkonini beradi
           // Cubit bilan state management amalga oshiriladi
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ClientBalanceWidgetV2(
-              tradingPoint: widget.tradingPoint,
-            ),
+            child: ClientBalanceWidgetV2(tradingPoint: widget.tradingPoint),
           ),
         ],
       ),
@@ -4688,40 +5360,40 @@ class _HeaderImageState extends State<_HeaderImage> {
   void _openFullScreenViewer(int initialIndex) {
     // Auto-scroll ni to'xtatish
     _stopAutoScroll();
-    
+
     // Large o'lchamli rasmlarni tayyorlash
     final largeImageUrls = widget.clientImages
         .map((img) => _getLargeImageUrl(img))
         .whereType<String>()
         .where((u) => u.trim().isNotEmpty)
         .toList();
-    
+
     if (largeImageUrls.isEmpty) return;
-    
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.black87,
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return _FullScreenImageViewer(
-            imageUrls: largeImageUrls,
-            initialIndex: initialIndex,
-            clientName: widget.tradingPoint.name,
-          );
-        },
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
-      ),
-    ).then((_) {
-      // Qaytib kelganda auto-scroll ni qayta boshlash
-      if (mounted && widget.clientImages.length > 1) {
-        _startAutoScroll();
-      }
-    });
+
+    Navigator.of(context)
+        .push(
+          PageRouteBuilder(
+            opaque: false,
+            barrierColor: Colors.black87,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return _FullScreenImageViewer(
+                imageUrls: largeImageUrls,
+                initialIndex: initialIndex,
+                clientName: widget.tradingPoint.name,
+              );
+            },
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+          ),
+        )
+        .then((_) {
+          // Qaytib kelganda auto-scroll ni qayta boshlash
+          if (mounted && widget.clientImages.length > 1) {
+            _startAutoScroll();
+          }
+        });
   }
 
   @override
@@ -4783,14 +5455,20 @@ class _HeaderImageState extends State<_HeaderImage> {
                                 top: 8,
                                 right: 8,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.green.withOpacity(0.8),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Text(
                                     'Asosiy',
-                                    style: TextStyle(color: Colors.white, fontSize: 12),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -4799,7 +5477,10 @@ class _HeaderImageState extends State<_HeaderImage> {
                               bottom: 8,
                               right: 8,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.black.withOpacity(0.5),
                                   borderRadius: BorderRadius.circular(8),
@@ -4807,11 +5488,18 @@ class _HeaderImageState extends State<_HeaderImage> {
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.fullscreen, color: Colors.white70, size: 14),
+                                    Icon(
+                                      Icons.fullscreen,
+                                      color: Colors.white70,
+                                      size: 14,
+                                    ),
                                     SizedBox(width: 4),
                                     Text(
                                       '2x bosing',
-                                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 10,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -4822,14 +5510,20 @@ class _HeaderImageState extends State<_HeaderImage> {
                               bottom: 8,
                               left: 8,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.black.withOpacity(0.6),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   '${index + 1} / ${widget.clientImages.length}',
-                                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
@@ -4863,14 +5557,18 @@ class _HeaderImageState extends State<_HeaderImage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ClientImagesPage(tradingPoint: TradingPointWithPermissions(
-                          tradingPoint: widget.tradingPoint,
-                          permissions: null, // We don't have permissions here
-                        )),
+                        builder: (_) => ClientImagesPage(
+                          tradingPoint: TradingPointWithPermissions(
+                            tradingPoint: widget.tradingPoint,
+                            permissions: null, // We don't have permissions here
+                          ),
+                        ),
                       ),
                     );
                   },
-                  tooltip: 'Mijoz rasmlarini boshqarish',
+                  tooltip:
+                      AppLocalizations.of(context)?.manageClientImages ??
+                      'Mijoz rasmlarini boshqarish',
                   iconSize: 20,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
@@ -4896,10 +5594,10 @@ class _HeaderImageState extends State<_HeaderImage> {
 class _FullScreenImageViewer extends StatefulWidget {
   /// Barcha rasm URL lari (Large o'lchamda)
   final List<String> imageUrls;
-  
+
   /// Boshlang'ich rasm indeksi
   final int initialIndex;
-  
+
   /// Mijoz nomi (header uchun)
   final String? clientName;
 
@@ -4916,7 +5614,7 @@ class _FullScreenImageViewer extends StatefulWidget {
 class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
   late PageController _pageController;
   late int _currentIndex;
-  
+
   /// Har bir rasm uchun TransformationController (zoom uchun)
   final Map<int, TransformationController> _transformControllers = {};
 
@@ -4954,10 +5652,14 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
   }
 
   /// Double-tap da zoom in/out qilish
-  void _handleDoubleTapZoom(int index, TapDownDetails details, BoxConstraints constraints) {
+  void _handleDoubleTapZoom(
+    int index,
+    TapDownDetails details,
+    BoxConstraints constraints,
+  ) {
     final controller = _getTransformController(index);
     final position = details.localPosition;
-    
+
     // Agar zoom qilingan bo'lsa - reset qilish
     if (controller.value.getMaxScaleOnAxis() > 1.0) {
       controller.value = Matrix4.identity();
@@ -4993,7 +5695,10 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
         ),
         title: widget.clientName != null
             ? Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(20),
@@ -5049,7 +5754,11 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
 
               if (provider == null) {
                 return const Center(
-                  child: Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                  child: Icon(
+                    Icons.broken_image,
+                    color: Colors.white54,
+                    size: 64,
+                  ),
                 );
               }
 
@@ -5075,7 +5784,11 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.broken_image, color: Colors.white54, size: 64),
+                                  Icon(
+                                    Icons.broken_image,
+                                    color: Colors.white54,
+                                    size: 64,
+                                  ),
                                   SizedBox(height: 16),
                                   Text(
                                     'Rasmni yuklashda xatolik',
@@ -5090,9 +5803,10 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                             return Center(
                               child: CircularProgressIndicator(
                                 color: Colors.white,
-                                value: loadingProgress.expectedTotalBytes != null
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
                                     ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
+                                          loadingProgress.expectedTotalBytes!
                                     : null,
                               ),
                             );
@@ -5139,7 +5853,10 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
             right: 0,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.6),
                   borderRadius: BorderRadius.circular(20),

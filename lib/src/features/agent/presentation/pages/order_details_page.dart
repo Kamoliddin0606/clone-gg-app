@@ -1,9 +1,9 @@
-
 // =============================
 // presentation/pages/order_details_page.dart
 // =============================
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/order_models.dart';
 import '../widgets/order_detail_sections.dart';
 import '../widgets/status_chip.dart';
@@ -38,25 +38,37 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       final dataSyncService = GetIt.I<DataSyncService>();
 
       // Try to get cached order details first
-      final cachedOrderDetail = await dataSyncService.getCachedOrderDetailByNumOrder(widget.order.numOrder);
+      final cachedOrderDetail = await dataSyncService
+          .getCachedOrderDetailByNumOrder(widget.order.numOrder);
       if (cachedOrderDetail != null) {
-        debugPrint('Loading order details from cache for order: ${widget.order.numOrder}');
+        debugPrint(
+          'Loading order details from cache for order: ${widget.order.numOrder}',
+        );
         // Convert OrderDetail to OrderModel with additional data
-        _detailedOrder = _convertOrderDetailToOrderModel(cachedOrderDetail, widget.order);
+        _detailedOrder = _convertOrderDetailToOrderModel(
+          cachedOrderDetail,
+          widget.order,
+        );
         setState(() => _isLoading = false);
         return;
+      } else {
+        debugPrint(
+          'No cached order details found for order: ${widget.order.numOrder}',
+        );
       }
-      else {
-        debugPrint('No cached order details found for order: ${widget.order.numOrder}');
-      }
-
 
       // If no cache, fetch from server
       final userCode = await _getUserCode();
       if (userCode != null) {
-        debugPrint('Fetching order details from server for order: ${widget.order.numOrder}');
-        final orderDate1 = widget.order.dateOrder.toIso8601String().split('T')[0];
-        final orderDate2 = widget.order.dateOrder.toIso8601String().split('T')[0];
+        debugPrint(
+          'Fetching order details from server for order: ${widget.order.numOrder}',
+        );
+        final orderDate1 = widget.order.dateOrder.toIso8601String().split(
+          'T',
+        )[0];
+        final orderDate2 = widget.order.dateOrder.toIso8601String().split(
+          'T',
+        )[0];
 
         final freshOrderDetail = await dataSyncService.syncOrderDetails(
           numberOrder: widget.order.numOrder,
@@ -66,7 +78,10 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         );
 
         // Convert and merge with existing order data
-        _detailedOrder = _convertOrderDetailToOrderModel(freshOrderDetail, widget.order);
+        _detailedOrder = _convertOrderDetailToOrderModel(
+          freshOrderDetail,
+          widget.order,
+        );
         setState(() => _isLoading = false);
       } else {
         debugPrint('No user code available, using original order data');
@@ -75,16 +90,21 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         setState(() => _isLoading = false);
       }
     } catch (e, stackTrace) {
-      debugPrint('Error loading order details for ${widget.order.numOrder}: $e');
+      debugPrint(
+        'Error loading order details for ${widget.order.numOrder}: $e',
+      );
       debugPrint('Stack trace: $stackTrace');
 
       // Enhanced error handling with user-friendly messages
       String errorMessage;
-      if (e.toString().contains('network') || e.toString().contains('connection')) {
-        errorMessage = 'Internet bilan bog\'liq xatolik. Iltimos, internetingizni tekshiring.';
+      if (e.toString().contains('network') ||
+          e.toString().contains('connection')) {
+        errorMessage =
+            'Internet bilan bog\'liq xatolik. Iltimos, internetingizni tekshiring.';
       } else if (e.toString().contains('timeout')) {
         errorMessage = 'Server javob bermayapti. Keyinroq urinib ko\'ring.';
-      } else if (e.toString().contains('not found') || e.toString().contains('404')) {
+      } else if (e.toString().contains('not found') ||
+          e.toString().contains('404')) {
         errorMessage = 'Buyurtma tafsilotlari topilmadi.';
       } else {
         errorMessage = 'Buyurtma tafsilotlarini yuklashda xatolik yuz berdi.';
@@ -100,11 +120,16 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   /// Convert OrderDetail to OrderModel with merged data
-  OrderModel _convertOrderDetailToOrderModel(OrderDetail orderDetail, OrderModel originalOrder) {
+  OrderModel _convertOrderDetailToOrderModel(
+    OrderDetail orderDetail,
+    OrderModel originalOrder,
+  ) {
     try {
       // Validate order detail data
       if (orderDetail.productRows == null || orderDetail.productRows!.isEmpty) {
-        debugPrint('Warning: orderDetail.productRows is null or empty for order ${originalOrder.numOrder}');
+        debugPrint(
+          'Warning: orderDetail.productRows is null or empty for order ${originalOrder.numOrder}',
+        );
         return originalOrder.copyWith(items: []);
       }
 
@@ -134,7 +159,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         }
       }
 
-      debugPrint('Successfully converted ${items.length} items for order ${originalOrder.numOrder}');
+      debugPrint(
+        'Successfully converted ${items.length} items for order ${originalOrder.numOrder}',
+      );
 
       return OrderModel(
         id: originalOrder.id,
@@ -157,7 +184,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         items: items,
       );
     } catch (e) {
-      debugPrint('Error converting OrderDetail to OrderModel for order ${originalOrder.numOrder}: $e');
+      debugPrint(
+        'Error converting OrderDetail to OrderModel for order ${originalOrder.numOrder}: $e',
+      );
       // Return original order with empty items as fallback
       return originalOrder.copyWith(items: []);
     }
@@ -181,15 +210,16 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       return Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: const Text('Buyurtma tafsilotlari'),
+          title: Text(
+            AppLocalizations.of(context)?.orderDetailsTitle ??
+                'Buyurtma tafsilotlari',
+          ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.maybePop(context),
           ),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -197,7 +227,10 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       return Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: const Text('Buyurtma tafsilotlari'),
+          title: Text(
+            AppLocalizations.of(context)?.orderDetailsTitle ??
+                'Buyurtma tafsilotlari',
+          ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.maybePop(context),
@@ -209,7 +242,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 64, color: Theme.of(context).colorScheme.error),
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.error,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Xatolik yuz berdi',
@@ -232,13 +269,18 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     OutlinedButton.icon(
                       onPressed: () => Navigator.maybePop(context),
                       icon: const Icon(Icons.arrow_back),
-                      label: const Text('Orqaga'),
+                      label: Text(
+                        AppLocalizations.of(context)?.back ?? 'Orqaga',
+                      ),
                     ),
                     const SizedBox(width: 12),
                     FilledButton.icon(
                       onPressed: _loadOrderDetails,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Qayta urinib ko\'ring'),
+                      label: Text(
+                        AppLocalizations.of(context)?.retry ??
+                            'Qayta urinib ko\'ring',
+                      ),
                     ),
                   ],
                 ),
@@ -254,7 +296,10 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Buyurtma tafsilotlari'),
+        title: Text(
+          AppLocalizations.of(context)?.orderDetailsTitle ??
+              'Buyurtma tafsilotlari',
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.maybePop(context),
@@ -274,9 +319,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       children: [
                         Text(
                           order.numOrder,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 8),
                       ],
@@ -287,12 +331,23 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               ),
             ),
             const SizedBox(height: 12),
-            const TabBar(tabs: [Tab(text: 'Asosiy'), Tab(text: 'Tarkibi')]),
+            TabBar(
+              tabs: [
+                Tab(text: AppLocalizations.of(context)?.main ?? 'Asosiy'),
+                Tab(text: AppLocalizations.of(context)?.contents ?? 'Tarkibi'),
+              ],
+            ),
             Expanded(
               child: TabBarView(
                 children: [
-                  OrderDetailsSection(order: order, controller: ScrollController()),
-                  OrderItemsSection(order: order, controller: ScrollController()),
+                  OrderDetailsSection(
+                    order: order,
+                    controller: ScrollController(),
+                  ),
+                  OrderItemsSection(
+                    order: order,
+                    controller: ScrollController(),
+                  ),
                 ],
               ),
             ),
@@ -302,4 +357,3 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     );
   }
 }
-

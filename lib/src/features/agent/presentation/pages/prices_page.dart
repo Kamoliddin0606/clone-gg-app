@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
@@ -57,13 +58,12 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _filterAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _filterAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _filterAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _filterAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
     _loadData();
   }
 
@@ -129,7 +129,9 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
       if (needsSync) {
         setState(() {
           _isLoading = true;
-          _errorMessage = 'Ma\'lumotlar yuklanmoqda...';
+          _errorMessage =
+              AppLocalizations.of(context)?.dataLoading ??
+              'Ma\'lumotlar yuklanmoqda...';
         });
 
         try {
@@ -141,14 +143,19 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
           );
 
           // Reload all data after sync
-          final syncedPriceTypes = await repository.getPriceTypes(userCode: userCode);
+          final syncedPriceTypes = await repository.getPriceTypes(
+            userCode: userCode,
+          );
           final syncedWarehouses = await repository.getCachedUserWarehouses();
           final syncedProducts = await repository.getProducts(
             codeProject: prefs.getCodeProject() ?? '',
             codeSklad: prefs.getWarehouseCode() ?? '',
           );
-          final syncedProductPrices = await repository.getProductPrices(userCode: userCode);
-          final syncedProductBalances = await repository.getCachedProductBalances();
+          final syncedProductPrices = await repository.getProductPrices(
+            userCode: userCode,
+          );
+          final syncedProductBalances = await repository
+              .getCachedProductBalances();
 
           // Update the variables with synced data
           priceTypes = syncedPriceTypes;
@@ -218,7 +225,9 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
         final repository = sl<AgentRepository>();
         final productsWithPrices = await repository.getProductsWithPrices(
           priceTypeCode: priceType.code,
-          warehouseCodes: _selectedWarehouses.isNotEmpty ? _selectedWarehouses : null,
+          warehouseCodes: _selectedWarehouses.isNotEmpty
+              ? _selectedWarehouses
+              : null,
           codeProject: codeProject,
         );
 
@@ -283,7 +292,9 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
       final allCategories = <ProductSeries>[];
 
       for (final brandName in brandNames) {
-        final brandCategories = await repository.getCachedProductSeries(brandName: brandName);
+        final brandCategories = await repository.getCachedProductSeries(
+          brandName: brandName,
+        );
         allCategories.addAll(brandCategories);
       }
 
@@ -316,16 +327,18 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
 
     // Apply brand filtering
     if (_selectedBrands.isNotEmpty) {
-      filtered = filtered.where((product) =>
-        _selectedBrands.contains(product.productBrand)
-      ).toList();
+      filtered = filtered
+          .where((product) => _selectedBrands.contains(product.productBrand))
+          .toList();
     }
 
     // Apply category (series) filtering
     if (_selectedCategories.isNotEmpty) {
-      filtered = filtered.where((product) =>
-        _selectedCategories.contains(product.productSeries)
-      ).toList();
+      filtered = filtered
+          .where(
+            (product) => _selectedCategories.contains(product.productSeries),
+          )
+          .toList();
     }
 
     // Apply search filtering
@@ -333,16 +346,15 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
     if (searchQuery.isNotEmpty) {
       filtered = filtered.where((item) {
         return matchesSearch(item.productName, searchQuery) ||
-               matchesSearch(item.productCode, searchQuery) ||
-               matchesSearch(item.vendorCode, searchQuery) ||
-               matchesSearch(item.priceTypeName, searchQuery) ||
-               matchesSearch(item.price.toString(), searchQuery);
+            matchesSearch(item.productCode, searchQuery) ||
+            matchesSearch(item.vendorCode, searchQuery) ||
+            matchesSearch(item.priceTypeName, searchQuery) ||
+            matchesSearch(item.price.toString(), searchQuery);
       }).toList();
     }
 
     return filtered;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -351,13 +363,18 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Narxlar', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        title: Text(
+          AppLocalizations.of(context)?.prices ?? 'Narxlar',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _toggleFilterPanel,
-            tooltip: 'Filtr',
+            tooltip: AppLocalizations.of(context)?.filter ?? 'Filtr',
           ),
         ],
       ),
@@ -387,7 +404,9 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
               sizeFactor: _filterAnimation,
               child: Card(
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 color: colorScheme.surfaceContainerHighest,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Padding(
@@ -398,340 +417,489 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                      // Price type selection
-                      DropdownButtonFormField<PriceType>(
-                        initialValue: _selectedPriceType,
-                        decoration: InputDecoration(
-                          labelText: 'Narx turi',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colorScheme.outline),
+                          // Price type selection
+                          DropdownButtonFormField<PriceType>(
+                            initialValue: _selectedPriceType,
+                            decoration: InputDecoration(
+                              labelText: 'Narx turi',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: colorScheme.outline,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: colorScheme.surface,
+                            ),
+                            items: _priceTypes.map((type) {
+                              return DropdownMenuItem(
+                                value: type,
+                                child: Text(type.name),
+                              );
+                            }).toList(),
+                            onChanged: _onPriceTypeChanged,
                           ),
-                          filled: true,
-                          fillColor: colorScheme.surface,
-                        ),
-                        items: _priceTypes.map((type) {
-                          return DropdownMenuItem(
-                            value: type,
-                            child: Text(type.name),
-                          );
-                        }).toList(),
-                        onChanged: _onPriceTypeChanged,
-                      ),
-                      const SizedBox(height: 16),
+                          const SizedBox(height: 16),
 
-                      // Warehouse selection
-                      Text(
-                        'Skladlar',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Builder(
-                        builder: (context) {
-                          final half = (_warehouses.length / 2).ceil();
-                          final firstHalf = _warehouses.sublist(0, min(half, _warehouses.length));
-                          final secondHalf = _warehouses.length > half ? _warehouses.sublist(half) : <UserWarehouse>[];
-                          return Column(
-                            children: [
-                              if (firstHalf.isNotEmpty)
-                                SizedBox(
-                                  height: 40,
-                                  child: ListView(
-                                    scrollDirection: Axis.horizontal,
-                                    children: firstHalf.map((warehouse) {
-                                      final isSelected = _selectedWarehouses.contains(warehouse.code);
-                                      return Padding(
-                                        padding: const EdgeInsets.only(right: 8),
-                                        child: FilterChip(
-                                          label: Text(warehouse.name),
-                                          selected: isSelected,
-                                          onSelected: (selected) {
-                                            final newSelection = List<String>.from(_selectedWarehouses);
-                                            if (selected) {
-                                              newSelection.add(warehouse.code);
-                                            } else {
-                                              newSelection.remove(warehouse.code);
-                                            }
-                                            _onWarehousesChanged(newSelection);
-                                          },
-                                          backgroundColor: colorScheme.surfaceContainerHighest,
-                                          selectedColor: colorScheme.primaryContainer,
-                                          checkmarkColor: colorScheme.onPrimaryContainer,
-                                        ),
-                                      );
-                                    }).toList(),
+                          // Warehouse selection
+                          Text(
+                            'Skladlar',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Builder(
+                            builder: (context) {
+                              final half = (_warehouses.length / 2).ceil();
+                              final firstHalf = _warehouses.sublist(
+                                0,
+                                min(half, _warehouses.length),
+                              );
+                              final secondHalf = _warehouses.length > half
+                                  ? _warehouses.sublist(half)
+                                  : <UserWarehouse>[];
+                              return Column(
+                                children: [
+                                  if (firstHalf.isNotEmpty)
+                                    SizedBox(
+                                      height: 40,
+                                      child: ListView(
+                                        scrollDirection: Axis.horizontal,
+                                        children: firstHalf.map((warehouse) {
+                                          final isSelected = _selectedWarehouses
+                                              .contains(warehouse.code);
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 8,
+                                            ),
+                                            child: FilterChip(
+                                              label: Text(warehouse.name),
+                                              selected: isSelected,
+                                              onSelected: (selected) {
+                                                final newSelection =
+                                                    List<String>.from(
+                                                      _selectedWarehouses,
+                                                    );
+                                                if (selected) {
+                                                  newSelection.add(
+                                                    warehouse.code,
+                                                  );
+                                                } else {
+                                                  newSelection.remove(
+                                                    warehouse.code,
+                                                  );
+                                                }
+                                                _onWarehousesChanged(
+                                                  newSelection,
+                                                );
+                                              },
+                                              backgroundColor: colorScheme
+                                                  .surfaceContainerHighest,
+                                              selectedColor:
+                                                  colorScheme.primaryContainer,
+                                              checkmarkColor: colorScheme
+                                                  .onPrimaryContainer,
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                  if (secondHalf.isNotEmpty)
+                                    SizedBox(
+                                      height: 40,
+                                      child: ListView(
+                                        scrollDirection: Axis.horizontal,
+                                        children: secondHalf.map((warehouse) {
+                                          final isSelected = _selectedWarehouses
+                                              .contains(warehouse.code);
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 8,
+                                            ),
+                                            child: FilterChip(
+                                              label: Text(warehouse.name),
+                                              selected: isSelected,
+                                              onSelected: (selected) {
+                                                final newSelection =
+                                                    List<String>.from(
+                                                      _selectedWarehouses,
+                                                    );
+                                                if (selected) {
+                                                  newSelection.add(
+                                                    warehouse.code,
+                                                  );
+                                                } else {
+                                                  newSelection.remove(
+                                                    warehouse.code,
+                                                  );
+                                                }
+                                                _onWarehousesChanged(
+                                                  newSelection,
+                                                );
+                                              },
+                                              backgroundColor: colorScheme
+                                                  .surfaceContainerHighest,
+                                              selectedColor:
+                                                  colorScheme.primaryContainer,
+                                              checkmarkColor: colorScheme
+                                                  .onPrimaryContainer,
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Brand selection header
+                          InkWell(
+                            onTap: _toggleBrandFilter,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Brandlar',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurface,
+                                    ),
                                   ),
-                                ),
-                              if (secondHalf.isNotEmpty)
-                                SizedBox(
-                                  height: 40,
-                                  child: ListView(
-                                    scrollDirection: Axis.horizontal,
-                                    children: secondHalf.map((warehouse) {
-                                      final isSelected = _selectedWarehouses.contains(warehouse.code);
-                                      return Padding(
-                                        padding: const EdgeInsets.only(right: 8),
-                                        child: FilterChip(
-                                          label: Text(warehouse.name),
-                                          selected: isSelected,
-                                          onSelected: (selected) {
-                                            final newSelection = List<String>.from(_selectedWarehouses);
-                                            if (selected) {
-                                              newSelection.add(warehouse.code);
-                                            } else {
-                                              newSelection.remove(warehouse.code);
-                                            }
-                                            _onWarehousesChanged(newSelection);
-                                          },
-                                          backgroundColor: colorScheme.surfaceContainerHighest,
-                                          selectedColor: colorScheme.primaryContainer,
-                                          checkmarkColor: colorScheme.onPrimaryContainer,
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Brand selection header
-                      InkWell(
-                        onTap: _toggleBrandFilter,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'Brandlar',
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                _isBrandFilterExpanded
-                                  ? Icons.keyboard_arrow_up
-                                  : Icons.keyboard_arrow_down,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Brand selection (expandable)
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                        child: _isBrandFilterExpanded
-                          ? Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Builder(
-                                builder: (context) {
-                                  final half = (_brands.length / 2).ceil();
-                                  final firstHalf = _brands.sublist(0, min(half, _brands.length));
-                                  final secondHalf = _brands.length > half ? _brands.sublist(half) : <ProductBrand>[];
-                                  return Column(
-                                    children: [
-                                      if (firstHalf.isNotEmpty)
-                                        SizedBox(
-                                          height: 40,
-                                          child: ListView(
-                                            scrollDirection: Axis.horizontal,
-                                            children: firstHalf.map((brand) {
-                                              final isSelected = _selectedBrands.contains(brand.name);
-                                              return Padding(
-                                                padding: const EdgeInsets.only(right: 8),
-                                                child: FilterChip(
-                                                  label: Text(brand.name),
-                                                  selected: isSelected,
-                                                  onSelected: (selected) {
-                                                    final newSelection = List<String>.from(_selectedBrands);
-                                                    if (selected) {
-                                                      newSelection.add(brand.name);
-                                                    } else {
-                                                      newSelection.remove(brand.name);
-                                                    }
-                                                    _onBrandsChanged(newSelection);
-                                                  },
-                                                  backgroundColor: colorScheme.surfaceContainerHighest,
-                                                  selectedColor: colorScheme.primaryContainer,
-                                                  checkmarkColor: colorScheme.onPrimaryContainer,
-                                                ),
-                                              );
-                                            }).toList(),
-                                          ),
-                                        ),
-                                      if (secondHalf.isNotEmpty)
-                                        SizedBox(
-                                          height: 40,
-                                          child: ListView(
-                                            scrollDirection: Axis.horizontal,
-                                            children: secondHalf.map((brand) {
-                                              final isSelected = _selectedBrands.contains(brand.name);
-                                              return Padding(
-                                                padding: const EdgeInsets.only(right: 8),
-                                                child: FilterChip(
-                                                  label: Text(brand.name),
-                                                  selected: isSelected,
-                                                  onSelected: (selected) {
-                                                    final newSelection = List<String>.from(_selectedBrands);
-                                                    if (selected) {
-                                                      newSelection.add(brand.name);
-                                                    } else {
-                                                      newSelection.remove(brand.name);
-                                                    }
-                                                    _onBrandsChanged(newSelection);
-                                                  },
-                                                  backgroundColor: colorScheme.surfaceContainerHighest,
-                                                  selectedColor: colorScheme.primaryContainer,
-                                                  checkmarkColor: colorScheme.onPrimaryContainer,
-                                                ),
-                                              );
-                                            }).toList(),
-                                          ),
-                                        ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Category selection header
-                      InkWell(
-                        onTap: _toggleCategoryFilter,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'Kategoriyalar',
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                _isCategoryFilterExpanded
-                                  ? Icons.keyboard_arrow_up
-                                  : Icons.keyboard_arrow_down,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Category selection (expandable)
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                        child: _isCategoryFilterExpanded && _categories.isNotEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Builder(
-                                builder: (context) {
-                                  final half = (_categories.length / 2).ceil();
-                                  final firstHalf = _categories.sublist(0, min(half, _categories.length));
-                                  final secondHalf = _categories.length > half ? _categories.sublist(half) : <ProductSeries>[];
-                                  return Column(
-                                    children: [
-                                      if (firstHalf.isNotEmpty)
-                                        SizedBox(
-                                          height: 40,
-                                          child: ListView(
-                                            scrollDirection: Axis.horizontal,
-                                            children: firstHalf.map((category) {
-                                              final isSelected = _selectedCategories.contains(category.name);
-                                              return Padding(
-                                                padding: const EdgeInsets.only(right: 8),
-                                                child: FilterChip(
-                                                  label: Text(category.name),
-                                                  selected: isSelected,
-                                                  onSelected: (selected) {
-                                                    final newSelection = List<String>.from(_selectedCategories);
-                                                    if (selected) {
-                                                      newSelection.add(category.name);
-                                                    } else {
-                                                      newSelection.remove(category.name);
-                                                    }
-                                                    _onCategoriesChanged(newSelection);
-                                                  },
-                                                  backgroundColor: colorScheme.surfaceContainerHighest,
-                                                  selectedColor: colorScheme.primaryContainer,
-                                                  checkmarkColor: colorScheme.onPrimaryContainer,
-                                                ),
-                                              );
-                                            }).toList(),
-                                          ),
-                                        ),
-                                      if (secondHalf.isNotEmpty)
-                                        SizedBox(
-                                          height: 40,
-                                          child: ListView(
-                                            scrollDirection: Axis.horizontal,
-                                            children: secondHalf.map((category) {
-                                              final isSelected = _selectedCategories.contains(category.name);
-                                              return Padding(
-                                                padding: const EdgeInsets.only(right: 8),
-                                                child: FilterChip(
-                                                  label: Text(category.name),
-                                                  selected: isSelected,
-                                                  onSelected: (selected) {
-                                                    final newSelection = List<String>.from(_selectedCategories);
-                                                    if (selected) {
-                                                      newSelection.add(category.name);
-                                                    } else {
-                                                      newSelection.remove(category.name);
-                                                    }
-                                                    _onCategoriesChanged(newSelection);
-                                                  },
-                                                  backgroundColor: colorScheme.surfaceContainerHighest,
-                                                  selectedColor: colorScheme.primaryContainer,
-                                                  checkmarkColor: colorScheme.onPrimaryContainer,
-                                                ),
-                                              );
-                                            }).toList(),
-                                          ),
-                                        ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            )
-                          : _isCategoryFilterExpanded
-                            ? Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Text(
-                                  'Avval brand tanlang',
-                                  style: theme.textTheme.bodySmall?.copyWith(
+                                  const Spacer(),
+                                  Icon(
+                                    _isBrandFilterExpanded
+                                        ? Icons.keyboard_arrow_up
+                                        : Icons.keyboard_arrow_down,
                                     color: colorScheme.onSurfaceVariant,
-                                    fontStyle: FontStyle.italic,
                                   ),
-                                ),
-                              )
-                            : const SizedBox.shrink(),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Brand selection (expandable)
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            child: _isBrandFilterExpanded
+                                ? Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Builder(
+                                      builder: (context) {
+                                        final half = (_brands.length / 2)
+                                            .ceil();
+                                        final firstHalf = _brands.sublist(
+                                          0,
+                                          min(half, _brands.length),
+                                        );
+                                        final secondHalf = _brands.length > half
+                                            ? _brands.sublist(half)
+                                            : <ProductBrand>[];
+                                        return Column(
+                                          children: [
+                                            if (firstHalf.isNotEmpty)
+                                              SizedBox(
+                                                height: 40,
+                                                child: ListView(
+                                                  scrollDirection:
+                                                      Axis.horizontal,
+                                                  children: firstHalf.map((
+                                                    brand,
+                                                  ) {
+                                                    final isSelected =
+                                                        _selectedBrands
+                                                            .contains(
+                                                              brand.name,
+                                                            );
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            right: 8,
+                                                          ),
+                                                      child: FilterChip(
+                                                        label: Text(brand.name),
+                                                        selected: isSelected,
+                                                        onSelected: (selected) {
+                                                          final newSelection =
+                                                              List<String>.from(
+                                                                _selectedBrands,
+                                                              );
+                                                          if (selected) {
+                                                            newSelection.add(
+                                                              brand.name,
+                                                            );
+                                                          } else {
+                                                            newSelection.remove(
+                                                              brand.name,
+                                                            );
+                                                          }
+                                                          _onBrandsChanged(
+                                                            newSelection,
+                                                          );
+                                                        },
+                                                        backgroundColor: colorScheme
+                                                            .surfaceContainerHighest,
+                                                        selectedColor: colorScheme
+                                                            .primaryContainer,
+                                                        checkmarkColor: colorScheme
+                                                            .onPrimaryContainer,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                            if (secondHalf.isNotEmpty)
+                                              SizedBox(
+                                                height: 40,
+                                                child: ListView(
+                                                  scrollDirection:
+                                                      Axis.horizontal,
+                                                  children: secondHalf.map((
+                                                    brand,
+                                                  ) {
+                                                    final isSelected =
+                                                        _selectedBrands
+                                                            .contains(
+                                                              brand.name,
+                                                            );
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            right: 8,
+                                                          ),
+                                                      child: FilterChip(
+                                                        label: Text(brand.name),
+                                                        selected: isSelected,
+                                                        onSelected: (selected) {
+                                                          final newSelection =
+                                                              List<String>.from(
+                                                                _selectedBrands,
+                                                              );
+                                                          if (selected) {
+                                                            newSelection.add(
+                                                              brand.name,
+                                                            );
+                                                          } else {
+                                                            newSelection.remove(
+                                                              brand.name,
+                                                            );
+                                                          }
+                                                          _onBrandsChanged(
+                                                            newSelection,
+                                                          );
+                                                        },
+                                                        backgroundColor: colorScheme
+                                                            .surfaceContainerHighest,
+                                                        selectedColor: colorScheme
+                                                            .primaryContainer,
+                                                        checkmarkColor: colorScheme
+                                                            .onPrimaryContainer,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Category selection header
+                          InkWell(
+                            onTap: _toggleCategoryFilter,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(context)?.categories ??
+                                        'Kategoriyalar',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Icon(
+                                    _isCategoryFilterExpanded
+                                        ? Icons.keyboard_arrow_up
+                                        : Icons.keyboard_arrow_down,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Category selection (expandable)
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            child:
+                                _isCategoryFilterExpanded &&
+                                    _categories.isNotEmpty
+                                ? Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Builder(
+                                      builder: (context) {
+                                        final half = (_categories.length / 2)
+                                            .ceil();
+                                        final firstHalf = _categories.sublist(
+                                          0,
+                                          min(half, _categories.length),
+                                        );
+                                        final secondHalf =
+                                            _categories.length > half
+                                            ? _categories.sublist(half)
+                                            : <ProductSeries>[];
+                                        return Column(
+                                          children: [
+                                            if (firstHalf.isNotEmpty)
+                                              SizedBox(
+                                                height: 40,
+                                                child: ListView(
+                                                  scrollDirection:
+                                                      Axis.horizontal,
+                                                  children: firstHalf.map((
+                                                    category,
+                                                  ) {
+                                                    final isSelected =
+                                                        _selectedCategories
+                                                            .contains(
+                                                              category.name,
+                                                            );
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            right: 8,
+                                                          ),
+                                                      child: FilterChip(
+                                                        label: Text(
+                                                          category.name,
+                                                        ),
+                                                        selected: isSelected,
+                                                        onSelected: (selected) {
+                                                          final newSelection =
+                                                              List<String>.from(
+                                                                _selectedCategories,
+                                                              );
+                                                          if (selected) {
+                                                            newSelection.add(
+                                                              category.name,
+                                                            );
+                                                          } else {
+                                                            newSelection.remove(
+                                                              category.name,
+                                                            );
+                                                          }
+                                                          _onCategoriesChanged(
+                                                            newSelection,
+                                                          );
+                                                        },
+                                                        backgroundColor: colorScheme
+                                                            .surfaceContainerHighest,
+                                                        selectedColor: colorScheme
+                                                            .primaryContainer,
+                                                        checkmarkColor: colorScheme
+                                                            .onPrimaryContainer,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                            if (secondHalf.isNotEmpty)
+                                              SizedBox(
+                                                height: 40,
+                                                child: ListView(
+                                                  scrollDirection:
+                                                      Axis.horizontal,
+                                                  children: secondHalf.map((
+                                                    category,
+                                                  ) {
+                                                    final isSelected =
+                                                        _selectedCategories
+                                                            .contains(
+                                                              category.name,
+                                                            );
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            right: 8,
+                                                          ),
+                                                      child: FilterChip(
+                                                        label: Text(
+                                                          category.name,
+                                                        ),
+                                                        selected: isSelected,
+                                                        onSelected: (selected) {
+                                                          final newSelection =
+                                                              List<String>.from(
+                                                                _selectedCategories,
+                                                              );
+                                                          if (selected) {
+                                                            newSelection.add(
+                                                              category.name,
+                                                            );
+                                                          } else {
+                                                            newSelection.remove(
+                                                              category.name,
+                                                            );
+                                                          }
+                                                          _onCategoriesChanged(
+                                                            newSelection,
+                                                          );
+                                                        },
+                                                        backgroundColor: colorScheme
+                                                            .surfaceContainerHighest,
+                                                        selectedColor: colorScheme
+                                                            .primaryContainer,
+                                                        checkmarkColor: colorScheme
+                                                            .onPrimaryContainer,
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : _isCategoryFilterExpanded
+                                ? Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Text(
+                                      AppLocalizations.of(
+                                            context,
+                                          )?.selectBrandFirst ??
+                                          'Avval brand tanlang',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: colorScheme.onSurfaceVariant,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
               ),
             ),
             // === ADD: yashirin/ko'rinar panel (son + list/grid tugmalar) ===
@@ -741,19 +909,23 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                 duration: const Duration(milliseconds: 220),
                 child: _showViewBar
                     ? _ViewToolbar(
-                  count: _getFilteredProducts().length,
-                  mode: _viewMode,
-                  onModeChanged: (m) => setState(() => _viewMode = m),
-                  onCollapse: () => setState(() => _showViewBar = false),
-                )
+                        count: _getFilteredProducts().length,
+                        mode: _viewMode,
+                        onModeChanged: (m) => setState(() => _viewMode = m),
+                        onCollapse: () => setState(() => _showViewBar = false),
+                      )
                     : Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    tooltip: 'Ko‘rinish paneli',
-                    onPressed: () => setState(() => _showViewBar = true),
-                    icon: const Icon(Icons.tune), // biriktirilgan namunadagi kabi "tune" tugma
-                  ),
-                ),
+                        alignment: Alignment.centerRight,
+                        child: IconButton(
+                          tooltip:
+                              AppLocalizations.of(context)?.viewPanel ??
+                              'Ko\'rinish paneli',
+                          onPressed: () => setState(() => _showViewBar = true),
+                          icon: const Icon(
+                            Icons.tune,
+                          ), // biriktirilgan namunadagi kabi "tune" tugma
+                        ),
+                      ),
               ),
             ),
             // Content
@@ -761,81 +933,84 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _errorMessage != null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.error, size: 48, color: Colors.red),
-                              const SizedBox(height: 16),
-                              Text(_errorMessage!),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: _loadData,
-                                child: const Text('Qayta urinish'),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error, size: 48, color: Colors.red),
+                          const SizedBox(height: 16),
+                          Text(_errorMessage!),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadData,
+                            child: Text(
+                              AppLocalizations.of(context)?.retry ??
+                                  'Qayta urinish',
+                            ),
                           ),
-                        )
-                      : _selectedPriceType == null
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.price_change,
-                                    size: 64,
-                                    color: colorScheme.outline,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Narx turini tanlang',
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                      color: colorScheme.onSurface,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                        ],
+                      ),
+                    )
+                  : _selectedPriceType == null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.price_change,
+                            size: 64,
+                            color: colorScheme.outline,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            AppLocalizations.of(context)?.selectPriceType ??
+                                'Narx turini tanlang',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            AppLocalizations.of(context)?.selectPriceTypeHint ??
+                                'Filtr panelidan narx turini tanlash uchun yuqoridagi filtr tugmasini bosing',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadData,
+                      child: _viewMode == _ViewMode.list
+                          ? ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                              itemCount: _getFilteredProducts().length,
+                              separatorBuilder: (_, _) =>
                                   const SizedBox(height: 8),
-                                  Text(
-                                    'Filtr panelidan narx turini tanlash uchun yuqoridagi filtr tugmasini bosing',
-                                    textAlign: TextAlign.center,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              itemBuilder: (context, index) {
+                                final product = _getFilteredProducts()[index];
+                                return ProductCard(product: product);
+                              },
                             )
-                          : RefreshIndicator(
-                onRefresh: _loadData,
-                child: _viewMode == _ViewMode.list
-                    ? ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                  itemCount: _getFilteredProducts().length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final product = _getFilteredProducts()[index];
-                    return ProductCard(
-                      product: product,
-                    );
-                  },
-                )
-                    : GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 0.55,
-                  ),
-                  itemCount: _getFilteredProducts().length,
-                  itemBuilder: (context, index) {
-                    final product = _getFilteredProducts()[index];
-                    return ProductGridTile(
-                      product: product,
-                    );
-                  },
-                ),
-              ),
+                          : GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing: 8,
+                                    crossAxisSpacing: 8,
+                                    childAspectRatio: 0.55,
+                                  ),
+                              itemCount: _getFilteredProducts().length,
+                              itemBuilder: (context, index) {
+                                final product = _getFilteredProducts()[index];
+                                return ProductGridTile(product: product);
+                              },
+                            ),
+                    ),
             ),
           ],
         ),
@@ -858,18 +1033,25 @@ class _SearchField extends StatelessWidget {
         color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: cs.primary.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(
+            color: cs.primary.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
         ],
         border: Border.all(color: cs.outlineVariant),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        decoration: const InputDecoration(
-          hintText: 'Qidirish...',
-          prefixIcon: Icon(Icons.search),
+        decoration: InputDecoration(
+          hintText: AppLocalizations.of(context)?.searchHint ?? 'Qidirish...',
+          prefixIcon: const Icon(Icons.search),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 14,
+          ),
         ),
       ),
     );
@@ -901,7 +1083,8 @@ class _ViewToolbar extends StatelessWidget {
       children: [
         // Mahsulotlar soni
         Text(
-          'Mahsulotlar soni: $count',
+          AppLocalizations.of(context)?.productsCount(count) ??
+              'Mahsulotlar soni: $count',
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -940,7 +1123,7 @@ class _ViewToolbar extends StatelessWidget {
         const SizedBox(width: 6),
         // Yopish
         IconButton(
-          tooltip: 'Yopish',
+          tooltip: AppLocalizations.of(context)?.close ?? 'Yopish',
           onPressed: onCollapse,
           icon: const Icon(Icons.close),
         ),
@@ -975,7 +1158,9 @@ class ProductCard extends StatelessWidget {
                     children: [
                       Text(
                         product.productName,
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                         maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -997,12 +1182,18 @@ class ProductCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.inventory_2_outlined, size: 16, color: cs.onSurfaceVariant),
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 16,
+                            color: cs.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
-                              style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1012,12 +1203,18 @@ class ProductCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.warehouse_outlined, size: 16, color: cs.onSurfaceVariant),
+                          Icon(
+                            Icons.warehouse_outlined,
+                            size: 16,
+                            color: cs.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               'Qoldiq: ${formatNumber(product.stock)}',
-                              style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1027,7 +1224,9 @@ class ProductCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         'Narx turi: ${product.priceTypeName}',
-                        style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1046,7 +1245,10 @@ class ProductCard extends StatelessWidget {
             if (product.warehouseCode.isNotEmpty) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: cs.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
@@ -1080,9 +1282,7 @@ class ProductGridTile extends StatelessWidget {
       elevation: 6,
       shadowColor: Colors.black.withValues(alpha: 0.15),
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {}, // Add tap functionality if needed
@@ -1111,7 +1311,9 @@ class ProductGridTile extends StatelessWidget {
                     maxLines: 4,
                     softWrap: true,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   // Text(
@@ -1129,12 +1331,18 @@ class ProductGridTile extends StatelessWidget {
                   // ),
                   Row(
                     children: [
-                      Icon(Icons.inventory_2_outlined, size: 16, color: cs.onSurfaceVariant),
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 16,
+                        color: cs.onSurfaceVariant,
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
-                          style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1145,12 +1353,18 @@ class ProductGridTile extends StatelessWidget {
 
                   Row(
                     children: [
-                      Icon(Icons.warehouse_outlined, size: 16, color: cs.onSurfaceVariant),
+                      Icon(
+                        Icons.warehouse_outlined,
+                        size: 16,
+                        color: cs.onSurfaceVariant,
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           'Qoldiq: ${formatNumber(product.stock)}',
-                          style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1164,7 +1378,7 @@ class ProductGridTile extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: cs.primary,
                       fontWeight: FontWeight.w800,
-                      fontSize: 14
+                      fontSize: 14,
                     ),
                   ),
                 ],

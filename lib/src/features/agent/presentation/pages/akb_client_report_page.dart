@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 class AkbClientReportPage extends StatefulWidget {
   const AkbClientReportPage({super.key});
@@ -30,7 +31,8 @@ class _AkbClientReportPageState extends State<AkbClientReportPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'AKB mijozlari hisoboti',
+              AppLocalizations.of(context)?.akbClientReport ??
+                  'AKB mijozlari hisoboti',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
@@ -39,7 +41,7 @@ class _AkbClientReportPageState extends State<AkbClientReportPage> {
             const SizedBox(height: 16),
 
             _buildStatCard(
-              'AKB mijozlar',
+              AppLocalizations.of(context)?.akbClients ?? 'AKB mijozlar',
               '28',
               Icons.people,
               colorScheme.primary,
@@ -47,7 +49,7 @@ class _AkbClientReportPageState extends State<AkbClientReportPage> {
             const SizedBox(height: 12),
 
             _buildStatCard(
-              'AKB foizi',
+              AppLocalizations.of(context)?.akbPercentage ?? 'AKB foizi',
               '62%',
               Icons.percent,
               colorScheme.secondary,
@@ -57,7 +59,8 @@ class _AkbClientReportPageState extends State<AkbClientReportPage> {
 
             // Client List
             Text(
-              'AKB mijozlar ro\'yxati',
+              AppLocalizations.of(context)?.akbClientsList ??
+                  'AKB mijozlar ro\'yxati',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
@@ -65,20 +68,45 @@ class _AkbClientReportPageState extends State<AkbClientReportPage> {
             ),
             const SizedBox(height: 12),
 
-            _buildClientItem('OOO "Alpomish"', '15 000 000 UZS', 'Aktiv', colorScheme.primary),
+            _buildClientItem(
+              'OOO "Alpomish"',
+              '15 000 000 UZS',
+              'Aktiv',
+              colorScheme.primary,
+            ),
             const SizedBox(height: 8),
-            _buildClientItem('ChP "Zafar"', '8 500 000 UZS', 'Aktiv', colorScheme.primary),
+            _buildClientItem(
+              'ChP "Zafar"',
+              '8 500 000 UZS',
+              'Aktiv',
+              colorScheme.primary,
+            ),
             const SizedBox(height: 8),
-            _buildClientItem('OOO "Mega Trade"', '12 200 000 UZS', 'Aktiv', colorScheme.primary),
+            _buildClientItem(
+              'OOO "Mega Trade"',
+              '12 200 000 UZS',
+              'Aktiv',
+              colorScheme.primary,
+            ),
             const SizedBox(height: 8),
-            _buildClientItem('IP "Nodira"', '5 800 000 UZS', 'Aktiv', colorScheme.primary),
+            _buildClientItem(
+              'IP "Nodira"',
+              '5 800 000 UZS',
+              'Aktiv',
+              colorScheme.primary,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     final theme = Theme.of(context);
 
     return Card(
@@ -117,7 +145,12 @@ class _AkbClientReportPageState extends State<AkbClientReportPage> {
     );
   }
 
-  Widget _buildClientItem(String name, String amount, String status, Color statusColor) {
+  Widget _buildClientItem(
+    String name,
+    String amount,
+    String status,
+    Color statusColor,
+  ) {
     final theme = Theme.of(context);
 
     return Card(

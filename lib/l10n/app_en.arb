@@ -1722,5 +1722,172 @@
         "type": "int"
       }
     }
+  },
+  "orderStatusDelivered": "Delivered",
+  "orderStatusInProcess": "In process",
+  "orderStatusReturn": "Return",
+  "orderStatusExpired": "Expired",
+  "loadingClientImages": "Loading client images...",
+  "clientDataLoadError": "Error loading client data",
+  "visitCompletedFor": "visit completed successfully for",
+  "contractStatusActive": "Active",
+  "contractStatusExpired": "Expired",
+  "contractStatusPending": "Pending",
+  "contractStatusSuspended": "Suspended",
+  "contractTabAll": "All",
+  "appPreparing": "Preparing app...",
+  "permissionsChecking": "Checking permissions...",
+  "permissionsCheckTitle": "Permissions check",
+  "permissionsCheckDescription": "The following permissions are required for the app to work properly:",
+  "permissionFileStorage": "File storage",
+  "permissionFileStorageDesc": "Store data",
+  "permissionLocation": "Location",
+  "permissionLocationDesc": "Map and distance calculation",
+  "permissionCamera": "Camera",
+  "permissionCameraDesc": "Take photos",
+  "permissionMicrophone": "Microphone",
+  "permissionMicrophoneDesc": "Record audio",
+  "permissionNotifications": "Notifications",
+  "permissionNotificationsDesc": "Show messages",
+  "permissionAudio": "Music and audio",
+  "permissionAudioDesc": "Work with audio files",
+  "permissionPhotosVideos": "Photos and videos",
+  "permissionPhotosVideosDesc": "Work with media files",
+  "permissionsLimitedWarning": "Without permissions, the app will work in limited mode.",
+  "startButton": "Start",
+  "permissionStorageTitle": "File storage permission",
+  "permissionStorageDescAndroid13": "Select folder to store app data",
+  "permissionStorageDescOther": "Store and load app data",
+  "permissionStoragePurposeAndroid13": "Select folder to store photos, documents and data",
+  "permissionStoragePurposeOther": "Store photos, documents and data",
+  "permissionLocationTitle": "Location permission",
+  "permissionLocationDescription": "Sort trading points by distance",
+  "permissionLocationPurpose": "Show location on map and calculate distance",
+  "permissionLocationAlwaysTitle": "Always allow location permission",
+  "permissionLocationAlwaysDescription": "Detect location when app is in background",
+  "permissionLocationAlwaysPurpose": "Background service and notifications",
+  "permissionCameraTitle": "Camera permission",
+  "permissionCameraDescription": "Take photos and scan barcodes",
+  "permissionCameraPurpose": "Take photos of products and trading points",
+  "permissionMicrophoneTitle": "Microphone permission",
+  "permissionMicrophoneDescription": "Record audio and audio messages",
+  "permissionMicrophonePurpose": "Voice reminders and audio recordings",
+  "permissionNotificationTitle": "Notification permission",
+  "permissionNotificationDescription": "Show important messages",
+  "permissionNotificationPurpose": "Reminders, news and notifications",
+  "permissionAudioTitle": "Music and audio permission",
+  "permissionAudioDescription": "Work with audio files",
+  "permissionAudioPurpose": "Work with music, audio messages and voice files",
+  "permissionPhotosVideosTitle": "Photos and videos permission",
+  "permissionPhotosVideosDescription": "Work with media files",
+  "permissionPhotosVideosPurpose": "Work with photos, videos and media files",
+  "permissionRequired": "{permission} required",
+  "@permissionRequired": {
+    "placeholders": {
+      "permission": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionRequiredSettings": "{description}. Please grant permission in app settings.",
+  "@permissionRequiredSettings": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "laterButton": "Later",
+  "goToSettings": "Go to settings",
+  "permissionPurpose": "Purpose: {purpose}",
+  "@permissionPurpose": {
+    "placeholders": {
+      "purpose": {
+        "type": "String"
+      }
+    }
+  },
+  "allowPermissionQuestion": "Do you want to grant permission?",
+  "grantPermission": "Grant permission",
+  "checking": "Checking...",
+  "initializingSyncEngine": "Initializing sync engine...",
+  "dataSynchronization": "Data Synchronization",
+  "tablesSynced": "{synced} of {total} tables synced",
+  "@tablesSynced": {
+    "placeholders": {
+      "synced": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "lastSync": "Last sync: {time}",
+  "@lastSync": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "syncing": "Syncing...",
+  "syncAllData": "Sync All Data",
+  "syncAllTablesInOrder": "This will sync all tables in dependency order",
+  "dataGroups": "Data Groups",
+  "backgroundAutoSync": "Background Auto-Sync",
+  "backgroundSyncDescription": "Keep your data fresh even when the app is closed. Requires internet connection.",
+  "syncInterval": "Sync Interval",
+  "customIntervalMinutes": "Custom Interval (Minutes)",
+  "customIntervalNote": "* Custom interval takes priority if set to 60 or more",
+  "clientBalanceCache": "Client Balance Cache",
+  "clientBalancesCached": "{count} client balances cached",
+  "@clientBalancesCached": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "balanceCacheDescription": "Client balance data is stored in local cache. You can clear the cache if the data is outdated.",
+  "clearing": "Clearing...",
+  "clearCache": "Clear Cache",
+  "balanceCacheCleared": "Balance cache cleared",
+  "clearBalanceCacheConfirm": "All client balance data will be deleted. It will be reloaded next time balance is viewed.",
+  "backgroundSyncEnabled": "Background sync enabled",
+  "backgroundSyncDisabled": "Background sync disabled",
+  "minimumIntervalIs60": "Minimum interval is 60 minutes",
+  "justNow": "just now",
+  "minutesAgo": "{minutes}m ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "hoursAgo": "{hours}h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {"type": "int"}
+    }
+  },
+  "yesterday": "yesterday",
+  "daysAgo": "{days} days ago",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "weeksAgo": "{weeks} weeks ago",
+  "@weeksAgo": {
+    "placeholders": {
+      "weeks": {"type": "int"}
+    }
+  },
+  "unknownProduct": "Unknown product",
+  "errorOccurredTitle": "An error occurred",
+  "akbClientReport": "AKB clients report",
+  "akbClients": "AKB clients",
+  "akbPercentage": "AKB percentage",
+  "akbClientsList": "AKB clients list",
+  "details": "Details",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "daysAgoShort": "{days} days ago",
+  "@daysAgoShort": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
   }
 }

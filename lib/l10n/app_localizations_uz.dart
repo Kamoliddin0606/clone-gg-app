@@ -213,10 +213,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get syncNow => 'Hozir sinxronizatsiya qilish';
 
   @override
-  String get lastSync => 'Oxirgi sinxronizatsiya';
+  String lastSync(String time) {
+    return 'Oxirgi sinxronizatsiya: $time';
+  }
 
   @override
-  String get syncing => 'Sinxronizatsiya qilinmoqda...';
+  String get syncing => 'Sinxronlanmoqda...';
 
   @override
   String get syncComplete => 'Sinxronizatsiya tugadi';
@@ -1288,19 +1290,19 @@ class AppLocalizationsUz extends AppLocalizations {
   String get clearOrderConfirmMessage => 'Tanlangan barcha mahsulotlar va ular bilan bog\'liq ma\'lumotlar o\'chiriladi. Sozlamalar tanlovlari saqlanib qolinadi. Davom etishni xohlaysizmi?';
 
   @override
-  String get clientDataLoadError => 'Mijozlar ma\'lumotlarini yuklashda xatolik';
+  String get clientDataLoadError => 'Mijoz ma\'lumotlarini yuklashda xatolik';
 
   @override
   String get locationNotAvailable => 'Joylashuv ma\'lumotlari mavjud emas. Tashrifni amalga oshirib bo\'lmaydi.';
 
   @override
-  String get visitCompletedFor => 'ga tashrif muvaffaqiyatli yakunlandi';
+  String get visitCompletedFor => 'uchun tashrif muvaffaqiyatli yakunlandi';
 
   @override
   String get contractsPageError => 'Shartnomalar sahifasiga o\'tishda xatolik';
 
   @override
-  String get loadingClientImages => 'Mijoz rasmlarini yuklash...';
+  String get loadingClientImages => 'Mijoz rasmlari yuklanmoqda...';
 
   @override
   String get clientImagesLoaded => 'Mijoz rasmlari yuklandi';
@@ -1614,7 +1616,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get clearBalanceCache => 'Balans keshini tozalash';
 
   @override
-  String get clearBalanceCacheConfirm => 'Barcha keshlangan balans ma\'lumotlarini tozalashni xohlaysizmi?';
+  String get clearBalanceCacheConfirm => 'Barcha mijozlar balans ma\'lumotlari o\'chiriladi. Keyingi safar balans ko\'rilganda qayta yuklanadi.';
 
   @override
   String get balanceCacheCleared => 'Balans keshi tozalandi';
@@ -2822,7 +2824,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get weekly1Week => 'Haftalik (1 hafta)';
 
   @override
-  String get customIntervalMinutes => 'Maxsus interval (daqiqalar)';
+  String get customIntervalMinutes => 'Maxsus oraliq (daqiqalar)';
 
   @override
   String get organizationLabel => 'Tashkilot';
@@ -3088,5 +3090,304 @@ class AppLocalizationsUz extends AppLocalizations {
   @override
   String requiredDistance(int distance) {
     return 'Talab qilingan masofa: ${distance}m';
+  }
+
+  @override
+  String get orderStatusDelivered => 'Yetkazildi';
+
+  @override
+  String get orderStatusInProcess => 'Jarayonda';
+
+  @override
+  String get orderStatusReturn => 'Qaytarildi';
+
+  @override
+  String get orderStatusExpired => 'Muddati o\'tgan';
+
+  @override
+  String get contractStatusActive => 'Faol';
+
+  @override
+  String get contractStatusExpired => 'Muddati o\'tgan';
+
+  @override
+  String get contractStatusPending => 'Kelishilmagan';
+
+  @override
+  String get contractStatusSuspended => 'To\'xtatilgan';
+
+  @override
+  String get contractTabAll => 'Barchasi';
+
+  @override
+  String get appPreparing => 'Ilova tayyorlanmoqda...';
+
+  @override
+  String get permissionsChecking => 'Ruxsatlar tekshirilmoqda...';
+
+  @override
+  String get permissionsCheckTitle => 'Ruxsatlar tekshiruvi';
+
+  @override
+  String get permissionsCheckDescription => 'Ilova to\'liq ishlashi uchun quyidagi ruxsatlar kerak:';
+
+  @override
+  String get permissionFileStorage => 'Fayl saqlash';
+
+  @override
+  String get permissionFileStorageDesc => 'Ma\'lumotlarni saqlash';
+
+  @override
+  String get permissionLocation => 'Joylashuv';
+
+  @override
+  String get permissionLocationDesc => 'Xarita va masofa hisoblash';
+
+  @override
+  String get permissionCamera => 'Kamera';
+
+  @override
+  String get permissionCameraDesc => 'Rasmga olish';
+
+  @override
+  String get permissionMicrophone => 'Mikrofon';
+
+  @override
+  String get permissionMicrophoneDesc => 'Ovoz yozish';
+
+  @override
+  String get permissionNotifications => 'Bildirishnomalar';
+
+  @override
+  String get permissionNotificationsDesc => 'Xabarlarni ko\'rsatish';
+
+  @override
+  String get permissionAudio => 'Musiqa va audio';
+
+  @override
+  String get permissionAudioDesc => 'Audio fayllar bilan ishlash';
+
+  @override
+  String get permissionPhotosVideos => 'Rasmlar va videolar';
+
+  @override
+  String get permissionPhotosVideosDesc => 'Media fayllar bilan ishlash';
+
+  @override
+  String get permissionsLimitedWarning => 'Ruxsatlarsiz ilova cheklangan rejimda ishlaydi.';
+
+  @override
+  String get startButton => 'Boshlash';
+
+  @override
+  String get permissionStorageTitle => 'Fayl saqlash ruxsati';
+
+  @override
+  String get permissionStorageDescAndroid13 => 'Ilova ma\'lumotlarini saqlash uchun papka tanlash';
+
+  @override
+  String get permissionStorageDescOther => 'Ilova ma\'lumotlarini saqlash va yuklash uchun';
+
+  @override
+  String get permissionStoragePurposeAndroid13 => 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash uchun papka tanlang';
+
+  @override
+  String get permissionStoragePurposeOther => 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash';
+
+  @override
+  String get permissionLocationTitle => 'Joylashuv ruxsati';
+
+  @override
+  String get permissionLocationDescription => 'Savdo nuqtalarini masofaga ko\'ra tartiblash uchun';
+
+  @override
+  String get permissionLocationPurpose => 'Xaritada joylashuvni ko\'rsatish va masofa hisoblash';
+
+  @override
+  String get permissionLocationAlwaysTitle => 'Doimiy joylashuv ruxsati';
+
+  @override
+  String get permissionLocationAlwaysDescription => 'Ilova fon rejimida ishlaganda joylashuvni aniqlash uchun';
+
+  @override
+  String get permissionLocationAlwaysPurpose => 'Fon rejimida xizmat ko\'rsatish va bildirishnomalar';
+
+  @override
+  String get permissionCameraTitle => 'Kamera ruxsati';
+
+  @override
+  String get permissionCameraDescription => 'Rasmga olish va shtrix-kod skanerlash uchun';
+
+  @override
+  String get permissionCameraPurpose => 'Mahsulotlar va savdo nuqtalarini rasmga olish';
+
+  @override
+  String get permissionMicrophoneTitle => 'Mikrofon ruxsati';
+
+  @override
+  String get permissionMicrophoneDescription => 'Ovoz yozish va audio xabarlar uchun';
+
+  @override
+  String get permissionMicrophonePurpose => 'Ovozli eslatmalar va audio qaydlar';
+
+  @override
+  String get permissionNotificationTitle => 'Bildirishnoma ruxsati';
+
+  @override
+  String get permissionNotificationDescription => 'Muhim xabarlarni ko\'rsatish uchun';
+
+  @override
+  String get permissionNotificationPurpose => 'Eslatmalar, yangiliklar va bildirishnomalar';
+
+  @override
+  String get permissionAudioTitle => 'Musiqa va audio ruxsati';
+
+  @override
+  String get permissionAudioDescription => 'Audio fayllar bilan ishlash uchun';
+
+  @override
+  String get permissionAudioPurpose => 'Musiqa, audio xabarlar va ovozli fayllar bilan ishlash';
+
+  @override
+  String get permissionPhotosVideosTitle => 'Rasmlar va videolar ruxsati';
+
+  @override
+  String get permissionPhotosVideosDescription => 'Media fayllar bilan ishlash uchun';
+
+  @override
+  String get permissionPhotosVideosPurpose => 'Rasmlar, videolar va media fayllar bilan ishlash';
+
+  @override
+  String permissionRequired(String permission) {
+    return '$permission kerak';
+  }
+
+  @override
+  String permissionRequiredSettings(String description) {
+    return '$description. Iltimos, ilova sozlamalaridan ruxsat bering.';
+  }
+
+  @override
+  String get laterButton => 'Keyinroq';
+
+  @override
+  String get goToSettings => 'Sozlamalarga o\'tish';
+
+  @override
+  String permissionPurpose(String purpose) {
+    return 'Maqsad: $purpose';
+  }
+
+  @override
+  String get allowPermissionQuestion => 'Ruxsat berishni xohlaysizmi?';
+
+  @override
+  String get grantPermission => 'Ruxsat berish';
+
+  @override
+  String get checking => 'Tekshirilmoqda...';
+
+  @override
+  String get initializingSyncEngine => 'Sinxronizatsiya tizimi ishga tushirilmoqda...';
+
+  @override
+  String get dataSynchronization => 'Ma\'lumotlar sinxronizatsiyasi';
+
+  @override
+  String tablesSynced(int synced, int total) {
+    return '$synced / $total jadval sinxronlashtirildi';
+  }
+
+  @override
+  String get syncAllData => 'Barcha ma\'lumotlarni sinxronlash';
+
+  @override
+  String get syncAllTablesInOrder => 'Bu barcha jadvallarni ketma-ketlikda sinxronlaydi';
+
+  @override
+  String get dataGroups => 'Ma\'lumotlar guruhlari';
+
+  @override
+  String get backgroundAutoSync => 'Fonda avtomatik sinxronlash';
+
+  @override
+  String get backgroundSyncDescription => 'Ilova yopiq bo\'lganda ham ma\'lumotlaringizni yangi saqlaydi. Internet aloqasi kerak.';
+
+  @override
+  String get syncInterval => 'Sinxronlash oralig\'i';
+
+  @override
+  String get customIntervalNote => '* Maxsus oraliq 60 yoki undan ko\'p bo\'lsa, ustuvorlikka ega';
+
+  @override
+  String get clientBalanceCache => 'Mijoz Balansi Keshi';
+
+  @override
+  String clientBalancesCached(int count) {
+    return '$count ta mijoz balansi saqlangan';
+  }
+
+  @override
+  String get balanceCacheDescription => 'Mijozlar balans ma\'lumotlari lokal keshda saqlanadi. Agar ma\'lumotlar eskirgan bo\'lsa, keshni tozalashingiz mumkin.';
+
+  @override
+  String get clearing => 'Tozalanmoqda...';
+
+  @override
+  String get clearCache => 'Keshni tozalash';
+
+  @override
+  String get backgroundSyncEnabled => 'Fonda sinxronlash yoqildi';
+
+  @override
+  String get backgroundSyncDisabled => 'Fonda sinxronlash o\'chirildi';
+
+  @override
+  String get minimumIntervalIs60 => 'Minimal oraliq 60 daqiqa';
+
+  @override
+  String get justNow => 'hozirgina';
+
+  @override
+  String minutesAgo(int minutes) {
+    return '${minutes}d oldin';
+  }
+
+  @override
+  String hoursAgo(int hours) {
+    return '${hours}s oldin';
+  }
+
+  @override
+  String daysAgo(int days) {
+    return '$days kun oldin';
+  }
+
+  @override
+  String weeksAgo(int weeks) {
+    return '$weeks hafta oldin';
+  }
+
+  @override
+  String get unknownProduct => 'Noma\'lum mahsulot';
+
+  @override
+  String get errorOccurredTitle => 'Xatolik yuz berdi';
+
+  @override
+  String get akbClientReport => 'AKB mijozlari hisoboti';
+
+  @override
+  String get akbClients => 'AKB mijozlar';
+
+  @override
+  String get akbPercentage => 'AKB foizi';
+
+  @override
+  String get akbClientsList => 'AKB mijozlar ro\'yxati';
+
+  @override
+  String daysAgoShort(int days) {
+    return '$days kun oldin';
   }
 }

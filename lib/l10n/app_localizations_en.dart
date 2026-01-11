@@ -213,10 +213,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncNow => 'Sync Now';
 
   @override
-  String get lastSync => 'Last sync';
+  String lastSync(String time) {
+    return 'Last sync: $time';
+  }
 
   @override
-  String get syncing => 'Synchronizing...';
+  String get syncing => 'Syncing...';
 
   @override
   String get syncComplete => 'Synchronization completed';
@@ -1294,7 +1296,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationNotAvailable => 'Location data not available. Visit cannot be completed.';
 
   @override
-  String get visitCompletedFor => 'Visit completed successfully for';
+  String get visitCompletedFor => 'visit completed successfully for';
 
   @override
   String get contractsPageError => 'Error navigating to contracts page';
@@ -1614,7 +1616,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearBalanceCache => 'Clear Balance Cache';
 
   @override
-  String get clearBalanceCacheConfirm => 'Clear all cached balance data?';
+  String get clearBalanceCacheConfirm => 'All client balance data will be deleted. It will be reloaded next time balance is viewed.';
 
   @override
   String get balanceCacheCleared => 'Balance cache cleared';
@@ -3088,5 +3090,304 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String requiredDistance(int distance) {
     return 'Required distance: ${distance}m';
+  }
+
+  @override
+  String get orderStatusDelivered => 'Delivered';
+
+  @override
+  String get orderStatusInProcess => 'In process';
+
+  @override
+  String get orderStatusReturn => 'Return';
+
+  @override
+  String get orderStatusExpired => 'Expired';
+
+  @override
+  String get contractStatusActive => 'Active';
+
+  @override
+  String get contractStatusExpired => 'Expired';
+
+  @override
+  String get contractStatusPending => 'Pending';
+
+  @override
+  String get contractStatusSuspended => 'Suspended';
+
+  @override
+  String get contractTabAll => 'All';
+
+  @override
+  String get appPreparing => 'Preparing app...';
+
+  @override
+  String get permissionsChecking => 'Checking permissions...';
+
+  @override
+  String get permissionsCheckTitle => 'Permissions check';
+
+  @override
+  String get permissionsCheckDescription => 'The following permissions are required for the app to work properly:';
+
+  @override
+  String get permissionFileStorage => 'File storage';
+
+  @override
+  String get permissionFileStorageDesc => 'Store data';
+
+  @override
+  String get permissionLocation => 'Location';
+
+  @override
+  String get permissionLocationDesc => 'Map and distance calculation';
+
+  @override
+  String get permissionCamera => 'Camera';
+
+  @override
+  String get permissionCameraDesc => 'Take photos';
+
+  @override
+  String get permissionMicrophone => 'Microphone';
+
+  @override
+  String get permissionMicrophoneDesc => 'Record audio';
+
+  @override
+  String get permissionNotifications => 'Notifications';
+
+  @override
+  String get permissionNotificationsDesc => 'Show messages';
+
+  @override
+  String get permissionAudio => 'Music and audio';
+
+  @override
+  String get permissionAudioDesc => 'Work with audio files';
+
+  @override
+  String get permissionPhotosVideos => 'Photos and videos';
+
+  @override
+  String get permissionPhotosVideosDesc => 'Work with media files';
+
+  @override
+  String get permissionsLimitedWarning => 'Without permissions, the app will work in limited mode.';
+
+  @override
+  String get startButton => 'Start';
+
+  @override
+  String get permissionStorageTitle => 'File storage permission';
+
+  @override
+  String get permissionStorageDescAndroid13 => 'Select folder to store app data';
+
+  @override
+  String get permissionStorageDescOther => 'Store and load app data';
+
+  @override
+  String get permissionStoragePurposeAndroid13 => 'Select folder to store photos, documents and data';
+
+  @override
+  String get permissionStoragePurposeOther => 'Store photos, documents and data';
+
+  @override
+  String get permissionLocationTitle => 'Location permission';
+
+  @override
+  String get permissionLocationDescription => 'Sort trading points by distance';
+
+  @override
+  String get permissionLocationPurpose => 'Show location on map and calculate distance';
+
+  @override
+  String get permissionLocationAlwaysTitle => 'Always allow location permission';
+
+  @override
+  String get permissionLocationAlwaysDescription => 'Detect location when app is in background';
+
+  @override
+  String get permissionLocationAlwaysPurpose => 'Background service and notifications';
+
+  @override
+  String get permissionCameraTitle => 'Camera permission';
+
+  @override
+  String get permissionCameraDescription => 'Take photos and scan barcodes';
+
+  @override
+  String get permissionCameraPurpose => 'Take photos of products and trading points';
+
+  @override
+  String get permissionMicrophoneTitle => 'Microphone permission';
+
+  @override
+  String get permissionMicrophoneDescription => 'Record audio and audio messages';
+
+  @override
+  String get permissionMicrophonePurpose => 'Voice reminders and audio recordings';
+
+  @override
+  String get permissionNotificationTitle => 'Notification permission';
+
+  @override
+  String get permissionNotificationDescription => 'Show important messages';
+
+  @override
+  String get permissionNotificationPurpose => 'Reminders, news and notifications';
+
+  @override
+  String get permissionAudioTitle => 'Music and audio permission';
+
+  @override
+  String get permissionAudioDescription => 'Work with audio files';
+
+  @override
+  String get permissionAudioPurpose => 'Work with music, audio messages and voice files';
+
+  @override
+  String get permissionPhotosVideosTitle => 'Photos and videos permission';
+
+  @override
+  String get permissionPhotosVideosDescription => 'Work with media files';
+
+  @override
+  String get permissionPhotosVideosPurpose => 'Work with photos, videos and media files';
+
+  @override
+  String permissionRequired(String permission) {
+    return '$permission required';
+  }
+
+  @override
+  String permissionRequiredSettings(String description) {
+    return '$description. Please grant permission in app settings.';
+  }
+
+  @override
+  String get laterButton => 'Later';
+
+  @override
+  String get goToSettings => 'Go to settings';
+
+  @override
+  String permissionPurpose(String purpose) {
+    return 'Purpose: $purpose';
+  }
+
+  @override
+  String get allowPermissionQuestion => 'Do you want to grant permission?';
+
+  @override
+  String get grantPermission => 'Grant permission';
+
+  @override
+  String get checking => 'Checking...';
+
+  @override
+  String get initializingSyncEngine => 'Initializing sync engine...';
+
+  @override
+  String get dataSynchronization => 'Data Synchronization';
+
+  @override
+  String tablesSynced(int synced, int total) {
+    return '$synced of $total tables synced';
+  }
+
+  @override
+  String get syncAllData => 'Sync All Data';
+
+  @override
+  String get syncAllTablesInOrder => 'This will sync all tables in dependency order';
+
+  @override
+  String get dataGroups => 'Data Groups';
+
+  @override
+  String get backgroundAutoSync => 'Background Auto-Sync';
+
+  @override
+  String get backgroundSyncDescription => 'Keep your data fresh even when the app is closed. Requires internet connection.';
+
+  @override
+  String get syncInterval => 'Sync Interval';
+
+  @override
+  String get customIntervalNote => '* Custom interval takes priority if set to 60 or more';
+
+  @override
+  String get clientBalanceCache => 'Client Balance Cache';
+
+  @override
+  String clientBalancesCached(int count) {
+    return '$count client balances cached';
+  }
+
+  @override
+  String get balanceCacheDescription => 'Client balance data is stored in local cache. You can clear the cache if the data is outdated.';
+
+  @override
+  String get clearing => 'Clearing...';
+
+  @override
+  String get clearCache => 'Clear Cache';
+
+  @override
+  String get backgroundSyncEnabled => 'Background sync enabled';
+
+  @override
+  String get backgroundSyncDisabled => 'Background sync disabled';
+
+  @override
+  String get minimumIntervalIs60 => 'Minimum interval is 60 minutes';
+
+  @override
+  String get justNow => 'just now';
+
+  @override
+  String minutesAgo(int minutes) {
+    return '${minutes}m ago';
+  }
+
+  @override
+  String hoursAgo(int hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String daysAgo(int days) {
+    return '$days days ago';
+  }
+
+  @override
+  String weeksAgo(int weeks) {
+    return '$weeks weeks ago';
+  }
+
+  @override
+  String get unknownProduct => 'Unknown product';
+
+  @override
+  String get errorOccurredTitle => 'An error occurred';
+
+  @override
+  String get akbClientReport => 'AKB clients report';
+
+  @override
+  String get akbClients => 'AKB clients';
+
+  @override
+  String get akbPercentage => 'AKB percentage';
+
+  @override
+  String get akbClientsList => 'AKB clients list';
+
+  @override
+  String daysAgoShort(int days) {
+    return '$days days ago';
   }
 }

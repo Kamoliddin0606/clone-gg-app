@@ -1238,7 +1238,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${tradingPoint.name} ${AppLocalizations.of(context)?.visitCompletedFor ?? "visit completed successfully"}',
+              '${tradingPoint.name} ${AppLocalizations.of(context)?.visitCompletedFor ?? "uchun tashrif muvaffaqiyatli yakunlandi"}',
             ),
             backgroundColor: Colors.green,
           ),

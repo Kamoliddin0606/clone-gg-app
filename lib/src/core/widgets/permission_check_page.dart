@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_dialog.dart';
@@ -74,14 +75,17 @@ class _PermissionCheckPageState extends State<PermissionCheckPage> {
   Widget build(BuildContext context) {
     // Show loading screen until initialized
     if (!_initialized) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Ilova tayyorlanmoqda...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context)?.appPreparing ??
+                    'Ilova tayyorlanmoqda...',
+              ),
             ],
           ),
         ),
@@ -92,13 +96,16 @@ class _PermissionCheckPageState extends State<PermissionCheckPage> {
       body: Stack(
         children: [
           // Loading screen background
-          const Center(
+          Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Ruxsatlar tekshirilmoqda...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  AppLocalizations.of(context)?.permissionsChecking ??
+                      'Ruxsatlar tekshirilmoqda...',
+                ),
               ],
             ),
           ),
@@ -146,28 +153,64 @@ class PermissionWarningDialog extends StatelessWidget {
 
     return AlertDialog(
       title: Text(
-        'Ruxsatlar tekshiruvi',
-        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+        AppLocalizations.of(context)?.permissionsCheckTitle ??
+            'Ruxsatlar tekshiruvi',
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Ilova to\'liq ishlashi uchun quyidagi ruxsatlar kerak:',
+            AppLocalizations.of(context)?.permissionsCheckDescription ??
+                'Ilova to\'liq ishlashi uchun quyidagi ruxsatlar kerak:',
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
-          _buildPermissionItem('Fayl saqlash', 'Ma\'lumotlarni saqlash'),
-          _buildPermissionItem('Joylashuv', 'Xarita va masofa hisoblash'),
-          _buildPermissionItem('Kamera', 'Rasmga olish'),
-          _buildPermissionItem('Mikrofon', 'Ovoz yozish'),
-          _buildPermissionItem('Bildirishnomalar', 'Xabarlarni ko\'rsatish'),
-          _buildPermissionItem('Musiqa va audio', 'Audio fayllar bilan ishlash'),
-          _buildPermissionItem('Rasmlar va videolar', 'Media fayllar bilan ishlash'),
+          _buildPermissionItem(
+            AppLocalizations.of(context)?.permissionFileStorage ??
+                'Fayl saqlash',
+            AppLocalizations.of(context)?.permissionFileStorageDesc ??
+                'Ma\'lumotlarni saqlash',
+          ),
+          _buildPermissionItem(
+            AppLocalizations.of(context)?.permissionLocation ?? 'Joylashuv',
+            AppLocalizations.of(context)?.permissionLocationDesc ??
+                'Xarita va masofa hisoblash',
+          ),
+          _buildPermissionItem(
+            AppLocalizations.of(context)?.permissionCamera ?? 'Kamera',
+            AppLocalizations.of(context)?.permissionCameraDesc ??
+                'Rasmga olish',
+          ),
+          _buildPermissionItem(
+            AppLocalizations.of(context)?.permissionMicrophone ?? 'Mikrofon',
+            AppLocalizations.of(context)?.permissionMicrophoneDesc ??
+                'Ovoz yozish',
+          ),
+          _buildPermissionItem(
+            AppLocalizations.of(context)?.permissionNotifications ??
+                'Bildirishnomalar',
+            AppLocalizations.of(context)?.permissionNotificationsDesc ??
+                'Xabarlarni ko\'rsatish',
+          ),
+          _buildPermissionItem(
+            AppLocalizations.of(context)?.permissionAudio ?? 'Musiqa va audio',
+            AppLocalizations.of(context)?.permissionAudioDesc ??
+                'Audio fayllar bilan ishlash',
+          ),
+          _buildPermissionItem(
+            AppLocalizations.of(context)?.permissionPhotosVideos ??
+                'Rasmlar va videolar',
+            AppLocalizations.of(context)?.permissionPhotosVideosDesc ??
+                'Media fayllar bilan ishlash',
+          ),
           const SizedBox(height: 12),
           Text(
-            'Ruxsatlarsiz ilova cheklangan rejimda ishlaydi.',
+            AppLocalizations.of(context)?.permissionsLimitedWarning ??
+                'Ruxsatlarsiz ilova cheklangan rejimda ishlaydi.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.error,
               fontWeight: FontWeight.w500,
@@ -178,7 +221,7 @@ class PermissionWarningDialog extends StatelessWidget {
       actions: [
         FilledButton(
           onPressed: () => onResult(true),
-          child: const Text('Boshlash'),
+          child: Text(AppLocalizations.of(context)?.startButton ?? 'Boshlash'),
         ),
       ],
     );
@@ -197,14 +240,14 @@ class PermissionWarningDialog extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
                 ),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -222,10 +265,12 @@ class ComprehensivePermissionDialog extends StatefulWidget {
   const ComprehensivePermissionDialog({super.key, required this.onResult});
 
   @override
-  State<ComprehensivePermissionDialog> createState() => _ComprehensivePermissionDialogState();
+  State<ComprehensivePermissionDialog> createState() =>
+      _ComprehensivePermissionDialogState();
 }
 
-class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionDialog> {
+class _ComprehensivePermissionDialogState
+    extends State<ComprehensivePermissionDialog> {
   final PermissionManager _permissionManager = PermissionManager();
   int _currentPermissionIndex = 0;
   bool _isLoading = false;
@@ -233,7 +278,9 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
   List<RequiredPermission> _requiredPermissions = [];
 
   Future<void> _loadPermissions() async {
-    final isAndroid13OrHigher = Platform.isAndroid ? await _isAndroid13OrHigher() : false;
+    final isAndroid13OrHigher = Platform.isAndroid
+        ? await _isAndroid13OrHigher()
+        : false;
 
     _requiredPermissions = [
       RequiredPermission(
@@ -372,7 +419,9 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
 
     try {
       final permission = _requiredPermissions[_currentPermissionIndex];
-      final status = await _permissionManager.requestPermission(permission.type);
+      final status = await _permissionManager.requestPermission(
+        permission.type,
+      );
 
       if (kDebugMode) {
         print('Permission request for ${permission.type}: $status');
@@ -406,7 +455,9 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
       builder: (context) => AlertDialog(
         title: Text(
           '${permission.title} kerak',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
         content: Text(
           '${permission.description}. Iltimos, ilova sozlamalaridan ruxsat bering.',
@@ -439,7 +490,9 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
 
   void _skipPermission() {
     if (kDebugMode) {
-      print('Skipping permission: ${_requiredPermissions[_currentPermissionIndex].type}');
+      print(
+        'Skipping permission: ${_requiredPermissions[_currentPermissionIndex].type}',
+      );
     }
     _moveToNextPermission();
   }
@@ -458,16 +511,15 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
       child: AlertDialog(
         title: Text(
           permission.title,
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              permission.description,
-              style: theme.textTheme.bodyMedium,
-            ),
+            Text(permission.description, style: theme.textTheme.bodyMedium),
             const SizedBox(height: 8),
             Text(
               'Maqsad: ${permission.purpose}',
@@ -478,7 +530,9 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
             const SizedBox(height: 16),
             Text(
               'Ruxsat berishni xohlaysizmi?',
-              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -495,10 +549,7 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
           ] else ...[
             const CircularProgressIndicator(),
             const SizedBox(width: 16),
-            Text(
-              'Tekshirilmoqda...',
-              style: theme.textTheme.bodyMedium,
-            ),
+            Text('Tekshirilmoqda...', style: theme.textTheme.bodyMedium),
           ],
         ],
       ),

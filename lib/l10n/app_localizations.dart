@@ -508,13 +508,13 @@ abstract class AppLocalizations {
   /// No description provided for @lastSync.
   ///
   /// In en, this message translates to:
-  /// **'Last sync'**
-  String get lastSync;
+  /// **'Last sync: {time}'**
+  String lastSync(String time);
 
   /// No description provided for @syncing.
   ///
   /// In en, this message translates to:
-  /// **'Synchronizing...'**
+  /// **'Syncing...'**
   String get syncing;
 
   /// No description provided for @syncComplete.
@@ -2662,7 +2662,7 @@ abstract class AppLocalizations {
   /// No description provided for @visitCompletedFor.
   ///
   /// In en, this message translates to:
-  /// **'Visit completed successfully for'**
+  /// **'visit completed successfully for'**
   String get visitCompletedFor;
 
   /// No description provided for @contractsPageError.
@@ -3286,7 +3286,7 @@ abstract class AppLocalizations {
   /// No description provided for @clearBalanceCacheConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Clear all cached balance data?'**
+  /// **'All client balance data will be deleted. It will be reloaded next time balance is viewed.'**
   String get clearBalanceCacheConfirm;
 
   /// No description provided for @balanceCacheCleared.
@@ -5916,6 +5916,564 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Required distance: {distance}m'**
   String requiredDistance(int distance);
+
+  /// No description provided for @orderStatusDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get orderStatusDelivered;
+
+  /// No description provided for @orderStatusInProcess.
+  ///
+  /// In en, this message translates to:
+  /// **'In process'**
+  String get orderStatusInProcess;
+
+  /// No description provided for @orderStatusReturn.
+  ///
+  /// In en, this message translates to:
+  /// **'Return'**
+  String get orderStatusReturn;
+
+  /// No description provided for @orderStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get orderStatusExpired;
+
+  /// No description provided for @contractStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get contractStatusActive;
+
+  /// No description provided for @contractStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get contractStatusExpired;
+
+  /// No description provided for @contractStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get contractStatusPending;
+
+  /// No description provided for @contractStatusSuspended.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspended'**
+  String get contractStatusSuspended;
+
+  /// No description provided for @contractTabAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get contractTabAll;
+
+  /// No description provided for @appPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing app...'**
+  String get appPreparing;
+
+  /// No description provided for @permissionsChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking permissions...'**
+  String get permissionsChecking;
+
+  /// No description provided for @permissionsCheckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions check'**
+  String get permissionsCheckTitle;
+
+  /// No description provided for @permissionsCheckDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The following permissions are required for the app to work properly:'**
+  String get permissionsCheckDescription;
+
+  /// No description provided for @permissionFileStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'File storage'**
+  String get permissionFileStorage;
+
+  /// No description provided for @permissionFileStorageDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Store data'**
+  String get permissionFileStorageDesc;
+
+  /// No description provided for @permissionLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get permissionLocation;
+
+  /// No description provided for @permissionLocationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Map and distance calculation'**
+  String get permissionLocationDesc;
+
+  /// No description provided for @permissionCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get permissionCamera;
+
+  /// No description provided for @permissionCameraDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photos'**
+  String get permissionCameraDesc;
+
+  /// No description provided for @permissionMicrophone.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone'**
+  String get permissionMicrophone;
+
+  /// No description provided for @permissionMicrophoneDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Record audio'**
+  String get permissionMicrophoneDesc;
+
+  /// No description provided for @permissionNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get permissionNotifications;
+
+  /// No description provided for @permissionNotificationsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Show messages'**
+  String get permissionNotificationsDesc;
+
+  /// No description provided for @permissionAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Music and audio'**
+  String get permissionAudio;
+
+  /// No description provided for @permissionAudioDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Work with audio files'**
+  String get permissionAudioDesc;
+
+  /// No description provided for @permissionPhotosVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos and videos'**
+  String get permissionPhotosVideos;
+
+  /// No description provided for @permissionPhotosVideosDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Work with media files'**
+  String get permissionPhotosVideosDesc;
+
+  /// No description provided for @permissionsLimitedWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Without permissions, the app will work in limited mode.'**
+  String get permissionsLimitedWarning;
+
+  /// No description provided for @startButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get startButton;
+
+  /// No description provided for @permissionStorageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'File storage permission'**
+  String get permissionStorageTitle;
+
+  /// No description provided for @permissionStorageDescAndroid13.
+  ///
+  /// In en, this message translates to:
+  /// **'Select folder to store app data'**
+  String get permissionStorageDescAndroid13;
+
+  /// No description provided for @permissionStorageDescOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Store and load app data'**
+  String get permissionStorageDescOther;
+
+  /// No description provided for @permissionStoragePurposeAndroid13.
+  ///
+  /// In en, this message translates to:
+  /// **'Select folder to store photos, documents and data'**
+  String get permissionStoragePurposeAndroid13;
+
+  /// No description provided for @permissionStoragePurposeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Store photos, documents and data'**
+  String get permissionStoragePurposeOther;
+
+  /// No description provided for @permissionLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission'**
+  String get permissionLocationTitle;
+
+  /// No description provided for @permissionLocationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort trading points by distance'**
+  String get permissionLocationDescription;
+
+  /// No description provided for @permissionLocationPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Show location on map and calculate distance'**
+  String get permissionLocationPurpose;
+
+  /// No description provided for @permissionLocationAlwaysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Always allow location permission'**
+  String get permissionLocationAlwaysTitle;
+
+  /// No description provided for @permissionLocationAlwaysDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Detect location when app is in background'**
+  String get permissionLocationAlwaysDescription;
+
+  /// No description provided for @permissionLocationAlwaysPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Background service and notifications'**
+  String get permissionLocationAlwaysPurpose;
+
+  /// No description provided for @permissionCameraTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission'**
+  String get permissionCameraTitle;
+
+  /// No description provided for @permissionCameraDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photos and scan barcodes'**
+  String get permissionCameraDescription;
+
+  /// No description provided for @permissionCameraPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photos of products and trading points'**
+  String get permissionCameraPurpose;
+
+  /// No description provided for @permissionMicrophoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission'**
+  String get permissionMicrophoneTitle;
+
+  /// No description provided for @permissionMicrophoneDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Record audio and audio messages'**
+  String get permissionMicrophoneDescription;
+
+  /// No description provided for @permissionMicrophonePurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice reminders and audio recordings'**
+  String get permissionMicrophonePurpose;
+
+  /// No description provided for @permissionNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission'**
+  String get permissionNotificationTitle;
+
+  /// No description provided for @permissionNotificationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Show important messages'**
+  String get permissionNotificationDescription;
+
+  /// No description provided for @permissionNotificationPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders, news and notifications'**
+  String get permissionNotificationPurpose;
+
+  /// No description provided for @permissionAudioTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Music and audio permission'**
+  String get permissionAudioTitle;
+
+  /// No description provided for @permissionAudioDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Work with audio files'**
+  String get permissionAudioDescription;
+
+  /// No description provided for @permissionAudioPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Work with music, audio messages and voice files'**
+  String get permissionAudioPurpose;
+
+  /// No description provided for @permissionPhotosVideosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos and videos permission'**
+  String get permissionPhotosVideosTitle;
+
+  /// No description provided for @permissionPhotosVideosDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Work with media files'**
+  String get permissionPhotosVideosDescription;
+
+  /// No description provided for @permissionPhotosVideosPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Work with photos, videos and media files'**
+  String get permissionPhotosVideosPurpose;
+
+  /// No description provided for @permissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'{permission} required'**
+  String permissionRequired(String permission);
+
+  /// No description provided for @permissionRequiredSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'{description}. Please grant permission in app settings.'**
+  String permissionRequiredSettings(String description);
+
+  /// No description provided for @laterButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get laterButton;
+
+  /// No description provided for @goToSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to settings'**
+  String get goToSettings;
+
+  /// No description provided for @permissionPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Purpose: {purpose}'**
+  String permissionPurpose(String purpose);
+
+  /// No description provided for @allowPermissionQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to grant permission?'**
+  String get allowPermissionQuestion;
+
+  /// No description provided for @grantPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant permission'**
+  String get grantPermission;
+
+  /// No description provided for @checking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking...'**
+  String get checking;
+
+  /// No description provided for @initializingSyncEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Initializing sync engine...'**
+  String get initializingSyncEngine;
+
+  /// No description provided for @dataSynchronization.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Synchronization'**
+  String get dataSynchronization;
+
+  /// No description provided for @tablesSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'{synced} of {total} tables synced'**
+  String tablesSynced(int synced, int total);
+
+  /// No description provided for @syncAllData.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync All Data'**
+  String get syncAllData;
+
+  /// No description provided for @syncAllTablesInOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'This will sync all tables in dependency order'**
+  String get syncAllTablesInOrder;
+
+  /// No description provided for @dataGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Groups'**
+  String get dataGroups;
+
+  /// No description provided for @backgroundAutoSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Background Auto-Sync'**
+  String get backgroundAutoSync;
+
+  /// No description provided for @backgroundSyncDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your data fresh even when the app is closed. Requires internet connection.'**
+  String get backgroundSyncDescription;
+
+  /// No description provided for @syncInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Interval'**
+  String get syncInterval;
+
+  /// No description provided for @customIntervalNote.
+  ///
+  /// In en, this message translates to:
+  /// **'* Custom interval takes priority if set to 60 or more'**
+  String get customIntervalNote;
+
+  /// No description provided for @clientBalanceCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Balance Cache'**
+  String get clientBalanceCache;
+
+  /// No description provided for @clientBalancesCached.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} client balances cached'**
+  String clientBalancesCached(int count);
+
+  /// No description provided for @balanceCacheDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Client balance data is stored in local cache. You can clear the cache if the data is outdated.'**
+  String get balanceCacheDescription;
+
+  /// No description provided for @clearing.
+  ///
+  /// In en, this message translates to:
+  /// **'Clearing...'**
+  String get clearing;
+
+  /// No description provided for @clearCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Cache'**
+  String get clearCache;
+
+  /// No description provided for @backgroundSyncEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Background sync enabled'**
+  String get backgroundSyncEnabled;
+
+  /// No description provided for @backgroundSyncDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Background sync disabled'**
+  String get backgroundSyncDisabled;
+
+  /// No description provided for @minimumIntervalIs60.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum interval is 60 minutes'**
+  String get minimumIntervalIs60;
+
+  /// No description provided for @justNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get justNow;
+
+  /// No description provided for @minutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m ago'**
+  String minutesAgo(int minutes);
+
+  /// No description provided for @hoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h ago'**
+  String hoursAgo(int hours);
+
+  /// No description provided for @daysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days ago'**
+  String daysAgo(int days);
+
+  /// No description provided for @weeksAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{weeks} weeks ago'**
+  String weeksAgo(int weeks);
+
+  /// No description provided for @unknownProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown product'**
+  String get unknownProduct;
+
+  /// No description provided for @errorOccurredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred'**
+  String get errorOccurredTitle;
+
+  /// No description provided for @akbClientReport.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB clients report'**
+  String get akbClientReport;
+
+  /// No description provided for @akbClients.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB clients'**
+  String get akbClients;
+
+  /// No description provided for @akbPercentage.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB percentage'**
+  String get akbPercentage;
+
+  /// No description provided for @akbClientsList.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB clients list'**
+  String get akbClientsList;
+
+  /// No description provided for @daysAgoShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days ago'**
+  String daysAgoShort(int days);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

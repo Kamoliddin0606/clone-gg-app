@@ -207,13 +207,20 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
 
   /// Build default status tabs and map (fallback)
   void _buildDefaultStatusTabsAndMap() {
-    _statusTabs = ['Barchasi', 'Доставлено', 'В процессе', 'Возврат', 'Истек'];
+    final l10n = AppLocalizations.of(context);
+    _statusTabs = [
+      l10n?.all ?? 'Barchasi',
+      l10n?.orderStatusDelivered ?? 'Доставлено',
+      l10n?.orderStatusInProcess ?? 'В процессе',
+      l10n?.orderStatusReturn ?? 'Возврат',
+      l10n?.orderStatusExpired ?? 'Истек',
+    ];
     _statusMap = {
-      'Barchasi': null,
-      'Доставлено': 4,
-      'В процессе': 2,
-      'Возврат': 7,
-      'Истек': 6,
+      l10n?.all ?? 'Barchasi': null,
+      l10n?.orderStatusDelivered ?? 'Доставлено': 4,
+      l10n?.orderStatusInProcess ?? 'В процессе': 2,
+      l10n?.orderStatusReturn ?? 'Возврат': 7,
+      l10n?.orderStatusExpired ?? 'Истек': 6,
     };
   }
 

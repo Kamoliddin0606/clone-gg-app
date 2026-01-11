@@ -387,12 +387,28 @@ class _ContractsPageState extends State<ContractsPage>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          tabs: const [
-            Tab(text: 'Все'),
-            Tab(text: 'Действует'),
-            Tab(text: 'Истек'),
-            Tab(text: 'Приостановлен'),
-            Tab(text: 'Не согласован'),
+          tabs: [
+            Tab(text: AppLocalizations.of(context)?.contractTabAll ?? 'Все'),
+            Tab(
+              text:
+                  AppLocalizations.of(context)?.contractStatusActive ??
+                  'Действует',
+            ),
+            Tab(
+              text:
+                  AppLocalizations.of(context)?.contractStatusExpired ??
+                  'Истек',
+            ),
+            Tab(
+              text:
+                  AppLocalizations.of(context)?.contractStatusSuspended ??
+                  'Приостановлен',
+            ),
+            Tab(
+              text:
+                  AppLocalizations.of(context)?.contractStatusPending ??
+                  'Не согласован',
+            ),
           ],
         ),
       ),

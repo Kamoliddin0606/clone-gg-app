@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 class GenericReportPage extends StatelessWidget {
   final String title;
@@ -43,31 +44,35 @@ class GenericReportPage extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Stats Cards
-            ...stats.map((stat) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildStatCard(
-                stat['title'],
-                stat['value'],
-                stat['icon'],
-                stat['color'],
+            ...stats.map(
+              (stat) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildStatCard(
+                  stat['title'],
+                  stat['value'],
+                  stat['icon'],
+                  stat['color'],
+                ),
               ),
-            )),
+            ),
 
             // Items List
             if (items != null && items!.isNotEmpty) ...[
               const SizedBox(height: 24),
               Text(
-                'Tafsilotlar',
+                AppLocalizations.of(context)?.details ?? 'Tafsilotlar',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
-              ...items!.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _buildItemCard(item),
-              )),
+              ...items!.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildItemCard(item),
+                ),
+              ),
             ],
           ],
         ),
@@ -75,14 +80,21 @@ class GenericReportPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Builder(
       builder: (context) {
         final theme = Theme.of(context);
 
         return Card(
           elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -126,7 +138,9 @@ class GenericReportPage extends StatelessWidget {
 
         return Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(

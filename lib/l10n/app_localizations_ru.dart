@@ -213,7 +213,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncNow => 'Синхронизировать сейчас';
 
   @override
-  String get lastSync => 'Последняя синхронизация';
+  String lastSync(String time) {
+    return 'Последняя синхронизация: $time';
+  }
 
   @override
   String get syncing => 'Синхронизация...';
@@ -1294,7 +1296,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get locationNotAvailable => 'Данные о местоположении недоступны. Посещение невозможно.';
 
   @override
-  String get visitCompletedFor => 'Посещение успешно завершено для';
+  String get visitCompletedFor => 'визит успешно завершен для';
 
   @override
   String get contractsPageError => 'Ошибка перехода на страницу контрактов';
@@ -1614,7 +1616,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clearBalanceCache => 'Очистить кэш баланса';
 
   @override
-  String get clearBalanceCacheConfirm => 'Очистить все кэшированные данные баланса?';
+  String get clearBalanceCacheConfirm => 'Все данные баланса клиентов будут удалены. Они будут перезагружены при следующем просмотре баланса.';
 
   @override
   String get balanceCacheCleared => 'Кэш баланса очищен';
@@ -3088,5 +3090,304 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String requiredDistance(int distance) {
     return 'Требуемое расстояние: $distanceм';
+  }
+
+  @override
+  String get orderStatusDelivered => 'Доставлено';
+
+  @override
+  String get orderStatusInProcess => 'В процессе';
+
+  @override
+  String get orderStatusReturn => 'Возврат';
+
+  @override
+  String get orderStatusExpired => 'Истек';
+
+  @override
+  String get contractStatusActive => 'Действует';
+
+  @override
+  String get contractStatusExpired => 'Истек';
+
+  @override
+  String get contractStatusPending => 'Не согласован';
+
+  @override
+  String get contractStatusSuspended => 'Приостановлен';
+
+  @override
+  String get contractTabAll => 'Все';
+
+  @override
+  String get appPreparing => 'Подготовка приложения...';
+
+  @override
+  String get permissionsChecking => 'Проверка разрешений...';
+
+  @override
+  String get permissionsCheckTitle => 'Проверка разрешений';
+
+  @override
+  String get permissionsCheckDescription => 'Для полноценной работы приложения требуются следующие разрешения:';
+
+  @override
+  String get permissionFileStorage => 'Хранение файлов';
+
+  @override
+  String get permissionFileStorageDesc => 'Сохранение данных';
+
+  @override
+  String get permissionLocation => 'Местоположение';
+
+  @override
+  String get permissionLocationDesc => 'Карта и расчет расстояния';
+
+  @override
+  String get permissionCamera => 'Камера';
+
+  @override
+  String get permissionCameraDesc => 'Фотосъемка';
+
+  @override
+  String get permissionMicrophone => 'Микрофон';
+
+  @override
+  String get permissionMicrophoneDesc => 'Запись звука';
+
+  @override
+  String get permissionNotifications => 'Уведомления';
+
+  @override
+  String get permissionNotificationsDesc => 'Показ сообщений';
+
+  @override
+  String get permissionAudio => 'Музыка и аудио';
+
+  @override
+  String get permissionAudioDesc => 'Работа с аудио файлами';
+
+  @override
+  String get permissionPhotosVideos => 'Фото и видео';
+
+  @override
+  String get permissionPhotosVideosDesc => 'Работа с медиа файлами';
+
+  @override
+  String get permissionsLimitedWarning => 'Без разрешений приложение будет работать в ограниченном режиме.';
+
+  @override
+  String get startButton => 'Начать';
+
+  @override
+  String get permissionStorageTitle => 'Разрешение на хранение файлов';
+
+  @override
+  String get permissionStorageDescAndroid13 => 'Выбор папки для хранения данных приложения';
+
+  @override
+  String get permissionStorageDescOther => 'Сохранение и загрузка данных приложения';
+
+  @override
+  String get permissionStoragePurposeAndroid13 => 'Выберите папку для хранения фото, документов и данных';
+
+  @override
+  String get permissionStoragePurposeOther => 'Хранение фото, документов и данных';
+
+  @override
+  String get permissionLocationTitle => 'Разрешение на местоположение';
+
+  @override
+  String get permissionLocationDescription => 'Сортировка торговых точек по расстоянию';
+
+  @override
+  String get permissionLocationPurpose => 'Показ местоположения на карте и расчет расстояния';
+
+  @override
+  String get permissionLocationAlwaysTitle => 'Разрешение на постоянное местоположение';
+
+  @override
+  String get permissionLocationAlwaysDescription => 'Определение местоположения при работе приложения в фоновом режиме';
+
+  @override
+  String get permissionLocationAlwaysPurpose => 'Фоновый сервис и уведомления';
+
+  @override
+  String get permissionCameraTitle => 'Разрешение на камеру';
+
+  @override
+  String get permissionCameraDescription => 'Фотосъемка и сканирование штрих-кодов';
+
+  @override
+  String get permissionCameraPurpose => 'Фотосъемка товаров и торговых точек';
+
+  @override
+  String get permissionMicrophoneTitle => 'Разрешение на микрофон';
+
+  @override
+  String get permissionMicrophoneDescription => 'Запись звука и аудио сообщений';
+
+  @override
+  String get permissionMicrophonePurpose => 'Голосовые напоминания и аудио записи';
+
+  @override
+  String get permissionNotificationTitle => 'Разрешение на уведомления';
+
+  @override
+  String get permissionNotificationDescription => 'Показ важных сообщений';
+
+  @override
+  String get permissionNotificationPurpose => 'Напоминания, новости и уведомления';
+
+  @override
+  String get permissionAudioTitle => 'Разрешение на музыку и аудио';
+
+  @override
+  String get permissionAudioDescription => 'Работа с аудио файлами';
+
+  @override
+  String get permissionAudioPurpose => 'Работа с музыкой, аудио сообщениями и голосовыми файлами';
+
+  @override
+  String get permissionPhotosVideosTitle => 'Разрешение на фото и видео';
+
+  @override
+  String get permissionPhotosVideosDescription => 'Работа с медиа файлами';
+
+  @override
+  String get permissionPhotosVideosPurpose => 'Работа с фото, видео и медиа файлами';
+
+  @override
+  String permissionRequired(String permission) {
+    return '$permission требуется';
+  }
+
+  @override
+  String permissionRequiredSettings(String description) {
+    return '$description. Пожалуйста, предоставьте разрешение в настройках приложения.';
+  }
+
+  @override
+  String get laterButton => 'Позже';
+
+  @override
+  String get goToSettings => 'Перейти в настройки';
+
+  @override
+  String permissionPurpose(String purpose) {
+    return 'Цель: $purpose';
+  }
+
+  @override
+  String get allowPermissionQuestion => 'Хотите предоставить разрешение?';
+
+  @override
+  String get grantPermission => 'Предоставить разрешение';
+
+  @override
+  String get checking => 'Проверка...';
+
+  @override
+  String get initializingSyncEngine => 'Инициализация системы синхронизации...';
+
+  @override
+  String get dataSynchronization => 'Синхронизация данных';
+
+  @override
+  String tablesSynced(int synced, int total) {
+    return '$synced из $total таблиц синхронизировано';
+  }
+
+  @override
+  String get syncAllData => 'Синхронизировать все данные';
+
+  @override
+  String get syncAllTablesInOrder => 'Это синхронизирует все таблицы в порядке зависимостей';
+
+  @override
+  String get dataGroups => 'Группы данных';
+
+  @override
+  String get backgroundAutoSync => 'Фоновая авто-синхронизация';
+
+  @override
+  String get backgroundSyncDescription => 'Держите данные актуальными даже когда приложение закрыто. Требуется подключение к интернету.';
+
+  @override
+  String get syncInterval => 'Интервал синхронизации';
+
+  @override
+  String get customIntervalNote => '* Пользовательский интервал имеет приоритет, если установлен 60 или более';
+
+  @override
+  String get clientBalanceCache => 'Кэш баланса клиентов';
+
+  @override
+  String clientBalancesCached(int count) {
+    return '$count балансов клиентов в кэше';
+  }
+
+  @override
+  String get balanceCacheDescription => 'Данные баланса клиентов хранятся в локальном кэше. Вы можете очистить кэш, если данные устарели.';
+
+  @override
+  String get clearing => 'Очистка...';
+
+  @override
+  String get clearCache => 'Очистить кэш';
+
+  @override
+  String get backgroundSyncEnabled => 'Фоновая синхронизация включена';
+
+  @override
+  String get backgroundSyncDisabled => 'Фоновая синхронизация отключена';
+
+  @override
+  String get minimumIntervalIs60 => 'Минимальный интервал 60 минут';
+
+  @override
+  String get justNow => 'только что';
+
+  @override
+  String minutesAgo(int minutes) {
+    return '$minutesм назад';
+  }
+
+  @override
+  String hoursAgo(int hours) {
+    return '$hoursч назад';
+  }
+
+  @override
+  String daysAgo(int days) {
+    return '$days дней назад';
+  }
+
+  @override
+  String weeksAgo(int weeks) {
+    return '$weeks недель назад';
+  }
+
+  @override
+  String get unknownProduct => 'Неизвестный продукт';
+
+  @override
+  String get errorOccurredTitle => 'Произошла ошибка';
+
+  @override
+  String get akbClientReport => 'Отчет по клиентам АКБ';
+
+  @override
+  String get akbClients => 'Клиенты АКБ';
+
+  @override
+  String get akbPercentage => 'Процент АКБ';
+
+  @override
+  String get akbClientsList => 'Список клиентов АКБ';
+
+  @override
+  String daysAgoShort(int days) {
+    return '$days дней назад';
   }
 }

@@ -158,14 +158,12 @@ class _DataSyncTabState extends State<DataSyncTab>
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange),
             SizedBox(width: 8),
-            Text(
-              AppLocalizations.of(context)?.clear ?? 'Balans keshini tozalash',
-            ),
+            Text(AppLocalizations.of(context)?.clearCache ?? 'Keshni tozalash'),
           ],
         ),
         content: Text(
-          'Barcha mijozlar balans ma\'lumotlari o\'chiriladi. '
-          'Keyingi safar balans ko\'rilganda qayta yuklanadi.',
+          AppLocalizations.of(context)?.clearBalanceCacheConfirm ??
+              'Barcha mijozlar balans ma\'lumotlari o\'chiriladi. Keyingi safar balans ko\'rilganda qayta yuklanadi.',
         ),
         actions: [
           TextButton(
@@ -196,7 +194,10 @@ class _DataSyncTabState extends State<DataSyncTab>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Balans keshi tozalandi'),
+              content: Text(
+                AppLocalizations.of(context)?.balanceCacheCleared ??
+                    'Balans keshi tozalandi',
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -235,7 +236,11 @@ class _DataSyncTabState extends State<DataSyncTab>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          value ? 'Background sync enabled' : 'Background sync disabled',
+          value
+              ? (AppLocalizations.of(context)?.backgroundSyncEnabled ??
+                    'Background sync enabled')
+              : (AppLocalizations.of(context)?.backgroundSyncDisabled ??
+                    'Background sync disabled'),
         ),
         backgroundColor: value ? Colors.green : Colors.grey,
         duration: Duration(seconds: 2),
@@ -268,7 +273,10 @@ class _DataSyncTabState extends State<DataSyncTab>
     if (minutes != null && minutes < 60) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Minimum interval is 60 minutes'),
+          content: Text(
+            AppLocalizations.of(context)?.minimumIntervalIs60 ??
+                'Minimum interval is 60 minutes',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -342,13 +350,16 @@ class _DataSyncTabState extends State<DataSyncTab>
       future: _orchestrator.initialized,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text('Initializing sync engine...'),
+                Text(
+                  AppLocalizations.of(context)?.initializingSyncEngine ??
+                      'Initializing sync engine...',
+                ),
               ],
             ),
           );
@@ -401,7 +412,10 @@ class _DataSyncTabState extends State<DataSyncTab>
                           SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Data Synchronization',
+                              AppLocalizations.of(
+                                    context,
+                                  )?.dataSynchronization ??
+                                  'Data Synchronization',
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: colorScheme.primary,
@@ -415,7 +429,11 @@ class _DataSyncTabState extends State<DataSyncTab>
 
                       // Status info
                       Text(
-                        '${overallStatus.syncedCount} of ${overallStatus.totalCount} tables synced',
+                        AppLocalizations.of(context)?.tablesSynced(
+                              overallStatus.syncedCount,
+                              overallStatus.totalCount,
+                            ) ??
+                            '${overallStatus.syncedCount} of ${overallStatus.totalCount} tables synced',
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: colorScheme.onPrimaryContainer,
                         ),
@@ -423,7 +441,10 @@ class _DataSyncTabState extends State<DataSyncTab>
                       if (overallStatus.lastSyncTime != null) ...[
                         SizedBox(height: 4),
                         Text(
-                          'Last sync: ${_getRelativeTime(overallStatus.lastSyncTime!)}',
+                          AppLocalizations.of(context)?.lastSync(
+                                _getRelativeTime(overallStatus.lastSyncTime!),
+                              ) ??
+                              'Last sync: ${_getRelativeTime(overallStatus.lastSyncTime!)}',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onPrimaryContainer.withOpacity(
                               0.8,
@@ -449,7 +470,11 @@ class _DataSyncTabState extends State<DataSyncTab>
                                 )
                               : Icon(Icons.sync, size: 20),
                           label: Text(
-                            _isSyncingAll ? 'Syncing...' : 'Sync All Data',
+                            _isSyncingAll
+                                ? (AppLocalizations.of(context)?.syncing ??
+                                      'Syncing...')
+                                : (AppLocalizations.of(context)?.syncAllData ??
+                                      'Sync All Data'),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -482,7 +507,10 @@ class _DataSyncTabState extends State<DataSyncTab>
                           SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              'This will sync all tables in dependency order',
+                              AppLocalizations.of(
+                                    context,
+                                  )?.syncAllTablesInOrder ??
+                                  'This will sync all tables in dependency order',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onPrimaryContainer
                                     .withOpacity(0.7),
@@ -509,7 +537,8 @@ class _DataSyncTabState extends State<DataSyncTab>
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'Data Groups',
+                        AppLocalizations.of(context)?.dataGroups ??
+                            'Data Groups',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colorScheme.primary,
@@ -595,14 +624,18 @@ class _DataSyncTabState extends State<DataSyncTab>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Mijoz Balansi Keshi',
+                      AppLocalizations.of(context)?.clientBalanceCache ??
+                          'Mijoz Balansi Keshi',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     SizedBox(height: 4),
                     Text(
-                      '$_balanceCacheCount ta mijoz balansi saqlangan',
+                      AppLocalizations.of(
+                            context,
+                          )?.clientBalancesCached(_balanceCacheCount) ??
+                          '$_balanceCacheCount ta mijoz balansi saqlangan',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -614,8 +647,8 @@ class _DataSyncTabState extends State<DataSyncTab>
           ),
           SizedBox(height: 16),
           Text(
-            'Mijozlar balans ma\'lumotlari lokal keshda saqlanadi. '
-            'Agar ma\'lumotlar eskirgan bo\'lsa, keshni tozalashingiz mumkin.',
+            AppLocalizations.of(context)?.balanceCacheDescription ??
+                'Mijozlar balans ma\'lumotlari lokal keshda saqlanadi. Agar ma\'lumotlar eskirgan bo\'lsa, keshni tozalashingiz mumkin.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -633,7 +666,11 @@ class _DataSyncTabState extends State<DataSyncTab>
                     )
                   : Icon(Icons.delete_outline, color: Colors.red),
               label: Text(
-                _isClearingBalanceCache ? 'Tozalanmoqda...' : 'Keshni tozalash',
+                _isClearingBalanceCache
+                    ? (AppLocalizations.of(context)?.clearing ??
+                          'Tozalanmoqda...')
+                    : (AppLocalizations.of(context)?.clearCache ??
+                          'Keshni tozalash'),
                 style: TextStyle(
                   color: _isClearingBalanceCache ? null : Colors.red,
                 ),
@@ -669,7 +706,8 @@ class _DataSyncTabState extends State<DataSyncTab>
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Background Auto-Sync',
+                  AppLocalizations.of(context)?.backgroundAutoSync ??
+                      'Background Auto-Sync',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -680,7 +718,8 @@ class _DataSyncTabState extends State<DataSyncTab>
           ),
           SizedBox(height: 8),
           Text(
-            'Keep your data fresh even when the app is closed. Requires internet connection.',
+            AppLocalizations.of(context)?.backgroundSyncDescription ??
+                'Keep your data fresh even when the app is closed. Requires internet connection.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -688,7 +727,7 @@ class _DataSyncTabState extends State<DataSyncTab>
           if (_bgSyncEnabled) ...[
             Divider(height: 32),
             Text(
-              'Sync Interval',
+              AppLocalizations.of(context)?.syncInterval ?? 'Sync Interval',
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -782,7 +821,8 @@ class _DataSyncTabState extends State<DataSyncTab>
             ),
             SizedBox(height: 4),
             Text(
-              '* Custom interval takes priority if set to 60 or more',
+              AppLocalizations.of(context)?.customIntervalNote ??
+                  '* Custom interval takes priority if set to 60 or more',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.primary,
                 fontStyle: FontStyle.italic,

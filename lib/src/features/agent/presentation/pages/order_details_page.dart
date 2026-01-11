@@ -146,7 +146,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           final orderItem = OrderItem(
             productName: product.nameProduct?.trim().isNotEmpty == true
                 ? product.nameProduct!.trim()
-                : 'Noma\'lum mahsulot',
+                : (AppLocalizations.of(context)?.unknownProduct ??
+                      'Noma\'lum mahsulot'),
             article: codeProduct,
             quantity: (product.amount ?? 0).toDouble(),
             price: product.price ?? 0.0,
@@ -249,7 +250,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Xatolik yuz berdi',
+                  AppLocalizations.of(context)?.errorOccurredTitle ??
+                      'Xatolik yuz berdi',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),

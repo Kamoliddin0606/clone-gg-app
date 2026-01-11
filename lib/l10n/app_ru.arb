@@ -1721,5 +1721,174 @@
         "type": "int"
       }
     }
+  },
+  "orderStatusDelivered": "Доставлено",
+  "orderStatusInProcess": "В процессе",
+  "orderStatusReturn": "Возврат",
+  "orderStatusExpired": "Истек",
+  "loadingClientImages": "Загрузка изображений клиента...",
+  "clientDataLoadError": "Ошибка загрузки данных клиента",
+  "visitCompletedFor": "визит успешно завершен для",
+  "contractStatusActive": "Действует",
+  "contractStatusExpired": "Истек",
+  "contractStatusPending": "Не согласован",
+  "contractStatusSuspended": "Приостановлен",
+  "contractTabAll": "Все",
+  "appPreparing": "Подготовка приложения...",
+  "permissionsChecking": "Проверка разрешений...",
+  "permissionsCheckTitle": "Проверка разрешений",
+  "permissionsCheckDescription": "Для полноценной работы приложения требуются следующие разрешения:",
+  "permissionFileStorage": "Хранение файлов",
+  "permissionFileStorageDesc": "Сохранение данных",
+  "permissionLocation": "Местоположение",
+  "permissionLocationDesc": "Карта и расчет расстояния",
+  "permissionCamera": "Камера",
+  "permissionCameraDesc": "Фотосъемка",
+  "permissionMicrophone": "Микрофон",
+  "permissionMicrophoneDesc": "Запись звука",
+  "permissionNotifications": "Уведомления",
+  "permissionNotificationsDesc": "Показ сообщений",
+  "permissionAudio": "Музыка и аудио",
+  "permissionAudioDesc": "Работа с аудио файлами",
+  "permissionPhotosVideos": "Фото и видео",
+  "permissionPhotosVideosDesc": "Работа с медиа файлами",
+  "permissionsLimitedWarning": "Без разрешений приложение будет работать в ограниченном режиме.",
+  "startButton": "Начать",
+  "permissionStorageTitle": "Разрешение на хранение файлов",
+  "permissionStorageDescAndroid13": "Выбор папки для хранения данных приложения",
+  "permissionStorageDescOther": "Сохранение и загрузка данных приложения",
+  "permissionStoragePurposeAndroid13": "Выберите папку для хранения фото, документов и данных",
+  "permissionStoragePurposeOther": "Хранение фото, документов и данных",
+  "permissionLocationTitle": "Разрешение на местоположение",
+  "permissionLocationDescription": "Сортировка торговых точек по расстоянию",
+  "permissionLocationPurpose": "Показ местоположения на карте и расчет расстояния",
+  "permissionLocationAlwaysTitle": "Разрешение на постоянное местоположение",
+  "permissionLocationAlwaysDescription": "Определение местоположения при работе приложения в фоновом режиме",
+  "permissionLocationAlwaysPurpose": "Фоновый сервис и уведомления",
+  "permissionCameraTitle": "Разрешение на камеру",
+  "permissionCameraDescription": "Фотосъемка и сканирование штрих-кодов",
+  "permissionCameraPurpose": "Фотосъемка товаров и торговых точек",
+  "permissionMicrophoneTitle": "Разрешение на микрофон",
+  "permissionMicrophoneDescription": "Запись звука и аудио сообщений",
+  "permissionMicrophonePurpose": "Голосовые напоминания и аудио записи",
+  "permissionNotificationTitle": "Разрешение на уведомления",
+  "permissionNotificationDescription": "Показ важных сообщений",
+  "permissionNotificationPurpose": "Напоминания, новости и уведомления",
+  "permissionAudioTitle": "Разрешение на музыку и аудио",
+  "permissionAudioDescription": "Работа с аудио файлами",
+  "permissionAudioPurpose": "Работа с музыкой, аудио сообщениями и голосовыми файлами",
+  "permissionPhotosVideosTitle": "Разрешение на фото и видео",
+  "permissionPhotosVideosDescription": "Работа с медиа файлами",
+  "permissionPhotosVideosPurpose": "Работа с фото, видео и медиа файлами",
+  "permissionRequired": "{permission} требуется",
+  "@permissionRequired": {
+    "placeholders": {
+      "permission": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionRequiredSettings": "{description}. Пожалуйста, предоставьте разрешение в настройках приложения.",
+  "@permissionRequiredSettings": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "laterButton": "Позже",
+  "goToSettings": "Перейти в настройки",
+  "permissionPurpose": "Цель: {purpose}",
+  "@permissionPurpose": {
+    "placeholders": {
+      "purpose": {
+        "type": "String"
+      }
+    }
+  },
+  "allowPermissionQuestion": "Хотите предоставить разрешение?",
+  "grantPermission": "Предоставить разрешение",
+  "checking": "Проверка...",
+  "initializingSyncEngine": "Инициализация системы синхронизации...",
+  "dataSynchronization": "Синхронизация данных",
+  "tablesSynced": "{synced} из {total} таблиц синхронизировано",
+  "@tablesSynced": {
+    "placeholders": {
+      "synced": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "lastSync": "Последняя синхронизация: {time}",
+  "@lastSync": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "syncing": "Синхронизация...",
+  "syncAllData": "Синхронизировать все данные",
+  "syncAllTablesInOrder": "Это синхронизирует все таблицы в порядке зависимостей",
+  "dataGroups": "Группы данных",
+  "backgroundAutoSync": "Фоновая авто-синхронизация",
+  "backgroundSyncDescription": "Держите данные актуальными даже когда приложение закрыто. Требуется подключение к интернету.",
+  "syncInterval": "Интервал синхронизации",
+  "customIntervalMinutes": "Пользовательский интервал (минуты)",
+  "customIntervalNote": "* Пользовательский интервал имеет приоритет, если установлен 60 или более",
+  "clientBalanceCache": "Кэш баланса клиентов",
+  "clientBalancesCached": "{count} балансов клиентов в кэше",
+  "@clientBalancesCached": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "balanceCacheDescription": "Данные баланса клиентов хранятся в локальном кэше. Вы можете очистить кэш, если данные устарели.",
+  "clearing": "Очистка...",
+  "clearCache": "Очистить кэш",
+  "balanceCacheCleared": "Кэш баланса очищен",
+  "clearBalanceCacheConfirm": "Все данные баланса клиентов будут удалены. Они будут перезагружены при следующем просмотре баланса.",
+  "backgroundSyncEnabled": "Фоновая синхронизация включена",
+  "backgroundSyncDisabled": "Фоновая синхронизация отключена",
+  "minimumIntervalIs60": "Минимальный интервал 60 минут",
+  "justNow": "только что",
+  "minutesAgo": "{minutes}м назад",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "hoursAgo": "{hours}ч назад",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {"type": "int"}
+    }
+  },
+  "yesterday": "вчера",
+  "daysAgo": "{days} дней назад",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "weeksAgo": "{weeks} недель назад",
+  "@weeksAgo": {
+    "placeholders": {
+      "weeks": {"type": "int"}
+    }
+  },
+  "unknownProduct": "Неизвестный продукт",
+  "errorOccurredTitle": "Произошла ошибка",
+  "akbClientReport": "Отчет по клиентам АКБ",
+  "akbClients": "Клиенты АКБ",
+  "akbPercentage": "Процент АКБ",
+  "akbClientsList": "Список клиентов АКБ",
+  "details": "Подробности",
+  "today": "Сегодня",
+  "yesterday": "Вчера",
+  "daysAgoShort": "{days} дней назад",
+  "@daysAgoShort": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   }
 }

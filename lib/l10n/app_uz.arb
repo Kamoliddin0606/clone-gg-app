@@ -1721,5 +1721,190 @@
         "type": "int"
       }
     }
+  },
+  "orderStatusDelivered": "Yetkazildi",
+  "orderStatusInProcess": "Jarayonda",
+  "orderStatusReturn": "Qaytarildi",
+  "orderStatusExpired": "Muddati o'tgan",
+  "loadingClientImages": "Mijoz rasmlari yuklanmoqda...",
+  "clientDataLoadError": "Mijoz ma'lumotlarini yuklashda xatolik",
+  "visitCompletedFor": "uchun tashrif muvaffaqiyatli yakunlandi",
+  "contractStatusActive": "Faol",
+  "contractStatusExpired": "Muddati o'tgan",
+  "contractStatusPending": "Kelishilmagan",
+  "contractStatusSuspended": "To'xtatilgan",
+  "contractTabAll": "Barchasi",
+  "appPreparing": "Ilova tayyorlanmoqda...",
+  "permissionsChecking": "Ruxsatlar tekshirilmoqda...",
+  "permissionsCheckTitle": "Ruxsatlar tekshiruvi",
+  "permissionsCheckDescription": "Ilova to'liq ishlashi uchun quyidagi ruxsatlar kerak:",
+  "permissionFileStorage": "Fayl saqlash",
+  "permissionFileStorageDesc": "Ma'lumotlarni saqlash",
+  "permissionLocation": "Joylashuv",
+  "permissionLocationDesc": "Xarita va masofa hisoblash",
+  "permissionCamera": "Kamera",
+  "permissionCameraDesc": "Rasmga olish",
+  "permissionMicrophone": "Mikrofon",
+  "permissionMicrophoneDesc": "Ovoz yozish",
+  "permissionNotifications": "Bildirishnomalar",
+  "permissionNotificationsDesc": "Xabarlarni ko'rsatish",
+  "permissionAudio": "Musiqa va audio",
+  "permissionAudioDesc": "Audio fayllar bilan ishlash",
+  "permissionPhotosVideos": "Rasmlar va videolar",
+  "permissionPhotosVideosDesc": "Media fayllar bilan ishlash",
+  "permissionsLimitedWarning": "Ruxsatlarsiz ilova cheklangan rejimda ishlaydi.",
+  "startButton": "Boshlash",
+  "permissionStorageTitle": "Fayl saqlash ruxsati",
+  "permissionStorageDescAndroid13": "Ilova ma'lumotlarini saqlash uchun papka tanlash",
+  "permissionStorageDescOther": "Ilova ma'lumotlarini saqlash va yuklash uchun",
+  "permissionStoragePurposeAndroid13": "Rasmlar, hujjatlar va ma'lumotlarni saqlash uchun papka tanlang",
+  "permissionStoragePurposeOther": "Rasmlar, hujjatlar va ma'lumotlarni saqlash",
+  "permissionLocationTitle": "Joylashuv ruxsati",
+  "permissionLocationDescription": "Savdo nuqtalarini masofaga ko'ra tartiblash uchun",
+  "permissionLocationPurpose": "Xaritada joylashuvni ko'rsatish va masofa hisoblash",
+  "permissionLocationAlwaysTitle": "Doimiy joylashuv ruxsati",
+  "permissionLocationAlwaysDescription": "Ilova fon rejimida ishlaganda joylashuvni aniqlash uchun",
+  "permissionLocationAlwaysPurpose": "Fon rejimida xizmat ko'rsatish va bildirishnomalar",
+  "permissionCameraTitle": "Kamera ruxsati",
+  "permissionCameraDescription": "Rasmga olish va shtrix-kod skanerlash uchun",
+  "permissionCameraPurpose": "Mahsulotlar va savdo nuqtalarini rasmga olish",
+  "permissionMicrophoneTitle": "Mikrofon ruxsati",
+  "permissionMicrophoneDescription": "Ovoz yozish va audio xabarlar uchun",
+  "permissionMicrophonePurpose": "Ovozli eslatmalar va audio qaydlar",
+  "permissionNotificationTitle": "Bildirishnoma ruxsati",
+  "permissionNotificationDescription": "Muhim xabarlarni ko'rsatish uchun",
+  "permissionNotificationPurpose": "Eslatmalar, yangiliklar va bildirishnomalar",
+  "permissionAudioTitle": "Musiqa va audio ruxsati",
+  "permissionAudioDescription": "Audio fayllar bilan ishlash uchun",
+  "permissionAudioPurpose": "Musiqa, audio xabarlar va ovozli fayllar bilan ishlash",
+  "permissionPhotosVideosTitle": "Rasmlar va videolar ruxsati",
+  "permissionPhotosVideosDescription": "Media fayllar bilan ishlash uchun",
+  "permissionPhotosVideosPurpose": "Rasmlar, videolar va media fayllar bilan ishlash",
+  "permissionRequired": "{permission} kerak",
+  "@permissionRequired": {
+    "placeholders": {
+      "permission": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionRequiredSettings": "{description}. Iltimos, ilova sozlamalaridan ruxsat bering.",
+  "@permissionRequiredSettings": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "laterButton": "Keyinroq",
+  "goToSettings": "Sozlamalarga o'tish",
+  "permissionPurpose": "Maqsad: {purpose}",
+  "@permissionPurpose": {
+    "placeholders": {
+      "purpose": {
+        "type": "String"
+      }
+    }
+  },
+  "allowPermissionQuestion": "Ruxsat berishni xohlaysizmi?",
+  "grantPermission": "Ruxsat berish",
+  "checking": "Tekshirilmoqda...",
+  "initializingSyncEngine": "Sinxronizatsiya tizimi ishga tushirilmoqda...",
+  "dataSynchronization": "Ma'lumotlar sinxronizatsiyasi",
+  "tablesSynced": "{synced} / {total} jadval sinxronlashtirildi",
+  "@tablesSynced": {
+    "placeholders": {
+      "synced": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "lastSync": "Oxirgi sinxronizatsiya: {time}",
+  "@lastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncing": "Sinxronlanmoqda...",
+  "syncAllData": "Barcha ma'lumotlarni sinxronlash",
+  "syncAllTablesInOrder": "Bu barcha jadvallarni ketma-ketlikda sinxronlaydi",
+  "dataGroups": "Ma'lumotlar guruhlari",
+  "backgroundAutoSync": "Fonda avtomatik sinxronlash",
+  "backgroundSyncDescription": "Ilova yopiq bo'lganda ham ma'lumotlaringizni yangi saqlaydi. Internet aloqasi kerak.",
+  "syncInterval": "Sinxronlash oralig'i",
+  "customIntervalMinutes": "Maxsus oraliq (daqiqalar)",
+  "customIntervalNote": "* Maxsus oraliq 60 yoki undan ko'p bo'lsa, ustuvorlikka ega",
+  "clientBalanceCache": "Mijoz Balansi Keshi",
+  "clientBalancesCached": "{count} ta mijoz balansi saqlangan",
+  "@clientBalancesCached": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "balanceCacheDescription": "Mijozlar balans ma'lumotlari lokal keshda saqlanadi. Agar ma'lumotlar eskirgan bo'lsa, keshni tozalashingiz mumkin.",
+  "clearing": "Tozalanmoqda...",
+  "clearCache": "Keshni tozalash",
+  "balanceCacheCleared": "Balans keshi tozalandi",
+  "clearBalanceCacheConfirm": "Barcha mijozlar balans ma'lumotlari o'chiriladi. Keyingi safar balans ko'rilganda qayta yuklanadi.",
+  "backgroundSyncEnabled": "Fonda sinxronlash yoqildi",
+  "backgroundSyncDisabled": "Fonda sinxronlash o'chirildi",
+  "minimumIntervalIs60": "Minimal oraliq 60 daqiqa",
+  "justNow": "hozirgina",
+  "minutesAgo": "{minutes}d oldin",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{hours}s oldin",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "yesterday": "kecha",
+  "daysAgo": "{days} kun oldin",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "weeksAgo": "{weeks} hafta oldin",
+  "@weeksAgo": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "unknownProduct": "Noma'lum mahsulot",
+  "errorOccurredTitle": "Xatolik yuz berdi",
+  "akbClientReport": "AKB mijozlari hisoboti",
+  "akbClients": "AKB mijozlar",
+  "akbPercentage": "AKB foizi",
+  "akbClientsList": "AKB mijozlar ro'yxati",
+  "details": "Tafsilotlar",
+  "today": "Bugun",
+  "yesterday": "Kecha",
+  "daysAgoShort": "{days} kun oldin",
+  "@daysAgoShort": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   }
 }

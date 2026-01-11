@@ -884,13 +884,15 @@ class _ClientImagesPageState extends State<ClientImagesPage>
           ),
           const SizedBox(height: 16),
           Text(
-            'Mijoz rasmlari',
+            l10n?.clientPhotosTitle ?? 'Mijoz rasmlari',
             style: theme.textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'Bu yerda ${widget.tradingPoint.tradingPoint.name} mijoziga tegishli rasmlar ko\'rsatiladi',
+            l10n != null 
+                ? l10n.clientPhotosDescription(widget.tradingPoint.tradingPoint.name)
+                : 'Bu yerda ${widget.tradingPoint.tradingPoint.name} mijoziga tegishli rasmlar ko\'rsatiladi',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -904,6 +906,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   /// Build grid view for server images + local images
   Widget _buildGridViewCombined(ThemeData theme) {
     final totalCount = _serverImages.length + _photos.length;
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -915,12 +918,12 @@ class _ClientImagesPageState extends State<ClientImagesPage>
         itemBuilder: (context, index) {
           if (index < _serverImages.length) {
             final image = _serverImages[index];
-            return _buildServerImageCard(image, theme);
+            return _buildServerImageCard(image, theme, l10n);
           }
 
           final localIndex = index - _serverImages.length;
           final photo = _photos[localIndex];
-          return _buildLocalPhotoCard(photo, localIndex, theme);
+          return _buildLocalPhotoCard(photo, localIndex, theme, l10n);
         },
       ),
     );
@@ -929,6 +932,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   /// Build list view for server images + local images
   Widget _buildListViewCombined(ThemeData theme) {
     final totalCount = _serverImages.length + _photos.length;
+    final l10n = AppLocalizations.of(context);
 
     return ListView.builder(
       padding: const EdgeInsets.all(8.0),
@@ -936,18 +940,18 @@ class _ClientImagesPageState extends State<ClientImagesPage>
       itemBuilder: (context, index) {
         if (index < _serverImages.length) {
           final image = _serverImages[index];
-          return _buildServerImageListItem(image, theme);
+          return _buildServerImageListItem(image, theme, l10n);
         }
 
         final localIndex = index - _serverImages.length;
         final photo = _photos[localIndex];
-        return _buildPhotoListItem(photo, localIndex, theme);
+        return _buildPhotoListItem(photo, localIndex, theme, l10n);
       },
     );
   }
 
   /// Build server image card for grid view
-  Widget _buildServerImageCard(ClientImage image, ThemeData theme) {
+  Widget _buildServerImageCard(ClientImage image, ThemeData theme, AppLocalizations? l10n) {
     final previewUrl = _bestClientImagePreviewUrl(image);
     final previewProvider = _clientImageProviderFromUrl(previewUrl);
 
@@ -1015,7 +1019,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                     onPressed: _isDeletingServerImage 
                         ? null 
                         : () => _showServerImageDeleteConfirmation(image),
-                    tooltip: 'Rasmni o\'chirish',
+                    tooltip: l10n != null ? l10n.deleteImageTitle : 'Rasmni o\'chirish',
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withOpacity(0.8),
                     ),
@@ -1025,7 +1029,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                     IconButton(
                       icon: const Icon(Icons.star_border, color: Colors.amber),
                       onPressed: () => _requestSetAsMain(image),
-                      tooltip: 'Asosiy rasmga o\'zgartirish',
+                      tooltip: l10n != null ? l10n.setAsMainImage : 'Asosiy rasmga o\'zgartirish',
                       style: IconButton.styleFrom(
                         backgroundColor: Colors.white.withOpacity(0.8),
                       ),
@@ -1041,7 +1045,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   }
 
   /// Build server image list item
-  Widget _buildServerImageListItem(ClientImage image, ThemeData theme) {
+  Widget _buildServerImageListItem(ClientImage image, ThemeData theme, AppLocalizations? l10n) {
     final previewUrl = _bestClientImagePreviewUrl(image);
     final previewProvider = _clientImageProviderFromUrl(previewUrl);
 
@@ -1068,7 +1072,9 @@ class _ClientImagesPageState extends State<ClientImagesPage>
           ),
         ),
         title: Text(
-          image.isMain ? 'Asosiy rasm' : 'Rasm',
+          image.isMain 
+              ? (l10n?.mainImage ?? 'Asosiy rasm') 
+              : (l10n?.image ?? 'Rasm'),
           style: theme.textTheme.titleMedium,
         ),
         subtitle: Text(
@@ -1082,7 +1088,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
               onPressed: _isDeletingServerImage
                   ? null
                   : () => _showServerImageDeleteConfirmation(image),
-              tooltip: 'Rasmni o\'chirish',
+              tooltip: l10n != null ? l10n.deleteImageTitle : 'Rasmni o\'chirish',
             ),
             if (image.isMain)
               const Icon(Icons.star, color: Colors.green)
@@ -1090,7 +1096,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
               IconButton(
                 icon: const Icon(Icons.star_border, color: Colors.amber, size: 20),
                 onPressed: () => _requestSetAsMain(image),
-                tooltip: 'Asosiy rasmga o\'zgartirish',
+                tooltip: l10n != null ? l10n.setAsMainImage : 'Asosiy rasmga o\'zgartirish',
               ),
           ],
         ),
@@ -1100,7 +1106,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   }
 
   /// Build local photo card for grid view
-  Widget _buildLocalPhotoCard(Map<String, dynamic> photo, int index, ThemeData theme) {
+  Widget _buildLocalPhotoCard(Map<String, dynamic> photo, int index, ThemeData theme, AppLocalizations? l10n) {
     return GestureDetector(
       onTap: () => _openFullScreenViewer(index),
       child: Card(
@@ -1124,13 +1130,13 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                   color: Colors.orange.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 14),
-                    SizedBox(width: 4),
+                    const Icon(Icons.cloud_upload_outlined, color: Colors.white, size: 14),
+                    const SizedBox(width: 4),
                     Text(
-                      'Yuborilmagan',
+                      l10n?.notSent ?? 'Yuborilmagan',
                       style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
                     ),
                   ],
@@ -1155,7 +1161,7 @@ class _ClientImagesPageState extends State<ClientImagesPage>
   }
 
   /// Build photo list item
-  Widget _buildPhotoListItem(Map<String, dynamic> photo, int index, ThemeData theme) {
+  Widget _buildPhotoListItem(Map<String, dynamic> photo, int index, ThemeData theme, AppLocalizations? l10n) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
@@ -1208,8 +1214,8 @@ class _ClientImagesPageState extends State<ClientImagesPage>
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(color: Colors.orange, width: 1),
               ),
-              child: const Text(
-                'Yuborilmagan',
+              child: Text(
+                l10n?.notSent ?? 'Yuborilmagan',
                 style: TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.w600),
               ),
             ),

@@ -2506,7 +2506,7 @@ abstract class AppLocalizations {
   /// No description provided for @stepCompletedReadOnly.
   ///
   /// In en, this message translates to:
-  /// **'This step is completed. View-only mode.'**
+  /// **'This step is completed. Read-only mode.'**
   String get stepCompletedReadOnly;
 
   /// No description provided for @stepTypeNotImplemented.
@@ -3160,7 +3160,7 @@ abstract class AppLocalizations {
   /// No description provided for @refreshAfterSeconds.
   ///
   /// In en, this message translates to:
-  /// **'Refresh after {seconds}s'**
+  /// **'Can refresh after {seconds} seconds'**
   String refreshAfterSeconds(int seconds);
 
   /// No description provided for @balanceUpdated.
@@ -4116,6 +4116,1188 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unknown error'**
   String get createClientUnknownError;
+
+  /// No description provided for @labelTradingPointType.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading Point Type'**
+  String get labelTradingPointType;
+
+  /// No description provided for @labelBusinessRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Business Region'**
+  String get labelBusinessRegion;
+
+  /// No description provided for @labelStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get labelStatus;
+
+  /// No description provided for @labelDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Range'**
+  String get labelDateRange;
+
+  /// No description provided for @labelClients.
+  ///
+  /// In en, this message translates to:
+  /// **'Clients'**
+  String get labelClients;
+
+  /// No description provided for @refusalReasonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Refusal Reason'**
+  String get refusalReasonTitle;
+
+  /// No description provided for @selectRefusalReasonFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Select refusal reason for {name}:'**
+  String selectRefusalReasonFor(String name);
+
+  /// No description provided for @businessRegionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Business Region: {region}'**
+  String businessRegionLabel(String region);
+
+  /// No description provided for @contactLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact: {contact}'**
+  String contactLabel(String contact);
+
+  /// No description provided for @innLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'INN: {inn}'**
+  String innLabel(String inn);
+
+  /// No description provided for @ownerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: {owner}'**
+  String ownerLabel(String owner);
+
+  /// No description provided for @responsiblePersonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Responsible: {responsible}'**
+  String responsiblePersonLabel(String responsible);
+
+  /// No description provided for @responsiblePersonPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Responsible Phone: {phone}'**
+  String responsiblePersonPhoneLabel(String phone);
+
+  /// No description provided for @typeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type: {type}'**
+  String typeLabel(String type);
+
+  /// No description provided for @regionDistrictLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{region}, {district}'**
+  String regionDistrictLabel(String region, String district);
+
+  /// No description provided for @signboardLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Signboard: {signboard}'**
+  String signboardLabel(String signboard);
+
+  /// No description provided for @landmarkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Landmark: {landmark}'**
+  String landmarkLabel(String landmark);
+
+  /// No description provided for @waitingForLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for location data...'**
+  String get waitingForLocation;
+
+  /// No description provided for @visitCompletedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Completed'**
+  String get visitCompletedTitle;
+
+  /// No description provided for @stepsCompletedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} steps completed'**
+  String stepsCompletedCount(int count);
+
+  /// No description provided for @returnToHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to Home'**
+  String get returnToHome;
+
+  /// No description provided for @completedAtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed: {date}'**
+  String completedAtLabel(String date);
+
+  /// No description provided for @orderCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Order {id}'**
+  String orderCaption(String id);
+
+  /// No description provided for @maxQuantityMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Max quantity: {stock} pcs'**
+  String maxQuantityMessage(int stock);
+
+  /// No description provided for @productPriceZeroError.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot add product with price 0 or less'**
+  String get productPriceZeroError;
+
+  /// No description provided for @quantityUpdateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error updating quantity'**
+  String get quantityUpdateError;
+
+  /// No description provided for @confirmationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error confirming selection'**
+  String get confirmationError;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @productSelectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Selection'**
+  String get productSelectionTitle;
+
+  /// No description provided for @productsSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} products selected'**
+  String productsSelectedCount(int count);
+
+  /// No description provided for @noProductsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No products available'**
+  String get noProductsAvailable;
+
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// No description provided for @totalProductsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Total products: {count}'**
+  String totalProductsCount(int count);
+
+  /// No description provided for @totalAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Total amount: {amount}'**
+  String totalAmount(String amount);
+
+  /// No description provided for @errorOccurred.
+  ///
+  /// In en, this message translates to:
+  /// **'Error occurred: {error}'**
+  String errorOccurred(String error);
+
+  /// No description provided for @cameraPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission denied'**
+  String get cameraPermissionDenied;
+
+  /// No description provided for @cameraInitError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error initializing camera: {error}'**
+  String cameraInitError(String error);
+
+  /// No description provided for @cameraError.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera error: {error}'**
+  String cameraError(String error);
+
+  /// No description provided for @cameraInUseMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera is being used by another app. Attempting to reconnect...'**
+  String get cameraInUseMessage;
+
+  /// No description provided for @imageSavedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Image saved successfully'**
+  String get imageSavedSuccessfully;
+
+  /// No description provided for @imageSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving image: {error}'**
+  String imageSaveError(String error);
+
+  /// No description provided for @cameraNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera not ready'**
+  String get cameraNotReady;
+
+  /// No description provided for @cameraNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera not available or not working'**
+  String get cameraNotAvailable;
+
+  /// No description provided for @imageCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} / {total}'**
+  String imageCounter(int current, int total);
+
+  /// No description provided for @imageCapturedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Image captured successfully'**
+  String get imageCapturedSuccessfully;
+
+  /// No description provided for @imageCaptureError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error capturing image: {error}'**
+  String imageCaptureError(String error);
+
+  /// No description provided for @xmlRequestLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'XML Request'**
+  String get xmlRequestLabel;
+
+  /// No description provided for @xmlCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'XML copied'**
+  String get xmlCopied;
+
+  /// No description provided for @enterNumberHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter number'**
+  String get enterNumberHint;
+
+  /// No description provided for @balanceStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance Status'**
+  String get balanceStatusTitle;
+
+  /// No description provided for @productNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Product information not found: {code}'**
+  String productNotFoundMessage(String code);
+
+  /// No description provided for @clientCreatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'New client created successfully!'**
+  String get clientCreatedSuccessfully;
+
+  /// No description provided for @callClientTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Call Client'**
+  String get callClientTitle;
+
+  /// No description provided for @callClientConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to call the client?\n{phone}'**
+  String callClientConfirmation(String phone);
+
+  /// No description provided for @dialerNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Dialer not available'**
+  String get dialerNotAvailable;
+
+  /// No description provided for @updateCoordinatesNotImplemented.
+  ///
+  /// In en, this message translates to:
+  /// **'Update coordinates - functionality to be implemented'**
+  String get updateCoordinatesNotImplemented;
+
+  /// No description provided for @osmNotLoadedFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenStreetMap not loaded. Using Google Maps.'**
+  String get osmNotLoadedFallback;
+
+  /// No description provided for @confirmLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Location'**
+  String get confirmLocationTitle;
+
+  /// No description provided for @orderDetailsNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Order details not found'**
+  String get orderDetailsNotFound;
+
+  /// No description provided for @unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get unknown;
+
+  /// No description provided for @locationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission denied'**
+  String get locationPermissionDenied;
+
+  /// No description provided for @permissionCheckError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error checking permission: {error}'**
+  String permissionCheckError(String error);
+
+  /// No description provided for @locationDetectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error detecting location: {error}'**
+  String locationDetectionError(String error);
+
+  /// No description provided for @userLocationNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'User location not found'**
+  String get userLocationNotFound;
+
+  /// No description provided for @routeInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Route: {distance} km, estimated {time}'**
+  String routeInfo(String distance, String time);
+
+  /// No description provided for @routeCreationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error creating route: {error}'**
+  String routeCreationError(String error);
+
+  /// No description provided for @cameraMoveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error moving camera: {error}'**
+  String cameraMoveError(String error);
+
+  /// No description provided for @permissionsCheckError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error checking permissions: {error}'**
+  String permissionsCheckError(String error);
+
+  /// No description provided for @locationUpdating.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating location...'**
+  String get locationUpdating;
+
+  /// No description provided for @clientLocationUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Client location updated successfully'**
+  String get clientLocationUpdated;
+
+  /// No description provided for @locationUpdateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error updating location: {error}'**
+  String locationUpdateError(String error);
+
+  /// No description provided for @calculatingRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculating route...'**
+  String get calculatingRoute;
+
+  /// No description provided for @regionsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading regions: {error}'**
+  String regionsLoadError(String error);
+
+  /// No description provided for @locationGetError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error getting location: {error}'**
+  String locationGetError(String error);
+
+  /// No description provided for @apiKeySavedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'API key saved successfully'**
+  String get apiKeySavedSuccessfully;
+
+  /// No description provided for @minimumInterval60Minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum interval is 60 minutes'**
+  String get minimumInterval60Minutes;
+
+  /// No description provided for @pageLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading page: {error}'**
+  String pageLoadError(String error);
+
+  /// No description provided for @imageSetAsPrimary.
+  ///
+  /// In en, this message translates to:
+  /// **'Image set as primary'**
+  String get imageSetAsPrimary;
+
+  /// No description provided for @imagesUploadedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} images uploaded successfully'**
+  String imagesUploadedCount(int count);
+
+  /// No description provided for @serverImagesLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading server images: {error}'**
+  String serverImagesLoadError(String error);
+
+  /// No description provided for @gallerySelectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error selecting from gallery: {error}'**
+  String gallerySelectionError(String error);
+
+  /// No description provided for @cameraCaptureError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error capturing from camera: {error}'**
+  String cameraCaptureError(String error);
+
+  /// No description provided for @imagesUploadedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Images uploaded successfully'**
+  String get imagesUploadedSuccessfully;
+
+  /// No description provided for @imagesUploadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error uploading images: {error}'**
+  String imagesUploadError(String error);
+
+  /// No description provided for @orderDraftSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Draft saved: {fileName}'**
+  String orderDraftSaved(String fileName);
+
+  /// No description provided for @tablesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tables'**
+  String get tablesLabel;
+
+  /// No description provided for @tableColumns.
+  ///
+  /// In en, this message translates to:
+  /// **'{tableName} columns'**
+  String tableColumns(String tableName);
+
+  /// No description provided for @orderDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Details'**
+  String get orderDetailsTitle;
+
+  /// No description provided for @camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// No description provided for @gallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get gallery;
+
+  /// No description provided for @clientImagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{clientName} - Images'**
+  String clientImagesTitle(String clientName);
+
+  /// No description provided for @tradingPointImagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{pointName} - Images'**
+  String tradingPointImagesTitle(String pointName);
+
+  /// No description provided for @uploadToServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload to Server ({count} images)'**
+  String uploadToServer(int count);
+
+  /// No description provided for @kpiDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'KPI Dashboard'**
+  String get kpiDashboardTitle;
+
+  /// No description provided for @reportSentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Sent'**
+  String get reportSentTitle;
+
+  /// No description provided for @editFeatureComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit feature coming soon'**
+  String get editFeatureComingSoon;
+
+  /// No description provided for @sendPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Send PDF'**
+  String get sendPdf;
+
+  /// No description provided for @printFeatureComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Print feature coming soon'**
+  String get printFeatureComingSoon;
+
+  /// No description provided for @print.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get print;
+
+  /// No description provided for @stepCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{stepName} completed'**
+  String stepCompleted(String stepName);
+
+  /// No description provided for @stepSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'{stepName} skip'**
+  String stepSkip(String stepName);
+
+  /// No description provided for @syncWithDependencies.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync with dependencies'**
+  String get syncWithDependencies;
+
+  /// No description provided for @recommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get recommended;
+
+  /// No description provided for @syncTableOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync table only'**
+  String get syncTableOnly;
+
+  /// No description provided for @syncWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'May fail if dependencies not synced'**
+  String get syncWarning;
+
+  /// No description provided for @tableOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Table only'**
+  String get tableOnly;
+
+  /// No description provided for @withDependencies.
+  ///
+  /// In en, this message translates to:
+  /// **'With dependencies'**
+  String get withDependencies;
+
+  /// No description provided for @syncEntireGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Entire Group'**
+  String get syncEntireGroup;
+
+  /// No description provided for @statusNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get statusNew;
+
+  /// No description provided for @retail.
+  ///
+  /// In en, this message translates to:
+  /// **'Retail'**
+  String get retail;
+
+  /// No description provided for @continueAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueAction;
+
+  /// No description provided for @previousStepsMustBeCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous steps must be completed'**
+  String get previousStepsMustBeCompleted;
+
+  /// No description provided for @reload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get reload;
+
+  /// No description provided for @imageDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Image deleted'**
+  String get imageDeleted;
+
+  /// No description provided for @imageDeleteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting image: {error}'**
+  String imageDeleteError(String error);
+
+  /// No description provided for @deleteImageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Image'**
+  String get deleteImageTitle;
+
+  /// No description provided for @deleteImageConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this image?'**
+  String get deleteImageConfirmation;
+
+  /// No description provided for @photoAfterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo AFTER (Facing correction)'**
+  String get photoAfterTitle;
+
+  /// No description provided for @photoBeforeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo BEFORE (Facing correction)'**
+  String get photoBeforeTitle;
+
+  /// No description provided for @photosNotLoadedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos not loaded yet'**
+  String get photosNotLoadedYet;
+
+  /// No description provided for @timeUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Time unknown'**
+  String get timeUnknown;
+
+  /// No description provided for @unitOfMeasure.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit of Measure'**
+  String get unitOfMeasure;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @brand.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand'**
+  String get brand;
+
+  /// No description provided for @series.
+  ///
+  /// In en, this message translates to:
+  /// **'Series'**
+  String get series;
+
+  /// No description provided for @barcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode'**
+  String get barcode;
+
+  /// No description provided for @vendorCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Vendor Code'**
+  String get vendorCode;
+
+  /// No description provided for @warehouseInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse Information'**
+  String get warehouseInformation;
+
+  /// No description provided for @reserved.
+  ///
+  /// In en, this message translates to:
+  /// **'Reserved'**
+  String get reserved;
+
+  /// No description provided for @physicalProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Physical Properties'**
+  String get physicalProperties;
+
+  /// No description provided for @weight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get weight;
+
+  /// No description provided for @volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get volume;
+
+  /// No description provided for @productsNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Products not found'**
+  String get productsNotFound;
+
+  /// No description provided for @bonusesNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonuses not found'**
+  String get bonusesNotFound;
+
+  /// No description provided for @classInformationNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Class information not found'**
+  String get classInformationNotFound;
+
+  /// No description provided for @searchResultsNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Search results not found'**
+  String get searchResultsNotFound;
+
+  /// No description provided for @promotionConditions.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotion Conditions'**
+  String get promotionConditions;
+
+  /// No description provided for @minimalProductCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimal product count: {count}'**
+  String minimalProductCount(int count);
+
+  /// No description provided for @bonusCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonus count: {count}'**
+  String bonusCount(int count);
+
+  /// No description provided for @readOnlyMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Read Only'**
+  String get readOnlyMode;
+
+  /// No description provided for @shelfAuditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shelf Audit (Remains)'**
+  String get shelfAuditTitle;
+
+  /// No description provided for @pageInDevelopment.
+  ///
+  /// In en, this message translates to:
+  /// **'Page is currently under development'**
+  String get pageInDevelopment;
+
+  /// No description provided for @apiKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'API Key: {status}'**
+  String apiKeyLabel(String status);
+
+  /// No description provided for @apiKeyConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured'**
+  String get apiKeyConfigured;
+
+  /// No description provided for @apiKeyNotRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Key not required'**
+  String get apiKeyNotRequired;
+
+  /// No description provided for @apiKeyNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not configured'**
+  String get apiKeyNotConfigured;
+
+  /// No description provided for @editInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Information'**
+  String get editInformation;
+
+  /// No description provided for @editClientCoordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Client Coordinates'**
+  String get editClientCoordinates;
+
+  /// No description provided for @clientPhotosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Photos'**
+  String get clientPhotosTitle;
+
+  /// No description provided for @clientPhotosDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Here are photos related to the client {name}'**
+  String clientPhotosDescription(String name);
+
+  /// No description provided for @notSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent'**
+  String get notSent;
+
+  /// No description provided for @sendToServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to server ({count} photos)'**
+  String sendToServer(int count);
+
+  /// No description provided for @mainImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Main image'**
+  String get mainImage;
+
+  /// No description provided for @image.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get image;
+
+  /// No description provided for @noImagesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No images available'**
+  String get noImagesAvailable;
+
+  /// No description provided for @clickPlusToAddImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Click the + button to add an image'**
+  String get clickPlusToAddImage;
+
+  /// No description provided for @setAsMainImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as main image'**
+  String get setAsMainImage;
+
+  /// No description provided for @clientNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Name'**
+  String get clientNameLabel;
+
+  /// No description provided for @orderNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Number'**
+  String get orderNumberLabel;
+
+  /// No description provided for @orderDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Date'**
+  String get orderDateLabel;
+
+  /// No description provided for @orderTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Total'**
+  String get orderTotalLabel;
+
+  /// No description provided for @mainStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Main Status'**
+  String get mainStatusLabel;
+
+  /// No description provided for @statusCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status Code'**
+  String get statusCodeLabel;
+
+  /// No description provided for @totalProductsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Products'**
+  String get totalProductsLabel;
+
+  /// No description provided for @productNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Name'**
+  String get productNameLabel;
+
+  /// No description provided for @articleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Article'**
+  String get articleLabel;
+
+  /// No description provided for @quantityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get quantityLabel;
+
+  /// No description provided for @priceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get priceLabel;
+
+  /// No description provided for @amountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amountLabel;
+
+  /// No description provided for @priceTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price Type'**
+  String get priceTypeLabel;
+
+  /// No description provided for @noProductsInOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'No products in this order'**
+  String get noProductsInOrder;
+
+  /// No description provided for @productListEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Product list is empty'**
+  String get productListEmpty;
+
+  /// No description provided for @productsNotSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Products not selected'**
+  String get productsNotSelected;
+
+  /// No description provided for @clickPlusToAddProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Click the + button to add a product'**
+  String get clickPlusToAddProduct;
+
+  /// No description provided for @reportPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Period'**
+  String get reportPeriod;
+
+  /// No description provided for @monthlyOKB.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly OKB'**
+  String get monthlyOKB;
+
+  /// No description provided for @selectPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Period'**
+  String get selectPeriod;
+
+  /// No description provided for @creatingLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Detecting...'**
+  String get creatingLocation;
+
+  /// No description provided for @locationNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Location not found'**
+  String get locationNotFound;
+
+  /// No description provided for @createClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Client'**
+  String get createClient;
+
+  /// No description provided for @swipeToRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Try swiping down to refresh!'**
+  String get swipeToRefresh;
+
+  /// No description provided for @ifSwipeNotWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'If swiping down doesn\'t work, perform the \"refresh all data\" action located in the settings menu'**
+  String get ifSwipeNotWorking;
+
+  /// No description provided for @imageCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} photos'**
+  String imageCountLabel(int count);
+
+  /// No description provided for @photosNotLoadedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Here are photos related to the client {clientName}'**
+  String photosNotLoadedDescription(String clientName);
+
+  /// No description provided for @totalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total:'**
+  String get totalLabel;
+
+  /// No description provided for @articleLabelShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Art:'**
+  String get articleLabelShort;
+
+  /// No description provided for @availableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Available:'**
+  String get availableLabel;
+
+  /// No description provided for @pieces.
+  ///
+  /// In en, this message translates to:
+  /// **'pieces'**
+  String get pieces;
+
+  /// No description provided for @shippingDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping Date'**
+  String get shippingDate;
+
+  /// No description provided for @changeShippingDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Shipping Date'**
+  String get changeShippingDate;
+
+  /// No description provided for @totalValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Value'**
+  String get totalValueLabel;
+
+  /// No description provided for @productsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get productsLabel;
+
+  /// No description provided for @addProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Product'**
+  String get addProduct;
+
+  /// No description provided for @creating.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating...'**
+  String get creating;
+
+  /// No description provided for @refreshLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refreshLabel;
+
+  /// No description provided for @refreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing...'**
+  String get refreshing;
+
+  /// No description provided for @changePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Period'**
+  String get changePeriod;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

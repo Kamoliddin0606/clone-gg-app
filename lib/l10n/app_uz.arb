@@ -832,5 +832,641 @@
   "createClientSelectTypeError": "Iltimos, savdo nuqtasi turini tanlang",
   "createClientLocationError": "Joylashuv ma'lumotlari topilmadi",
   "createClientUserCodeError": "Foydalanuvchi kodi topilmadi",
-  "createClientUnknownError": "Noma'lum xatolik"
+  "createClientUnknownError": "Noma'lum xatolik",
+  "labelTradingPointType": "Savdo nuqtasi turi",
+  "labelBusinessRegion": "Biznes region",
+  "labelStatus": "Status",
+  "labelDateRange": "Sana oralig'i",
+  "labelClients": "Mijozlar",
+  "refusalReasonTitle": "Rad etish sababi",
+  "selectRefusalReasonFor": "{name} uchun rad etish sababini tanlang:",
+  "@selectRefusalReasonFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "businessRegionLabel": "Biznes region: {region}",
+  "@businessRegionLabel": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "contactLabel": "Aloqa: {contact}",
+  "@contactLabel": {
+    "placeholders": {
+      "contact": {
+        "type": "String"
+      }
+    }
+  },
+  "innLabel": "INN: {inn}",
+  "@innLabel": {
+    "placeholders": {
+      "inn": {
+        "type": "String"
+      }
+    }
+  },
+  "ownerLabel": "Egasi: {owner}",
+  "@ownerLabel": {
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      }
+    }
+  },
+  "responsiblePersonLabel": "Mas'ul: {responsible}",
+  "@responsiblePersonLabel": {
+    "placeholders": {
+      "responsible": {
+        "type": "String"
+      }
+    }
+  },
+  "responsiblePersonPhoneLabel": "Mas'ul tel: {phone}",
+  "@responsiblePersonPhoneLabel": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "typeLabel": "Turi: {type}",
+  "@typeLabel": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "regionDistrictLabel": "{region}, {district}",
+  "@regionDistrictLabel": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      },
+      "district": {
+        "type": "String"
+      }
+    }
+  },
+  "signboardLabel": "Belgi: {signboard}",
+  "@signboardLabel": {
+    "placeholders": {
+      "signboard": {
+        "type": "String"
+      }
+    }
+  },
+  "landmarkLabel": "Mo'ljal: {landmark}",
+  "@landmarkLabel": {
+    "placeholders": {
+      "landmark": {
+        "type": "String"
+      }
+    }
+  },
+  "waitingForLocation": "Joylashuv ma'lumotlari kutilmoqda...",
+  "visitCompletedTitle": "Tashrif yakunlandi",
+  "visitCompletedSuccessfully": "Tashrif muvaffaqiyatli yakunlandi!",
+  "stepsCompletedCount": "{count} ta bosqich bajarildi",
+  "@stepsCompletedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "returnToHome": "Bosh sahifaga qaytish",
+  "completedAtLabel": "Bajarilgan: {date}",
+  "@completedAtLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "orderCaption": "Buyurtma {id}",
+  "@orderCaption": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "maxQuantityMessage": "Maksimal miqdor: {stock} dona",
+  "@maxQuantityMessage": {
+    "placeholders": {
+      "stock": {
+        "type": "int"
+      }
+    }
+  },
+  "productPriceZeroError": "Narxi 0 yoki undan kichik bo'lgan mahsulot qo'shib bo'lmaydi",
+  "quantityUpdateError": "Miqdorni yangilashda xatolik yuz berdi",
+  "confirmationError": "Tanlovni tasdiqlashda xatolik yuz berdi",
+  "confirm": "Tasdiqlash",
+  "productSelectionTitle": "Mahsulot tanlash",
+  "productsSelectedCount": "{count} ta mahsulot tanlandi",
+  "@productsSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noProductsAvailable": "Mahsulotlar mavjud emas",
+  "clear": "Tozalash",
+  "totalProductsCount": "Jami mahsulotlar: {count} ta",
+  "@totalProductsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "totalAmount": "Jami qiymat: {amount}",
+  "@totalAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "errorOccurred": "Xatolik yuz berdi: {error}",
+  "@errorOccurred": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraPermissionDenied": "Kamera ruxsati berilmadi",
+  "cameraInitError": "Kamera ishga tushirishda xatolik: {error}",
+  "@cameraInitError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraError": "Kamera xatoligi: {error}",
+  "@cameraError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraInUseMessage": "Kamera boshqa ilova tomonidan ishlatilmoqda. Qayta ulanishga harakat qilinmoqda...",
+  "imageSavedSuccessfully": "Rasm muvaffaqiyatli saqlandi",
+  "imageSaveError": "Rasm saqlashda xatolik: {error}",
+  "@imageSaveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraNotReady": "Kamera tayyor emas",
+  "cameraNotAvailable": "Kamera mavjud emas yoki ishlamayapti",
+  "imageCounter": "{current} / {total}",
+  "@imageCounter": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "finish": "Yakunlash",
+  "imageCapturedSuccessfully": "Rasm muvaffaqiyatli olingan",
+  "imageCaptureError": "Rasm olishda xatolik: {error}",
+  "@imageCaptureError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "xmlRequestLabel": "XML Request",
+  "xmlCopied": "XML nusxalandi",
+  "enterNumberHint": "Raqamni kiriting",
+  "balanceStatusTitle": "Balans holati",
+  "productNotFoundMessage": "Mahsulot ma'lumotlari topilmadi: {code}",
+  "@productNotFoundMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "clientCreatedSuccessfully": "Yangi mijoz muvaffaqiyatli yaratildi!",
+  "callClientTitle": "Qo'ng'iroq qilish",
+  "callClientConfirmation": "Mijozga qo'ng'iroq qilmoqchimisiz?\n{phone}",
+  "@callClientConfirmation": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "dialerNotAvailable": "Dialer ochilmadi",
+  "updateCoordinatesNotImplemented": "Update coordinates - functionality to be implemented",
+  "osmNotLoadedFallback": "OpenStreetMap yuklanmadi. Google Maps ishlatiladi.",
+  "confirmLocationTitle": "Joylashuvni tasdiqlash",
+  "orderDetailsNotFound": "Buyurtma tafsilotlari topilmadi",
+  "unknown": "Noma'lum",
+  "locationPermissionDenied": "Joylashuv ruxsatnomasi berilmadi",
+  "permissionCheckError": "Ruxsatnoma tekshirishda xatolik: {error}",
+  "@permissionCheckError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationDetectionError": "Joylashuvni aniqlashda xatolik: {error}",
+  "@locationDetectionError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "userLocationNotFound": "Foydalanuvchi joylashuvi aniqlanmadi",
+  "routeInfo": "Marshrut: {distance} km, taxminiy {time}",
+  "@routeInfo": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "routeCreationError": "Marshrut yaratishda xatolik: {error}",
+  "@routeCreationError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraMoveError": "Kamera harakatida xatolik: {error}",
+  "@cameraMoveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionsCheckError": "Ruxsatlarni tekshirishda xatolik: {error}",
+  "@permissionsCheckError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationUpdating": "Joylashuv yangilanmoqda...",
+  "clientLocationUpdated": "Mijoz joylashuvi muvaffaqiyatli yangilandi",
+  "locationUpdateError": "Joylashuvni yangilashda xatolik: {error}",
+  "@locationUpdateError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatingRoute": "Marshrut hisoblanmoqda...",
+  "regionsLoadError": "Hududlarni yuklashda xatolik: {error}",
+  "@regionsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationGetError": "Joylashuvni olishda xatolik: {error}",
+  "@locationGetError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeySavedSuccessfully": "API kaliti muvaffaqiyatli saqlandi",
+  "minimumInterval60Minutes": "Minimum interval is 60 minutes",
+  "pageLoadError": "Sahifa yuklanishda xatolik: {error}",
+  "@pageLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "imageSetAsPrimary": "Rasm asosiy qilib belgilandi",
+  "imagesUploadedCount": "{count} ta rasm muvaffaqiyatli yuklandi",
+  "@imagesUploadedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverImagesLoadError": "Server rasmlarini yuklashda xatolik: {error}",
+  "@serverImagesLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "gallerySelectionError": "Galereyadan rasm tanlashda xatolik: {error}",
+  "@gallerySelectionError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraCaptureError": "Kameradan rasm olishda xatolik: {error}",
+  "@cameraCaptureError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "imagesUploadedSuccessfully": "Rasmlar muvaffaqiyatli yuklandi",
+  "imagesUploadError": "Rasmlarni yuklashda xatolik: {error}",
+  "@imagesUploadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderDraftSaved": "Order Draft saved: {fileName}",
+  "@orderDraftSaved": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "tablesLabel": "Jadvallar",
+  "tableColumns": "{tableName} ustunlari",
+  "@tableColumns": {
+    "placeholders": {
+      "tableName": {
+        "type": "String"
+      }
+    }
+  },
+  "orderDetailsTitle": "Buyurtma tafsilotlari",
+  "camera": "Kamera",
+  "gallery": "Galereya",
+  "clientImagesTitle": "{clientName} - Rasmlar",
+  "@clientImagesTitle": {
+    "placeholders": {
+      "clientName": {
+        "type": "String"
+      }
+    }
+  },
+  "tradingPointImagesTitle": "{pointName} - Rasmlar",
+  "@tradingPointImagesTitle": {
+    "placeholders": {
+      "pointName": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadToServer": "Serverga yuborish ({count} ta rasm)",
+  "@uploadToServer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "kpiDashboardTitle": "KPI Dashboard",
+  "reportSentTitle": "Hisobot yuborilgan",
+  "editFeatureComingSoon": "Tahrirlash funksiyasi tez orada qo'shiladi",
+  "sendPdf": "PDF yuborish",
+  "printFeatureComingSoon": "Print funksiyasi tez orada qo'shiladi",
+  "print": "Print",
+  "stepCompleted": "{stepName} completed",
+  "@stepCompleted": {
+    "placeholders": {
+      "stepName": {
+        "type": "String"
+      }
+    }
+  },
+  "stepSkip": "{stepName} skip",
+  "@stepSkip": {
+    "placeholders": {
+      "stepName": {
+        "type": "String"
+      }
+    }
+  },
+  "syncWithDependencies": "Sync with dependencies",
+  "recommended": "Recommended",
+  "syncTableOnly": "Sync table only",
+  "syncWarning": "May fail if dependencies not synced",
+  "tableOnly": "Table only",
+  "withDependencies": "With dependencies",
+  "syncEntireGroup": "Sync Entire Group",
+  "statusNew": "Yangi",
+  "retail": "Retail",
+  "continueAction": "Davom etish",
+  "send": "Yuborish",
+  "previousStepsMustBeCompleted": "Avvalgi bosqichlar bajarilishi kerak",
+  "reload": "Qayta yuklash",
+  "refreshAfterSeconds": "{seconds} soniyadan keyin yangilash mumkin",
+  "@refreshAfterSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "imageDeleted": "Rasm o'chirildi",
+  "imageDeleteError": "Rasm o'chirishda xatolik: {error}",
+  "@imageDeleteError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteImageTitle": "Rasmni o'chirish",
+  "deleteImageConfirmation": "Haqiqatan ham bu rasmni o'chirmoqchimisiz?",
+  "delete": "O'chirish",
+  "photoAfterTitle": "Фото ПОСЛЕ (Facing correction)",
+  "photoBeforeTitle": "Фото ДО (Facing correction)",
+  "stepCompletedReadOnly": "Bu step yakunlangan. Faqat ko'rish rejimida.",
+  "photosNotLoadedYet": "Rasmlar hali yuklanmagan",
+  "timeUnknown": "Vaqt noma'lum",
+  "codeLabel": "Kod: {code}",
+  "@codeLabel": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "unitOfMeasure": "O'lchov birligi",
+  "category": "Kategoriya",
+  "brand": "Brend",
+  "series": "Seriya",
+  "barcode": "Shtrix kod",
+  "vendorCode": "Vendor kod",
+  "warehouseInformation": "Ombor ma'lumotlari",
+  "quantity": "Miqdori",
+  "available": "Mavjud",
+  "reserved": "Band qilingan",
+  "physicalProperties": "Fizik xususiyatlar",
+  "weight": "Og'irligi",
+  "volume": "Hajmi",
+  "productsNotFound": "Mahsulotlar topilmadi",
+  "bonusesNotFound": "Bonuslar topilmadi",
+  "classInformationNotFound": "Sinf ma'lumotlari topilmadi",
+  "searchResultsNotFound": "Qidiruv natijasi topilmadi",
+  "promotionConditions": "Aksiya shartlari",
+  "minimalProductCount": "Minimal mahsulot soni: {count}",
+  "@minimalProductCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bonusCount": "Bonus soni: {count}",
+  "@bonusCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readOnlyMode": "Faqat ko'rish",
+  "shelfAuditTitle": "Аудит полки (остатки)",
+  "pageInDevelopment": "Sahifa hozirda ishlab chiqilmoqda",
+  "productNotFoundMessage": "Mahsulot ma'lumotlari topilmadi: {code}",
+  "@productNotFoundMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyLabel": "API Kaliti: {status}",
+  "@apiKeyLabel": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyConfigured": "Sozlangan",
+  "apiKeyNotRequired": "Kalit shart emas",
+  "apiKeyNotConfigured": "Sozlanmagan",
+  "editInformation": "Malumotlarni tahrirlash",
+  "editClientCoordinates": "Mijoz koordinatalarini tahrirlash",
+  "currentMapProvider": "Current Map Provider",
+  "availableMaps": "Available Maps",
+  "clientPhotosTitle": "Mijoz rasmlari",
+  "clientPhotosDescription": "Bu yerda {name} mijoziga tegishli rasmlar ko'rsatiladi",
+  "@clientPhotosDescription": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notSent": "Yuborilmagan",
+  "sendToServer": "Serverga yuborish ({count} ta rasm)",
+  "@sendToServer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mainImage": "Asosiy rasm",
+  "image": "Rasm",
+  "noImagesAvailable": "Rasmlar mavjud emas",
+  "clickPlusToAddImage": "Yangi rasm qo'shish uchun + tugmasini bosing",
+  "setAsMainImage": "Asosiy rasmga o'zgartirish",
+  "orderDetailsTitle": "Buyurtma tafsilotlari",
+  "clientNameLabel": "Mijoz nomi",
+  "orderNumberLabel": "Buyurtma raqami",
+  "orderDateLabel": "Buyurtma sanasi",
+  "orderTotalLabel": "Buyurtma summasi",
+  "mainStatusLabel": "Asosiy status",
+  "statusCodeLabel": "Status kodi",
+  "totalProductsLabel": "Jami tovarlar",
+  "productNameLabel": "Tovar nomi",
+  "articleLabel": "Artikul",
+  "quantityLabel": "Soni",
+  "priceLabel": "Narx",
+  "amountLabel": "Summa",
+  "priceTypeLabel": "Narx turi",
+  "noProductsInOrder": "Bu buyurtmada mahsulotlar mavjud emas",
+  "productListEmpty": "Mahsulotlar ro'yxati bo'sh",
+  "productsNotSelected": "Mahsulotlar tanlanmagan",
+  "clickPlusToAddProduct": "Mahsulot qo'shish uchun + tugmasini bosing",
+  "reportPeriod": "Hisobot davri",
+  "monthlyOKB": "Oylik OKB",
+  "akbPlan": "AKB reja",
+  "akbFact": "AKB fakt",
+  "selectPeriod": "Davrni tanlang",
+  "apply": "Qo'llash",
+  "location": "Joylashuv",
+  "creatingLocation": "Aniqlanmoqda...",
+  "locationNotFound": "Joylashuv topilmadi",
+  "createClient": "Mijozni yaratish",
+  "swipeToRefresh": "Pastga surib yangilash uchun urinib ko'ring!",
+  "ifSwipeNotWorking": "Pastga surish ish bermasa sozlamalar menyusida joylashgan \"barcha ma'lumotlarni yangilash amalini bajaring\"",
+  "imageCountLabel": "{count} ta rasm",
+  "@imageCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosNotLoadedDescription": "Bu yerda {clientName} mijoziga tegishli rasmlar ko'rsatiladi",
+  "@photosNotLoadedDescription": {
+    "placeholders": {
+      "clientName": {
+        "type": "String"
+      }
+    }
+  },
+  "totalLabel": "Jami:",
+  "articleLabelShort": "Art:",
+  "availableLabel": "Mavjud:",
+  "pieces": "dona",
+  "shippingDate": "Yetkazib berish sanasi",
+  "changeShippingDate": "Yetkazib berish sanasini o'zgartirish",
+  "totalValueLabel": "Jami qiymat",
+  "productsLabel": "Mahsulotlar",
+  "addProduct": "Mahsulot qo'shish",
+  "creating": "Yaratilmoqda...",
+  "refreshLabel": "Yangilash",
+  "refreshing": "Yangilanmoqda...",
+  "changePeriod": "Davrni o'zgartirish"
 }

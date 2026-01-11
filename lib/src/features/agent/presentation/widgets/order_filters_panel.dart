@@ -3,6 +3,7 @@
 // presentation/widgets/order_filters_panel.dart
 // =============================
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../shared/formatters.dart';
 
 class OrdersFilterState {
@@ -29,11 +30,12 @@ class OrdersFiltersPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(color: cs.surfaceContainerLowest, borderRadius: BorderRadius.circular(16)),
       padding: const EdgeInsets.all(12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-        Text('Status', style: Theme.of(context).textTheme.labelLarge),
+        Text(l10n.labelStatus, style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
         SizedBox(
           height: 120, // Fixed height for 3 rows (approximately 40px per row)
@@ -61,14 +63,14 @@ class OrdersFiltersPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Text('Sana oralig\'i', style: Theme.of(context).textTheme.labelLarge),
+        Text(l10n.labelDateRange, style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
         Row(children:[
-          Expanded(child: OutlinedButton.icon(onPressed: onPickDateRange, icon: const Icon(Icons.calendar_month_rounded), label: Text(state.range==null ? 'Barcha sanalar' : '${dateFormatShort.format(state.range!.start)} — ${dateFormatShort.format(state.range!.end)}'))),
-          if(state.range!=null) IconButton(tooltip: 'Tozalash', onPressed: onClearDateRange, icon: const Icon(Icons.clear))
+          Expanded(child: OutlinedButton.icon(onPressed: onPickDateRange, icon: const Icon(Icons.calendar_month_rounded), label: Text(state.range==null ? l10n.allDates : '${dateFormatShort.format(state.range!.start)} — ${dateFormatShort.format(state.range!.end)}'))),
+          if(state.range!=null) IconButton(tooltip: l10n.clear, onPressed: onClearDateRange, icon: const Icon(Icons.clear))
         ]),
         const SizedBox(height: 12),
-        Text('Mijozlar', style: Theme.of(context).textTheme.labelLarge),
+        Text(l10n.labelClients, style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
         SizedBox(
           height: 160, // Fixed height for scrollable container

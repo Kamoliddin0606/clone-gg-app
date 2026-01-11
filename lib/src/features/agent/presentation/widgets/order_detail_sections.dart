@@ -4,6 +4,7 @@
 // =============================
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../shared/formatters.dart';
 import 'order_models.dart';
 
@@ -24,22 +25,23 @@ class OrderDetailsSection extends StatelessWidget {
     );
   }
   @override Widget build(BuildContext context){
+    final l10n = AppLocalizations.of(context)!;
     final pairs = <Widget>[
-      _tile(context,'Mijoz nomi', order.clientName.isNotEmpty ? order.clientName : order.clientCode, icon: Icons.badge_rounded),
-      _tile(context,'Buyurtma raqami', order.numOrder, icon: Icons.confirmation_number_outlined),
-      _tile(context,'Buyurtma sanasi', dateTimeFormat.format(order.dateOrder), icon: Icons.event),
-      _tile(context,'Buyurtma summasi', uzsFormat.format(order.total), icon: Icons.payments_rounded),
-      _tile(context,'Asosiy status', order.mainStatus, icon: Icons.info_outline_rounded),
-      _tile(context,'Status kodi', order.status.toString(), icon: Icons.numbers_rounded),
-      _tile(context,'Narx turi (code)', order.typePriceCode, icon: Icons.sell_outlined),
-      _tile(context,'Mijoz kodi', order.clientCode, icon: Icons.qr_code_2_rounded),
-      _tile(context,'Tashkilot kodi', order.codeOrg, icon: Icons.apartment_rounded),
-      if((order.courierName??'').isNotEmpty) _tile(context,'Eltuvchi', order.courierName!, icon: Icons.delivery_dining_rounded),
-      if((order.courierCar??'').isNotEmpty) _tile(context,'Mashina', order.courierCar!, icon: Icons.directions_car_rounded),
-      if((order.courierPlate??'').isNotEmpty) _tile(context,'Davlat raqami', order.courierPlate!, icon: Icons.numbers_outlined),
-      if((order.commentSupervisor??'').isNotEmpty) _tile(context,'Supervisor izohi', order.commentSupervisor!),
-      if((order.commentForwarder??'').isNotEmpty) _tile(context,'Logist izohi', order.commentForwarder!),
-      if((order.commentAgent??'').isNotEmpty) _tile(context,'Agent izohi', order.commentAgent!),
+      _tile(context, l10n.clientNameLabel, order.clientName.isNotEmpty ? order.clientName : order.clientCode, icon: Icons.badge_rounded),
+      _tile(context, l10n.orderNumberLabel, order.numOrder, icon: Icons.confirmation_number_outlined),
+      _tile(context, l10n.orderDateLabel, dateTimeFormat.format(order.dateOrder), icon: Icons.event),
+      _tile(context, l10n.orderTotalLabel, uzsFormat.format(order.total), icon: Icons.payments_rounded),
+      _tile(context, l10n.mainStatusLabel, order.mainStatus, icon: Icons.info_outline_rounded),
+      _tile(context, l10n.statusCodeLabel, order.status.toString(), icon: Icons.numbers_rounded),
+      _tile(context, '${l10n.priceTypeLabel} (code)', order.typePriceCode, icon: Icons.sell_outlined),
+      _tile(context, 'Mijoz kodi', order.clientCode, icon: Icons.qr_code_2_rounded),
+      _tile(context, 'Tashkilot kodi', order.codeOrg, icon: Icons.apartment_rounded),
+      if((order.courierName??'').isNotEmpty) _tile(context, 'Eltuvchi', order.courierName!, icon: Icons.delivery_dining_rounded),
+      if((order.courierCar??'').isNotEmpty) _tile(context, 'Mashina', order.courierCar!, icon: Icons.directions_car_rounded),
+      if((order.courierPlate??'').isNotEmpty) _tile(context, 'Davlat raqami', order.courierPlate!, icon: Icons.numbers_outlined),
+      if((order.commentSupervisor??'').isNotEmpty) _tile(context, 'Supervisor izohi', order.commentSupervisor!),
+      if((order.commentForwarder??'').isNotEmpty) _tile(context, 'Logist izohi', order.commentForwarder!),
+      if((order.commentAgent??'').isNotEmpty) _tile(context, 'Agent izohi', order.commentAgent!),
     ];
     return Padding(padding: const EdgeInsets.fromLTRB(16,8,16,16), child: ListView.separated(controller: controller, itemCount: pairs.length, separatorBuilder: (_, __)=>const SizedBox(height:12), itemBuilder: (_, i)=>pairs[i]));
   }
@@ -51,22 +53,23 @@ class OrderItemsSection extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     // Handle empty items case
+    final l10n = AppLocalizations.of(context)!;
     if (order.items.isEmpty) {
       return Column(children:[
-        Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: cs.surfaceContainerLow, border: Border(bottom: BorderSide(color: cs.outlineVariant.withOpacity(0.6)))), child: Row(children: const [
-          _Head('Tovar nomi', flex: 3), _Head('Artikul', flex: 2), _Head('Soni'), _Head('Narx'), _Head('Summa'), _Head('Narx turi', flex: 2),
+        Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: cs.surfaceContainerLow, border: Border(bottom: BorderSide(color: cs.outlineVariant.withOpacity(0.6)))), child: Row(children: [
+          _Head(l10n.productNameLabel, flex: 3), _Head(l10n.articleLabel, flex: 2), _Head(l10n.quantityLabel), _Head(l10n.priceLabel), _Head(l10n.amountLabel), _Head(l10n.priceTypeLabel, flex: 2),
         ])),
         Expanded(child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(Icons.inventory_2_outlined, size: 64, color: cs.outline),
           const SizedBox(height: 16),
-          Text('Bu buyurtmada mahsulotlar mavjud emas', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: cs.onSurfaceVariant)),
+          Text(l10n.noProductsInOrder, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: cs.onSurfaceVariant)),
           const SizedBox(height: 8),
-          Text('Mahsulotlar ro\'yxati bo\'sh', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.outline)),
+          Text(l10n.productListEmpty, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.outline)),
         ]))),
         Container(padding: const EdgeInsets.fromLTRB(16,12,16,16), decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: const BorderRadius.vertical(top: Radius.circular(16)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0,-4))]), child: Row(children:[
           const Icon(Icons.summarize_rounded), const SizedBox(width: 10), Expanded(child: Wrap(spacing: 16, runSpacing: 8, children:[
-            _Badge(label: 'Jami tovarlar', value: '0'), _Badge(label: 'Buyurtma summasi', value: uzsFormat.format(0.0)),
-          ])), FilledButton.icon(onPressed: ()=>Navigator.of(context).maybePop(), icon: const Icon(Icons.check_circle_outline), label: const Text('Yopish')),
+            _Badge(label: l10n.totalProductsLabel, value: '0'), _Badge(label: l10n.orderTotalLabel, value: uzsFormat.format(0.0)),
+          ])), FilledButton.icon(onPressed: ()=>Navigator.of(context).maybePop(), icon: const Icon(Icons.check_circle_outline), label: Text(l10n.close)),
         ])),
       ]);
     }
@@ -75,8 +78,8 @@ class OrderItemsSection extends StatelessWidget {
     final totalSum = order.items.fold<double>(0, (p, e) => p + e.sum);
 
     return Column(children:[
-      Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: cs.surfaceContainerLow, border: Border(bottom: BorderSide(color: cs.outlineVariant.withOpacity(0.6)))), child: Row(children: const [
-        _Head('Tovar nomi', flex: 3), _Head('Artikul', flex: 2), _Head('Soni'), _Head('Narx'), _Head('Summa'), _Head('Narx turi', flex: 2),
+      Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: cs.surfaceContainerLow, border: Border(bottom: BorderSide(color: cs.outlineVariant.withOpacity(0.6)))), child: Row(children: [
+        _Head(l10n.productNameLabel, flex: 3), _Head(l10n.articleLabel, flex: 2), _Head(l10n.quantityLabel), _Head(l10n.priceLabel), _Head(l10n.amountLabel), _Head(l10n.priceTypeLabel, flex: 2),
       ])),
       Expanded(child: ListView.separated(controller: controller, itemCount: order.items.length, separatorBuilder: (_, __)=>Divider(height: 1, color: cs.outlineVariant.withOpacity(0.4)), itemBuilder: (_, i){
         final it = order.items[i];
@@ -86,8 +89,8 @@ class OrderItemsSection extends StatelessWidget {
       })),
       Container(padding: const EdgeInsets.fromLTRB(16,12,16,16), decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: const BorderRadius.vertical(top: Radius.circular(16)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0,-4))]), child: Row(children:[
         const Icon(Icons.summarize_rounded), const SizedBox(width: 10), Expanded(child: Wrap(spacing: 16, runSpacing: 8, children:[
-          _Badge(label: 'Jami tovarlar', value: NumberFormat('#,##0.###').format(totalItems)), _Badge(label: 'Buyurtma summasi', value: uzsFormat.format(totalSum)),
-        ])), FilledButton.icon(onPressed: ()=>Navigator.of(context).maybePop(), icon: const Icon(Icons.check_circle_outline), label: const Text('Yopish')),
+          _Badge(label: l10n.totalProductsLabel, value: NumberFormat('#,##0.###').format(totalItems)), _Badge(label: l10n.orderTotalLabel, value: uzsFormat.format(totalSum)),
+        ])), FilledButton.icon(onPressed: ()=>Navigator.of(context).maybePop(), icon: const Icon(Icons.check_circle_outline), label: Text(l10n.close)),
       ])),
     ]);
   }

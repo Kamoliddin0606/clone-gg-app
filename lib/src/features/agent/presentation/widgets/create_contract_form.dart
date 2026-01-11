@@ -337,7 +337,7 @@ class _CreateContractFormState extends State<CreateContractForm>
           children: [
             Icon(Icons.code, color: Theme.of(context).colorScheme.primary),
             SizedBox(width: 8),
-            Text('XML Request'),
+            Text(AppLocalizations.of(context)?.xmlRequestLabel ?? 'XML Request'),
           ],
         ),
         content: Container(
@@ -356,21 +356,22 @@ class _CreateContractFormState extends State<CreateContractForm>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Yopish'),
+            child: Text(AppLocalizations.of(context)?.close ?? 'Yopish'),
           ),
           FilledButton.icon(
             onPressed: () {
+              final l10n = AppLocalizations.of(context)!;
               Clipboard.setData(ClipboardData(text: xmlRequest));
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('XML nusxalandi'),
+                  content: Text(l10n.xmlCopied),
                   behavior: SnackBarBehavior.floating,
                   duration: Duration(seconds: 2),
                 ),
               );
             },
             icon: Icon(Icons.copy),
-            label: Text('Nusxa olish'),
+            label: Text(AppLocalizations.of(context)?.copy ?? 'Nusxa olish'),
           ),
         ],
       ),
@@ -612,7 +613,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                               child: _buildTextField(
                                 controller: _numbReferenceController,
                                 label: 'Ma\'lumotnoma raqami',
-                                hint: 'Raqamni kiriting',
+                                hint: AppLocalizations.of(context)?.enterNumberHint ?? 'Raqamni kiriting',
                                 icon: Icons.description_outlined,
                                 theme: theme,
                                 colorScheme: colorScheme,
@@ -642,7 +643,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                               child: _buildTextField(
                                 controller: _numbCertificateController,
                                 label: 'Sertifikat raqami',
-                                hint: 'Raqamni kiriting',
+                                hint: AppLocalizations.of(context)?.enterNumberHint ?? 'Raqamni kiriting',
                                 icon: Icons.verified_outlined,
                                 theme: theme,
                                 colorScheme: colorScheme,
@@ -1288,7 +1289,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                 const Spacer(),
                 TextButton(
                   onPressed: _loadContractTypes,
-                  child: const Text('Qayta yuklash'),
+                  child: Text(AppLocalizations.of(context)?.reload ?? 'Qayta yuklash'),
                 ),
               ],
             ),
@@ -1563,7 +1564,7 @@ class _CreateContractFormState extends State<CreateContractForm>
             child: OutlinedButton.icon(
               onPressed: _showXmlRequestDialog,
               icon: const Icon(Icons.code, size: 20),
-              label: const Text('XML Request'),
+              label: Text(AppLocalizations.of(context)?.xmlRequestLabel ?? 'XML Request'),
               style: OutlinedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

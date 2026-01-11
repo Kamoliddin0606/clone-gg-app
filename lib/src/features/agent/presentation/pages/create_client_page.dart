@@ -749,23 +749,33 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Joylashuv',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _latitude != null && _longitude != null
-                      ? '${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}'
-                      : _isGettingLocation
-                          ? 'Aniqlanmoqda...'
-                          : 'Joylashuv topilmadi',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onPrimaryContainer.withOpacity(0.8),
-                  ),
+                Builder(
+                  builder: (ctx) {
+                    final l10n = AppLocalizations.of(ctx);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n?.location ?? 'Joylashuv',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _latitude != null && _longitude != null
+                              ? '${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}'
+                              : _isGettingLocation
+                                  ? (l10n?.creatingLocation ?? 'Aniqlanmoqda...')
+                                  : (l10n?.locationNotFound ?? 'Joylashuv topilmadi'),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -972,7 +982,7 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text('Yaratilmoqda...'),
+                  Text(AppLocalizations.of(context)!.creating),
                 ],
               )
             : Row(
@@ -980,11 +990,13 @@ class _CreateClientPageState extends State<CreateClientPage> with SingleTickerPr
                 children: [
                   const Icon(Icons.add_business),
                   const SizedBox(width: 12),
-                  Text(
-                    'Mijozni yaratish',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onPrimary,
+                  Builder(
+                    builder: (ctx) => Text(
+                      AppLocalizations.of(ctx)!.createClient,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onPrimary,
+                      ),
                     ),
                   ),
                 ],

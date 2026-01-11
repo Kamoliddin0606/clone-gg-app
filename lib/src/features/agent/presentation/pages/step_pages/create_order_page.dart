@@ -800,9 +800,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     } else {
       if (!_disabledAddProducts.contains(codeProduct)) {
         setState(() => _disabledAddProducts.add(codeProduct));
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Maksimal miqdor: $stock dona'),
+            content: Text(l10n.maxQuantityMessage(stock)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -959,7 +960,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Bekor'),
+                    child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -1108,7 +1109,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                         : Colors.green,
                   ),
                   onPressed: _toggleSettingsPanel,
-                  tooltip: 'Sozlamalar',
+                  tooltip: AppLocalizations.of(context)?.settings ?? 'Sozlamalar',
                 ),
               ),
             ],
@@ -1164,7 +1165,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Sozlamalar',
+            AppLocalizations.of(context)?.settings ?? 'Sozlamalar',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -1280,7 +1281,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           child: _isLoadingProducts
               ? const Center(child: CircularProgressIndicator())
               : _selectedProducts.isEmpty
-                  ? _buildEmptyState(theme)
+                  ? _buildEmptyState(theme, context)
                   : _buildProductsList(theme),
         ),
       ],
@@ -1330,7 +1331,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     }
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
+  Widget _buildEmptyState(ThemeData theme, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1342,14 +1344,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
           ),
           const SizedBox(height: 16),
           Text(
-            'Mahsulotlar tanlanmagan',
+            l10n?.productsNotSelected ?? 'Mahsulotlar tanlanmagan',
             style: theme.textTheme.headlineSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Mahsulot qo\'shish uchun + tugmasini bosing',
+            l10n?.clickPlusToAddProduct ?? 'Mahsulot qo\'shish uchun + tugmasini bosing',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
             ),
@@ -1894,7 +1896,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               const SizedBox(height: 8),
               // Total
               Text(
-                'Jami: ${uzsFormat.format(product.total)}',
+                '${AppLocalizations.of(context)?.totalLabel ?? 'Jami:'} ${uzsFormat.format(product.total)}',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -1911,7 +1913,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
               const SizedBox(height: 8),
 
               Text(
-                'Art: ${product.vendorCode} • Mavjud: ${_getProductStock(product.codeProduct)} dona',
+                '${AppLocalizations.of(context)?.articleLabelShort ?? 'Art:'} ${product.vendorCode} • ${AppLocalizations.of(context)?.availableLabel ?? 'Mavjud:'} ${_getProductStock(product.codeProduct)} ${AppLocalizations.of(context)?.pieces ?? 'dona'}',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: Colors.white,
                   shadows: [
@@ -1946,7 +1948,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     );
   }
 
-  Widget _buildBottomSummary(ThemeData theme) {
+  Widget _buildBottomSummary(ThemeData theme, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onVerticalDragStart: (details) {
         _dragStartY = details.globalPosition.dy;
@@ -1981,10 +1984,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildSummaryItem(theme, 'Mahsulotlar', '$_totalItems ta'),
-                      _buildSummaryItem(theme, 'Jami qiymat', _totalValue),
-                      _buildSummaryItem(theme, 'Og\'irlik', '${_totalWeight.toStringAsFixed(2)} kg'),
-                      _buildSummaryItem(theme, 'Hajm', '${_totalVolume.toStringAsFixed(2)} m³'),
+                      _buildSummaryItem(theme, l10n?.productsLabel ?? 'Mahsulotlar', '$_totalItems ta', context),
+                      _buildSummaryItem(theme, l10n?.totalValueLabel ?? 'Jami qiymat', _totalValue, context),
+                      _buildSummaryItem(theme, l10n?.weight ?? 'Og\'irlik', '${_totalWeight.toStringAsFixed(2)} kg', context),
+                      _buildSummaryItem(theme, l10n?.volume ?? 'Hajm', '${_totalVolume.toStringAsFixed(2)} m³', context),
                     ],
                   ),
                 ),
@@ -2008,11 +2011,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     );
   }
 
-  Widget _buildSummaryItem(ThemeData theme, String label, dynamic value) {
+  Widget _buildSummaryItem(ThemeData theme, String label, dynamic value, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     String displayValue;
     String? tooltipMessage;
 
-    if (label == 'Jami qiymat' && value is double) {
+    if ((label == (l10n?.totalValueLabel ?? 'Jami qiymat') || label == 'Jami qiymat') && value is double) {
       displayValue = _formatTotalValue(value);
       tooltipMessage = uzsFormat.format(value);
     } else {
@@ -2087,9 +2091,10 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
         // Show success message
         debugPrint('CreateOrderPage: About to show success snackbar, mounted: $mounted');
         if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${result.length} ta mahsulot tanlandi'),
+              content: Text(l10n.productsSelectedCount(result.length)),
               backgroundColor: Colors.green,
             ),
           );
@@ -2128,14 +2133,16 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
     final theme = Theme.of(context);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Mahsulot tanlash'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 400,
-          child: _availableProducts.isEmpty
-              ? const Center(child: Text('Mahsulotlar mavjud emas'))
-              : ListView.builder(
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        return AlertDialog(
+          title: Text(l10n.productSelectionTitle),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400,
+            child: _availableProducts.isEmpty
+                ? Center(child: Text(l10n.noProductsAvailable))
+                : ListView.builder(
                   itemCount: _availableProducts.length,
                   itemBuilder: (context, index) {
                     final product = _availableProducts[index];
@@ -2162,13 +2169,14 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                   },
                 ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel),
+            ),
+          ],
+        );
+      }
     );
   }
 
@@ -2195,7 +2203,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Tozalash'),
+            child: Text(AppLocalizations.of(context)?.clear ?? 'Tozalash'),
           ),
         ],
       ),
@@ -2275,8 +2283,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Jami mahsulotlar: $_totalItems ta'),
-              Text('Jami qiymat: ${uzsFormat.format(_totalValue)}'),
+              Text(l10n?.totalProductsCount(_totalItems) ?? 'Jami mahsulotlar: $_totalItems ta'),
+              Text(l10n?.totalAmount(uzsFormat.format(_totalValue)) ?? 'Jami qiymat: ${uzsFormat.format(_totalValue)}'),
               const SizedBox(height: 16),
               // Shipping Date Picker
               InkWell(
@@ -2291,27 +2299,37 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                     setState(() => _shippingDate = pickedDate);
                   }
                 },
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Yetkazib berish sanasi',
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.calendar_today),
-                  ),
-                  child: Text(
-                    _shippingDate != null
-                        ? '${_shippingDate!.day}.${_shippingDate!.month}.${_shippingDate!.year}'
-                        : 'Bugun',
-                  ),
+                child: Builder(
+                  builder: (ctx) {
+                    final localL10n = AppLocalizations.of(ctx);
+                    return InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: localL10n?.shippingDate ?? 'Yetkazib berish sanasi',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: const Icon(Icons.calendar_today),
+                      ),
+                      child: Text(
+                        _shippingDate != null
+                            ? '${_shippingDate!.day}.${_shippingDate!.month}.${_shippingDate!.year}'
+                            : (localL10n?.today ?? 'Bugun'),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Izohlar',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
+              Builder(
+                builder: (ctx) {
+                  final localL10n = AppLocalizations.of(ctx);
+                  return TextField(
+                    controller: _notesController,
+                    decoration: InputDecoration(
+                      labelText: localL10n?.notes ?? 'Izohlar',
+                      border: const OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  );
+                },
               ),
             ],
           ),
@@ -2547,7 +2565,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 ),
 
                 // Bottom summary
-                _buildBottomSummary(theme),
+                _buildBottomSummary(theme, context),
               ],
             ),
 
@@ -2559,7 +2577,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> with TickerProviderSt
                 child: FloatingActionButton(
                   onPressed: _navigateToProductSelection,
                   child: const Icon(Icons.add),
-                  tooltip: 'Mahsulot qo\'shish',
+                  tooltip: AppLocalizations.of(context)?.addProduct ?? 'Mahsulot qo\'shish',
                 ),
               ),
           ],

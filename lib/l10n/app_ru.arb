@@ -832,5 +832,641 @@
   "createClientSelectTypeError": "Пожалуйста, выберите тип торговой точки",
   "createClientLocationError": "Данные о местоположении не найдены",
   "createClientUserCodeError": "Код пользователя не найден",
-  "createClientUnknownError": "Неизвестная ошибка"
+  "createClientUnknownError": "Неизвестная ошибка",
+  "labelTradingPointType": "Тип торговой точки",
+  "labelBusinessRegion": "Бизнес регион",
+  "labelStatus": "Статус",
+  "labelDateRange": "Диапазон дат",
+  "labelClients": "Клиенты",
+  "refusalReasonTitle": "Причина отказа",
+  "selectRefusalReasonFor": "Выберите причину отказа для {name}:",
+  "@selectRefusalReasonFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "businessRegionLabel": "Бизнес регион: {region}",
+  "@businessRegionLabel": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "contactLabel": "Контакт: {contact}",
+  "@contactLabel": {
+    "placeholders": {
+      "contact": {
+        "type": "String"
+      }
+    }
+  },
+  "innLabel": "ИНН: {inn}",
+  "@innLabel": {
+    "placeholders": {
+      "inn": {
+        "type": "String"
+      }
+    }
+  },
+  "ownerLabel": "Владелец: {owner}",
+  "@ownerLabel": {
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      }
+    }
+  },
+  "responsiblePersonLabel": "Ответственный: {responsible}",
+  "@responsiblePersonLabel": {
+    "placeholders": {
+      "responsible": {
+        "type": "String"
+      }
+    }
+  },
+  "responsiblePersonPhoneLabel": "Телефон ответственного: {phone}",
+  "@responsiblePersonPhoneLabel": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "typeLabel": "Тип: {type}",
+  "@typeLabel": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "regionDistrictLabel": "{region}, {district}",
+  "@regionDistrictLabel": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      },
+      "district": {
+        "type": "String"
+      }
+    }
+  },
+  "signboardLabel": "Вывеска: {signboard}",
+  "@signboardLabel": {
+    "placeholders": {
+      "signboard": {
+        "type": "String"
+      }
+    }
+  },
+  "landmarkLabel": "Ориентир: {landmark}",
+  "@landmarkLabel": {
+    "placeholders": {
+      "landmark": {
+        "type": "String"
+      }
+    }
+  },
+  "waitingForLocation": "Ожидание данных о местоположении...",
+  "visitCompletedTitle": "Посещение завершено",
+  "visitCompletedSuccessfully": "Посещение успешно завершено!",
+  "stepsCompletedCount": "{count} шагов завершено",
+  "@stepsCompletedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "returnToHome": "Вернуться на главную",
+  "completedAtLabel": "Завершено: {date}",
+  "@completedAtLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "orderCaption": "Заказ {id}",
+  "@orderCaption": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "maxQuantityMessage": "Максимальное количество: {stock} шт",
+  "@maxQuantityMessage": {
+    "placeholders": {
+      "stock": {
+        "type": "int"
+      }
+    }
+  },
+  "productPriceZeroError": "Нельзя добавить товар с ценой 0 или меньше",
+  "quantityUpdateError": "Ошибка обновления количества",
+  "confirmationError": "Ошибка подтверждения выбора",
+  "confirm": "Подтвердить",
+  "productSelectionTitle": "Выбор товара",
+  "productsSelectedCount": "{count} товаров выбрано",
+  "@productsSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noProductsAvailable": "Товары отсутствуют",
+  "clear": "Очистить",
+  "totalProductsCount": "Всего товаров: {count}",
+  "@totalProductsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "totalAmount": "Общая сумма: {amount}",
+  "@totalAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "errorOccurred": "Произошла ошибка: {error}",
+  "@errorOccurred": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraPermissionDenied": "Разрешение на камеру не предоставлено",
+  "cameraInitError": "Ошибка инициализации камеры: {error}",
+  "@cameraInitError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraError": "Ошибка камеры: {error}",
+  "@cameraError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraInUseMessage": "Камера используется другим приложением. Попытка переподключения...",
+  "imageSavedSuccessfully": "Изображение успешно сохранено",
+  "imageSaveError": "Ошибка сохранения изображения: {error}",
+  "@imageSaveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraNotReady": "Камера не готова",
+  "cameraNotAvailable": "Камера недоступна или не работает",
+  "imageCounter": "{current} / {total}",
+  "@imageCounter": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "finish": "Завершить",
+  "imageCapturedSuccessfully": "Изображение успешно получено",
+  "imageCaptureError": "Ошибка получения изображения: {error}",
+  "@imageCaptureError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "xmlRequestLabel": "XML Запрос",
+  "xmlCopied": "XML скопирован",
+  "enterNumberHint": "Введите номер",
+  "balanceStatusTitle": "Статус баланса",
+  "productNotFoundMessage": "Информация о товаре не найдена: {code}",
+  "@productNotFoundMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "clientCreatedSuccessfully": "Новый клиент успешно создан!",
+  "callClientTitle": "Позвонить клиенту",
+  "callClientConfirmation": "Вы хотите позвонить клиенту?\n{phone}",
+  "@callClientConfirmation": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "dialerNotAvailable": "Звонок недоступен",
+  "updateCoordinatesNotImplemented": "Обновление координат - функция будет реализована",
+  "osmNotLoadedFallback": "OpenStreetMap не загружен. Используется Google Maps.",
+  "confirmLocationTitle": "Подтвердить местоположение",
+  "orderDetailsNotFound": "Детали заказа не найдены",
+  "unknown": "Неизвестно",
+  "locationPermissionDenied": "Разрешение на местоположение не предоставлено",
+  "permissionCheckError": "Ошибка проверки разрешения: {error}",
+  "@permissionCheckError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationDetectionError": "Ошибка определения местоположения: {error}",
+  "@locationDetectionError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "userLocationNotFound": "Местоположение пользователя не найдено",
+  "routeInfo": "Маршрут: {distance} км, примерно {time}",
+  "@routeInfo": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "routeCreationError": "Ошибка создания маршрута: {error}",
+  "@routeCreationError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraMoveError": "Ошибка перемещения камеры: {error}",
+  "@cameraMoveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionsCheckError": "Ошибка проверки разрешений: {error}",
+  "@permissionsCheckError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationUpdating": "Обновление местоположения...",
+  "clientLocationUpdated": "Местоположение клиента успешно обновлено",
+  "locationUpdateError": "Ошибка обновления местоположения: {error}",
+  "@locationUpdateError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatingRoute": "Расчет маршрута...",
+  "regionsLoadError": "Ошибка загрузки регионов: {error}",
+  "@regionsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationGetError": "Ошибка получения местоположения: {error}",
+  "@locationGetError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeySavedSuccessfully": "API ключ успешно сохранен",
+  "minimumInterval60Minutes": "Минимальный интервал составляет 60 минут",
+  "pageLoadError": "Ошибка загрузки страницы: {error}",
+  "@pageLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "imageSetAsPrimary": "Изображение установлено как основное",
+  "imagesUploadedCount": "{count} изображений успешно загружено",
+  "@imagesUploadedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverImagesLoadError": "Ошибка загрузки изображений с сервера: {error}",
+  "@serverImagesLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "gallerySelectionError": "Ошибка выбора из галереи: {error}",
+  "@gallerySelectionError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraCaptureError": "Ошибка получения с камеры: {error}",
+  "@cameraCaptureError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "imagesUploadedSuccessfully": "Изображения успешно загружены",
+  "imagesUploadError": "Ошибка загрузки изображений: {error}",
+  "@imagesUploadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderDraftSaved": "Черновик заказа сохранен: {fileName}",
+  "@orderDraftSaved": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "tablesLabel": "Таблицы",
+  "tableColumns": "Колонки {tableName}",
+  "@tableColumns": {
+    "placeholders": {
+      "tableName": {
+        "type": "String"
+      }
+    }
+  },
+  "orderDetailsTitle": "Детали заказа",
+  "camera": "Камера",
+  "gallery": "Галерея",
+  "clientImagesTitle": "{clientName} - Изображения",
+  "@clientImagesTitle": {
+    "placeholders": {
+      "clientName": {
+        "type": "String"
+      }
+    }
+  },
+  "tradingPointImagesTitle": "{pointName} - Изображения",
+  "@tradingPointImagesTitle": {
+    "placeholders": {
+      "pointName": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadToServer": "Отправить на сервер ({count} изображений)",
+  "@uploadToServer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "kpiDashboardTitle": "KPI Панель",
+  "reportSentTitle": "Отчет отправлен",
+  "editFeatureComingSoon": "Функция редактирования скоро будет добавлена",
+  "sendPdf": "Отправить PDF",
+  "printFeatureComingSoon": "Функция печати скоро будет добавлена",
+  "print": "Печать",
+  "stepCompleted": "{stepName} завершено",
+  "@stepCompleted": {
+    "placeholders": {
+      "stepName": {
+        "type": "String"
+      }
+    }
+  },
+  "stepSkip": "{stepName} пропущено",
+  "@stepSkip": {
+    "placeholders": {
+      "stepName": {
+        "type": "String"
+      }
+    }
+  },
+  "syncWithDependencies": "Синхронизация с зависимостями",
+  "recommended": "Рекомендуется",
+  "syncTableOnly": "Синхронизация только таблицы",
+  "syncWarning": "Может не удаться, если зависимости не синхронизированы",
+  "tableOnly": "Только таблица",
+  "withDependencies": "С зависимостями",
+  "syncEntireGroup": "Синхронизировать всю группу",
+  "statusNew": "Новый",
+  "retail": "Розничная",
+  "continueAction": "Продолжить",
+  "send": "Отправить",
+  "previousStepsMustBeCompleted": "Предыдущие шаги должны быть выполнены",
+  "reload": "Перезагрузить",
+  "refreshAfterSeconds": "Можно обновить через {seconds} секунд",
+  "@refreshAfterSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "imageDeleted": "Изображение удалено",
+  "imageDeleteError": "Ошибка удаления изображения: {error}",
+  "@imageDeleteError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteImageTitle": "Удалить изображение",
+  "deleteImageConfirmation": "Вы уверены, что хотите удалить это изображение?",
+  "delete": "Удалить",
+  "photoAfterTitle": "Фото ПОСЛЕ (Facing correction)",
+  "photoBeforeTitle": "Фото ДО (Facing correction)",
+  "stepCompletedReadOnly": "Этот шаг завершен. Режим только чтения.",
+  "photosNotLoadedYet": "Фотографии еще не загружены",
+  "timeUnknown": "Время неизвестно",
+  "codeLabel": "Код: {code}",
+  "@codeLabel": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "unitOfMeasure": "Единица измерения",
+  "category": "Категория",
+  "brand": "Бренд",
+  "series": "Серия",
+  "barcode": "Штрих-код",
+  "vendorCode": "Артикул",
+  "warehouseInformation": "Информация о складе",
+  "quantity": "Количество",
+  "available": "Доступно",
+  "reserved": "Зарезервировано",
+  "physicalProperties": "Физические свойства",
+  "weight": "Вес",
+  "volume": "Объем",
+  "productsNotFound": "Товары не найдены",
+  "bonusesNotFound": "Бонусы не найдены",
+  "classInformationNotFound": "Информация о классе не найдена",
+  "searchResultsNotFound": "Результаты поиска не найдены",
+  "promotionConditions": "Условия акции",
+  "minimalProductCount": "Минимальное количество товара: {count}",
+  "@minimalProductCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bonusCount": "Количество бонусов: {count}",
+  "@bonusCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readOnlyMode": "Только чтение",
+  "shelfAuditTitle": "Аудит полки (остатки)",
+  "pageInDevelopment": "Страница находится в разработке",
+  "productNotFoundMessage": "Информация о товаре не найдена: {code}",
+  "@productNotFoundMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyLabel": "API Ключ: {status}",
+  "@apiKeyLabel": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyConfigured": "Настроено",
+  "apiKeyNotRequired": "Ключ не требуется",
+  "apiKeyNotConfigured": "Не настроено",
+  "editInformation": "Редактировать информацию",
+  "editClientCoordinates": "Редактировать координаты клиента",
+  "currentMapProvider": "Текущий провайдер карт",
+  "availableMaps": "Доступные карты",
+  "clientPhotosTitle": "Фото клиента",
+  "clientPhotosDescription": "Здесь отображаются фотографии, относящиеся к клиенту {name}",
+  "@clientPhotosDescription": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notSent": "Не отправлено",
+  "sendToServer": "Отправить на сервер ({count} фото)",
+  "@sendToServer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mainImage": "Основное изображение",
+  "image": "Изображение",
+  "noImagesAvailable": "Изображения недоступны",
+  "clickPlusToAddImage": "Нажмите кнопку +, чтобы добавить изображение",
+  "setAsMainImage": "Установить как основное",
+  "orderDetailsTitle": "Детали заказа",
+  "clientNameLabel": "Имя клиента",
+  "orderNumberLabel": "Номер заказа",
+  "orderDateLabel": "Дата заказа",
+  "orderTotalLabel": "Сумма заказа",
+  "mainStatusLabel": "Основной статус",
+  "statusCodeLabel": "Код статуса",
+  "totalProductsLabel": "Всего товаров",
+  "productNameLabel": "Название товара",
+  "articleLabel": "Артикул",
+  "quantityLabel": "Количество",
+  "priceLabel": "Цена",
+  "amountLabel": "Сумма",
+  "priceTypeLabel": "Тип цены",
+  "noProductsInOrder": "В этом заказе нет товаров",
+  "productListEmpty": "Список товаров пуст",
+  "productsNotSelected": "Товары не выбраны",
+  "clickPlusToAddProduct": "Нажмите кнопку +, чтобы добавить товар",
+  "reportPeriod": "Период отчета",
+  "monthlyOKB": "Ежемесячный ОКБ",
+  "akbPlan": "АКБ план",
+  "akbFact": "АКБ факт",
+  "selectPeriod": "Выберите период",
+  "apply": "Применить",
+  "location": "Местоположение",
+  "creatingLocation": "Определение...",
+  "locationNotFound": "Местоположение не найдено",
+  "createClient": "Создать клиента",
+  "swipeToRefresh": "Попробуйте потянуть вниз для обновления!",
+  "ifSwipeNotWorking": "Если потягивание вниз не работает, выполните действие \"обновить все данные\", расположенное в меню настроек",
+  "imageCountLabel": "{count} фото",
+  "@imageCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosNotLoadedDescription": "Здесь отображаются фотографии, относящиеся к клиенту {clientName}",
+  "@photosNotLoadedDescription": {
+    "placeholders": {
+      "clientName": {
+        "type": "String"
+      }
+    }
+  },
+  "totalLabel": "Итого:",
+  "articleLabelShort": "Арт.:",
+  "availableLabel": "В наличии:",
+  "pieces": "шт.",
+  "shippingDate": "Дата доставки",
+  "changeShippingDate": "Изменить дату доставки",
+  "totalValueLabel": "Общая стоимость",
+  "productsLabel": "Товары",
+  "addProduct": "Добавить товар",
+  "creating": "Создание...",
+  "refreshLabel": "Обновить",
+  "refreshing": "Обновление...",
+  "changePeriod": "Изменить период"
 }

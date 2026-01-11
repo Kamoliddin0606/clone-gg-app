@@ -94,8 +94,9 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
       // Camera will be initialized when add_a_photo button is pressed
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Xatolik yuz berdi: $e')),
+          SnackBar(content: Text(l10n.errorOccurred(e.toString()))),
         );
       }
     } finally {
@@ -128,7 +129,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
       if (status != PermissionStatus.granted) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kamera ruxsati berilmadi')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.cameraPermissionDenied ?? 'Kamera ruxsati berilmadi')),
           );
         }
         return;
@@ -142,7 +143,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
       debugPrint('Camera initialization error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kamera ishga tushirishda xatolik: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.cameraInitError(e.toString()) ?? 'Kamera ishga tushirishda xatolik: $e')),
         );
       }
     }
@@ -175,7 +176,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
       debugPrint('Camera controller initialization error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kamera ishga tushirishda xatolik: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.cameraInitError(e.toString()) ?? 'Kamera ishga tushirishda xatolik: $e')),
         );
       }
     }
@@ -193,7 +194,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
           _handleCameraEviction();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Kamera xatoligi: $error')),
+            SnackBar(content: Text(AppLocalizations.of(context)?.cameraError(error ?? '') ?? 'Kamera xatoligi: ${error ?? ''}')),
           );
 
           // Try to reinitialize camera if possible
@@ -224,8 +225,8 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
     if (mounted) {
       setState(() => _isCameraInitialized = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Kamera boshqa ilova tomonidan ishlatilmoqda. Qayta ulanishga harakat qilinmoqda...'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)?.cameraInUseMessage ?? 'Kamera boshqa ilova tomonidan ishlatilmoqda. Qayta ulanishga harakat qilinmoqda...'),
           duration: Duration(seconds: 3),
         ),
       );
@@ -294,13 +295,13 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rasm muvaffaqiyatli saqlandi')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.imageSavedSuccessfully ?? 'Rasm muvaffaqiyatli saqlandi')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rasm saqlashda xatolik: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.imageSaveError(e.toString()) ?? 'Rasm saqlashda xatolik: $e')),
         );
       }
     }
@@ -328,7 +329,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rasm o\'chirildi')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.imageDeleted ?? 'Rasm o\'chirildi')),
         );
       }
     } catch (e) {
@@ -348,7 +349,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
       await _initializeCameras();
       if (_cameraController == null || !_isCameraInitialized) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kamera tayyor emas')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.cameraNotReady ?? 'Kamera tayyor emas')),
         );
         return;
       }
@@ -359,7 +360,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
         !_cameraController!.value.isInitialized ||
         _cameraController!.value.hasError) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kamera mavjud emas yoki ishlamayapti')),
+        SnackBar(content: Text(AppLocalizations.of(context)?.cameraNotAvailable ?? 'Kamera mavjud emas yoki ishlamayapti')),
       );
       return;
     }
@@ -458,15 +459,15 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
           ),
           const SizedBox(height: 16),
           Text(
-            'Фото ДО (Facing correction)',
+            l10n?.photoBeforeTitle ?? 'Фото ДО (Facing correction)',
             style: theme.textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             widget.readOnly
-                ? 'Bu step yakunlangan. Faqat ko\'rish rejimida.'
-                : 'Rasmlar hali yuklanmagan',
+                ? (l10n?.stepCompletedReadOnly ?? 'Bu step yakunlangan. Faqat ko\'rish rejimida.')
+                : (l10n?.photosNotLoadedYet ?? 'Rasmlar hali yuklanmagan'),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -636,12 +637,12 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rasmni o\'chirish'),
-        content: const Text('Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
+        title: Text(AppLocalizations.of(context)?.deleteImageTitle ?? 'Rasmni o\'chirish'),
+        content: Text(AppLocalizations.of(context)?.deleteImageConfirmation ?? 'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           FilledButton(
             onPressed: () {
@@ -651,7 +652,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
             style: FilledButton.styleFrom(
               backgroundColor: Colors.red,
             ),
-            child: const Text('O\'chirish'),
+            child: Text(AppLocalizations.of(context)?.delete ?? 'O\'chirish'),
           ),
         ],
       ),
@@ -664,7 +665,7 @@ class _PhotoFacingBeforePageState extends State<PhotoFacingBeforePage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${widget.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
+        title: Text('${widget.stepName} ${(l10n?.completed ?? 'completed').toLowerCase()}'),
         // content: Column(
         //   mainAxisSize: MainAxisSize.min,
         //   children: [
@@ -760,14 +761,14 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
       appBar: AppBar(
         backgroundColor: Colors.black.withOpacity(0.7),
         foregroundColor: Colors.white,
-        title: Text('${_currentIndex + 1} / ${widget.photos.length}'),
+        title: Text(AppLocalizations.of(context)?.imageCounter(_currentIndex + 1, widget.photos.length) ?? '${_currentIndex + 1} / ${widget.photos.length}'),
         actions: widget.readOnly
             ? null
             : [
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: _showDeleteConfirmation,
-                  tooltip: 'Rasmni o\'chirish',
+                  tooltip: AppLocalizations.of(context)?.deleteImageTitle ?? 'Rasmni o\'chirish',
                 ),
               ],
       ),
@@ -805,7 +806,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           FilledButton(
             onPressed: () {
@@ -877,7 +878,7 @@ class _CameraFullScreenImageViewerState extends State<CameraFullScreenImageViewe
       appBar: AppBar(
         backgroundColor: Colors.black.withOpacity(0.7),
         foregroundColor: Colors.white,
-        title: Text('${_currentIndex + 1} / ${widget.photos.length}'),
+        title: Text(AppLocalizations.of(context)?.imageCounter(_currentIndex + 1, widget.photos.length) ?? '${_currentIndex + 1} / ${widget.photos.length}'),
         actions: widget.onDeletePhoto != null
             ? [
                 IconButton(
@@ -921,7 +922,7 @@ class _CameraFullScreenImageViewerState extends State<CameraFullScreenImageViewe
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           FilledButton(
             onPressed: () {
@@ -1031,7 +1032,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
           ),
           FilledButton(
             onPressed: () async {
@@ -1089,8 +1090,8 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rasm o\'chirildi'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)?.imageDeleted ?? 'Rasm o\'chirildi'),
             duration: Duration(seconds: 1),
           ),
         );
@@ -1284,7 +1285,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
                             ? () => Navigator.of(context).pop()
                             : null,
                         icon: const Icon(Icons.check),
-                        label: const Text('Yakunlash'),
+                        label: Text(AppLocalizations.of(context)?.finish ?? 'Yakunlash'),
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.green,
                         ),
@@ -1325,7 +1326,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       if (!widget.cameraController.value.isInitialized ||
           widget.cameraController.value.isRecordingVideo ||
           widget.cameraController.value.hasError) {
-        throw Exception('Kamera tayyor emas');
+        throw Exception(AppLocalizations.of(context)?.cameraNotReady ?? 'Kamera tayyor emas');
       }
 
       final image = await widget.cameraController.takePicture();
@@ -1344,8 +1345,8 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       // Show success feedback
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rasm muvaffaqiyatli olingan'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)?.imageCapturedSuccessfully ?? 'Rasm muvaffaqiyatli olingan'),
             duration: Duration(seconds: 1),
           ),
         );
@@ -1355,7 +1356,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> {
       if (mounted) {
         setState(() => _isCameraAvailable = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rasm olishda xatolik: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)?.imageCaptureError(e.toString()) ?? 'Rasm olishda xatolik: $e')),
         );
       }
     } finally {

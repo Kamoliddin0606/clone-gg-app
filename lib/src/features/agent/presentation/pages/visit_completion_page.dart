@@ -41,14 +41,14 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tashrif yakunlandi'),
+        title: Text(l10n?.visitCompletedTitle ?? 'Tashrif yakunlandi'),
         centerTitle: true,
         automaticallyImplyLeading: false, // Remove back button
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
             child: Text(
-              'Yopish',
+              l10n?.close ?? 'Yopish',
               style: TextStyle(color: theme.colorScheme.primary),
             ),
           ),
@@ -84,6 +84,7 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
   }
 
   Widget _buildSuccessHeader(BuildContext context, ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -102,7 +103,7 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Tashrif muvaffaqiyatli yakunlandi!',
+            l10n?.visitCompletedSuccessfully ?? 'Tashrif muvaffaqiyatli yakunlandi!',
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
@@ -111,7 +112,7 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            '${widget.completedSteps.length} ta bosqich bajarildi',
+            l10n?.stepsCompletedCount(widget.completedSteps.length) ?? '${widget.completedSteps.length} ta bosqich bajarildi',
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -185,7 +186,7 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
                         if (stepProgress.completedAt != null) ...[
                           const SizedBox(height: 4),
                           Text(
-                            'Bajarilgan: ${_formatDateTime(stepProgress.completedAt!)}',
+                            l10n?.completedAtLabel(_formatDateTime(stepProgress.completedAt!)) ?? 'Bajarilgan: ${_formatDateTime(stepProgress.completedAt!)}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -218,7 +219,7 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
       child: FilledButton.icon(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         icon: const Icon(Icons.home),
-        label: const Text('Bosh sahifaga qaytish'),
+        label: Text(l10n?.returnToHome ?? 'Bosh sahifaga qaytish'),
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
         ),
@@ -248,9 +249,10 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
       } else {
         // Show message if order not found
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Buyurtma tafsilotlari topilmadi'),
+            SnackBar(
+              content: Text(l10n?.orderDetailsNotFound ?? 'Buyurtma tafsilotlari topilmadi'),
               backgroundColor: Colors.orange,
             ),
           );
@@ -259,9 +261,10 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
     } catch (e) {
       debugPrint('Error navigating to order details: $e');
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Buyurtma tafsilotlariga o\'tishda xatolik'),
+          SnackBar(
+            content: Text('${l10n?.orderDetailsNavigationErrorPrefix ?? "Error occurred"}: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -300,11 +303,13 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
 
   /// Convert CreateOrder to OrderModel for compatibility with OrderDetailsPage
   Future<OrderModel> _convertCreateOrderToOrderModel(CreateOrder createOrder) async {
+    final l10n = AppLocalizations.of(context);
+    final orderId = createOrder.id?.toString() ?? l10n?.statusNew ?? 'Yangi';
     return OrderModel(
       id: createOrder.id,
       numOrder: '', // Will be filled from server response
       dateOrder: createOrder.createDate,
-      captionOrder: 'Buyurtma ${createOrder.id ?? 'Yangi'}',
+      captionOrder: l10n?.orderCaption(orderId) ?? 'Buyurtma ${createOrder.id ?? 'Yangi'}',
       typePriceCode: createOrder.codePrice,
       status: 1, // Assume pending status
       commentSupervisor: createOrder.commentSupervisor,
@@ -314,7 +319,7 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
       clientCode: createOrder.codeClient,
       clientName: widget.tradingPoint.tradingPoint.name,
       codeOrg: createOrder.codeOrg,
-      mainStatus: 'Yangi', // Default status
+      mainStatus: l10n?.statusNew ?? 'Yangi', // Default status
       courierName: null,
       courierCar: null,
       courierPlate: null,
@@ -323,7 +328,7 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
         article: product.codeProduct,
         quantity: product.amount.toDouble(),
         price: product.price,
-        priceType: 'Retail',
+        priceType: l10n?.retail ?? 'Retail',
       )).toList(),
     );
   }

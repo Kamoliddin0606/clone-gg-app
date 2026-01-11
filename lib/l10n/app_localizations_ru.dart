@@ -393,7 +393,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sku => 'SKU';
 
   @override
-  String get location => 'Расположение';
+  String get location => 'Местоположение';
 
   @override
   String get pcs => 'шт';
@@ -696,7 +696,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get beginning => 'Начало';
 
   @override
-  String get finish => 'Конец';
+  String get finish => 'Завершить';
 
   @override
   String get open => 'Открыть';
@@ -900,10 +900,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get okb => 'OKB';
 
   @override
-  String get akbPlan => 'План AKB';
+  String get akbPlan => 'АКБ план';
 
   @override
-  String get akbFact => 'Факт AKB';
+  String get akbFact => 'АКБ факт';
 
   @override
   String get forecastPercentOfFact => 'Прогноз % от факта';
@@ -1214,7 +1214,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pageUnderDevelopment => 'Страница в разработке';
 
   @override
-  String get stepCompletedReadOnly => 'Этот шаг завершен. Режим только просмотра.';
+  String get stepCompletedReadOnly => 'Этот шаг завершен. Режим только чтения.';
 
   @override
   String get stepTypeNotImplemented => 'Для этого типа шага страница еще не реализована.';
@@ -1544,7 +1544,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String refreshAfterSeconds(int seconds) {
-    return 'Обновить через $seconds сек';
+    return 'Можно обновить через $seconds секунд';
   }
 
   @override
@@ -2047,4 +2047,707 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get createClientUnknownError => 'Неизвестная ошибка';
+
+  @override
+  String get labelTradingPointType => 'Тип торговой точки';
+
+  @override
+  String get labelBusinessRegion => 'Бизнес регион';
+
+  @override
+  String get labelStatus => 'Статус';
+
+  @override
+  String get labelDateRange => 'Диапазон дат';
+
+  @override
+  String get labelClients => 'Клиенты';
+
+  @override
+  String get refusalReasonTitle => 'Причина отказа';
+
+  @override
+  String selectRefusalReasonFor(String name) {
+    return 'Выберите причину отказа для $name:';
+  }
+
+  @override
+  String businessRegionLabel(String region) {
+    return 'Бизнес регион: $region';
+  }
+
+  @override
+  String contactLabel(String contact) {
+    return 'Контакт: $contact';
+  }
+
+  @override
+  String innLabel(String inn) {
+    return 'ИНН: $inn';
+  }
+
+  @override
+  String ownerLabel(String owner) {
+    return 'Владелец: $owner';
+  }
+
+  @override
+  String responsiblePersonLabel(String responsible) {
+    return 'Ответственный: $responsible';
+  }
+
+  @override
+  String responsiblePersonPhoneLabel(String phone) {
+    return 'Телефон ответственного: $phone';
+  }
+
+  @override
+  String typeLabel(String type) {
+    return 'Тип: $type';
+  }
+
+  @override
+  String regionDistrictLabel(String region, String district) {
+    return '$region, $district';
+  }
+
+  @override
+  String signboardLabel(String signboard) {
+    return 'Вывеска: $signboard';
+  }
+
+  @override
+  String landmarkLabel(String landmark) {
+    return 'Ориентир: $landmark';
+  }
+
+  @override
+  String get waitingForLocation => 'Ожидание данных о местоположении...';
+
+  @override
+  String get visitCompletedTitle => 'Посещение завершено';
+
+  @override
+  String stepsCompletedCount(int count) {
+    return '$count шагов завершено';
+  }
+
+  @override
+  String get returnToHome => 'Вернуться на главную';
+
+  @override
+  String completedAtLabel(String date) {
+    return 'Завершено: $date';
+  }
+
+  @override
+  String orderCaption(String id) {
+    return 'Заказ $id';
+  }
+
+  @override
+  String maxQuantityMessage(int stock) {
+    return 'Максимальное количество: $stock шт';
+  }
+
+  @override
+  String get productPriceZeroError => 'Нельзя добавить товар с ценой 0 или меньше';
+
+  @override
+  String get quantityUpdateError => 'Ошибка обновления количества';
+
+  @override
+  String get confirmationError => 'Ошибка подтверждения выбора';
+
+  @override
+  String get confirm => 'Подтвердить';
+
+  @override
+  String get productSelectionTitle => 'Выбор товара';
+
+  @override
+  String productsSelectedCount(int count) {
+    return '$count товаров выбрано';
+  }
+
+  @override
+  String get noProductsAvailable => 'Товары отсутствуют';
+
+  @override
+  String get clear => 'Очистить';
+
+  @override
+  String totalProductsCount(int count) {
+    return 'Всего товаров: $count';
+  }
+
+  @override
+  String totalAmount(String amount) {
+    return 'Общая сумма: $amount';
+  }
+
+  @override
+  String errorOccurred(String error) {
+    return 'Произошла ошибка: $error';
+  }
+
+  @override
+  String get cameraPermissionDenied => 'Разрешение на камеру не предоставлено';
+
+  @override
+  String cameraInitError(String error) {
+    return 'Ошибка инициализации камеры: $error';
+  }
+
+  @override
+  String cameraError(String error) {
+    return 'Ошибка камеры: $error';
+  }
+
+  @override
+  String get cameraInUseMessage => 'Камера используется другим приложением. Попытка переподключения...';
+
+  @override
+  String get imageSavedSuccessfully => 'Изображение успешно сохранено';
+
+  @override
+  String imageSaveError(String error) {
+    return 'Ошибка сохранения изображения: $error';
+  }
+
+  @override
+  String get cameraNotReady => 'Камера не готова';
+
+  @override
+  String get cameraNotAvailable => 'Камера недоступна или не работает';
+
+  @override
+  String imageCounter(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get imageCapturedSuccessfully => 'Изображение успешно получено';
+
+  @override
+  String imageCaptureError(String error) {
+    return 'Ошибка получения изображения: $error';
+  }
+
+  @override
+  String get xmlRequestLabel => 'XML Запрос';
+
+  @override
+  String get xmlCopied => 'XML скопирован';
+
+  @override
+  String get enterNumberHint => 'Введите номер';
+
+  @override
+  String get balanceStatusTitle => 'Статус баланса';
+
+  @override
+  String productNotFoundMessage(String code) {
+    return 'Информация о товаре не найдена: $code';
+  }
+
+  @override
+  String get clientCreatedSuccessfully => 'Новый клиент успешно создан!';
+
+  @override
+  String get callClientTitle => 'Позвонить клиенту';
+
+  @override
+  String callClientConfirmation(String phone) {
+    return 'Вы хотите позвонить клиенту?\n$phone';
+  }
+
+  @override
+  String get dialerNotAvailable => 'Звонок недоступен';
+
+  @override
+  String get updateCoordinatesNotImplemented => 'Обновление координат - функция будет реализована';
+
+  @override
+  String get osmNotLoadedFallback => 'OpenStreetMap не загружен. Используется Google Maps.';
+
+  @override
+  String get confirmLocationTitle => 'Подтвердить местоположение';
+
+  @override
+  String get orderDetailsNotFound => 'Детали заказа не найдены';
+
+  @override
+  String get unknown => 'Неизвестно';
+
+  @override
+  String get locationPermissionDenied => 'Разрешение на местоположение не предоставлено';
+
+  @override
+  String permissionCheckError(String error) {
+    return 'Ошибка проверки разрешения: $error';
+  }
+
+  @override
+  String locationDetectionError(String error) {
+    return 'Ошибка определения местоположения: $error';
+  }
+
+  @override
+  String get userLocationNotFound => 'Местоположение пользователя не найдено';
+
+  @override
+  String routeInfo(String distance, String time) {
+    return 'Маршрут: $distance км, примерно $time';
+  }
+
+  @override
+  String routeCreationError(String error) {
+    return 'Ошибка создания маршрута: $error';
+  }
+
+  @override
+  String cameraMoveError(String error) {
+    return 'Ошибка перемещения камеры: $error';
+  }
+
+  @override
+  String permissionsCheckError(String error) {
+    return 'Ошибка проверки разрешений: $error';
+  }
+
+  @override
+  String get locationUpdating => 'Обновление местоположения...';
+
+  @override
+  String get clientLocationUpdated => 'Местоположение клиента успешно обновлено';
+
+  @override
+  String locationUpdateError(String error) {
+    return 'Ошибка обновления местоположения: $error';
+  }
+
+  @override
+  String get calculatingRoute => 'Расчет маршрута...';
+
+  @override
+  String regionsLoadError(String error) {
+    return 'Ошибка загрузки регионов: $error';
+  }
+
+  @override
+  String locationGetError(String error) {
+    return 'Ошибка получения местоположения: $error';
+  }
+
+  @override
+  String get apiKeySavedSuccessfully => 'API ключ успешно сохранен';
+
+  @override
+  String get minimumInterval60Minutes => 'Минимальный интервал составляет 60 минут';
+
+  @override
+  String pageLoadError(String error) {
+    return 'Ошибка загрузки страницы: $error';
+  }
+
+  @override
+  String get imageSetAsPrimary => 'Изображение установлено как основное';
+
+  @override
+  String imagesUploadedCount(int count) {
+    return '$count изображений успешно загружено';
+  }
+
+  @override
+  String serverImagesLoadError(String error) {
+    return 'Ошибка загрузки изображений с сервера: $error';
+  }
+
+  @override
+  String gallerySelectionError(String error) {
+    return 'Ошибка выбора из галереи: $error';
+  }
+
+  @override
+  String cameraCaptureError(String error) {
+    return 'Ошибка получения с камеры: $error';
+  }
+
+  @override
+  String get imagesUploadedSuccessfully => 'Изображения успешно загружены';
+
+  @override
+  String imagesUploadError(String error) {
+    return 'Ошибка загрузки изображений: $error';
+  }
+
+  @override
+  String orderDraftSaved(String fileName) {
+    return 'Черновик заказа сохранен: $fileName';
+  }
+
+  @override
+  String get tablesLabel => 'Таблицы';
+
+  @override
+  String tableColumns(String tableName) {
+    return 'Колонки $tableName';
+  }
+
+  @override
+  String get orderDetailsTitle => 'Детали заказа';
+
+  @override
+  String get camera => 'Камера';
+
+  @override
+  String get gallery => 'Галерея';
+
+  @override
+  String clientImagesTitle(String clientName) {
+    return '$clientName - Изображения';
+  }
+
+  @override
+  String tradingPointImagesTitle(String pointName) {
+    return '$pointName - Изображения';
+  }
+
+  @override
+  String uploadToServer(int count) {
+    return 'Отправить на сервер ($count изображений)';
+  }
+
+  @override
+  String get kpiDashboardTitle => 'KPI Панель';
+
+  @override
+  String get reportSentTitle => 'Отчет отправлен';
+
+  @override
+  String get editFeatureComingSoon => 'Функция редактирования скоро будет добавлена';
+
+  @override
+  String get sendPdf => 'Отправить PDF';
+
+  @override
+  String get printFeatureComingSoon => 'Функция печати скоро будет добавлена';
+
+  @override
+  String get print => 'Печать';
+
+  @override
+  String stepCompleted(String stepName) {
+    return '$stepName завершено';
+  }
+
+  @override
+  String stepSkip(String stepName) {
+    return '$stepName пропущено';
+  }
+
+  @override
+  String get syncWithDependencies => 'Синхронизация с зависимостями';
+
+  @override
+  String get recommended => 'Рекомендуется';
+
+  @override
+  String get syncTableOnly => 'Синхронизация только таблицы';
+
+  @override
+  String get syncWarning => 'Может не удаться, если зависимости не синхронизированы';
+
+  @override
+  String get tableOnly => 'Только таблица';
+
+  @override
+  String get withDependencies => 'С зависимостями';
+
+  @override
+  String get syncEntireGroup => 'Синхронизировать всю группу';
+
+  @override
+  String get statusNew => 'Новый';
+
+  @override
+  String get retail => 'Розничная';
+
+  @override
+  String get continueAction => 'Продолжить';
+
+  @override
+  String get previousStepsMustBeCompleted => 'Предыдущие шаги должны быть выполнены';
+
+  @override
+  String get reload => 'Перезагрузить';
+
+  @override
+  String get imageDeleted => 'Изображение удалено';
+
+  @override
+  String imageDeleteError(String error) {
+    return 'Ошибка удаления изображения: $error';
+  }
+
+  @override
+  String get deleteImageTitle => 'Удалить изображение';
+
+  @override
+  String get deleteImageConfirmation => 'Вы уверены, что хотите удалить это изображение?';
+
+  @override
+  String get photoAfterTitle => 'Фото ПОСЛЕ (Facing correction)';
+
+  @override
+  String get photoBeforeTitle => 'Фото ДО (Facing correction)';
+
+  @override
+  String get photosNotLoadedYet => 'Фотографии еще не загружены';
+
+  @override
+  String get timeUnknown => 'Время неизвестно';
+
+  @override
+  String get unitOfMeasure => 'Единица измерения';
+
+  @override
+  String get category => 'Категория';
+
+  @override
+  String get brand => 'Бренд';
+
+  @override
+  String get series => 'Серия';
+
+  @override
+  String get barcode => 'Штрих-код';
+
+  @override
+  String get vendorCode => 'Артикул';
+
+  @override
+  String get warehouseInformation => 'Информация о складе';
+
+  @override
+  String get reserved => 'Зарезервировано';
+
+  @override
+  String get physicalProperties => 'Физические свойства';
+
+  @override
+  String get weight => 'Вес';
+
+  @override
+  String get volume => 'Объем';
+
+  @override
+  String get productsNotFound => 'Товары не найдены';
+
+  @override
+  String get bonusesNotFound => 'Бонусы не найдены';
+
+  @override
+  String get classInformationNotFound => 'Информация о классе не найдена';
+
+  @override
+  String get searchResultsNotFound => 'Результаты поиска не найдены';
+
+  @override
+  String get promotionConditions => 'Условия акции';
+
+  @override
+  String minimalProductCount(int count) {
+    return 'Минимальное количество товара: $count';
+  }
+
+  @override
+  String bonusCount(int count) {
+    return 'Количество бонусов: $count';
+  }
+
+  @override
+  String get readOnlyMode => 'Только чтение';
+
+  @override
+  String get shelfAuditTitle => 'Аудит полки (остатки)';
+
+  @override
+  String get pageInDevelopment => 'Страница находится в разработке';
+
+  @override
+  String apiKeyLabel(String status) {
+    return 'API Ключ: $status';
+  }
+
+  @override
+  String get apiKeyConfigured => 'Настроено';
+
+  @override
+  String get apiKeyNotRequired => 'Ключ не требуется';
+
+  @override
+  String get apiKeyNotConfigured => 'Не настроено';
+
+  @override
+  String get editInformation => 'Редактировать информацию';
+
+  @override
+  String get editClientCoordinates => 'Редактировать координаты клиента';
+
+  @override
+  String get clientPhotosTitle => 'Фото клиента';
+
+  @override
+  String clientPhotosDescription(String name) {
+    return 'Здесь отображаются фотографии, относящиеся к клиенту $name';
+  }
+
+  @override
+  String get notSent => 'Не отправлено';
+
+  @override
+  String sendToServer(int count) {
+    return 'Отправить на сервер ($count фото)';
+  }
+
+  @override
+  String get mainImage => 'Основное изображение';
+
+  @override
+  String get image => 'Изображение';
+
+  @override
+  String get noImagesAvailable => 'Изображения недоступны';
+
+  @override
+  String get clickPlusToAddImage => 'Нажмите кнопку +, чтобы добавить изображение';
+
+  @override
+  String get setAsMainImage => 'Установить как основное';
+
+  @override
+  String get clientNameLabel => 'Имя клиента';
+
+  @override
+  String get orderNumberLabel => 'Номер заказа';
+
+  @override
+  String get orderDateLabel => 'Дата заказа';
+
+  @override
+  String get orderTotalLabel => 'Сумма заказа';
+
+  @override
+  String get mainStatusLabel => 'Основной статус';
+
+  @override
+  String get statusCodeLabel => 'Код статуса';
+
+  @override
+  String get totalProductsLabel => 'Всего товаров';
+
+  @override
+  String get productNameLabel => 'Название товара';
+
+  @override
+  String get articleLabel => 'Артикул';
+
+  @override
+  String get quantityLabel => 'Количество';
+
+  @override
+  String get priceLabel => 'Цена';
+
+  @override
+  String get amountLabel => 'Сумма';
+
+  @override
+  String get priceTypeLabel => 'Тип цены';
+
+  @override
+  String get noProductsInOrder => 'В этом заказе нет товаров';
+
+  @override
+  String get productListEmpty => 'Список товаров пуст';
+
+  @override
+  String get productsNotSelected => 'Товары не выбраны';
+
+  @override
+  String get clickPlusToAddProduct => 'Нажмите кнопку +, чтобы добавить товар';
+
+  @override
+  String get reportPeriod => 'Период отчета';
+
+  @override
+  String get monthlyOKB => 'Ежемесячный ОКБ';
+
+  @override
+  String get selectPeriod => 'Выберите период';
+
+  @override
+  String get creatingLocation => 'Определение...';
+
+  @override
+  String get locationNotFound => 'Местоположение не найдено';
+
+  @override
+  String get createClient => 'Создать клиента';
+
+  @override
+  String get swipeToRefresh => 'Попробуйте потянуть вниз для обновления!';
+
+  @override
+  String get ifSwipeNotWorking => 'Если потягивание вниз не работает, выполните действие \"обновить все данные\", расположенное в меню настроек';
+
+  @override
+  String imageCountLabel(int count) {
+    return '$count фото';
+  }
+
+  @override
+  String photosNotLoadedDescription(String clientName) {
+    return 'Здесь отображаются фотографии, относящиеся к клиенту $clientName';
+  }
+
+  @override
+  String get totalLabel => 'Итого:';
+
+  @override
+  String get articleLabelShort => 'Арт.:';
+
+  @override
+  String get availableLabel => 'В наличии:';
+
+  @override
+  String get pieces => 'шт.';
+
+  @override
+  String get shippingDate => 'Дата доставки';
+
+  @override
+  String get changeShippingDate => 'Изменить дату доставки';
+
+  @override
+  String get totalValueLabel => 'Общая стоимость';
+
+  @override
+  String get productsLabel => 'Товары';
+
+  @override
+  String get addProduct => 'Добавить товар';
+
+  @override
+  String get creating => 'Создание...';
+
+  @override
+  String get refreshLabel => 'Обновить';
+
+  @override
+  String get refreshing => 'Обновление...';
+
+  @override
+  String get changePeriod => 'Изменить период';
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/models/data_sync_group.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_config.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
@@ -298,7 +299,7 @@ class _GroupSyncCardState extends State<GroupSyncCard> {
                     ),
                   )
                 : Icon(Icons.sync),
-            label: Text('Sync Entire Group'),
+            label: Text(AppLocalizations.of(context)?.syncEntireGroup ?? 'Sync Entire Group'),
             onPressed: _isSyncing ? null : _syncGroup,
             style: ElevatedButton.styleFrom(
               backgroundColor: widget.group.color,

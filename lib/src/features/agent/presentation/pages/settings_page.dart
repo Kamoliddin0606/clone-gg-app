@@ -66,7 +66,7 @@ class _SettingsPageState extends State<SettingsPage> with TickerProviderStateMix
               tabs: [
                  Tab(text: l10n.permissions),
                  Tab(text: l10n.maps),
-                 Tab( text: 'Data Sync'), // NEW TAB
+                 Tab(text: l10n.dataSync),
                  Tab(text: l10n.interfaceSettings),
                ],
             ),
@@ -452,7 +452,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
       case 'plannedRoute':
         return l10n.plannedRoute;
       case 'editClientCoordinates':
-        return 'Mijoz koordinatalarini tahrirlash'; // Uzbek translation for "Edit Client Coordinates"
+        return l10n.editClientCoordinates;
       default:
         return key;
     }
@@ -470,7 +470,7 @@ class _PermissionsTabState extends State<PermissionsTab> {
       case 'plannedRoute':
         return AppLocalizations.of(context)!.visitManagement;
       case 'editClientCoordinates':
-        return 'Malumotlarni tahrirlash';
+        return l10n.editInformation;
       default:
         return AppLocalizations.of(context)!.general;
     }
@@ -1567,17 +1567,19 @@ class _MapsTabState extends State<MapsTab> {
                         Row(
                           children: [
                             Text(
-                              'API Kaliti: ',
+                              '${l10n.apiKey}: ',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                             Text(
                               apiKeyStatus == 'kalit_shart_emas'
-                                  ? 'Kalit shart emas'
+                                  ? l10n.apiKeyNotRequired
                                   : apiKeyStatus == 'sozlangan'
-                                      ? 'Sozlangan'
-                                      : 'Sozlanmagan',
+                                      ? l10n.apiKeyConfigured
+                                      : apiKeyStatus == 'sozlanmagan'
+                                          ? l10n.apiKeyNotConfigured
+                                          : l10n.error,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: apiKeyStatus == 'sozlangan' || apiKeyStatus == 'kalit_shart_emas'
                                     ? colorScheme.primary

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../../../../core/services/reports_sync_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/shared_preferences_service.dart';
@@ -221,7 +222,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                                         actions: [
                                           TextButton(
                                             onPressed: () => Navigator.of(dialogContext).pop(),
-                                            child: const Text('Bekor qilish'),
+                                            child: Text(AppLocalizations.of(context)!.cancel),
                                           ),
                                           FilledButton(
                                             onPressed: () async {
@@ -487,7 +488,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Davrni tanlang',
+                    AppLocalizations.of(context)!.selectPeriod,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -541,7 +542,7 @@ class _ReportsPageState extends State<ReportsPage> with TickerProviderStateMixin
                                 });
                               }
                             },
-                            tooltip: 'Davrni o\'zgartirish',
+                            tooltip: AppLocalizations.of(context)!.changePeriod,
                           ),
                         ],
                       ),

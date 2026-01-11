@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -75,9 +76,10 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
     if (!mounted) return;
 
     if (product == null) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Mahsulot ma\'lumotlari topilmadi: $productCode'),
+          content: Text(l10n.productNotFoundMessage(productCode)),
           backgroundColor: Colors.orange,
         ),
       );
@@ -191,7 +193,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Kod: ${product.code}',
+                            AppLocalizations.of(context)?.codeLabel(product.code) ?? 'Kod: ${product.code}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -213,35 +215,35 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                   controller: scrollController,
                   padding: const EdgeInsets.all(16),
                   children: [
-                    _buildDetailRow('O\'lchov birligi', product.unit, Icons.straighten),
-                    _buildDetailRow('Kategoriya', product.category, Icons.category),
-                    _buildDetailRow('Brend', product.productBrand, Icons.branding_watermark),
-                    _buildDetailRow('Seriya', product.productSeries, Icons.layers),
-                    _buildDetailRow('Shtrix kod', product.barcode, Icons.qr_code),
-                    _buildDetailRow('Vendor kod', product.vendorCode, Icons.tag),
+                    _buildDetailRow(AppLocalizations.of(context)?.unitOfMeasure ?? 'O\'lchov birligi', product.unit, Icons.straighten),
+                    _buildDetailRow(AppLocalizations.of(context)?.category ?? 'Kategoriya', product.category, Icons.category),
+                    _buildDetailRow(AppLocalizations.of(context)?.brand ?? 'Brend', product.productBrand, Icons.branding_watermark),
+                    _buildDetailRow(AppLocalizations.of(context)?.series ?? 'Seriya', product.productSeries, Icons.layers),
+                    _buildDetailRow(AppLocalizations.of(context)?.barcode ?? 'Shtrix kod', product.barcode, Icons.qr_code),
+                    _buildDetailRow(AppLocalizations.of(context)?.vendorCode ?? 'Vendor kod', product.vendorCode, Icons.tag),
                     const SizedBox(height: 16),
                     Text(
-                      'Ombor ma\'lumotlari',
+                      AppLocalizations.of(context)?.warehouseInformation ?? 'Ombor ma\'lumotlari',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.primary,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _buildDetailRow('Miqdori', '${product.quantity}', Icons.inventory_2),
-                    _buildDetailRow('Mavjud', '${product.available}', Icons.check_circle_outline),
-                    _buildDetailRow('Band qilingan', '${product.reserved}', Icons.lock_outline),
+                    _buildDetailRow(AppLocalizations.of(context)?.quantity ?? 'Miqdori', '${product.quantity}', Icons.inventory_2),
+                    _buildDetailRow(AppLocalizations.of(context)?.available ?? 'Mavjud', '${product.available}', Icons.check_circle_outline),
+                    _buildDetailRow(AppLocalizations.of(context)?.reserved ?? 'Band qilingan', '${product.reserved}', Icons.lock_outline),
                     const SizedBox(height: 16),
                     Text(
-                      'Fizik xususiyatlar',
+                      AppLocalizations.of(context)?.physicalProperties ?? 'Fizik xususiyatlar',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.primary,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _buildDetailRow('Og\'irligi', '${product.weight} kg', Icons.scale),
-                    _buildDetailRow('Hajmi', '${product.capacity} L', Icons.water_drop),
+                    _buildDetailRow(AppLocalizations.of(context)?.weight ?? 'Og\'irligi', '${product.weight} kg', Icons.scale),
+                    _buildDetailRow(AppLocalizations.of(context)?.volume ?? 'Hajmi', '${product.capacity} L', Icons.water_drop),
                   ],
                 ),
               ),
@@ -493,7 +495,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Aksiya shartlari',
+                              AppLocalizations.of(context)?.promotionConditions ?? 'Aksiya shartlari',
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: colorScheme.primary,
@@ -510,7 +512,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Minimal mahsulot soni: ${widget.promotion.minPromoProductCount}',
+                                    AppLocalizations.of(context)?.minimalProductCount(widget.promotion.minPromoProductCount) ?? 'Minimal mahsulot soni: ${widget.promotion.minPromoProductCount}',
                                     style: theme.textTheme.bodyMedium,
                                   ),
                                 ),
@@ -527,7 +529,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Bonus soni: ${widget.promotion.bonusCount}',
+                                    AppLocalizations.of(context)?.bonusCount(widget.promotion.bonusCount) ?? 'Bonus soni: ${widget.promotion.bonusCount}',
                                     style: theme.textTheme.bodyMedium,
                                   ),
                                 ),
@@ -679,7 +681,8 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
           }).toList();
 
     if (productsToShow.isEmpty) {
-      return _buildEmptyState(query.isEmpty ? 'Mahsulotlar topilmadi' : 'Qidiruv natijasi topilmadi');
+      final l10n = AppLocalizations.of(context)!;
+      return _buildEmptyState(query.isEmpty ? (l10n.productsNotFound) : (l10n.searchResultsNotFound));
     }
 
     return ListView.builder(
@@ -702,7 +705,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
               ),
             ),
             title: Text(product.productName),
-            subtitle: Text('Kod: ${product.code}'),
+            subtitle: Text(AppLocalizations.of(context)?.codeLabel(product.code) ?? 'Kod: ${product.code}'),
             trailing: Icon(
               Icons.arrow_forward_ios,
               size: 16,
@@ -726,7 +729,8 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
           }).toList();
 
     if (bonusesToShow.isEmpty) {
-      return _buildEmptyState(query.isEmpty ? 'Bonuslar topilmadi' : 'Qidiruv natijasi topilmadi');
+      final l10n = AppLocalizations.of(context)!;
+      return _buildEmptyState(query.isEmpty ? (l10n.bonusesNotFound) : (l10n.searchResultsNotFound));
     }
 
     return ListView.builder(
@@ -746,7 +750,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
               ),
             ),
             title: Text(bonus.productName),
-            subtitle: Text('Kod: ${bonus.code}'),
+            subtitle: Text(AppLocalizations.of(context)?.codeLabel(bonus.code) ?? 'Kod: ${bonus.code}'),
             trailing: Icon(
               Icons.arrow_forward_ios,
               size: 16,
@@ -770,7 +774,8 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
           }).toList();
 
     if (classesToShow.isEmpty) {
-      return _buildEmptyState(query.isEmpty ? 'Sinf ma\'lumotlari topilmadi' : 'Qidiruv natijasi topilmadi');
+      final l10n = AppLocalizations.of(context)!;
+      return _buildEmptyState(query.isEmpty ? (l10n.classInformationNotFound) : (l10n.searchResultsNotFound));
     }
 
     return ListView.builder(
@@ -789,7 +794,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
               ),
             ),
             title: Text(classItem.productName),
-            subtitle: Text('Kod: ${classItem.code}'),
+            subtitle: Text(AppLocalizations.of(context)?.codeLabel(classItem.code) ?? 'Kod: ${classItem.code}'),
             trailing: Icon(
               Icons.arrow_forward_ios,
               size: 16,

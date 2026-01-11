@@ -123,7 +123,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get total => 'Jami';
 
   @override
-  String get quantity => 'Miqdor';
+  String get quantity => 'Miqdori';
 
   @override
   String get price => 'Narx';
@@ -696,7 +696,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get beginning => 'Boshlanish';
 
   @override
-  String get finish => 'Tugash';
+  String get finish => 'Yakunlash';
 
   @override
   String get open => 'Ochish';
@@ -900,10 +900,10 @@ class AppLocalizationsUz extends AppLocalizations {
   String get okb => 'OKB';
 
   @override
-  String get akbPlan => 'AKB Reja';
+  String get akbPlan => 'AKB reja';
 
   @override
-  String get akbFact => 'AKB Fakt';
+  String get akbFact => 'AKB fakt';
 
   @override
   String get forecastPercentOfFact => 'Bashorat % dan Fakt';
@@ -1100,10 +1100,10 @@ class AppLocalizationsUz extends AppLocalizations {
   String get defaultMapChanged => 'Asosiy xarita muvaffaqiyatli o\'zgartirildi';
 
   @override
-  String get currentMapProvider => 'Joriy xarita provayderi';
+  String get currentMapProvider => 'Current Map Provider';
 
   @override
-  String get availableMaps => 'Mavjud xaritalar';
+  String get availableMaps => 'Available Maps';
 
   @override
   String get mapConfiguration => 'Xarita konfiguratsiyasi';
@@ -1544,7 +1544,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String refreshAfterSeconds(int seconds) {
-    return '$seconds soniyadan keyin yangilash';
+    return '$seconds soniyadan keyin yangilash mumkin';
   }
 
   @override
@@ -2047,4 +2047,707 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get createClientUnknownError => 'Noma\'lum xatolik';
+
+  @override
+  String get labelTradingPointType => 'Savdo nuqtasi turi';
+
+  @override
+  String get labelBusinessRegion => 'Biznes region';
+
+  @override
+  String get labelStatus => 'Status';
+
+  @override
+  String get labelDateRange => 'Sana oralig\'i';
+
+  @override
+  String get labelClients => 'Mijozlar';
+
+  @override
+  String get refusalReasonTitle => 'Rad etish sababi';
+
+  @override
+  String selectRefusalReasonFor(String name) {
+    return '$name uchun rad etish sababini tanlang:';
+  }
+
+  @override
+  String businessRegionLabel(String region) {
+    return 'Biznes region: $region';
+  }
+
+  @override
+  String contactLabel(String contact) {
+    return 'Aloqa: $contact';
+  }
+
+  @override
+  String innLabel(String inn) {
+    return 'INN: $inn';
+  }
+
+  @override
+  String ownerLabel(String owner) {
+    return 'Egasi: $owner';
+  }
+
+  @override
+  String responsiblePersonLabel(String responsible) {
+    return 'Mas\'ul: $responsible';
+  }
+
+  @override
+  String responsiblePersonPhoneLabel(String phone) {
+    return 'Mas\'ul tel: $phone';
+  }
+
+  @override
+  String typeLabel(String type) {
+    return 'Turi: $type';
+  }
+
+  @override
+  String regionDistrictLabel(String region, String district) {
+    return '$region, $district';
+  }
+
+  @override
+  String signboardLabel(String signboard) {
+    return 'Belgi: $signboard';
+  }
+
+  @override
+  String landmarkLabel(String landmark) {
+    return 'Mo\'ljal: $landmark';
+  }
+
+  @override
+  String get waitingForLocation => 'Joylashuv ma\'lumotlari kutilmoqda...';
+
+  @override
+  String get visitCompletedTitle => 'Tashrif yakunlandi';
+
+  @override
+  String stepsCompletedCount(int count) {
+    return '$count ta bosqich bajarildi';
+  }
+
+  @override
+  String get returnToHome => 'Bosh sahifaga qaytish';
+
+  @override
+  String completedAtLabel(String date) {
+    return 'Bajarilgan: $date';
+  }
+
+  @override
+  String orderCaption(String id) {
+    return 'Buyurtma $id';
+  }
+
+  @override
+  String maxQuantityMessage(int stock) {
+    return 'Maksimal miqdor: $stock dona';
+  }
+
+  @override
+  String get productPriceZeroError => 'Narxi 0 yoki undan kichik bo\'lgan mahsulot qo\'shib bo\'lmaydi';
+
+  @override
+  String get quantityUpdateError => 'Miqdorni yangilashda xatolik yuz berdi';
+
+  @override
+  String get confirmationError => 'Tanlovni tasdiqlashda xatolik yuz berdi';
+
+  @override
+  String get confirm => 'Tasdiqlash';
+
+  @override
+  String get productSelectionTitle => 'Mahsulot tanlash';
+
+  @override
+  String productsSelectedCount(int count) {
+    return '$count ta mahsulot tanlandi';
+  }
+
+  @override
+  String get noProductsAvailable => 'Mahsulotlar mavjud emas';
+
+  @override
+  String get clear => 'Tozalash';
+
+  @override
+  String totalProductsCount(int count) {
+    return 'Jami mahsulotlar: $count ta';
+  }
+
+  @override
+  String totalAmount(String amount) {
+    return 'Jami qiymat: $amount';
+  }
+
+  @override
+  String errorOccurred(String error) {
+    return 'Xatolik yuz berdi: $error';
+  }
+
+  @override
+  String get cameraPermissionDenied => 'Kamera ruxsati berilmadi';
+
+  @override
+  String cameraInitError(String error) {
+    return 'Kamera ishga tushirishda xatolik: $error';
+  }
+
+  @override
+  String cameraError(String error) {
+    return 'Kamera xatoligi: $error';
+  }
+
+  @override
+  String get cameraInUseMessage => 'Kamera boshqa ilova tomonidan ishlatilmoqda. Qayta ulanishga harakat qilinmoqda...';
+
+  @override
+  String get imageSavedSuccessfully => 'Rasm muvaffaqiyatli saqlandi';
+
+  @override
+  String imageSaveError(String error) {
+    return 'Rasm saqlashda xatolik: $error';
+  }
+
+  @override
+  String get cameraNotReady => 'Kamera tayyor emas';
+
+  @override
+  String get cameraNotAvailable => 'Kamera mavjud emas yoki ishlamayapti';
+
+  @override
+  String imageCounter(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get imageCapturedSuccessfully => 'Rasm muvaffaqiyatli olingan';
+
+  @override
+  String imageCaptureError(String error) {
+    return 'Rasm olishda xatolik: $error';
+  }
+
+  @override
+  String get xmlRequestLabel => 'XML Request';
+
+  @override
+  String get xmlCopied => 'XML nusxalandi';
+
+  @override
+  String get enterNumberHint => 'Raqamni kiriting';
+
+  @override
+  String get balanceStatusTitle => 'Balans holati';
+
+  @override
+  String productNotFoundMessage(String code) {
+    return 'Mahsulot ma\'lumotlari topilmadi: $code';
+  }
+
+  @override
+  String get clientCreatedSuccessfully => 'Yangi mijoz muvaffaqiyatli yaratildi!';
+
+  @override
+  String get callClientTitle => 'Qo\'ng\'iroq qilish';
+
+  @override
+  String callClientConfirmation(String phone) {
+    return 'Mijozga qo\'ng\'iroq qilmoqchimisiz?\n$phone';
+  }
+
+  @override
+  String get dialerNotAvailable => 'Dialer ochilmadi';
+
+  @override
+  String get updateCoordinatesNotImplemented => 'Update coordinates - functionality to be implemented';
+
+  @override
+  String get osmNotLoadedFallback => 'OpenStreetMap yuklanmadi. Google Maps ishlatiladi.';
+
+  @override
+  String get confirmLocationTitle => 'Joylashuvni tasdiqlash';
+
+  @override
+  String get orderDetailsNotFound => 'Buyurtma tafsilotlari topilmadi';
+
+  @override
+  String get unknown => 'Noma\'lum';
+
+  @override
+  String get locationPermissionDenied => 'Joylashuv ruxsatnomasi berilmadi';
+
+  @override
+  String permissionCheckError(String error) {
+    return 'Ruxsatnoma tekshirishda xatolik: $error';
+  }
+
+  @override
+  String locationDetectionError(String error) {
+    return 'Joylashuvni aniqlashda xatolik: $error';
+  }
+
+  @override
+  String get userLocationNotFound => 'Foydalanuvchi joylashuvi aniqlanmadi';
+
+  @override
+  String routeInfo(String distance, String time) {
+    return 'Marshrut: $distance km, taxminiy $time';
+  }
+
+  @override
+  String routeCreationError(String error) {
+    return 'Marshrut yaratishda xatolik: $error';
+  }
+
+  @override
+  String cameraMoveError(String error) {
+    return 'Kamera harakatida xatolik: $error';
+  }
+
+  @override
+  String permissionsCheckError(String error) {
+    return 'Ruxsatlarni tekshirishda xatolik: $error';
+  }
+
+  @override
+  String get locationUpdating => 'Joylashuv yangilanmoqda...';
+
+  @override
+  String get clientLocationUpdated => 'Mijoz joylashuvi muvaffaqiyatli yangilandi';
+
+  @override
+  String locationUpdateError(String error) {
+    return 'Joylashuvni yangilashda xatolik: $error';
+  }
+
+  @override
+  String get calculatingRoute => 'Marshrut hisoblanmoqda...';
+
+  @override
+  String regionsLoadError(String error) {
+    return 'Hududlarni yuklashda xatolik: $error';
+  }
+
+  @override
+  String locationGetError(String error) {
+    return 'Joylashuvni olishda xatolik: $error';
+  }
+
+  @override
+  String get apiKeySavedSuccessfully => 'API kaliti muvaffaqiyatli saqlandi';
+
+  @override
+  String get minimumInterval60Minutes => 'Minimum interval is 60 minutes';
+
+  @override
+  String pageLoadError(String error) {
+    return 'Sahifa yuklanishda xatolik: $error';
+  }
+
+  @override
+  String get imageSetAsPrimary => 'Rasm asosiy qilib belgilandi';
+
+  @override
+  String imagesUploadedCount(int count) {
+    return '$count ta rasm muvaffaqiyatli yuklandi';
+  }
+
+  @override
+  String serverImagesLoadError(String error) {
+    return 'Server rasmlarini yuklashda xatolik: $error';
+  }
+
+  @override
+  String gallerySelectionError(String error) {
+    return 'Galereyadan rasm tanlashda xatolik: $error';
+  }
+
+  @override
+  String cameraCaptureError(String error) {
+    return 'Kameradan rasm olishda xatolik: $error';
+  }
+
+  @override
+  String get imagesUploadedSuccessfully => 'Rasmlar muvaffaqiyatli yuklandi';
+
+  @override
+  String imagesUploadError(String error) {
+    return 'Rasmlarni yuklashda xatolik: $error';
+  }
+
+  @override
+  String orderDraftSaved(String fileName) {
+    return 'Order Draft saved: $fileName';
+  }
+
+  @override
+  String get tablesLabel => 'Jadvallar';
+
+  @override
+  String tableColumns(String tableName) {
+    return '$tableName ustunlari';
+  }
+
+  @override
+  String get orderDetailsTitle => 'Buyurtma tafsilotlari';
+
+  @override
+  String get camera => 'Kamera';
+
+  @override
+  String get gallery => 'Galereya';
+
+  @override
+  String clientImagesTitle(String clientName) {
+    return '$clientName - Rasmlar';
+  }
+
+  @override
+  String tradingPointImagesTitle(String pointName) {
+    return '$pointName - Rasmlar';
+  }
+
+  @override
+  String uploadToServer(int count) {
+    return 'Serverga yuborish ($count ta rasm)';
+  }
+
+  @override
+  String get kpiDashboardTitle => 'KPI Dashboard';
+
+  @override
+  String get reportSentTitle => 'Hisobot yuborilgan';
+
+  @override
+  String get editFeatureComingSoon => 'Tahrirlash funksiyasi tez orada qo\'shiladi';
+
+  @override
+  String get sendPdf => 'PDF yuborish';
+
+  @override
+  String get printFeatureComingSoon => 'Print funksiyasi tez orada qo\'shiladi';
+
+  @override
+  String get print => 'Print';
+
+  @override
+  String stepCompleted(String stepName) {
+    return '$stepName completed';
+  }
+
+  @override
+  String stepSkip(String stepName) {
+    return '$stepName skip';
+  }
+
+  @override
+  String get syncWithDependencies => 'Sync with dependencies';
+
+  @override
+  String get recommended => 'Recommended';
+
+  @override
+  String get syncTableOnly => 'Sync table only';
+
+  @override
+  String get syncWarning => 'May fail if dependencies not synced';
+
+  @override
+  String get tableOnly => 'Table only';
+
+  @override
+  String get withDependencies => 'With dependencies';
+
+  @override
+  String get syncEntireGroup => 'Sync Entire Group';
+
+  @override
+  String get statusNew => 'Yangi';
+
+  @override
+  String get retail => 'Retail';
+
+  @override
+  String get continueAction => 'Davom etish';
+
+  @override
+  String get previousStepsMustBeCompleted => 'Avvalgi bosqichlar bajarilishi kerak';
+
+  @override
+  String get reload => 'Qayta yuklash';
+
+  @override
+  String get imageDeleted => 'Rasm o\'chirildi';
+
+  @override
+  String imageDeleteError(String error) {
+    return 'Rasm o\'chirishda xatolik: $error';
+  }
+
+  @override
+  String get deleteImageTitle => 'Rasmni o\'chirish';
+
+  @override
+  String get deleteImageConfirmation => 'Haqiqatan ham bu rasmni o\'chirmoqchimisiz?';
+
+  @override
+  String get photoAfterTitle => 'Фото ПОСЛЕ (Facing correction)';
+
+  @override
+  String get photoBeforeTitle => 'Фото ДО (Facing correction)';
+
+  @override
+  String get photosNotLoadedYet => 'Rasmlar hali yuklanmagan';
+
+  @override
+  String get timeUnknown => 'Vaqt noma\'lum';
+
+  @override
+  String get unitOfMeasure => 'O\'lchov birligi';
+
+  @override
+  String get category => 'Kategoriya';
+
+  @override
+  String get brand => 'Brend';
+
+  @override
+  String get series => 'Seriya';
+
+  @override
+  String get barcode => 'Shtrix kod';
+
+  @override
+  String get vendorCode => 'Vendor kod';
+
+  @override
+  String get warehouseInformation => 'Ombor ma\'lumotlari';
+
+  @override
+  String get reserved => 'Band qilingan';
+
+  @override
+  String get physicalProperties => 'Fizik xususiyatlar';
+
+  @override
+  String get weight => 'Og\'irligi';
+
+  @override
+  String get volume => 'Hajmi';
+
+  @override
+  String get productsNotFound => 'Mahsulotlar topilmadi';
+
+  @override
+  String get bonusesNotFound => 'Bonuslar topilmadi';
+
+  @override
+  String get classInformationNotFound => 'Sinf ma\'lumotlari topilmadi';
+
+  @override
+  String get searchResultsNotFound => 'Qidiruv natijasi topilmadi';
+
+  @override
+  String get promotionConditions => 'Aksiya shartlari';
+
+  @override
+  String minimalProductCount(int count) {
+    return 'Minimal mahsulot soni: $count';
+  }
+
+  @override
+  String bonusCount(int count) {
+    return 'Bonus soni: $count';
+  }
+
+  @override
+  String get readOnlyMode => 'Faqat ko\'rish';
+
+  @override
+  String get shelfAuditTitle => 'Аудит полки (остатки)';
+
+  @override
+  String get pageInDevelopment => 'Sahifa hozirda ishlab chiqilmoqda';
+
+  @override
+  String apiKeyLabel(String status) {
+    return 'API Kaliti: $status';
+  }
+
+  @override
+  String get apiKeyConfigured => 'Sozlangan';
+
+  @override
+  String get apiKeyNotRequired => 'Kalit shart emas';
+
+  @override
+  String get apiKeyNotConfigured => 'Sozlanmagan';
+
+  @override
+  String get editInformation => 'Malumotlarni tahrirlash';
+
+  @override
+  String get editClientCoordinates => 'Mijoz koordinatalarini tahrirlash';
+
+  @override
+  String get clientPhotosTitle => 'Mijoz rasmlari';
+
+  @override
+  String clientPhotosDescription(String name) {
+    return 'Bu yerda $name mijoziga tegishli rasmlar ko\'rsatiladi';
+  }
+
+  @override
+  String get notSent => 'Yuborilmagan';
+
+  @override
+  String sendToServer(int count) {
+    return 'Serverga yuborish ($count ta rasm)';
+  }
+
+  @override
+  String get mainImage => 'Asosiy rasm';
+
+  @override
+  String get image => 'Rasm';
+
+  @override
+  String get noImagesAvailable => 'Rasmlar mavjud emas';
+
+  @override
+  String get clickPlusToAddImage => 'Yangi rasm qo\'shish uchun + tugmasini bosing';
+
+  @override
+  String get setAsMainImage => 'Asosiy rasmga o\'zgartirish';
+
+  @override
+  String get clientNameLabel => 'Mijoz nomi';
+
+  @override
+  String get orderNumberLabel => 'Buyurtma raqami';
+
+  @override
+  String get orderDateLabel => 'Buyurtma sanasi';
+
+  @override
+  String get orderTotalLabel => 'Buyurtma summasi';
+
+  @override
+  String get mainStatusLabel => 'Asosiy status';
+
+  @override
+  String get statusCodeLabel => 'Status kodi';
+
+  @override
+  String get totalProductsLabel => 'Jami tovarlar';
+
+  @override
+  String get productNameLabel => 'Tovar nomi';
+
+  @override
+  String get articleLabel => 'Artikul';
+
+  @override
+  String get quantityLabel => 'Soni';
+
+  @override
+  String get priceLabel => 'Narx';
+
+  @override
+  String get amountLabel => 'Summa';
+
+  @override
+  String get priceTypeLabel => 'Narx turi';
+
+  @override
+  String get noProductsInOrder => 'Bu buyurtmada mahsulotlar mavjud emas';
+
+  @override
+  String get productListEmpty => 'Mahsulotlar ro\'yxati bo\'sh';
+
+  @override
+  String get productsNotSelected => 'Mahsulotlar tanlanmagan';
+
+  @override
+  String get clickPlusToAddProduct => 'Mahsulot qo\'shish uchun + tugmasini bosing';
+
+  @override
+  String get reportPeriod => 'Hisobot davri';
+
+  @override
+  String get monthlyOKB => 'Oylik OKB';
+
+  @override
+  String get selectPeriod => 'Davrni tanlang';
+
+  @override
+  String get creatingLocation => 'Aniqlanmoqda...';
+
+  @override
+  String get locationNotFound => 'Joylashuv topilmadi';
+
+  @override
+  String get createClient => 'Mijozni yaratish';
+
+  @override
+  String get swipeToRefresh => 'Pastga surib yangilash uchun urinib ko\'ring!';
+
+  @override
+  String get ifSwipeNotWorking => 'Pastga surish ish bermasa sozlamalar menyusida joylashgan \"barcha ma\'lumotlarni yangilash amalini bajaring\"';
+
+  @override
+  String imageCountLabel(int count) {
+    return '$count ta rasm';
+  }
+
+  @override
+  String photosNotLoadedDescription(String clientName) {
+    return 'Bu yerda $clientName mijoziga tegishli rasmlar ko\'rsatiladi';
+  }
+
+  @override
+  String get totalLabel => 'Jami:';
+
+  @override
+  String get articleLabelShort => 'Art:';
+
+  @override
+  String get availableLabel => 'Mavjud:';
+
+  @override
+  String get pieces => 'dona';
+
+  @override
+  String get shippingDate => 'Yetkazib berish sanasi';
+
+  @override
+  String get changeShippingDate => 'Yetkazib berish sanasini o\'zgartirish';
+
+  @override
+  String get totalValueLabel => 'Jami qiymat';
+
+  @override
+  String get productsLabel => 'Mahsulotlar';
+
+  @override
+  String get addProduct => 'Mahsulot qo\'shish';
+
+  @override
+  String get creating => 'Yaratilmoqda...';
+
+  @override
+  String get refreshLabel => 'Yangilash';
+
+  @override
+  String get refreshing => 'Yangilanmoqda...';
+
+  @override
+  String get changePeriod => 'Davrni o\'zgartirish';
 }

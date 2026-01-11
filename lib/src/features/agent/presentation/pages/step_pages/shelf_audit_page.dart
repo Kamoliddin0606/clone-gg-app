@@ -49,8 +49,8 @@ class _ShelfAuditPageState extends State<ShelfAuditPage> {
         actions: widget.readOnly ? [
           const Icon(Icons.visibility, color: Colors.grey),
           const SizedBox(width: 8),
-          const Text(
-            'Faqat ko\'rish',
+          Text(
+            l10n?.readOnlyMode ?? 'Faqat ko\'rish',
             style: TextStyle(color: Colors.grey, fontSize: 12),
           ),
           const SizedBox(width: 16),
@@ -70,15 +70,15 @@ class _ShelfAuditPageState extends State<ShelfAuditPage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Аудит полки (остатки)',
+                    l10n?.shelfAuditTitle ?? 'Аудит полки (остатки)',
                     style: theme.textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     widget.readOnly
-                        ? 'Bu step yakunlangan. Faqat ko\'rish rejimida.'
-                        : 'Sahifa hozirda ishlab chiqilmoqda',
+                        ? (l10n?.stepCompletedReadOnly ?? 'Bu step yakunlangan. Faqat ko\'rish rejimida.')
+                        : (l10n?.pageInDevelopment ?? 'Sahifa hozirda ishlab chiqilmoqda'),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -127,7 +127,7 @@ class _ShelfAuditPageState extends State<ShelfAuditPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${widget.stepName} ${l10n?.completed?.toLowerCase() ?? 'completed'}'),
+        title: Text('${widget.stepName} ${l10n?.completed.toLowerCase()}'),
 
         actions: [
           TextButton(

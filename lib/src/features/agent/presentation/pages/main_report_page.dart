@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get_it/get_it.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
@@ -1015,7 +1016,7 @@ class _MainReportPageState extends State<MainReportPage>
                                   Row(
                                     children: [
                                       Text(
-                                        'Hisobot davri',
+                                        AppLocalizations.of(context)!.reportPeriod,
                                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                           fontWeight: FontWeight.w600,
                                           color: cs.onSurface,
@@ -1502,6 +1503,7 @@ class _OkbAkbMonthly extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     if (report == null) {
       return const SizedBox.shrink();
     }
@@ -1526,11 +1528,11 @@ class _OkbAkbMonthly extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _kv('Oylik OKB', report!.countOKB.toString()),
+                _kv(context, l10n.monthlyOKB, report!.countOKB.toString()),
                 const SizedBox(height: 6),
-                _kv('AKB reja', report!.countAKB.toString()),
+                _kv(context, l10n.akbPlan, report!.countAKB.toString()),
                 const SizedBox(height: 6),
-                _kv('AKB fakt', report!.countAKB.toString()),
+                _kv(context, l10n.akbFact, report!.countAKB.toString()),
               ],
             ),
           ),
@@ -1539,7 +1541,7 @@ class _OkbAkbMonthly extends StatelessWidget {
     );
   }
 
-  Widget _kv(String k, String v) {
+  Widget _kv(BuildContext context, String k, String v) {
     return Row(
       children: [
         Expanded(child: Text(k, style: const TextStyle(fontWeight: FontWeight.w600))),

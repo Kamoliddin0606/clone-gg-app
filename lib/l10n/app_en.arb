@@ -833,5 +833,641 @@
   "createClientSelectTypeError": "Please select a trade point type",
   "createClientLocationError": "Location data not found",
   "createClientUserCodeError": "User code not found",
-  "createClientUnknownError": "Unknown error"
+  "createClientUnknownError": "Unknown error",
+  "labelTradingPointType": "Trading Point Type",
+  "labelBusinessRegion": "Business Region",
+  "labelStatus": "Status",
+  "labelDateRange": "Date Range",
+  "labelClients": "Clients",
+  "refusalReasonTitle": "Refusal Reason",
+  "selectRefusalReasonFor": "Select refusal reason for {name}:",
+  "@selectRefusalReasonFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "businessRegionLabel": "Business Region: {region}",
+  "@businessRegionLabel": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "contactLabel": "Contact: {contact}",
+  "@contactLabel": {
+    "placeholders": {
+      "contact": {
+        "type": "String"
+      }
+    }
+  },
+  "innLabel": "INN: {inn}",
+  "@innLabel": {
+    "placeholders": {
+      "inn": {
+        "type": "String"
+      }
+    }
+  },
+  "ownerLabel": "Owner: {owner}",
+  "@ownerLabel": {
+    "placeholders": {
+      "owner": {
+        "type": "String"
+      }
+    }
+  },
+  "responsiblePersonLabel": "Responsible: {responsible}",
+  "@responsiblePersonLabel": {
+    "placeholders": {
+      "responsible": {
+        "type": "String"
+      }
+    }
+  },
+  "responsiblePersonPhoneLabel": "Responsible Phone: {phone}",
+  "@responsiblePersonPhoneLabel": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "typeLabel": "Type: {type}",
+  "@typeLabel": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "regionDistrictLabel": "{region}, {district}",
+  "@regionDistrictLabel": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      },
+      "district": {
+        "type": "String"
+      }
+    }
+  },
+  "signboardLabel": "Signboard: {signboard}",
+  "@signboardLabel": {
+    "placeholders": {
+      "signboard": {
+        "type": "String"
+      }
+    }
+  },
+  "landmarkLabel": "Landmark: {landmark}",
+  "@landmarkLabel": {
+    "placeholders": {
+      "landmark": {
+        "type": "String"
+      }
+    }
+  },
+  "waitingForLocation": "Waiting for location data...",
+  "visitCompletedTitle": "Visit Completed",
+  "visitCompletedSuccessfully": "Visit completed successfully!",
+  "stepsCompletedCount": "{count} steps completed",
+  "@stepsCompletedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "returnToHome": "Return to Home",
+  "completedAtLabel": "Completed: {date}",
+  "@completedAtLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "orderCaption": "Order {id}",
+  "@orderCaption": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "maxQuantityMessage": "Max quantity: {stock} pcs",
+  "@maxQuantityMessage": {
+    "placeholders": {
+      "stock": {
+        "type": "int"
+      }
+    }
+  },
+  "productPriceZeroError": "Cannot add product with price 0 or less",
+  "quantityUpdateError": "Error updating quantity",
+  "confirmationError": "Error confirming selection",
+  "confirm": "Confirm",
+  "productSelectionTitle": "Product Selection",
+  "productsSelectedCount": "{count} products selected",
+  "@productsSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noProductsAvailable": "No products available",
+  "clear": "Clear",
+  "totalProductsCount": "Total products: {count}",
+  "@totalProductsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "totalAmount": "Total amount: {amount}",
+  "@totalAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "errorOccurred": "Error occurred: {error}",
+  "@errorOccurred": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraPermissionDenied": "Camera permission denied",
+  "cameraInitError": "Error initializing camera: {error}",
+  "@cameraInitError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraError": "Camera error: {error}",
+  "@cameraError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraInUseMessage": "Camera is being used by another app. Attempting to reconnect...",
+  "imageSavedSuccessfully": "Image saved successfully",
+  "imageSaveError": "Error saving image: {error}",
+  "@imageSaveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraNotReady": "Camera not ready",
+  "cameraNotAvailable": "Camera not available or not working",
+  "imageCounter": "{current} / {total}",
+  "@imageCounter": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "finish": "Finish",
+  "imageCapturedSuccessfully": "Image captured successfully",
+  "imageCaptureError": "Error capturing image: {error}",
+  "@imageCaptureError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "xmlRequestLabel": "XML Request",
+  "xmlCopied": "XML copied",
+  "enterNumberHint": "Enter number",
+  "balanceStatusTitle": "Balance Status",
+  "productNotFoundMessage": "Product information not found: {code}",
+  "@productNotFoundMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "clientCreatedSuccessfully": "New client created successfully!",
+  "callClientTitle": "Call Client",
+  "callClientConfirmation": "Do you want to call the client?\n{phone}",
+  "@callClientConfirmation": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "dialerNotAvailable": "Dialer not available",
+  "updateCoordinatesNotImplemented": "Update coordinates - functionality to be implemented",
+  "osmNotLoadedFallback": "OpenStreetMap not loaded. Using Google Maps.",
+  "confirmLocationTitle": "Confirm Location",
+  "orderDetailsNotFound": "Order details not found",
+  "unknown": "Unknown",
+  "locationPermissionDenied": "Location permission denied",
+  "permissionCheckError": "Error checking permission: {error}",
+  "@permissionCheckError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationDetectionError": "Error detecting location: {error}",
+  "@locationDetectionError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "userLocationNotFound": "User location not found",
+  "routeInfo": "Route: {distance} km, estimated {time}",
+  "@routeInfo": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "routeCreationError": "Error creating route: {error}",
+  "@routeCreationError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraMoveError": "Error moving camera: {error}",
+  "@cameraMoveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionsCheckError": "Error checking permissions: {error}",
+  "@permissionsCheckError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationUpdating": "Updating location...",
+  "clientLocationUpdated": "Client location updated successfully",
+  "locationUpdateError": "Error updating location: {error}",
+  "@locationUpdateError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "calculatingRoute": "Calculating route...",
+  "regionsLoadError": "Error loading regions: {error}",
+  "@regionsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "locationGetError": "Error getting location: {error}",
+  "@locationGetError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeySavedSuccessfully": "API key saved successfully",
+  "minimumInterval60Minutes": "Minimum interval is 60 minutes",
+  "pageLoadError": "Error loading page: {error}",
+  "@pageLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "imageSetAsPrimary": "Image set as primary",
+  "imagesUploadedCount": "{count} images uploaded successfully",
+  "@imagesUploadedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverImagesLoadError": "Error loading server images: {error}",
+  "@serverImagesLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "gallerySelectionError": "Error selecting from gallery: {error}",
+  "@gallerySelectionError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraCaptureError": "Error capturing from camera: {error}",
+  "@cameraCaptureError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "imagesUploadedSuccessfully": "Images uploaded successfully",
+  "imagesUploadError": "Error uploading images: {error}",
+  "@imagesUploadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderDraftSaved": "Order Draft saved: {fileName}",
+  "@orderDraftSaved": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "tablesLabel": "Tables",
+  "tableColumns": "{tableName} columns",
+  "@tableColumns": {
+    "placeholders": {
+      "tableName": {
+        "type": "String"
+      }
+    }
+  },
+  "orderDetailsTitle": "Order Details",
+  "camera": "Camera",
+  "gallery": "Gallery",
+  "clientImagesTitle": "{clientName} - Images",
+  "@clientImagesTitle": {
+    "placeholders": {
+      "clientName": {
+        "type": "String"
+      }
+    }
+  },
+  "tradingPointImagesTitle": "{pointName} - Images",
+  "@tradingPointImagesTitle": {
+    "placeholders": {
+      "pointName": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadToServer": "Upload to Server ({count} images)",
+  "@uploadToServer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "kpiDashboardTitle": "KPI Dashboard",
+  "reportSentTitle": "Report Sent",
+  "editFeatureComingSoon": "Edit feature coming soon",
+  "sendPdf": "Send PDF",
+  "printFeatureComingSoon": "Print feature coming soon",
+  "print": "Print",
+  "stepCompleted": "{stepName} completed",
+  "@stepCompleted": {
+    "placeholders": {
+      "stepName": {
+        "type": "String"
+      }
+    }
+  },
+  "stepSkip": "{stepName} skip",
+  "@stepSkip": {
+    "placeholders": {
+      "stepName": {
+        "type": "String"
+      }
+    }
+  },
+  "syncWithDependencies": "Sync with dependencies",
+  "recommended": "Recommended",
+  "syncTableOnly": "Sync table only",
+  "syncWarning": "May fail if dependencies not synced",
+  "tableOnly": "Table only",
+  "withDependencies": "With dependencies",
+  "syncEntireGroup": "Sync Entire Group",
+  "statusNew": "New",
+  "retail": "Retail",
+  "continueAction": "Continue",
+  "send": "Send",
+  "previousStepsMustBeCompleted": "Previous steps must be completed",
+  "reload": "Reload",
+  "refreshAfterSeconds": "Can refresh after {seconds} seconds",
+  "@refreshAfterSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "imageDeleted": "Image deleted",
+  "imageDeleteError": "Error deleting image: {error}",
+  "@imageDeleteError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteImageTitle": "Delete Image",
+  "deleteImageConfirmation": "Are you sure you want to delete this image?",
+  "delete": "Delete",
+  "photoAfterTitle": "Photo AFTER (Facing correction)",
+  "photoBeforeTitle": "Photo BEFORE (Facing correction)",
+  "stepCompletedReadOnly": "This step is completed. Read-only mode.",
+  "photosNotLoadedYet": "Photos not loaded yet",
+  "timeUnknown": "Time unknown",
+  "codeLabel": "Code: {code}",
+  "@codeLabel": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "unitOfMeasure": "Unit of Measure",
+  "category": "Category",
+  "brand": "Brand",
+  "series": "Series",
+  "barcode": "Barcode",
+  "vendorCode": "Vendor Code",
+  "warehouseInformation": "Warehouse Information",
+  "quantity": "Quantity",
+  "available": "Available",
+  "reserved": "Reserved",
+  "physicalProperties": "Physical Properties",
+  "weight": "Weight",
+  "volume": "Volume",
+  "productsNotFound": "Products not found",
+  "bonusesNotFound": "Bonuses not found",
+  "classInformationNotFound": "Class information not found",
+  "searchResultsNotFound": "Search results not found",
+  "promotionConditions": "Promotion Conditions",
+  "minimalProductCount": "Minimal product count: {count}",
+  "@minimalProductCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bonusCount": "Bonus count: {count}",
+  "@bonusCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readOnlyMode": "Read Only",
+  "shelfAuditTitle": "Shelf Audit (Remains)",
+  "pageInDevelopment": "Page is currently under development",
+  "productNotFoundMessage": "Product information not found: {code}",
+  "@productNotFoundMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyLabel": "API Key: {status}",
+  "@apiKeyLabel": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyConfigured": "Configured",
+  "apiKeyNotRequired": "Key not required",
+  "apiKeyNotConfigured": "Not configured",
+  "editInformation": "Edit Information",
+  "editClientCoordinates": "Edit Client Coordinates",
+  "currentMapProvider": "Current Map Provider",
+  "availableMaps": "Available Maps",
+  "clientPhotosTitle": "Client Photos",
+  "clientPhotosDescription": "Here are photos related to the client {name}",
+  "@clientPhotosDescription": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notSent": "Not sent",
+  "sendToServer": "Send to server ({count} photos)",
+  "@sendToServer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mainImage": "Main image",
+  "image": "Image",
+  "noImagesAvailable": "No images available",
+  "clickPlusToAddImage": "Click the + button to add an image",
+  "setAsMainImage": "Set as main image",
+  "orderDetailsTitle": "Order Details",
+  "clientNameLabel": "Client Name",
+  "orderNumberLabel": "Order Number",
+  "orderDateLabel": "Order Date",
+  "orderTotalLabel": "Order Total",
+  "mainStatusLabel": "Main Status",
+  "statusCodeLabel": "Status Code",
+  "totalProductsLabel": "Total Products",
+  "productNameLabel": "Product Name",
+  "articleLabel": "Article",
+  "quantityLabel": "Quantity",
+  "priceLabel": "Price",
+  "amountLabel": "Amount",
+  "priceTypeLabel": "Price Type",
+  "noProductsInOrder": "No products in this order",
+  "productListEmpty": "Product list is empty",
+  "productsNotSelected": "Products not selected",
+  "clickPlusToAddProduct": "Click the + button to add a product",
+  "reportPeriod": "Report Period",
+  "monthlyOKB": "Monthly OKB",
+  "akbPlan": "AKB Plan",
+  "akbFact": "AKB Fact",
+  "selectPeriod": "Select Period",
+  "apply": "Apply",
+  "location": "Location",
+  "creatingLocation": "Detecting...",
+  "locationNotFound": "Location not found",
+  "createClient": "Create Client",
+  "swipeToRefresh": "Try swiping down to refresh!",
+  "ifSwipeNotWorking": "If swiping down doesn't work, perform the \"refresh all data\" action located in the settings menu",
+  "imageCountLabel": "{count} photos",
+  "@imageCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosNotLoadedDescription": "Here are photos related to the client {clientName}",
+  "@photosNotLoadedDescription": {
+    "placeholders": {
+      "clientName": {
+        "type": "String"
+      }
+    }
+  },
+  "totalLabel": "Total:",
+  "articleLabelShort": "Art:",
+  "availableLabel": "Available:",
+  "pieces": "pieces",
+  "shippingDate": "Shipping Date",
+  "changeShippingDate": "Change Shipping Date",
+  "totalValueLabel": "Total Value",
+  "productsLabel": "Products",
+  "addProduct": "Add Product",
+  "creating": "Creating...",
+  "refreshLabel": "Refresh",
+  "refreshing": "Refreshing...",
+  "changePeriod": "Change Period"
 }

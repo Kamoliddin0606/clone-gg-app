@@ -266,7 +266,9 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.cloud_upload),
-                label: Text(_isUploading ? 'Yuklanmoqda...' : 'Serverga yuborish'),
+                label: Text(_isUploading 
+                    ? (l10n?.syncing ?? 'Yuklanmoqda...') 
+                    : (l10n?.sendToServer.replaceAll('{count}', _pendingImages.length.toString()) ?? 'Serverga yuborish')),
               ),
             )
           : null,
@@ -284,12 +286,12 @@ class _ClientImagesManagementPageState extends State<ClientImagesManagementPage>
             const Icon(Icons.photo, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
             Text(
-              'Rasmlar mavjud emas',
+              l10n?.noImagesAvailable ?? 'Rasmlar mavjud emas',
               style: theme.textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'Yangi rasm qo\'shish uchun + tugmasini bosing',
+              l10n?.clickPlusToAddImage ?? 'Yangi rasm qo\'shish uchun + tugmasini bosing',
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),

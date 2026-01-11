@@ -1214,7 +1214,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pageUnderDevelopment => 'Page under development';
 
   @override
-  String get stepCompletedReadOnly => 'This step is completed. View-only mode.';
+  String get stepCompletedReadOnly => 'This step is completed. Read-only mode.';
 
   @override
   String get stepTypeNotImplemented => 'This step type page is not implemented yet.';
@@ -1544,7 +1544,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String refreshAfterSeconds(int seconds) {
-    return 'Refresh after ${seconds}s';
+    return 'Can refresh after $seconds seconds';
   }
 
   @override
@@ -2047,4 +2047,707 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createClientUnknownError => 'Unknown error';
+
+  @override
+  String get labelTradingPointType => 'Trading Point Type';
+
+  @override
+  String get labelBusinessRegion => 'Business Region';
+
+  @override
+  String get labelStatus => 'Status';
+
+  @override
+  String get labelDateRange => 'Date Range';
+
+  @override
+  String get labelClients => 'Clients';
+
+  @override
+  String get refusalReasonTitle => 'Refusal Reason';
+
+  @override
+  String selectRefusalReasonFor(String name) {
+    return 'Select refusal reason for $name:';
+  }
+
+  @override
+  String businessRegionLabel(String region) {
+    return 'Business Region: $region';
+  }
+
+  @override
+  String contactLabel(String contact) {
+    return 'Contact: $contact';
+  }
+
+  @override
+  String innLabel(String inn) {
+    return 'INN: $inn';
+  }
+
+  @override
+  String ownerLabel(String owner) {
+    return 'Owner: $owner';
+  }
+
+  @override
+  String responsiblePersonLabel(String responsible) {
+    return 'Responsible: $responsible';
+  }
+
+  @override
+  String responsiblePersonPhoneLabel(String phone) {
+    return 'Responsible Phone: $phone';
+  }
+
+  @override
+  String typeLabel(String type) {
+    return 'Type: $type';
+  }
+
+  @override
+  String regionDistrictLabel(String region, String district) {
+    return '$region, $district';
+  }
+
+  @override
+  String signboardLabel(String signboard) {
+    return 'Signboard: $signboard';
+  }
+
+  @override
+  String landmarkLabel(String landmark) {
+    return 'Landmark: $landmark';
+  }
+
+  @override
+  String get waitingForLocation => 'Waiting for location data...';
+
+  @override
+  String get visitCompletedTitle => 'Visit Completed';
+
+  @override
+  String stepsCompletedCount(int count) {
+    return '$count steps completed';
+  }
+
+  @override
+  String get returnToHome => 'Return to Home';
+
+  @override
+  String completedAtLabel(String date) {
+    return 'Completed: $date';
+  }
+
+  @override
+  String orderCaption(String id) {
+    return 'Order $id';
+  }
+
+  @override
+  String maxQuantityMessage(int stock) {
+    return 'Max quantity: $stock pcs';
+  }
+
+  @override
+  String get productPriceZeroError => 'Cannot add product with price 0 or less';
+
+  @override
+  String get quantityUpdateError => 'Error updating quantity';
+
+  @override
+  String get confirmationError => 'Error confirming selection';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get productSelectionTitle => 'Product Selection';
+
+  @override
+  String productsSelectedCount(int count) {
+    return '$count products selected';
+  }
+
+  @override
+  String get noProductsAvailable => 'No products available';
+
+  @override
+  String get clear => 'Clear';
+
+  @override
+  String totalProductsCount(int count) {
+    return 'Total products: $count';
+  }
+
+  @override
+  String totalAmount(String amount) {
+    return 'Total amount: $amount';
+  }
+
+  @override
+  String errorOccurred(String error) {
+    return 'Error occurred: $error';
+  }
+
+  @override
+  String get cameraPermissionDenied => 'Camera permission denied';
+
+  @override
+  String cameraInitError(String error) {
+    return 'Error initializing camera: $error';
+  }
+
+  @override
+  String cameraError(String error) {
+    return 'Camera error: $error';
+  }
+
+  @override
+  String get cameraInUseMessage => 'Camera is being used by another app. Attempting to reconnect...';
+
+  @override
+  String get imageSavedSuccessfully => 'Image saved successfully';
+
+  @override
+  String imageSaveError(String error) {
+    return 'Error saving image: $error';
+  }
+
+  @override
+  String get cameraNotReady => 'Camera not ready';
+
+  @override
+  String get cameraNotAvailable => 'Camera not available or not working';
+
+  @override
+  String imageCounter(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get imageCapturedSuccessfully => 'Image captured successfully';
+
+  @override
+  String imageCaptureError(String error) {
+    return 'Error capturing image: $error';
+  }
+
+  @override
+  String get xmlRequestLabel => 'XML Request';
+
+  @override
+  String get xmlCopied => 'XML copied';
+
+  @override
+  String get enterNumberHint => 'Enter number';
+
+  @override
+  String get balanceStatusTitle => 'Balance Status';
+
+  @override
+  String productNotFoundMessage(String code) {
+    return 'Product information not found: $code';
+  }
+
+  @override
+  String get clientCreatedSuccessfully => 'New client created successfully!';
+
+  @override
+  String get callClientTitle => 'Call Client';
+
+  @override
+  String callClientConfirmation(String phone) {
+    return 'Do you want to call the client?\n$phone';
+  }
+
+  @override
+  String get dialerNotAvailable => 'Dialer not available';
+
+  @override
+  String get updateCoordinatesNotImplemented => 'Update coordinates - functionality to be implemented';
+
+  @override
+  String get osmNotLoadedFallback => 'OpenStreetMap not loaded. Using Google Maps.';
+
+  @override
+  String get confirmLocationTitle => 'Confirm Location';
+
+  @override
+  String get orderDetailsNotFound => 'Order details not found';
+
+  @override
+  String get unknown => 'Unknown';
+
+  @override
+  String get locationPermissionDenied => 'Location permission denied';
+
+  @override
+  String permissionCheckError(String error) {
+    return 'Error checking permission: $error';
+  }
+
+  @override
+  String locationDetectionError(String error) {
+    return 'Error detecting location: $error';
+  }
+
+  @override
+  String get userLocationNotFound => 'User location not found';
+
+  @override
+  String routeInfo(String distance, String time) {
+    return 'Route: $distance km, estimated $time';
+  }
+
+  @override
+  String routeCreationError(String error) {
+    return 'Error creating route: $error';
+  }
+
+  @override
+  String cameraMoveError(String error) {
+    return 'Error moving camera: $error';
+  }
+
+  @override
+  String permissionsCheckError(String error) {
+    return 'Error checking permissions: $error';
+  }
+
+  @override
+  String get locationUpdating => 'Updating location...';
+
+  @override
+  String get clientLocationUpdated => 'Client location updated successfully';
+
+  @override
+  String locationUpdateError(String error) {
+    return 'Error updating location: $error';
+  }
+
+  @override
+  String get calculatingRoute => 'Calculating route...';
+
+  @override
+  String regionsLoadError(String error) {
+    return 'Error loading regions: $error';
+  }
+
+  @override
+  String locationGetError(String error) {
+    return 'Error getting location: $error';
+  }
+
+  @override
+  String get apiKeySavedSuccessfully => 'API key saved successfully';
+
+  @override
+  String get minimumInterval60Minutes => 'Minimum interval is 60 minutes';
+
+  @override
+  String pageLoadError(String error) {
+    return 'Error loading page: $error';
+  }
+
+  @override
+  String get imageSetAsPrimary => 'Image set as primary';
+
+  @override
+  String imagesUploadedCount(int count) {
+    return '$count images uploaded successfully';
+  }
+
+  @override
+  String serverImagesLoadError(String error) {
+    return 'Error loading server images: $error';
+  }
+
+  @override
+  String gallerySelectionError(String error) {
+    return 'Error selecting from gallery: $error';
+  }
+
+  @override
+  String cameraCaptureError(String error) {
+    return 'Error capturing from camera: $error';
+  }
+
+  @override
+  String get imagesUploadedSuccessfully => 'Images uploaded successfully';
+
+  @override
+  String imagesUploadError(String error) {
+    return 'Error uploading images: $error';
+  }
+
+  @override
+  String orderDraftSaved(String fileName) {
+    return 'Order Draft saved: $fileName';
+  }
+
+  @override
+  String get tablesLabel => 'Tables';
+
+  @override
+  String tableColumns(String tableName) {
+    return '$tableName columns';
+  }
+
+  @override
+  String get orderDetailsTitle => 'Order Details';
+
+  @override
+  String get camera => 'Camera';
+
+  @override
+  String get gallery => 'Gallery';
+
+  @override
+  String clientImagesTitle(String clientName) {
+    return '$clientName - Images';
+  }
+
+  @override
+  String tradingPointImagesTitle(String pointName) {
+    return '$pointName - Images';
+  }
+
+  @override
+  String uploadToServer(int count) {
+    return 'Upload to Server ($count images)';
+  }
+
+  @override
+  String get kpiDashboardTitle => 'KPI Dashboard';
+
+  @override
+  String get reportSentTitle => 'Report Sent';
+
+  @override
+  String get editFeatureComingSoon => 'Edit feature coming soon';
+
+  @override
+  String get sendPdf => 'Send PDF';
+
+  @override
+  String get printFeatureComingSoon => 'Print feature coming soon';
+
+  @override
+  String get print => 'Print';
+
+  @override
+  String stepCompleted(String stepName) {
+    return '$stepName completed';
+  }
+
+  @override
+  String stepSkip(String stepName) {
+    return '$stepName skip';
+  }
+
+  @override
+  String get syncWithDependencies => 'Sync with dependencies';
+
+  @override
+  String get recommended => 'Recommended';
+
+  @override
+  String get syncTableOnly => 'Sync table only';
+
+  @override
+  String get syncWarning => 'May fail if dependencies not synced';
+
+  @override
+  String get tableOnly => 'Table only';
+
+  @override
+  String get withDependencies => 'With dependencies';
+
+  @override
+  String get syncEntireGroup => 'Sync Entire Group';
+
+  @override
+  String get statusNew => 'New';
+
+  @override
+  String get retail => 'Retail';
+
+  @override
+  String get continueAction => 'Continue';
+
+  @override
+  String get previousStepsMustBeCompleted => 'Previous steps must be completed';
+
+  @override
+  String get reload => 'Reload';
+
+  @override
+  String get imageDeleted => 'Image deleted';
+
+  @override
+  String imageDeleteError(String error) {
+    return 'Error deleting image: $error';
+  }
+
+  @override
+  String get deleteImageTitle => 'Delete Image';
+
+  @override
+  String get deleteImageConfirmation => 'Are you sure you want to delete this image?';
+
+  @override
+  String get photoAfterTitle => 'Photo AFTER (Facing correction)';
+
+  @override
+  String get photoBeforeTitle => 'Photo BEFORE (Facing correction)';
+
+  @override
+  String get photosNotLoadedYet => 'Photos not loaded yet';
+
+  @override
+  String get timeUnknown => 'Time unknown';
+
+  @override
+  String get unitOfMeasure => 'Unit of Measure';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get brand => 'Brand';
+
+  @override
+  String get series => 'Series';
+
+  @override
+  String get barcode => 'Barcode';
+
+  @override
+  String get vendorCode => 'Vendor Code';
+
+  @override
+  String get warehouseInformation => 'Warehouse Information';
+
+  @override
+  String get reserved => 'Reserved';
+
+  @override
+  String get physicalProperties => 'Physical Properties';
+
+  @override
+  String get weight => 'Weight';
+
+  @override
+  String get volume => 'Volume';
+
+  @override
+  String get productsNotFound => 'Products not found';
+
+  @override
+  String get bonusesNotFound => 'Bonuses not found';
+
+  @override
+  String get classInformationNotFound => 'Class information not found';
+
+  @override
+  String get searchResultsNotFound => 'Search results not found';
+
+  @override
+  String get promotionConditions => 'Promotion Conditions';
+
+  @override
+  String minimalProductCount(int count) {
+    return 'Minimal product count: $count';
+  }
+
+  @override
+  String bonusCount(int count) {
+    return 'Bonus count: $count';
+  }
+
+  @override
+  String get readOnlyMode => 'Read Only';
+
+  @override
+  String get shelfAuditTitle => 'Shelf Audit (Remains)';
+
+  @override
+  String get pageInDevelopment => 'Page is currently under development';
+
+  @override
+  String apiKeyLabel(String status) {
+    return 'API Key: $status';
+  }
+
+  @override
+  String get apiKeyConfigured => 'Configured';
+
+  @override
+  String get apiKeyNotRequired => 'Key not required';
+
+  @override
+  String get apiKeyNotConfigured => 'Not configured';
+
+  @override
+  String get editInformation => 'Edit Information';
+
+  @override
+  String get editClientCoordinates => 'Edit Client Coordinates';
+
+  @override
+  String get clientPhotosTitle => 'Client Photos';
+
+  @override
+  String clientPhotosDescription(String name) {
+    return 'Here are photos related to the client $name';
+  }
+
+  @override
+  String get notSent => 'Not sent';
+
+  @override
+  String sendToServer(int count) {
+    return 'Send to server ($count photos)';
+  }
+
+  @override
+  String get mainImage => 'Main image';
+
+  @override
+  String get image => 'Image';
+
+  @override
+  String get noImagesAvailable => 'No images available';
+
+  @override
+  String get clickPlusToAddImage => 'Click the + button to add an image';
+
+  @override
+  String get setAsMainImage => 'Set as main image';
+
+  @override
+  String get clientNameLabel => 'Client Name';
+
+  @override
+  String get orderNumberLabel => 'Order Number';
+
+  @override
+  String get orderDateLabel => 'Order Date';
+
+  @override
+  String get orderTotalLabel => 'Order Total';
+
+  @override
+  String get mainStatusLabel => 'Main Status';
+
+  @override
+  String get statusCodeLabel => 'Status Code';
+
+  @override
+  String get totalProductsLabel => 'Total Products';
+
+  @override
+  String get productNameLabel => 'Product Name';
+
+  @override
+  String get articleLabel => 'Article';
+
+  @override
+  String get quantityLabel => 'Quantity';
+
+  @override
+  String get priceLabel => 'Price';
+
+  @override
+  String get amountLabel => 'Amount';
+
+  @override
+  String get priceTypeLabel => 'Price Type';
+
+  @override
+  String get noProductsInOrder => 'No products in this order';
+
+  @override
+  String get productListEmpty => 'Product list is empty';
+
+  @override
+  String get productsNotSelected => 'Products not selected';
+
+  @override
+  String get clickPlusToAddProduct => 'Click the + button to add a product';
+
+  @override
+  String get reportPeriod => 'Report Period';
+
+  @override
+  String get monthlyOKB => 'Monthly OKB';
+
+  @override
+  String get selectPeriod => 'Select Period';
+
+  @override
+  String get creatingLocation => 'Detecting...';
+
+  @override
+  String get locationNotFound => 'Location not found';
+
+  @override
+  String get createClient => 'Create Client';
+
+  @override
+  String get swipeToRefresh => 'Try swiping down to refresh!';
+
+  @override
+  String get ifSwipeNotWorking => 'If swiping down doesn\'t work, perform the \"refresh all data\" action located in the settings menu';
+
+  @override
+  String imageCountLabel(int count) {
+    return '$count photos';
+  }
+
+  @override
+  String photosNotLoadedDescription(String clientName) {
+    return 'Here are photos related to the client $clientName';
+  }
+
+  @override
+  String get totalLabel => 'Total:';
+
+  @override
+  String get articleLabelShort => 'Art:';
+
+  @override
+  String get availableLabel => 'Available:';
+
+  @override
+  String get pieces => 'pieces';
+
+  @override
+  String get shippingDate => 'Shipping Date';
+
+  @override
+  String get changeShippingDate => 'Change Shipping Date';
+
+  @override
+  String get totalValueLabel => 'Total Value';
+
+  @override
+  String get productsLabel => 'Products';
+
+  @override
+  String get addProduct => 'Add Product';
+
+  @override
+  String get creating => 'Creating...';
+
+  @override
+  String get refreshLabel => 'Refresh';
+
+  @override
+  String get refreshing => 'Refreshing...';
+
+  @override
+  String get changePeriod => 'Change Period';
 }

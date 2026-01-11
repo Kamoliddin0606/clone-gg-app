@@ -1612,9 +1612,10 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
       
       // Show success message
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Yangi mijoz muvaffaqiyatli yaratildi!'),
+            content: Text(l10n.clientCreatedSuccessfully),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 3),
           ),
@@ -1654,14 +1655,16 @@ class _SearchField extends StatelessWidget {
         ],
         border: Border.all(color: cs.outlineVariant),
       ),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        decoration: const InputDecoration(
-          hintText: 'Qidirish...',
-          prefixIcon: Icon(Icons.search),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+      child: Builder(
+        builder: (ctx) => TextField(
+          controller: controller,
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(ctx)?.searchHint ?? 'Qidirish...',
+            prefixIcon: const Icon(Icons.search),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+          ),
         ),
       ),
     );
@@ -1705,13 +1708,13 @@ class _EmptyStateState extends State<_EmptyState> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Pastga surib yangilash uchun urinib ko\'ring!',
+                  AppLocalizations.of(context)?.swipeToRefresh ?? 'Pastga surib yangilash uchun urinib ko\'ring!',
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor.withOpacity(0.7)),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Pastga surish ish bermasa sozlamalar menyusida joylashgan "barcha ma\'lumotlarni yangilash amalini bajaring',
+                  AppLocalizations.of(context)?.ifSwipeNotWorking ?? 'Pastga surish ish bermasa sozlamalar menyusida joylashgan "barcha ma\'lumotlarni yangilash amalini bajaring"',
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor.withOpacity(0.7)),
                   textAlign: TextAlign.center,
                 ),
@@ -1845,7 +1848,7 @@ class TradingPointCard extends StatelessWidget {
             children: [
               const Icon(Icons.location_city_outlined, size: 16),
               const SizedBox(width: 8),
-              Expanded(child: Text('Biznes region: ${regionNames[tradingPoint.codeRegion] ?? 'Noma\'lum'}')),
+              Expanded(child: Text(AppLocalizations.of(context)?.businessRegionLabel(regionNames[tradingPoint.codeRegion] ?? AppLocalizations.of(context)?.unknown ?? 'Noma\'lum') ?? 'Biznes region: ${regionNames[tradingPoint.codeRegion] ?? 'Noma\'lum'}')),
             ],
           ),
           const SizedBox(height: 8),
@@ -1853,7 +1856,7 @@ class TradingPointCard extends StatelessWidget {
             children: [
               const Icon(Icons.person, size: 16),
               const SizedBox(width: 8),
-              Expanded(child: Text('Aloqa: ${tradingPoint.contactPerson}')),
+              Expanded(child: Text(AppLocalizations.of(context)?.contactLabel(tradingPoint.contactPerson) ?? 'Aloqa: ${tradingPoint.contactPerson}')),
             ],
           ),
           const SizedBox(height: 8),
@@ -2123,12 +2126,13 @@ class _RefusalDialogState extends State<RefusalDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Text('Rad etish sababi'),
+      title: Text(l10n.refusalReasonTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('${widget.tradingPoint.name} uchun rad etish sababini tanlang:'),
+          Text(l10n.selectRefusalReasonFor(widget.tradingPoint.name)),
           const SizedBox(height: 12),
           ..._refusalReasons.map((reason) => RadioListTile<String>(
             title: Text(reason),
@@ -2142,13 +2146,13 @@ class _RefusalDialogState extends State<RefusalDialog> {
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-          child: const Text('Bekor qilish'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: _isLoading || _selectedReason == null ? null : _sendRefusal,
           child: _isLoading
               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Yuborish'),
+              : Text(l10n.send),
         ),
       ],
     );
@@ -3445,7 +3449,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                   onPressed: () {
                     // TODO: Open page to update client coordinates and send to server
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Update coordinates - functionality to be implemented')),
+                      SnackBar(content: Text(AppLocalizations.of(context)?.updateCoordinatesNotImplemented ?? 'Update coordinates - functionality to be implemented')),
                     );
                   },
                   tooltip: 'Update coordinates',
@@ -3546,7 +3550,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                   onPressed: () {
                     // TODO: Open page to update client coordinates and send to server
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Update coordinates - functionality to be implemented')),
+                      SnackBar(content: Text(AppLocalizations.of(context)?.updateCoordinatesNotImplemented ?? 'Update coordinates - functionality to be implemented')),
                     );
                   },
                   tooltip: 'Update coordinates',
@@ -3678,11 +3682,12 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                     icon: const Icon(Icons.edit_location, color: Colors.orange),
                     onPressed: () {
                       // TODO: Open page to update client coordinates and send to server
+                      final l10n = AppLocalizations.of(context)!;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Update coordinates - functionality to be implemented')),
+                        SnackBar(content: Text(l10n.updateCoordinatesNotImplemented)),
                       );
                     },
-                    tooltip: 'Update coordinates',
+                    tooltip: AppLocalizations.of(context)?.updateCoordinatesNotImplemented ?? 'Update coordinates',
                     iconSize: 24,
                   ),
                 ),
@@ -3691,8 +3696,9 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
           );
         } catch (e) {
           // Fallback if OSM fails
-          return const Center(
-            child: Text('OpenStreetMap yuklanmadi. Google Maps ishlatiladi.'),
+          final l10n = AppLocalizations.of(context)!;
+          return Center(
+            child: Text(l10n.osmNotLoadedFallback),
           );
         }
       default:
@@ -4149,7 +4155,12 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.refresh, size: 16),
-                  label: Text(_isRefreshing ? 'Yangilanmoqda...' : 'Yangilash'),
+                  label: Builder(
+                    builder: (ctx) {
+                      final l10n = AppLocalizations.of(ctx);
+                      return Text(_isRefreshing ? (l10n?.refreshing ?? 'Yangilanmoqda...') : (l10n?.refreshLabel ?? 'Yangilash'));
+                    },
+                  ),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     textStyle: const TextStyle(fontSize: 12),
@@ -4290,12 +4301,12 @@ class _DistanceValidationDialogState extends State<DistanceValidationDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Bekor qilish'),
+          child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor qilish'),
         ),
         if (isCompliant)
           FilledButton(
             onPressed: widget.onConditionsMet,
-            child: const Text('Davom etish'),
+            child: Text(AppLocalizations.of(context)?.continueAction ?? 'Davom etish'),
           ),
       ],
     );
@@ -4462,14 +4473,15 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
     final uri = Uri(scheme: 'tel', path: phone);
 
     // Tasdiqlash dialogi
+    final l10n = AppLocalizations.of(context)!;
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Qo‘ng‘iroq qilish'),
-        content: Text('Mijozga qo‘ng‘iroq qilmoqchimisiz?\n$rawPhone'),
+        title: Text(l10n.callClientTitle),
+        content: Text(l10n.callClientConfirmation(rawPhone)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Bekor qilish')),
-          ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Qo‘ng‘iroq qilish')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.callClientTitle)),
         ],
       ),
     );
@@ -4479,7 +4491,7 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Dialer ochilmadi')),
+          SnackBar(content: Text(l10n.dialerNotAvailable)),
         );
       }
     }

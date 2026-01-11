@@ -20,6 +20,7 @@ import 'package:gloria_marketing_flutter/src/core/services/client_balance_servic
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/client_balance_details_page.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 /// ============================================================================
 /// ClientBalanceWidget - Mijoz balansi widgeti
@@ -233,9 +234,10 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
     final inn = widget.tradingPoint.inn;
     if (!_balanceService!.canRefresh(inn)) {
       // Cooldown hali tugamagan
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$_remainingSeconds soniyadan keyin yangilash mumkin'),
+          content: Text(l10n.refreshAfterSeconds(_remainingSeconds)),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -266,14 +268,14 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
               color: isDebtor ? Colors.red : Colors.green,
             ),
             const SizedBox(width: 8),
-            const Text('Balans holati'),
+            Text(AppLocalizations.of(context)?.balanceStatusTitle ?? 'Balans holati'),
           ],
         ),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Yopish'),
+            child: Text(AppLocalizations.of(context)?.close ?? 'Yopish'),
           ),
         ],
       ),
@@ -465,7 +467,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
           ),
           TextButton(
             onPressed: _loadBalance,
-            child: const Text('Qayta urinish'),
+            child: Text(AppLocalizations.of(context)?.retry ?? 'Qayta urinish'),
           ),
         ],
       ),

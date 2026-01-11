@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
@@ -448,9 +449,10 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
 
       if (newQuantity > stock) {
         debugPrint('ProductSelectionPage: Quantity $newQuantity exceeds stock $stock for product $productCode');
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Maksimal miqdor: $stock dona'),
+            content: Text(l10n.maxQuantityMessage(stock)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -460,9 +462,10 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       // Check price validation for adding products
       if (newQuantity > 0 && price <= 0) {
         debugPrint('ProductSelectionPage: Cannot add product $productCode with price $price');
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Narxi 0 yoki undan kichik bo\'lgan mahsulot qo\'shib bo\'lmaydi'),
+            content: Text(l10n.productPriceZeroError),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -514,10 +517,10 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
     } catch (e, stackTrace) {
       debugPrint('ProductSelectionPage: Error updating product quantity: $e');
       debugPrint('ProductSelectionPage: Stack trace: $stackTrace');
-
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Miqdorni yangilashda xatolik yuz berdi'),
+          content: Text(l10n.quantityUpdateError),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -532,9 +535,10 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
     if (currentQuantity + 1 <= stock) {
       _updateProductQuantity(productCode, currentQuantity + 1);
     } else {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Maksimal miqdor: $stock dona'),
+          content: Text(l10n.maxQuantityMessage(stock)),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -614,7 +618,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Bekor'),
+                    child: Text(AppLocalizations.of(context)?.cancel ?? 'Bekor'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -626,15 +630,16 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                         _updateProductQuantity(productCode, value);
                         Navigator.pop(context);
                       } else {
+                        final l10n = AppLocalizations.of(context)!;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Miqdor 0 dan $stock gacha bo\'lishi kerak'),
+                            content: Text(l10n.maxQuantityMessage(stock)),
                             backgroundColor: Theme.of(context).colorScheme.error,
                           ),
                         );
                       }
                     },
-                    child: const Text('Saqlash'),
+                    child: Text(AppLocalizations.of(context)?.save ?? 'Saqlash'),
                   ),
                 ),
               ],
@@ -701,9 +706,10 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
       debugPrint('ProductSelectionPage: Error confirming selection: $e');
       debugPrint('ProductSelectionPage: Stack trace: $stackTrace');
 
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Tanlovni tasdiqlashda xatolik yuz berdi'),
+          content: Text(l10n.confirmationError),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -770,7 +776,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check),
-                label: const Text('Tasdiqlash'),
+                label: Text(AppLocalizations.of(context)?.confirm ?? 'Tasdiqlash'),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
                 ),
@@ -1453,7 +1459,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Orqaga'),
+                    child: Text(AppLocalizations.of(context)?.back ?? 'Orqaga'),
                   ),
                 ],
               ),
@@ -1782,7 +1788,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage> with Ticker
             _showViewModeToggle();
           }
         },
-        child: const Text('Mahsulot tanlash'),
+        child: Text(AppLocalizations.of(context)?.productSelectionTitle ?? 'Mahsulot tanlash'),
       ),
       centerTitle: true,
       actions: [

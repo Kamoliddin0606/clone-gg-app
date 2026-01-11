@@ -2,6 +2,7 @@
 // presentation/widgets/trading_points_filters_panel.dart
 // =============================
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 class TradingPointsFilterState {
   Set<String> tradePointTypes; // multi-select savdo nuqtasi turlari
@@ -29,6 +30,7 @@ class TradingPointsFiltersPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: cs.surfaceContainerLowest,
@@ -39,7 +41,7 @@ class TradingPointsFiltersPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Savdo nuqtasi turi
-          Text('Savdo nuqtasi turi', style: Theme.of(context).textTheme.labelLarge),
+          Text(l10n.labelTradingPointType, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           SizedBox(
             height: 120, // Fixed height for scrollable container
@@ -71,7 +73,7 @@ class TradingPointsFiltersPanel extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Biznes region
-          Text('Biznes region', style: Theme.of(context).textTheme.labelLarge),
+          Text(l10n.labelBusinessRegion, style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           SizedBox(
             height: 120, // Fixed height for scrollable container

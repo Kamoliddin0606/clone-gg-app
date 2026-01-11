@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/models/data_sync_table.dart';
 import 'package:gloria_marketing_flutter/src/core/models/sync_table_metadata.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
@@ -76,8 +77,12 @@ class _TableSyncCardState extends State<TableSyncCard> {
           value: SyncMode.withCascade,
           child: ListTile(
             leading: Icon(Icons.sync, size: 20),
-            title: Text('Sync with dependencies'),
-            subtitle: Text('Recommended', style: TextStyle(fontSize: 11)),
+            title: Builder(
+              builder: (ctx) => Text(AppLocalizations.of(ctx)?.syncWithDependencies ?? 'Sync with dependencies'),
+            ),
+            subtitle: Builder(
+              builder: (ctx) => Text(AppLocalizations.of(ctx)?.recommended ?? 'Recommended', style: TextStyle(fontSize: 11)),
+            ),
             contentPadding: EdgeInsets.zero,
           ),
         ),
@@ -85,9 +90,13 @@ class _TableSyncCardState extends State<TableSyncCard> {
           value: SyncMode.tableOnly,
           child: ListTile(
             leading: Icon(Icons.sync_disabled, size: 20),
-            title: Text('Sync table only'),
-            subtitle: Text('May fail if dependencies not synced',
-                style: TextStyle(fontSize: 11)),
+            title: Builder(
+              builder: (ctx) => Text(AppLocalizations.of(ctx)?.syncTableOnly ?? 'Sync table only'),
+            ),
+            subtitle: Builder(
+              builder: (ctx) => Text(AppLocalizations.of(ctx)?.syncWarning ?? 'May fail if dependencies not synced',
+                  style: TextStyle(fontSize: 11)),
+            ),
             contentPadding: EdgeInsets.zero,
           ),
         ),
@@ -337,12 +346,12 @@ class _TableSyncCardState extends State<TableSyncCard> {
             children: [
               TextButton.icon(
                 icon: Icon(Icons.sync_disabled, size: 18),
-                label: Text('Table only'),
+                label: Text(AppLocalizations.of(context)?.tableOnly ?? 'Table only'),
                 onPressed: () => _performSync(SyncMode.tableOnly),
               ),
               ElevatedButton.icon(
                 icon: Icon(Icons.sync, size: 18),
-                label: Text('With dependencies'),
+                label: Text(AppLocalizations.of(context)?.withDependencies ?? 'With dependencies'),
                 onPressed: () => _performSync(SyncMode.withCascade),
               ),
             ],

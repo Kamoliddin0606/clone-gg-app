@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/visit_steps_page.dart';
 
 import '../../data/models/trading_point_with_permissions.dart';
@@ -703,7 +704,7 @@ class _VisitStepCardWithPersistenceState extends State<_VisitStepCardWithPersist
                         child: OutlinedButton.icon(
                           onPressed: () => _showSkipDialog(context),
                           icon: const Icon(Icons.skip_next, size: 18),
-                          label: const Text('Skip Step'),
+                          label: Text(AppLocalizations.of(context)?.skipStep ?? 'Skip Step'),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                           ),
@@ -716,7 +717,7 @@ class _VisitStepCardWithPersistenceState extends State<_VisitStepCardWithPersist
                       child: FilledButton.icon(
                         onPressed: () => _showCompleteDialog(context),
                         icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Complete Step'),
+                        label: Text(AppLocalizations.of(context)?.completeStep ?? 'Complete Step'),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
@@ -741,7 +742,7 @@ class _VisitStepCardWithPersistenceState extends State<_VisitStepCardWithPersist
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Previous steps must be completed',
+                        AppLocalizations.of(context)?.previousStepsMustBeCompleted ?? 'Previous steps must be completed',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -761,11 +762,11 @@ class _VisitStepCardWithPersistenceState extends State<_VisitStepCardWithPersist
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${widget.stepProgress.step.stepName} completed'),
+        title: Text(AppLocalizations.of(context)?.stepCompleted(widget.stepProgress.step.stepName) ?? '${widget.stepProgress.step.stepName} completed'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Confirm completion'),
+            Text(AppLocalizations.of(context)?.confirmCompletion ?? 'Confirm completion'),
             const SizedBox(height: 12),
             TextField(
               controller: _notesController,
@@ -780,7 +781,7 @@ class _VisitStepCardWithPersistenceState extends State<_VisitStepCardWithPersist
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () {
@@ -788,7 +789,7 @@ class _VisitStepCardWithPersistenceState extends State<_VisitStepCardWithPersist
               _notesController.clear();
               Navigator.of(context).pop();
             },
-            child: const Text('Confirm'),
+            child: Text(AppLocalizations.of(context)?.confirm ?? 'Confirm'),
           ),
         ],
       ),
@@ -799,11 +800,11 @@ class _VisitStepCardWithPersistenceState extends State<_VisitStepCardWithPersist
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${widget.stepProgress.step.stepName} skip'),
+        title: Text(AppLocalizations.of(context)?.stepSkip(widget.stepProgress.step.stepName) ?? '${widget.stepProgress.step.stepName} skip'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Enter skip reason'),
+            Text(AppLocalizations.of(context)?.enterSkipReason ?? 'Enter skip reason'),
             const SizedBox(height: 12),
             TextField(
               controller: _skipReasonController,
@@ -818,7 +819,7 @@ class _VisitStepCardWithPersistenceState extends State<_VisitStepCardWithPersist
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)?.cancel ?? 'Cancel'),
           ),
           FilledButton(
             onPressed: () {
@@ -826,7 +827,7 @@ class _VisitStepCardWithPersistenceState extends State<_VisitStepCardWithPersist
               _skipReasonController.clear();
               Navigator.of(context).pop();
             },
-            child: const Text('Confirm Skip'),
+            child: Text(AppLocalizations.of(context)?.confirmSkip ?? 'Confirm Skip'),
           ),
         ],
       ),

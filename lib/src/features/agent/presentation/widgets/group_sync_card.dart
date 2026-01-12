@@ -145,36 +145,43 @@ class _GroupSyncCardState extends State<GroupSyncCard> {
               size: 28,
             ),
           ),
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  widget.group.nameEn,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: groupColor,
-                  ),
-                ),
-              ),
-              // Status badge
-              _buildStatusBadge(status, theme, groupColor),
-            ],
+          title: Text(
+            widget.group.nameEn,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: groupColor,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context)?.tablesOfTotalSynced(status.syncedCount, status.totalCount) ?? '${status.syncedCount} of ${status.totalCount} tables synced',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              // Status badge row
+              Row(
+                children: [
+                  _buildStatusBadge(status, theme, groupColor),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      AppLocalizations.of(context)?.tablesOfTotalSynced(status.syncedCount, status.totalCount) ?? '${status.syncedCount} of ${status.totalCount} tables synced',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
               if (status.lastSyncTime != null)
-                Text(
-                  _getRelativeTime(status.lastSyncTime!),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    _getRelativeTime(status.lastSyncTime!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
             ],

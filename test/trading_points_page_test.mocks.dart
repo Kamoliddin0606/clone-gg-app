@@ -312,6 +312,49 @@ class MockSharedPreferencesService extends _i1.Mock
             returnValue: _i5.Future<bool>.value(false),
           )
           as _i5.Future<bool>);
+
+  @override
+  _i5.Future<void> setBgSyncEnabled(bool? enabled) =>
+      (super.noSuchMethod(
+            Invocation.method(#setBgSyncEnabled, [enabled]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  bool isBgSyncEnabled() =>
+      (super.noSuchMethod(
+            Invocation.method(#isBgSyncEnabled, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i5.Future<void> setBgSyncInterval(int? hours) =>
+      (super.noSuchMethod(
+            Invocation.method(#setBgSyncInterval, [hours]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  int getBgSyncInterval() =>
+      (super.noSuchMethod(
+            Invocation.method(#getBgSyncInterval, []),
+            returnValue: 0,
+          )
+          as int);
+
+  @override
+  _i5.Future<void> setBgSyncCustomMinutes(int? minutes) =>
+      (super.noSuchMethod(
+            Invocation.method(#setBgSyncCustomMinutes, [minutes]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
 }
 
 /// A class which mocks [AgentRepository].
@@ -625,18 +668,6 @@ class MockThumbnailImageService extends _i1.Mock
       );
 
   @override
-  void cancel() => super.noSuchMethod(
-    Invocation.method(#cancel, []),
-    returnValueForMissingStub: null,
-  );
-
-  @override
-  void reset() => super.noSuchMethod(
-    Invocation.method(#reset, []),
-    returnValueForMissingStub: null,
-  );
-
-  @override
   _i5.Future<void> updateClientThumbnails(String? clientCode) =>
       (super.noSuchMethod(
             Invocation.method(#updateClientThumbnails, [clientCode]),
@@ -661,6 +692,26 @@ class MockThumbnailImageService extends _i1.Mock
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
+
+  @override
+  _i5.Future<Map<String, int>> getThumbnailStats() =>
+      (super.noSuchMethod(
+            Invocation.method(#getThumbnailStats, []),
+            returnValue: _i5.Future<Map<String, int>>.value(<String, int>{}),
+          )
+          as _i5.Future<Map<String, int>>);
+
+  @override
+  void cancel() => super.noSuchMethod(
+    Invocation.method(#cancel, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void reset() => super.noSuchMethod(
+    Invocation.method(#reset, []),
+    returnValueForMissingStub: null,
+  );
 
   @override
   _i5.Future<void> fetchAndSaveClientImages(
@@ -697,6 +748,14 @@ class MockThumbnailImageService extends _i1.Mock
           as _i5.Future<_i19.ClientImage?>);
 
   @override
+  _i5.Future<bool> deleteClientImageFromServer(_i19.ClientImage? image) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteClientImageFromServer, [image]),
+            returnValue: _i5.Future<bool>.value(false),
+          )
+          as _i5.Future<bool>);
+
+  @override
   _i5.Future<void> deleteClientImages(String? clientCode) =>
       (super.noSuchMethod(
             Invocation.method(#deleteClientImages, [clientCode]),
@@ -706,9 +765,17 @@ class MockThumbnailImageService extends _i1.Mock
           as _i5.Future<void>);
 
   @override
-  _i5.Future<Map<String, int>> getThumbnailStats() =>
+  _i5.Future<bool> setClientImageAsMain(_i19.ClientImage? image) =>
       (super.noSuchMethod(
-            Invocation.method(#getThumbnailStats, []),
+            Invocation.method(#setClientImageAsMain, [image]),
+            returnValue: _i5.Future<bool>.value(false),
+          )
+          as _i5.Future<bool>);
+
+  @override
+  _i5.Future<Map<String, int>> getClientImagesStats() =>
+      (super.noSuchMethod(
+            Invocation.method(#getClientImagesStats, []),
             returnValue: _i5.Future<Map<String, int>>.value(<String, int>{}),
           )
           as _i5.Future<Map<String, int>>);

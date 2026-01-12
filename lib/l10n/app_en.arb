@@ -1734,6 +1734,7 @@
   "visitCompletedFor": "visit completed successfully for",
   "contractStatusActive": "Active",
   "contractStatusExpired": "Expired",
+  "contractStatusCancelled": "Cancelled",
   "contractStatusPending": "Pending",
   "contractStatusSuspended": "Suspended",
   "contractTabAll": "All",
@@ -2559,5 +2560,51 @@
     }
   },
   "fakturaInnEmpty": "TIN cannot be empty",
-  "fakturaTokenRefreshError": "Token refresh error"
+  "fakturaTokenRefreshError": "Token refresh error",
+  "reportMenuTitle": "Reports menu",
+  "reportAlreadySent": "Report has already been sent to your Telegram group. Do you want to send it again?",
+  "reportSentSuccess": "Report sent",
+  "resendReport": "Resend",
+  "toggleHeaderShow": "Show header",
+  "toggleHeaderHide": "Hide header",
+  "periodNotSelected": "Period not selected",
+  "userDataNotFound": "User data not found",
+  "dataSyncing": "Syncing data...",
+  "reportsUpdated": "Reports updated",
+  "syncError": "Sync error: {error}",
+  "@syncError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "applyButton": "Apply",
+  "reportMainEvyap": "Main reports(for EVYAP)",
+  "reportMainEvyapDesc": "KPI indicators and main statistics",
+  "reportVisits": "Visits report",
+  "reportVisitsDesc": "Information about visits to clients",
+  "reportAkbClient": "AKB Client",
+  "reportAkbClientDesc": "Report on AKB clients",
+  "reportAkbSum": "AKB Sum",
+  "reportAkbSumDesc": "Financial report on AKB amounts",
+  "reportAkbProduct": "AKB Product",
+  "reportAkbProductDesc": "Report on AKB products",
+  "reportCategory": "Category reports",
+  "reportCategoryDesc": "Sales analysis by categories",
+  "reportMonthlyResults": "Monthly results",
+  "reportMonthlyResultsDesc": "Monthly sales results and trends",
+  "reportMonthlyKpi": "Monthly KPI (salary)",
+  "reportMonthlyKpiDesc": "Monthly KPI completion and salary report",
+  "reportsSection": "Reports section",
+  "akbAmount": "AKB amount",
+  "akbPlan": "AKB plan",
+  "akbProducts": "AKB products",
+  "productTypes": "Product types",
+  "categoriesCount": "Categories count",
+  "topSelling": "Top selling",
+  "monthlySales": "Monthly sales",
+  "monthlyGrowth": "Monthly growth",
+  "kpiCompletion": "KPI completion",
+  "salaryAmount": "Salary amount"
 }

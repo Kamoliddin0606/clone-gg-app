@@ -3128,6 +3128,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contractStatusExpired => 'Expired';
 
   @override
+  String get contractStatusCancelled => 'Cancelled';
+
+  @override
   String get contractStatusPending => 'Not approved';
 
   @override

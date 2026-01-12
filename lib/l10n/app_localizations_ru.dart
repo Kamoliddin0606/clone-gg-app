@@ -3128,6 +3128,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get contractStatusExpired => 'Истек';
 
   @override
+  String get contractStatusCancelled => 'Отменен';
+
+  @override
   String get contractStatusPending => 'Не согласован';
 
   @override

@@ -177,6 +177,8 @@ class _TableSyncCardState extends State<TableSyncCard> {
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Icon(

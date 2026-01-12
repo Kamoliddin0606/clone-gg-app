@@ -3122,13 +3122,16 @@ class AppLocalizationsUz extends AppLocalizations {
   String get orderStatusExpired => 'Muddati o\'tdi';
 
   @override
-  String get contractStatusActive => 'Faol';
+  String get contractStatusActive => 'Amalda';
 
   @override
   String get contractStatusExpired => 'Muddati o\'tgan';
 
   @override
-  String get contractStatusPending => 'Kelishilmagan';
+  String get contractStatusCancelled => 'Bekor qilingan';
+
+  @override
+  String get contractStatusPending => 'Tastiqlanmagan';
 
   @override
   String get contractStatusSuspended => 'To\'xtatilgan';

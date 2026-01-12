@@ -5971,6 +5971,12 @@ abstract class AppLocalizations {
   /// **'Expired'**
   String get contractStatusExpired;
 
+  /// No description provided for @contractStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get contractStatusCancelled;
+
   /// No description provided for @contractStatusPending.
   ///
   /// In en, this message translates to:

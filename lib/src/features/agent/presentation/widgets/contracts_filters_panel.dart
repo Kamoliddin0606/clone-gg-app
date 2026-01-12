@@ -120,7 +120,7 @@ class ContractsFiltersPanel extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: ContractStatus.values.map((status) {
+            children: ContractStatusGroup.values.map((status) {
               return FilterChip(
                 label: Text(_getStatusText(context, status)),
                 selected: state.status == status,
@@ -135,19 +135,19 @@ class ContractsFiltersPanel extends StatelessWidget {
     );
   }
 
-  String _getStatusText(BuildContext context, ContractStatus status) {
+  String _getStatusText(BuildContext context, ContractStatusGroup status) {
     final l10n = AppLocalizations.of(context);
     switch (status) {
-      case ContractStatus.all:
-        return l10n?.statusAll ?? 'All';
-      case ContractStatus.active:
-        return l10n?.statusActive ?? 'Active';
-      case ContractStatus.inactive:
-        return l10n?.statusInactive ?? 'Inactive';
-      case ContractStatus.expired:
-        return l10n?.statusExpired ?? 'Expired';
-      case ContractStatus.pending:
-        return l10n?.statusPending ?? 'Pending';
+      case ContractStatusGroup.all:
+        return l10n?.statusAll ?? 'Hammasi';
+      case ContractStatusGroup.active:
+        return l10n?.contractStatusActive ?? 'Amalda';
+      case ContractStatusGroup.expired:
+        return l10n?.contractStatusExpired ?? 'Muddati o\'tgan';
+      case ContractStatusGroup.cancelled:
+        return l10n?.contractStatusCancelled ?? 'Bekor qilingan';
+      case ContractStatusGroup.pending:
+        return l10n?.contractStatusPending ?? 'Tastiqlanmagan';
     }
   }
 }

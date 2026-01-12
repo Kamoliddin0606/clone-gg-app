@@ -9,7 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dar
 import '../../../../Utility/formatter.dart';
 import '../../data/models/client_contract.dart';
 import '../../data/models/trading_point.dart';
-import '../widgets/contract_models.dart';
+import '../widgets/contract_models.dart' show ContractStatusGroup, calculateContractStatus, ContractsFilterState;
 import '../widgets/contracts_filters_panel.dart';
 import '../widgets/create_contract_form.dart';
 import 'contract_detail_page.dart';
@@ -310,21 +310,15 @@ class _ContractsPageState extends State<ContractsPage>
       }).toList();
     }
 
-    // Apply status filter
-    if (_filters.status != null && _filters.status != ContractStatus.all) {
+    // Apply status filter using new business logic
+    if (_filters.status != null && _filters.status != ContractStatusGroup.all) {
       filtered = filtered.where((contract) {
-        switch (_filters.status) {
-          case ContractStatus.active:
-            return contract.active && contract.status == 'Действует';
-          case ContractStatus.inactive:
-            return !contract.active;
-          case ContractStatus.expired:
-            return contract.status == 'Истек';
-          case ContractStatus.pending:
-            return contract.status == 'Не согласован';
-          default:
-            return true;
-        }
+        final contractStatus = calculateContractStatus(
+          status: contract.status,
+          active: contract.active,
+          termOfContract: contract.termOfContract,
+        );
+        return contractStatus == _filters.status;
       }).toList();
     }
 
@@ -346,18 +340,44 @@ class _ContractsPageState extends State<ContractsPage>
     final allFiltered = _getFilteredContracts();
 
     switch (tabIndex) {
-      case 0: // Все
+      case 0: // Hammasi
         return allFiltered;
-      case 1: // Действует
-        return allFiltered
-            .where((c) => c.status == 'Действует' && c.active)
-            .toList();
-      case 2: // Истек
-        return allFiltered.where((c) => c.status == 'Истек').toList();
-      case 3: // Приостановлен
-        return allFiltered.where((c) => !c.active).toList();
-      case 4: // Не согласован
-        return allFiltered.where((c) => c.status == 'Не согласован').toList();
+      case 1: // Amalda
+        return allFiltered.where((c) {
+          final status = calculateContractStatus(
+            status: c.status,
+            active: c.active,
+            termOfContract: c.termOfContract,
+          );
+          return status == ContractStatusGroup.active;
+        }).toList();
+      case 2: // Muddati o'tgan
+        return allFiltered.where((c) {
+          final status = calculateContractStatus(
+            status: c.status,
+            active: c.active,
+            termOfContract: c.termOfContract,
+          );
+          return status == ContractStatusGroup.expired;
+        }).toList();
+      case 3: // Bekor qilingan
+        return allFiltered.where((c) {
+          final status = calculateContractStatus(
+            status: c.status,
+            active: c.active,
+            termOfContract: c.termOfContract,
+          );
+          return status == ContractStatusGroup.cancelled;
+        }).toList();
+      case 4: // Tastiqlanmagan
+        return allFiltered.where((c) {
+          final status = calculateContractStatus(
+            status: c.status,
+            active: c.active,
+            termOfContract: c.termOfContract,
+          );
+          return status == ContractStatusGroup.pending;
+        }).toList();
       default:
         return allFiltered;
     }
@@ -388,26 +408,26 @@ class _ContractsPageState extends State<ContractsPage>
           controller: _tabController,
           isScrollable: true,
           tabs: [
-            Tab(text: AppLocalizations.of(context)?.contractTabAll ?? 'Все'),
+            Tab(text: AppLocalizations.of(context)?.contractTabAll ?? 'Hammasi'),
             Tab(
               text:
                   AppLocalizations.of(context)?.contractStatusActive ??
-                  'Действует',
+                  'Amalda',
             ),
             Tab(
               text:
                   AppLocalizations.of(context)?.contractStatusExpired ??
-                  'Истек',
+                  'Muddati o\'tgan',
             ),
             Tab(
               text:
-                  AppLocalizations.of(context)?.contractStatusSuspended ??
-                  'Приостановлен',
+                  AppLocalizations.of(context)?.contractStatusCancelled ??
+                  'Bekor qilingan',
             ),
             Tab(
               text:
                   AppLocalizations.of(context)?.contractStatusPending ??
-                  'Не согласован',
+                  'Tastiqlanmagan',
             ),
           ],
         ),

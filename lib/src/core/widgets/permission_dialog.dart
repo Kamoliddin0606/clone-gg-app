@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'dart:io';
 
@@ -37,66 +38,67 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
 
   Future<void> _loadPermissions() async {
     final isAndroid13OrHigher = Platform.isAndroid ? await _isAndroid13OrHigher() : false;
+    final l10n = AppLocalizations.of(context);
 
     _requiredPermissions = [
       RequiredPermission(
         type: AppPermissionType.storage,
-        title: 'Fayl saqlash ruxsati',
+        title: l10n?.permissionStorageTitle ?? 'Fayl saqlash ruxsati',
         description: isAndroid13OrHigher
-            ? 'Ilova ma\'lumotlarini saqlash uchun papka tanlash'
-            : 'Ilova ma\'lumotlarini saqlash va yuklash uchun',
+            ? (l10n?.permissionStorageDescAndroid13 ?? 'Ilova ma\'lumotlarini saqlash uchun papka tanlash')
+            : (l10n?.permissionStorageDescOther ?? 'Ilova ma\'lumotlarini saqlash va yuklash uchun'),
         purpose: isAndroid13OrHigher
-            ? 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash uchun papka tanlang'
-            : 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash',
+            ? (l10n?.permissionStoragePurposeAndroid13 ?? 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash uchun papka tanlang')
+            : (l10n?.permissionStoragePurposeOther ?? 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash'),
         isRequired: true,
       ),
       RequiredPermission(
         type: AppPermissionType.location,
-        title: 'Joylashuv ruxsati',
-        description: 'Savdo nuqtalarini masofaga ko\'ra tartiblash uchun',
-        purpose: 'Xaritada joylashuvni ko\'rsatish va masofa hisoblash',
+        title: l10n?.permissionLocationTitle ?? 'Joylashuv ruxsati',
+        description: l10n?.permissionLocationDescription ?? 'Savdo nuqtalarini masofaga ko\'ra tartiblash uchun',
+        purpose: l10n?.permissionLocationPurpose ?? 'Xaritada joylashuvni ko\'rsatish va masofa hisoblash',
         isRequired: true,
       ),
       RequiredPermission(
         type: AppPermissionType.locationAlways,
-        title: 'Doimiy joylashuv ruxsati',
-        description: 'Ilova fon rejimida ishlaganda joylashuvni aniqlash uchun',
-        purpose: 'Fon rejimida xizmat ko\'rsatish va bildirishnomalar',
+        title: l10n?.permissionLocationAlwaysTitle ?? 'Doimiy joylashuv ruxsati',
+        description: l10n?.permissionLocationAlwaysDescription ?? 'Ilova fon rejimida ishlaganda joylashuvni aniqlash uchun',
+        purpose: l10n?.permissionLocationAlwaysPurpose ?? 'Fon rejimida xizmat ko\'rsatish va bildirishnomalar',
         isRequired: true,
       ),
       RequiredPermission(
         type: AppPermissionType.camera,
-        title: 'Kamera ruxsati',
-        description: 'Rasmga olish va shtrix-kod skanerlash uchun',
-        purpose: 'Mahsulotlar va savdo nuqtalarini rasmga olish',
+        title: l10n?.permissionCameraTitle ?? 'Kamera ruxsati',
+        description: l10n?.permissionCameraDescription ?? 'Rasmga olish va shtrix-kod skanerlash uchun',
+        purpose: l10n?.permissionCameraPurpose ?? 'Mahsulotlar va savdo nuqtalarini rasmga olish',
         isRequired: true,
       ),
       RequiredPermission(
         type: AppPermissionType.microphone,
-        title: 'Mikrofon ruxsati',
-        description: 'Ovoz yozish va audio xabarlar uchun',
-        purpose: 'Ovozli eslatmalar va audio qaydlar',
+        title: l10n?.permissionMicrophoneTitle ?? 'Mikrofon ruxsati',
+        description: l10n?.permissionMicrophoneDescription ?? 'Ovoz yozish va audio xabarlar uchun',
+        purpose: l10n?.permissionMicrophonePurpose ?? 'Ovozli eslatmalar va audio qaydlar',
         isRequired: true,
       ),
       RequiredPermission(
         type: AppPermissionType.notification,
-        title: 'Bildirishnoma ruxsati',
-        description: 'Muhim xabarlarni ko\'rsatish uchun',
-        purpose: 'Eslatmalar, yangiliklar va bildirishnomalar',
+        title: l10n?.permissionNotificationTitle ?? 'Bildirishnoma ruxsati',
+        description: l10n?.permissionNotificationDescription ?? 'Muhim xabarlarni ko\'rsatish uchun',
+        purpose: l10n?.permissionNotificationPurpose ?? 'Eslatmalar, yangiliklar va bildirishnomalar',
         isRequired: true,
       ),
       RequiredPermission(
         type: AppPermissionType.audio,
-        title: 'Musiqa va audio ruxsati',
-        description: 'Audio fayllar bilan ishlash uchun',
-        purpose: 'Musiqa, audio xabarlar va ovozli fayllar bilan ishlash',
+        title: l10n?.permissionAudioTitle ?? 'Musiqa va audio ruxsati',
+        description: l10n?.permissionAudioDescription ?? 'Audio fayllar bilan ishlash uchun',
+        purpose: l10n?.permissionAudioPurpose ?? 'Musiqa, audio xabarlar va ovozli fayllar bilan ishlash',
         isRequired: true,
       ),
       RequiredPermission(
         type: AppPermissionType.photosAndVideos,
-        title: 'Rasmlar va videolar ruxsati',
-        description: 'Media fayllar bilan ishlash uchun',
-        purpose: 'Rasmlar, videolar va media fayllar bilan ishlash',
+        title: l10n?.permissionPhotosVideosTitle ?? 'Rasmlar va videolar ruxsati',
+        description: l10n?.permissionPhotosVideosDescription ?? 'Media fayllar bilan ishlash uchun',
+        purpose: l10n?.permissionPhotosVideosPurpose ?? 'Rasmlar, videolar va media fayllar bilan ishlash',
         isRequired: true,
       ),
     ];
@@ -204,30 +206,31 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
 
   Future<void> _showSettingsDialog() async {
     final permission = _requiredPermissions[_currentPermissionIndex];
+    final l10n = AppLocalizations.of(context);
 
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: Text(
-          '${permission.title} kerak',
+          l10n?.permissionRequired(permission.title) ?? '${permission.title} kerak',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
         content: Text(
-          '${permission.description}. Iltimos, ilova sozlamalaridan ruxsat bering.',
+          l10n?.permissionRequiredSettings(permission.description) ?? '${permission.description}. Iltimos, ilova sozlamalaridan ruxsat bering.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keyinroq'),
+            child: Text(l10n?.laterButton ?? 'Keyinroq'),
           ),
           FilledButton(
             onPressed: () async {
               await _permissionManager.openAppSettings();
               Navigator.of(context).pop(true);
             },
-            child: const Text('Sozlamalarga o\'tish'),
+            child: Text(l10n?.goToSettings ?? 'Sozlamalarga o\'tish'),
           ),
         ],
       ),
@@ -257,6 +260,7 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
 
     final permission = _requiredPermissions[_currentPermissionIndex];
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return WillPopScope(
       onWillPop: () async => false, // Prevent back button
@@ -275,14 +279,14 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
             ),
             const SizedBox(height: 8),
             Text(
-              'Maqsad: ${permission.purpose}',
+              l10n?.permissionPurpose(permission.purpose) ?? 'Maqsad: ${permission.purpose}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 16),
             Text(
-              'Ruxsat berishni xohlaysizmi?',
+              l10n?.allowPermissionQuestion ?? 'Ruxsat berishni xohlaysizmi?',
               style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
             ),
           ],
@@ -291,17 +295,17 @@ class _ComprehensivePermissionDialogState extends State<ComprehensivePermissionD
           if (!_isLoading) ...[
             TextButton(
               onPressed: _skipPermission,
-              child: const Text('Keyinroq'),
+              child: Text(l10n?.later ?? 'Keyinroq'),
             ),
             FilledButton(
               onPressed: _requestPermission,
-              child: const Text('Ruxsat berish'),
+              child: Text(l10n?.grantPermission ?? 'Ruxsat berish'),
             ),
           ] else ...[
             const CircularProgressIndicator(),
             const SizedBox(width: 16),
             Text(
-              'Tekshirilmoqda...',
+              l10n?.checking ?? 'Tekshirilmoqda...',
               style: theme.textTheme.bodyMedium,
             ),
           ],
@@ -318,10 +322,11 @@ class PermissionWarningDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return AlertDialog(
       title: Text(
-        'Ruxsatlar tekshiruvi',
+        l10n?.permissionsCheckTitle ?? 'Ruxsatlar tekshiruvi',
         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
       ),
       content: Column(
@@ -329,18 +334,33 @@ class PermissionWarningDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Ilova to\'liq ishlashi uchun quyidagi ruxsatlar kerak:',
+            l10n?.permissionsCheckDescription ?? 'Ilova to\'liq ishlashi uchun quyidagi ruxsatlar kerak:',
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
-          _buildPermissionItem('Fayl saqlash', 'Ma\'lumotlarni saqlash'),
-          _buildPermissionItem('Joylashuv', 'Xarita va masofa hisoblash'),
-          _buildPermissionItem('Kamera', 'Rasmga olish'),
-          _buildPermissionItem('Mikrofon', 'Ovoz yozish'),
-          _buildPermissionItem('Bildirishnomalar', 'Xabarlarni ko\'rsatish'),
+          _buildPermissionItem(
+            l10n?.permissionFileStorage ?? 'Fayl saqlash',
+            l10n?.permissionFileStorageDesc ?? 'Ma\'lumotlarni saqlash',
+          ),
+          _buildPermissionItem(
+            l10n?.permissionLocation ?? 'Joylashuv',
+            l10n?.permissionLocationDesc ?? 'Xarita va masofa hisoblash',
+          ),
+          _buildPermissionItem(
+            l10n?.permissionCamera ?? 'Kamera',
+            l10n?.permissionCameraDesc ?? 'Rasmga olish',
+          ),
+          _buildPermissionItem(
+            l10n?.permissionMicrophone ?? 'Mikrofon',
+            l10n?.permissionMicrophoneDesc ?? 'Ovoz yozish',
+          ),
+          _buildPermissionItem(
+            l10n?.permissionNotifications ?? 'Bildirishnomalar',
+            l10n?.permissionNotificationsDesc ?? 'Xabarlarni ko\'rsatish',
+          ),
           const SizedBox(height: 12),
           Text(
-            'Ruxsatlarsiz ilova cheklangan rejimda ishlaydi.',
+            l10n?.permissionsLimitedWarning ?? 'Ruxsatlarsiz ilova cheklangan rejimda ishlaydi.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.error,
               fontWeight: FontWeight.w500,
@@ -351,7 +371,7 @@ class PermissionWarningDialog extends StatelessWidget {
       actions: [
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Boshlash'),
+          child: Text(l10n?.startButton ?? 'Boshlash'),
         ),
       ],
     );

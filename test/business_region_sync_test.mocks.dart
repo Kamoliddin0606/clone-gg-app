@@ -6,27 +6,31 @@
 import 'dart:async' as _i7;
 
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
-    as _i37;
+    as _i40;
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart'
-    as _i22;
+    as _i24;
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart'
     as _i6;
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart'
     as _i9;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart'
-    as _i30;
+    as _i32;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart'
     as _i11;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart'
-    as _i29;
+    as _i31;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart'
     as _i17;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart'
+    as _i22;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart'
     as _i19;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart'
+    as _i23;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart'
     as _i3;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_report.dart'
-    as _i28;
+    as _i30;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart'
     as _i20;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart'
@@ -34,39 +38,41 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_de
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart'
     as _i18;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart'
-    as _i36;
+    as _i37;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart'
     as _i14;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart'
-    as _i25;
+    as _i27;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart'
-    as _i23;
+    as _i25;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart'
     as _i13;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart'
+    as _i39;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart'
     as _i15;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart'
-    as _i24;
+    as _i26;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart'
-    as _i27;
+    as _i29;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart'
-    as _i34;
+    as _i35;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart'
-    as _i33;
+    as _i38;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
     as _i10;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart'
-    as _i26;
+    as _i28;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart'
     as _i21;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart'
     as _i12;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart'
-    as _i35;
+    as _i36;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart'
-    as _i31;
+    as _i33;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart'
-    as _i32;
+    as _i34;
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart'
     as _i16;
 import 'package:mockito/mockito.dart' as _i1;
@@ -357,6 +363,49 @@ class MockSharedPreferencesService extends _i1.Mock
             returnValue: _i7.Future<bool>.value(false),
           )
           as _i7.Future<bool>);
+
+  @override
+  _i7.Future<void> setBgSyncEnabled(bool? enabled) =>
+      (super.noSuchMethod(
+            Invocation.method(#setBgSyncEnabled, [enabled]),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
+  bool isBgSyncEnabled() =>
+      (super.noSuchMethod(
+            Invocation.method(#isBgSyncEnabled, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i7.Future<void> setBgSyncInterval(int? hours) =>
+      (super.noSuchMethod(
+            Invocation.method(#setBgSyncInterval, [hours]),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
+  int getBgSyncInterval() =>
+      (super.noSuchMethod(
+            Invocation.method(#getBgSyncInterval, []),
+            returnValue: 0,
+          )
+          as int);
+
+  @override
+  _i7.Future<void> setBgSyncCustomMinutes(int? minutes) =>
+      (super.noSuchMethod(
+            Invocation.method(#setBgSyncCustomMinutes, [minutes]),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
 }
 
 /// A class which mocks [SoapApiService].
@@ -757,13 +806,159 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
             ),
           )
           as _i7.Future<List<_i21.UserOrganization>>);
+
+  @override
+  _i7.Future<Map<String, dynamic>> checkAccessOnStartup({
+    required String? userId,
+    required String? localUuid,
+    String? appDeviceId,
+    required String? platform,
+    required String? brand,
+    required String? model,
+    required String? osVersion,
+    String? sdk,
+    required String? appVersion,
+    String? deviceFingerprint,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#checkAccessOnStartup, [], {
+              #userId: userId,
+              #localUuid: localUuid,
+              #appDeviceId: appDeviceId,
+              #platform: platform,
+              #brand: brand,
+              #model: model,
+              #osVersion: osVersion,
+              #sdk: sdk,
+              #appVersion: appVersion,
+              #deviceFingerprint: deviceFingerprint,
+            }),
+            returnValue: _i7.Future<Map<String, dynamic>>.value(
+              <String, dynamic>{},
+            ),
+          )
+          as _i7.Future<Map<String, dynamic>>);
+
+  @override
+  _i7.Future<List<_i22.ContractType>> getTypeOfContract() =>
+      (super.noSuchMethod(
+            Invocation.method(#getTypeOfContract, []),
+            returnValue: _i7.Future<List<_i22.ContractType>>.value(
+              <_i22.ContractType>[],
+            ),
+          )
+          as _i7.Future<List<_i22.ContractType>>);
+
+  @override
+  _i7.Future<List<_i23.DistrictContracting>> getCitiesDistrictContracting({
+    required String? codeUser,
+    required String? codeProject,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#getCitiesDistrictContracting, [], {
+              #codeUser: codeUser,
+              #codeProject: codeProject,
+            }),
+            returnValue: _i7.Future<List<_i23.DistrictContracting>>.value(
+              <_i23.DistrictContracting>[],
+            ),
+          )
+          as _i7.Future<List<_i23.DistrictContracting>>);
+
+  @override
+  _i7.Future<Map<String, dynamic>> setContract({
+    required String? dateOfContract,
+    required String? codeUser,
+    required String? codeClient,
+    required double? sumOfContract,
+    String? termReference,
+    String? termCertificate,
+    String? numbReference,
+    String? numbCertificate,
+    required String? typeOfContract,
+    String? numbPassport,
+    String? termPassport,
+    bool? certificateUnlimited = false,
+    String? psCodeProject,
+    String? psCodeDistrict,
+    String? psNameDistrict,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#setContract, [], {
+              #dateOfContract: dateOfContract,
+              #codeUser: codeUser,
+              #codeClient: codeClient,
+              #sumOfContract: sumOfContract,
+              #termReference: termReference,
+              #termCertificate: termCertificate,
+              #numbReference: numbReference,
+              #numbCertificate: numbCertificate,
+              #typeOfContract: typeOfContract,
+              #numbPassport: numbPassport,
+              #termPassport: termPassport,
+              #certificateUnlimited: certificateUnlimited,
+              #psCodeProject: psCodeProject,
+              #psCodeDistrict: psCodeDistrict,
+              #psNameDistrict: psNameDistrict,
+            }),
+            returnValue: _i7.Future<Map<String, dynamic>>.value(
+              <String, dynamic>{},
+            ),
+          )
+          as _i7.Future<Map<String, dynamic>>);
+
+  @override
+  _i7.Future<Map<String, dynamic>> setClient({
+    required String? name,
+    required String? signboard,
+    required String? inn,
+    required String? tradePointType,
+    required String? contactPerson,
+    required String? contactPersonPhone,
+    required String? address,
+    required String? addressDelivery,
+    required String? referencePoint,
+    required String? responsiblePersonPhone,
+    required double? longitude,
+    required double? latitude,
+    required String? codeUser,
+    required String? codeRegion,
+    String? director,
+    String? mfo,
+    String? bankAccount,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#setClient, [], {
+              #name: name,
+              #signboard: signboard,
+              #inn: inn,
+              #tradePointType: tradePointType,
+              #contactPerson: contactPerson,
+              #contactPersonPhone: contactPersonPhone,
+              #address: address,
+              #addressDelivery: addressDelivery,
+              #referencePoint: referencePoint,
+              #responsiblePersonPhone: responsiblePersonPhone,
+              #longitude: longitude,
+              #latitude: latitude,
+              #codeUser: codeUser,
+              #codeRegion: codeRegion,
+              #director: director,
+              #mfo: mfo,
+              #bankAccount: bankAccount,
+            }),
+            returnValue: _i7.Future<Map<String, dynamic>>.value(
+              <String, dynamic>{},
+            ),
+          )
+          as _i7.Future<Map<String, dynamic>>);
 }
 
 /// A class which mocks [ApiDatabaseService].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockApiDatabaseService extends _i1.Mock
-    implements _i22.ApiDatabaseService {
+    implements _i24.ApiDatabaseService {
   MockApiDatabaseService() {
     _i1.throwOnMissingStub(this);
   }
@@ -815,6 +1010,14 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<List<_i10.TradingPoint>>);
 
   @override
+  _i7.Future<List<String>> getUniqueTradePointTypes() =>
+      (super.noSuchMethod(
+            Invocation.method(#getUniqueTradePointTypes, []),
+            returnValue: _i7.Future<List<String>>.value(<String>[]),
+          )
+          as _i7.Future<List<String>>);
+
+  @override
   _i7.Future<void> saveProducts(List<_i13.ProductData>? products) =>
       (super.noSuchMethod(
             Invocation.method(#saveProducts, [products]),
@@ -832,6 +1035,14 @@ class MockApiDatabaseService extends _i1.Mock
             ),
           )
           as _i7.Future<List<_i13.ProductData>>);
+
+  @override
+  _i7.Future<_i13.ProductData?> getProductByCode(String? productCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#getProductByCode, [productCode]),
+            returnValue: _i7.Future<_i13.ProductData?>.value(),
+          )
+          as _i7.Future<_i13.ProductData?>);
 
   @override
   _i7.Future<void> savePriceTypes(List<_i14.PriceType>? priceTypes) =>
@@ -1053,7 +1264,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<void> saveProductBrands(List<_i23.ProductBrand>? brands) =>
+  _i7.Future<void> saveProductBrands(List<_i25.ProductBrand>? brands) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductBrands, [brands]),
             returnValue: _i7.Future<void>.value(),
@@ -1062,25 +1273,25 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i23.ProductBrand>> getProductBrands() =>
+  _i7.Future<List<_i25.ProductBrand>> getProductBrands() =>
       (super.noSuchMethod(
             Invocation.method(#getProductBrands, []),
-            returnValue: _i7.Future<List<_i23.ProductBrand>>.value(
-              <_i23.ProductBrand>[],
+            returnValue: _i7.Future<List<_i25.ProductBrand>>.value(
+              <_i25.ProductBrand>[],
             ),
           )
-          as _i7.Future<List<_i23.ProductBrand>>);
+          as _i7.Future<List<_i25.ProductBrand>>);
 
   @override
-  _i7.Future<_i23.ProductBrand?> getProductBrandByName(String? name) =>
+  _i7.Future<_i25.ProductBrand?> getProductBrandByName(String? name) =>
       (super.noSuchMethod(
             Invocation.method(#getProductBrandByName, [name]),
-            returnValue: _i7.Future<_i23.ProductBrand?>.value(),
+            returnValue: _i7.Future<_i25.ProductBrand?>.value(),
           )
-          as _i7.Future<_i23.ProductBrand?>);
+          as _i7.Future<_i25.ProductBrand?>);
 
   @override
-  _i7.Future<void> saveProductBrand(_i23.ProductBrand? brand) =>
+  _i7.Future<void> saveProductBrand(_i25.ProductBrand? brand) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductBrand, [brand]),
             returnValue: _i7.Future<void>.value(),
@@ -1089,7 +1300,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<void> updateProductBrand(String? name, _i23.ProductBrand? brand) =>
+  _i7.Future<void> updateProductBrand(String? name, _i25.ProductBrand? brand) =>
       (super.noSuchMethod(
             Invocation.method(#updateProductBrand, [name, brand]),
             returnValue: _i7.Future<void>.value(),
@@ -1107,7 +1318,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<void> saveProductSeries(List<_i24.ProductSeries>? series) =>
+  _i7.Future<void> saveProductSeries(List<_i26.ProductSeries>? series) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductSeries, [series]),
             returnValue: _i7.Future<void>.value(),
@@ -1116,17 +1327,17 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i24.ProductSeries>> getProductSeries({String? brandName}) =>
+  _i7.Future<List<_i26.ProductSeries>> getProductSeries({String? brandName}) =>
       (super.noSuchMethod(
             Invocation.method(#getProductSeries, [], {#brandName: brandName}),
-            returnValue: _i7.Future<List<_i24.ProductSeries>>.value(
-              <_i24.ProductSeries>[],
+            returnValue: _i7.Future<List<_i26.ProductSeries>>.value(
+              <_i26.ProductSeries>[],
             ),
           )
-          as _i7.Future<List<_i24.ProductSeries>>);
+          as _i7.Future<List<_i26.ProductSeries>>);
 
   @override
-  _i7.Future<_i24.ProductSeries?> getProductSeriesByNameAndBrand(
+  _i7.Future<_i26.ProductSeries?> getProductSeriesByNameAndBrand(
     String? name,
     String? brandName,
   ) =>
@@ -1135,12 +1346,12 @@ class MockApiDatabaseService extends _i1.Mock
               name,
               brandName,
             ]),
-            returnValue: _i7.Future<_i24.ProductSeries?>.value(),
+            returnValue: _i7.Future<_i26.ProductSeries?>.value(),
           )
-          as _i7.Future<_i24.ProductSeries?>);
+          as _i7.Future<_i26.ProductSeries?>);
 
   @override
-  _i7.Future<void> saveProductSerie(_i24.ProductSeries? series) =>
+  _i7.Future<void> saveProductSerie(_i26.ProductSeries? series) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductSerie, [series]),
             returnValue: _i7.Future<void>.value(),
@@ -1152,7 +1363,7 @@ class MockApiDatabaseService extends _i1.Mock
   _i7.Future<void> updateProductSeries(
     String? name,
     String? brandName,
-    _i24.ProductSeries? series,
+    _i26.ProductSeries? series,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateProductSeries, [name, brandName, series]),
@@ -1171,7 +1382,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<void> saveProductBalances(List<_i25.ProductBalance>? balances) =>
+  _i7.Future<void> saveProductBalances(List<_i27.ProductBalance>? balances) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductBalances, [balances]),
             returnValue: _i7.Future<void>.value(),
@@ -1180,7 +1391,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i25.ProductBalance>> getProductBalances({
+  _i7.Future<List<_i27.ProductBalance>> getProductBalances({
     String? warehouseCode,
     String? productBrand,
     String? productSeries,
@@ -1191,14 +1402,14 @@ class MockApiDatabaseService extends _i1.Mock
               #productBrand: productBrand,
               #productSeries: productSeries,
             }),
-            returnValue: _i7.Future<List<_i25.ProductBalance>>.value(
-              <_i25.ProductBalance>[],
+            returnValue: _i7.Future<List<_i27.ProductBalance>>.value(
+              <_i27.ProductBalance>[],
             ),
           )
-          as _i7.Future<List<_i25.ProductBalance>>);
+          as _i7.Future<List<_i27.ProductBalance>>);
 
   @override
-  _i7.Future<_i25.ProductBalance?> getProductBalanceByCodes(
+  _i7.Future<_i27.ProductBalance?> getProductBalanceByCodes(
     String? warehouseCode,
     String? productCode,
   ) =>
@@ -1207,12 +1418,12 @@ class MockApiDatabaseService extends _i1.Mock
               warehouseCode,
               productCode,
             ]),
-            returnValue: _i7.Future<_i25.ProductBalance?>.value(),
+            returnValue: _i7.Future<_i27.ProductBalance?>.value(),
           )
-          as _i7.Future<_i25.ProductBalance?>);
+          as _i7.Future<_i27.ProductBalance?>);
 
   @override
-  _i7.Future<void> saveProductBalance(_i25.ProductBalance? balance) =>
+  _i7.Future<void> saveProductBalance(_i27.ProductBalance? balance) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductBalance, [balance]),
             returnValue: _i7.Future<void>.value(),
@@ -1224,7 +1435,7 @@ class MockApiDatabaseService extends _i1.Mock
   _i7.Future<void> updateProductBalance(
     String? warehouseCode,
     String? productCode,
-    _i25.ProductBalance? balance,
+    _i27.ProductBalance? balance,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateProductBalance, [
@@ -1253,19 +1464,19 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i26.TradingPointWithPermissions>>
+  _i7.Future<List<_i28.TradingPointWithPermissions>>
   getTradingPointsWithPermissions(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getTradingPointsWithPermissions, [userCode]),
             returnValue:
-                _i7.Future<List<_i26.TradingPointWithPermissions>>.value(
-                  <_i26.TradingPointWithPermissions>[],
+                _i7.Future<List<_i28.TradingPointWithPermissions>>.value(
+                  <_i28.TradingPointWithPermissions>[],
                 ),
           )
-          as _i7.Future<List<_i26.TradingPointWithPermissions>>);
+          as _i7.Future<List<_i28.TradingPointWithPermissions>>);
 
   @override
-  _i7.Future<List<_i27.ProductWithPrice>> getProductsWithPrices({
+  _i7.Future<List<_i29.ProductWithPrice>> getProductsWithPrices({
     required String? priceTypeCode,
     List<String>? warehouseCodes,
     String? searchQuery,
@@ -1278,11 +1489,11 @@ class MockApiDatabaseService extends _i1.Mock
               #searchQuery: searchQuery,
               #codeProject: codeProject,
             }),
-            returnValue: _i7.Future<List<_i27.ProductWithPrice>>.value(
-              <_i27.ProductWithPrice>[],
+            returnValue: _i7.Future<List<_i29.ProductWithPrice>>.value(
+              <_i29.ProductWithPrice>[],
             ),
           )
-          as _i7.Future<List<_i27.ProductWithPrice>>);
+          as _i7.Future<List<_i29.ProductWithPrice>>);
 
   @override
   _i7.Future<void> saveClientContracts(List<_i17.ClientContract>? contracts) =>
@@ -1366,7 +1577,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<void> saveMainReports(List<_i28.MainReport>? reports) =>
+  _i7.Future<void> saveMainReports(List<_i30.MainReport>? reports) =>
       (super.noSuchMethod(
             Invocation.method(#saveMainReports, [reports]),
             returnValue: _i7.Future<void>.value(),
@@ -1375,26 +1586,26 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i28.MainReport>> getMainReports({String? userCode}) =>
+  _i7.Future<List<_i30.MainReport>> getMainReports({String? userCode}) =>
       (super.noSuchMethod(
             Invocation.method(#getMainReports, [], {#userCode: userCode}),
-            returnValue: _i7.Future<List<_i28.MainReport>>.value(
-              <_i28.MainReport>[],
+            returnValue: _i7.Future<List<_i30.MainReport>>.value(
+              <_i30.MainReport>[],
             ),
           )
-          as _i7.Future<List<_i28.MainReport>>);
+          as _i7.Future<List<_i30.MainReport>>);
 
   @override
-  _i7.Future<_i28.MainReport?> getMainReportById(int? id) =>
+  _i7.Future<_i30.MainReport?> getMainReportById(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#getMainReportById, [id]),
-            returnValue: _i7.Future<_i28.MainReport?>.value(),
+            returnValue: _i7.Future<_i30.MainReport?>.value(),
           )
-          as _i7.Future<_i28.MainReport?>);
+          as _i7.Future<_i30.MainReport?>);
 
   @override
   _i7.Future<void> saveBusinessRegionReports(
-    List<_i29.BusinessRegionReport>? reports,
+    List<_i31.BusinessRegionReport>? reports,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#saveBusinessRegionReports, [reports]),
@@ -1404,21 +1615,21 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i29.BusinessRegionReport>> getBusinessRegionReports({
+  _i7.Future<List<_i31.BusinessRegionReport>> getBusinessRegionReports({
     int? mainReportId,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getBusinessRegionReports, [], {
               #mainReportId: mainReportId,
             }),
-            returnValue: _i7.Future<List<_i29.BusinessRegionReport>>.value(
-              <_i29.BusinessRegionReport>[],
+            returnValue: _i7.Future<List<_i31.BusinessRegionReport>>.value(
+              <_i31.BusinessRegionReport>[],
             ),
           )
-          as _i7.Future<List<_i29.BusinessRegionReport>>);
+          as _i7.Future<List<_i31.BusinessRegionReport>>);
 
   @override
-  _i7.Future<void> saveAKBByCategories(List<_i30.AKBByCategory>? categories) =>
+  _i7.Future<void> saveAKBByCategories(List<_i32.AKBByCategory>? categories) =>
       (super.noSuchMethod(
             Invocation.method(#saveAKBByCategories, [categories]),
             returnValue: _i7.Future<void>.value(),
@@ -1427,21 +1638,21 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i30.AKBByCategory>> getAKBByCategories({
+  _i7.Future<List<_i32.AKBByCategory>> getAKBByCategories({
     int? mainReportId,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getAKBByCategories, [], {
               #mainReportId: mainReportId,
             }),
-            returnValue: _i7.Future<List<_i30.AKBByCategory>>.value(
-              <_i30.AKBByCategory>[],
+            returnValue: _i7.Future<List<_i32.AKBByCategory>>.value(
+              <_i32.AKBByCategory>[],
             ),
           )
-          as _i7.Future<List<_i30.AKBByCategory>>);
+          as _i7.Future<List<_i32.AKBByCategory>>);
 
   @override
-  _i7.Future<void> saveVisitPlans(List<_i31.VisitPlan>? plans) =>
+  _i7.Future<void> saveVisitPlans(List<_i33.VisitPlan>? plans) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitPlans, [plans]),
             returnValue: _i7.Future<void>.value(),
@@ -1450,7 +1661,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i31.VisitPlan>> getVisitPlans({
+  _i7.Future<List<_i33.VisitPlan>> getVisitPlans({
     int? mainReportId,
     String? clientCode,
   }) =>
@@ -1459,14 +1670,14 @@ class MockApiDatabaseService extends _i1.Mock
               #mainReportId: mainReportId,
               #clientCode: clientCode,
             }),
-            returnValue: _i7.Future<List<_i31.VisitPlan>>.value(
-              <_i31.VisitPlan>[],
+            returnValue: _i7.Future<List<_i33.VisitPlan>>.value(
+              <_i33.VisitPlan>[],
             ),
           )
-          as _i7.Future<List<_i31.VisitPlan>>);
+          as _i7.Future<List<_i33.VisitPlan>>);
 
   @override
-  _i7.Future<void> saveVisitPlanLists(List<_i32.VisitPlanList>? lists) =>
+  _i7.Future<void> saveVisitPlanLists(List<_i34.VisitPlanList>? lists) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitPlanLists, [lists]),
             returnValue: _i7.Future<void>.value(),
@@ -1475,29 +1686,19 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i32.VisitPlanList>> getVisitPlanLists({int? visitPlanId}) =>
+  _i7.Future<List<_i34.VisitPlanList>> getVisitPlanLists({int? visitPlanId}) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitPlanLists, [], {
               #visitPlanId: visitPlanId,
             }),
-            returnValue: _i7.Future<List<_i32.VisitPlanList>>.value(
-              <_i32.VisitPlanList>[],
+            returnValue: _i7.Future<List<_i34.VisitPlanList>>.value(
+              <_i34.VisitPlanList>[],
             ),
           )
-          as _i7.Future<List<_i32.VisitPlanList>>);
+          as _i7.Future<List<_i34.VisitPlanList>>);
 
   @override
-  _i7.Future<List<_i33.Thumbnail>> getThumbnails() =>
-      (super.noSuchMethod(
-            Invocation.method(#getThumbnails, []),
-            returnValue: _i7.Future<List<_i33.Thumbnail>>.value(
-              <_i33.Thumbnail>[],
-            ),
-          )
-          as _i7.Future<List<_i33.Thumbnail>>);
-
-  @override
-  _i7.Future<void> saveMainReportsByDelete(List<_i28.MainReport>? reports) =>
+  _i7.Future<void> saveMainReportsByDelete(List<_i30.MainReport>? reports) =>
       (super.noSuchMethod(
             Invocation.method(#saveMainReportsByDelete, [reports]),
             returnValue: _i7.Future<void>.value(),
@@ -1694,7 +1895,7 @@ class MockApiDatabaseService extends _i1.Mock
 
   @override
   _i7.Future<void> saveSalesReqPermissions(
-    List<_i34.SalesReqPermissions>? permissions,
+    List<_i35.SalesReqPermissions>? permissions,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#saveSalesReqPermissions, [permissions]),
@@ -1704,27 +1905,27 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<_i34.SalesReqPermissions?> getSalesReqPermissions(
+  _i7.Future<_i35.SalesReqPermissions?> getSalesReqPermissions(
     String? userCode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getSalesReqPermissions, [userCode]),
-            returnValue: _i7.Future<_i34.SalesReqPermissions?>.value(),
+            returnValue: _i7.Future<_i35.SalesReqPermissions?>.value(),
           )
-          as _i7.Future<_i34.SalesReqPermissions?>);
+          as _i7.Future<_i35.SalesReqPermissions?>);
 
   @override
-  _i7.Future<List<_i34.SalesReqPermissions>> getAllSalesReqPermissions() =>
+  _i7.Future<List<_i35.SalesReqPermissions>> getAllSalesReqPermissions() =>
       (super.noSuchMethod(
             Invocation.method(#getAllSalesReqPermissions, []),
-            returnValue: _i7.Future<List<_i34.SalesReqPermissions>>.value(
-              <_i34.SalesReqPermissions>[],
+            returnValue: _i7.Future<List<_i35.SalesReqPermissions>>.value(
+              <_i35.SalesReqPermissions>[],
             ),
           )
-          as _i7.Future<List<_i34.SalesReqPermissions>>);
+          as _i7.Future<List<_i35.SalesReqPermissions>>);
 
   @override
-  _i7.Future<void> saveVisitStepsLegacy(List<_i34.VisitStep>? visitSteps) =>
+  _i7.Future<void> saveVisitStepsLegacy(List<_i35.VisitStep>? visitSteps) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitStepsLegacy, [visitSteps]),
             returnValue: _i7.Future<void>.value(),
@@ -1752,7 +1953,7 @@ class MockApiDatabaseService extends _i1.Mock
 
   @override
   _i7.Future<void> saveVisitSteps(
-    List<_i34.VisitStep>? visitSteps,
+    List<_i35.VisitStep>? visitSteps,
     int? salesReqPermissionsId,
   ) =>
       (super.noSuchMethod(
@@ -1766,25 +1967,25 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i34.VisitStep>> getVisitSteps(int? salesReqPermissionsId) =>
+  _i7.Future<List<_i35.VisitStep>> getVisitSteps(int? salesReqPermissionsId) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitSteps, [salesReqPermissionsId]),
-            returnValue: _i7.Future<List<_i34.VisitStep>>.value(
-              <_i34.VisitStep>[],
+            returnValue: _i7.Future<List<_i35.VisitStep>>.value(
+              <_i35.VisitStep>[],
             ),
           )
-          as _i7.Future<List<_i34.VisitStep>>);
+          as _i7.Future<List<_i35.VisitStep>>);
 
   @override
-  _i7.Future<_i34.VisitStep?> getVisitStepById(int? id) =>
+  _i7.Future<_i35.VisitStep?> getVisitStepById(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitStepById, [id]),
-            returnValue: _i7.Future<_i34.VisitStep?>.value(),
+            returnValue: _i7.Future<_i35.VisitStep?>.value(),
           )
-          as _i7.Future<_i34.VisitStep?>);
+          as _i7.Future<_i35.VisitStep?>);
 
   @override
-  _i7.Future<void> updateVisitStep(int? id, _i34.VisitStep? visitStep) =>
+  _i7.Future<void> updateVisitStep(int? id, _i35.VisitStep? visitStep) =>
       (super.noSuchMethod(
             Invocation.method(#updateVisitStep, [id, visitStep]),
             returnValue: _i7.Future<void>.value(),
@@ -1815,14 +2016,14 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i34.VisitStep>> getAllVisitSteps() =>
+  _i7.Future<List<_i35.VisitStep>> getAllVisitSteps() =>
       (super.noSuchMethod(
             Invocation.method(#getAllVisitSteps, []),
-            returnValue: _i7.Future<List<_i34.VisitStep>>.value(
-              <_i34.VisitStep>[],
+            returnValue: _i7.Future<List<_i35.VisitStep>>.value(
+              <_i35.VisitStep>[],
             ),
           )
-          as _i7.Future<List<_i34.VisitStep>>);
+          as _i7.Future<List<_i35.VisitStep>>);
 
   @override
   _i7.Future<int> getVisitStepsCount(int? salesReqPermissionsId) =>
@@ -1833,7 +2034,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<int>);
 
   @override
-  _i7.Future<void> saveVisitStepData(_i35.VisitData? visitData) =>
+  _i7.Future<void> saveVisitStepData(_i36.VisitData? visitData) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitStepData, [visitData]),
             returnValue: _i7.Future<void>.value(),
@@ -1843,7 +2044,7 @@ class MockApiDatabaseService extends _i1.Mock
 
   @override
   _i7.Future<void> saveVisitStepDataBatch(
-    List<_i35.VisitData>? visitDataList,
+    List<_i36.VisitData>? visitDataList,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitStepDataBatch, [visitDataList]),
@@ -1853,46 +2054,46 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i35.VisitData>> getVisitStepDataByVisitId(String? visitId) =>
+  _i7.Future<List<_i36.VisitData>> getVisitStepDataByVisitId(String? visitId) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitStepDataByVisitId, [visitId]),
-            returnValue: _i7.Future<List<_i35.VisitData>>.value(
-              <_i35.VisitData>[],
+            returnValue: _i7.Future<List<_i36.VisitData>>.value(
+              <_i36.VisitData>[],
             ),
           )
-          as _i7.Future<List<_i35.VisitData>>);
+          as _i7.Future<List<_i36.VisitData>>);
 
   @override
-  _i7.Future<List<_i35.VisitData>> getVisitStepDataByUser(String? userCode) =>
+  _i7.Future<List<_i36.VisitData>> getVisitStepDataByUser(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitStepDataByUser, [userCode]),
-            returnValue: _i7.Future<List<_i35.VisitData>>.value(
-              <_i35.VisitData>[],
+            returnValue: _i7.Future<List<_i36.VisitData>>.value(
+              <_i36.VisitData>[],
             ),
           )
-          as _i7.Future<List<_i35.VisitData>>);
+          as _i7.Future<List<_i36.VisitData>>);
 
   @override
-  _i7.Future<List<_i35.VisitData>> getVisitStepDataByClient(
+  _i7.Future<List<_i36.VisitData>> getVisitStepDataByClient(
     String? clientCode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitStepDataByClient, [clientCode]),
-            returnValue: _i7.Future<List<_i35.VisitData>>.value(
-              <_i35.VisitData>[],
+            returnValue: _i7.Future<List<_i36.VisitData>>.value(
+              <_i36.VisitData>[],
             ),
           )
-          as _i7.Future<List<_i35.VisitData>>);
+          as _i7.Future<List<_i36.VisitData>>);
 
   @override
-  _i7.Future<List<_i35.VisitData>> getPendingSyncVisitStepData() =>
+  _i7.Future<List<_i36.VisitData>> getPendingSyncVisitStepData() =>
       (super.noSuchMethod(
             Invocation.method(#getPendingSyncVisitStepData, []),
-            returnValue: _i7.Future<List<_i35.VisitData>>.value(
-              <_i35.VisitData>[],
+            returnValue: _i7.Future<List<_i36.VisitData>>.value(
+              <_i36.VisitData>[],
             ),
           )
-          as _i7.Future<List<_i35.VisitData>>);
+          as _i7.Future<List<_i36.VisitData>>);
 
   @override
   _i7.Future<void> updateVisitStepDataSyncStatus(
@@ -1977,7 +2178,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<void> savePlannedRoutes(List<_i36.PlannedRoute>? routes) =>
+  _i7.Future<void> savePlannedRoutes(List<_i37.PlannedRoute>? routes) =>
       (super.noSuchMethod(
             Invocation.method(#savePlannedRoutes, [routes]),
             returnValue: _i7.Future<void>.value(),
@@ -1986,27 +2187,27 @@ class MockApiDatabaseService extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<List<_i36.PlannedRoute>> getPlannedRoutes(String? userCode) =>
+  _i7.Future<List<_i37.PlannedRoute>> getPlannedRoutes(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getPlannedRoutes, [userCode]),
-            returnValue: _i7.Future<List<_i36.PlannedRoute>>.value(
-              <_i36.PlannedRoute>[],
+            returnValue: _i7.Future<List<_i37.PlannedRoute>>.value(
+              <_i37.PlannedRoute>[],
             ),
           )
-          as _i7.Future<List<_i36.PlannedRoute>>);
+          as _i7.Future<List<_i37.PlannedRoute>>);
 
   @override
-  _i7.Future<List<_i36.PlannedRoute>> getAllPlannedRoutes() =>
+  _i7.Future<List<_i37.PlannedRoute>> getAllPlannedRoutes() =>
       (super.noSuchMethod(
             Invocation.method(#getAllPlannedRoutes, []),
-            returnValue: _i7.Future<List<_i36.PlannedRoute>>.value(
-              <_i36.PlannedRoute>[],
+            returnValue: _i7.Future<List<_i37.PlannedRoute>>.value(
+              <_i37.PlannedRoute>[],
             ),
           )
-          as _i7.Future<List<_i36.PlannedRoute>>);
+          as _i7.Future<List<_i37.PlannedRoute>>);
 
   @override
-  _i7.Future<List<_i36.PlannedRoute>> getPlannedRoutesByWeekday(
+  _i7.Future<List<_i37.PlannedRoute>> getPlannedRoutesByWeekday(
     String? userCode,
     int? codeWeekday,
   ) =>
@@ -2015,14 +2216,14 @@ class MockApiDatabaseService extends _i1.Mock
               userCode,
               codeWeekday,
             ]),
-            returnValue: _i7.Future<List<_i36.PlannedRoute>>.value(
-              <_i36.PlannedRoute>[],
+            returnValue: _i7.Future<List<_i37.PlannedRoute>>.value(
+              <_i37.PlannedRoute>[],
             ),
           )
-          as _i7.Future<List<_i36.PlannedRoute>>);
+          as _i7.Future<List<_i37.PlannedRoute>>);
 
   @override
-  _i7.Future<List<_i36.PlannedRoute>> getPlannedRoutesByClient(
+  _i7.Future<List<_i37.PlannedRoute>> getPlannedRoutesByClient(
     String? userCode,
     String? codeClient,
   ) =>
@@ -2031,11 +2232,11 @@ class MockApiDatabaseService extends _i1.Mock
               userCode,
               codeClient,
             ]),
-            returnValue: _i7.Future<List<_i36.PlannedRoute>>.value(
-              <_i36.PlannedRoute>[],
+            returnValue: _i7.Future<List<_i37.PlannedRoute>>.value(
+              <_i37.PlannedRoute>[],
             ),
           )
-          as _i7.Future<List<_i36.PlannedRoute>>);
+          as _i7.Future<List<_i37.PlannedRoute>>);
 
   @override
   _i7.Future<List<int>> getUniqueWeekdays(String? userCode) =>
@@ -2302,12 +2503,182 @@ class MockApiDatabaseService extends _i1.Mock
             returnValueForMissingStub: _i7.Future<void>.value(),
           )
           as _i7.Future<void>);
+
+  @override
+  _i7.Future<List<_i38.Thumbnail>> getThumbnails() =>
+      (super.noSuchMethod(
+            Invocation.method(#getThumbnails, []),
+            returnValue: _i7.Future<List<_i38.Thumbnail>>.value(
+              <_i38.Thumbnail>[],
+            ),
+          )
+          as _i7.Future<List<_i38.Thumbnail>>);
+
+  @override
+  _i7.Future<int> getTableRowCount(String? tableName) =>
+      (super.noSuchMethod(
+            Invocation.method(#getTableRowCount, [tableName]),
+            returnValue: _i7.Future<int>.value(0),
+          )
+          as _i7.Future<int>);
+
+  @override
+  _i7.Future<void> saveContractTypes(List<_i22.ContractType>? contractTypes) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveContractTypes, [contractTypes]),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
+  _i7.Future<List<_i22.ContractType>> getContractTypes() =>
+      (super.noSuchMethod(
+            Invocation.method(#getContractTypes, []),
+            returnValue: _i7.Future<List<_i22.ContractType>>.value(
+              <_i22.ContractType>[],
+            ),
+          )
+          as _i7.Future<List<_i22.ContractType>>);
+
+  @override
+  _i7.Future<bool> hasContractTypes() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasContractTypes, []),
+            returnValue: _i7.Future<bool>.value(false),
+          )
+          as _i7.Future<bool>);
+
+  @override
+  _i7.Future<void> clearContractTypes() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearContractTypes, []),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> saveDistrictContracting(
+    List<_i23.DistrictContracting>? districts,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveDistrictContracting, [districts]),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
+  _i7.Future<List<_i23.DistrictContracting>> getDistrictContracting() =>
+      (super.noSuchMethod(
+            Invocation.method(#getDistrictContracting, []),
+            returnValue: _i7.Future<List<_i23.DistrictContracting>>.value(
+              <_i23.DistrictContracting>[],
+            ),
+          )
+          as _i7.Future<List<_i23.DistrictContracting>>);
+
+  @override
+  _i7.Future<bool> hasDistrictContracting() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasDistrictContracting, []),
+            returnValue: _i7.Future<bool>.value(false),
+          )
+          as _i7.Future<bool>);
+
+  @override
+  _i7.Future<void> clearDistrictContracting() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearDistrictContracting, []),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> saveProductImages(
+    List<_i39.ProductImage>? images, {
+    String? productCode,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #saveProductImages,
+              [images],
+              {#productCode: productCode},
+            ),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
+  _i7.Future<List<_i39.ProductImage>> getProductImages(String? productCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#getProductImages, [productCode]),
+            returnValue: _i7.Future<List<_i39.ProductImage>>.value(
+              <_i39.ProductImage>[],
+            ),
+          )
+          as _i7.Future<List<_i39.ProductImage>>);
+
+  @override
+  _i7.Future<_i39.ProductImage?> getMainProductImage(String? productCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#getMainProductImage, [productCode]),
+            returnValue: _i7.Future<_i39.ProductImage?>.value(),
+          )
+          as _i7.Future<_i39.ProductImage?>);
+
+  @override
+  _i7.Future<List<_i39.ProductImage>> getAllProductImages() =>
+      (super.noSuchMethod(
+            Invocation.method(#getAllProductImages, []),
+            returnValue: _i7.Future<List<_i39.ProductImage>>.value(
+              <_i39.ProductImage>[],
+            ),
+          )
+          as _i7.Future<List<_i39.ProductImage>>);
+
+  @override
+  _i7.Future<bool> hasProductImages() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasProductImages, []),
+            returnValue: _i7.Future<bool>.value(false),
+          )
+          as _i7.Future<bool>);
+
+  @override
+  _i7.Future<int> getProductImagesCount() =>
+      (super.noSuchMethod(
+            Invocation.method(#getProductImagesCount, []),
+            returnValue: _i7.Future<int>.value(0),
+          )
+          as _i7.Future<int>);
+
+  @override
+  _i7.Future<void> clearProductImages() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearProductImages, []),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> deleteProductImages(String? productCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteProductImages, [productCode]),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
 }
 
 /// A class which mocks [DatabaseHelper].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDatabaseHelper extends _i1.Mock implements _i37.DatabaseHelper {
+class MockDatabaseHelper extends _i1.Mock implements _i40.DatabaseHelper {
   MockDatabaseHelper() {
     _i1.throwOnMissingStub(this);
   }
@@ -2403,4 +2774,12 @@ class MockDatabaseHelper extends _i1.Mock implements _i37.DatabaseHelper {
             returnValueForMissingStub: _i7.Future<void>.value(),
           )
           as _i7.Future<void>);
+
+  @override
+  _i7.Future<int> getTableRowCount(String? tableName) =>
+      (super.noSuchMethod(
+            Invocation.method(#getTableRowCount, [tableName]),
+            returnValue: _i7.Future<int>.value(0),
+          )
+          as _i7.Future<int>);
 }

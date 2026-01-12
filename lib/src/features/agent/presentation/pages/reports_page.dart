@@ -42,56 +42,59 @@ class _ReportsPageState extends State<ReportsPage>
   late final userCode = prefs.getUserCode() ?? '';
   late final password = prefs.getPassword() ?? '';
 
-  final List<Map<String, dynamic>> _reportItems = [
-    {
-      'key': 'asosiy_hisobotlar',
-      'title': 'Asosiy hisobotlar(EVYAP uchun)',
-      'icon': Icons.bar_chart,
-      'description': 'KPI ko\'rsatkichlari va asosiy statistikalar',
-    },
-    {
-      'key': 'vizitlar_hisobot',
-      'title': 'Vizitlar bo\'yicha hisobot',
-      'icon': Icons.location_on,
-      'description': 'Mijozlarga qilingan tashriflar haqida ma\'lumot',
-    },
-    {
-      'key': 'akb_client',
-      'title': 'AKB Client',
-      'icon': Icons.people,
-      'description': 'AKB mijozlari bo\'yicha hisobot',
-    },
-    {
-      'key': 'akb_sum',
-      'title': 'AKB Sum',
-      'icon': Icons.attach_money,
-      'description': 'AKB summalari bo\'yicha moliyaviy hisobot',
-    },
-    {
-      'key': 'akb_product',
-      'title': 'AKB Product',
-      'icon': Icons.inventory,
-      'description': 'AKB mahsulotlari bo\'yicha hisobot',
-    },
-    {
-      'key': 'category_hisobotlari',
-      'title': 'Category hisobotlari',
-      'icon': Icons.category,
-      'description': 'Kategoriyalar bo\'yicha savdo tahlili',
-    },
-    {
-      'key': 'oylik_natijalar',
-      'title': 'Oylik natijalar',
-      'icon': Icons.calendar_month,
-      'description': 'Oylik savdo natijalari va tendensiyalar',
-    },
-    {
-      'key': 'oylik_kpi',
-      'title': 'Oylik KPI (maosh)',
-      'icon': Icons.trending_up,
-      'description': 'Oylik KPI bajarilishi va maosh hisoboti',
-    },
-  ];
+  List<Map<String, dynamic>> _getReportItems(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return [
+      {
+        'key': 'asosiy_hisobotlar',
+        'title': l10n?.reportMainEvyap ?? 'Asosiy hisobotlar(EVYAP uchun)',
+        'icon': Icons.bar_chart,
+        'description': l10n?.reportMainEvyapDesc ?? 'KPI ko\'rsatkichlari va asosiy statistikalar',
+      },
+      {
+        'key': 'vizitlar_hisobot',
+        'title': l10n?.reportVisits ?? 'Vizitlar bo\'yicha hisobot',
+        'icon': Icons.location_on,
+        'description': l10n?.reportVisitsDesc ?? 'Mijozlarga qilingan tashriflar haqida ma\'lumot',
+      },
+      {
+        'key': 'akb_client',
+        'title': l10n?.reportAkbClient ?? 'AKB Client',
+        'icon': Icons.people,
+        'description': l10n?.reportAkbClientDesc ?? 'AKB mijozlari bo\'yicha hisobot',
+      },
+      {
+        'key': 'akb_sum',
+        'title': l10n?.reportAkbSum ?? 'AKB Sum',
+        'icon': Icons.attach_money,
+        'description': l10n?.reportAkbSumDesc ?? 'AKB summalari bo\'yicha moliyaviy hisobot',
+      },
+      {
+        'key': 'akb_product',
+        'title': l10n?.reportAkbProduct ?? 'AKB Product',
+        'icon': Icons.inventory,
+        'description': l10n?.reportAkbProductDesc ?? 'AKB mahsulotlari bo\'yicha hisobot',
+      },
+      {
+        'key': 'category_hisobotlari',
+        'title': l10n?.reportCategory ?? 'Category hisobotlari',
+        'icon': Icons.category,
+        'description': l10n?.reportCategoryDesc ?? 'Kategoriyalar bo\'yicha savdo tahlili',
+      },
+      {
+        'key': 'oylik_natijalar',
+        'title': l10n?.reportMonthlyResults ?? 'Oylik natijalar',
+        'icon': Icons.calendar_month,
+        'description': l10n?.reportMonthlyResultsDesc ?? 'Oylik savdo natijalari va tendensiyalar',
+      },
+      {
+        'key': 'oylik_kpi',
+        'title': l10n?.reportMonthlyKpi ?? 'Oylik KPI (maosh)',
+        'icon': Icons.trending_up,
+        'description': l10n?.reportMonthlyKpiDesc ?? 'Oylik KPI bajarilishi va maosh hisoboti',
+      },
+    ];
+  }
 
   @override
   void initState() {
@@ -243,8 +246,9 @@ class _ReportsPageState extends State<ReportsPage>
                             : null,
                         actions: [
                           IconButton(
-                            tooltip:
-                                'Headerni ${_isHeaderVisible ? "yashirish" : "ko\'rsatish"}',
+                            tooltip: _isHeaderVisible 
+                                ? (AppLocalizations.of(context)?.toggleHeaderHide ?? 'Headerni yashirish')
+                                : (AppLocalizations.of(context)?.toggleHeaderShow ?? 'Headerni ko\'rsatish'),
                             onPressed: _toggleHeaderVisibility,
                             icon: Icon(
                               _isHeaderVisible
@@ -280,8 +284,8 @@ class _ReportsPageState extends State<ReportsPage>
                                               )?.success ??
                                               'Hisobot yuborilgan',
                                         ),
-                                        content: const Text(
-                                          'Hisobot allaqachon sizning Telegram guruhingizga  yuborilgan. Qayta yuborishni xohlaysizmi?',
+                                        content: Text(
+                                          AppLocalizations.of(context)?.reportAlreadySent ?? 'Hisobot allaqachon sizning Telegram guruhingizga yuborilgan. Qayta yuborishni xohlaysizmi?',
                                         ),
                                         actions: [
                                           TextButton(
@@ -310,10 +314,7 @@ class _ReportsPageState extends State<ReportsPage>
                                               }
                                             },
                                             child: Text(
-                                              AppLocalizations.of(
-                                                    context,
-                                                  )?.retry ??
-                                                  'Qayta yuborish',
+                                              AppLocalizations.of(context)?.resendReport ?? 'Qayta yuborish',
                                             ),
                                           ),
                                         ],
@@ -390,12 +391,14 @@ class _ReportsPageState extends State<ReportsPage>
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final selectedReport = _reportItems.firstWhere(
+    final l10n = AppLocalizations.of(context);
+    final reportItems = _getReportItems(context);
+    final selectedReport = reportItems.firstWhere(
       (item) => item['key'] == _selectedReport,
       orElse: () => {
-        'title': 'Hisobotlar',
+        'title': l10n?.reports ?? 'Hisobotlar',
         'icon': Icons.bar_chart,
-        'description': 'Hisobotlar bo\'limi',
+        'description': l10n?.reportsSection ?? 'Hisobotlar bo\'limi',
       },
     );
 
@@ -490,7 +493,7 @@ class _ReportsPageState extends State<ReportsPage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Hisobotlar menyusi',
+                              AppLocalizations.of(context)?.reportMenuTitle ?? 'Hisobotlar menyusi',
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: colorScheme.onPrimaryContainer,
@@ -508,7 +511,7 @@ class _ReportsPageState extends State<ReportsPage>
                 Expanded(
                   child: ListView(
                     padding: EdgeInsets.zero,
-                    children: _reportItems.map((item) {
+                    children: _getReportItems(context).map((item) {
                       final isSelected = _selectedReport == item['key'];
                       return ListTile(
                         leading: Icon(
@@ -529,7 +532,7 @@ class _ReportsPageState extends State<ReportsPage>
                             _isMenuOpen = false;
                             _menuAnimationController.reverse();
                           });
-                          final index = _reportItems.indexWhere(
+                          final index = _getReportItems(context).indexWhere(
                             (i) => i['key'] == item['key'],
                           );
                           if (index >= 0) {
@@ -677,7 +680,10 @@ class _ReportsPageState extends State<ReportsPage>
                             final password = prefs.getPassword();
 
                             if (selectedRange == null) {
-                              _showErrorSnackBar(context, "Davr tanlanmadi");
+                              _showErrorSnackBar(
+                                context,
+                                AppLocalizations.of(context)?.periodNotSelected ?? "Davr tanlanmadi",
+                              );
 
                               return;
                             }
@@ -685,16 +691,16 @@ class _ReportsPageState extends State<ReportsPage>
                                 (password == null || password.isEmpty)) {
                               _showErrorSnackBar(
                                 context,
-                                "Foydalanuvchi ma'lumotlari topilmadi",
+                                AppLocalizations.of(context)?.userDataNotFound ?? "Foydalanuvchi ma'lumotlari topilmadi",
                               );
 
                               return;
                             }
 
-                            // 2) Progress ko‘rsatish
+                            // 2) Progress ko'rsatish
                             _showLoadingDialog(
                               context,
-                              "Ma'lumotlar sinxronlanmoqda...",
+                              AppLocalizations.of(context)?.dataSyncing ?? "Ma'lumotlar sinxronlanmoqda...",
                             );
 
                             try {
@@ -724,17 +730,18 @@ class _ReportsPageState extends State<ReportsPage>
                               ); // date-range dialogni yopish
                               _showSuccessSnackBar(
                                 context,
-                                "Hisobotlar yangilandi",
+                                AppLocalizations.of(context)?.reportsUpdated ?? "Hisobotlar yangilandi",
                               );
                             } catch (e) {
                               _hideLoadingDialog(context);
+                              final l10n = AppLocalizations.of(context);
                               _showErrorSnackBar(
                                 context,
-                                "Sinxronizatsiya xatosi: $e",
+                                l10n?.syncError.replaceAll('{error}', e.toString()) ?? "Sinxronizatsiya xatosi: $e",
                               );
                             }
                           },
-                          child: const Text("Qo'llash"),
+                          child: Text(AppLocalizations.of(context)?.applyButton ?? "Qo'llash"),
                         ),
                       ),
                     ],
@@ -749,13 +756,14 @@ class _ReportsPageState extends State<ReportsPage>
   }
 
   int _getCurrentPageIndex() {
-    return _reportItems.indexWhere((item) => item['key'] == _selectedReport);
+    return 0; // Will be recalculated in build
   }
 
   void _onPageChanged(int index) {
-    if (index >= 0 && index < _reportItems.length) {
+    final reportItems = _getReportItems(context);
+    if (index >= 0 && index < reportItems.length) {
       setState(() {
-        _selectedReport = _reportItems[index]['key'];
+        _selectedReport = reportItems[index]['key'];
       });
     }
   }
@@ -882,7 +890,7 @@ class _ReportsPageState extends State<ReportsPage>
     return PageView(
       controller: _pageController,
       onPageChanged: _onPageChanged,
-      children: _reportItems.map((item) {
+      children: _getReportItems(context).map((item) {
         final key = item['key'] as String;
         return _getReportPage(key);
       }).toList(),
@@ -898,17 +906,18 @@ class _ReportsPageState extends State<ReportsPage>
       case 'akb_client':
         return const AkbClientReportPage();
       case 'akb_sum':
+        final l10n = AppLocalizations.of(context);
         return GenericReportPage(
-          title: 'AKB Sum hisoboti',
+          title: l10n?.reportAkbSum ?? 'AKB Sum hisoboti',
           stats: [
             {
-              'title': 'AKB summasi',
+              'title': l10n?.akbAmount ?? 'AKB summasi',
               'value': '780 000 UZS',
               'icon': Icons.attach_money,
               'color': Colors.green,
             },
             {
-              'title': 'AKB rejasi',
+              'title': l10n?.akbPlan ?? 'AKB rejasi',
               'value': '1 000 000 UZS',
               'icon': Icons.flag,
               'color': Colors.blue,
@@ -916,17 +925,18 @@ class _ReportsPageState extends State<ReportsPage>
           ],
         );
       case 'akb_product':
+        final l10n = AppLocalizations.of(context);
         return GenericReportPage(
-          title: 'AKB Product hisoboti',
+          title: l10n?.reportAkbProduct ?? 'AKB Product hisoboti',
           stats: [
             {
-              'title': 'AKB mahsulotlar',
+              'title': l10n?.akbProducts ?? 'AKB mahsulotlar',
               'value': '156',
               'icon': Icons.inventory,
               'color': Colors.orange,
             },
             {
-              'title': 'Mahsulot turlari',
+              'title': l10n?.productTypes ?? 'Mahsulot turlari',
               'value': '23',
               'icon': Icons.category,
               'color': Colors.purple,
@@ -934,17 +944,18 @@ class _ReportsPageState extends State<ReportsPage>
           ],
         );
       case 'category_hisobotlari':
+        final l10n = AppLocalizations.of(context);
         return GenericReportPage(
-          title: 'Category hisobotlari',
+          title: l10n?.reportCategory ?? 'Category hisobotlari',
           stats: [
             {
-              'title': 'Kategoriyalar soni',
+              'title': l10n?.categoriesCount ?? 'Kategoriyalar soni',
               'value': '12',
               'icon': Icons.category,
               'color': Colors.teal,
             },
             {
-              'title': 'Eng ko\'p sotilgan',
+              'title': l10n?.topSelling ?? 'Eng ko\'p sotilgan',
               'value': 'Kosmetika',
               'icon': Icons.star,
               'color': Colors.amber,
@@ -952,17 +963,18 @@ class _ReportsPageState extends State<ReportsPage>
           ],
         );
       case 'oylik_natijalar':
+        final l10n = AppLocalizations.of(context);
         return GenericReportPage(
-          title: 'Oylik natijalar',
+          title: l10n?.reportMonthlyResults ?? 'Oylik natijalar',
           stats: [
             {
-              'title': 'Oylik savdo',
+              'title': l10n?.monthlySales ?? 'Oylik savdo',
               'value': '15 500 000 UZS',
               'icon': Icons.calendar_month,
               'color': Colors.indigo,
             },
             {
-              'title': 'Oylik o\'sish',
+              'title': l10n?.monthlyGrowth ?? 'Oylik o\'sish',
               'value': '+15.3%',
               'icon': Icons.trending_up,
               'color': Colors.green,
@@ -970,17 +982,18 @@ class _ReportsPageState extends State<ReportsPage>
           ],
         );
       case 'oylik_kpi':
+        final l10n = AppLocalizations.of(context);
         return GenericReportPage(
-          title: 'Oylik KPI (maosh)',
+          title: l10n?.reportMonthlyKpi ?? 'Oylik KPI (maosh)',
           stats: [
             {
-              'title': 'KPI bajarilishi',
+              'title': l10n?.kpiCompletion ?? 'KPI bajarilishi',
               'value': '85%',
               'icon': Icons.trending_up,
               'color': Colors.blue,
             },
             {
-              'title': 'Maosh miqdori',
+              'title': l10n?.salaryAmount ?? 'Maosh miqdori',
               'value': '2 500 000 UZS',
               'icon': Icons.attach_money,
               'color': Colors.green,

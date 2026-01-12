@@ -918,7 +918,7 @@ class _MainReportPageState extends State<MainReportPage>
       final userCode = _prefs.getUserCode();
       if (kDebugMode) print("userCode: $userCode");
       if (userCode == null) {
-        _showErrorSnackBar(context, 'Foydalanuvchi kodi topilmadi');
+        _showErrorSnackBar(context, AppLocalizations.of(context)?.userCodeNotFound ?? 'Foydalanuvchi kodi topilmadi');
         return;
       }
 
@@ -995,7 +995,7 @@ class _MainReportPageState extends State<MainReportPage>
 
       // Show error message
       if (mounted) {
-        _showErrorSnackBar(context, 'Ma\'lumotlarni yangilashda xatolik: $e');
+        _showErrorSnackBar(context, '${AppLocalizations.of(context)?.dataRefreshError ?? "Ma'lumotlarni yangilashda xatolik"}: $e');
       }
     }
   }
@@ -1143,7 +1143,7 @@ class _MainReportPageState extends State<MainReportPage>
                                               children: [
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  ' ${DateFormat('yyyy-MM-dd').format(_selectedRange!.start)} dan ${DateFormat('yyyy-MM-dd').format(_selectedRange!.end)} gacha',
+                                                  ' ${AppLocalizations.of(context)!.dateFromTo(DateFormat('yyyy-MM-dd').format(_selectedRange!.start), DateFormat('yyyy-MM-dd').format(_selectedRange!.end))}',
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .bodyMedium
@@ -1168,7 +1168,7 @@ class _MainReportPageState extends State<MainReportPage>
                                               children: [
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  ' ${DateFormat('yyyy-MM-dd').format(report!.dateStart!)} dan ${DateFormat('yyyy-MM-dd').format(report!.dateEnd!)} gacha',
+                                                  ' ${AppLocalizations.of(context)!.dateFromTo(DateFormat('yyyy-MM-dd').format(report!.dateStart!), DateFormat('yyyy-MM-dd').format(report!.dateEnd!))}',
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .bodyMedium
@@ -1321,7 +1321,9 @@ class _MainReportPageState extends State<MainReportPage>
                       const SizedBox(height: 20),
                       _SectionTitle(
                         icon: Icons.map_outlined,
-                        title: 'Hududlar bo\'yicha AKB',
+                        title:
+                            AppLocalizations.of(context)?.akbByRegions ??
+                            "Hududlar bo'yicha AKB",
                       ),
                       const SizedBox(height: 8),
                       _RegionChips(regions: _akbByRegion),
@@ -1329,7 +1331,9 @@ class _MainReportPageState extends State<MainReportPage>
                       const SizedBox(height: 20),
                       _SectionTitle(
                         icon: Icons.category_outlined,
-                        title: 'Tovar kategoriyalari bo\'yicha AKB',
+                        title:
+                            AppLocalizations.of(context)?.akbByProductCategories ??
+                            "Tovar kategoriyalari bo'yicha AKB",
                       ),
                       const SizedBox(height: 8),
                       _CategoryList(categories: _categories),
@@ -1622,7 +1626,7 @@ class _RegionChips extends StatelessWidget {
         for (final e in entries)
           Chip(
             avatar: const Icon(Icons.location_city_outlined, size: 18),
-            label: Text('${e.key}: ${e.value} t.t.'),
+            label: Text('${e.key}: ${e.value} ${AppLocalizations.of(context)?.tradingPointAbbr ?? "t.t."}'),
           ),
       ],
     );
@@ -1772,13 +1776,14 @@ class _FooterNote extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.info_outline),
-          SizedBox(width: 10),
+          const Icon(Icons.info_outline),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Ma\'lumotlar Telegram hisobotidan import qilingan. Yangi manbaga o\'tish uchun matnni o\'zgartirishingiz mumkin — UI yangilanadi.',
+              AppLocalizations.of(context)?.footerNoteText ??
+                  "Ma'lumotlar Telegram hisobotidan import qilingan. Yangi manbaga o'tish uchun matnni o'zgartirishingiz mumkin — UI yangilanadi.",
             ),
           ),
         ],
@@ -1955,7 +1960,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
         // Legend
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [_buildLegendItem(cs.primary, 'Hisobot davri')],
+          children: [_buildLegendItem(cs.primary, AppLocalizations.of(context)?.reportPeriod ?? 'Hisobot davri')],
         ),
       ],
     );

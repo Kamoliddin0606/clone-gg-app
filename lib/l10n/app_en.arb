@@ -1889,5 +1889,41 @@
     "placeholders": {
       "days": {"type": "int"}
     }
-  }
+  },
+
+  "locationPermissionNeeded": "Location permission required",
+  "locationPermissionRequestMessage": "Your location is needed to sort trading points by distance and display on the map. Do you allow?",
+  "later": "Later",
+  "grantPermission": "Grant permission",
+  "locationSettingsMessage": "Location permission is required for sorting by distance and map functions. Please grant location permission from app settings.",
+  "goToSettings": "Go to settings",
+  "enableLocationServicesMessage": "Location services must be enabled for sorting by distance and map functions. Please enable location services.",
+  "locationSettings": "Location settings",
+  
+  "reportDataRefreshed": "Report data refreshed successfully",
+  "dataRefreshError": "Error refreshing data",
+  "dateFromTo": "{start} to {end}",
+  "@dateFromTo": {
+    "placeholders": {
+      "start": {"type": "String"},
+      "end": {"type": "String"}
+    }
+  },
+  "monthlyOkbAkb": "Monthly OKB/AKB",
+  "monthlyOKB": "Monthly OKB",
+  "monthlyPlanFactForecast": "Monthly Plan / Fact / Forecast",
+  "todayMainIndicators": "Today — main indicators",
+  "territoryOKB": "Territory OKB",
+  "territoryOKBTooltip": "Territory client base coverage",
+  "visitedTradingPoints": "Visited trading points",
+  "visitedTradingPointsTooltip": "Number of visited trading points",
+  "activeClients": "Active clients",
+  "activeClientsTooltip": "Clients with active orders today",
+  "cashless": "Cashless",
+  "ordersTotal": "Total orders",
+  "akbByRegions": "AKB by regions",
+  "akbByProductCategories": "AKB by product categories",
+  "tradingPointAbbr": "t.p.",
+  "footerNoteText": "Data imported from Telegram report. You can change the text to switch to a new source — UI will be updated.",
+  "reportPeriod": "Report period"
 }

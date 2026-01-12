@@ -3390,4 +3390,42 @@ class AppLocalizationsUz extends AppLocalizations {
   String daysAgoShort(int days) {
     return '$days kun oldin';
   }
+
+  @override
+  String get locationPermissionNeeded => 'Joylashuv ruxsati kerak';
+
+  @override
+  String get locationPermissionRequestMessage => 'Savdo nuqtalarini masofaga ko\'ra tartiblash va xaritada ko\'rsatish uchun sizning joylashuvingiz kerak. Ruxsat berasizmi?';
+
+  @override
+  String get later => 'Keyinroq';
+
+  @override
+  String get locationSettingsMessage => 'Masofa bo\'yicha tartiblash va xarita funksiyalari uchun joylashuv ruxsati zarur. Iltimos, ilova sozlamalaridan joylashuv ruxsatini bering.';
+
+  @override
+  String get enableLocationServicesMessage => 'Masofa bo\'yicha tartiblash va xarita funksiyalari uchun joylashuv xizmatlari yoqilgan bo\'lishi kerak. Iltimos, joylashuv xizmatlarini yoqing.';
+
+  @override
+  String get locationSettings => 'Joylashuv sozlamalari';
+
+  @override
+  String get dataRefreshError => 'Ma\'lumotlarni yangilashda xatolik';
+
+  @override
+  String dateFromTo(String start, String end) {
+    return '$start dan $end gacha';
+  }
+
+  @override
+  String get akbByRegions => 'Hududlar bo\'yicha AKB';
+
+  @override
+  String get akbByProductCategories => 'Tovar kategoriyalari bo\'yicha AKB';
+
+  @override
+  String get tradingPointAbbr => 't.t.';
+
+  @override
+  String get footerNoteText => 'Ma\'lumotlar Telegram hisobotidan import qilingan. Yangi manbaga o\'tish uchun matnni o\'zgartirishingiz mumkin — UI yangilanadi.';
 }

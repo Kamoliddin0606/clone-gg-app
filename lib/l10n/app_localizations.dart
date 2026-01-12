@@ -5164,7 +5164,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportPeriod.
   ///
   /// In en, this message translates to:
-  /// **'Report Period'**
+  /// **'Report period'**
   String get reportPeriod;
 
   /// No description provided for @monthlyOKB.
@@ -5620,13 +5620,13 @@ abstract class AppLocalizations {
   /// No description provided for @ordersTotal.
   ///
   /// In en, this message translates to:
-  /// **'Orders total'**
+  /// **'Total orders'**
   String get ordersTotal;
 
   /// No description provided for @visitedTradingPoints.
   ///
   /// In en, this message translates to:
-  /// **'Visited t.p.'**
+  /// **'Visited trading points'**
   String get visitedTradingPoints;
 
   /// No description provided for @visitedTradingPointsTooltip.
@@ -5644,7 +5644,7 @@ abstract class AppLocalizations {
   /// No description provided for @territoryOKBTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Coverage of customer base by territory'**
+  /// **'Territory client base coverage'**
   String get territoryOKBTooltip;
 
   /// No description provided for @todayMainIndicators.
@@ -5668,7 +5668,7 @@ abstract class AppLocalizations {
   /// No description provided for @monthlyPlanFactForecast.
   ///
   /// In en, this message translates to:
-  /// **'Monthly plan / Fact / Forecast'**
+  /// **'Monthly Plan / Fact / Forecast'**
   String get monthlyPlanFactForecast;
 
   /// No description provided for @monthlyOkbAkb.
@@ -6474,6 +6474,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{days} days ago'**
   String daysAgoShort(int days);
+
+  /// No description provided for @locationPermissionNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission required'**
+  String get locationPermissionNeeded;
+
+  /// No description provided for @locationPermissionRequestMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your location is needed to sort trading points by distance and display on the map. Do you allow?'**
+  String get locationPermissionRequestMessage;
+
+  /// No description provided for @later.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
+
+  /// No description provided for @locationSettingsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is required for sorting by distance and map functions. Please grant location permission from app settings.'**
+  String get locationSettingsMessage;
+
+  /// No description provided for @enableLocationServicesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services must be enabled for sorting by distance and map functions. Please enable location services.'**
+  String get enableLocationServicesMessage;
+
+  /// No description provided for @locationSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Location settings'**
+  String get locationSettings;
+
+  /// No description provided for @dataRefreshError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error refreshing data'**
+  String get dataRefreshError;
+
+  /// No description provided for @dateFromTo.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} to {end}'**
+  String dateFromTo(String start, String end);
+
+  /// No description provided for @akbByRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB by regions'**
+  String get akbByRegions;
+
+  /// No description provided for @akbByProductCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB by product categories'**
+  String get akbByProductCategories;
+
+  /// No description provided for @tradingPointAbbr.
+  ///
+  /// In en, this message translates to:
+  /// **'t.p.'**
+  String get tradingPointAbbr;
+
+  /// No description provided for @footerNoteText.
+  ///
+  /// In en, this message translates to:
+  /// **'Data imported from Telegram report. You can change the text to switch to a new source — UI will be updated.'**
+  String get footerNoteText;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

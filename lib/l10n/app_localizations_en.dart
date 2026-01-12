@@ -2685,7 +2685,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clickPlusToAddProduct => 'Click the + button to add a product';
 
   @override
-  String get reportPeriod => 'Report Period';
+  String get reportPeriod => 'Report period';
 
   @override
   String get monthlyOKB => 'Monthly OKB';
@@ -2927,10 +2927,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashless => 'Cashless';
 
   @override
-  String get ordersTotal => 'Orders total';
+  String get ordersTotal => 'Total orders';
 
   @override
-  String get visitedTradingPoints => 'Visited t.p.';
+  String get visitedTradingPoints => 'Visited trading points';
 
   @override
   String get visitedTradingPointsTooltip => 'Number of visited trading points';
@@ -2939,7 +2939,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get territoryOKB => 'Territory OKB';
 
   @override
-  String get territoryOKBTooltip => 'Coverage of customer base by territory';
+  String get territoryOKBTooltip => 'Territory client base coverage';
 
   @override
   String get todayMainIndicators => 'Today — main indicators';
@@ -2951,7 +2951,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get last30Days => 'Last 30 days';
 
   @override
-  String get monthlyPlanFactForecast => 'Monthly plan / Fact / Forecast';
+  String get monthlyPlanFactForecast => 'Monthly Plan / Fact / Forecast';
 
   @override
   String get monthlyOkbAkb => 'Monthly OKB/AKB';
@@ -3390,4 +3390,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String daysAgoShort(int days) {
     return '$days days ago';
   }
+
+  @override
+  String get locationPermissionNeeded => 'Location permission required';
+
+  @override
+  String get locationPermissionRequestMessage => 'Your location is needed to sort trading points by distance and display on the map. Do you allow?';
+
+  @override
+  String get later => 'Later';
+
+  @override
+  String get locationSettingsMessage => 'Location permission is required for sorting by distance and map functions. Please grant location permission from app settings.';
+
+  @override
+  String get enableLocationServicesMessage => 'Location services must be enabled for sorting by distance and map functions. Please enable location services.';
+
+  @override
+  String get locationSettings => 'Location settings';
+
+  @override
+  String get dataRefreshError => 'Error refreshing data';
+
+  @override
+  String dateFromTo(String start, String end) {
+    return '$start to $end';
+  }
+
+  @override
+  String get akbByRegions => 'AKB by regions';
+
+  @override
+  String get akbByProductCategories => 'AKB by product categories';
+
+  @override
+  String get tradingPointAbbr => 't.p.';
+
+  @override
+  String get footerNoteText => 'Data imported from Telegram report. You can change the text to switch to a new source — UI will be updated.';
 }

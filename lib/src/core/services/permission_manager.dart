@@ -4,6 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'dart:io';
 
 /// Custom permission status enum
@@ -560,20 +561,20 @@ class LocationPermissionDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       title: Text(
-        'Joylashuv ruxsati kerak',
+        l10n.locationPermissionNeeded,
         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
       ),
       content: Text(
-        'Savdo nuqtalarini masofaga ko\'ra tartiblash va xaritada ko\'rsatish uchun '
-        'sizning joylashuvingiz kerak. Ruxsat berasizmi?',
+        l10n.locationPermissionRequestMessage,
         style: theme.textTheme.bodyMedium,
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Keyinroq'),
+          child: Text(l10n.later),
         ),
         FilledButton(
           onPressed: () async {
@@ -582,7 +583,7 @@ class LocationPermissionDialog extends StatelessWidget {
             final appStatus = PermissionManager()._mapGeolocatorToAppStatus(permission);
             Navigator.of(context).pop(appStatus == AppPermissionStatus.granted);
           },
-          child: const Text('Ruxsat berish'),
+          child: Text(l10n.grantPermission),
         ),
       ],
     );
@@ -596,27 +597,27 @@ class LocationSettingsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       title: Text(
-        'Joylashuv ruxsati kerak',
+        l10n.locationPermissionNeeded,
         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
       ),
       content: Text(
-        'Masofa bo\'yicha tartiblash va xarita funksiyalari uchun joylashuv ruxsati zarur. '
-        'Iltimos, ilova sozlamalaridan joylashuv ruxsatini bering.',
+        l10n.locationSettingsMessage,
         style: theme.textTheme.bodyMedium,
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Bekor qilish'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: () async {
             await PermissionManager().openAppSettings();
             Navigator.of(context).pop();
           },
-          child: const Text('Sozlamalarga o\'tish'),
+          child: Text(l10n.goToSettings),
         ),
       ],
     );
@@ -630,20 +631,20 @@ class LocationServiceDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       title: Text(
-        'Joylashuv xizmatlari o\'chirilgan',
+        l10n.locationServicesDisabled,
         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
       ),
       content: Text(
-        'Masofa bo\'yicha tartiblash va xarita funksiyalari uchun joylashuv xizmatlari yoqilgan bo\'lishi kerak. '
-        'Iltimos, joylashuv xizmatlarini yoqing.',
+        l10n.enableLocationServicesMessage,
         style: theme.textTheme.bodyMedium,
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Keyinroq'),
+          child: Text(l10n.later),
         ),
         FilledButton(
           onPressed: () async {
@@ -651,7 +652,7 @@ class LocationServiceDialog extends StatelessWidget {
             final opened = await permissionManager.openLocationSettings();
             Navigator.of(context).pop(opened);
           },
-          child: const Text('Joylashuv sozlamalari'),
+          child: Text(l10n.locationSettings),
         ),
       ],
     );

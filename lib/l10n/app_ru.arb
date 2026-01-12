@@ -1890,5 +1890,41 @@
         "type": "int"
       }
     }
-  }
+  },
+
+  "locationPermissionNeeded": "Требуется разрешение на местоположение",
+  "locationPermissionRequestMessage": "Для сортировки торговых точек по расстоянию и отображения на карте требуется ваше местоположение. Разрешить?",
+  "later": "Позже",
+  "grantPermission": "Разрешить",
+  "locationSettingsMessage": "Для сортировки по расстоянию и функций карты требуется разрешение на местоположение. Пожалуйста, предоставьте разрешение в настройках приложения.",
+  "goToSettings": "Перейти в настройки",
+  "enableLocationServicesMessage": "Службы определения местоположения должны быть включены для сортировки по расстоянию и функций карты. Пожалуйста, включите службы определения местоположения.",
+  "locationSettings": "Настройки местоположения",
+  
+  "reportDataRefreshed": "Данные отчёта успешно обновлены",
+  "dataRefreshError": "Ошибка обновления данных",
+  "dateFromTo": "с {start} по {end}",
+  "@dateFromTo": {
+    "placeholders": {
+      "start": {"type": "String"},
+      "end": {"type": "String"}
+    }
+  },
+  "monthlyOkbAkb": "Ежемесячный OKB/AKB",
+  "monthlyOKB": "Ежемесячный OKB",
+  "monthlyPlanFactForecast": "Ежемесячный План / Факт / Прогноз",
+  "todayMainIndicators": "Сегодня — основные показатели",
+  "territoryOKB": "Территория OKB",
+  "territoryOKBTooltip": "Охват клиентской базы по территории",
+  "visitedTradingPoints": "Посещённые торговые точки",
+  "visitedTradingPointsTooltip": "Количество посещённых торговых точек",
+  "activeClients": "Активные клиенты",
+  "activeClientsTooltip": "Клиенты с активными заказами сегодня",
+  "cashless": "Безналичные",
+  "ordersTotal": "Общая сумма заказов",
+  "akbByRegions": "AKB по регионам",
+  "akbByProductCategories": "AKB по категориям товаров",
+  "tradingPointAbbr": "т.т.",
+  "footerNoteText": "Данные импортированы из отчёта Telegram. Вы можете изменить текст для переключения на новый источник — UI будет обновлён.",
+  "reportPeriod": "Период отчёта"
 }

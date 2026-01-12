@@ -2685,10 +2685,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clickPlusToAddProduct => 'Нажмите кнопку +, чтобы добавить товар';
 
   @override
-  String get reportPeriod => 'Период отчета';
+  String get reportPeriod => 'Период отчёта';
 
   @override
-  String get monthlyOKB => 'Ежемесячный ОКБ';
+  String get monthlyOKB => 'Ежемесячный OKB';
 
   @override
   String get selectPeriod => 'Выберите период';
@@ -2927,16 +2927,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get cashless => 'Безналичные';
 
   @override
-  String get ordersTotal => 'Всего заказов';
+  String get ordersTotal => 'Общая сумма заказов';
 
   @override
-  String get visitedTradingPoints => 'Посещенные т.т.';
+  String get visitedTradingPoints => 'Посещённые торговые точки';
 
   @override
-  String get visitedTradingPointsTooltip => 'Количество посещенных торговых точек';
+  String get visitedTradingPointsTooltip => 'Количество посещённых торговых точек';
 
   @override
-  String get territoryOKB => 'Территория ОКБ';
+  String get territoryOKB => 'Территория OKB';
 
   @override
   String get territoryOKBTooltip => 'Охват клиентской базы по территории';
@@ -2951,10 +2951,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get last30Days => 'Последние 30 дней';
 
   @override
-  String get monthlyPlanFactForecast => 'Месячный план / Факт / Прогноз';
+  String get monthlyPlanFactForecast => 'Ежемесячный План / Факт / Прогноз';
 
   @override
-  String get monthlyOkbAkb => 'Ежемесячный ОКБ/АКБ';
+  String get monthlyOkbAkb => 'Ежемесячный OKB/AKB';
 
   @override
   String get contractsNotFound => 'Договоры не найдены';
@@ -3019,7 +3019,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get rejected => 'Отклонено';
 
   @override
-  String get reportDataRefreshed => 'Данные отчета успешно обновлены';
+  String get reportDataRefreshed => 'Данные отчёта успешно обновлены';
 
   @override
   String get apiKeySaved => 'API ключ успешно сохранен';
@@ -3282,7 +3282,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get allowPermissionQuestion => 'Хотите предоставить разрешение?';
 
   @override
-  String get grantPermission => 'Предоставить разрешение';
+  String get grantPermission => 'Разрешить';
 
   @override
   String get checking => 'Проверка...';
@@ -3390,4 +3390,42 @@ class AppLocalizationsRu extends AppLocalizations {
   String daysAgoShort(int days) {
     return '$days дней назад';
   }
+
+  @override
+  String get locationPermissionNeeded => 'Требуется разрешение на местоположение';
+
+  @override
+  String get locationPermissionRequestMessage => 'Для сортировки торговых точек по расстоянию и отображения на карте требуется ваше местоположение. Разрешить?';
+
+  @override
+  String get later => 'Позже';
+
+  @override
+  String get locationSettingsMessage => 'Для сортировки по расстоянию и функций карты требуется разрешение на местоположение. Пожалуйста, предоставьте разрешение в настройках приложения.';
+
+  @override
+  String get enableLocationServicesMessage => 'Службы определения местоположения должны быть включены для сортировки по расстоянию и функций карты. Пожалуйста, включите службы определения местоположения.';
+
+  @override
+  String get locationSettings => 'Настройки местоположения';
+
+  @override
+  String get dataRefreshError => 'Ошибка обновления данных';
+
+  @override
+  String dateFromTo(String start, String end) {
+    return 'с $start по $end';
+  }
+
+  @override
+  String get akbByRegions => 'AKB по регионам';
+
+  @override
+  String get akbByProductCategories => 'AKB по категориям товаров';
+
+  @override
+  String get tradingPointAbbr => 'т.т.';
+
+  @override
+  String get footerNoteText => 'Данные импортированы из отчёта Telegram. Вы можете изменить текст для переключения на новый источник — UI будет обновлён.';
 }

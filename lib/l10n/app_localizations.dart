@@ -3295,11 +3295,23 @@ abstract class AppLocalizations {
   /// **'Balance cache cleared'**
   String get balanceCacheCleared;
 
-  /// No description provided for @networkError.
+  /// No description provided for @fakturaNetworkError.
   ///
   /// In en, this message translates to:
-  /// **'Network error'**
-  String get networkError;
+  /// **'Network error. Please check your internet connection'**
+  String get fakturaNetworkError;
+
+  /// No description provided for @tradePointTypesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade point types list is empty. Please add trade points first.'**
+  String get tradePointTypesEmpty;
+
+  /// No description provided for @tradePointTypesLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading trade point types.'**
+  String get tradePointTypesLoadError;
 
   /// No description provided for @timeoutError.
   ///
@@ -3799,6 +3811,12 @@ abstract class AppLocalizations {
   /// **'Creating...'**
   String get creatingContract;
 
+  /// No description provided for @networkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error'**
+  String get networkError;
+
   /// No description provided for @serverTimeout.
   ///
   /// In en, this message translates to:
@@ -4072,7 +4090,7 @@ abstract class AppLocalizations {
   /// No description provided for @createClientTerritoryWarningMessage.
   ///
   /// In en, this message translates to:
-  /// **'Client should only be created within your sales territory. Otherwise, there may be problems with ordering and delivery.'**
+  /// **'Client creation must be performed within their trading territory. Otherwise, problems may occur when creating an order and its delivery.'**
   String get createClientTerritoryWarningMessage;
 
   /// No description provided for @createClientAutoFilledHint.
@@ -7938,12 +7956,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Server error: {statusCode}'**
   String fakturaServerError(String statusCode);
-
-  /// No description provided for @fakturaNetworkError.
-  ///
-  /// In en, this message translates to:
-  /// **'Network error'**
-  String get fakturaNetworkError;
 
   /// No description provided for @fakturaInnEmpty.
   ///

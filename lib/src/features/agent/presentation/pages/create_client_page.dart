@@ -59,18 +59,6 @@ class _CreateClientPageState extends State<CreateClientPage>
   List<String> _tradePointTypes = [];
   bool _isLoadingTypes = true;
 
-  // Fallback types if database is empty
-  static const List<String> _defaultTradePointTypes = [
-    'Supermarket',
-    'Mini market',
-    'Do\'kon',
-    'Ulgurji',
-    'Restoran',
-    'Kafe',
-    'Mehmonxona',
-    'Boshqa',
-  ];
-
   // Submission state
   bool _isSubmitting = false;
 
@@ -80,6 +68,7 @@ class _CreateClientPageState extends State<CreateClientPage>
   // Faktura.uz integration
   bool _isFetchingCompanyData = false;
   bool _companyDataFetched = false;
+  bool _addressFilledFromFaktura = false;
 
   @override
   void initState() {
@@ -155,20 +144,41 @@ class _CreateClientPageState extends State<CreateClientPage>
 
       if (mounted) {
         setState(() {
-          // Use database types if available, otherwise fallback to defaults
-          _tradePointTypes = types.isNotEmpty
-              ? types
-              : List.from(_defaultTradePointTypes);
+          _tradePointTypes = types;
           _isLoadingTypes = false;
         });
+        
+        // Show error message if list is empty
+        if (types.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)?.tradePointTypesEmpty ??
+                    'Savdo nuqtasi turlari ro\'yxati bo\'sh. Iltimos, avval savdo nuqtalarini qo\'shing.',
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          // Fallback to default types on error
-          _tradePointTypes = List.from(_defaultTradePointTypes);
+          _tradePointTypes = [];
           _isLoadingTypes = false;
         });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)?.tradePointTypesLoadError ??
+                  'Savdo nuqtasi turlarini yuklashda xatolik yuz berdi.',
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     }
   }
@@ -238,10 +248,15 @@ class _CreateClientPageState extends State<CreateClientPage>
       if (mounted && address.confidence > 0.3) {
         final formattedAddress = address.toFormattedString();
         setState(() {
-          // Auto-fill both address fields with formatted address
-          _addressController.text = formattedAddress;
-          _addressDeliveryController.text = formattedAddress;
-          _addressAutoFilled = true;
+          // If address was filled from Faktura, only update delivery address
+          if (_addressFilledFromFaktura) {
+            _addressDeliveryController.text = formattedAddress;
+          } else {
+            // Auto-fill both address fields with formatted address
+            _addressController.text = formattedAddress;
+            _addressDeliveryController.text = formattedAddress;
+            _addressAutoFilled = true;
+          }
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -612,6 +627,7 @@ class _CreateClientPageState extends State<CreateClientPage>
     final fullAddress = company.getFullAddress();
     if (fullAddress.isNotEmpty) {
       _addressController.text = fullAddress;
+      _addressFilledFromFaktura = true;
       
       // If delivery address is empty, also fill it
       if (_addressDeliveryController.text.trim().isEmpty) {

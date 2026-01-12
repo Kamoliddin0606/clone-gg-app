@@ -66,6 +66,19 @@ class FakturaAuthService {
   /// Authenticate and get new tokens
   Future<String> _authenticate() async {
     try {
+      if (kDebugMode) {
+        print('=== FAKTURA AUTH REQUEST ===');
+        print('Endpoint: $_tokenEndpoint');
+        print('Headers: Content-Type: application/x-www-form-urlencoded');
+        print('Body parameters:');
+        print('  grant_type: password');
+        print('  username: $_username');
+        print('  password: $_password');
+        print('  client_id: $_clientId');
+        print('  client_secret: $_clientSecret');
+        print('===========================');
+      }
+      
       final response = await http.post(
         Uri.parse(_tokenEndpoint),
         headers: {
@@ -80,11 +93,22 @@ class FakturaAuthService {
         },
       ).timeout(const Duration(seconds: 30));
 
+      if (kDebugMode) {
+        print('=== FAKTURA AUTH RESPONSE ===');
+        print('Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
+        print('============================');
+      }
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return await _saveTokens(data);
       } else {
-        print('Authentication failed with status code: ${response.statusCode} and body: ${response.body} ${_clientId} ${_clientSecret} ${_username} ${_password}');
+        if (kDebugMode) {
+          print('❌ Authentication failed!');
+          print('Status: ${response.statusCode}');
+          print('Body: ${response.body}');
+        }
         final errorBody = response.body;
         throw FakturaAuthException(
           'AUTH_ERROR',

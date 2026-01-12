@@ -825,7 +825,7 @@
   "createClientSyncing": "Ma'lumotlar sinxronlanmoqda...",
   "createClientCode": "Kod",
   "createClientTerritoryWarningTitle": "Muhim eslatma!",
-  "createClientTerritoryWarningMessage": "Mijoz faqat sizning savdo hududingiz ichida yaratilishi kerak. Aks holda buyurtma olish va yetkazib berishda muammolar yuzaga kelishi mumkin.",
+  "createClientTerritoryWarningMessage": "Mijoz yaratish uning savdo hududi doirasida amalga oshirilishi kerak. Aks holda buyurtma yaratish va uni yetkazib berishda muammolar yuzaga kelishi mumkin.",
   "createClientAutoFilledHint": "Avtomatik to'ldirildi. Zarurat bo'lsa o'zgartiring.",
   "createClientAddressDetected": "Manzil aniqlandi va avtomatik to'ldirildi",
   "createClientSelectRegionError": "Iltimos, hududni tanlang",

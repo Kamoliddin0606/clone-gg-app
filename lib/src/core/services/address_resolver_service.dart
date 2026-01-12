@@ -347,7 +347,10 @@ class AddressResolverService {
   String _formatRegion(String raw) {
     if (raw.isEmpty) return '';
     
-    final normalized = raw.trim();
+    String normalized = raw.trim();
+    
+    // Translate Russian city names to Uzbek
+    normalized = _translateToUzbek(normalized);
     
     // Check if already has suffix
     if (normalized.toLowerCase().contains('shahri') || 
@@ -374,7 +377,10 @@ class AddressResolverService {
   String _formatDistrict(String raw) {
     if (raw.isEmpty) return '';
     
-    final normalized = raw.trim();
+    String normalized = raw.trim();
+    
+    // Translate Russian district names to Uzbek
+    normalized = _translateToUzbek(normalized);
     
     // Check if already has suffix
     if (normalized.toLowerCase().contains('tumani') || 
@@ -392,7 +398,10 @@ class AddressResolverService {
   String _formatStreet(String raw) {
     if (raw.isEmpty) return '';
     
-    final normalized = raw.trim();
+    String normalized = raw.trim();
+    
+    // Translate Russian street names to Uzbek
+    normalized = _translateToUzbek(normalized);
     
     // Check if already has suffix
     if (normalized.toLowerCase().contains("ko'chasi") || 
@@ -440,5 +449,133 @@ class AddressResolverService {
     if (hasHouse) score += 0.15;
     
     return score;
+  }
+
+  /// Translate Russian/Cyrillic place names to Uzbek Latin
+  String _translateToUzbek(String text) {
+    if (text.isEmpty) return text;
+    
+    // Common Russian -> Uzbek translations for districts and streets
+    final translations = {
+      // Districts
+      'Мирзо-Улугбекский': "Mirzo Ulug'bek",
+      'Мирзо Улугбекский': "Mirzo Ulug'bek",
+      'Учтепинский': 'Uchtepa',
+      'Яшнабадский': 'Yashnobod',
+      'Юнусабадский': 'Yunusobod',
+      'Чиланзарский': 'Chilonzor',
+      'Сергелийский': 'Sergeli',
+      'Шайхантахурский': 'Shayxontohur',
+      'Яккасарайский': 'Yakkasaroy',
+      'Бектемирский': 'Bektemir',
+      'Алмазарский': 'Olmazor',
+      'Мирабадский': 'Mirobod',
+      
+      // Cities/Regions
+      'Ташкент': 'Toshkent',
+      'Самарканд': 'Samarqand',
+      'Бухара': 'Buxoro',
+      'Андижан': 'Andijon',
+      'Наманган': 'Namangan',
+      'Фергана': 'Farg\'ona',
+      'Коканд': 'Qo\'qon',
+      'Нукус': 'Nukus',
+      'Карши': 'Qarshi',
+      'Термез': 'Termiz',
+      'Хива': 'Xiva',
+      'Гулистан': 'Guliston',
+      'Джизак': 'Jizzax',
+      'Навои': 'Navoiy',
+      'Ургенч': 'Urganch',
+      
+      // Common street words
+      'улица': "ko'chasi",
+      'проспект': 'prospekti',
+      'переулок': 'tor ko\'chasi',
+      'бульвар': 'bulvar',
+      'площадь': 'maydon',
+      'район': 'tumani',
+      
+      // Common street names
+      'Амира Темура': 'Amir Temur',
+      'Мустақиллик': "Mustaqillik",
+      'Бунёдкор': 'Bunyodkor',
+      'Шота Руставели': 'Shota Rustaveli',
+      'Абдулла Кодирий': 'Abdulla Qodiriy',
+      'Алишер Навои': 'Alisher Navoiy',
+      'Бабур': 'Bobur',
+      'Беруний': 'Beruniy',
+      'Фараби': 'Forobiy',
+      'Ибн Сино': 'Ibn Sino',
+      'Паркент': 'Parkent',
+    };
+    
+    String result = text;
+    
+    // First apply specific translations
+    translations.forEach((russian, uzbek) {
+      result = result.replaceAll(russian, uzbek);
+      // Case insensitive replacement
+      result = result.replaceAll(
+        RegExp(russian, caseSensitive: false),
+        uzbek,
+      );
+    });
+    
+    // Then apply general Cyrillic to Latin transliteration for remaining Cyrillic text
+    result = _transliterateCyrillicToLatin(result);
+    
+    return result;
+  }
+  
+  /// Transliterate Cyrillic text to Latin script (Uzbek alphabet)
+  String _transliterateCyrillicToLatin(String text) {
+    // Cyrillic to Latin mapping for Uzbek
+    final Map<String, String> cyrillicToLatin = {
+      'А': 'A', 'а': 'a',
+      'Б': 'B', 'б': 'b',
+      'В': 'V', 'в': 'v',
+      'Г': 'G', 'г': 'g',
+      'Д': 'D', 'д': 'd',
+      'Е': 'E', 'е': 'e',
+      'Ё': 'Yo', 'ё': 'yo',
+      'Ж': 'J', 'ж': 'j',
+      'З': 'Z', 'з': 'z',
+      'И': 'I', 'и': 'i',
+      'Й': 'Y', 'й': 'y',
+      'К': 'K', 'к': 'k',
+      'Л': 'L', 'л': 'l',
+      'М': 'M', 'м': 'm',
+      'Н': 'N', 'н': 'n',
+      'О': 'O', 'о': 'o',
+      'П': 'P', 'п': 'p',
+      'Р': 'R', 'р': 'r',
+      'С': 'S', 'с': 's',
+      'Т': 'T', 'т': 't',
+      'У': 'U', 'у': 'u',
+      'Ф': 'F', 'ф': 'f',
+      'Х': 'X', 'х': 'x',
+      'Ц': 'Ts', 'ц': 'ts',
+      'Ч': 'Ch', 'ч': 'ch',
+      'Ш': 'Sh', 'ш': 'sh',
+      'Щ': 'Sh', 'щ': 'sh',
+      'Ъ': '', 'ъ': '',
+      'Ы': 'I', 'ы': 'i',
+      'Ь': '', 'ь': '',
+      'Э': 'E', 'э': 'e',
+      'Ю': 'Yu', 'ю': 'yu',
+      'Я': 'Ya', 'я': 'ya',
+      'Ў': 'O\'', 'ў': 'o\'',
+      'Қ': 'Q', 'қ': 'q',
+      'Ғ': 'G\'', 'ғ': 'g\'',
+      'Ҳ': 'H', 'ҳ': 'h',
+    };
+    
+    String result = text;
+    cyrillicToLatin.forEach((cyrillic, latin) {
+      result = result.replaceAll(cyrillic, latin);
+    });
+    
+    return result;
   }
 }

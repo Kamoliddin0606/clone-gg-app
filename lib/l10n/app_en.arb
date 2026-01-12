@@ -608,7 +608,9 @@
   "clearBalanceCache": "Clear Balance Cache",
   "clearBalanceCacheConfirm": "Clear all cached balance data?",
   "balanceCacheCleared": "Balance cache cleared",
-  "networkError": "Network error. Please check your connection.",
+  "fakturaNetworkError": "Network error. Please check your internet connection",
+  "tradePointTypesEmpty": "Trade point types list is empty. Please add trade points first.",
+  "tradePointTypesLoadError": "Error loading trade point types.",
   "timeoutError": "Request timed out. Please try again.",
   "dataNotFound": "Data not found.",
   "invalidDataError": "Invalid data received.",
@@ -826,7 +828,7 @@
   "createClientSyncing": "Syncing data...",
   "createClientCode": "Code",
   "createClientTerritoryWarningTitle": "Important Notice!",
-  "createClientTerritoryWarningMessage": "Client should only be created within your sales territory. Otherwise, there may be problems with ordering and delivery.",
+  "createClientTerritoryWarningMessage": "Client creation must be performed within their trading territory. Otherwise, problems may occur when creating an order and its delivery.",
   "createClientAutoFilledHint": "Auto-filled. Modify if necessary.",
   "createClientAddressDetected": "Address detected and auto-filled",
   "createClientSelectRegionError": "Please select a region",
@@ -2556,7 +2558,6 @@
       }
     }
   },
-  "fakturaNetworkError": "Network error",
   "fakturaInnEmpty": "TIN cannot be empty",
   "fakturaTokenRefreshError": "Token refresh error"
 }

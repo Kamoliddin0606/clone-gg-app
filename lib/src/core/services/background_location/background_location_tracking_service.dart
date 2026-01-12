@@ -594,11 +594,11 @@ class BackgroundLocationTrackingService {
   /// Qaytaradi: Future<bool> - muvaffaqiyatli yuborildi mi
   Future<bool> _sendLocationToServer(AgentLocationRecord record) async {
     try {
-      // Token olish
-      final token = await _tokenService.getValidAccessToken();
+      // Token olish (avtomatik qayta autentifikatsiya bilan)
+      final token = await _tokenService.ensureValidToken();
       if (token == null || token.isEmpty) {
         if (kDebugMode) {
-          print('BackgroundLocationTrackingService: No valid token, adding to offline queue');
+          print('BackgroundLocationTrackingService: No valid token after re-authentication attempt, adding to offline queue');
         }
         return false;
       }

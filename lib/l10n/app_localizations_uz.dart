@@ -1630,7 +1630,13 @@ class AppLocalizationsUz extends AppLocalizations {
   String get balanceCacheCleared => 'Balans keshi tozalandi';
 
   @override
-  String get networkError => 'Tarmoq xatosi. Internetni tekshiring.';
+  String get fakturaNetworkError => 'Tarmoq xatosi';
+
+  @override
+  String get tradePointTypesEmpty => 'Trade point types list is empty. Please add trade points first.';
+
+  @override
+  String get tradePointTypesLoadError => 'Error loading trade point types.';
 
   @override
   String get timeoutError => 'So\'rov vaqti tugadi. Qayta urinib ko\'ring.';
@@ -1904,6 +1910,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get creatingContract => 'Yaratilmoqda...';
 
   @override
+  String get networkError => 'Tarmoq xatosi. Internetni tekshiring.';
+
+  @override
   String get serverTimeout => 'Server bilan bog\'lanishda vaqt tugadi';
 
   @override
@@ -2039,7 +2048,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get createClientTerritoryWarningTitle => 'Muhim eslatma!';
 
   @override
-  String get createClientTerritoryWarningMessage => 'Mijoz faqat sizning savdo hududingiz ichida yaratilishi kerak. Aks holda buyurtma olish va yetkazib berishda muammolar yuzaga kelishi mumkin.';
+  String get createClientTerritoryWarningMessage => 'Mijoz yaratish uning savdo hududi doirasida amalga oshirilishi kerak. Aks holda buyurtma yaratish va uni yetkazib berishda muammolar yuzaga kelishi mumkin.';
 
   @override
   String get createClientAutoFilledHint => 'Avtomatik to\'ldirildi. Zarurat bo\'lsa o\'zgartiring.';
@@ -4176,9 +4185,6 @@ class AppLocalizationsUz extends AppLocalizations {
   String fakturaServerError(String statusCode) {
     return 'Server xatosi: $statusCode';
   }
-
-  @override
-  String get fakturaNetworkError => 'Tarmoq xatosi';
 
   @override
   String get fakturaInnEmpty => 'INN bo\'sh bo\'lishi mumkin emas';

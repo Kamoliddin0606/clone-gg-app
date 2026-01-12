@@ -185,7 +185,7 @@ Future<void> setupServiceLocator() async {
       username: '998909378702',
       password: '9118113',
       clientId: 'Gloriya',
-      clientSecret: 'nJCMrRxP9IDl8WwgQyrMs1YT4KAla869EHA89AQCik8OFJ7VV00hNgIuLaPQ',
+      clientSecret: '55iK94yR2LdwrVVZSqS07CRTIXFYMxu9Tw2CtVDFdsBFdLLdhiIQx9fkIAHc',
     ));
   }
   if (!sl.isRegistered<FakturaCompanyService>()) {

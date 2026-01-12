@@ -1630,7 +1630,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get balanceCacheCleared => 'Кэш баланса очищен';
 
   @override
-  String get networkError => 'Ошибка сети. Проверьте подключение.';
+  String get fakturaNetworkError => 'Ошибка сети';
+
+  @override
+  String get tradePointTypesEmpty => 'Список типов торговых точек пуст. Пожалуйста, сначала добавьте торговые точки.';
+
+  @override
+  String get tradePointTypesLoadError => 'Ошибка загрузки типов торговых точек.';
 
   @override
   String get timeoutError => 'Время запроса истекло. Попробуйте снова.';
@@ -1904,6 +1910,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get creatingContract => 'Создание...';
 
   @override
+  String get networkError => 'Network error';
+
+  @override
   String get serverTimeout => 'Время подключения к серверу истекло';
 
   @override
@@ -2039,7 +2048,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createClientTerritoryWarningTitle => 'Важное замечание!';
 
   @override
-  String get createClientTerritoryWarningMessage => 'Клиент должен быть создан только в пределах вашей территории продаж. В противном случае могут возникнуть проблемы с заказом и доставкой.';
+  String get createClientTerritoryWarningMessage => 'Создание клиента должно выполняться в пределах его торговой территории. В противном случае возможны проблемы при создании заказа и его доставке.';
 
   @override
   String get createClientAutoFilledHint => 'Автозаполнено. При необходимости измените.';
@@ -4176,9 +4185,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String fakturaServerError(String statusCode) {
     return 'Ошибка сервера: $statusCode';
   }
-
-  @override
-  String get fakturaNetworkError => 'Ошибка сети';
 
   @override
   String get fakturaInnEmpty => 'ИНН не может быть пустым';

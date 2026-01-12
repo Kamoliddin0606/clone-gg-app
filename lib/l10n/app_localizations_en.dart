@@ -1630,7 +1630,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get balanceCacheCleared => 'Balance cache cleared';
 
   @override
-  String get networkError => 'Network error';
+  String get fakturaNetworkError => 'Network error. Please check your internet connection';
+
+  @override
+  String get tradePointTypesEmpty => 'Trade point types list is empty. Please add trade points first.';
+
+  @override
+  String get tradePointTypesLoadError => 'Error loading trade point types.';
 
   @override
   String get timeoutError => 'Request timed out. Please try again.';
@@ -1904,6 +1910,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get creatingContract => 'Creating...';
 
   @override
+  String get networkError => 'Network error';
+
+  @override
   String get serverTimeout => 'Server connection timed out';
 
   @override
@@ -2039,7 +2048,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createClientTerritoryWarningTitle => 'Important Notice!';
 
   @override
-  String get createClientTerritoryWarningMessage => 'Client should only be created within your sales territory. Otherwise, there may be problems with ordering and delivery.';
+  String get createClientTerritoryWarningMessage => 'Client creation must be performed within their trading territory. Otherwise, problems may occur when creating an order and its delivery.';
 
   @override
   String get createClientAutoFilledHint => 'Auto-filled. Modify if necessary.';
@@ -4176,9 +4185,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String fakturaServerError(String statusCode) {
     return 'Server error: $statusCode';
   }
-
-  @override
-  String get fakturaNetworkError => 'Network error';
 
   @override
   String get fakturaInnEmpty => 'TIN cannot be empty';

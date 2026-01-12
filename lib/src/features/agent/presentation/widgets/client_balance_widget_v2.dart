@@ -329,6 +329,15 @@ class _ClientBalanceContent extends StatelessWidget {
             ? Colors.green
             : cs.onSurface;
 
+    String statusText;
+    if (isDebtor) {
+      statusText = l10n?.clientIsDebtor as String? ?? 'Mijoz qarzdor';
+    } else if (hasOverpayment) {
+      statusText = l10n?.clientHasOverpayment as String? ?? 'Ortiqcha to\'lov';
+    } else {
+      statusText = l10n?.balanceIsZero ?? 'Balans nolda';
+    }
+
     return InkWell(
       onTap: () => _openBalanceDetails(context, balance),
       borderRadius: BorderRadius.circular(8),
@@ -359,11 +368,7 @@ class _ClientBalanceContent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isDebtor
-                          ? (l10n?.clientIsDebtor ?? 'Mijoz qarzdor')
-                          : hasOverpayment
-                              ? (l10n?.clientHasOverpayment ?? 'Ortiqcha to\'lov')
-                              : (l10n?.balanceIsZero ?? 'Balans nolda'),
+                      statusText,
                       style: TextStyle(
                         fontSize: 13,
                         color: balanceColor,

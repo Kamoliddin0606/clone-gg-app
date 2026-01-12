@@ -1458,19 +1458,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncStatusIdle => 'Waiting';
 
   @override
-  String get syncStatusProducts => 'Updating products';
+  String get syncStatusProducts => 'Syncing products';
 
   @override
-  String get syncStatusBalances => 'Updating balances';
+  String get syncStatusBalances => 'Syncing balances';
 
   @override
-  String get syncStatusOrders => 'Updating orders';
+  String get syncStatusOrders => 'Syncing orders';
 
   @override
-  String get syncStatusCompleted => 'Updated';
+  String get syncStatusCompleted => 'Sync completed';
 
   @override
-  String get syncStatusError => 'Error';
+  String get syncStatusError => 'Sync error';
 
   @override
   String get syncInProgress => 'Syncing...';
@@ -1485,22 +1485,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncCompleted => 'Data updated successfully';
 
   @override
-  String get clientBalance => 'Client Balance';
+  String get clientBalance => 'Client balance';
 
   @override
   String get clientBalanceDetails => 'Balance Details';
 
   @override
-  String get clientIsDebtor => 'Client is debtor';
+  String clientIsDebtor(String amount) {
+    return 'Client is debtor. Total debt: $amount sum';
+  }
 
   @override
-  String get clientHasOverpayment => 'Overpayment available';
+  String clientHasOverpayment(String amount) {
+    return 'Client has overpaid. Overpayment: $amount sum';
+  }
 
   @override
   String get balanceIsZero => 'Balance is zero';
 
   @override
-  String get totalDebt => 'Total Debt';
+  String get totalDebt => 'Total debt';
 
   @override
   String get totalPayment => 'Total Payment';
@@ -1509,13 +1513,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalOrder => 'Total Order';
 
   @override
-  String get unpaidOrders => 'Unpaid Orders';
+  String unpaidOrders(int count) {
+    return '$count unpaid';
+  }
 
   @override
-  String get overdueOrders => 'Overdue Orders';
+  String overdueOrders(int count) {
+    return '$count overdue';
+  }
 
   @override
-  String get balanceStatus => 'Balance Status';
+  String get balanceStatus => 'Balance status';
 
   @override
   String get contractsTab => 'Contracts';
@@ -1553,11 +1561,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String balanceUpdated(String date) {
-    return 'Updated: $date';
+    return 'Updated';
   }
 
   @override
-  String get noBalanceData => 'No balance data found';
+  String get noBalanceData => 'Balance data not found';
 
   @override
   String get balanceLoadError => 'Error loading balance';
@@ -1573,7 +1581,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String contractsCount(int count) {
-    return 'Contracts count: $count';
+    return '$count contracts';
   }
 
   @override
@@ -1747,8 +1755,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String projectLabel(String name) {
-    return 'Project: $name';
+  String projectLabel(String project) {
+    return 'Project: $project';
   }
 
   @override
@@ -1827,7 +1835,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newContract => 'New contract';
 
   @override
-  String get createContract => 'Create Contract';
+  String get createContract => 'Create contract';
 
   @override
   String get createContractTitle => 'New Contract';
@@ -2194,7 +2202,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String errorOccurred(String error) {
-    return 'An error occurred';
+    return 'Error occurred';
   }
 
   @override
@@ -2281,7 +2289,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmLocationTitle => 'Confirm Location';
 
   @override
-  String get orderDetailsNotFound => 'Order details not found';
+  String get orderDetailsNotFound => 'Order details not found.';
 
   @override
   String get unknown => 'Unknown';
@@ -2402,7 +2410,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get orderDetailsTitle => 'Order Details';
+  String get orderDetailsTitle => 'Order details';
 
   @override
   String get camera => 'Camera';
@@ -2634,28 +2642,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get setAsMainImage => 'Set as main image';
 
   @override
-  String get clientNameLabel => 'Client Name';
+  String get clientNameLabel => 'Client name';
 
   @override
-  String get orderNumberLabel => 'Order Number';
+  String get orderNumberLabel => 'Order number';
 
   @override
-  String get orderDateLabel => 'Order Date';
+  String get orderDateLabel => 'Order date';
 
   @override
-  String get orderTotalLabel => 'Order Total';
+  String get orderTotalLabel => 'Order total';
 
   @override
-  String get mainStatusLabel => 'Main Status';
+  String get mainStatusLabel => 'Main status';
 
   @override
-  String get statusCodeLabel => 'Status Code';
+  String get statusCodeLabel => 'Status code';
 
   @override
-  String get totalProductsLabel => 'Total Products';
+  String get totalProductsLabel => 'Total products';
 
   @override
-  String get productNameLabel => 'Product Name';
+  String get productNameLabel => 'Product name';
 
   @override
   String get articleLabel => 'Article';
@@ -2670,10 +2678,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get amountLabel => 'Amount';
 
   @override
-  String get priceTypeLabel => 'Price Type';
+  String get priceTypeLabel => 'Price type';
 
   @override
-  String get noProductsInOrder => 'No products in this order';
+  String get noProductsInOrder => 'No products in order';
 
   @override
   String get productListEmpty => 'Product list is empty';
@@ -2957,7 +2965,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monthlyOkbAkb => 'Monthly OKB/AKB';
 
   @override
-  String get contractsNotFound => 'Contracts not found';
+  String get contractsNotFound => 'No contracts found';
 
   @override
   String get contractsListRefreshed => 'Contracts list refreshed';
@@ -3007,7 +3015,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lastVisits => 'Last visits';
 
   @override
-  String get dataLoading => 'Data loading...';
+  String get dataLoading => 'Loading data...';
 
   @override
   String get successful => 'Successful';
@@ -3111,7 +3119,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contractStatusExpired => 'Expired';
 
   @override
-  String get contractStatusPending => 'Pending';
+  String get contractStatusPending => 'Not approved';
 
   @override
   String get contractStatusSuspended => 'Suspended';
@@ -3258,8 +3266,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionPhotosVideosPurpose => 'Work with photos, videos and media files';
 
   @override
-  String permissionRequired(String permission) {
-    return '$permission required';
+  String permissionRequired(String title) {
+    return '$title required';
   }
 
   @override
@@ -3346,7 +3354,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minimumIntervalIs60 => 'Minimum interval is 60 minutes';
 
   @override
-  String get justNow => 'just now';
+  String get justNow => 'Just now';
 
   @override
   String minutesAgo(int minutes) {
@@ -3428,4 +3436,705 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get footerNoteText => 'Data imported from Telegram report. You can change the text to switch to a new source — UI will be updated.';
+
+  @override
+  String get syncStepCheckingUser => 'Checking user...';
+
+  @override
+  String get syncStepClearingData => 'Clearing old data...';
+
+  @override
+  String get syncStepSyncingKpi => 'Loading KPI data...';
+
+  @override
+  String get syncStepSyncingClients => 'Loading clients list...';
+
+  @override
+  String get syncStepSyncingProducts => 'Loading products...';
+
+  @override
+  String get syncStepSyncingPriceTypes => 'Loading price types...';
+
+  @override
+  String get syncStepSyncingBusinessRegions => 'Loading business regions...';
+
+  @override
+  String get syncStepSyncingUserWarehouses => 'Loading user warehouses...';
+
+  @override
+  String get syncStepSyncingProductPrices => 'Loading product prices...';
+
+  @override
+  String get syncStepSyncingProductBalances => 'Loading product balances...';
+
+  @override
+  String get syncStepSyncingClientContracts => 'Loading client contracts...';
+
+  @override
+  String get syncStepUpdatingClientContractStatus => 'Updating client contract statuses...';
+
+  @override
+  String get syncStepSyncingOrderStatuses => 'Loading order statuses...';
+
+  @override
+  String get syncStepSyncingOrders => 'Loading orders...';
+
+  @override
+  String get syncStepSyncingSalesReqPermissions => 'Loading agent permissions...';
+
+  @override
+  String get syncStepSyncingPlannedRoutes => 'Loading planned routes...';
+
+  @override
+  String get syncStepSyncingUserOrganizations => 'Loading user organizations...';
+
+  @override
+  String get syncStepSyncingPromotions => 'Loading promotions...';
+
+  @override
+  String get syncStepSyncingMapTokens => 'Loading map tokens...';
+
+  @override
+  String get syncStepSyncingReports => 'Loading reports...';
+
+  @override
+  String get syncStepSyncingThumbnails => 'Loading images...';
+
+  @override
+  String get syncStepCompleted => 'Data updated!';
+
+  @override
+  String get syncStepError => 'An error occurred';
+
+  @override
+  String get syncSuccessTitle => 'Success!';
+
+  @override
+  String get syncUpdatingTitle => 'Updating data...';
+
+  @override
+  String get paymentRequiredError => 'Payment required. Please check your subscription.';
+
+  @override
+  String get authenticationError => 'Authentication error. Please login again.';
+
+  @override
+  String get accessForbiddenError => 'Access forbidden. You don\'t have permission.';
+
+  @override
+  String get serviceNotFoundError => 'Service not found. Please contact support.';
+
+  @override
+  String get serverUnavailableError => 'Server unavailable. Please try again later.';
+
+  @override
+  String get dataUpdateError => 'Error updating data. Using cached data.';
+
+  @override
+  String get syncStatusErrors => 'Errors';
+
+  @override
+  String get syncStatusSynced => 'Synced';
+
+  @override
+  String get syncStatusPartial => 'Partial';
+
+  @override
+  String get syncStatusNotSynced => 'Not synced';
+
+  @override
+  String tablesOfTotalSynced(int synced, int total) {
+    return '$synced of $total tables synced';
+  }
+
+  @override
+  String get tablesInThisGroup => 'Tables in this group';
+
+  @override
+  String get yesterdayText => 'Yesterday';
+
+  @override
+  String get neverSynced => 'Never synced';
+
+  @override
+  String get tableEmpty => 'Table is empty';
+
+  @override
+  String recordsCount(int count) {
+    return '$count records';
+  }
+
+  @override
+  String lastSyncLabel(String time) {
+    return 'Last sync: $time';
+  }
+
+  @override
+  String get syncTable => 'Sync table';
+
+  @override
+  String get dependencies => 'Dependencies';
+
+  @override
+  String get willCascadeTo => 'Will cascade to';
+
+  @override
+  String get tradingPointsLabel => 'Trading points';
+
+  @override
+  String get tradingPointsNotAvailable => 'Trading points not available';
+
+  @override
+  String get dateRangeLabel => 'Date range';
+
+  @override
+  String get allDatesLabel => 'All dates';
+
+  @override
+  String get clearLabel => 'Clear';
+
+  @override
+  String get statusLabel => 'Status';
+
+  @override
+  String get statusAll => 'All';
+
+  @override
+  String get statusActive => 'Active';
+
+  @override
+  String get statusInactive => 'Inactive';
+
+  @override
+  String get statusExpired => 'Expired';
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String clientContractsCount(String name, int count) {
+    return '$name client\'s contracts ($count)';
+  }
+
+  @override
+  String refreshError(String error) {
+    return 'Refresh error';
+  }
+
+  @override
+  String get dataTab => 'Details';
+
+  @override
+  String get documentTab => 'Document';
+
+  @override
+  String clientLabel(String name) {
+    return 'Client: $name';
+  }
+
+  @override
+  String get startDateLabel => 'Start date';
+
+  @override
+  String get endDateLabel => 'End date';
+
+  @override
+  String get unknownDate => 'Unknown';
+
+  @override
+  String get statusAndType => 'Status and type';
+
+  @override
+  String get typeLabel2 => 'Type';
+
+  @override
+  String get additionalInfo => 'Additional information';
+
+  @override
+  String get certificateLimited => 'Certificate limited';
+
+  @override
+  String get yesText => 'Yes';
+
+  @override
+  String get noText => 'No';
+
+  @override
+  String get referenceNumberLabel => 'Reference number';
+
+  @override
+  String get certificateNumberLabel => 'Certificate number';
+
+  @override
+  String get passportNumberLabel => 'Passport number';
+
+  @override
+  String get districtCodeLabel => 'District code';
+
+  @override
+  String get districtNameLabel => 'District name';
+
+  @override
+  String get projectCodeLabel => 'Project code';
+
+  @override
+  String get creditLabel => 'Credit';
+
+  @override
+  String get fullPaymentLabel => '100% payment';
+
+  @override
+  String get uzbekLanguage => 'Uzbek';
+
+  @override
+  String get russianLanguage => 'Russian';
+
+  @override
+  String get pdfPreparing => 'Preparing PDF...';
+
+  @override
+  String get tapToReveal => 'Tap';
+
+  @override
+  String get warehousesTitle => 'Warehouses';
+
+  @override
+  String get warehousesNotFound => 'Warehouses not found';
+
+  @override
+  String warehousesCount(int count) {
+    return 'Warehouses count: $count';
+  }
+
+  @override
+  String createdLabel(String date) {
+    return 'Created: $date';
+  }
+
+  @override
+  String updatedLabel(String date) {
+    return 'Updated: $date';
+  }
+
+  @override
+  String get visitCompletedToday => 'Visit completed today';
+
+  @override
+  String get visitExpectedToday => 'Visit expected today';
+
+  @override
+  String get visitNotPlannedToday => 'Visit not planned today';
+
+  @override
+  String visitOrderLabel(int number) {
+    return 'Visit order: $number';
+  }
+
+  @override
+  String get selectClientTitle => 'Select client';
+
+  @override
+  String clientsAvailable(int count) {
+    return '$count clients available';
+  }
+
+  @override
+  String get searchByNameCodeInn => 'Name, code, INN, phone, type...';
+
+  @override
+  String get searchInCyrillicOrLatin => 'Search in Cyrillic or Latin';
+
+  @override
+  String foundCount(int count) {
+    return '$count found';
+  }
+
+  @override
+  String get clientNotFound => 'Client not found';
+
+  @override
+  String get tryDifferentSearch => 'Try a different search term';
+
+  @override
+  String get confirmButton => 'Confirm';
+
+  @override
+  String get cancelButton => 'Cancel';
+
+  @override
+  String get newContractTitle => 'New contract';
+
+  @override
+  String get fillAllFields => 'Fill in all fields';
+
+  @override
+  String get contractTypesLoadError => 'Error loading contract types';
+
+  @override
+  String get pleaseSelectClient => 'Please select a client';
+
+  @override
+  String get pleaseSelectContractType => 'Please select a contract type';
+
+  @override
+  String get contractCreatedSuccessfully => 'Contract created successfully';
+
+  @override
+  String get contractCreationError => 'Error creating contract';
+
+  @override
+  String get documentInfoSection => 'Document information';
+
+  @override
+  String get regionInfoSection => 'Region information';
+
+  @override
+  String get referenceNumberField => 'Reference number';
+
+  @override
+  String get termLabel => 'Term';
+
+  @override
+  String get certificateNumberField => 'Certificate number';
+
+  @override
+  String get certificateUnlimitedField => 'Certificate unlimited';
+
+  @override
+  String get passportNumberField => 'Passport number';
+
+  @override
+  String get clientCodeLabel => 'Client code';
+
+  @override
+  String get organizationCodeLabel => 'Organization code';
+
+  @override
+  String get courierLabel => 'Courier';
+
+  @override
+  String get vehicleLabel => 'Vehicle';
+
+  @override
+  String get licensePlateLabel => 'License plate';
+
+  @override
+  String get supervisorCommentLabel => 'Supervisor comment';
+
+  @override
+  String get logistCommentLabel => 'Logist comment';
+
+  @override
+  String get agentCommentLabel => 'Agent comment';
+
+  @override
+  String get networkErrorMessage => 'Network error. Check your internet connection.';
+
+  @override
+  String get serverTimeoutMessage => 'Server connection timed out.';
+
+  @override
+  String get orderDetailsLoadError => 'Error loading order details.';
+
+  @override
+  String dataLoadFailed(String error) {
+    return 'Data loading failed: $error';
+  }
+
+  @override
+  String get brands => 'Brands';
+
+  @override
+  String get fileStoragePermission => 'File storage permission';
+
+  @override
+  String get fileStorageDescriptionAndroid13 => 'Select folder to save app data';
+
+  @override
+  String get fileStorageDescription => 'To save and load app data';
+
+  @override
+  String get fileStoragePurposeAndroid13 => 'Select folder to save images, documents and data';
+
+  @override
+  String get fileStoragePurpose => 'Save images, documents and data';
+
+  @override
+  String get locationPermissionTitle => 'Location permission';
+
+  @override
+  String get locationPermissionDescription => 'To sort trading points by distance';
+
+  @override
+  String get locationPermissionPurpose => 'Show location on map and calculate distance';
+
+  @override
+  String get alwaysLocationPermissionTitle => 'Always location permission';
+
+  @override
+  String get alwaysLocationPermissionDescription => 'To detect location when app is in background';
+
+  @override
+  String get alwaysLocationPermissionPurpose => 'Background service and notifications';
+
+  @override
+  String get cameraPermissionTitle => 'Camera permission';
+
+  @override
+  String get cameraPermissionDescription => 'To take photos and scan barcodes';
+
+  @override
+  String get cameraPermissionPurpose => 'Take photos of products and trading points';
+
+  @override
+  String get microphonePermissionTitle => 'Microphone permission';
+
+  @override
+  String get microphonePermissionDescription => 'For voice recording and audio messages';
+
+  @override
+  String get microphonePermissionPurpose => 'Voice notes and audio records';
+
+  @override
+  String get notificationPermissionTitle => 'Notification permission';
+
+  @override
+  String get notificationPermissionDescription => 'To show important messages';
+
+  @override
+  String get notificationPermissionPurpose => 'Reminders, news and notifications';
+
+  @override
+  String get audioPermissionTitle => 'Music and audio permission';
+
+  @override
+  String get audioPermissionDescription => 'To work with audio files';
+
+  @override
+  String get audioPermissionPurpose => 'Music, audio messages and voice files';
+
+  @override
+  String get photosAndVideosPermissionTitle => 'Photos and videos permission';
+
+  @override
+  String get photosAndVideosPermissionDescription => 'To work with media files';
+
+  @override
+  String get photosAndVideosPermissionPurpose => 'Work with photos, videos and media files';
+
+  @override
+  String permissionRequiredMessage(String description) {
+    return '$description. Please grant permission in app settings.';
+  }
+
+  @override
+  String get goToSettingsButton => 'Go to settings';
+
+  @override
+  String get grantPermissionButton => 'Grant permission';
+
+  @override
+  String get checkingPermission => 'Checking...';
+
+  @override
+  String get permissionCheckTitle => 'Permission check';
+
+  @override
+  String get permissionCheckMessage => 'The app needs the following permissions to work properly:';
+
+  @override
+  String get permissionSaveData => 'Save data';
+
+  @override
+  String get permissionMapDistance => 'Map and distance calculation';
+
+  @override
+  String get permissionTakePhotos => 'Take photos';
+
+  @override
+  String get permissionRecordVoice => 'Record voice';
+
+  @override
+  String get permissionShowMessages => 'Show messages';
+
+  @override
+  String get permissionLimitedMode => 'Without permissions the app will work in limited mode.';
+
+  @override
+  String purposeLabel(String purpose) {
+    return 'Purpose: $purpose';
+  }
+
+  @override
+  String get grantPermissionQuestion => 'Do you want to grant permission?';
+
+  @override
+  String get serviceInitError => 'Error initializing services';
+
+  @override
+  String get clientInnNotAvailable => 'Client INN not available';
+
+  @override
+  String get clientBalanceZero => 'Client balance is zero.';
+
+  @override
+  String get balanceDataNotFound => 'Balance data not found';
+
+  @override
+  String updatedAtTime(String time) {
+    return 'Updated: $time';
+  }
+
+  @override
+  String get clientDebtorStatus => 'Client is debtor';
+
+  @override
+  String get overpaymentStatus => 'Overpayment';
+
+  @override
+  String get balanceZeroStatus => 'Balance is zero';
+
+  @override
+  String get savingStatus => 'Saving...';
+
+  @override
+  String get unsavedChangesStatus => 'Unsaved changes';
+
+  @override
+  String get offlineStatus => 'Offline';
+
+  @override
+  String pendingSyncCount(int count) {
+    return '$count pending sync';
+  }
+
+  @override
+  String get allSyncedStatus => 'All synced';
+
+  @override
+  String get autoSaving => 'Auto-saving...';
+
+  @override
+  String get savingStepData => 'Saving step data...';
+
+  @override
+  String get mandatoryLabel => 'Mandatory';
+
+  @override
+  String get optionalLabel => 'Optional';
+
+  @override
+  String get currentLabel => 'Current';
+
+  @override
+  String get completedLabel => 'Completed';
+
+  @override
+  String get skippedLabel => 'Skipped';
+
+  @override
+  String notesLabel(String notes) {
+    return 'Notes: $notes';
+  }
+
+  @override
+  String reasonLabel(String reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
+  String get reasonHint => 'Reason';
+
+  @override
+  String get syncStarting => 'Starting sync...';
+
+  @override
+  String get weekdayMon => 'Mo';
+
+  @override
+  String get weekdayTue => 'Tu';
+
+  @override
+  String get weekdayWed => 'We';
+
+  @override
+  String get weekdayThu => 'Th';
+
+  @override
+  String get weekdayFri => 'Fr';
+
+  @override
+  String get weekdaySat => 'Sa';
+
+  @override
+  String get weekdaySun => 'Su';
+
+  @override
+  String get copyLabel => 'Copy';
+
+  @override
+  String get reloadLabel => 'Reload';
+
+  @override
+  String get refreshContractTypesAndRegions => 'Refresh contract types and regions';
+
+  @override
+  String get orderStatusNew => 'New';
+
+  @override
+  String get orderStatusConfirmed => 'Confirmed';
+
+  @override
+  String get orderStatusDelivering => 'In delivery';
+
+  @override
+  String get orderStatusReturnRequested => 'Return requested';
+
+  @override
+  String get orderStatusCancelled => 'Cancelled';
+
+  @override
+  String get orderStatusDeliveredUnpaid => 'Delivered, unpaid';
+
+  @override
+  String get orderStatusDeliveredPartiallyPaid => 'Delivered, partially paid';
+
+  @override
+  String get orderStatusUnknown => 'Unknown';
+
+  @override
+  String get filterTooltip => 'Filter';
+
+  @override
+  String get fullscreenTooltip => 'Fullscreen';
+
+  @override
+  String get refusalReasonClientNotAvailable => 'Client not available';
+
+  @override
+  String get refusalReasonNoTime => 'No time';
+
+  @override
+  String get refusalReasonProductNotNeeded => 'Product not needed';
+
+  @override
+  String get refusalReasonPriceNotSuitable => 'Price not suitable';
+
+  @override
+  String get refusalReasonWorksWithOtherSupplier => 'Works with other supplier';
+
+  @override
+  String get refusalReasonOther => 'Other reason';
+
+  @override
+  String get apiKeyStatusConfigured => 'configured';
+
+  @override
+  String get apiKeyStatusNotConfigured => 'not configured';
+
+  @override
+  String get apiKeyStatusNotRequired => 'key not required';
+
+  @override
+  String get apiKeyStatusError => 'error';
 }

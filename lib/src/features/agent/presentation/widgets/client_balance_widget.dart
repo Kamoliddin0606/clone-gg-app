@@ -93,7 +93,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Xizmatlarni ishga tushirishda xatolik';
+          _errorMessage = AppLocalizations.of(context)?.serviceInitError ?? 'Error initializing services';
         });
       }
     }
@@ -104,7 +104,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
     if (_balanceService == null) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Balans xizmati mavjud emas';
+        _errorMessage = AppLocalizations.of(context)?.balanceServiceNotAvailable ?? 'Balance service not available';
       });
       return;
     }
@@ -113,7 +113,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
     if (inn.isEmpty) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Mijoz INN raqami mavjud emas';
+        _errorMessage = AppLocalizations.of(context)?.clientInnNotAvailable ?? 'Client INN not available';
       });
       return;
     }
@@ -170,7 +170,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Balansni yuklashda xatolik';
+          _errorMessage = AppLocalizations.of(context)?.balanceLoadError ?? 'Error loading balance';
         });
       }
     }
@@ -252,11 +252,12 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
     if (_balance == null) return;
 
     final isDebtor = _balance!.isDebtor;
+    final l10n = AppLocalizations.of(context);
     final message = isDebtor
-        ? 'Mijoz qarzdor. Jami qarzdorlik: ${_formatCurrency(_balance!.absoluteBalance)} so\'m'
+        ? l10n?.clientIsDebtor(_formatCurrency(_balance!.absoluteBalance)) ?? 'Client is debtor. Total debt: ${_formatCurrency(_balance!.absoluteBalance)} sum'
         : _balance!.hasOverpayment
-            ? 'Mijoz ortiqcha to\'lov qilgan. Ortiqcha: ${_formatCurrency(_balance!.absoluteBalance)} so\'m'
-            : 'Mijoz balansi nolda.';
+            ? l10n?.clientHasOverpayment(_formatCurrency(_balance!.absoluteBalance)) ?? 'Client has overpaid. Overpayment: ${_formatCurrency(_balance!.absoluteBalance)} sum'
+            : l10n?.clientBalanceZero ?? 'Client balance is zero.';
 
     showDialog(
       context: context,
@@ -337,7 +338,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Mijoz balansi',
+                AppLocalizations.of(context)?.clientBalance ?? 'Client balance',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -461,7 +462,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _errorMessage ?? 'Xatolik yuz berdi',
+              _errorMessage ?? AppLocalizations.of(context)?.errorOccurredTitle ?? 'Error occurred',
               style: const TextStyle(color: Colors.red, fontSize: 13),
             ),
           ),
@@ -483,7 +484,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
           Icon(Icons.info_outline, color: cs.outline, size: 20),
           const SizedBox(width: 8),
           Text(
-            'Balans ma\'lumotlari topilmadi',
+            AppLocalizations.of(context)?.balanceDataNotFound ?? 'Balance data not found',
             style: TextStyle(color: cs.outline, fontSize: 13),
           ),
         ],
@@ -516,7 +517,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
               Icon(Icons.update, size: 14, color: cs.outline),
               const SizedBox(width: 4),
               Text(
-                'Yangilangan: ${_formatDateTime(balance.lastUpdated)}',
+                AppLocalizations.of(context)?.updatedAtTime(_formatDateTime(balance.lastUpdated)) ?? 'Updated: ${_formatDateTime(balance.lastUpdated)}',
                 style: TextStyle(
                   fontSize: 11,
                   color: cs.outline,
@@ -538,10 +539,10 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
                     // Holat xabari
                     Text(
                       isDebtor
-                          ? 'Mijoz qarzdor'
+                          ? AppLocalizations.of(context)?.clientDebtorStatus ?? 'Client is debtor'
                           : hasOverpayment
-                              ? 'Ortiqcha to\'lov'
-                              : 'Balans nolda',
+                              ? AppLocalizations.of(context)?.overpaymentStatus ?? 'Overpayment'
+                              : AppLocalizations.of(context)?.balanceZeroStatus ?? 'Balance is zero',
                       style: TextStyle(
                         fontSize: 13,
                         color: balanceColor,
@@ -580,7 +581,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
                 if (balance.unpaidOrdersCount > 0) ...[
                   _buildInfoChip(
                     icon: Icons.pending_outlined,
-                    label: '${balance.unpaidOrdersCount} to\'lanmagan',
+                    label: AppLocalizations.of(context)?.unpaidOrders(balance.unpaidOrdersCount) ?? '${balance.unpaidOrdersCount} unpaid',
                     color: Colors.orange,
                   ),
                   const SizedBox(width: 8),
@@ -588,7 +589,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
                 if (balance.overdueOrdersCount > 0)
                   _buildInfoChip(
                     icon: Icons.warning_amber_rounded,
-                    label: '${balance.overdueOrdersCount} muddati o\'tgan',
+                    label: AppLocalizations.of(context)?.overdueOrders(balance.overdueOrdersCount) ?? '${balance.overdueOrdersCount} overdue',
                     color: Colors.red,
                   ),
               ],

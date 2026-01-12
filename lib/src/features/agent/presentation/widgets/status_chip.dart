@@ -25,7 +25,7 @@ class StatusChip extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 8),
-        Text(statusText(status), style: TextStyle(fontSize: 12, color: onColor.withOpacity(0.9))),
+        Text(statusText(status, context), style: TextStyle(fontSize: 12, color: onColor.withOpacity(0.9))),
       ]),
     );
   }

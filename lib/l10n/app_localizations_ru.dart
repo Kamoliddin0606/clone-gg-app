@@ -1111,7 +1111,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mapConfiguration => 'Конфигурация карт';
 
   @override
-  String get visitProgress => 'Процесс посещения';
+  String get visitProgress => 'Прогресс визита';
 
   @override
   String get visitStepNumber => 'Шаг посещения';
@@ -1147,7 +1147,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get skipStep => 'Пропустить шаг';
 
   @override
-  String get confirmCompletion => 'Подтвердить завершение';
+  String get confirmCompletion => 'Подтвердите завершение';
 
   @override
   String get stepCompletedSuccessfully => 'Шаг успешно завершен';
@@ -1458,19 +1458,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncStatusIdle => 'Ожидание';
 
   @override
-  String get syncStatusProducts => 'Обновление товаров';
+  String get syncStatusProducts => 'Синхронизация товаров';
 
   @override
-  String get syncStatusBalances => 'Обновление остатков';
+  String get syncStatusBalances => 'Синхронизация остатков';
 
   @override
-  String get syncStatusOrders => 'Обновление заказов';
+  String get syncStatusOrders => 'Синхронизация заказов';
 
   @override
-  String get syncStatusCompleted => 'Обновлено';
+  String get syncStatusCompleted => 'Синхронизация завершена';
 
   @override
-  String get syncStatusError => 'Ошибка';
+  String get syncStatusError => 'Ошибка синхронизации';
 
   @override
   String get syncInProgress => 'Синхронизация...';
@@ -1491,16 +1491,20 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clientBalanceDetails => 'Детали баланса';
 
   @override
-  String get clientIsDebtor => 'Клиент должник';
+  String clientIsDebtor(String amount) {
+    return 'Клиент должник. Общий долг: $amount сум';
+  }
 
   @override
-  String get clientHasOverpayment => 'Переплата';
+  String clientHasOverpayment(String amount) {
+    return 'Клиент переплатил. Переплата: $amount сум';
+  }
 
   @override
   String get balanceIsZero => 'Баланс равен нулю';
 
   @override
-  String get totalDebt => 'Общая задолженность';
+  String get totalDebt => 'Общий долг';
 
   @override
   String get totalPayment => 'Общая оплата';
@@ -1509,10 +1513,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get totalOrder => 'Общий заказ';
 
   @override
-  String get unpaidOrders => 'Неоплаченные заказы';
+  String unpaidOrders(int count) {
+    return '$count неоплачено';
+  }
 
   @override
-  String get overdueOrders => 'Просроченные заказы';
+  String overdueOrders(int count) {
+    return '$count просрочено';
+  }
 
   @override
   String get balanceStatus => 'Статус баланса';
@@ -1553,7 +1561,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String balanceUpdated(String date) {
-    return 'Обновлено: $date';
+    return 'Обновлено';
   }
 
   @override
@@ -1573,7 +1581,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String contractsCount(int count) {
-    return 'Количество договоров: $count';
+    return '$count контрактов';
   }
 
   @override
@@ -1710,10 +1718,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get noDataAvailable => 'Данные отсутствуют';
+  String get noDataAvailable => 'Нет данных';
 
   @override
-  String get noContractsFound => 'Договоры не найдены';
+  String get noContractsFound => 'Контракты не найдены';
 
   @override
   String get noOrdersFound => 'Заказы не найдены';
@@ -1722,7 +1730,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paidLabel => 'Оплачено';
 
   @override
-  String get debtLabelChart => 'Задолженность';
+  String get debtLabelChart => 'Долг';
 
   @override
   String get paymentLabel => 'Оплата';
@@ -1731,7 +1739,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get partialLabel => 'Частично';
 
   @override
-  String get unpaidLabel => 'Не оплачено';
+  String get unpaidLabel => 'Неоплачено';
 
   @override
   String countItems(int count) {
@@ -1739,7 +1747,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get contractDialog => 'Договор';
+  String get contractDialog => 'Контракт';
 
   @override
   String codeLabel(String code) {
@@ -1747,8 +1755,8 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String projectLabel(String name) {
-    return 'Проект: $name';
+  String projectLabel(String project) {
+    return 'Проект: $project';
   }
 
   @override
@@ -2241,7 +2249,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get xmlRequestLabel => 'XML Запрос';
+  String get xmlRequestLabel => 'XML запрос';
 
   @override
   String get xmlCopied => 'XML скопирован';
@@ -2281,7 +2289,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get confirmLocationTitle => 'Подтвердить местоположение';
 
   @override
-  String get orderDetailsNotFound => 'Детали заказа не найдены';
+  String get orderDetailsNotFound => 'Детали заказа не найдены.';
 
   @override
   String get unknown => 'Неизвестно';
@@ -2438,29 +2446,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sendPdf => 'Отправить PDF';
 
   @override
-  String get printFeatureComingSoon => 'Функция печати скоро будет добавлена';
+  String get printFeatureComingSoon => 'Функция печати скоро появится';
 
   @override
   String get print => 'Печать';
 
   @override
   String stepCompleted(String stepName) {
-    return '$stepName завершено';
+    return '$stepName завершен';
   }
 
   @override
   String stepSkip(String stepName) {
-    return '$stepName пропущено';
+    return 'Пропуск $stepName';
   }
 
   @override
-  String get syncWithDependencies => 'Синхронизация с зависимостями';
+  String get syncWithDependencies => 'Синхронизировать с зависимостями';
 
   @override
   String get recommended => 'Рекомендуется';
 
   @override
-  String get syncTableOnly => 'Синхронизация только таблицы';
+  String get syncTableOnly => 'Синхронизировать только таблицу';
 
   @override
   String get syncWarning => 'Может не удаться, если зависимости не синхронизированы';
@@ -2484,7 +2492,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get continueAction => 'Продолжить';
 
   @override
-  String get previousStepsMustBeCompleted => 'Предыдущие шаги должны быть выполнены';
+  String get previousStepsMustBeCompleted => 'Предыдущие шаги должны быть завершены';
 
   @override
   String get reload => 'Перезагрузить';
@@ -2655,7 +2663,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get totalProductsLabel => 'Всего товаров';
 
   @override
-  String get productNameLabel => 'Название товара';
+  String get productNameLabel => 'Наименование товара';
 
   @override
   String get articleLabel => 'Артикул';
@@ -2673,7 +2681,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get priceTypeLabel => 'Тип цены';
 
   @override
-  String get noProductsInOrder => 'В этом заказе нет товаров';
+  String get noProductsInOrder => 'Нет товаров в заказе';
 
   @override
   String get productListEmpty => 'Список товаров пуст';
@@ -2957,16 +2965,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get monthlyOkbAkb => 'Ежемесячный OKB/AKB';
 
   @override
-  String get contractsNotFound => 'Договоры не найдены';
+  String get contractsNotFound => 'Контракты не найдены';
 
   @override
-  String get contractsListRefreshed => 'Список договоров обновлен';
+  String get contractsListRefreshed => 'Список контрактов обновлён';
 
   @override
-  String get contractAmount => 'Сумма договора';
+  String get contractAmount => 'Сумма контракта';
 
   @override
-  String get contractDocument => 'Документ договора';
+  String get contractDocument => 'Документ контракта';
 
   @override
   String clientOrders(String name) {
@@ -2977,7 +2985,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get filterApplyError => 'Ошибка применения фильтра';
 
   @override
-  String get main => 'Основной';
+  String get main => 'Основное';
 
   @override
   String get contents => 'Содержимое';
@@ -3007,7 +3015,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get lastVisits => 'Последние визиты';
 
   @override
-  String get dataLoading => 'Данные загружаются...';
+  String get dataLoading => 'Загрузка данных...';
 
   @override
   String get successful => 'Успешно';
@@ -3093,7 +3101,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get orderStatusDelivered => 'Доставлено';
+  String get orderStatusDelivered => 'Доставлен';
 
   @override
   String get orderStatusInProcess => 'В процессе';
@@ -3102,7 +3110,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get orderStatusReturn => 'Возврат';
 
   @override
-  String get orderStatusExpired => 'Истек';
+  String get orderStatusExpired => 'Просрочен';
 
   @override
   String get contractStatusActive => 'Действует';
@@ -3258,7 +3266,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get permissionPhotosVideosPurpose => 'Работа с фото, видео и медиа файлами';
 
   @override
-  String permissionRequired(String permission) {
+  String permissionRequired(String title) {
     return '$permission требуется';
   }
 
@@ -3346,16 +3354,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get minimumIntervalIs60 => 'Минимальный интервал 60 минут';
 
   @override
-  String get justNow => 'только что';
+  String get justNow => 'Только что';
 
   @override
   String minutesAgo(int minutes) {
-    return '$minutesм назад';
+    return '$minutes мин назад';
   }
 
   @override
   String hoursAgo(int hours) {
-    return '$hoursч назад';
+    return '$hours ч назад';
   }
 
   @override
@@ -3428,4 +3436,705 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get footerNoteText => 'Данные импортированы из отчёта Telegram. Вы можете изменить текст для переключения на новый источник — UI будет обновлён.';
+
+  @override
+  String get syncStepCheckingUser => 'Проверка пользователя...';
+
+  @override
+  String get syncStepClearingData => 'Очистка старых данных...';
+
+  @override
+  String get syncStepSyncingKpi => 'Загрузка данных KPI...';
+
+  @override
+  String get syncStepSyncingClients => 'Загрузка списка клиентов...';
+
+  @override
+  String get syncStepSyncingProducts => 'Загрузка товаров...';
+
+  @override
+  String get syncStepSyncingPriceTypes => 'Загрузка типов цен...';
+
+  @override
+  String get syncStepSyncingBusinessRegions => 'Загрузка бизнес-регионов...';
+
+  @override
+  String get syncStepSyncingUserWarehouses => 'Загрузка складов пользователя...';
+
+  @override
+  String get syncStepSyncingProductPrices => 'Загрузка цен товаров...';
+
+  @override
+  String get syncStepSyncingProductBalances => 'Загрузка остатков товаров...';
+
+  @override
+  String get syncStepSyncingClientContracts => 'Загрузка контрактов клиентов...';
+
+  @override
+  String get syncStepUpdatingClientContractStatus => 'Обновление статусов контрактов...';
+
+  @override
+  String get syncStepSyncingOrderStatuses => 'Загрузка статусов заказов...';
+
+  @override
+  String get syncStepSyncingOrders => 'Загрузка заказов...';
+
+  @override
+  String get syncStepSyncingSalesReqPermissions => 'Загрузка разрешений агента...';
+
+  @override
+  String get syncStepSyncingPlannedRoutes => 'Загрузка запланированных маршрутов...';
+
+  @override
+  String get syncStepSyncingUserOrganizations => 'Загрузка организаций пользователя...';
+
+  @override
+  String get syncStepSyncingPromotions => 'Загрузка акций...';
+
+  @override
+  String get syncStepSyncingMapTokens => 'Загрузка токенов карт...';
+
+  @override
+  String get syncStepSyncingReports => 'Загрузка отчётов...';
+
+  @override
+  String get syncStepSyncingThumbnails => 'Загрузка изображений...';
+
+  @override
+  String get syncStepCompleted => 'Данные обновлены!';
+
+  @override
+  String get syncStepError => 'Произошла ошибка';
+
+  @override
+  String get syncSuccessTitle => 'Успешно!';
+
+  @override
+  String get syncUpdatingTitle => 'Обновление данных...';
+
+  @override
+  String get paymentRequiredError => 'Требуется оплата. Проверьте вашу подписку.';
+
+  @override
+  String get authenticationError => 'Ошибка аутентификации. Войдите заново.';
+
+  @override
+  String get accessForbiddenError => 'Доступ запрещён. У вас нет разрешения.';
+
+  @override
+  String get serviceNotFoundError => 'Сервис не найден. Обратитесь в поддержку.';
+
+  @override
+  String get serverUnavailableError => 'Сервер недоступен. Попробуйте позже.';
+
+  @override
+  String get dataUpdateError => 'Ошибка обновления данных. Используются кэшированные данные.';
+
+  @override
+  String get syncStatusErrors => 'Ошибки';
+
+  @override
+  String get syncStatusSynced => 'Синхронизировано';
+
+  @override
+  String get syncStatusPartial => 'Частично';
+
+  @override
+  String get syncStatusNotSynced => 'Не синхронизировано';
+
+  @override
+  String tablesOfTotalSynced(int synced, int total) {
+    return '$synced из $total таблиц синхронизировано';
+  }
+
+  @override
+  String get tablesInThisGroup => 'Таблицы в этой группе';
+
+  @override
+  String get yesterdayText => 'Вчера';
+
+  @override
+  String get neverSynced => 'Никогда не синхронизировано';
+
+  @override
+  String get tableEmpty => 'Таблица пуста';
+
+  @override
+  String recordsCount(int count) {
+    return '$count записей';
+  }
+
+  @override
+  String lastSyncLabel(String time) {
+    return 'Последняя синхронизация: $time';
+  }
+
+  @override
+  String get syncTable => 'Синхронизировать таблицу';
+
+  @override
+  String get dependencies => 'Зависимости';
+
+  @override
+  String get willCascadeTo => 'Будет каскадировано на';
+
+  @override
+  String get tradingPointsLabel => 'Торговые точки';
+
+  @override
+  String get tradingPointsNotAvailable => 'Торговые точки недоступны';
+
+  @override
+  String get dateRangeLabel => 'Диапазон дат';
+
+  @override
+  String get allDatesLabel => 'Все даты';
+
+  @override
+  String get clearLabel => 'Очистить';
+
+  @override
+  String get statusLabel => 'Статус';
+
+  @override
+  String get statusAll => 'Все';
+
+  @override
+  String get statusActive => 'Активный';
+
+  @override
+  String get statusInactive => 'Неактивный';
+
+  @override
+  String get statusExpired => 'Истёк';
+
+  @override
+  String get statusPending => 'Ожидает';
+
+  @override
+  String clientContractsCount(String name, int count) {
+    return 'Контракты клиента $name ($count)';
+  }
+
+  @override
+  String refreshError(String error) {
+    return 'Ошибка обновления';
+  }
+
+  @override
+  String get dataTab => 'Данные';
+
+  @override
+  String get documentTab => 'Документ';
+
+  @override
+  String clientLabel(String name) {
+    return 'Клиент: $name';
+  }
+
+  @override
+  String get startDateLabel => 'Дата начала';
+
+  @override
+  String get endDateLabel => 'Дата окончания';
+
+  @override
+  String get unknownDate => 'Неизвестно';
+
+  @override
+  String get statusAndType => 'Статус и тип';
+
+  @override
+  String get typeLabel2 => 'Тип';
+
+  @override
+  String get additionalInfo => 'Дополнительная информация';
+
+  @override
+  String get certificateLimited => 'Сертификат ограничен';
+
+  @override
+  String get yesText => 'Да';
+
+  @override
+  String get noText => 'Нет';
+
+  @override
+  String get referenceNumberLabel => 'Номер справки';
+
+  @override
+  String get certificateNumberLabel => 'Номер сертификата';
+
+  @override
+  String get passportNumberLabel => 'Номер паспорта';
+
+  @override
+  String get districtCodeLabel => 'Код района';
+
+  @override
+  String get districtNameLabel => 'Название района';
+
+  @override
+  String get projectCodeLabel => 'Код проекта';
+
+  @override
+  String get creditLabel => 'Кредит';
+
+  @override
+  String get fullPaymentLabel => '100% оплата';
+
+  @override
+  String get uzbekLanguage => 'Узбекский';
+
+  @override
+  String get russianLanguage => 'Русский';
+
+  @override
+  String get pdfPreparing => 'Подготовка PDF...';
+
+  @override
+  String get tapToReveal => 'Нажмите';
+
+  @override
+  String get warehousesTitle => 'Склады';
+
+  @override
+  String get warehousesNotFound => 'Склады не найдены';
+
+  @override
+  String warehousesCount(int count) {
+    return 'Количество складов: $count';
+  }
+
+  @override
+  String createdLabel(String date) {
+    return 'Создано: $date';
+  }
+
+  @override
+  String updatedLabel(String date) {
+    return 'Обновлено: $date';
+  }
+
+  @override
+  String get visitCompletedToday => 'Визит выполнен сегодня';
+
+  @override
+  String get visitExpectedToday => 'Визит ожидается сегодня';
+
+  @override
+  String get visitNotPlannedToday => 'Визит не запланирован на сегодня';
+
+  @override
+  String visitOrderLabel(int number) {
+    return 'Порядок визита: $number';
+  }
+
+  @override
+  String get selectClientTitle => 'Выберите клиента';
+
+  @override
+  String clientsAvailable(int count) {
+    return '$count клиентов доступно';
+  }
+
+  @override
+  String get searchByNameCodeInn => 'Имя, код, ИНН, телефон, тип...';
+
+  @override
+  String get searchInCyrillicOrLatin => 'Поиск на кириллице или латинице';
+
+  @override
+  String foundCount(int count) {
+    return '$count найдено';
+  }
+
+  @override
+  String get clientNotFound => 'Клиент не найден';
+
+  @override
+  String get tryDifferentSearch => 'Попробуйте другой поисковый запрос';
+
+  @override
+  String get confirmButton => 'Подтвердить';
+
+  @override
+  String get cancelButton => 'Отмена';
+
+  @override
+  String get newContractTitle => 'Новый контракт';
+
+  @override
+  String get fillAllFields => 'Заполните все поля';
+
+  @override
+  String get contractTypesLoadError => 'Ошибка загрузки типов контрактов';
+
+  @override
+  String get pleaseSelectClient => 'Пожалуйста, выберите клиента';
+
+  @override
+  String get pleaseSelectContractType => 'Пожалуйста, выберите тип контракта';
+
+  @override
+  String get contractCreatedSuccessfully => 'Контракт успешно создан';
+
+  @override
+  String get contractCreationError => 'Ошибка создания контракта';
+
+  @override
+  String get documentInfoSection => 'Информация о документе';
+
+  @override
+  String get regionInfoSection => 'Информация о регионе';
+
+  @override
+  String get referenceNumberField => 'Номер справки';
+
+  @override
+  String get termLabel => 'Срок';
+
+  @override
+  String get certificateNumberField => 'Номер сертификата';
+
+  @override
+  String get certificateUnlimitedField => 'Сертификат бессрочный';
+
+  @override
+  String get passportNumberField => 'Номер паспорта';
+
+  @override
+  String get clientCodeLabel => 'Код клиента';
+
+  @override
+  String get organizationCodeLabel => 'Код организации';
+
+  @override
+  String get courierLabel => 'Курьер';
+
+  @override
+  String get vehicleLabel => 'Транспорт';
+
+  @override
+  String get licensePlateLabel => 'Номер машины';
+
+  @override
+  String get supervisorCommentLabel => 'Комментарий супервайзера';
+
+  @override
+  String get logistCommentLabel => 'Комментарий логиста';
+
+  @override
+  String get agentCommentLabel => 'Комментарий агента';
+
+  @override
+  String get networkErrorMessage => 'Ошибка сети. Проверьте интернет-соединение.';
+
+  @override
+  String get serverTimeoutMessage => 'Время ожидания сервера истекло.';
+
+  @override
+  String get orderDetailsLoadError => 'Ошибка загрузки деталей заказа.';
+
+  @override
+  String dataLoadFailed(String error) {
+    return 'Ошибка загрузки данных: $error';
+  }
+
+  @override
+  String get brands => 'Бренды';
+
+  @override
+  String get fileStoragePermission => 'Разрешение на хранение файлов';
+
+  @override
+  String get fileStorageDescriptionAndroid13 => 'Выберите папку для сохранения данных приложения';
+
+  @override
+  String get fileStorageDescription => 'Для сохранения и загрузки данных приложения';
+
+  @override
+  String get fileStoragePurposeAndroid13 => 'Выберите папку для сохранения фото, документов и данных';
+
+  @override
+  String get fileStoragePurpose => 'Сохранение фото, документов и данных';
+
+  @override
+  String get locationPermissionTitle => 'Разрешение на местоположение';
+
+  @override
+  String get locationPermissionDescription => 'Для сортировки торговых точек по расстоянию';
+
+  @override
+  String get locationPermissionPurpose => 'Показ местоположения на карте и расчет расстояния';
+
+  @override
+  String get alwaysLocationPermissionTitle => 'Разрешение на постоянное местоположение';
+
+  @override
+  String get alwaysLocationPermissionDescription => 'Для определения местоположения в фоновом режиме';
+
+  @override
+  String get alwaysLocationPermissionPurpose => 'Фоновый сервис и уведомления';
+
+  @override
+  String get cameraPermissionTitle => 'Разрешение на камеру';
+
+  @override
+  String get cameraPermissionDescription => 'Для фотосъемки и сканирования штрих-кодов';
+
+  @override
+  String get cameraPermissionPurpose => 'Фотосъемка товаров и торговых точек';
+
+  @override
+  String get microphonePermissionTitle => 'Разрешение на микрофон';
+
+  @override
+  String get microphonePermissionDescription => 'Для записи голоса и аудио сообщений';
+
+  @override
+  String get microphonePermissionPurpose => 'Голосовые заметки и аудио записи';
+
+  @override
+  String get notificationPermissionTitle => 'Разрешение на уведомления';
+
+  @override
+  String get notificationPermissionDescription => 'Для показа важных сообщений';
+
+  @override
+  String get notificationPermissionPurpose => 'Напоминания, новости и уведомления';
+
+  @override
+  String get audioPermissionTitle => 'Разрешение на музыку и аудио';
+
+  @override
+  String get audioPermissionDescription => 'Для работы с аудио файлами';
+
+  @override
+  String get audioPermissionPurpose => 'Музыка, аудио сообщения и голосовые файлы';
+
+  @override
+  String get photosAndVideosPermissionTitle => 'Разрешение на фото и видео';
+
+  @override
+  String get photosAndVideosPermissionDescription => 'Для работы с медиа файлами';
+
+  @override
+  String get photosAndVideosPermissionPurpose => 'Работа с фото, видео и медиа файлами';
+
+  @override
+  String permissionRequiredMessage(String description) {
+    return '$description. Пожалуйста, предоставьте разрешение в настройках приложения.';
+  }
+
+  @override
+  String get goToSettingsButton => 'Перейти в настройки';
+
+  @override
+  String get grantPermissionButton => 'Дать разрешение';
+
+  @override
+  String get checkingPermission => 'Проверка...';
+
+  @override
+  String get permissionCheckTitle => 'Проверка разрешений';
+
+  @override
+  String get permissionCheckMessage => 'Для корректной работы приложению необходимы следующие разрешения:';
+
+  @override
+  String get permissionSaveData => 'Сохранение данных';
+
+  @override
+  String get permissionMapDistance => 'Карта и расчет расстояния';
+
+  @override
+  String get permissionTakePhotos => 'Фотосъемка';
+
+  @override
+  String get permissionRecordVoice => 'Запись голоса';
+
+  @override
+  String get permissionShowMessages => 'Показ сообщений';
+
+  @override
+  String get permissionLimitedMode => 'Без разрешений приложение будет работать в ограниченном режиме.';
+
+  @override
+  String purposeLabel(String purpose) {
+    return 'Цель: $purpose';
+  }
+
+  @override
+  String get grantPermissionQuestion => 'Хотите дать разрешение?';
+
+  @override
+  String get serviceInitError => 'Ошибка инициализации сервисов';
+
+  @override
+  String get clientInnNotAvailable => 'ИНН клиента недоступен';
+
+  @override
+  String get clientBalanceZero => 'Баланс клиента равен нулю.';
+
+  @override
+  String get balanceDataNotFound => 'Данные баланса не найдены';
+
+  @override
+  String updatedAtTime(String time) {
+    return 'Обновлено: $time';
+  }
+
+  @override
+  String get clientDebtorStatus => 'Клиент должник';
+
+  @override
+  String get overpaymentStatus => 'Переплата';
+
+  @override
+  String get balanceZeroStatus => 'Баланс равен нулю';
+
+  @override
+  String get savingStatus => 'Сохранение...';
+
+  @override
+  String get unsavedChangesStatus => 'Несохраненные изменения';
+
+  @override
+  String get offlineStatus => 'Офлайн';
+
+  @override
+  String pendingSyncCount(int count) {
+    return '$count ожидает синхронизации';
+  }
+
+  @override
+  String get allSyncedStatus => 'Все синхронизировано';
+
+  @override
+  String get autoSaving => 'Автосохранение...';
+
+  @override
+  String get savingStepData => 'Сохранение данных шага...';
+
+  @override
+  String get mandatoryLabel => 'Обязательно';
+
+  @override
+  String get optionalLabel => 'Необязательно';
+
+  @override
+  String get currentLabel => 'Текущий';
+
+  @override
+  String get completedLabel => 'Завершено';
+
+  @override
+  String get skippedLabel => 'Пропущено';
+
+  @override
+  String notesLabel(String notes) {
+    return 'Заметки: $notes';
+  }
+
+  @override
+  String reasonLabel(String reason) {
+    return 'Причина: $reason';
+  }
+
+  @override
+  String get reasonHint => 'Причина';
+
+  @override
+  String get syncStarting => 'Начало синхронизации...';
+
+  @override
+  String get weekdayMon => 'Пн';
+
+  @override
+  String get weekdayTue => 'Вт';
+
+  @override
+  String get weekdayWed => 'Ср';
+
+  @override
+  String get weekdayThu => 'Чт';
+
+  @override
+  String get weekdayFri => 'Пт';
+
+  @override
+  String get weekdaySat => 'Сб';
+
+  @override
+  String get weekdaySun => 'Вс';
+
+  @override
+  String get copyLabel => 'Копировать';
+
+  @override
+  String get reloadLabel => 'Перезагрузить';
+
+  @override
+  String get refreshContractTypesAndRegions => 'Обновить типы контрактов и регионы';
+
+  @override
+  String get orderStatusNew => 'Новый';
+
+  @override
+  String get orderStatusConfirmed => 'Подтверждён';
+
+  @override
+  String get orderStatusDelivering => 'В доставке';
+
+  @override
+  String get orderStatusReturnRequested => 'Запрос на возврат';
+
+  @override
+  String get orderStatusCancelled => 'Отменён';
+
+  @override
+  String get orderStatusDeliveredUnpaid => 'Доставлен, не оплачен';
+
+  @override
+  String get orderStatusDeliveredPartiallyPaid => 'Доставлен, частично оплачен';
+
+  @override
+  String get orderStatusUnknown => 'Неизвестно';
+
+  @override
+  String get filterTooltip => 'Фильтр';
+
+  @override
+  String get fullscreenTooltip => 'Полный экран';
+
+  @override
+  String get refusalReasonClientNotAvailable => 'Клиент недоступен';
+
+  @override
+  String get refusalReasonNoTime => 'Нет времени';
+
+  @override
+  String get refusalReasonProductNotNeeded => 'Товар не нужен';
+
+  @override
+  String get refusalReasonPriceNotSuitable => 'Цена не подходит';
+
+  @override
+  String get refusalReasonWorksWithOtherSupplier => 'Работает с другим поставщиком';
+
+  @override
+  String get refusalReasonOther => 'Другая причина';
+
+  @override
+  String get apiKeyStatusConfigured => 'настроен';
+
+  @override
+  String get apiKeyStatusNotConfigured => 'не настроен';
+
+  @override
+  String get apiKeyStatusNotRequired => 'ключ не требуется';
+
+  @override
+  String get apiKeyStatusError => 'ошибка';
 }

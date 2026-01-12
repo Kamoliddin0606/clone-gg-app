@@ -150,6 +150,15 @@ class _ClientBalanceDetailsPageState extends State<ClientBalanceDetailsPage>
     final hasOverpayment = balance.hasOverpayment;
     final l10n = AppLocalizations.of(context);
 
+    String statusText;
+    if (isDebtor) {
+      statusText = l10n?.clientIsDebtor as String? ?? 'Client is debtor';
+    } else if (hasOverpayment) {
+      statusText = l10n?.clientHasOverpayment as String? ?? 'Overpayment available';
+    } else {
+      statusText = l10n?.balanceIsZero ?? 'Balance is zero';
+    }
+
     return Card(
       elevation: 2,
       child: Padding(
@@ -179,11 +188,7 @@ class _ClientBalanceDetailsPageState extends State<ClientBalanceDetailsPage>
 
             // Holat matni
             Text(
-              isDebtor
-                  ? (l10n?.clientIsDebtor ?? 'Client is debtor')
-                  : hasOverpayment
-                      ? (l10n?.clientHasOverpayment ?? 'Overpayment available')
-                      : (l10n?.balanceIsZero ?? 'Balance is zero'),
+              statusText,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: balanceColor,
                 fontWeight: FontWeight.w600,

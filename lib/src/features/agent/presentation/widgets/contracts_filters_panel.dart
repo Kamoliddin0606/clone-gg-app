@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../shared/formatters.dart';
 import 'contract_models.dart';
 import '../../../../features/agent/data/models/trading_point.dart';
@@ -26,6 +27,7 @@ class ContractsFiltersPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -38,19 +40,19 @@ class ContractsFiltersPanel extends StatelessWidget {
         children: [
           // Trading Points filter
           Text(
-            'Savdo nuqtalari',
+            l10n?.tradingPointsLabel ?? 'Trading points',
             style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 8),
           if (availableTradingPoints.isEmpty)
             Text(
-              'Savdo nuqtalari mavjud emas',
+              l10n?.tradingPointsNotAvailable ?? 'Trading points not available',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             )
           else
-          const SizedBox(height: 8),
+            const SizedBox(height: 8),
           SizedBox(
             height: 160, // Fixed height for 4 rows (approximately 40px per row)
             child: SingleChildScrollView(
@@ -82,7 +84,7 @@ class ContractsFiltersPanel extends StatelessWidget {
 
           // Date Range filter
           Text(
-            'Sana oralig\'i',
+            l10n?.dateRangeLabel ?? 'Date range',
             style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 8),
@@ -94,14 +96,14 @@ class ContractsFiltersPanel extends StatelessWidget {
                   icon: const Icon(Icons.calendar_month_rounded),
                   label: Text(
                     state.dateRange == null
-                        ? 'Barcha sanalar'
+                        ? l10n?.allDatesLabel ?? 'All dates'
                         : '${dateFormatShort.format(state.dateRange!.start)} — ${dateFormatShort.format(state.dateRange!.end)}',
                   ),
                 ),
               ),
               if (state.dateRange != null)
                 IconButton(
-                  tooltip: 'Tozalash',
+                  tooltip: l10n?.clearLabel ?? 'Clear',
                   onPressed: onClearDateRange,
                   icon: const Icon(Icons.clear),
                 ),
@@ -111,7 +113,7 @@ class ContractsFiltersPanel extends StatelessWidget {
 
           // Status filter
           Text(
-            'Status',
+            l10n?.statusLabel ?? 'Status',
             style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 8),
@@ -120,7 +122,7 @@ class ContractsFiltersPanel extends StatelessWidget {
             runSpacing: 8,
             children: ContractStatus.values.map((status) {
               return FilterChip(
-                label: Text(_getStatusText(status)),
+                label: Text(_getStatusText(context, status)),
                 selected: state.status == status,
                 onSelected: (v) {
                   onChange(state.copyWith(status: v ? status : null));
@@ -133,18 +135,19 @@ class ContractsFiltersPanel extends StatelessWidget {
     );
   }
 
-  String _getStatusText(ContractStatus status) {
+  String _getStatusText(BuildContext context, ContractStatus status) {
+    final l10n = AppLocalizations.of(context);
     switch (status) {
       case ContractStatus.all:
-        return 'Barcha';
+        return l10n?.statusAll ?? 'All';
       case ContractStatus.active:
-        return 'Faol';
+        return l10n?.statusActive ?? 'Active';
       case ContractStatus.inactive:
-        return 'Faol emas';
+        return l10n?.statusInactive ?? 'Inactive';
       case ContractStatus.expired:
-        return 'Muddati tugagan';
+        return l10n?.statusExpired ?? 'Expired';
       case ContractStatus.pending:
-        return 'Tasdiqlanmagan';
+        return l10n?.statusPending ?? 'Pending';
     }
   }
 }

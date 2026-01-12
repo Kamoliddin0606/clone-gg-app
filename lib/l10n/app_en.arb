@@ -1925,5 +1925,609 @@
   "akbByProductCategories": "AKB by product categories",
   "tradingPointAbbr": "t.p.",
   "footerNoteText": "Data imported from Telegram report. You can change the text to switch to a new source — UI will be updated.",
-  "reportPeriod": "Report period"
+  "reportPeriod": "Report period",
+
+  "syncStepCheckingUser": "Checking user...",
+  "syncStepClearingData": "Clearing old data...",
+  "syncStepSyncingKpi": "Loading KPI data...",
+  "syncStepSyncingClients": "Loading clients list...",
+  "syncStepSyncingProducts": "Loading products...",
+  "syncStepSyncingPriceTypes": "Loading price types...",
+  "syncStepSyncingBusinessRegions": "Loading business regions...",
+  "syncStepSyncingUserWarehouses": "Loading user warehouses...",
+  "syncStepSyncingProductPrices": "Loading product prices...",
+  "syncStepSyncingProductBalances": "Loading product balances...",
+  "syncStepSyncingClientContracts": "Loading client contracts...",
+  "syncStepUpdatingClientContractStatus": "Updating client contract statuses...",
+  "syncStepSyncingOrderStatuses": "Loading order statuses...",
+  "syncStepSyncingOrders": "Loading orders...",
+  "syncStepSyncingSalesReqPermissions": "Loading agent permissions...",
+  "syncStepSyncingPlannedRoutes": "Loading planned routes...",
+  "syncStepSyncingUserOrganizations": "Loading user organizations...",
+  "syncStepSyncingPromotions": "Loading promotions...",
+  "syncStepSyncingMapTokens": "Loading map tokens...",
+  "syncStepSyncingReports": "Loading reports...",
+  "syncStepSyncingThumbnails": "Loading images...",
+  "syncStepCompleted": "Data updated!",
+  "syncStepError": "An error occurred",
+  "syncSuccessTitle": "Success!",
+  "syncUpdatingTitle": "Updating data...",
+  "paymentRequiredError": "Payment required. Please check your subscription.",
+  "authenticationError": "Authentication error. Please login again.",
+  "accessForbiddenError": "Access forbidden. You don't have permission.",
+  "serviceNotFoundError": "Service not found. Please contact support.",
+  "serverUnavailableError": "Server unavailable. Please try again later.",
+  "dataUpdateError": "Error updating data. Using cached data.",
+
+  "syncStatusErrors": "Errors",
+  "syncStatusSynced": "Synced",
+  "syncStatusPartial": "Partial",
+  "syncStatusNotSynced": "Not synced",
+  "tablesOfTotalSynced": "{synced} of {total} tables synced",
+  "@tablesOfTotalSynced": {
+    "placeholders": {
+      "synced": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "syncEntireGroup": "Sync Entire Group",
+  "tablesInThisGroup": "Tables in this group",
+  "justNow": "Just now",
+  "minutesAgo": "{minutes}m ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "hoursAgo": "{hours}h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {"type": "int"}
+    }
+  },
+  "yesterdayText": "Yesterday",
+  "daysAgo": "{days} days ago",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "weeksAgo": "{weeks} weeks ago",
+  "@weeksAgo": {
+    "placeholders": {
+      "weeks": {"type": "int"}
+    }
+  },
+
+  "neverSynced": "Never synced",
+  "tableEmpty": "Table is empty",
+  "recordsCount": "{count} records",
+  "@recordsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "lastSyncLabel": "Last sync: {time}",
+  "@lastSyncLabel": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "syncTable": "Sync table",
+  "dependencies": "Dependencies",
+  "willCascadeTo": "Will cascade to",
+  "tableOnly": "Table only",
+  "withDependencies": "With dependencies",
+  "syncWithDependencies": "Sync with dependencies",
+  "syncTableOnly": "Sync table only",
+  "recommended": "Recommended",
+  "syncWarning": "May fail if dependencies not synced",
+
+  "tradingPointsLabel": "Trading points",
+  "tradingPointsNotAvailable": "Trading points not available",
+  "dateRangeLabel": "Date range",
+  "allDatesLabel": "All dates",
+  "clearLabel": "Clear",
+  "statusLabel": "Status",
+  "statusAll": "All",
+  "statusActive": "Active",
+  "statusInactive": "Inactive",
+  "statusExpired": "Expired",
+  "statusPending": "Pending",
+
+  "contractTabAll": "All",
+  "contractStatusActive": "Active",
+  "contractStatusExpired": "Expired",
+  "contractStatusSuspended": "Suspended",
+  "contractStatusPending": "Not approved",
+  "contractsNotFound": "No contracts found",
+  "contractsCount": "{count} contracts",
+  "@contractsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "contractsListRefreshed": "Contracts list refreshed",
+  "filterApplyError": "Error applying filter",
+  "clientContractsCount": "{name} client's contracts ({count})",
+  "@clientContractsCount": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "refreshError": "Refresh error: {error}",
+  "@refreshError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+
+  "dataTab": "Details",
+  "documentTab": "Document",
+  "clientLabel": "Client: {name}",
+  "@clientLabel": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "startDateLabel": "Start date",
+  "endDateLabel": "End date",
+  "unknownDate": "Unknown",
+  "contractAmount": "Contract amount",
+  "statusAndType": "Status and type",
+  "typeLabel2": "Type",
+  "additionalInfo": "Additional information",
+  "certificateLimited": "Certificate limited",
+  "yesText": "Yes",
+  "noText": "No",
+  "referenceNumberLabel": "Reference number",
+  "certificateNumberLabel": "Certificate number",
+  "passportNumberLabel": "Passport number",
+  "districtCodeLabel": "District code",
+  "districtNameLabel": "District name",
+  "projectCodeLabel": "Project code",
+  "editFeatureComingSoon": "Edit feature coming soon",
+  "contractDocument": "Contract document",
+  "creditLabel": "Credit",
+  "fullPaymentLabel": "100% payment",
+  "uzbekLanguage": "Uzbek",
+  "russianLanguage": "Russian",
+  "sendPdfLabel": "Send PDF",
+  "printFeatureComingSoon": "Print feature coming soon",
+  "print": "Print",
+  "pdfPreparing": "Preparing PDF...",
+  "tapToReveal": "Tap",
+
+  "warehousesTitle": "Warehouses",
+  "warehousesNotFound": "Warehouses not found",
+  "warehousesCount": "Warehouses count: {count}",
+  "@warehousesCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "warehouseDataLoadError": "Error loading warehouse data: {error}",
+  "@warehouseDataLoadError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "organizationLabel": "Organization",
+  "codeLabel2": "Code",
+  "createdLabel": "Created: {date}",
+  "@createdLabel": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "updatedLabel": "Updated: {date}",
+  "@updatedLabel": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+
+  "visitCompletedToday": "Visit completed today",
+  "visitExpectedToday": "Visit expected today",
+  "visitNotPlannedToday": "Visit not planned today",
+  "visitOrderLabel": "Visit order: {number}",
+  "@visitOrderLabel": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
+
+  "selectClientTitle": "Select client",
+  "clientsAvailable": "{count} clients available",
+  "@clientsAvailable": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "searchByNameCodeInn": "Name, code, INN, phone, type...",
+  "searchInCyrillicOrLatin": "Search in Cyrillic or Latin",
+  "foundCount": "{count} found",
+  "@foundCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "clientNotFound": "Client not found",
+  "tryDifferentSearch": "Try a different search term",
+
+  "selectDateRange": "Select date range",
+  "confirmButton": "Confirm",
+  "cancelButton": "Cancel",
+  "selectedPeriod": "Selected period",
+
+  "newContractTitle": "New contract",
+  "fillAllFields": "Fill in all fields",
+  "contractTypesLoadError": "Error loading contract types",
+  "pleaseSelectClient": "Please select a client",
+  "pleaseSelectContractType": "Please select a contract type",
+  "contractCreatedSuccessfully": "Contract created successfully",
+  "contractCreationError": "Error creating contract",
+  "documentInfoSection": "Document information",
+  "regionInfoSection": "Region information",
+  "referenceNumberField": "Reference number",
+  "enterNumberHint": "Enter number",
+  "termLabel": "Term",
+  "certificateNumberField": "Certificate number",
+  "certificateUnlimitedField": "Certificate unlimited",
+  "passportNumberField": "Passport number",
+  "xmlRequestLabel": "XML Request",
+  "xmlCopied": "XML copied",
+
+  "priceTypeLabel": "Price type",
+  "clientCodeLabel": "Client code",
+  "organizationCodeLabel": "Organization code",
+  "courierLabel": "Courier",
+  "vehicleLabel": "Vehicle",
+  "licensePlateLabel": "License plate",
+  "supervisorCommentLabel": "Supervisor comment",
+  "logistCommentLabel": "Logist comment",
+  "agentCommentLabel": "Agent comment",
+  "noProductsInOrder": "No products in order",
+  "productListEmpty": "Product list is empty",
+  "totalProductsLabel": "Total products",
+  "productNameLabel": "Product name",
+  "articleLabel": "Article",
+  "quantityLabel": "Quantity",
+  "priceLabel": "Price",
+  "amountLabel": "Amount",
+  "clientNameLabel": "Client name",
+  "orderNumberLabel": "Order number",
+  "orderDateLabel": "Order date",
+  "orderTotalLabel": "Order total",
+  "mainStatusLabel": "Main status",
+  "statusCodeLabel": "Status code",
+
+  "networkErrorMessage": "Network error. Check your internet connection.",
+  "serverTimeoutMessage": "Server connection timed out.",
+  "orderDetailsNotFound": "Order details not found.",
+  "orderDetailsLoadError": "Error loading order details.",
+  "orderDetailsTitle": "Order details",
+  "errorOccurredTitle": "An error occurred",
+  "unknownProduct": "Unknown product",
+  "main": "Main",
+  "contents": "Contents",
+
+  "all": "All",
+  "orderStatusDelivered": "Delivered",
+  "orderStatusInProcess": "In process",
+  "orderStatusReturn": "Return",
+  "orderStatusExpired": "Expired",
+  "clientOrders": "{name}'s orders",
+  "@clientOrders": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "dataLoading": "Loading data...",
+  "dataLoadFailed": "Data loading failed: {error}",
+  "@dataLoadFailed": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "categories": "Categories",
+  "brands": "Brands",
+
+  "fileStoragePermission": "File storage permission",
+  "fileStorageDescriptionAndroid13": "Select folder to save app data",
+  "fileStorageDescription": "To save and load app data",
+  "fileStoragePurposeAndroid13": "Select folder to save images, documents and data",
+  "fileStoragePurpose": "Save images, documents and data",
+  "locationPermissionTitle": "Location permission",
+  "locationPermissionDescription": "To sort trading points by distance",
+  "locationPermissionPurpose": "Show location on map and calculate distance",
+  "alwaysLocationPermissionTitle": "Always location permission",
+  "alwaysLocationPermissionDescription": "To detect location when app is in background",
+  "alwaysLocationPermissionPurpose": "Background service and notifications",
+  "cameraPermissionTitle": "Camera permission",
+  "cameraPermissionDescription": "To take photos and scan barcodes",
+  "cameraPermissionPurpose": "Take photos of products and trading points",
+  "microphonePermissionTitle": "Microphone permission",
+  "microphonePermissionDescription": "For voice recording and audio messages",
+  "microphonePermissionPurpose": "Voice notes and audio records",
+  "notificationPermissionTitle": "Notification permission",
+  "notificationPermissionDescription": "To show important messages",
+  "notificationPermissionPurpose": "Reminders, news and notifications",
+  "audioPermissionTitle": "Music and audio permission",
+  "audioPermissionDescription": "To work with audio files",
+  "audioPermissionPurpose": "Music, audio messages and voice files",
+  "photosAndVideosPermissionTitle": "Photos and videos permission",
+  "photosAndVideosPermissionDescription": "To work with media files",
+  "photosAndVideosPermissionPurpose": "Work with photos, videos and media files",
+  "permissionRequired": "{title} required",
+  "@permissionRequired": {
+    "placeholders": {
+      "title": {"type": "String"}
+    }
+  },
+  "permissionRequiredMessage": "{description}. Please grant permission in app settings.",
+  "@permissionRequiredMessage": {
+    "placeholders": {
+      "description": {"type": "String"}
+    }
+  },
+  "laterButton": "Later",
+  "goToSettingsButton": "Go to settings",
+  "grantPermissionButton": "Grant permission",
+  "checkingPermission": "Checking...",
+  "permissionCheckTitle": "Permission check",
+  "permissionCheckMessage": "The app needs the following permissions to work properly:",
+  "permissionFileStorage": "File storage",
+  "permissionLocation": "Location",
+  "permissionCamera": "Camera",
+  "permissionMicrophone": "Microphone",
+  "permissionNotifications": "Notifications",
+  "permissionSaveData": "Save data",
+  "permissionMapDistance": "Map and distance calculation",
+  "permissionTakePhotos": "Take photos",
+  "permissionRecordVoice": "Record voice",
+  "permissionShowMessages": "Show messages",
+  "permissionLimitedMode": "Without permissions the app will work in limited mode.",
+  "startButton": "Start",
+  "purposeLabel": "Purpose: {purpose}",
+  "@purposeLabel": {
+    "placeholders": {
+      "purpose": {"type": "String"}
+    }
+  },
+  "grantPermissionQuestion": "Do you want to grant permission?",
+
+  "serviceInitError": "Error initializing services",
+  "balanceServiceNotAvailable": "Balance service not available",
+  "clientInnNotAvailable": "Client INN not available",
+  "balanceLoadError": "Error loading balance",
+  "clientIsDebtor": "Client is debtor. Total debt: {amount} sum",
+  "@clientIsDebtor": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "clientHasOverpayment": "Client has overpaid. Overpayment: {amount} sum",
+  "@clientHasOverpayment": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "clientBalanceZero": "Client balance is zero.",
+  "clientBalance": "Client balance",
+  "errorOccurred": "Error occurred",
+  "balanceDataNotFound": "Balance data not found",
+  "updatedAtTime": "Updated: {time}",
+  "@updatedAtTime": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "clientDebtorStatus": "Client is debtor",
+  "overpaymentStatus": "Overpayment",
+  "balanceZeroStatus": "Balance is zero",
+  "unpaidOrders": "{count} unpaid",
+  "@unpaidOrders": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "overdueOrders": "{count} overdue",
+  "@overdueOrders": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "tablesOfTotalSynced": "{synced} of {total} tables synced",
+  "@tablesOfTotalSynced": {
+    "placeholders": {
+      "synced": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "syncStatusErrors": "Errors",
+  "syncStatusSynced": "Synced",
+  "syncStatusPartial": "Partial",
+  "syncStatusNotSynced": "Not synced",
+  "justNow": "Just now",
+  "minutesAgo": "{minutes}m ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "hoursAgo": "{hours}h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {"type": "int"}
+    }
+  },
+  "daysAgo": "{days} days ago",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "weeksAgo": "{weeks} weeks ago",
+  "@weeksAgo": {
+    "placeholders": {
+      "weeks": {"type": "int"}
+    }
+  },
+  "paymentRequiredError": "Payment required. Please check your subscription.",
+  "authenticationError": "Authentication error. Please login again.",
+  "accessForbiddenError": "Access forbidden. You don't have permission.",
+  "serviceNotFoundError": "Service not found. Please contact support.",
+  "serverUnavailableError": "Server unavailable. Please try again later.",
+  "dataUpdateError": "Error updating data. Using cached data.",
+  "syncSuccessTitle": "Success!",
+  "syncUpdatingTitle": "Updating data...",
+  "clientInnNotFound": "Client INN not found",
+  "balanceUpdated": "Updated",
+  "balanceIsZero": "Balance is zero",
+  "noBalanceData": "Balance data not found",
+  "balanceStatus": "Balance status",
+  "totalDebt": "Total debt",
+  "refreshError": "Refresh error",
+  "noDataAvailable": "No data available",
+  "paidLabel": "Paid",
+  "debtLabelChart": "Debt",
+  "noContractsFound": "No contracts found",
+  "paymentAmount": "Payment: {amount}",
+  "@paymentAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "debtAmount": "Debt: {amount}",
+  "@debtAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "contractDialog": "Contract",
+  "codeLabel": "Code: {code}",
+  "@codeLabel": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "idLabel": "ID: {id}",
+  "@idLabel": {
+    "placeholders": {
+      "id": {"type": "String"}
+    }
+  },
+  "projectLabel": "Project: {project}",
+  "@projectLabel": {
+    "placeholders": {
+      "project": {"type": "String"}
+    }
+  },
+  "closeButton": "Close",
+  "noOrdersFound": "No orders found",
+  "countItems": "{count} items",
+  "@countItems": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "partialLabel": "Partial",
+  "unpaidLabel": "Unpaid",
+  "savingStatus": "Saving...",
+  "unsavedChangesStatus": "Unsaved changes",
+  "offlineStatus": "Offline",
+  "pendingSyncCount": "{count} pending sync",
+  "@pendingSyncCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "allSyncedStatus": "All synced",
+  "autoSaving": "Auto-saving...",
+  "savingStepData": "Saving step data...",
+  "visitProgress": "Visit Progress",
+  "mandatoryLabel": "Mandatory",
+  "optionalLabel": "Optional",
+  "currentLabel": "Current",
+  "completedLabel": "Completed",
+  "skippedLabel": "Skipped",
+  "notesLabel": "Notes: {notes}",
+  "@notesLabel": {
+    "placeholders": {
+      "notes": {"type": "String"}
+    }
+  },
+  "reasonLabel": "Reason: {reason}",
+  "@reasonLabel": {
+    "placeholders": {
+      "reason": {"type": "String"}
+    }
+  },
+  "skipStep": "Skip Step",
+  "completeStep": "Complete Step",
+  "previousStepsMustBeCompleted": "Previous steps must be completed",
+  "stepCompleted": "{stepName} completed",
+  "@stepCompleted": {
+    "placeholders": {
+      "stepName": {"type": "String"}
+    }
+  },
+  "confirmCompletion": "Confirm completion",
+  "enterNotesOptional": "Enter notes (optional)",
+  "stepSkip": "{stepName} skip",
+  "@stepSkip": {
+    "placeholders": {
+      "stepName": {"type": "String"}
+    }
+  },
+  "enterSkipReason": "Enter skip reason",
+  "reasonHint": "Reason",
+  "confirmSkip": "Confirm Skip",
+  "syncStatusIdle": "Waiting",
+  "syncStatusProducts": "Syncing products",
+  "syncStatusBalances": "Syncing balances",
+  "syncStatusOrders": "Syncing orders",
+  "syncStatusCompleted": "Sync completed",
+  "syncStatusError": "Sync error",
+  "syncInProgress": "Syncing...",
+  "syncStarting": "Starting sync...",
+  "weekdayMon": "Mo",
+  "weekdayTue": "Tu",
+  "weekdayWed": "We",
+  "weekdayThu": "Th",
+  "weekdayFri": "Fr",
+  "weekdaySat": "Sa",
+  "weekdaySun": "Su",
+  "copyLabel": "Copy",
+  "reloadLabel": "Reload",
+  "createContract": "Create contract",
+  "refreshContractTypesAndRegions": "Refresh contract types and regions",
+  "selectContractType": "Select contract type",
+  "contractTypesNotFound": "Contract types not found",
+  "loading": "Loading...",
+  "creating": "Creating...",
+  "orderStatusNew": "New",
+  "orderStatusConfirmed": "Confirmed",
+  "orderStatusDelivering": "In delivery",
+  "orderStatusDelivered": "Delivered",
+  "orderStatusReturnRequested": "Return requested",
+  "orderStatusCancelled": "Cancelled",
+  "orderStatusDeliveredUnpaid": "Delivered, unpaid",
+  "orderStatusDeliveredPartiallyPaid": "Delivered, partially paid",
+  "orderStatusExpired": "Expired",
+  "orderStatusUnknown": "Unknown",
+  "filterTooltip": "Filter",
+  "fullscreenTooltip": "Fullscreen",
+  "refusalReasonClientNotAvailable": "Client not available",
+  "refusalReasonNoTime": "No time",
+  "refusalReasonProductNotNeeded": "Product not needed",
+  "refusalReasonPriceNotSuitable": "Price not suitable",
+  "refusalReasonWorksWithOtherSupplier": "Works with other supplier",
+  "refusalReasonOther": "Other reason",
+  "apiKeyStatusConfigured": "configured",
+  "apiKeyStatusNotConfigured": "not configured",
+  "apiKeyStatusNotRequired": "key not required",
+  "apiKeyStatusError": "error"
 }

@@ -1571,7 +1571,7 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
                 Icons.filter_alt_rounded,
                 color: _showFilters ? theme.colorScheme.primary : null,
               ),
-              tooltip: 'Filter',
+              tooltip: AppLocalizations.of(context)?.filterTooltip ?? 'Filter',
             ),
 
             // Visit today filter button
@@ -2480,14 +2480,17 @@ class _RefusalDialogState extends State<RefusalDialog> {
   String? _selectedReason;
   bool _isLoading = false;
 
-  final List<String> _refusalReasons = const [
-    'Mijoz yo\'q',
-    'Vaqt yo\'q',
-    'Mahsulot kerak emas',
-    'Narx mos kelmaydi',
-    'Boshqa ta\'minotchi bilan ishlaydi',
-    'Boshqa sabab',
-  ];
+  List<String> _getRefusalReasons(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return [
+      l10n?.refusalReasonClientNotAvailable ?? 'Client not available',
+      l10n?.refusalReasonNoTime ?? 'No time',
+      l10n?.refusalReasonProductNotNeeded ?? 'Product not needed',
+      l10n?.refusalReasonPriceNotSuitable ?? 'Price not suitable',
+      l10n?.refusalReasonWorksWithOtherSupplier ?? 'Works with other supplier',
+      l10n?.refusalReasonOther ?? 'Other reason',
+    ];
+  }
 
   Future<void> _sendRefusal() async {
     if (_selectedReason == null) return;
@@ -2510,7 +2513,7 @@ class _RefusalDialogState extends State<RefusalDialog> {
         children: [
           Text(l10n.selectRefusalReasonFor(widget.tradingPoint.name)),
           const SizedBox(height: 12),
-          ..._refusalReasons.map(
+          ..._getRefusalReasons(context).map(
             (reason) => RadioListTile<String>(
               title: Text(reason),
               value: reason,
@@ -3902,7 +3905,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                           );
                         }
                       },
-                      tooltip: 'Fullscreen',
+                      tooltip: AppLocalizations.of(context)?.fullscreenTooltip ?? 'Fullscreen',
                       iconSize: 24,
                     ),
                   ),
@@ -4010,7 +4013,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                           arguments: widget.tradingPoint,
                         );
                       },
-                      tooltip: 'Fullscreen',
+                      tooltip: AppLocalizations.of(context)?.fullscreenTooltip ?? 'Fullscreen',
                       iconSize: 24,
                     ),
                   ),
@@ -4156,7 +4159,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                             arguments: widget.tradingPoint,
                           );
                         },
-                        tooltip: 'Fullscreen',
+                        tooltip: AppLocalizations.of(context)?.fullscreenTooltip ?? 'Fullscreen',
                         iconSize: 24,
                       ),
                     ),

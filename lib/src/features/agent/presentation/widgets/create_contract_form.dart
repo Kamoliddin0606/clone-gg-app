@@ -223,7 +223,7 @@ class _CreateContractFormState extends State<CreateContractForm>
       }
       setState(() {
         _isLoadingTypes = false;
-        _errorMessage = 'Shartnoma turlarini yuklashda xatolik';
+        _errorMessage = AppLocalizations.of(context)?.contractTypesLoadError ?? 'Error loading contract types';
       });
     }
   }
@@ -385,12 +385,12 @@ class _CreateContractFormState extends State<CreateContractForm>
     }
 
     if (_selectedClient == null) {
-      _showError('Iltimos, mijozni tanlang');
+      _showError(AppLocalizations.of(context)?.pleaseSelectClient ?? 'Please select a client');
       return;
     }
 
     if (_selectedContractType == null) {
-      _showError('Iltimos, shartnoma turini tanlang');
+      _showError(AppLocalizations.of(context)?.pleaseSelectContractType ?? 'Please select a contract type');
       return;
     }
 
@@ -431,17 +431,17 @@ class _CreateContractFormState extends State<CreateContractForm>
 
       if (result['success'] == true) {
         if (mounted) {
-          _showSuccess(result['message'] ?? 'Shartnoma muvaffaqiyatli yaratildi');
+          _showSuccess(result['message'] ?? AppLocalizations.of(context)?.contractCreatedSuccessfully ?? 'Contract created successfully');
           widget.onContractCreated?.call();
         }
       } else {
-        _showError(result['message'] ?? 'Shartnoma yaratishda xatolik');
+        _showError(result['message'] ?? AppLocalizations.of(context)?.contractCreationError ?? 'Error creating contract');
       }
     } catch (e) {
       if (kDebugMode) {
         print('CreateContractForm: Error creating contract: $e');
       }
-      _showError('Shartnoma yaratishda xatolik: $e');
+      _showError('${AppLocalizations.of(context)?.contractCreationError ?? "Error creating contract"}: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -602,7 +602,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                         const SizedBox(height: 24),
                         
                         // Divider with label
-                        _buildSectionDivider('Hujjatlar ma\'lumotlari', colorScheme),
+                        _buildSectionDivider(l10n?.documentInfoSection ?? 'Document information', colorScheme),
                         
                         const SizedBox(height: 16),
                         
@@ -612,7 +612,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                             Expanded(
                               child: _buildTextField(
                                 controller: _numbReferenceController,
-                                label: 'Ma\'lumotnoma raqami',
+                                label: l10n?.referenceNumberField ?? 'Reference number',
                                 hint: AppLocalizations.of(context)?.enterNumberHint ?? 'Raqamni kiriting',
                                 icon: Icons.description_outlined,
                                 theme: theme,
@@ -622,7 +622,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildDateField(
-                                label: 'Muddati',
+                                label: l10n?.termLabel ?? 'Term',
                                 value: _termReference,
                                 onChanged: (date) => setState(() => _termReference = date),
                                 icon: Icons.event,
@@ -642,7 +642,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                             Expanded(
                               child: _buildTextField(
                                 controller: _numbCertificateController,
-                                label: 'Sertifikat raqami',
+                                label: l10n?.certificateNumberField ?? 'Certificate number',
                                 hint: AppLocalizations.of(context)?.enterNumberHint ?? 'Raqamni kiriting',
                                 icon: Icons.verified_outlined,
                                 theme: theme,
@@ -652,7 +652,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildDateField(
-                                label: 'Muddati',
+                                label: l10n?.termLabel ?? 'Term',
                                 value: _termCertificate,
                                 onChanged: (date) => setState(() => _termCertificate = date),
                                 icon: Icons.event,
@@ -670,7 +670,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                         // Certificate unlimited checkbox
                         _buildCheckbox(
                           value: _certificateUnlimited,
-                          label: 'Sertifikat muddatsiz',
+                          label: l10n?.certificateUnlimitedField ?? 'Certificate unlimited',
                           onChanged: (value) => setState(() => _certificateUnlimited = value ?? false),
                           colorScheme: colorScheme,
                         ),
@@ -683,7 +683,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                             Expanded(
                               child: _buildTextField(
                                 controller: _numbPassportController,
-                                label: 'Pasport raqami',
+                                label: l10n?.passportNumberField ?? 'Passport number',
                                 hint: 'AA1234567',
                                 icon: Icons.badge_outlined,
                                 theme: theme,
@@ -693,7 +693,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildDateField(
-                                label: 'Muddati',
+                                label: l10n?.termLabel ?? 'Term',
                                 value: _termPassport,
                                 onChanged: (date) => setState(() => _termPassport = date),
                                 icon: Icons.event,
@@ -708,7 +708,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                         const SizedBox(height: 24),
                         
                         // Divider with label
-                        _buildSectionDivider('Hudud ma\'lumotlari', colorScheme),
+                        _buildSectionDivider(l10n?.regionInfoSection ?? 'Region information', colorScheme),
                         
                         const SizedBox(height: 16),
                         
@@ -757,7 +757,7 @@ class _CreateContractFormState extends State<CreateContractForm>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Yangi shartnoma',
+                  l10n?.newContractTitle ?? 'New contract',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurface,
@@ -765,7 +765,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Barcha maydonlarni to\'ldiring',
+                  l10n?.fillAllFields ?? 'Fill in all fields',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -826,7 +826,7 @@ class _CreateContractFormState extends State<CreateContractForm>
       context: context,
       clients: widget.availableClients,
       selectedClient: _selectedClient,
-      title: 'Mijozni tanlang',
+      title: AppLocalizations.of(context)?.selectClientTitle,
     );
 
     if (selected != null && mounted) {
@@ -1209,7 +1209,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                 Icons.refresh,
                 color: _isLoadingTypes ? colorScheme.onSurfaceVariant : colorScheme.primary,
               ),
-              tooltip: 'Shartnoma turi va hudud ma\'lumotlarini yangilash',
+              tooltip: AppLocalizations.of(context)?.refreshContractTypesAndRegions ?? 'Refresh contract types and regions',
               style: IconButton.styleFrom(
                 backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
               ),
@@ -1237,7 +1237,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Yuklanmoqda...',
+                        AppLocalizations.of(context)?.loading ?? 'Loading...',
                         style: TextStyle(color: colorScheme.onSurfaceVariant),
                       ),
                     ],
@@ -1251,7 +1251,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                     prefixIcon: Icon(Icons.category_outlined, color: colorScheme.primary),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    hintText: 'Shartnoma turini tanlang',
+                    hintText: AppLocalizations.of(context)?.selectContractType ?? 'Select contract type',
                   ),
                   items: _contractTypes.map((type) {
                     return DropdownMenuItem<String>(
@@ -1265,7 +1265,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                   onChanged: (value) => setState(() => _selectedContractType = value),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Shartnoma turini tanlang';
+                      return AppLocalizations.of(context)?.selectContractType ?? 'Select contract type';
                     }
                     return null;
                   },
@@ -1281,7 +1281,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                 Icon(Icons.warning_amber, size: 14, color: colorScheme.error),
                 const SizedBox(width: 4),
                 Text(
-                  'Shartnoma turlari topilmadi',
+                  AppLocalizations.of(context)?.contractTypesNotFound ?? 'Contract types not found',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.error,
                   ),
@@ -1289,7 +1289,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                 const Spacer(),
                 TextButton(
                   onPressed: _loadContractTypes,
-                  child: Text(AppLocalizations.of(context)?.reload ?? 'Qayta yuklash'),
+                  child: Text(AppLocalizations.of(context)?.reloadLabel ?? 'Reload'),
                 ),
               ],
             ),
@@ -1546,8 +1546,8 @@ class _CreateContractFormState extends State<CreateContractForm>
                     children: [
                       const Icon(Icons.add_circle_outline, size: 24),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Shartnoma yaratish',
+                      Text(
+                        AppLocalizations.of(context)?.createContract ?? 'Create contract',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

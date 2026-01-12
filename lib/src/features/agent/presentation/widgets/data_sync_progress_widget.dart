@@ -1,34 +1,86 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 
 enum SyncStep {
-  checkingUser('Foydalanuvchi tekshirilmoqda...', Icons.person_search),
-  clearingData('Eski ma\'lumotlar tozalanmoqda...', Icons.cleaning_services),
-  syncingKpi('KPI ma\'lumotlari yuklanmoqda...', Icons.bar_chart),
-  syncingClients('Mijozlar ro\'yxati yuklanmoqda...', Icons.people),
-  syncingProducts('Mahsulotlar yuklanmoqda...', Icons.inventory),
-  syncingPriceTypes('Narx turlari yuklanmoqda...', Icons.price_change),
-  syncingBusinessRegions('Biznes rayonlari yuklanmoqda...', Icons.location_on),
-  syncingUserWarehouses('Foydalanuvchi omborlari yuklanmoqda...', Icons.warehouse),
-  syncingProductPrices('Mahsulot narxlari yuklanmoqda...', Icons.attach_money),
-  syncingProductBalances('Mahsulot balanslari yuklanmoqda...', Icons.balance),
-  syncingClientContracts('Mijoz shartnomalari yuklanmoqda...', Icons.description),
-  updatingClientContractStatus('Mijoz shartnoma statuslari yangilanmoqda...', Icons.update),
-  syncingOrderStatuses('Buyurtma statuslari yuklanmoqda...', Icons.list_alt),
-  syncingOrders('Buyurtmalar yuklanmoqda...', Icons.shopping_cart),
-  syncingSalesReqPermissions('Agent ruxsatlari yuklanmoqda...', Icons.security),
-  syncingPlannedRoutes('Rejalashtirilgan marshrutlar yuklanmoqda...', Icons.route),
-  syncingUserOrganizations('Foydalanuvchi tashkilotlari yuklanmoqda...', Icons.business),
-  syncingPromotions('Aksiyalar yuklanmoqda...', Icons.local_offer),
-  syncingMapTokens('Xarita tokenlari yuklanmoqda...', Icons.map),
-  syncingReports('Hisobotlar yuklanmoqda...', Icons.analytics),
-  syncingThumbnails('Rasmlar yuklanmoqda...', Icons.image),
-  completed('Ma\'lumotlar yangilandi!', Icons.check_circle),
-  error('Xatolik yuz berdi', Icons.error);
+  checkingUser(Icons.person_search),
+  clearingData(Icons.cleaning_services),
+  syncingKpi(Icons.bar_chart),
+  syncingClients(Icons.people),
+  syncingProducts(Icons.inventory),
+  syncingPriceTypes(Icons.price_change),
+  syncingBusinessRegions(Icons.location_on),
+  syncingUserWarehouses(Icons.warehouse),
+  syncingProductPrices(Icons.attach_money),
+  syncingProductBalances(Icons.balance),
+  syncingClientContracts(Icons.description),
+  updatingClientContractStatus(Icons.update),
+  syncingOrderStatuses(Icons.list_alt),
+  syncingOrders(Icons.shopping_cart),
+  syncingSalesReqPermissions(Icons.security),
+  syncingPlannedRoutes(Icons.route),
+  syncingUserOrganizations(Icons.business),
+  syncingPromotions(Icons.local_offer),
+  syncingMapTokens(Icons.map),
+  syncingReports(Icons.analytics),
+  syncingThumbnails(Icons.image),
+  completed(Icons.check_circle),
+  error(Icons.error);
 
-  const SyncStep(this.message, this.icon);
-  final String message;
+  const SyncStep(this.icon);
   final IconData icon;
+
+  String getMessage(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    switch (this) {
+      case SyncStep.checkingUser:
+        return l10n?.syncStepCheckingUser ?? 'Checking user...';
+      case SyncStep.clearingData:
+        return l10n?.syncStepClearingData ?? 'Clearing old data...';
+      case SyncStep.syncingKpi:
+        return l10n?.syncStepSyncingKpi ?? 'Loading KPI data...';
+      case SyncStep.syncingClients:
+        return l10n?.syncStepSyncingClients ?? 'Loading clients list...';
+      case SyncStep.syncingProducts:
+        return l10n?.syncStepSyncingProducts ?? 'Loading products...';
+      case SyncStep.syncingPriceTypes:
+        return l10n?.syncStepSyncingPriceTypes ?? 'Loading price types...';
+      case SyncStep.syncingBusinessRegions:
+        return l10n?.syncStepSyncingBusinessRegions ?? 'Loading business regions...';
+      case SyncStep.syncingUserWarehouses:
+        return l10n?.syncStepSyncingUserWarehouses ?? 'Loading user warehouses...';
+      case SyncStep.syncingProductPrices:
+        return l10n?.syncStepSyncingProductPrices ?? 'Loading product prices...';
+      case SyncStep.syncingProductBalances:
+        return l10n?.syncStepSyncingProductBalances ?? 'Loading product balances...';
+      case SyncStep.syncingClientContracts:
+        return l10n?.syncStepSyncingClientContracts ?? 'Loading client contracts...';
+      case SyncStep.updatingClientContractStatus:
+        return l10n?.syncStepUpdatingClientContractStatus ?? 'Updating client contract statuses...';
+      case SyncStep.syncingOrderStatuses:
+        return l10n?.syncStepSyncingOrderStatuses ?? 'Loading order statuses...';
+      case SyncStep.syncingOrders:
+        return l10n?.syncStepSyncingOrders ?? 'Loading orders...';
+      case SyncStep.syncingSalesReqPermissions:
+        return l10n?.syncStepSyncingSalesReqPermissions ?? 'Loading agent permissions...';
+      case SyncStep.syncingPlannedRoutes:
+        return l10n?.syncStepSyncingPlannedRoutes ?? 'Loading planned routes...';
+      case SyncStep.syncingUserOrganizations:
+        return l10n?.syncStepSyncingUserOrganizations ?? 'Loading user organizations...';
+      case SyncStep.syncingPromotions:
+        return l10n?.syncStepSyncingPromotions ?? 'Loading promotions...';
+      case SyncStep.syncingMapTokens:
+        return l10n?.syncStepSyncingMapTokens ?? 'Loading map tokens...';
+      case SyncStep.syncingReports:
+        return l10n?.syncStepSyncingReports ?? 'Loading reports...';
+      case SyncStep.syncingThumbnails:
+        return l10n?.syncStepSyncingThumbnails ?? 'Loading images...';
+      case SyncStep.completed:
+        return l10n?.syncStepCompleted ?? 'Data updated!';
+      case SyncStep.error:
+        return l10n?.syncStepError ?? 'An error occurred';
+    }
+  }
 }
 
 class DataSyncProgressWidget extends StatefulWidget {
@@ -87,18 +139,19 @@ class _DataSyncProgressWidgetState extends State<DataSyncProgressWidget> {
   }
 
   String _getErrorMessage(dynamic error) {
+    final l10n = AppLocalizations.of(context);
     if (error is PaymentRequiredException) {
-      return 'To\'lov talab qilinmoqda. Iltimos, obunangizni tekshiring.';
+      return l10n?.paymentRequiredError ?? 'Payment required. Please check your subscription.';
     } else if (error is AuthenticationException) {
-      return 'Autentifikatsiya xatosi. Iltimos, qayta kiring.';
+      return l10n?.authenticationError ?? 'Authentication error. Please login again.';
     } else if (error is ForbiddenException) {
-      return 'Kirish taqiqlangan. Sizda ruxsat yo\'q.';
+      return l10n?.accessForbiddenError ?? 'Access forbidden. You don\'t have permission.';
     } else if (error is NotFoundException) {
-      return 'Xizmat topilmadi. Iltimos, qo\'llab-quvvatlashga murojaat qiling.';
+      return l10n?.serviceNotFoundError ?? 'Service not found. Please contact support.';
     } else if (error is ServerUnavailableException) {
-      return 'Server mavjud emas. Iltimos, keyinroq urinib ko\'ring.';
+      return l10n?.serverUnavailableError ?? 'Server unavailable. Please try again later.';
     } else {
-      return 'Ma\'lumotlarni yangilashda xatolik yuz berdi. Kesh ma\'lumotlaridan foydalaniladi.';
+      return l10n?.dataUpdateError ?? 'Error updating data. Using cached data.';
     }
   }
 
@@ -146,8 +199,8 @@ class _DataSyncProgressWidgetState extends State<DataSyncProgressWidget> {
           // Title
           Text(
             _currentStep == SyncStep.completed
-                ? 'Muvaffaqiyatli!'
-                : 'Ma\'lumotlar yangilanmoqda...',
+                ? AppLocalizations.of(context)?.syncSuccessTitle ?? 'Success!'
+                : AppLocalizations.of(context)?.syncUpdatingTitle ?? 'Updating data...',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
@@ -159,7 +212,7 @@ class _DataSyncProgressWidgetState extends State<DataSyncProgressWidget> {
 
           // Message
           Text(
-            _currentStep.message,
+            _currentStep.getMessage(context),
             style: theme.textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),

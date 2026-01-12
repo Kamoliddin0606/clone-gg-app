@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 /// Modern Date Range Picker Widget
 /// Provides a beautiful, animated date range selection interface
 class ModernDateRangePicker extends StatefulWidget {
   final DateTimeRange? initialRange;
-  final String title;
-  final String confirmText;
-  final String cancelText;
+  final String? title;
+  final String? confirmText;
+  final String? cancelText;
   final DateTime? minimumDate;
   final DateTime? maximumDate;
 
   const ModernDateRangePicker({
     super.key,
     this.initialRange,
-    this.title = 'Select Date Range',
-    this.confirmText = 'Confirm',
-    this.cancelText = 'Cancel',
+    this.title,
+    this.confirmText,
+    this.cancelText,
     this.minimumDate,
     this.maximumDate,
   });
@@ -25,9 +26,9 @@ class ModernDateRangePicker extends StatefulWidget {
   static Future<DateTimeRange?> show(
     BuildContext context, {
     DateTimeRange? initialRange,
-    String title = 'Select Date Range',
-    String confirmText = 'Confirm',
-    String cancelText = 'Cancel',
+    String? title,
+    String? confirmText,
+    String? cancelText,
     DateTime? minimumDate,
     DateTime? maximumDate,
   }) {
@@ -188,7 +189,7 @@ class _ModernDateRangePickerState extends State<ModernDateRangePicker>
 
                   // Title
                   Text(
-                    widget.title,
+                    widget.title ?? AppLocalizations.of(context)?.selectDateRange ?? 'Select date range',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: colorScheme.onSurface,
@@ -245,7 +246,7 @@ class _ModernDateRangePickerState extends State<ModernDateRangePicker>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(widget.cancelText),
+                      child: Text(widget.cancelText ?? AppLocalizations.of(context)?.cancelButton ?? 'Cancel'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -260,7 +261,7 @@ class _ModernDateRangePickerState extends State<ModernDateRangePicker>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(widget.confirmText),
+                      child: Text(widget.confirmText ?? AppLocalizations.of(context)?.confirmButton ?? 'Confirm'),
                     ),
                   ),
                 ],
@@ -316,18 +317,32 @@ class _ModernDateRangePickerState extends State<ModernDateRangePicker>
         // Weekday headers
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'].map((day) => Expanded(
-              child: Center(
-                child: Text(
-                  day,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurfaceVariant,
+          child: Builder(
+            builder: (context) {
+              final l10n = AppLocalizations.of(context);
+              final weekdays = [
+                l10n?.weekdayMon ?? 'Mo',
+                l10n?.weekdayTue ?? 'Tu',
+                l10n?.weekdayWed ?? 'We',
+                l10n?.weekdayThu ?? 'Th',
+                l10n?.weekdayFri ?? 'Fr',
+                l10n?.weekdaySat ?? 'Sa',
+                l10n?.weekdaySun ?? 'Su',
+              ];
+              return Row(
+                children: weekdays.map((day) => Expanded(
+                  child: Center(
+                    child: Text(
+                      day,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            )).toList(),
+                )).toList(),
+              );
+            },
           ),
         ),
 
@@ -413,7 +428,7 @@ class _ModernDateRangePickerState extends State<ModernDateRangePicker>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem(colorScheme.primary, 'Tanlangan davr'),
+              _buildLegendItem(colorScheme.primary, AppLocalizations.of(context)?.selectedPeriod ?? 'Selected period'),
             ],
           ),
         ),

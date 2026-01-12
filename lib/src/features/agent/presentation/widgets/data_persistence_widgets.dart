@@ -42,7 +42,7 @@ class DataPersistenceIndicator extends StatelessWidget {
         children: [
           _buildStatusIcon(),
           const SizedBox(width: 6),
-          _buildStatusText(theme),
+          _buildStatusText(context, theme),
           if (unsyncedCount > 0 && onSyncPressed != null) ...[
             const SizedBox(width: 8),
             _buildSyncButton(theme),
@@ -94,24 +94,25 @@ class DataPersistenceIndicator extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusText(ThemeData theme) {
+  Widget _buildStatusText(BuildContext context, ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     String text;
     Color color;
 
     if (isSaving) {
-      text = 'Saving...';
+      text = l10n?.savingStatus ?? 'Saving...';
       color = theme.colorScheme.primary;
     } else if (hasUnsavedChanges) {
-      text = 'Unsaved changes';
+      text = l10n?.unsavedChangesStatus ?? 'Unsaved changes';
       color = theme.colorScheme.onSurfaceVariant;
     } else if (!isOnline) {
-      text = 'Offline';
+      text = l10n?.offlineStatus ?? 'Offline';
       color = theme.colorScheme.error;
     } else if (unsyncedCount > 0) {
-      text = '$unsyncedCount pending sync';
+      text = l10n?.pendingSyncCount(unsyncedCount) ?? '$unsyncedCount pending sync';
       color = theme.colorScheme.primary;
     } else {
-      text = 'All synced';
+      text = l10n?.allSyncedStatus ?? 'All synced';
       color = theme.colorScheme.primary;
     }
 

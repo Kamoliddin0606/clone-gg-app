@@ -359,7 +359,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
             o.captionOrder,
             o.clientCode,
             o.codeOrg,
-            statusText(o.mainStatus),
+            statusText(o.mainStatus, context),
             NumberFormat('#,##0').format(o.total),
           ].join(' '),
         );

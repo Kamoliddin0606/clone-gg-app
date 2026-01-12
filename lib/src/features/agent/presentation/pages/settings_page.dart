@@ -1361,19 +1361,19 @@ class _MapsTabState extends State<MapsTab> {
             ApiKeyService.googleMapsApiKey,
           );
           if (kDebugMode) print('hasKey: $hasKey');
-          return hasKey ? 'sozlangan' : 'sozlanmagan';
+          return hasKey ? 'configured' : 'not_configured';
         case MapProvider.yandex:
           final hasKey = await _apiKeyService.hasApiKey(
             ApiKeyService.yandexMapsApiKey,
           );
           if (kDebugMode) print('hasKey: $hasKey');
-          return hasKey ? 'sozlangan' : 'sozlanmagan';
+          return hasKey ? 'configured' : 'not_configured';
         case MapProvider.openStreetMap:
-          return 'kalit_shart_emas'; // OSM doesn't require API key
+          return 'key_not_required'; // OSM doesn't require API key
       }
     } catch (e) {
       if (kDebugMode) print('Error checking API key status: $e');
-      return 'xatolik';
+      return 'error';
     }
   }
 
@@ -1665,17 +1665,17 @@ class _MapsTabState extends State<MapsTab> {
                               ),
                             ),
                             Text(
-                              apiKeyStatus == 'kalit_shart_emas'
+                              apiKeyStatus == 'key_not_required'
                                   ? l10n.apiKeyNotRequired
-                                  : apiKeyStatus == 'sozlangan'
+                                  : apiKeyStatus == 'configured'
                                   ? l10n.apiKeyConfigured
-                                  : apiKeyStatus == 'sozlanmagan'
+                                  : apiKeyStatus == 'not_configured'
                                   ? l10n.apiKeyNotConfigured
                                   : l10n.error,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color:
-                                    apiKeyStatus == 'sozlangan' ||
-                                        apiKeyStatus == 'kalit_shart_emas'
+                                    apiKeyStatus == 'configured' ||
+                                        apiKeyStatus == 'key_not_required'
                                     ? colorScheme.primary
                                     : colorScheme.error,
                                 fontWeight: FontWeight.w500,

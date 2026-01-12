@@ -2986,31 +2986,31 @@ abstract class AppLocalizations {
   /// No description provided for @syncStatusProducts.
   ///
   /// In en, this message translates to:
-  /// **'Updating products'**
+  /// **'Syncing products'**
   String get syncStatusProducts;
 
   /// No description provided for @syncStatusBalances.
   ///
   /// In en, this message translates to:
-  /// **'Updating balances'**
+  /// **'Syncing balances'**
   String get syncStatusBalances;
 
   /// No description provided for @syncStatusOrders.
   ///
   /// In en, this message translates to:
-  /// **'Updating orders'**
+  /// **'Syncing orders'**
   String get syncStatusOrders;
 
   /// No description provided for @syncStatusCompleted.
   ///
   /// In en, this message translates to:
-  /// **'Updated'**
+  /// **'Sync completed'**
   String get syncStatusCompleted;
 
   /// No description provided for @syncStatusError.
   ///
   /// In en, this message translates to:
-  /// **'Error'**
+  /// **'Sync error'**
   String get syncStatusError;
 
   /// No description provided for @syncInProgress.
@@ -3040,7 +3040,7 @@ abstract class AppLocalizations {
   /// No description provided for @clientBalance.
   ///
   /// In en, this message translates to:
-  /// **'Client Balance'**
+  /// **'Client balance'**
   String get clientBalance;
 
   /// No description provided for @clientBalanceDetails.
@@ -3052,14 +3052,14 @@ abstract class AppLocalizations {
   /// No description provided for @clientIsDebtor.
   ///
   /// In en, this message translates to:
-  /// **'Client is debtor'**
-  String get clientIsDebtor;
+  /// **'Client is debtor. Total debt: {amount} sum'**
+  String clientIsDebtor(String amount);
 
   /// No description provided for @clientHasOverpayment.
   ///
   /// In en, this message translates to:
-  /// **'Overpayment available'**
-  String get clientHasOverpayment;
+  /// **'Client has overpaid. Overpayment: {amount} sum'**
+  String clientHasOverpayment(String amount);
 
   /// No description provided for @balanceIsZero.
   ///
@@ -3070,7 +3070,7 @@ abstract class AppLocalizations {
   /// No description provided for @totalDebt.
   ///
   /// In en, this message translates to:
-  /// **'Total Debt'**
+  /// **'Total debt'**
   String get totalDebt;
 
   /// No description provided for @totalPayment.
@@ -3088,19 +3088,19 @@ abstract class AppLocalizations {
   /// No description provided for @unpaidOrders.
   ///
   /// In en, this message translates to:
-  /// **'Unpaid Orders'**
-  String get unpaidOrders;
+  /// **'{count} unpaid'**
+  String unpaidOrders(int count);
 
   /// No description provided for @overdueOrders.
   ///
   /// In en, this message translates to:
-  /// **'Overdue Orders'**
-  String get overdueOrders;
+  /// **'{count} overdue'**
+  String overdueOrders(int count);
 
   /// No description provided for @balanceStatus.
   ///
   /// In en, this message translates to:
-  /// **'Balance Status'**
+  /// **'Balance status'**
   String get balanceStatus;
 
   /// No description provided for @contractsTab.
@@ -3166,13 +3166,13 @@ abstract class AppLocalizations {
   /// No description provided for @balanceUpdated.
   ///
   /// In en, this message translates to:
-  /// **'Updated: {date}'**
+  /// **'Updated'**
   String balanceUpdated(String date);
 
   /// No description provided for @noBalanceData.
   ///
   /// In en, this message translates to:
-  /// **'No balance data found'**
+  /// **'Balance data not found'**
   String get noBalanceData;
 
   /// No description provided for @balanceLoadError.
@@ -3202,7 +3202,7 @@ abstract class AppLocalizations {
   /// No description provided for @contractsCount.
   ///
   /// In en, this message translates to:
-  /// **'Contracts count: {count}'**
+  /// **'{count} contracts'**
   String contractsCount(int count);
 
   /// No description provided for @contract.
@@ -3520,8 +3520,8 @@ abstract class AppLocalizations {
   /// No description provided for @projectLabel.
   ///
   /// In en, this message translates to:
-  /// **'Project: {name}'**
-  String projectLabel(String name);
+  /// **'Project: {project}'**
+  String projectLabel(String project);
 
   /// No description provided for @idLabel.
   ///
@@ -3664,7 +3664,7 @@ abstract class AppLocalizations {
   /// No description provided for @createContract.
   ///
   /// In en, this message translates to:
-  /// **'Create Contract'**
+  /// **'Create contract'**
   String get createContract;
 
   /// No description provided for @createContractTitle.
@@ -4324,7 +4324,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorOccurred.
   ///
   /// In en, this message translates to:
-  /// **'An error occurred'**
+  /// **'Error occurred'**
   String errorOccurred(String error);
 
   /// No description provided for @cameraPermissionDenied.
@@ -4468,7 +4468,7 @@ abstract class AppLocalizations {
   /// No description provided for @orderDetailsNotFound.
   ///
   /// In en, this message translates to:
-  /// **'Order details not found'**
+  /// **'Order details not found.'**
   String get orderDetailsNotFound;
 
   /// No description provided for @unknown.
@@ -4642,7 +4642,7 @@ abstract class AppLocalizations {
   /// No description provided for @orderDetailsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Order Details'**
+  /// **'Order details'**
   String get orderDetailsTitle;
 
   /// No description provided for @camera.
@@ -5062,49 +5062,49 @@ abstract class AppLocalizations {
   /// No description provided for @clientNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'Client Name'**
+  /// **'Client name'**
   String get clientNameLabel;
 
   /// No description provided for @orderNumberLabel.
   ///
   /// In en, this message translates to:
-  /// **'Order Number'**
+  /// **'Order number'**
   String get orderNumberLabel;
 
   /// No description provided for @orderDateLabel.
   ///
   /// In en, this message translates to:
-  /// **'Order Date'**
+  /// **'Order date'**
   String get orderDateLabel;
 
   /// No description provided for @orderTotalLabel.
   ///
   /// In en, this message translates to:
-  /// **'Order Total'**
+  /// **'Order total'**
   String get orderTotalLabel;
 
   /// No description provided for @mainStatusLabel.
   ///
   /// In en, this message translates to:
-  /// **'Main Status'**
+  /// **'Main status'**
   String get mainStatusLabel;
 
   /// No description provided for @statusCodeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Status Code'**
+  /// **'Status code'**
   String get statusCodeLabel;
 
   /// No description provided for @totalProductsLabel.
   ///
   /// In en, this message translates to:
-  /// **'Total Products'**
+  /// **'Total products'**
   String get totalProductsLabel;
 
   /// No description provided for @productNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'Product Name'**
+  /// **'Product name'**
   String get productNameLabel;
 
   /// No description provided for @articleLabel.
@@ -5134,13 +5134,13 @@ abstract class AppLocalizations {
   /// No description provided for @priceTypeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Price Type'**
+  /// **'Price type'**
   String get priceTypeLabel;
 
   /// No description provided for @noProductsInOrder.
   ///
   /// In en, this message translates to:
-  /// **'No products in this order'**
+  /// **'No products in order'**
   String get noProductsInOrder;
 
   /// No description provided for @productListEmpty.
@@ -5680,7 +5680,7 @@ abstract class AppLocalizations {
   /// No description provided for @contractsNotFound.
   ///
   /// In en, this message translates to:
-  /// **'Contracts not found'**
+  /// **'No contracts found'**
   String get contractsNotFound;
 
   /// No description provided for @contractsListRefreshed.
@@ -5776,7 +5776,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataLoading.
   ///
   /// In en, this message translates to:
-  /// **'Data loading...'**
+  /// **'Loading data...'**
   String get dataLoading;
 
   /// No description provided for @successful.
@@ -5956,7 +5956,7 @@ abstract class AppLocalizations {
   /// No description provided for @contractStatusPending.
   ///
   /// In en, this message translates to:
-  /// **'Pending'**
+  /// **'Not approved'**
   String get contractStatusPending;
 
   /// No description provided for @contractStatusSuspended.
@@ -6250,8 +6250,8 @@ abstract class AppLocalizations {
   /// No description provided for @permissionRequired.
   ///
   /// In en, this message translates to:
-  /// **'{permission} required'**
-  String permissionRequired(String permission);
+  /// **'{title} required'**
+  String permissionRequired(String title);
 
   /// No description provided for @permissionRequiredSettings.
   ///
@@ -6406,7 +6406,7 @@ abstract class AppLocalizations {
   /// No description provided for @justNow.
   ///
   /// In en, this message translates to:
-  /// **'just now'**
+  /// **'Just now'**
   String get justNow;
 
   /// No description provided for @minutesAgo.
@@ -6546,6 +6546,1332 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Data imported from Telegram report. You can change the text to switch to a new source — UI will be updated.'**
   String get footerNoteText;
+
+  /// No description provided for @syncStepCheckingUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking user...'**
+  String get syncStepCheckingUser;
+
+  /// No description provided for @syncStepClearingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Clearing old data...'**
+  String get syncStepClearingData;
+
+  /// No description provided for @syncStepSyncingKpi.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading KPI data...'**
+  String get syncStepSyncingKpi;
+
+  /// No description provided for @syncStepSyncingClients.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading clients list...'**
+  String get syncStepSyncingClients;
+
+  /// No description provided for @syncStepSyncingProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading products...'**
+  String get syncStepSyncingProducts;
+
+  /// No description provided for @syncStepSyncingPriceTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading price types...'**
+  String get syncStepSyncingPriceTypes;
+
+  /// No description provided for @syncStepSyncingBusinessRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading business regions...'**
+  String get syncStepSyncingBusinessRegions;
+
+  /// No description provided for @syncStepSyncingUserWarehouses.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading user warehouses...'**
+  String get syncStepSyncingUserWarehouses;
+
+  /// No description provided for @syncStepSyncingProductPrices.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading product prices...'**
+  String get syncStepSyncingProductPrices;
+
+  /// No description provided for @syncStepSyncingProductBalances.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading product balances...'**
+  String get syncStepSyncingProductBalances;
+
+  /// No description provided for @syncStepSyncingClientContracts.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading client contracts...'**
+  String get syncStepSyncingClientContracts;
+
+  /// No description provided for @syncStepUpdatingClientContractStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating client contract statuses...'**
+  String get syncStepUpdatingClientContractStatus;
+
+  /// No description provided for @syncStepSyncingOrderStatuses.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading order statuses...'**
+  String get syncStepSyncingOrderStatuses;
+
+  /// No description provided for @syncStepSyncingOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading orders...'**
+  String get syncStepSyncingOrders;
+
+  /// No description provided for @syncStepSyncingSalesReqPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading agent permissions...'**
+  String get syncStepSyncingSalesReqPermissions;
+
+  /// No description provided for @syncStepSyncingPlannedRoutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading planned routes...'**
+  String get syncStepSyncingPlannedRoutes;
+
+  /// No description provided for @syncStepSyncingUserOrganizations.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading user organizations...'**
+  String get syncStepSyncingUserOrganizations;
+
+  /// No description provided for @syncStepSyncingPromotions.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading promotions...'**
+  String get syncStepSyncingPromotions;
+
+  /// No description provided for @syncStepSyncingMapTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading map tokens...'**
+  String get syncStepSyncingMapTokens;
+
+  /// No description provided for @syncStepSyncingReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading reports...'**
+  String get syncStepSyncingReports;
+
+  /// No description provided for @syncStepSyncingThumbnails.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading images...'**
+  String get syncStepSyncingThumbnails;
+
+  /// No description provided for @syncStepCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Data updated!'**
+  String get syncStepCompleted;
+
+  /// No description provided for @syncStepError.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred'**
+  String get syncStepError;
+
+  /// No description provided for @syncSuccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Success!'**
+  String get syncSuccessTitle;
+
+  /// No description provided for @syncUpdatingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating data...'**
+  String get syncUpdatingTitle;
+
+  /// No description provided for @paymentRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment required. Please check your subscription.'**
+  String get paymentRequiredError;
+
+  /// No description provided for @authenticationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication error. Please login again.'**
+  String get authenticationError;
+
+  /// No description provided for @accessForbiddenError.
+  ///
+  /// In en, this message translates to:
+  /// **'Access forbidden. You don\'t have permission.'**
+  String get accessForbiddenError;
+
+  /// No description provided for @serviceNotFoundError.
+  ///
+  /// In en, this message translates to:
+  /// **'Service not found. Please contact support.'**
+  String get serviceNotFoundError;
+
+  /// No description provided for @serverUnavailableError.
+  ///
+  /// In en, this message translates to:
+  /// **'Server unavailable. Please try again later.'**
+  String get serverUnavailableError;
+
+  /// No description provided for @dataUpdateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error updating data. Using cached data.'**
+  String get dataUpdateError;
+
+  /// No description provided for @syncStatusErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Errors'**
+  String get syncStatusErrors;
+
+  /// No description provided for @syncStatusSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get syncStatusSynced;
+
+  /// No description provided for @syncStatusPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial'**
+  String get syncStatusPartial;
+
+  /// No description provided for @syncStatusNotSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced'**
+  String get syncStatusNotSynced;
+
+  /// No description provided for @tablesOfTotalSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'{synced} of {total} tables synced'**
+  String tablesOfTotalSynced(int synced, int total);
+
+  /// No description provided for @tablesInThisGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Tables in this group'**
+  String get tablesInThisGroup;
+
+  /// No description provided for @yesterdayText.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get yesterdayText;
+
+  /// No description provided for @neverSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Never synced'**
+  String get neverSynced;
+
+  /// No description provided for @tableEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Table is empty'**
+  String get tableEmpty;
+
+  /// No description provided for @recordsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} records'**
+  String recordsCount(int count);
+
+  /// No description provided for @lastSyncLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync: {time}'**
+  String lastSyncLabel(String time);
+
+  /// No description provided for @syncTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync table'**
+  String get syncTable;
+
+  /// No description provided for @dependencies.
+  ///
+  /// In en, this message translates to:
+  /// **'Dependencies'**
+  String get dependencies;
+
+  /// No description provided for @willCascadeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Will cascade to'**
+  String get willCascadeTo;
+
+  /// No description provided for @tradingPointsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading points'**
+  String get tradingPointsLabel;
+
+  /// No description provided for @tradingPointsNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading points not available'**
+  String get tradingPointsNotAvailable;
+
+  /// No description provided for @dateRangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date range'**
+  String get dateRangeLabel;
+
+  /// No description provided for @allDatesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All dates'**
+  String get allDatesLabel;
+
+  /// No description provided for @clearLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearLabel;
+
+  /// No description provided for @statusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get statusLabel;
+
+  /// No description provided for @statusAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get statusAll;
+
+  /// No description provided for @statusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get statusActive;
+
+  /// No description provided for @statusInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get statusInactive;
+
+  /// No description provided for @statusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get statusExpired;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get statusPending;
+
+  /// No description provided for @clientContractsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} client\'s contracts ({count})'**
+  String clientContractsCount(String name, int count);
+
+  /// No description provided for @refreshError.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh error'**
+  String refreshError(String error);
+
+  /// No description provided for @dataTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get dataTab;
+
+  /// No description provided for @documentTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get documentTab;
+
+  /// No description provided for @clientLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Client: {name}'**
+  String clientLabel(String name);
+
+  /// No description provided for @startDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get startDateLabel;
+
+  /// No description provided for @endDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get endDateLabel;
+
+  /// No description provided for @unknownDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get unknownDate;
+
+  /// No description provided for @statusAndType.
+  ///
+  /// In en, this message translates to:
+  /// **'Status and type'**
+  String get statusAndType;
+
+  /// No description provided for @typeLabel2.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get typeLabel2;
+
+  /// No description provided for @additionalInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional information'**
+  String get additionalInfo;
+
+  /// No description provided for @certificateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate limited'**
+  String get certificateLimited;
+
+  /// No description provided for @yesText.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yesText;
+
+  /// No description provided for @noText.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get noText;
+
+  /// No description provided for @referenceNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference number'**
+  String get referenceNumberLabel;
+
+  /// No description provided for @certificateNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate number'**
+  String get certificateNumberLabel;
+
+  /// No description provided for @passportNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport number'**
+  String get passportNumberLabel;
+
+  /// No description provided for @districtCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'District code'**
+  String get districtCodeLabel;
+
+  /// No description provided for @districtNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'District name'**
+  String get districtNameLabel;
+
+  /// No description provided for @projectCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Project code'**
+  String get projectCodeLabel;
+
+  /// No description provided for @creditLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit'**
+  String get creditLabel;
+
+  /// No description provided for @fullPaymentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'100% payment'**
+  String get fullPaymentLabel;
+
+  /// No description provided for @uzbekLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Uzbek'**
+  String get uzbekLanguage;
+
+  /// No description provided for @russianLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Russian'**
+  String get russianLanguage;
+
+  /// No description provided for @pdfPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing PDF...'**
+  String get pdfPreparing;
+
+  /// No description provided for @tapToReveal.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap'**
+  String get tapToReveal;
+
+  /// No description provided for @warehousesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouses'**
+  String get warehousesTitle;
+
+  /// No description provided for @warehousesNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouses not found'**
+  String get warehousesNotFound;
+
+  /// No description provided for @warehousesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouses count: {count}'**
+  String warehousesCount(int count);
+
+  /// No description provided for @createdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Created: {date}'**
+  String createdLabel(String date);
+
+  /// No description provided for @updatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated: {date}'**
+  String updatedLabel(String date);
+
+  /// No description provided for @visitCompletedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit completed today'**
+  String get visitCompletedToday;
+
+  /// No description provided for @visitExpectedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit expected today'**
+  String get visitExpectedToday;
+
+  /// No description provided for @visitNotPlannedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit not planned today'**
+  String get visitNotPlannedToday;
+
+  /// No description provided for @visitOrderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit order: {number}'**
+  String visitOrderLabel(int number);
+
+  /// No description provided for @selectClientTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select client'**
+  String get selectClientTitle;
+
+  /// No description provided for @clientsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} clients available'**
+  String clientsAvailable(int count);
+
+  /// No description provided for @searchByNameCodeInn.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, code, INN, phone, type...'**
+  String get searchByNameCodeInn;
+
+  /// No description provided for @searchInCyrillicOrLatin.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in Cyrillic or Latin'**
+  String get searchInCyrillicOrLatin;
+
+  /// No description provided for @foundCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} found'**
+  String foundCount(int count);
+
+  /// No description provided for @clientNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Client not found'**
+  String get clientNotFound;
+
+  /// No description provided for @tryDifferentSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different search term'**
+  String get tryDifferentSearch;
+
+  /// No description provided for @confirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirmButton;
+
+  /// No description provided for @cancelButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelButton;
+
+  /// No description provided for @newContractTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New contract'**
+  String get newContractTitle;
+
+  /// No description provided for @fillAllFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in all fields'**
+  String get fillAllFields;
+
+  /// No description provided for @contractTypesLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading contract types'**
+  String get contractTypesLoadError;
+
+  /// No description provided for @pleaseSelectClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a client'**
+  String get pleaseSelectClient;
+
+  /// No description provided for @pleaseSelectContractType.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a contract type'**
+  String get pleaseSelectContractType;
+
+  /// No description provided for @contractCreatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract created successfully'**
+  String get contractCreatedSuccessfully;
+
+  /// No description provided for @contractCreationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error creating contract'**
+  String get contractCreationError;
+
+  /// No description provided for @documentInfoSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Document information'**
+  String get documentInfoSection;
+
+  /// No description provided for @regionInfoSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Region information'**
+  String get regionInfoSection;
+
+  /// No description provided for @referenceNumberField.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference number'**
+  String get referenceNumberField;
+
+  /// No description provided for @termLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Term'**
+  String get termLabel;
+
+  /// No description provided for @certificateNumberField.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate number'**
+  String get certificateNumberField;
+
+  /// No description provided for @certificateUnlimitedField.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate unlimited'**
+  String get certificateUnlimitedField;
+
+  /// No description provided for @passportNumberField.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport number'**
+  String get passportNumberField;
+
+  /// No description provided for @clientCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Client code'**
+  String get clientCodeLabel;
+
+  /// No description provided for @organizationCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization code'**
+  String get organizationCodeLabel;
+
+  /// No description provided for @courierLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Courier'**
+  String get courierLabel;
+
+  /// No description provided for @vehicleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get vehicleLabel;
+
+  /// No description provided for @licensePlateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'License plate'**
+  String get licensePlateLabel;
+
+  /// No description provided for @supervisorCommentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Supervisor comment'**
+  String get supervisorCommentLabel;
+
+  /// No description provided for @logistCommentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Logist comment'**
+  String get logistCommentLabel;
+
+  /// No description provided for @agentCommentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent comment'**
+  String get agentCommentLabel;
+
+  /// No description provided for @networkErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Check your internet connection.'**
+  String get networkErrorMessage;
+
+  /// No description provided for @serverTimeoutMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Server connection timed out.'**
+  String get serverTimeoutMessage;
+
+  /// No description provided for @orderDetailsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading order details.'**
+  String get orderDetailsLoadError;
+
+  /// No description provided for @dataLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Data loading failed: {error}'**
+  String dataLoadFailed(String error);
+
+  /// No description provided for @brands.
+  ///
+  /// In en, this message translates to:
+  /// **'Brands'**
+  String get brands;
+
+  /// No description provided for @fileStoragePermission.
+  ///
+  /// In en, this message translates to:
+  /// **'File storage permission'**
+  String get fileStoragePermission;
+
+  /// No description provided for @fileStorageDescriptionAndroid13.
+  ///
+  /// In en, this message translates to:
+  /// **'Select folder to save app data'**
+  String get fileStorageDescriptionAndroid13;
+
+  /// No description provided for @fileStorageDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'To save and load app data'**
+  String get fileStorageDescription;
+
+  /// No description provided for @fileStoragePurposeAndroid13.
+  ///
+  /// In en, this message translates to:
+  /// **'Select folder to save images, documents and data'**
+  String get fileStoragePurposeAndroid13;
+
+  /// No description provided for @fileStoragePurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Save images, documents and data'**
+  String get fileStoragePurpose;
+
+  /// No description provided for @locationPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission'**
+  String get locationPermissionTitle;
+
+  /// No description provided for @locationPermissionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'To sort trading points by distance'**
+  String get locationPermissionDescription;
+
+  /// No description provided for @locationPermissionPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Show location on map and calculate distance'**
+  String get locationPermissionPurpose;
+
+  /// No description provided for @alwaysLocationPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Always location permission'**
+  String get alwaysLocationPermissionTitle;
+
+  /// No description provided for @alwaysLocationPermissionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'To detect location when app is in background'**
+  String get alwaysLocationPermissionDescription;
+
+  /// No description provided for @alwaysLocationPermissionPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Background service and notifications'**
+  String get alwaysLocationPermissionPurpose;
+
+  /// No description provided for @cameraPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission'**
+  String get cameraPermissionTitle;
+
+  /// No description provided for @cameraPermissionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'To take photos and scan barcodes'**
+  String get cameraPermissionDescription;
+
+  /// No description provided for @cameraPermissionPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photos of products and trading points'**
+  String get cameraPermissionPurpose;
+
+  /// No description provided for @microphonePermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission'**
+  String get microphonePermissionTitle;
+
+  /// No description provided for @microphonePermissionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'For voice recording and audio messages'**
+  String get microphonePermissionDescription;
+
+  /// No description provided for @microphonePermissionPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice notes and audio records'**
+  String get microphonePermissionPurpose;
+
+  /// No description provided for @notificationPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission'**
+  String get notificationPermissionTitle;
+
+  /// No description provided for @notificationPermissionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'To show important messages'**
+  String get notificationPermissionDescription;
+
+  /// No description provided for @notificationPermissionPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders, news and notifications'**
+  String get notificationPermissionPurpose;
+
+  /// No description provided for @audioPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Music and audio permission'**
+  String get audioPermissionTitle;
+
+  /// No description provided for @audioPermissionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'To work with audio files'**
+  String get audioPermissionDescription;
+
+  /// No description provided for @audioPermissionPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Music, audio messages and voice files'**
+  String get audioPermissionPurpose;
+
+  /// No description provided for @photosAndVideosPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos and videos permission'**
+  String get photosAndVideosPermissionTitle;
+
+  /// No description provided for @photosAndVideosPermissionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'To work with media files'**
+  String get photosAndVideosPermissionDescription;
+
+  /// No description provided for @photosAndVideosPermissionPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Work with photos, videos and media files'**
+  String get photosAndVideosPermissionPurpose;
+
+  /// No description provided for @permissionRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{description}. Please grant permission in app settings.'**
+  String permissionRequiredMessage(String description);
+
+  /// No description provided for @goToSettingsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to settings'**
+  String get goToSettingsButton;
+
+  /// No description provided for @grantPermissionButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant permission'**
+  String get grantPermissionButton;
+
+  /// No description provided for @checkingPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking...'**
+  String get checkingPermission;
+
+  /// No description provided for @permissionCheckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission check'**
+  String get permissionCheckTitle;
+
+  /// No description provided for @permissionCheckMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The app needs the following permissions to work properly:'**
+  String get permissionCheckMessage;
+
+  /// No description provided for @permissionSaveData.
+  ///
+  /// In en, this message translates to:
+  /// **'Save data'**
+  String get permissionSaveData;
+
+  /// No description provided for @permissionMapDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Map and distance calculation'**
+  String get permissionMapDistance;
+
+  /// No description provided for @permissionTakePhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photos'**
+  String get permissionTakePhotos;
+
+  /// No description provided for @permissionRecordVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Record voice'**
+  String get permissionRecordVoice;
+
+  /// No description provided for @permissionShowMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Show messages'**
+  String get permissionShowMessages;
+
+  /// No description provided for @permissionLimitedMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Without permissions the app will work in limited mode.'**
+  String get permissionLimitedMode;
+
+  /// No description provided for @purposeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Purpose: {purpose}'**
+  String purposeLabel(String purpose);
+
+  /// No description provided for @grantPermissionQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to grant permission?'**
+  String get grantPermissionQuestion;
+
+  /// No description provided for @serviceInitError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error initializing services'**
+  String get serviceInitError;
+
+  /// No description provided for @clientInnNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Client INN not available'**
+  String get clientInnNotAvailable;
+
+  /// No description provided for @clientBalanceZero.
+  ///
+  /// In en, this message translates to:
+  /// **'Client balance is zero.'**
+  String get clientBalanceZero;
+
+  /// No description provided for @balanceDataNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance data not found'**
+  String get balanceDataNotFound;
+
+  /// No description provided for @updatedAtTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated: {time}'**
+  String updatedAtTime(String time);
+
+  /// No description provided for @clientDebtorStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Client is debtor'**
+  String get clientDebtorStatus;
+
+  /// No description provided for @overpaymentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpayment'**
+  String get overpaymentStatus;
+
+  /// No description provided for @balanceZeroStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance is zero'**
+  String get balanceZeroStatus;
+
+  /// No description provided for @savingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving...'**
+  String get savingStatus;
+
+  /// No description provided for @unsavedChangesStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved changes'**
+  String get unsavedChangesStatus;
+
+  /// No description provided for @offlineStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get offlineStatus;
+
+  /// No description provided for @pendingSyncCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending sync'**
+  String pendingSyncCount(int count);
+
+  /// No description provided for @allSyncedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'All synced'**
+  String get allSyncedStatus;
+
+  /// No description provided for @autoSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-saving...'**
+  String get autoSaving;
+
+  /// No description provided for @savingStepData.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving step data...'**
+  String get savingStepData;
+
+  /// No description provided for @mandatoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mandatory'**
+  String get mandatoryLabel;
+
+  /// No description provided for @optionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optionalLabel;
+
+  /// No description provided for @currentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get currentLabel;
+
+  /// No description provided for @completedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get completedLabel;
+
+  /// No description provided for @skippedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get skippedLabel;
+
+  /// No description provided for @notesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes: {notes}'**
+  String notesLabel(String notes);
+
+  /// No description provided for @reasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason: {reason}'**
+  String reasonLabel(String reason);
+
+  /// No description provided for @reasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get reasonHint;
+
+  /// No description provided for @syncStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting sync...'**
+  String get syncStarting;
+
+  /// No description provided for @weekdayMon.
+  ///
+  /// In en, this message translates to:
+  /// **'Mo'**
+  String get weekdayMon;
+
+  /// No description provided for @weekdayTue.
+  ///
+  /// In en, this message translates to:
+  /// **'Tu'**
+  String get weekdayTue;
+
+  /// No description provided for @weekdayWed.
+  ///
+  /// In en, this message translates to:
+  /// **'We'**
+  String get weekdayWed;
+
+  /// No description provided for @weekdayThu.
+  ///
+  /// In en, this message translates to:
+  /// **'Th'**
+  String get weekdayThu;
+
+  /// No description provided for @weekdayFri.
+  ///
+  /// In en, this message translates to:
+  /// **'Fr'**
+  String get weekdayFri;
+
+  /// No description provided for @weekdaySat.
+  ///
+  /// In en, this message translates to:
+  /// **'Sa'**
+  String get weekdaySat;
+
+  /// No description provided for @weekdaySun.
+  ///
+  /// In en, this message translates to:
+  /// **'Su'**
+  String get weekdaySun;
+
+  /// No description provided for @copyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copyLabel;
+
+  /// No description provided for @reloadLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get reloadLabel;
+
+  /// No description provided for @refreshContractTypesAndRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh contract types and regions'**
+  String get refreshContractTypesAndRegions;
+
+  /// No description provided for @orderStatusNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get orderStatusNew;
+
+  /// No description provided for @orderStatusConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get orderStatusConfirmed;
+
+  /// No description provided for @orderStatusDelivering.
+  ///
+  /// In en, this message translates to:
+  /// **'In delivery'**
+  String get orderStatusDelivering;
+
+  /// No description provided for @orderStatusReturnRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Return requested'**
+  String get orderStatusReturnRequested;
+
+  /// No description provided for @orderStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get orderStatusCancelled;
+
+  /// No description provided for @orderStatusDeliveredUnpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered, unpaid'**
+  String get orderStatusDeliveredUnpaid;
+
+  /// No description provided for @orderStatusDeliveredPartiallyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered, partially paid'**
+  String get orderStatusDeliveredPartiallyPaid;
+
+  /// No description provided for @orderStatusUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get orderStatusUnknown;
+
+  /// No description provided for @filterTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filterTooltip;
+
+  /// No description provided for @fullscreenTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Fullscreen'**
+  String get fullscreenTooltip;
+
+  /// No description provided for @refusalReasonClientNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Client not available'**
+  String get refusalReasonClientNotAvailable;
+
+  /// No description provided for @refusalReasonNoTime.
+  ///
+  /// In en, this message translates to:
+  /// **'No time'**
+  String get refusalReasonNoTime;
+
+  /// No description provided for @refusalReasonProductNotNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Product not needed'**
+  String get refusalReasonProductNotNeeded;
+
+  /// No description provided for @refusalReasonPriceNotSuitable.
+  ///
+  /// In en, this message translates to:
+  /// **'Price not suitable'**
+  String get refusalReasonPriceNotSuitable;
+
+  /// No description provided for @refusalReasonWorksWithOtherSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Works with other supplier'**
+  String get refusalReasonWorksWithOtherSupplier;
+
+  /// No description provided for @refusalReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other reason'**
+  String get refusalReasonOther;
+
+  /// No description provided for @apiKeyStatusConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'configured'**
+  String get apiKeyStatusConfigured;
+
+  /// No description provided for @apiKeyStatusNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'not configured'**
+  String get apiKeyStatusNotConfigured;
+
+  /// No description provided for @apiKeyStatusNotRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'key not required'**
+  String get apiKeyStatusNotRequired;
+
+  /// No description provided for @apiKeyStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'error'**
+  String get apiKeyStatusError;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

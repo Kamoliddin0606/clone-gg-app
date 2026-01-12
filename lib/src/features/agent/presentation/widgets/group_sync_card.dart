@@ -165,7 +165,7 @@ class _GroupSyncCardState extends State<GroupSyncCard> {
             children: [
               SizedBox(height: 4),
               Text(
-                '${status.syncedCount} of ${status.totalCount} tables synced',
+                AppLocalizations.of(context)?.tablesOfTotalSynced(status.syncedCount, status.totalCount) ?? '${status.syncedCount} of ${status.totalCount} tables synced',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -189,7 +189,7 @@ class _GroupSyncCardState extends State<GroupSyncCard> {
                   icon: Icon(Icons.sync),
                   color: groupColor,
                   onPressed: _syncGroup,
-                  tooltip: 'Sync entire group',
+                  tooltip: AppLocalizations.of(context)?.syncEntireGroup ?? 'Sync entire group',
                 ),
           initiallyExpanded: _isExpanded,
           onExpansionChanged: (expanded) {
@@ -211,22 +211,23 @@ class _GroupSyncCardState extends State<GroupSyncCard> {
     Color color;
     String text;
 
+    final l10n = AppLocalizations.of(context);
     if (status.hasErrors) {
       icon = Icons.error;
       color = Colors.red;
-      text = 'Errors';
+      text = l10n?.syncStatusErrors ?? 'Errors';
     } else if (status.allSynced) {
       icon = Icons.check_circle;
       color = Colors.green;
-      text = 'Synced';
+      text = l10n?.syncStatusSynced ?? 'Synced';
     } else if (status.syncedCount > 0) {
       icon = Icons.sync_problem;
       color = Colors.orange;
-      text = 'Partial';
+      text = l10n?.syncStatusPartial ?? 'Partial';
     } else {
       icon = Icons.sync_disabled;
       color = Colors.grey;
-      text = 'Not synced';
+      text = l10n?.syncStatusNotSynced ?? 'Not synced';
     }
 
     return Container(
@@ -271,7 +272,7 @@ class _GroupSyncCardState extends State<GroupSyncCard> {
         children: [
           // Group description
           Text(
-            'Tables in this group',
+            AppLocalizations.of(context)?.tablesInThisGroup ?? 'Tables in this group',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurfaceVariant,
@@ -315,19 +316,20 @@ class _GroupSyncCardState extends State<GroupSyncCard> {
   String _getRelativeTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
+    final l10n = AppLocalizations.of(context);
 
     if (difference.inSeconds < 60) {
-      return 'Just now';
+      return l10n?.justNow ?? 'Just now';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
+      return l10n?.minutesAgo(difference.inMinutes) ?? '${difference.inMinutes}m ago';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
+      return l10n?.hoursAgo(difference.inHours) ?? '${difference.inHours}h ago';
     } else if (difference.inDays == 1) {
-      return 'Yesterday';
+      return l10n?.yesterdayText ?? 'Yesterday';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
+      return l10n?.daysAgo(difference.inDays) ?? '${difference.inDays} days ago';
     } else {
-      return '${(difference.inDays / 7).floor()} weeks ago';
+      return l10n?.weeksAgo((difference.inDays / 7).floor()) ?? '${(difference.inDays / 7).floor()} weeks ago';
     }
   }
 }

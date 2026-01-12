@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 
@@ -7,13 +8,13 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 class SearchableClientDialog extends StatefulWidget {
   final List<TradingPoint> clients;
   final TradingPoint? selectedClient;
-  final String title;
+  final String? title;
 
   const SearchableClientDialog({
     super.key,
     required this.clients,
     this.selectedClient,
-    this.title = 'Mijozni tanlang',
+    this.title,
   });
 
   /// Show the dialog and return selected client
@@ -21,7 +22,7 @@ class SearchableClientDialog extends StatefulWidget {
     required BuildContext context,
     required List<TradingPoint> clients,
     TradingPoint? selectedClient,
-    String title = 'Mijozni tanlang',
+    String? title,
   }) {
     return showModalBottomSheet<TradingPoint>(
       context: context,
@@ -156,14 +157,14 @@ class _SearchableClientDialogState extends State<SearchableClientDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.title,
+                        widget.title ?? AppLocalizations.of(context)?.selectClientTitle ?? 'Select client',
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colorScheme.onSurface,
                         ),
                       ),
                       Text(
-                        '${widget.clients.length} ta mijoz mavjud',
+                        AppLocalizations.of(context)?.clientsAvailable(widget.clients.length) ?? '${widget.clients.length} clients available',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -190,7 +191,7 @@ class _SearchableClientDialogState extends State<SearchableClientDialog> {
               focusNode: _searchFocusNode,
               onChanged: _filterClients,
               decoration: InputDecoration(
-                hintText: 'Nom, kod, INN, telefon, tur...',
+                hintText: AppLocalizations.of(context)?.searchByNameCodeInn ?? 'Name, code, INN, phone, type...',
                 prefixIcon: Icon(Icons.search, color: colorScheme.primary),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
@@ -233,7 +234,7 @@ class _SearchableClientDialogState extends State<SearchableClientDialog> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Kril yoki lotin yozuvida qidiring',
+                    AppLocalizations.of(context)?.searchInCyrillicOrLatin ?? 'Search in Cyrillic or Latin',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       fontStyle: FontStyle.italic,
@@ -248,7 +249,7 @@ class _SearchableClientDialogState extends State<SearchableClientDialog> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '${_filteredClients.length} ta topildi',
+                      AppLocalizations.of(context)?.foundCount(_filteredClients.length) ?? '${_filteredClients.length} found',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w600,
@@ -294,14 +295,14 @@ class _SearchableClientDialogState extends State<SearchableClientDialog> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Mijoz topilmadi',
+            AppLocalizations.of(context)?.clientNotFound ?? 'Client not found',
             style: theme.textTheme.titleMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Boshqa so\'z bilan qidirib ko\'ring',
+            AppLocalizations.of(context)?.tryDifferentSearch ?? 'Try a different search term',
             style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
             ),

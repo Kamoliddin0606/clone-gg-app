@@ -193,21 +193,21 @@ class _TableSyncCardState extends State<TableSyncCard> {
               if (_metadata?.recordsCount != null && _metadata!.recordsCount > 0) ...[
                 Text(
                   _metadata?.hasBeenSynced == true
-                      ? 'Last sync: ${_metadata!.getRelativeTime()}'
-                      : 'Never synced',
+                      ? AppLocalizations.of(context)?.lastSyncLabel(_metadata!.getRelativeTime()) ?? 'Last sync: ${_metadata!.getRelativeTime()}'
+                      : AppLocalizations.of(context)?.neverSynced ?? 'Never synced',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 Text(
-                  '${_metadata!.recordsCount} records',
+                  AppLocalizations.of(context)?.recordsCount(_metadata!.recordsCount) ?? '${_metadata!.recordsCount} records',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ] else if (_metadata?.hasBeenSynced == true)
                 Text(
-                  'Jadval bo\'sh',
+                  AppLocalizations.of(context)?.tableEmpty ?? 'Table is empty',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: Colors.orange,
                     fontWeight: FontWeight.bold,
@@ -215,7 +215,7 @@ class _TableSyncCardState extends State<TableSyncCard> {
                 )
               else
                 Text(
-                  'Never synced',
+                  AppLocalizations.of(context)?.neverSynced ?? 'Never synced',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -227,7 +227,7 @@ class _TableSyncCardState extends State<TableSyncCard> {
             onPressed: _orchestrator.isSyncing(widget.table.id)
                 ? null
                 : () => _showSyncModeMenu(context),
-            tooltip: 'Sync table',
+            tooltip: AppLocalizations.of(context)?.syncTable ?? 'Sync table',
           ),
           initiallyExpanded: _isExpanded,
           onExpansionChanged: (expanded) {
@@ -280,7 +280,7 @@ class _TableSyncCardState extends State<TableSyncCard> {
           // Dependencies
           if (widget.table.hasDependencies) ...[
             Text(
-              'Dependencies',
+              AppLocalizations.of(context)?.dependencies ?? 'Dependencies',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -314,7 +314,7 @@ class _TableSyncCardState extends State<TableSyncCard> {
           // Cascade targets
           if (widget.table.hasCascadeTargets) ...[
             Text(
-              'Will cascade to',
+              AppLocalizations.of(context)?.willCascadeTo ?? 'Will cascade to',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),

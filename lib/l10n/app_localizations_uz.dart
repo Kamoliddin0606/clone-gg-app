@@ -1141,13 +1141,13 @@ class AppLocalizationsUz extends AppLocalizations {
   String get previousStepsRequired => 'Oldingi qadamlar bajarilishi kerak';
 
   @override
-  String get completeStep => 'Qadamni bajarish';
+  String get completeStep => 'Bosqichni yakunlash';
 
   @override
-  String get skipStep => 'Qadamni o\'tkazib yuborish';
+  String get skipStep => 'Bosqichni o\'tkazish';
 
   @override
-  String get confirmCompletion => 'Bajarilganligini tasdiqlang';
+  String get confirmCompletion => 'Yakunlashni tasdiqlang';
 
   @override
   String get stepCompletedSuccessfully => 'Qadam muvaffaqiyatli bajarildi';
@@ -1183,13 +1183,13 @@ class AppLocalizationsUz extends AppLocalizations {
   String get cancelCompletion => 'Bekor qilish';
 
   @override
-  String get confirmSkip => 'O\'tkazib yuborishni tasdiqlash';
+  String get confirmSkip => 'O\'tkazishni tasdiqlash';
 
   @override
   String get enterNotesOptional => 'Izoh kiriting (ixtiyoriy)';
 
   @override
-  String get enterSkipReason => 'O\'tkazib yuborish sababini kiriting';
+  String get enterSkipReason => 'O\'tkazish sababini kiriting';
 
   @override
   String get stepCannotBeSkipped => 'Bu qadamni o\'tkazib bo\'lmaydi';
@@ -1458,22 +1458,22 @@ class AppLocalizationsUz extends AppLocalizations {
   String get syncStatusIdle => 'Kutilmoqda';
 
   @override
-  String get syncStatusProducts => 'Mahsulotlar yangilanmoqda';
+  String get syncStatusProducts => 'Tovarlar sinxronlanmoqda';
 
   @override
-  String get syncStatusBalances => 'Balanslar yangilanmoqda';
+  String get syncStatusBalances => 'Qoldiqlar sinxronlanmoqda';
 
   @override
-  String get syncStatusOrders => 'Buyurtmalar yangilanmoqda';
+  String get syncStatusOrders => 'Buyurtmalar sinxronlanmoqda';
 
   @override
-  String get syncStatusCompleted => 'Yangilandi';
+  String get syncStatusCompleted => 'Sinxronlash tugadi';
 
   @override
-  String get syncStatusError => 'Xatolik';
+  String get syncStatusError => 'Sinxronlash xatosi';
 
   @override
-  String get syncInProgress => 'Sinxronizatsiya...';
+  String get syncInProgress => 'Sinxronlanmoqda...';
 
   @override
   String get syncErrorUserNotFound => 'Foydalanuvchi kodi topilmadi';
@@ -1491,10 +1491,14 @@ class AppLocalizationsUz extends AppLocalizations {
   String get clientBalanceDetails => 'Balans tafsilotlari';
 
   @override
-  String get clientIsDebtor => 'Mijoz qarzdor';
+  String clientIsDebtor(String amount) {
+    return 'Mijoz qarzdor. Jami qarzdorlik: $amount so\'m';
+  }
 
   @override
-  String get clientHasOverpayment => 'Ortiqcha to\'lov';
+  String clientHasOverpayment(String amount) {
+    return 'Mijoz ortiqcha to\'lov qilgan. Ortiqcha: $amount so\'m';
+  }
 
   @override
   String get balanceIsZero => 'Balans nolda';
@@ -1509,10 +1513,14 @@ class AppLocalizationsUz extends AppLocalizations {
   String get totalOrder => 'Jami buyurtma';
 
   @override
-  String get unpaidOrders => 'To\'lanmagan buyurtmalar';
+  String unpaidOrders(int count) {
+    return '$count ta to\'lanmagan';
+  }
 
   @override
-  String get overdueOrders => 'Muddati o\'tgan buyurtmalar';
+  String overdueOrders(int count) {
+    return '$count ta muddati o\'tgan';
+  }
 
   @override
   String get balanceStatus => 'Balans holati';
@@ -1553,7 +1561,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String balanceUpdated(String date) {
-    return 'Yangilangan: $date';
+    return 'Yangilangan';
   }
 
   @override
@@ -1573,7 +1581,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String contractsCount(int count) {
-    return 'Shartnomalar soni: $count';
+    return '$count ta shartnoma';
   }
 
   @override
@@ -1710,13 +1718,13 @@ class AppLocalizationsUz extends AppLocalizations {
   }
 
   @override
-  String get noDataAvailable => 'Ma\'lumot yo\'q';
+  String get noDataAvailable => 'Ma\'lumot mavjud emas';
 
   @override
-  String get noContractsFound => 'Shartnomalar yo\'q';
+  String get noContractsFound => 'Shartnomalar topilmadi';
 
   @override
-  String get noOrdersFound => 'Buyurtmalar yo\'q';
+  String get noOrdersFound => 'Buyurtmalar topilmadi';
 
   @override
   String get paidLabel => 'To\'langan';
@@ -1747,8 +1755,8 @@ class AppLocalizationsUz extends AppLocalizations {
   }
 
   @override
-  String projectLabel(String name) {
-    return 'Loyiha: $name';
+  String projectLabel(String project) {
+    return 'Loyiha: $project';
   }
 
   @override
@@ -1766,7 +1774,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String debtAmount(String amount) {
-    return 'Qarz: $amount';
+    return 'Qarzdorlik: $amount';
   }
 
   @override
@@ -2241,7 +2249,7 @@ class AppLocalizationsUz extends AppLocalizations {
   }
 
   @override
-  String get xmlRequestLabel => 'XML Request';
+  String get xmlRequestLabel => 'XML so\'rov';
 
   @override
   String get xmlCopied => 'XML nusxalandi';
@@ -2281,7 +2289,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get confirmLocationTitle => 'Joylashuvni tasdiqlash';
 
   @override
-  String get orderDetailsNotFound => 'Buyurtma tafsilotlari topilmadi';
+  String get orderDetailsNotFound => 'Buyurtma tafsilotlari topilmadi.';
 
   @override
   String get unknown => 'Noma\'lum';
@@ -2441,38 +2449,38 @@ class AppLocalizationsUz extends AppLocalizations {
   String get printFeatureComingSoon => 'Print funksiyasi tez orada qo\'shiladi';
 
   @override
-  String get print => 'Print';
+  String get print => 'Chop etish';
 
   @override
   String stepCompleted(String stepName) {
-    return '$stepName completed';
+    return '$stepName bajarildi';
   }
 
   @override
   String stepSkip(String stepName) {
-    return '$stepName skip';
+    return '$stepName o\'tkazish';
   }
 
   @override
-  String get syncWithDependencies => 'Sync with dependencies';
+  String get syncWithDependencies => 'Bog\'liqliklar bilan sinxronlash';
 
   @override
-  String get recommended => 'Recommended';
+  String get recommended => 'Tavsiya etiladi';
 
   @override
-  String get syncTableOnly => 'Sync table only';
+  String get syncTableOnly => 'Faqat jadvalni sinxronlash';
 
   @override
-  String get syncWarning => 'May fail if dependencies not synced';
+  String get syncWarning => 'Bog\'liqliklar sinxronlanmagan bo\'lsa xato berishi mumkin';
 
   @override
-  String get tableOnly => 'Table only';
+  String get tableOnly => 'Faqat jadval';
 
   @override
-  String get withDependencies => 'With dependencies';
+  String get withDependencies => 'Bog\'liqliklar bilan';
 
   @override
-  String get syncEntireGroup => 'Sync Entire Group';
+  String get syncEntireGroup => 'Butun guruhni sinxronlash';
 
   @override
   String get statusNew => 'Yangi';
@@ -2484,7 +2492,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get continueAction => 'Davom etish';
 
   @override
-  String get previousStepsMustBeCompleted => 'Avvalgi bosqichlar bajarilishi kerak';
+  String get previousStepsMustBeCompleted => 'Oldingi bosqichlar bajarilishi kerak';
 
   @override
   String get reload => 'Qayta yuklash';
@@ -2661,22 +2669,22 @@ class AppLocalizationsUz extends AppLocalizations {
   String get articleLabel => 'Artikul';
 
   @override
-  String get quantityLabel => 'Soni';
+  String get quantityLabel => 'Miqdori';
 
   @override
-  String get priceLabel => 'Narx';
+  String get priceLabel => 'Narxi';
 
   @override
-  String get amountLabel => 'Summa';
+  String get amountLabel => 'Summasi';
 
   @override
   String get priceTypeLabel => 'Narx turi';
 
   @override
-  String get noProductsInOrder => 'Bu buyurtmada mahsulotlar mavjud emas';
+  String get noProductsInOrder => 'Buyurtmada tovarlar yo\'q';
 
   @override
-  String get productListEmpty => 'Mahsulotlar ro\'yxati bo\'sh';
+  String get productListEmpty => 'Tovarlar ro\'yxati bo\'sh';
 
   @override
   String get productsNotSelected => 'Mahsulotlar tanlanmagan';
@@ -2912,7 +2920,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get locationDataNotFound => 'Joylashuv ma\'lumotlari topilmadi';
 
   @override
-  String get all => 'Barchasi';
+  String get all => 'Barcha';
 
   @override
   String get closeEditMode => 'Tahrirlash rejimini yopish';
@@ -2970,11 +2978,11 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String clientOrders(String name) {
-    return '$name mijozining buyurtmalari';
+    return '$name buyurtmalari';
   }
 
   @override
-  String get filterApplyError => 'Filtr qo\'llashda xatolik yuz berdi';
+  String get filterApplyError => 'Filtr qo\'llashda xatolik';
 
   @override
   String get main => 'Asosiy';
@@ -3036,7 +3044,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String warehouseDataLoadError(String error) {
-    return 'Skladlar ma\'lumotlarini yuklashda xatolik: $error';
+    return 'Sklad ma\'lumotlarini yuklashda xatolik: $error';
   }
 
   @override
@@ -3102,7 +3110,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get orderStatusReturn => 'Qaytarildi';
 
   @override
-  String get orderStatusExpired => 'Muddati o\'tgan';
+  String get orderStatusExpired => 'Muddati o\'tdi';
 
   @override
   String get contractStatusActive => 'Faol';
@@ -3258,7 +3266,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get permissionPhotosVideosPurpose => 'Rasmlar, videolar va media fayllar bilan ishlash';
 
   @override
-  String permissionRequired(String permission) {
+  String permissionRequired(String title) {
     return '$permission kerak';
   }
 
@@ -3346,16 +3354,16 @@ class AppLocalizationsUz extends AppLocalizations {
   String get minimumIntervalIs60 => 'Minimal oraliq 60 daqiqa';
 
   @override
-  String get justNow => 'hozirgina';
+  String get justNow => 'Hozirgina';
 
   @override
   String minutesAgo(int minutes) {
-    return '${minutes}d oldin';
+    return '$minutes daqiqa oldin';
   }
 
   @override
   String hoursAgo(int hours) {
-    return '${hours}s oldin';
+    return '$hours soat oldin';
   }
 
   @override
@@ -3428,4 +3436,705 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get footerNoteText => 'Ma\'lumotlar Telegram hisobotidan import qilingan. Yangi manbaga o\'tish uchun matnni o\'zgartirishingiz mumkin — UI yangilanadi.';
+
+  @override
+  String get syncStepCheckingUser => 'Foydalanuvchi tekshirilmoqda...';
+
+  @override
+  String get syncStepClearingData => 'Eski ma\'lumotlar tozalanmoqda...';
+
+  @override
+  String get syncStepSyncingKpi => 'KPI ma\'lumotlari yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingClients => 'Mijozlar ro\'yxati yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingProducts => 'Tovarlar yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingPriceTypes => 'Narx turlari yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingBusinessRegions => 'Biznes regionlar yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingUserWarehouses => 'Foydalanuvchi skladlari yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingProductPrices => 'Tovar narxlari yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingProductBalances => 'Tovar qoldiqlari yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingClientContracts => 'Mijoz shartnomalari yuklanmoqda...';
+
+  @override
+  String get syncStepUpdatingClientContractStatus => 'Shartnoma statuslari yangilanmoqda...';
+
+  @override
+  String get syncStepSyncingOrderStatuses => 'Buyurtma statuslari yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingOrders => 'Buyurtmalar yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingSalesReqPermissions => 'Agent ruxsatlari yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingPlannedRoutes => 'Rejalashtirilgan marshrutlar yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingUserOrganizations => 'Foydalanuvchi tashkilotlari yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingPromotions => 'Aksiyalar yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingMapTokens => 'Xarita tokenlari yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingReports => 'Hisobotlar yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingThumbnails => 'Rasmlar yuklanmoqda...';
+
+  @override
+  String get syncStepCompleted => 'Ma\'lumotlar yangilandi!';
+
+  @override
+  String get syncStepError => 'Xatolik yuz berdi';
+
+  @override
+  String get syncSuccessTitle => 'Muvaffaqiyatli!';
+
+  @override
+  String get syncUpdatingTitle => 'Ma\'lumotlar yangilanmoqda...';
+
+  @override
+  String get paymentRequiredError => 'To\'lov talab qilinmoqda. Iltimos, obunangizni tekshiring.';
+
+  @override
+  String get authenticationError => 'Autentifikatsiya xatosi. Iltimos, qayta kiring.';
+
+  @override
+  String get accessForbiddenError => 'Kirish taqiqlangan. Sizda ruxsat yo\'q.';
+
+  @override
+  String get serviceNotFoundError => 'Xizmat topilmadi. Iltimos, qo\'llab-quvvatlashga murojaat qiling.';
+
+  @override
+  String get serverUnavailableError => 'Server mavjud emas. Iltimos, keyinroq urinib ko\'ring.';
+
+  @override
+  String get dataUpdateError => 'Ma\'lumotlarni yangilashda xatolik. Kesh ma\'lumotlaridan foydalaniladi.';
+
+  @override
+  String get syncStatusErrors => 'Xatolar';
+
+  @override
+  String get syncStatusSynced => 'Sinxronlangan';
+
+  @override
+  String get syncStatusPartial => 'Qisman';
+
+  @override
+  String get syncStatusNotSynced => 'Sinxronlanmagan';
+
+  @override
+  String tablesOfTotalSynced(int synced, int total) {
+    return '$synced / $total jadval sinxronlangan';
+  }
+
+  @override
+  String get tablesInThisGroup => 'Bu guruhdagi jadvallar';
+
+  @override
+  String get yesterdayText => 'Kecha';
+
+  @override
+  String get neverSynced => 'Hech qachon sinxronlanmagan';
+
+  @override
+  String get tableEmpty => 'Jadval bo\'sh';
+
+  @override
+  String recordsCount(int count) {
+    return '$count ta yozuv';
+  }
+
+  @override
+  String lastSyncLabel(String time) {
+    return 'Oxirgi sinxronlash: $time';
+  }
+
+  @override
+  String get syncTable => 'Jadvalni sinxronlash';
+
+  @override
+  String get dependencies => 'Bog\'liqliklar';
+
+  @override
+  String get willCascadeTo => 'Quyidagilarga ta\'sir qiladi';
+
+  @override
+  String get tradingPointsLabel => 'Savdo nuqtalari';
+
+  @override
+  String get tradingPointsNotAvailable => 'Savdo nuqtalari mavjud emas';
+
+  @override
+  String get dateRangeLabel => 'Sana oralig\'i';
+
+  @override
+  String get allDatesLabel => 'Barcha sanalar';
+
+  @override
+  String get clearLabel => 'Tozalash';
+
+  @override
+  String get statusLabel => 'Status';
+
+  @override
+  String get statusAll => 'Barcha';
+
+  @override
+  String get statusActive => 'Faol';
+
+  @override
+  String get statusInactive => 'Faol emas';
+
+  @override
+  String get statusExpired => 'Muddati tugagan';
+
+  @override
+  String get statusPending => 'Tasdiqlanmagan';
+
+  @override
+  String clientContractsCount(String name, int count) {
+    return '$name mijozning shartnomalari ($count)';
+  }
+
+  @override
+  String refreshError(String error) {
+    return 'Yangilashda xatolik';
+  }
+
+  @override
+  String get dataTab => 'Ma\'lumotlar';
+
+  @override
+  String get documentTab => 'Hujjat';
+
+  @override
+  String clientLabel(String name) {
+    return 'Mijoz: $name';
+  }
+
+  @override
+  String get startDateLabel => 'Boshlanish sanasi';
+
+  @override
+  String get endDateLabel => 'Tugash sanasi';
+
+  @override
+  String get unknownDate => 'Noma\'lum';
+
+  @override
+  String get statusAndType => 'Status va turi';
+
+  @override
+  String get typeLabel2 => 'Turi';
+
+  @override
+  String get additionalInfo => 'Qo\'shimcha ma\'lumotlar';
+
+  @override
+  String get certificateLimited => 'Sertifikat cheklangan';
+
+  @override
+  String get yesText => 'Ha';
+
+  @override
+  String get noText => 'Yo\'q';
+
+  @override
+  String get referenceNumberLabel => 'Ma\'lumotnoma raqami';
+
+  @override
+  String get certificateNumberLabel => 'Sertifikat raqami';
+
+  @override
+  String get passportNumberLabel => 'Pasport raqami';
+
+  @override
+  String get districtCodeLabel => 'Tuman kodi';
+
+  @override
+  String get districtNameLabel => 'Tuman nomi';
+
+  @override
+  String get projectCodeLabel => 'Loyiha kodi';
+
+  @override
+  String get creditLabel => 'Kredit';
+
+  @override
+  String get fullPaymentLabel => '100% to\'lov';
+
+  @override
+  String get uzbekLanguage => 'O\'zbekcha';
+
+  @override
+  String get russianLanguage => 'Ruscha';
+
+  @override
+  String get pdfPreparing => 'PDF tayyorlanmoqda...';
+
+  @override
+  String get tapToReveal => 'Bosing';
+
+  @override
+  String get warehousesTitle => 'Skladlar';
+
+  @override
+  String get warehousesNotFound => 'Skladlar topilmadi';
+
+  @override
+  String warehousesCount(int count) {
+    return 'Skladlar soni: $count';
+  }
+
+  @override
+  String createdLabel(String date) {
+    return 'Yaratilgan: $date';
+  }
+
+  @override
+  String updatedLabel(String date) {
+    return 'Yangilangan: $date';
+  }
+
+  @override
+  String get visitCompletedToday => 'Bugun tashrif bajarildi';
+
+  @override
+  String get visitExpectedToday => 'Bugun tashrif kutilmoqda';
+
+  @override
+  String get visitNotPlannedToday => 'Bugun tashrif rejalashtirilmagan';
+
+  @override
+  String visitOrderLabel(int number) {
+    return 'Tashrif tartibi: $number';
+  }
+
+  @override
+  String get selectClientTitle => 'Mijozni tanlang';
+
+  @override
+  String clientsAvailable(int count) {
+    return '$count ta mijoz mavjud';
+  }
+
+  @override
+  String get searchByNameCodeInn => 'Nom, kod, INN, telefon, tur...';
+
+  @override
+  String get searchInCyrillicOrLatin => 'Kril yoki lotin yozuvida qidiring';
+
+  @override
+  String foundCount(int count) {
+    return '$count ta topildi';
+  }
+
+  @override
+  String get clientNotFound => 'Mijoz topilmadi';
+
+  @override
+  String get tryDifferentSearch => 'Boshqa so\'z bilan qidirib ko\'ring';
+
+  @override
+  String get confirmButton => 'Tasdiqlash';
+
+  @override
+  String get cancelButton => 'Bekor qilish';
+
+  @override
+  String get newContractTitle => 'Yangi shartnoma';
+
+  @override
+  String get fillAllFields => 'Barcha maydonlarni to\'ldiring';
+
+  @override
+  String get contractTypesLoadError => 'Shartnoma turlarini yuklashda xatolik';
+
+  @override
+  String get pleaseSelectClient => 'Iltimos, mijozni tanlang';
+
+  @override
+  String get pleaseSelectContractType => 'Iltimos, shartnoma turini tanlang';
+
+  @override
+  String get contractCreatedSuccessfully => 'Shartnoma muvaffaqiyatli yaratildi';
+
+  @override
+  String get contractCreationError => 'Shartnoma yaratishda xatolik';
+
+  @override
+  String get documentInfoSection => 'Hujjatlar ma\'lumotlari';
+
+  @override
+  String get regionInfoSection => 'Hudud ma\'lumotlari';
+
+  @override
+  String get referenceNumberField => 'Ma\'lumotnoma raqami';
+
+  @override
+  String get termLabel => 'Muddati';
+
+  @override
+  String get certificateNumberField => 'Sertifikat raqami';
+
+  @override
+  String get certificateUnlimitedField => 'Sertifikat muddatsiz';
+
+  @override
+  String get passportNumberField => 'Pasport raqami';
+
+  @override
+  String get clientCodeLabel => 'Mijoz kodi';
+
+  @override
+  String get organizationCodeLabel => 'Tashkilot kodi';
+
+  @override
+  String get courierLabel => 'Kuryer';
+
+  @override
+  String get vehicleLabel => 'Transport';
+
+  @override
+  String get licensePlateLabel => 'Mashina raqami';
+
+  @override
+  String get supervisorCommentLabel => 'Supervisor izohi';
+
+  @override
+  String get logistCommentLabel => 'Logist izohi';
+
+  @override
+  String get agentCommentLabel => 'Agent izohi';
+
+  @override
+  String get networkErrorMessage => 'Tarmoq xatosi. Internetni tekshiring.';
+
+  @override
+  String get serverTimeoutMessage => 'Server bilan aloqa vaqti tugadi.';
+
+  @override
+  String get orderDetailsLoadError => 'Buyurtma tafsilotlarini yuklashda xatolik.';
+
+  @override
+  String dataLoadFailed(String error) {
+    return 'Ma\'lumotlarni yuklashda xatolik: $error';
+  }
+
+  @override
+  String get brands => 'Brendlar';
+
+  @override
+  String get fileStoragePermission => 'Fayl saqlash ruxsati';
+
+  @override
+  String get fileStorageDescriptionAndroid13 => 'Ilova ma\'lumotlarini saqlash uchun papka tanlang';
+
+  @override
+  String get fileStorageDescription => 'Ilova ma\'lumotlarini saqlash va yuklash uchun';
+
+  @override
+  String get fileStoragePurposeAndroid13 => 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash uchun papka tanlang';
+
+  @override
+  String get fileStoragePurpose => 'Rasmlar, hujjatlar va ma\'lumotlarni saqlash';
+
+  @override
+  String get locationPermissionTitle => 'Joylashuv ruxsati';
+
+  @override
+  String get locationPermissionDescription => 'Savdo nuqtalarini masofaga ko\'ra tartiblash uchun';
+
+  @override
+  String get locationPermissionPurpose => 'Xaritada joylashuvni ko\'rsatish va masofa hisoblash';
+
+  @override
+  String get alwaysLocationPermissionTitle => 'Doimiy joylashuv ruxsati';
+
+  @override
+  String get alwaysLocationPermissionDescription => 'Ilova fon rejimida ishlaganda joylashuvni aniqlash uchun';
+
+  @override
+  String get alwaysLocationPermissionPurpose => 'Fon xizmati va bildirishnomalar';
+
+  @override
+  String get cameraPermissionTitle => 'Kamera ruxsati';
+
+  @override
+  String get cameraPermissionDescription => 'Rasmga olish va shtrix-kod skanerlash uchun';
+
+  @override
+  String get cameraPermissionPurpose => 'Tovarlar va savdo nuqtalarini rasmga olish';
+
+  @override
+  String get microphonePermissionTitle => 'Mikrofon ruxsati';
+
+  @override
+  String get microphonePermissionDescription => 'Ovoz yozish va audio xabarlar uchun';
+
+  @override
+  String get microphonePermissionPurpose => 'Ovozli eslatmalar va audio yozuvlar';
+
+  @override
+  String get notificationPermissionTitle => 'Bildirishnoma ruxsati';
+
+  @override
+  String get notificationPermissionDescription => 'Muhim xabarlarni ko\'rsatish uchun';
+
+  @override
+  String get notificationPermissionPurpose => 'Eslatmalar, yangiliklar va bildirishnomalar';
+
+  @override
+  String get audioPermissionTitle => 'Musiqa va audio ruxsati';
+
+  @override
+  String get audioPermissionDescription => 'Audio fayllar bilan ishlash uchun';
+
+  @override
+  String get audioPermissionPurpose => 'Musiqa, audio xabarlar va ovozli fayllar';
+
+  @override
+  String get photosAndVideosPermissionTitle => 'Rasm va video ruxsati';
+
+  @override
+  String get photosAndVideosPermissionDescription => 'Media fayllar bilan ishlash uchun';
+
+  @override
+  String get photosAndVideosPermissionPurpose => 'Rasm, video va media fayllar bilan ishlash';
+
+  @override
+  String permissionRequiredMessage(String description) {
+    return '$description. Iltimos, ilova sozlamalaridan ruxsat bering.';
+  }
+
+  @override
+  String get goToSettingsButton => 'Sozlamalarga o\'tish';
+
+  @override
+  String get grantPermissionButton => 'Ruxsat berish';
+
+  @override
+  String get checkingPermission => 'Tekshirilmoqda...';
+
+  @override
+  String get permissionCheckTitle => 'Ruxsatlar tekshiruvi';
+
+  @override
+  String get permissionCheckMessage => 'Ilova to\'g\'ri ishlashi uchun quyidagi ruxsatlar kerak:';
+
+  @override
+  String get permissionSaveData => 'Ma\'lumotlarni saqlash';
+
+  @override
+  String get permissionMapDistance => 'Xarita va masofa hisoblash';
+
+  @override
+  String get permissionTakePhotos => 'Rasmga olish';
+
+  @override
+  String get permissionRecordVoice => 'Ovoz yozish';
+
+  @override
+  String get permissionShowMessages => 'Xabarlarni ko\'rsatish';
+
+  @override
+  String get permissionLimitedMode => 'Ruxsatlarsiz ilova cheklangan rejimda ishlaydi.';
+
+  @override
+  String purposeLabel(String purpose) {
+    return 'Maqsad: $purpose';
+  }
+
+  @override
+  String get grantPermissionQuestion => 'Ruxsat berishni xohlaysizmi?';
+
+  @override
+  String get serviceInitError => 'Xizmatlarni ishga tushirishda xatolik';
+
+  @override
+  String get clientInnNotAvailable => 'Mijoz INN raqami mavjud emas';
+
+  @override
+  String get clientBalanceZero => 'Mijoz balansi nolda.';
+
+  @override
+  String get balanceDataNotFound => 'Balans ma\'lumotlari topilmadi';
+
+  @override
+  String updatedAtTime(String time) {
+    return 'Yangilangan: $time';
+  }
+
+  @override
+  String get clientDebtorStatus => 'Mijoz qarzdor';
+
+  @override
+  String get overpaymentStatus => 'Ortiqcha to\'lov';
+
+  @override
+  String get balanceZeroStatus => 'Balans nolda';
+
+  @override
+  String get savingStatus => 'Saqlanmoqda...';
+
+  @override
+  String get unsavedChangesStatus => 'Saqlanmagan o\'zgarishlar';
+
+  @override
+  String get offlineStatus => 'Oflayn';
+
+  @override
+  String pendingSyncCount(int count) {
+    return '$count sinxronlash kutilmoqda';
+  }
+
+  @override
+  String get allSyncedStatus => 'Hammasi sinxronlangan';
+
+  @override
+  String get autoSaving => 'Avtosaqlash...';
+
+  @override
+  String get savingStepData => 'Bosqich ma\'lumotlari saqlanmoqda...';
+
+  @override
+  String get mandatoryLabel => 'Majburiy';
+
+  @override
+  String get optionalLabel => 'Ixtiyoriy';
+
+  @override
+  String get currentLabel => 'Joriy';
+
+  @override
+  String get completedLabel => 'Bajarildi';
+
+  @override
+  String get skippedLabel => 'O\'tkazib yuborildi';
+
+  @override
+  String notesLabel(String notes) {
+    return 'Izohlar: $notes';
+  }
+
+  @override
+  String reasonLabel(String reason) {
+    return 'Sabab: $reason';
+  }
+
+  @override
+  String get reasonHint => 'Sabab';
+
+  @override
+  String get syncStarting => 'Sinxronlash boshlanmoqda...';
+
+  @override
+  String get weekdayMon => 'Du';
+
+  @override
+  String get weekdayTue => 'Se';
+
+  @override
+  String get weekdayWed => 'Ch';
+
+  @override
+  String get weekdayThu => 'Pa';
+
+  @override
+  String get weekdayFri => 'Ju';
+
+  @override
+  String get weekdaySat => 'Sh';
+
+  @override
+  String get weekdaySun => 'Ya';
+
+  @override
+  String get copyLabel => 'Nusxa olish';
+
+  @override
+  String get reloadLabel => 'Qayta yuklash';
+
+  @override
+  String get refreshContractTypesAndRegions => 'Shartnoma turi va hudud ma\'lumotlarini yangilash';
+
+  @override
+  String get orderStatusNew => 'Yangi';
+
+  @override
+  String get orderStatusConfirmed => 'Tasdiqlangan';
+
+  @override
+  String get orderStatusDelivering => 'Yetkazish jarayonida';
+
+  @override
+  String get orderStatusReturnRequested => 'Qaytarish so\'raldi';
+
+  @override
+  String get orderStatusCancelled => 'Bekor qilindi';
+
+  @override
+  String get orderStatusDeliveredUnpaid => 'Yetkazildi, to\'lanmadi';
+
+  @override
+  String get orderStatusDeliveredPartiallyPaid => 'Yetkazildi, qisman to\'landi';
+
+  @override
+  String get orderStatusUnknown => 'Noma\'lum';
+
+  @override
+  String get filterTooltip => 'Filtr';
+
+  @override
+  String get fullscreenTooltip => 'To\'liq ekran';
+
+  @override
+  String get refusalReasonClientNotAvailable => 'Mijoz yo\'q';
+
+  @override
+  String get refusalReasonNoTime => 'Vaqt yo\'q';
+
+  @override
+  String get refusalReasonProductNotNeeded => 'Mahsulot kerak emas';
+
+  @override
+  String get refusalReasonPriceNotSuitable => 'Narx mos kelmaydi';
+
+  @override
+  String get refusalReasonWorksWithOtherSupplier => 'Boshqa ta\'minotchi bilan ishlaydi';
+
+  @override
+  String get refusalReasonOther => 'Boshqa sabab';
+
+  @override
+  String get apiKeyStatusConfigured => 'sozlangan';
+
+  @override
+  String get apiKeyStatusNotConfigured => 'sozlanmagan';
+
+  @override
+  String get apiKeyStatusNotRequired => 'kalit shart emas';
+
+  @override
+  String get apiKeyStatusError => 'xatolik';
 }

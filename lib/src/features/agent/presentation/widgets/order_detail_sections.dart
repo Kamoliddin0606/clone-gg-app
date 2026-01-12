@@ -34,14 +34,14 @@ class OrderDetailsSection extends StatelessWidget {
       _tile(context, l10n.mainStatusLabel, order.mainStatus, icon: Icons.info_outline_rounded),
       _tile(context, l10n.statusCodeLabel, order.status.toString(), icon: Icons.numbers_rounded),
       _tile(context, '${l10n.priceTypeLabel} (code)', order.typePriceCode, icon: Icons.sell_outlined),
-      _tile(context, 'Mijoz kodi', order.clientCode, icon: Icons.qr_code_2_rounded),
-      _tile(context, 'Tashkilot kodi', order.codeOrg, icon: Icons.apartment_rounded),
-      if((order.courierName??'').isNotEmpty) _tile(context, 'Eltuvchi', order.courierName!, icon: Icons.delivery_dining_rounded),
-      if((order.courierCar??'').isNotEmpty) _tile(context, 'Mashina', order.courierCar!, icon: Icons.directions_car_rounded),
-      if((order.courierPlate??'').isNotEmpty) _tile(context, 'Davlat raqami', order.courierPlate!, icon: Icons.numbers_outlined),
-      if((order.commentSupervisor??'').isNotEmpty) _tile(context, 'Supervisor izohi', order.commentSupervisor!),
-      if((order.commentForwarder??'').isNotEmpty) _tile(context, 'Logist izohi', order.commentForwarder!),
-      if((order.commentAgent??'').isNotEmpty) _tile(context, 'Agent izohi', order.commentAgent!),
+      _tile(context, l10n.clientCodeLabel, order.clientCode, icon: Icons.qr_code_2_rounded),
+      _tile(context, l10n.organizationCodeLabel, order.codeOrg, icon: Icons.apartment_rounded),
+      if((order.courierName??'').isNotEmpty) _tile(context, l10n.courierLabel, order.courierName!, icon: Icons.delivery_dining_rounded),
+      if((order.courierCar??'').isNotEmpty) _tile(context, l10n.vehicleLabel, order.courierCar!, icon: Icons.directions_car_rounded),
+      if((order.courierPlate??'').isNotEmpty) _tile(context, l10n.licensePlateLabel, order.courierPlate!, icon: Icons.numbers_outlined),
+      if((order.commentSupervisor??'').isNotEmpty) _tile(context, l10n.supervisorCommentLabel, order.commentSupervisor!),
+      if((order.commentForwarder??'').isNotEmpty) _tile(context, l10n.logistCommentLabel, order.commentForwarder!),
+      if((order.commentAgent??'').isNotEmpty) _tile(context, l10n.agentCommentLabel, order.commentAgent!),
     ];
     return Padding(padding: const EdgeInsets.fromLTRB(16,8,16,16), child: ListView.separated(controller: controller, itemCount: pairs.length, separatorBuilder: (_, __)=>const SizedBox(height:12), itemBuilder: (_, i)=>pairs[i]));
   }

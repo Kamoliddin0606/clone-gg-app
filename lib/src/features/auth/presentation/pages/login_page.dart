@@ -429,7 +429,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                   Icon(step.icon, size: 48, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(height: 16),
                   Text(
-                    step.message,
+                    step.getMessage(context),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),

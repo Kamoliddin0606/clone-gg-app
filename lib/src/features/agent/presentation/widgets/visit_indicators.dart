@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 /// Visit status indicator widget showing visit completion state
 class VisitStatusIndicator extends StatelessWidget {
@@ -14,6 +15,7 @@ class VisitStatusIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     IconData icon;
     Color color;
@@ -22,15 +24,15 @@ class VisitStatusIndicator extends StatelessWidget {
     if (visitToday && isVisited) {
       icon = Icons.check_circle;
       color = Colors.green;
-      tooltip = 'Bugun tashrif bajarildi';
+      tooltip = l10n?.visitCompletedToday ?? 'Visit completed today';
     } else if (visitToday && !isVisited) {
       icon = Icons.schedule;
       color = Colors.orange;
-      tooltip = 'Bugun tashrif kutilmoqda';
+      tooltip = l10n?.visitExpectedToday ?? 'Visit expected today';
     } else {
       icon = Icons.warning;
       color = Colors.red;
-      tooltip = 'Bugun tashrif rejalashtirilmagan';
+      tooltip = l10n?.visitNotPlannedToday ?? 'Visit not planned today';
     }
 
     return Tooltip(
@@ -72,9 +74,10 @@ class VisitStepIndicator extends StatelessWidget {
     if (!visitToday) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Tooltip(
-      message: 'Tashrif tartibi: $visitStepNumber',
+      message: l10n?.visitOrderLabel(visitStepNumber) ?? 'Visit order: $visitStepNumber',
       child: Container(
         width: 24,
         height: 24,

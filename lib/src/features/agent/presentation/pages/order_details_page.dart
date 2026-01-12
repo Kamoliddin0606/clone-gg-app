@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../widgets/order_models.dart';
 import '../widgets/order_detail_sections.dart';
+import '../widgets/order_items_card_view.dart';
 import '../widgets/status_chip.dart';
 import '../../../../core/services/data_sync_service.dart';
 import '../../../../core/services/shared_preferences_service.dart';
@@ -207,81 +208,131 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     if (_isLoading) {
       return Scaffold(
+        backgroundColor: cs.surfaceContainerLowest,
         appBar: AppBar(
           centerTitle: true,
+          elevation: 0,
+          backgroundColor: cs.surface,
           title: Text(
             AppLocalizations.of(context)?.orderDetailsTitle ??
                 'Buyurtma tafsilotlari',
           ),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => Navigator.maybePop(context),
           ),
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(strokeWidth: 3),
+              const SizedBox(height: 24),
+              Text(
+                AppLocalizations.of(context)?.loading ?? 'Yuklanmoqda...',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
     if (_error != null) {
       return Scaffold(
+        backgroundColor: cs.surfaceContainerLowest,
         appBar: AppBar(
           centerTitle: true,
+          elevation: 0,
+          backgroundColor: cs.surface,
           title: Text(
             AppLocalizations.of(context)?.orderDetailsTitle ??
                 'Buyurtma tafsilotlari',
           ),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => Navigator.maybePop(context),
           ),
         ),
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(32.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.error,
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: cs.errorContainer.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.error_outline_rounded,
+                    size: 64,
+                    color: cs.error,
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 Text(
                   AppLocalizations.of(context)?.errorOccurredTitle ??
                       'Xatolik yuz berdi',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurface,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _error!,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    _error!,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurfaceVariant,
+                      height: 1.5,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     OutlinedButton.icon(
                       onPressed: () => Navigator.maybePop(context),
-                      icon: const Icon(Icons.arrow_back),
+                      icon: const Icon(Icons.arrow_back_rounded),
                       label: Text(
                         AppLocalizations.of(context)?.back ?? 'Orqaga',
                       ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     FilledButton.icon(
                       onPressed: _loadOrderDetails,
-                      icon: const Icon(Icons.refresh),
+                      icon: const Icon(Icons.refresh_rounded),
                       label: Text(
                         AppLocalizations.of(context)?.retry ??
                             'Qayta urinib ko\'ring',
+                      ),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
                       ),
                     ),
                   ],
@@ -294,16 +345,23 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
 
     final order = _detailedOrder ?? widget.order;
+    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: cs.surfaceContainerLowest,
       appBar: AppBar(
         centerTitle: true,
+        elevation: 0,
+        backgroundColor: cs.surface,
         title: Text(
           AppLocalizations.of(context)?.orderDetailsTitle ??
               'Buyurtma tafsilotlari',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.maybePop(context),
         ),
       ),
@@ -311,34 +369,138 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         length: 2,
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          order.numOrder,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
+            // Modern header with Hero animation
+            Hero(
+              tag: 'order_${order.numOrder}',
+              child: Material(
+                color: cs.surface,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: cs.shadow.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  StatusChip(status: order.mainStatus),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: cs.primaryContainer,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(
+                              Icons.receipt_long_rounded,
+                              color: cs.onPrimaryContainer,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppLocalizations.of(context)!.orderNumberLabel,
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: cs.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  order.numOrder,
+                                  style: theme.textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: cs.onSurface,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          StatusChip(status: order.mainStatus),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: cs.outlineVariant.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.store_rounded,
+                              size: 20,
+                              color: cs.primary,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                order.clientName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.onSurface,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Modern TabBar
+            Container(
+              decoration: BoxDecoration(
+                color: cs.surface,
+                border: Border(
+                  bottom: BorderSide(
+                    color: cs.outlineVariant.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: TabBar(
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicatorWeight: 3,
+                labelStyle: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+                unselectedLabelStyle: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                tabs: [
+                  Tab(
+                    icon: Icon(Icons.info_outline_rounded, size: 20),
+                    text: AppLocalizations.of(context)?.main ?? 'Asosiy',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.inventory_2_outlined, size: 20),
+                    text: AppLocalizations.of(context)?.contents ?? 'Tarkibi',
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            TabBar(
-              tabs: [
-                Tab(text: AppLocalizations.of(context)?.main ?? 'Asosiy'),
-                Tab(text: AppLocalizations.of(context)?.contents ?? 'Tarkibi'),
-              ],
-            ),
+            // Content with smooth transitions
             Expanded(
               child: TabBarView(
                 children: [
@@ -346,7 +508,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     order: order,
                     controller: ScrollController(),
                   ),
-                  OrderItemsSection(
+                  OrderItemsCardView(
                     order: order,
                     controller: ScrollController(),
                   ),

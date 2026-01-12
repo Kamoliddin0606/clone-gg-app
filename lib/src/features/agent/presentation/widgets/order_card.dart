@@ -13,57 +13,147 @@ class OrderCard extends StatelessWidget {
   final EdgeInsetsGeometry margin;
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
-  const OrderCard({super.key, required this.order, this.margin = const EdgeInsets.symmetric(horizontal: 12, vertical: 8), this.onTap, this.onDoubleTap});
+  const OrderCard({super.key, required this.order, this.margin = const EdgeInsets.symmetric(horizontal: 16, vertical: 6), this.onTap, this.onDoubleTap});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return _InkReveal(
-      onTap: onTap,
-      onDoubleTap: onDoubleTap,
-      child: Card(
-        margin: margin,
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        clipBehavior: Clip.antiAlias,
-        child: Ink(
+    final theme = Theme.of(context);
+    
+    return Hero(
+      tag: 'order_${order.numOrder}',
+      child: _InkReveal(
+        onTap: onTap,
+        onDoubleTap: onDoubleTap,
+        child: Container(
+          margin: margin,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [cs.surface, cs.surfaceContainerHigh],
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: cs.outlineVariant.withOpacity(0.3),
+              width: 1,
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Container(
-                width: 42, height: 42,
-                decoration: BoxDecoration(
-                  color: cs.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cs.primary.withOpacity(0.2)),
-                ),
-                child: Icon(Icons.receipt_long_rounded, color: cs.primary, size: 22),
+            boxShadow: [
+              BoxShadow(
+                color: cs.shadow.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-              const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Flexible(child: Text('№ ${order.numOrder}', maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700))),
-                  const SizedBox(width: 8),
-                  StatusChip(status: order.mainStatus),
-                ]),
-                const SizedBox(height: 8),
-                Text(order.clientName, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
-                const SizedBox(height: 6),
-                Wrap(spacing: 12, runSpacing: 6, children: [
-                  _IconText(icon: Icons.event, text: dateFormatShort.format(order.dateOrder)),
-                  _IconText(icon: Icons.payments_rounded, text: uzsFormat.format(order.total)),
-                ]),
-              ])),
-              const SizedBox(width: 12),
-              Icon(Icons.keyboard_arrow_up_rounded, color: cs.outline, size: 22),
-            ]),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                onDoubleTap: onDoubleTap,
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header: Order number and status
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: cs.primaryContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.receipt_long_rounded, color: cs.onPrimaryContainer, size: 16),
+                                const SizedBox(width: 6),
+                                Text(
+                                  order.numOrder,
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: cs.onPrimaryContainer,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          StatusChip(status: order.mainStatus),
+                          const Spacer(),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: cs.outline.withOpacity(0.5),
+                            size: 24,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Client name
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: cs.secondaryContainer.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.store_rounded,
+                              color: cs.onSecondaryContainer,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              order.clientName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: cs.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      // Date and amount
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _InfoChip(
+                                icon: Icons.calendar_today_rounded,
+                                label: dateFormatShort.format(order.dateOrder),
+                                color: cs.tertiary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _InfoChip(
+                                icon: Icons.payments_rounded,
+                                label: uzsFormat.format(order.total),
+                                color: cs.primary,
+                                isBold: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -71,15 +161,40 @@ class OrderCard extends StatelessWidget {
   }
 }
 
-class _IconText extends StatelessWidget {
-  final IconData icon; final String text; const _IconText({required this.icon, required this.text});
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isBold;
+  
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.isBold = false,
+  });
+  
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, size: 16, color: cs.outline), const SizedBox(width: 6),
-      Text(text, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-    ]);
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -89,11 +204,38 @@ class _InkReveal extends StatefulWidget {
   @override State<_InkReveal> createState() => _InkRevealState();
 }
 class _InkRevealState extends State<_InkReveal> with SingleTickerProviderStateMixin {
-  late final AnimationController _ac = AnimationController(vsync: this, duration: const Duration(milliseconds: 120));
-  late final Animation<double> _scale = Tween(begin: 1.0, end: 0.98).animate(CurvedAnimation(parent: _ac, curve: Curves.easeOut));
-  @override void dispose(){ _ac.dispose(); super.dispose(); }
-  void _tap() async { await _ac.forward(); await _ac.reverse(); widget.onTap?.call(); }
-  @override Widget build(BuildContext context){ return GestureDetector(behavior: HitTestBehavior.opaque, onTap: _tap, onDoubleTap: widget.onDoubleTap, child: ScaleTransition(scale: _scale, child: widget.child)); }
+  late final AnimationController _ac = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 150),
+  );
+  late final Animation<double> _scale = Tween(begin: 1.0, end: 0.97).animate(
+    CurvedAnimation(parent: _ac, curve: Curves.easeInOut),
+  );
+  
+  @override
+  void dispose() {
+    _ac.dispose();
+    super.dispose();
+  }
+  
+  void _tap() async {
+    await _ac.forward();
+    await _ac.reverse();
+    widget.onTap?.call();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _tap,
+      onDoubleTap: widget.onDoubleTap,
+      child: ScaleTransition(
+        scale: _scale,
+        child: widget.child,
+      ),
+    );
+  }
 }
 
 

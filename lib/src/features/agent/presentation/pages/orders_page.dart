@@ -10,6 +10,7 @@ import '../widgets/order_card.dart';
 import '../widgets/order_card_grid.dart';
 import '../widgets/order_models.dart';
 import '../widgets/order_detail_sections.dart';
+import '../widgets/order_items_card_view.dart';
 import '../widgets/status_chip.dart';
 import '../widgets/order_filters_panel.dart';
 import '../shared/order_status_utils.dart';
@@ -18,6 +19,7 @@ import '../../../../core/services/data_sync_service.dart';
 import '../../../../core/services/shared_preferences_service.dart';
 import '../../../agent/data/models/order.dart';
 import '../../../agent/data/models/order_status.dart';
+import '../../../agent/data/models/order_detail.dart';
 
 class OrdersPage extends StatefulWidget {
   final String? initialClientFilter;
@@ -422,28 +424,20 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
 
     if (_isLoading) {
       return Scaffold(
+        backgroundColor: cs.surfaceContainerLowest,
         appBar: AppBar(
-          title: Text(AppLocalizations.of(context)?.orders ?? 'Orders'),
+          title: Text(
+            AppLocalizations.of(context)?.orders ?? 'Orders',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           centerTitle: true,
+          elevation: 0,
+          backgroundColor: cs.surface,
           leading: (ModalRoute.of(context)?.canPop ?? false)
               ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.maybePop(context),
-                )
-              : null,
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_error != null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(AppLocalizations.of(context)?.orders ?? 'Orders'),
-          centerTitle: true,
-          leading: (ModalRoute.of(context)?.canPop ?? false)
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
+                  icon: const Icon(Icons.arrow_back_rounded),
                   onPressed: () => Navigator.maybePop(context),
                 )
               : null,
@@ -452,20 +446,99 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
+              CircularProgressIndicator(strokeWidth: 3),
+              const SizedBox(height: 24),
               Text(
-                '${AppLocalizations.of(context)?.errorOccurredPrefix ?? "Error occurred"}: $_error',
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loadOrderStatusesAndOrders,
-                child: Text(
-                  AppLocalizations.of(context)?.retry ??
-                      'Qayta urinib ko\'ring',
+                AppLocalizations.of(context)?.loading ?? 'Yuklanmoqda...',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: cs.onSurfaceVariant,
                 ),
               ),
             ],
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: cs.surfaceContainerLowest,
+        appBar: AppBar(
+          title: Text(
+            AppLocalizations.of(context)?.orders ?? 'Orders',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: cs.surface,
+          leading: (ModalRoute.of(context)?.canPop ?? false)
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: () => Navigator.maybePop(context),
+                )
+              : null,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: cs.errorContainer.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.error_outline_rounded,
+                    size: 64,
+                    color: cs.error,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  AppLocalizations.of(context)?.errorOccurredTitle ??
+                      'Xatolik yuz berdi',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    _error!,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: _loadOrderStatusesAndOrders,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text(
+                    AppLocalizations.of(context)?.retry ??
+                        'Qayta urinib ko\'ring',
+                  ),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -475,100 +548,203 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
       initialIndex: _currentTabIndex,
       length: _statusTabs.length,
       child: Scaffold(
+        backgroundColor: cs.surfaceContainerLowest,
         appBar: AppBar(
-          title: Text(AppLocalizations.of(context)?.orders ?? 'Orders'),
+          title: Text(
+            AppLocalizations.of(context)?.orders ?? 'Orders',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           centerTitle: true,
+          elevation: 0,
+          backgroundColor: cs.surface,
           leading: (ModalRoute.of(context)?.canPop ?? false)
               ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
+                  icon: const Icon(Icons.arrow_back_rounded),
                   onPressed: () => Navigator.maybePop(context),
                 )
               : null,
           actions: [
-            IconButton(
-              icon: Icon(
-                Icons.filter_alt_rounded,
-                color: _showFilters ? cs.primary : null,
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: _showFilters
+                    ? cs.primaryContainer
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
               ),
-              onPressed: _toggleFilters,
+              child: IconButton(
+                icon: Icon(
+                  Icons.filter_alt_rounded,
+                  color: _showFilters ? cs.primary : cs.onSurface,
+                ),
+                onPressed: _toggleFilters,
+                tooltip: AppLocalizations.of(context)?.filterTooltip ?? 'Filter',
+              ),
             ),
           ],
         ),
         body: Column(
           children: [
-            // Tabs
-            Material(
-              color: Colors.transparent,
+            // Modern Tabs
+            Container(
+              decoration: BoxDecoration(
+                color: cs.surface,
+                border: Border(
+                  bottom: BorderSide(
+                    color: cs.outlineVariant.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+              ),
               child: TabBar(
                 isScrollable: true,
                 tabs: tabs,
+                indicatorWeight: 3,
+                labelStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+                unselectedLabelStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
                 onTap: (i) {
                   _currentTabIndex = i;
                   _applyAllFilters();
                 },
               ),
             ),
-            // Search + tune icon
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            // Modern Search + tune icon
+            Container(
+              color: cs.surface,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _search,
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.search),
+                        prefixIcon: Icon(Icons.search_rounded, color: cs.primary),
                         hintText:
                             AppLocalizations.of(context)?.searchHint ??
                             'Qidirish...',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: cs.outlineVariant.withOpacity(0.5),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: cs.outlineVariant.withOpacity(0.5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: cs.primary,
+                            width: 2,
+                          ),
                         ),
                         filled: true,
+                        fillColor: cs.surfaceContainerHighest.withOpacity(0.5),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  IconButton(
-                    onPressed: _toggleTune,
-                    icon: const Icon(Icons.tune),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: _showTuneRow
+                          ? cs.primaryContainer
+                          : cs.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: IconButton(
+                      onPressed: _toggleTune,
+                      icon: Icon(
+                        Icons.tune_rounded,
+                        color: _showTuneRow ? cs.primary : cs.onSurface,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            // Tune row
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
+            // Modern Tune row
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
               child: _showTuneRow
-                  ? Padding(
-                      key: const ValueKey('tune'),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ? Container(
+                      color: cs.surface,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Row(
                         children: [
-                          Text(
-                            '${_filtered.length} ${AppLocalizations.of(context)?.orders ?? 'Buyurtmalar'}',
-                            style: Theme.of(context).textTheme.titleMedium,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: cs.primaryContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.receipt_long_rounded,
+                                  size: 18,
+                                  color: cs.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${_filtered.length}',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: cs.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           const Spacer(),
-                          IconButton(
-                            tooltip: 'List',
-                            onPressed: _switchToList,
-                            icon: Icon(
-                              Icons.view_agenda_rounded,
-                              color: _isGrid ? cs.outline : cs.primary,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: cs.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'List',
+                                  onPressed: _switchToList,
+                                  icon: Icon(
+                                    Icons.view_agenda_rounded,
+                                    color: !_isGrid ? cs.primary : cs.outline,
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Grid',
+                                  onPressed: _switchToGrid,
+                                  icon: Icon(
+                                    Icons.grid_view_rounded,
+                                    color: _isGrid ? cs.primary : cs.outline,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          IconButton(
-                            tooltip: 'Grid',
-                            onPressed: _switchToGrid,
-                            icon: Icon(
-                              Icons.grid_view_rounded,
-                              color: _isGrid ? cs.primary : cs.outline,
-                            ),
-                          ),
+                          const SizedBox(width: 8),
                           IconButton(
                             onPressed: _toggleTune,
-                            icon: const Icon(Icons.close),
+                            icon: const Icon(Icons.close_rounded),
                           ),
                         ],
                       ),
@@ -599,18 +775,28 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                     )
                   : const SizedBox.shrink(),
             ),
-            const SizedBox(height: 6),
             // Content
             Expanded(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 350),
+                switchInCurve: Curves.easeInOut,
+                switchOutCurve: Curves.easeInOut,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.02),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
                 child: _isGrid
                     ? Padding(
                         key: const ValueKey('grid'),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
+                        padding: const EdgeInsets.all(8),
                         child: GridView.builder(
                           controller: _scrollController,
                           gridDelegate:
@@ -631,7 +817,10 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                                 MaterialPageRoute(
                                   builder: (_) => OrderDetailsPage(order: o),
                                 ),
-                              ),
+                              ).then((_) {
+                                // Refresh list after returning from details
+                                setState(() {});
+                              }),
                             );
                           },
                         ),
@@ -639,6 +828,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                     : ListView.builder(
                         key: const ValueKey('list'),
                         controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         itemCount: _filtered.length,
                         itemBuilder: (_, i) {
                           final o = _filtered[i];
@@ -650,7 +840,10 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                               MaterialPageRoute(
                                 builder: (_) => OrderDetailsPage(order: o),
                               ),
-                            ),
+                            ).then((_) {
+                              // Refresh list after returning from details
+                              setState(() {});
+                            }),
                           );
                         },
                       ),
@@ -663,86 +856,16 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   }
 
   Future<void> _openBottomSheet(BuildContext context, OrderModel order) async {
-    final cs = Theme.of(context).colorScheme;
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.72,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, controller) {
-            return DefaultTabController(
-              length: 2,
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 38,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: cs.outlineVariant,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Icon(Icons.receipt_long_rounded, color: cs.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            AppLocalizations.of(
-                                  context,
-                                )?.orderNumber(order.numOrder) ??
-                                'Buyurtma № ${order.numOrder}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                        StatusChip(status: order.mainStatus),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TabBar(
-                    tabs: [
-                      Tab(text: AppLocalizations.of(context)?.main ?? 'Asosiy'),
-                      Tab(
-                        text:
-                            AppLocalizations.of(context)?.contents ?? 'Tarkibi',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        OrderDetailsSection(
-                          order: order,
-                          controller: controller,
-                        ),
-                        OrderItemsSection(order: order, controller: controller),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+      clipBehavior: Clip.antiAlias,
+      builder: (context) => _OrderBottomSheet(order: order),
     );
   }
 
@@ -793,5 +916,251 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
       );
     }
     return list;
+  }
+}
+
+/// Bottom sheet widget for order details with data loading
+class _OrderBottomSheet extends StatefulWidget {
+  final OrderModel order;
+  
+  const _OrderBottomSheet({required this.order});
+  
+  @override
+  State<_OrderBottomSheet> createState() => _OrderBottomSheetState();
+}
+
+class _OrderBottomSheetState extends State<_OrderBottomSheet> {
+  bool _isLoading = false;
+  OrderModel? _detailedOrder;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadOrderDetails();
+  }
+  
+  Future<void> _loadOrderDetails() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final dataSyncService = GetIt.I<DataSyncService>();
+      final prefs = GetIt.I<SharedPreferencesService>();
+      
+      // Try cache first
+      final cachedOrderDetail = await dataSyncService
+          .getCachedOrderDetailByNumOrder(widget.order.numOrder);
+      
+      if (cachedOrderDetail != null) {
+        _detailedOrder = _convertOrderDetailToOrderModel(
+          cachedOrderDetail,
+          widget.order,
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+      
+      // Load from server
+      final userCode = await prefs.getUserCode();
+      if (userCode != null) {
+        final orderDate = widget.order.dateOrder.toIso8601String().split('T')[0];
+        final freshOrderDetail = await dataSyncService.syncOrderDetails(
+          numberOrder: widget.order.numOrder,
+          orderDate1: orderDate,
+          orderDate2: orderDate,
+          forceRefresh: false,
+        );
+        
+        _detailedOrder = _convertOrderDetailToOrderModel(
+          freshOrderDetail,
+          widget.order,
+        );
+      } else {
+        _detailedOrder = widget.order;
+      }
+    } catch (e) {
+      debugPrint('Error loading order details in bottom sheet: $e');
+      _detailedOrder = widget.order;
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+  
+  OrderModel _convertOrderDetailToOrderModel(
+    OrderDetail orderDetail,
+    OrderModel originalOrder,
+  ) {
+    try {
+      if (orderDetail.productRows.isEmpty) {
+        return originalOrder.copyWith(items: []);
+      }
+      
+      final items = <OrderItem>[];
+      for (final product in orderDetail.productRows) {
+        final codeProduct = product.codeProduct.trim();
+        if (codeProduct.isEmpty) continue;
+        
+        try {
+          final orderItem = OrderItem(
+            productName: product.nameProduct.trim().isNotEmpty
+                ? product.nameProduct.trim()
+                : 'Noma\'lum mahsulot',
+            article: codeProduct,
+            quantity: product.amount.toDouble(),
+            price: product.price,
+            priceType: originalOrder.typePriceCode,
+          );
+          items.add(orderItem);
+        } catch (e) {
+          debugPrint('Error converting product: $e');
+        }
+      }
+      
+      return OrderModel(
+        id: originalOrder.id,
+        numOrder: originalOrder.numOrder,
+        dateOrder: originalOrder.dateOrder,
+        captionOrder: originalOrder.captionOrder,
+        typePriceCode: originalOrder.typePriceCode,
+        status: originalOrder.status,
+        commentSupervisor: orderDetail.commentSupervisor,
+        commentForwarder: orderDetail.commentForwarder,
+        commentAgent: orderDetail.commentAgent,
+        total: originalOrder.total,
+        clientCode: originalOrder.clientCode,
+        clientName: originalOrder.clientName,
+        codeOrg: originalOrder.codeOrg,
+        mainStatus: originalOrder.mainStatus,
+        courierName: originalOrder.courierName,
+        courierCar: originalOrder.courierCar,
+        courierPlate: originalOrder.courierPlate,
+        items: items,
+      );
+    } catch (e) {
+      debugPrint('Error converting OrderDetail: $e');
+      return originalOrder.copyWith(items: []);
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final order = _detailedOrder ?? widget.order;
+    
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.72,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, controller) {
+        return DefaultTabController(
+          length: 2,
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: cs.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.receipt_long_rounded,
+                        color: cs.onPrimaryContainer,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            (AppLocalizations.of(context)?.orderNumber ?? 'Buyurtma').toString(),
+                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: cs.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            order.numOrder,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_isLoading)
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else
+                      StatusChip(status: order.mainStatus),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: cs.outlineVariant.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: TabBar(
+                  indicatorWeight: 3,
+                  labelStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  tabs: [
+                    Tab(
+                      icon: Icon(Icons.info_outline_rounded, size: 18),
+                      text: AppLocalizations.of(context)?.main ?? 'Asosiy',
+                    ),
+                    Tab(
+                      icon: Icon(Icons.inventory_2_outlined, size: 18),
+                      text: AppLocalizations.of(context)?.contents ?? 'Tarkibi',
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    OrderDetailsSection(
+                      order: order,
+                      controller: controller,
+                    ),
+                    OrderItemsCardView(order: order, controller: controller),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

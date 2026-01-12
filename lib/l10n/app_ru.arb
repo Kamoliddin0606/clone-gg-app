@@ -2481,5 +2481,40 @@
   "apiKeyStatusConfigured": "настроен",
   "apiKeyStatusNotConfigured": "не настроен",
   "apiKeyStatusNotRequired": "ключ не требуется",
-  "apiKeyStatusError": "ошибка"
+  "apiKeyStatusError": "ошибка",
+  "fakturaFetchCompanyData": "Загрузить",
+  "fakturaRefreshCompanyData": "Обновить",
+  "fakturaEnterInn": "Пожалуйста, введите ИНН",
+  "fakturaInvalidInnFormat": "Неверный формат ИНН. Должно быть 9 или 14 цифр",
+  "fakturaCompanyDataLoaded": "Данные организации успешно загружены: {companyName}",
+  "@fakturaCompanyDataLoaded": {
+    "placeholders": {
+      "companyName": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaRegionNotFound": "Регион не найден: {regionName}. Пожалуйста, выберите вручную",
+  "@fakturaRegionNotFound": {
+    "placeholders": {
+      "regionName": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaAuthError": "Ошибка аутентификации",
+  "fakturaAuthErrorRetry": "Ошибка аутентификации. Пожалуйста, попробуйте еще раз",
+  "fakturaCompanyNotFound": "Организация не найдена. Проверьте ИНН",
+  "fakturaInvalidRequest": "Неверный запрос. Проверьте формат ИНН",
+  "fakturaServerError": "Ошибка сервера: {statusCode}",
+  "@fakturaServerError": {
+    "placeholders": {
+      "statusCode": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaNetworkError": "Ошибка сети",
+  "fakturaInnEmpty": "ИНН не может быть пустым",
+  "fakturaTokenRefreshError": "Ошибка обновления токена"
 }

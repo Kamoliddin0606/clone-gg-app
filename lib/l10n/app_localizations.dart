@@ -6250,8 +6250,8 @@ abstract class AppLocalizations {
   /// No description provided for @permissionRequired.
   ///
   /// In en, this message translates to:
-  /// **'{title} required'**
-  String permissionRequired(String title);
+  /// **'{permission} required'**
+  String permissionRequired(String permission);
 
   /// No description provided for @permissionRequiredSettings.
   ///
@@ -7872,6 +7872,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'error'**
   String get apiKeyStatusError;
+
+  /// No description provided for @fakturaFetchCompanyData.
+  ///
+  /// In en, this message translates to:
+  /// **'Load'**
+  String get fakturaFetchCompanyData;
+
+  /// No description provided for @fakturaRefreshCompanyData.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get fakturaRefreshCompanyData;
+
+  /// No description provided for @fakturaEnterInn.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter TIN number'**
+  String get fakturaEnterInn;
+
+  /// No description provided for @fakturaInvalidInnFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid TIN format. Must be 9 or 14 digits'**
+  String get fakturaInvalidInnFormat;
+
+  /// No description provided for @fakturaCompanyDataLoaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Company data successfully loaded: {companyName}'**
+  String fakturaCompanyDataLoaded(String companyName);
+
+  /// No description provided for @fakturaRegionNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Region not found: {regionName}. Please select manually'**
+  String fakturaRegionNotFound(String regionName);
+
+  /// No description provided for @fakturaAuthError.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication error'**
+  String get fakturaAuthError;
+
+  /// No description provided for @fakturaAuthErrorRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication error. Please try again'**
+  String get fakturaAuthErrorRetry;
+
+  /// No description provided for @fakturaCompanyNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Company not found. Check TIN number'**
+  String get fakturaCompanyNotFound;
+
+  /// No description provided for @fakturaInvalidRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid request. Check TIN format'**
+  String get fakturaInvalidRequest;
+
+  /// No description provided for @fakturaServerError.
+  ///
+  /// In en, this message translates to:
+  /// **'Server error: {statusCode}'**
+  String fakturaServerError(String statusCode);
+
+  /// No description provided for @fakturaNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error'**
+  String get fakturaNetworkError;
+
+  /// No description provided for @fakturaInnEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'TIN cannot be empty'**
+  String get fakturaInnEmpty;
+
+  /// No description provided for @fakturaTokenRefreshError.
+  ///
+  /// In en, this message translates to:
+  /// **'Token refresh error'**
+  String get fakturaTokenRefreshError;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

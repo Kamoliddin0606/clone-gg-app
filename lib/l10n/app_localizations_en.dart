@@ -3266,8 +3266,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionPhotosVideosPurpose => 'Work with photos, videos and media files';
 
   @override
-  String permissionRequired(String title) {
-    return '$title required';
+  String permissionRequired(String permission) {
+    return '$permission required';
   }
 
   @override
@@ -4137,4 +4137,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get apiKeyStatusError => 'error';
+
+  @override
+  String get fakturaFetchCompanyData => 'Load';
+
+  @override
+  String get fakturaRefreshCompanyData => 'Refresh';
+
+  @override
+  String get fakturaEnterInn => 'Please enter TIN number';
+
+  @override
+  String get fakturaInvalidInnFormat => 'Invalid TIN format. Must be 9 or 14 digits';
+
+  @override
+  String fakturaCompanyDataLoaded(String companyName) {
+    return 'Company data successfully loaded: $companyName';
+  }
+
+  @override
+  String fakturaRegionNotFound(String regionName) {
+    return 'Region not found: $regionName. Please select manually';
+  }
+
+  @override
+  String get fakturaAuthError => 'Authentication error';
+
+  @override
+  String get fakturaAuthErrorRetry => 'Authentication error. Please try again';
+
+  @override
+  String get fakturaCompanyNotFound => 'Company not found. Check TIN number';
+
+  @override
+  String get fakturaInvalidRequest => 'Invalid request. Check TIN format';
+
+  @override
+  String fakturaServerError(String statusCode) {
+    return 'Server error: $statusCode';
+  }
+
+  @override
+  String get fakturaNetworkError => 'Network error';
+
+  @override
+  String get fakturaInnEmpty => 'TIN cannot be empty';
+
+  @override
+  String get fakturaTokenRefreshError => 'Token refresh error';
 }

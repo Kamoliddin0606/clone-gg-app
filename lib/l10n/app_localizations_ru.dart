@@ -3266,7 +3266,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get permissionPhotosVideosPurpose => 'Работа с фото, видео и медиа файлами';
 
   @override
-  String permissionRequired(String title) {
+  String permissionRequired(String permission) {
     return '$permission требуется';
   }
 
@@ -4137,4 +4137,52 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get apiKeyStatusError => 'ошибка';
+
+  @override
+  String get fakturaFetchCompanyData => 'Загрузить';
+
+  @override
+  String get fakturaRefreshCompanyData => 'Обновить';
+
+  @override
+  String get fakturaEnterInn => 'Пожалуйста, введите ИНН';
+
+  @override
+  String get fakturaInvalidInnFormat => 'Неверный формат ИНН. Должно быть 9 или 14 цифр';
+
+  @override
+  String fakturaCompanyDataLoaded(String companyName) {
+    return 'Данные организации успешно загружены: $companyName';
+  }
+
+  @override
+  String fakturaRegionNotFound(String regionName) {
+    return 'Регион не найден: $regionName. Пожалуйста, выберите вручную';
+  }
+
+  @override
+  String get fakturaAuthError => 'Ошибка аутентификации';
+
+  @override
+  String get fakturaAuthErrorRetry => 'Ошибка аутентификации. Пожалуйста, попробуйте еще раз';
+
+  @override
+  String get fakturaCompanyNotFound => 'Организация не найдена. Проверьте ИНН';
+
+  @override
+  String get fakturaInvalidRequest => 'Неверный запрос. Проверьте формат ИНН';
+
+  @override
+  String fakturaServerError(String statusCode) {
+    return 'Ошибка сервера: $statusCode';
+  }
+
+  @override
+  String get fakturaNetworkError => 'Ошибка сети';
+
+  @override
+  String get fakturaInnEmpty => 'ИНН не может быть пустым';
+
+  @override
+  String get fakturaTokenRefreshError => 'Ошибка обновления токена';
 }

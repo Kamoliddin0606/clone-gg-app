@@ -23,6 +23,8 @@ import 'package:gloria_marketing_flutter/src/core/services/background_location/b
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/local_uuid_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/startup_access_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/startup_access_bloc.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
@@ -172,6 +174,23 @@ Future<void> setupServiceLocator() async {
       dio: Dio(), // Alohida Dio instance - boshqa interceptorlardan ta'sirlanmaydi
       dbService: sl<ApiDatabaseService>(),
       prefs: sl<SharedPreferencesService>(),
+    ));
+  }
+
+  // Faktura.uz Services - Tashkilot ma'lumotlarini olish uchun
+  // https://api.faktura.uz API'dan kompaniya ma'lumotlarini INN orqali oladi
+  if (!sl.isRegistered<FakturaAuthService>()) {
+    sl.registerFactory<FakturaAuthService>(() => FakturaAuthService(
+      prefs: sl<SharedPreferencesService>(),
+      username: '998909378702',
+      password: '9118113',
+      clientId: 'Gloriya',
+      clientSecret: 'nJCMrRxP9IDl8WwgQyrMs1YT4KAla869EHA89AQCik8OFJ7VV00hNgIuLaPQ',
+    ));
+  }
+  if (!sl.isRegistered<FakturaCompanyService>()) {
+    sl.registerFactory<FakturaCompanyService>(() => FakturaCompanyService(
+      authService: sl<FakturaAuthService>(),
     ));
   }
 

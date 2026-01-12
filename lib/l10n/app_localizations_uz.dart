@@ -3266,7 +3266,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get permissionPhotosVideosPurpose => 'Rasmlar, videolar va media fayllar bilan ishlash';
 
   @override
-  String permissionRequired(String title) {
+  String permissionRequired(String permission) {
     return '$permission kerak';
   }
 
@@ -4137,4 +4137,52 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get apiKeyStatusError => 'xatolik';
+
+  @override
+  String get fakturaFetchCompanyData => 'Yuklash';
+
+  @override
+  String get fakturaRefreshCompanyData => 'Yangilash';
+
+  @override
+  String get fakturaEnterInn => 'Iltimos, INN raqamini kiriting';
+
+  @override
+  String get fakturaInvalidInnFormat => 'INN formati noto\'g\'ri. 9 yoki 14 raqamli bo\'lishi kerak';
+
+  @override
+  String fakturaCompanyDataLoaded(String companyName) {
+    return 'Tashkilot ma\'lumotlari muvaffaqiyatli yuklandi: $companyName';
+  }
+
+  @override
+  String fakturaRegionNotFound(String regionName) {
+    return 'Hudud topilmadi: $regionName. Iltimos, qo\'lda tanlang';
+  }
+
+  @override
+  String get fakturaAuthError => 'Autentifikatsiya xatosi';
+
+  @override
+  String get fakturaAuthErrorRetry => 'Autentifikatsiya xatosi. Iltimos, qayta urinib ko\'ring';
+
+  @override
+  String get fakturaCompanyNotFound => 'Tashkilot topilmadi. INN raqamini tekshiring';
+
+  @override
+  String get fakturaInvalidRequest => 'Noto\'g\'ri so\'rov. INN formatini tekshiring';
+
+  @override
+  String fakturaServerError(String statusCode) {
+    return 'Server xatosi: $statusCode';
+  }
+
+  @override
+  String get fakturaNetworkError => 'Tarmoq xatosi';
+
+  @override
+  String get fakturaInnEmpty => 'INN bo\'sh bo\'lishi mumkin emas';
+
+  @override
+  String get fakturaTokenRefreshError => 'Token yangilash xatosi';
 }

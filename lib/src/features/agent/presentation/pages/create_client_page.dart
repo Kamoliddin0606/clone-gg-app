@@ -11,6 +11,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:gloria_marketing_flutter/src/core/services/address_resolver_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
+import 'package:gloria_marketing_flutter/src/core/models/faktura_company_details.dart';
 
 /// Page for creating a new client (trading point)
 /// Beautiful, user-friendly form with all required fields
@@ -73,6 +76,10 @@ class _CreateClientPageState extends State<CreateClientPage>
 
   // Track if addresses were auto-filled
   bool _addressAutoFilled = false;
+
+  // Faktura.uz integration
+  bool _isFetchingCompanyData = false;
+  bool _companyDataFetched = false;
 
   @override
   void initState() {
@@ -462,6 +469,199 @@ class _CreateClientPageState extends State<CreateClientPage>
     }
   }
 
+  /// Fetch company data from Faktura.uz by INN
+  Future<void> _fetchCompanyDataFromFaktura() async {
+    final inn = _innController.text.trim();
+    
+    if (inn.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.fakturaEnterInn),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Validate INN format
+    final fakturaService = sl<FakturaCompanyService>();
+    if (!fakturaService.isValidInn(inn)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.fakturaInvalidInnFormat),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isFetchingCompanyData = true);
+
+    try {
+      final companyDetails = await fakturaService.getCompanyDetails(inn);
+      
+      if (mounted) {
+        await _populateFormWithCompanyData(companyDetails);
+        
+        setState(() {
+          _companyDataFetched = true;
+          _isFetchingCompanyData = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.fakturaCompanyDataLoaded(
+                companyDetails.companyName,
+              ),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isFetchingCompanyData = false);
+        
+        // Map error codes to localized messages
+        String errorMessage;
+        final l10n = AppLocalizations.of(context)!;
+        
+        if (e is FakturaCompanyException) {
+          switch (e.message) {
+            case 'INN_EMPTY':
+              errorMessage = l10n.fakturaInnEmpty;
+              break;
+            case 'AUTH_ERROR':
+              errorMessage = l10n.fakturaAuthErrorRetry;
+              break;
+            case 'COMPANY_NOT_FOUND':
+              errorMessage = l10n.fakturaCompanyNotFound;
+              break;
+            case 'INVALID_REQUEST':
+              errorMessage = l10n.fakturaInvalidRequest;
+              break;
+            case 'SERVER_ERROR':
+              errorMessage = l10n.fakturaServerError(e.statusCode?.toString() ?? '');
+              break;
+            case 'NETWORK_ERROR':
+              errorMessage = l10n.fakturaNetworkError;
+              break;
+            default:
+              errorMessage = '${l10n.error}: ${e.message}';
+          }
+        } else if (e is FakturaAuthException) {
+          switch (e.message) {
+            case 'AUTH_ERROR':
+              errorMessage = l10n.fakturaAuthError;
+              break;
+            case 'TOKEN_REFRESH_ERROR':
+              errorMessage = l10n.fakturaTokenRefreshError;
+              break;
+            case 'NETWORK_ERROR':
+              errorMessage = l10n.fakturaNetworkError;
+              break;
+            default:
+              errorMessage = '${l10n.error}: ${e.message}';
+          }
+        } else {
+          errorMessage = '${l10n.error}: $e';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Populate form fields with company data from Faktura.uz
+  Future<void> _populateFormWithCompanyData(FakturaCompanyDetails company) async {
+    // Fill company name
+    _nameController.text = company.companyName;
+    _signboardController.text = company.companyName;
+
+    // Fill director info
+    if (company.directorName != null && company.directorName!.isNotEmpty) {
+      _directorController.text = company.directorName!;
+    }
+
+    // Fill bank details from primary account
+    final primaryAccount = company.getPrimaryAccount();
+    if (primaryAccount != null) {
+      _mfoController.text = primaryAccount.bankMfo;
+      _bankAccountController.text = primaryAccount.accountCode;
+    }
+
+    // Fill phone if available
+    if (company.phoneNumber != null && company.phoneNumber!.isNotEmpty) {
+      _contactPhoneController.text = company.phoneNumber!;
+    }
+
+    // Fill address - combine Region, District, and CompanyAddress
+    final fullAddress = company.getFullAddress();
+    if (fullAddress.isNotEmpty) {
+      _addressController.text = fullAddress;
+      
+      // If delivery address is empty, also fill it
+      if (_addressDeliveryController.text.trim().isEmpty) {
+        // Try to resolve delivery address from current location
+        if (_latitude != null && _longitude != null) {
+          await _resolveAddressFromCoordinates(_latitude!, _longitude!);
+        } else {
+          // Fallback: use same address
+          _addressDeliveryController.text = fullAddress;
+        }
+      }
+    }
+
+    // Try to match region from Faktura to existing BusinessRegion
+    await _matchRegionFromFaktura(company.regionCode, company.region);
+  }
+
+  /// Try to match Faktura region to existing BusinessRegion
+  Future<void> _matchRegionFromFaktura(String regionCode, String regionName) async {
+    try {
+      // Try to find matching region by name or code
+      final matchingRegion = _regions.where((region) {
+        final nameMatch = region.name.toLowerCase().contains(regionName.toLowerCase()) ||
+                         regionName.toLowerCase().contains(region.name.toLowerCase());
+        return nameMatch;
+      }).firstOrNull;
+
+      if (matchingRegion != null) {
+        setState(() {
+          _selectedRegion = matchingRegion;
+        });
+      } else {
+        // Show info that region needs to be selected manually
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.fakturaRegionNotFound(regionName),
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error matching region: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -527,15 +727,7 @@ class _CreateClientPageState extends State<CreateClientPage>
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 12),
-                _buildTextField(
-                  controller: _innController,
-                  label: l10n.createClientInn,
-                  hint: l10n.createClientInnHint,
-                  icon: Icons.numbers,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  maxLength: 14,
-                ),
+                _buildInnFieldWithFetchButton(colorScheme, l10n),
                 const SizedBox(height: 12),
                 _buildTradePointTypeSelector(theme, colorScheme),
                 const SizedBox(height: 12),
@@ -844,6 +1036,110 @@ class _CreateClientPageState extends State<CreateClientPage>
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.primary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInnFieldWithFetchButton(
+    ColorScheme colorScheme,
+    AppLocalizations l10n,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: TextFormField(
+            controller: _innController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            maxLength: 14,
+            style: TextStyle(color: colorScheme.onSurface),
+            decoration: InputDecoration(
+              labelText: l10n.createClientInn,
+              hintText: l10n.createClientInnHint,
+              prefixIcon: Icon(Icons.numbers, color: colorScheme.primary),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colorScheme.error),
+              ),
+              counterText: '',
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.primary,
+                colorScheme.primary.withOpacity(0.8),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.primary.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _isFetchingCompanyData ? null : _fetchCompanyDataFromFaktura,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _isFetchingCompanyData
+                    ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.onPrimary,
+                        ),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _companyDataFetched ? Icons.refresh : Icons.download,
+                            color: colorScheme.onPrimary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _companyDataFetched 
+                                ? AppLocalizations.of(context)!.fakturaRefreshCompanyData
+                                : AppLocalizations.of(context)!.fakturaFetchCompanyData,
+                            style: TextStyle(
+                              color: colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
           ),
         ),
       ],

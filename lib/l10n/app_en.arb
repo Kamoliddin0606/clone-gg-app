@@ -2260,12 +2260,6 @@
   "photosAndVideosPermissionTitle": "Photos and videos permission",
   "photosAndVideosPermissionDescription": "To work with media files",
   "photosAndVideosPermissionPurpose": "Work with photos, videos and media files",
-  "permissionRequired": "{title} required",
-  "@permissionRequired": {
-    "placeholders": {
-      "title": {"type": "String"}
-    }
-  },
   "permissionRequiredMessage": "{description}. Please grant permission in app settings.",
   "@permissionRequiredMessage": {
     "placeholders": {
@@ -2529,5 +2523,40 @@
   "apiKeyStatusConfigured": "configured",
   "apiKeyStatusNotConfigured": "not configured",
   "apiKeyStatusNotRequired": "key not required",
-  "apiKeyStatusError": "error"
+  "apiKeyStatusError": "error",
+  "fakturaFetchCompanyData": "Load",
+  "fakturaRefreshCompanyData": "Refresh",
+  "fakturaEnterInn": "Please enter TIN number",
+  "fakturaInvalidInnFormat": "Invalid TIN format. Must be 9 or 14 digits",
+  "fakturaCompanyDataLoaded": "Company data successfully loaded: {companyName}",
+  "@fakturaCompanyDataLoaded": {
+    "placeholders": {
+      "companyName": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaRegionNotFound": "Region not found: {regionName}. Please select manually",
+  "@fakturaRegionNotFound": {
+    "placeholders": {
+      "regionName": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaAuthError": "Authentication error",
+  "fakturaAuthErrorRetry": "Authentication error. Please try again",
+  "fakturaCompanyNotFound": "Company not found. Check TIN number",
+  "fakturaInvalidRequest": "Invalid request. Check TIN format",
+  "fakturaServerError": "Server error: {statusCode}",
+  "@fakturaServerError": {
+    "placeholders": {
+      "statusCode": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaNetworkError": "Network error",
+  "fakturaInnEmpty": "TIN cannot be empty",
+  "fakturaTokenRefreshError": "Token refresh error"
 }

@@ -2483,5 +2483,40 @@
   "apiKeyStatusConfigured": "sozlangan",
   "apiKeyStatusNotConfigured": "sozlanmagan",
   "apiKeyStatusNotRequired": "kalit shart emas",
-  "apiKeyStatusError": "xatolik"
+  "apiKeyStatusError": "xatolik",
+  "fakturaFetchCompanyData": "Yuklash",
+  "fakturaRefreshCompanyData": "Yangilash",
+  "fakturaEnterInn": "Iltimos, INN raqamini kiriting",
+  "fakturaInvalidInnFormat": "INN formati noto'g'ri. 9 yoki 14 raqamli bo'lishi kerak",
+  "fakturaCompanyDataLoaded": "Tashkilot ma'lumotlari muvaffaqiyatli yuklandi: {companyName}",
+  "@fakturaCompanyDataLoaded": {
+    "placeholders": {
+      "companyName": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaRegionNotFound": "Hudud topilmadi: {regionName}. Iltimos, qo'lda tanlang",
+  "@fakturaRegionNotFound": {
+    "placeholders": {
+      "regionName": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaAuthError": "Autentifikatsiya xatosi",
+  "fakturaAuthErrorRetry": "Autentifikatsiya xatosi. Iltimos, qayta urinib ko'ring",
+  "fakturaCompanyNotFound": "Tashkilot topilmadi. INN raqamini tekshiring",
+  "fakturaInvalidRequest": "Noto'g'ri so'rov. INN formatini tekshiring",
+  "fakturaServerError": "Server xatosi: {statusCode}",
+  "@fakturaServerError": {
+    "placeholders": {
+      "statusCode": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaNetworkError": "Tarmoq xatosi",
+  "fakturaInnEmpty": "INN bo'sh bo'lishi mumkin emas",
+  "fakturaTokenRefreshError": "Token yangilash xatosi"
 }

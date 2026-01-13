@@ -755,7 +755,7 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
 
   void _onDataSyncError(dynamic error) {
     // Show user-friendly error message
-    String errorMessage = AppLocalizations.of(context)!.syncError;
+    String errorMessage = AppLocalizations.of(context)!.syncError(error.toString());
 
     if (error is PaymentRequiredException) {
       errorMessage = 'To\'lov talab qilinmoqda. Iltimos, obunangizni tekshiring.';

@@ -2517,7 +2517,7 @@
       }
     }
   },
-  "fakturaNetworkError": "Tarmoq xatosi",
+  "fakturaNetworkError": "Faktura.uz ga ulanishda tarmoq xatosi",
   "fakturaInnEmpty": "INN bo'sh bo'lishi mumkin emas",
   "fakturaTokenRefreshError": "Token yangilash xatosi",
   "reportMenuTitle": "Hisobotlar menyusi",
@@ -2565,5 +2565,39 @@
   "monthlySales": "Oylik savdo",
   "monthlyGrowth": "Oylik o'sish",
   "kpiCompletion": "KPI bajarilishi",
-  "salaryAmount": "Maosh miqdori"
+  "salaryAmount": "Maosh miqdori",
+  "scannerTitle": "Hujjat skaneri",
+  "scannerSubtitle": "Formani avtomatik to'ldirish uchun guvohnomani skanerlang",
+  "scannerTakePhoto": "Rasm olish",
+  "scannerChoosePhoto": "Galereya",
+  "scannerProcessing": "Hujjat tahlil qilinmoqda...",
+  "scannerPleaseWait": "AI rasmdan ma'lumotlarni ajratib olmoqda",
+  "scannerDataExtracted": "{count} ta maydon muvaffaqiyatli ajratildi",
+  "@scannerDataExtracted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scannerCameraError": "Kameraga kirish xatosi. Ruxsatlarni tekshiring",
+  "scannerGalleryError": "Galereyaga kirish xatosi. Ruxsatlarni tekshiring",
+  "scannerImageEmpty": "Tanlangan rasm bo'sh yoki buzilgan",
+  "scannerNetworkError": "Tarmoq xatosi. Internet ulanishini tekshiring",
+  "scannerAuthError": "AI xizmati autentifikatsiya xatosi. Qayta urinib ko'ring",
+  "scannerRateLimitError": "Juda ko'p so'rov. Biroz kuting",
+  "scannerNoDataExtracted": "Hujjatdan ma'lumot ajratib bo'lmadi. Aniqroq rasm bilan urinib ko'ring",
+  "scannerParseError": "AI javobini qayta ishlashda xatolik. Qayta urinib ko'ring",
+  "scannerUnknownError": "Kutilmagan xatolik yuz berdi. Qayta urinib ko'ring",
+  "scannerFormUpdated": "Forma skanerlangan ma'lumotlar bilan yangilandi",
+  "scannerVerifyingWithFaktura": "Ma'lumotlar Faktura.uz orqali tekshirilmoqda...",
+  "scannerDataVerified": "Ma'lumotlar Faktura.uz dan tekshirildi va yangilandi",
+  "scannerDataMismatch": "{count} ta maydon Faktura.uz dan yangilandi",
+  "@scannerDataMismatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

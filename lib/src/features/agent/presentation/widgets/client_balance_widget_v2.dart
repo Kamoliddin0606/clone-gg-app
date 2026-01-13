@@ -23,6 +23,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/bloc/cl
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/bloc/client_balance_state.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/client_balance_details_page.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/formatters.dart';
 
 /// ============================================================================
 /// ClientBalanceWidgetV2 - Works with Cubit
@@ -331,9 +332,9 @@ class _ClientBalanceContent extends StatelessWidget {
 
     String statusText;
     if (isDebtor) {
-      statusText = l10n?.clientIsDebtor as String? ?? 'Mijoz qarzdor';
+      statusText = l10n?.clientIsDebtor(uzsFormat.format(balance.absoluteBalance)) ?? 'Mijoz qarzdor';
     } else if (hasOverpayment) {
-      statusText = l10n?.clientHasOverpayment as String? ?? 'Ortiqcha to\'lov';
+      statusText = l10n?.clientHasOverpayment(uzsFormat.format(balance.absoluteBalance)) ?? 'Ortiqcha to\'lov';
     } else {
       statusText = l10n?.balanceIsZero ?? 'Balans nolda';
     }

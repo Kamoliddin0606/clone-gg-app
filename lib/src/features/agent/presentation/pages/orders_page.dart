@@ -40,14 +40,13 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   bool _showFilters = false; // AppBar filter panel
   bool _showTuneRow = false; // the count + list/grid row under search
   bool _isGrid = false;
+  bool _showStatusFilter = true; // Status filter row collapse/expand state
 
   // Dynamic status data
   List<String> _statusTabs = ['Barchasi'];
   Map<String, int?> _statusMap = {'Barchasi': null};
   List<OrderStatus> _orderStatuses = [];
 
-  int _currentTabIndex = 0;
-  DateTimeRange? _pickedRange;
   final OrdersFilterState _filters = OrdersFilterState();
 
   late List<Order> _allOrders; // original orders from server
@@ -87,6 +86,10 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
     setState(() => _showTuneRow = !_showTuneRow);
   }
 
+  void _toggleStatusFilter() {
+    setState(() => _showStatusFilter = !_showStatusFilter);
+  }
+
   void _switchToList() {
     setState(() => _isGrid = false);
   }
@@ -96,13 +99,11 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   }
 
   void _onFiltersChanged(OrdersFilterState s) {
-    setState(
-      () => {
-        _filters.statuses = s.statuses,
-        _filters.clients = s.clients,
-        _filters.range = s.range,
-      },
-    );
+    setState(() {
+      _filters.statuses = s.statuses;
+      _filters.clients = s.clients;
+      _filters.range = s.range;
+    });
     _applyAllFilters();
   }
 
@@ -259,7 +260,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   Future<String?> _getUserCode() async {
     try {
       final prefs = GetIt.I<SharedPreferencesService>();
-      return await prefs.getUserCode();
+      return prefs.getUserCode();
     } catch (e) {
       debugPrint('Error getting user code: $e');
       return null;
@@ -311,34 +312,9 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
 
   void _applyAllFilters() {
     final String q = _normalize(_search.text);
-    final int? tabStatus = _statusMap[_statusTabs[_currentTabIndex]];
-
-    // Debug: Userdan kelgan filter statuslari va UI da oldindan bor statuslar ro'yxatini chiqarish
-    if (kDebugMode) {
-      print('=== FILTER DEBUG ===');
-      print(
-        'User tanlagan filter statuslari (_filters.statuses): ${_filters.statuses}',
-      );
-      print('UI dagi mavjud statuslar ro\'yxati (_statusMap): $_statusMap');
-      print('Joriy tab index: $_currentTabIndex');
-      print('Joriy tab nomi: ${_statusTabs[_currentTabIndex]}');
-      print('Joriy tab status kodi (tabStatus): $tabStatus');
-      print('===================');
-    }
 
     setState(() {
       _filtered = _all.where((o) {
-        if (kDebugMode)
-          print(
-            "Order status: ${o.mainStatus} tanlangan tab: ${_statusTabs[_currentTabIndex]}",
-          );
-        final matchTab = (tabStatus == null)
-            ? true
-            : o.mainStatus == _statusTabs[_currentTabIndex];
-        if (kDebugMode)
-          print(
-            "_filters.statuses: ${_filters.statuses} o.mainStatus: ${o.mainStatus} Check: ${_statusMap[o.mainStatus]}",
-          );
         final matchStatusMulti = _filters.statuses.isEmpty
             ? true
             : _filters.statuses.contains(_statusMap[o.mainStatus]);
@@ -367,19 +343,167 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
         );
         final matchSearch = q.isEmpty ? true : text.contains(q);
 
-        // Debug: Har bir order uchun filter natijalarini alohida chiqarish
-        if (kDebugMode)
-          print(
-            'Order: ${o.numOrder} | Status: ${o.status} | Tab Match: $matchTab | Multi Status Match: $matchStatusMulti | Date Match: $matchDate | Client Match: $matchClient | Search Match: $matchSearch | Overall: ${matchTab && matchStatusMulti && matchDate && matchClient && matchSearch}',
-          );
-
-        return matchTab &&
-            matchStatusMulti &&
-            matchDate &&
-            matchClient &&
-            matchSearch;
+        return matchStatusMulti && matchDate && matchClient && matchSearch;
       }).toList();
     });
+  }
+
+  void _toggleStatus(int? statusId) {
+    // statusId == null means "All".
+    if (statusId == null) {
+      _onFiltersChanged(
+        OrdersFilterState(
+          statuses: {},
+          clients: _filters.clients,
+          range: _filters.range,
+        ),
+      );
+      return;
+    }
+
+    final ns = {..._filters.statuses};
+    if (ns.contains(statusId)) {
+      ns.remove(statusId);
+    } else {
+      ns.add(statusId);
+    }
+    _onFiltersChanged(
+      OrdersFilterState(statuses: ns, clients: _filters.clients, range: _filters.range),
+    );
+  }
+
+  Future<void> _pickClients(List<String> clients) async {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    final selected = {..._filters.clients};
+    final search = TextEditingController();
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            final q = search.text.trim().toLowerCase();
+            final filtered = q.isEmpty
+                ? clients
+                : clients.where((c) => c.toLowerCase().contains(q)).toList();
+
+            return Container(
+              height: MediaQuery.of(ctx).size.height * 0.85,
+              decoration: BoxDecoration(
+                color: cs.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: cs.outlineVariant.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.labelClients,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setModalState(() => selected.clear());
+                          },
+                          child: Text(l10n.clear),
+                        ),
+                        const SizedBox(width: 6),
+                        FilledButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                          },
+                          child: Text(l10n.ok),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: TextField(
+                      controller: search,
+                      onChanged: (_) => setModalState(() {}),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        hintText: l10n.searchHint,
+                        filled: true,
+                        fillColor: cs.surfaceContainerHighest.withOpacity(0.6),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      itemCount: filtered.length + 1,
+                      separatorBuilder: (_, __) => Divider(height: 1, color: cs.outlineVariant.withOpacity(0.25)),
+                      itemBuilder: (ctx, i) {
+                        if (i == 0) {
+                          final allSelected = selected.isEmpty;
+                          return CheckboxListTile(
+                            value: allSelected,
+                            onChanged: (_) {
+                              setModalState(() => selected.clear());
+                            },
+                            title: Text(l10n.all),
+                            controlAffinity: ListTileControlAffinity.leading,
+                          );
+                        }
+
+                        final name = filtered[i - 1];
+                        final isChecked = selected.contains(name);
+                        return CheckboxListTile(
+                          value: isChecked,
+                          onChanged: (v) {
+                            setModalState(() {
+                              if (v == true) {
+                                selected.add(name);
+                              } else {
+                                selected.remove(name);
+                              }
+                            });
+                          },
+                          title: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis),
+                          controlAffinity: ListTileControlAffinity.leading,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted) return;
+    _onFiltersChanged(
+      OrdersFilterState(statuses: _filters.statuses, clients: selected, range: _filters.range),
+    );
   }
 
   String _normalize(String s) {
@@ -417,7 +541,6 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final tabs = _statusTabs.map((t) => Tab(text: t)).toList();
     final clients =
         _isLoading ? [] : _all.map((e) => e.clientName).toSet().toList()
           ..sort();
@@ -544,10 +667,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
       );
     }
 
-    return DefaultTabController(
-      initialIndex: _currentTabIndex,
-      length: _statusTabs.length,
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: cs.surfaceContainerLowest,
         appBar: AppBar(
           title: Text(
@@ -585,35 +705,122 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
             ),
           ],
         ),
-        body: Column(
-          children: [
-            // Modern Tabs
-            Container(
-              decoration: BoxDecoration(
-                color: cs.surface,
-                border: Border(
-                  bottom: BorderSide(
-                    color: cs.outlineVariant.withOpacity(0.3),
-                    width: 1,
+        body: Builder(
+          builder: (context) {
+            final l10n = AppLocalizations.of(context)!;
+            final theme = Theme.of(context);
+            
+            return Column(
+              children: [
+                // Status multi-select chips (collapsible)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  height: _showStatusFilter ? null : 0,
+                  color: cs.surface,
+                  child: _showStatusFilter
+                      ? Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      l10n.status,
+                                      style: theme.textTheme.labelMedium?.copyWith(
+                                        color: cs.onSurfaceVariant,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.keyboard_arrow_up_rounded,
+                                      color: cs.onSurfaceVariant,
+                                      size: 20,
+                                    ),
+                                    onPressed: _toggleStatusFilter,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  FilterChip(
+                                    label: Text(l10n.all),
+                                    selected: _filters.statuses.isEmpty,
+                                    onSelected: (_) => _toggleStatus(null),
+                                  ),
+                                  for (final s in _orderStatuses)
+                                    if (s.id != null)
+                                      FilterChip(
+                                        label: Text(statusText(s.message, context)),
+                                        selected: _filters.statuses.contains(s.id),
+                                        onSelected: (_) => _toggleStatus(s.id),
+                                      ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      : null,
+                ),
+                // Collapsed state indicator
+                if (!_showStatusFilter)
+                  InkWell(
+                    onTap: _toggleStatusFilter,
+                    child: Container(
+                      color: cs.surface,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.filter_alt_rounded,
+                            size: 16,
+                            color: cs.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.status,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: cs.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (_filters.statuses.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: cs.primaryContainer,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${_filters.statuses.length}',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: cs.onPrimaryContainer,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 20,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              child: TabBar(
-                isScrollable: true,
-                tabs: tabs,
-                indicatorWeight: 3,
-                labelStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-                unselectedLabelStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-                onTap: (i) {
-                  _currentTabIndex = i;
-                  _applyAllFilters();
-                },
-              ),
-            ),
             // Modern Search + tune icon
             Container(
               color: cs.surface,
@@ -760,8 +967,6 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                       child: OrdersFiltersPanel(
                         state: _filters,
-                        statusMap: _statusMap.entries.toList(),
-                        clients: clients.cast<String>(),
                         onChange: _onFiltersChanged,
                         onPickDateRange: _pickDateRange,
                         onClearDateRange: () => _onFiltersChanged(
@@ -769,6 +974,14 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                             statuses: _filters.statuses,
                             clients: _filters.clients,
                             range: null,
+                          ),
+                        ),
+                        onPickClients: () => _pickClients(clients.cast<String>()),
+                        onClearClients: () => _onFiltersChanged(
+                          OrdersFilterState(
+                            statuses: _filters.statuses,
+                            clients: {},
+                            range: _filters.range,
                           ),
                         ),
                       ),
@@ -850,7 +1063,8 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
               ),
             ),
           ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -960,7 +1174,7 @@ class _OrderBottomSheetState extends State<_OrderBottomSheet> {
       }
       
       // Load from server
-      final userCode = await prefs.getUserCode();
+      final userCode = prefs.getUserCode();
       if (userCode != null) {
         final orderDate = widget.order.dateOrder.toIso8601String().split('T')[0];
         final freshOrderDetail = await dataSyncService.syncOrderDetails(
@@ -1090,7 +1304,8 @@ class _OrderBottomSheetState extends State<_OrderBottomSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            (AppLocalizations.of(context)?.orderNumber ?? 'Buyurtma').toString(),
+                            AppLocalizations.of(context)?.orderNumberLabel ??
+                                'Buyurtma raqami',
                             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                               color: cs.onSurfaceVariant,
                               fontWeight: FontWeight.w600,

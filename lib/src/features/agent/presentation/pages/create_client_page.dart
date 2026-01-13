@@ -14,6 +14,11 @@ import 'package:gloria_marketing_flutter/src/core/services/address_resolver_serv
 import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
 import 'package:gloria_marketing_flutter/src/core/models/faktura_company_details.dart';
+import 'package:gloria_marketing_flutter/src/core/models/scanned_document_data.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/document_scanner_widget.dart';
+
+/// Gemini AI API key for document scanning
+const String _geminiApiKey = 'AIzaSyDeIApWRmFwNOr5pQVvs_xwba0woIS3xYE';
 
 /// Page for creating a new client (trading point)
 /// Beautiful, user-friendly form with all required fields
@@ -133,6 +138,24 @@ class _CreateClientPageState extends State<CreateClientPage>
         );
       }
     }
+  }
+
+  void _clearFormForScan() {
+    _nameController.clear();
+    _signboardController.clear();
+    _directorController.clear();
+    _innController.clear();
+    _addressController.clear();
+    _addressDeliveryController.clear();
+    _contactPhoneController.clear();
+    _mfoController.clear();
+    _bankAccountController.clear();
+
+    setState(() {
+      _selectedRegion = null;
+      _companyDataFetched = false;
+      _addressFilledFromFaktura = false;
+    });
   }
 
   /// Load unique trade point types from existing clients
@@ -678,6 +701,198 @@ class _CreateClientPageState extends State<CreateClientPage>
     }
   }
 
+  /// Handle scanned document data from AI scanner
+  /// Fills form fields and triggers Faktura verification if STIR is present
+  Future<void> _handleScannedData(ScannedDocumentData data) async {
+    if (!mounted) return;
+
+    final l10n = AppLocalizations.of(context)!;
+    int filledCount = 0;
+
+    // Overwrite fields with scanned data
+    if (data.organizationName != null) {
+      _nameController.text = data.organizationName!;
+      _signboardController.text = data.organizationName!;
+      filledCount += 2;
+    }
+
+    if (data.directorName != null) {
+      _directorController.text = data.directorName!;
+      filledCount++;
+    }
+
+    if (data.address != null) {
+      _addressController.text = data.address!;
+      _addressDeliveryController.text = data.address!;
+      filledCount++;
+    }
+
+    if (data.phoneNumber != null) {
+      _contactPhoneController.text = data.phoneNumber!;
+      filledCount++;
+    }
+
+    if (data.mfo != null) {
+      _mfoController.text = data.mfo!;
+      filledCount++;
+    }
+    if (data.bankAccount != null) {
+      _bankAccountController.text = data.bankAccount!;
+      filledCount++;
+    }
+
+    // Fill INN/STIR - this is crucial for Faktura verification
+    if (data.inn != null) {
+      _innController.text = data.inn!;
+      filledCount++;
+    }
+
+    setState(() {});
+
+    // Show success message
+    if (filledCount > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.scannerFormUpdated),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+
+    // If STIR/INN was extracted, verify with Faktura.uz
+    if (data.hasInn && _innController.text.trim().isNotEmpty) {
+      await _verifyAndUpdateFromFaktura();
+    }
+  }
+
+  /// Verify scanned INN with Faktura.uz and update mismatched/empty fields
+  Future<void> _verifyAndUpdateFromFaktura() async {
+    final inn = _innController.text.trim();
+    if (inn.isEmpty) return;
+
+    final fakturaService = sl<FakturaCompanyService>();
+    if (!fakturaService.isValidInn(inn)) return;
+
+    final l10n = AppLocalizations.of(context)!;
+
+    // Show verifying message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            Text(l10n.scannerVerifyingWithFaktura),
+          ],
+        ),
+        backgroundColor: Colors.blue,
+        duration: const Duration(seconds: 10),
+      ),
+    );
+
+    try {
+      final companyDetails = await fakturaService.getCompanyDetails(inn);
+      if (!mounted) return;
+
+      // Hide the verifying snackbar
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      int updatedCount = 0;
+
+      // Compare and update fields - update if empty or different
+      // Organization name
+      if (companyDetails.companyName.isNotEmpty) {
+        if (_nameController.text.trim().isEmpty ||
+            _nameController.text.trim() != companyDetails.companyName) {
+          _nameController.text = companyDetails.companyName;
+          updatedCount++;
+        }
+        if (_signboardController.text.trim().isEmpty) {
+          _signboardController.text = companyDetails.companyName;
+        }
+      }
+
+      // Director
+      if (companyDetails.directorName != null && companyDetails.directorName!.isNotEmpty) {
+        if (_directorController.text.trim().isEmpty ||
+            _directorController.text.trim() != companyDetails.directorName) {
+          _directorController.text = companyDetails.directorName!;
+          updatedCount++;
+        }
+      }
+
+      // Address
+      final fullAddress = companyDetails.getFullAddress();
+      if (fullAddress.isNotEmpty) {
+        if (_addressController.text.trim().isEmpty ||
+            _addressController.text.trim() != fullAddress) {
+          _addressController.text = fullAddress;
+          _addressFilledFromFaktura = true;
+          updatedCount++;
+        }
+      }
+
+      // Phone
+      if (companyDetails.phoneNumber != null && companyDetails.phoneNumber!.isNotEmpty) {
+        if (_contactPhoneController.text.trim().isEmpty) {
+          _contactPhoneController.text = companyDetails.phoneNumber!;
+          updatedCount++;
+        }
+      }
+
+      // Bank details
+      final primaryAccount = companyDetails.getPrimaryAccount();
+      if (primaryAccount != null) {
+        if (_mfoController.text.trim().isEmpty ||
+            _mfoController.text.trim() != primaryAccount.bankMfo) {
+          _mfoController.text = primaryAccount.bankMfo;
+          updatedCount++;
+        }
+        if (_bankAccountController.text.trim().isEmpty ||
+            _bankAccountController.text.trim() != primaryAccount.accountCode) {
+          _bankAccountController.text = primaryAccount.accountCode;
+          updatedCount++;
+        }
+      }
+
+      // Try to match region
+      await _matchRegionFromFaktura(companyDetails.regionCode, companyDetails.region);
+
+      setState(() {
+        _companyDataFetched = true;
+      });
+
+      // Show result message
+      if (updatedCount > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.scannerDataMismatch(updatedCount)),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.scannerDataVerified),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      // Silent fail - Faktura verification is optional enhancement
+      debugPrint('Faktura verification failed: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -717,6 +932,14 @@ class _CreateClientPageState extends State<CreateClientPage>
 
                 // Header card with location
                 _buildLocationCard(theme, colorScheme),
+                const SizedBox(height: 16),
+
+                // AI Document Scanner
+                DocumentScannerWidget(
+                  apiKey: _geminiApiKey,
+                  onScanStarted: _clearFormForScan,
+                  onDataExtracted: _handleScannedData,
+                ),
                 const SizedBox(height: 20),
 
                 // Basic info section

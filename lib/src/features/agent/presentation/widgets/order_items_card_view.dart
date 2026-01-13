@@ -87,7 +87,7 @@ class OrderItemsCardView extends StatelessWidget {
                 return _OrderItemCard(
                   item: item,
                   index: i,
-                  onTap: () => _showItemDetails(context, item),
+                  onDoubleTap: () => _showItemDetails(context, item),
                 );
               },
             ),
@@ -161,12 +161,12 @@ class OrderItemsCardView extends StatelessWidget {
 class _OrderItemCard extends StatelessWidget {
   final OrderItem item;
   final int index;
-  final VoidCallback onTap;
+  final VoidCallback onDoubleTap;
   
   const _OrderItemCard({
     required this.item,
     required this.index,
-    required this.onTap,
+    required this.onDoubleTap,
   });
   
   @override
@@ -174,9 +174,8 @@ class _OrderItemCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
     
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onDoubleTap: onDoubleTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -219,51 +218,45 @@ class _OrderItemCard extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    item.productName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: cs.onSurface,
-                      height: 1.3,
+                  SizedBox(
+                    height: 44,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: IntrinsicWidth(
+                        child: Text(
+                          item.productName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    '${NumberFormat('#,##0.###').format(item.quantity)}x ${item.article}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: cs.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            // See details button
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: cs.primaryContainer.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Details',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
-                    color: cs.primary,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${NumberFormat('#,##0.###').format(item.quantity)}x ${item.article}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        uzsFormat.format(item.sum),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: cs.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

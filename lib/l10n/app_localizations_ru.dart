@@ -224,7 +224,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncComplete => 'Синхронизация завершена';
 
   @override
-  String get syncError => 'Ошибка синхронизации';
+  String syncError(String error) {
+    return 'Ошибка синхронизации: $error';
+  }
 
   @override
   String get noInternet => 'Нет подключения к интернету';
@@ -902,7 +904,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get okb => 'OKB';
 
   @override
-  String get akbPlan => 'АКБ план';
+  String get akbPlan => 'План AKB';
 
   @override
   String get akbFact => 'АКБ факт';
@@ -4145,6 +4147,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get apiKeyStatusNotConfigured => 'не настроен';
 
   @override
+  String get visited => 'Посещено';
+
+  @override
+  String get plannedForToday => 'Запланировано на сегодня';
+
+  @override
+  String get additionalInformation => 'Дополнительная информация';
+
+  @override
+  String get locationInformation => 'Информация о местоположении';
+
+  @override
+  String get businessInformation => 'Бизнес информация';
+
+  @override
   String get apiKeyStatusNotRequired => 'ключ не требуется';
 
   @override
@@ -4194,4 +4211,173 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get fakturaTokenRefreshError => 'Ошибка обновления токена';
+
+  @override
+  String get reportMenuTitle => 'Меню отчетов';
+
+  @override
+  String get reportAlreadySent => 'Отчет уже отправлен в вашу группу Telegram. Хотите отправить снова?';
+
+  @override
+  String get reportSentSuccess => 'Отчет отправлен';
+
+  @override
+  String get resendReport => 'Отправить снова';
+
+  @override
+  String get toggleHeaderShow => 'Показать заголовок';
+
+  @override
+  String get toggleHeaderHide => 'Скрыть заголовок';
+
+  @override
+  String get periodNotSelected => 'Период не выбран';
+
+  @override
+  String get dataSyncing => 'Синхронизация данных...';
+
+  @override
+  String get reportsUpdated => 'Отчеты обновлены';
+
+  @override
+  String get applyButton => 'Применить';
+
+  @override
+  String get reportMainEvyap => 'Основные отчеты(для EVYAP)';
+
+  @override
+  String get reportMainEvyapDesc => 'Показатели KPI и основная статистика';
+
+  @override
+  String get reportVisits => 'Отчет по визитам';
+
+  @override
+  String get reportVisitsDesc => 'Информация о визитах к клиентам';
+
+  @override
+  String get reportAkbClient => 'AKB Client';
+
+  @override
+  String get reportAkbClientDesc => 'Отчет по клиентам AKB';
+
+  @override
+  String get reportAkbSum => 'AKB Sum';
+
+  @override
+  String get reportAkbSumDesc => 'Финансовый отчет по суммам AKB';
+
+  @override
+  String get reportAkbProduct => 'AKB Product';
+
+  @override
+  String get reportAkbProductDesc => 'Отчет по продуктам AKB';
+
+  @override
+  String get reportCategory => 'Отчеты по категориям';
+
+  @override
+  String get reportCategoryDesc => 'Анализ продаж по категориям';
+
+  @override
+  String get reportMonthlyResults => 'Месячные результаты';
+
+  @override
+  String get reportMonthlyResultsDesc => 'Результаты продаж и тенденции за месяц';
+
+  @override
+  String get reportMonthlyKpi => 'Месячный KPI (зарплата)';
+
+  @override
+  String get reportMonthlyKpiDesc => 'Выполнение месячного KPI и отчет по зарплате';
+
+  @override
+  String get akbAmount => 'Сумма AKB';
+
+  @override
+  String get akbProducts => 'Продукты AKB';
+
+  @override
+  String get productTypes => 'Типы продуктов';
+
+  @override
+  String get categoriesCount => 'Количество категорий';
+
+  @override
+  String get topSelling => 'Самые продаваемые';
+
+  @override
+  String get monthlySales => 'Месячные продажи';
+
+  @override
+  String get monthlyGrowth => 'Месячный рост';
+
+  @override
+  String get kpiCompletion => 'Выполнение KPI';
+
+  @override
+  String get salaryAmount => 'Сумма зарплаты';
+
+  @override
+  String get scannerTitle => 'Сканер документов';
+
+  @override
+  String get scannerSubtitle => 'Сканируйте сертификат для автозаполнения';
+
+  @override
+  String get scannerTakePhoto => 'Снять фото';
+
+  @override
+  String get scannerChoosePhoto => 'Галерея';
+
+  @override
+  String get scannerProcessing => 'Анализ документа...';
+
+  @override
+  String get scannerPleaseWait => 'ИИ извлекает данные из изображения';
+
+  @override
+  String scannerDataExtracted(int count) {
+    return 'Извлечено $count полей';
+  }
+
+  @override
+  String get scannerCameraError => 'Ошибка доступа к камере. Проверьте разрешения';
+
+  @override
+  String get scannerGalleryError => 'Ошибка доступа к галерее. Проверьте разрешения';
+
+  @override
+  String get scannerImageEmpty => 'Выбранное изображение пустое или повреждено';
+
+  @override
+  String get scannerNetworkError => 'Ошибка сети. Проверьте интернет-соединение';
+
+  @override
+  String get scannerAuthError => 'Ошибка аутентификации ИИ. Попробуйте снова';
+
+  @override
+  String get scannerRateLimitError => 'Слишком много запросов. Подождите немного';
+
+  @override
+  String get scannerNoDataExtracted => 'Не удалось извлечь данные. Попробуйте более четкое изображение';
+
+  @override
+  String get scannerParseError => 'Ошибка обработки ответа ИИ. Попробуйте снова';
+
+  @override
+  String get scannerUnknownError => 'Произошла непредвиденная ошибка. Попробуйте снова';
+
+  @override
+  String get scannerFormUpdated => 'Форма обновлена отсканированными данными';
+
+  @override
+  String get scannerVerifyingWithFaktura => 'Проверка данных через Faktura.uz...';
+
+  @override
+  String get scannerDataVerified => 'Данные проверены и обновлены из Faktura.uz';
+
+  @override
+  String scannerDataMismatch(int count) {
+    return '$count полей обновлено из Faktura.uz';
+  }
 }

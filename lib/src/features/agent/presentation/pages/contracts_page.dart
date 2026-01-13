@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
@@ -43,6 +44,8 @@ class _ContractsPageState extends State<ContractsPage>
   late TabController _tabController;
   late AnimationController _filterAnimationController;
   late Animation<double> _filterAnimation;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   bool _isFilterPanelVisible = false;
   // Removed unused fields - now using _filters
@@ -61,6 +64,12 @@ class _ContractsPageState extends State<ContractsPage>
   // Track time when contracts were refreshed for highlighting new contracts
   DateTime? _newContractHighlightTime;
 
+  // FAB draggable state
+  Offset _fabPosition = const Offset(0, 0);
+  bool _isFabDragging = false;
+  bool _fabPositionLoaded = false;
+  Offset? _dragStartPosition;
+
   @override
   void initState() {
     super.initState();
@@ -76,11 +85,60 @@ class _ContractsPageState extends State<ContractsPage>
         curve: Curves.easeInOut,
       ),
     );
+    
+    // Initialize pulse animation for FAB
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1800),
+      vsync: this,
+    )..repeat(reverse: true);
+    
+    _pulseAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pulseController,
+        curve: Curves.easeInOut,
+      ),
+    );
+    
+    _loadFabPosition();
     _loadData();
+  }
+
+  /// Load FAB position from SharedPreferences
+  Future<void> _loadFabPosition() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final xStr = prefs.getString('fab_position_x');
+      final yStr = prefs.getString('fab_position_y');
+      final x = xStr != null ? double.tryParse(xStr) ?? 0.0 : 0.0;
+      final y = yStr != null ? double.tryParse(yStr) ?? 0.0 : 0.0;
+      if (mounted) {
+        setState(() {
+          _fabPosition = Offset(x, y);
+          _fabPositionLoaded = true;
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) print('Error loading FAB position: $e');
+      if (mounted) {
+        setState(() => _fabPositionLoaded = true);
+      }
+    }
+  }
+
+  /// Save FAB position to SharedPreferences
+  Future<void> _saveFabPosition() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('fab_position_x', _fabPosition.dx.toString());
+      await prefs.setString('fab_position_y', _fabPosition.dy.toString());
+    } catch (e) {
+      if (kDebugMode) print('Error saving FAB position: $e');
+    }
   }
 
   @override
   void dispose() {
+    _pulseController.dispose();
     _searchController.dispose();
     _tabController.dispose();
     _filterAnimationController.dispose();
@@ -388,7 +446,9 @@ class _ContractsPageState extends State<ContractsPage>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
+    return Stack(
+      children: [
+        Scaffold(
       appBar: AppBar(
         title: Text(
           AppLocalizations.of(context)?.contracts ?? 'Shartnomalar',
@@ -616,18 +676,117 @@ class _ContractsPageState extends State<ContractsPage>
           ],
         ),
       ),
-      // Floating Action Button for creating new contracts
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateContractForm,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        elevation: 6,
-        icon: const Icon(Icons.add),
-        label: Text(
-          AppLocalizations.of(context)?.newContract ?? 'Yangi shartnoma',
-          style: const TextStyle(fontWeight: FontWeight.w600),
+      // Floating Action Button for creating new contracts (draggable)
+      floatingActionButton: null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         ),
-      ),
+        // Draggable FAB overlay
+        if (_fabPositionLoaded)
+          Positioned(
+            left: _fabPosition.dx == 0 ? null : _fabPosition.dx,
+            top: _fabPosition.dy == 0 ? null : _fabPosition.dy,
+            right: _fabPosition.dx == 0 ? 16 : null,
+            bottom: _fabPosition.dy == 0 ? 16 : null,
+            child: GestureDetector(
+              onLongPressStart: (details) {
+                _dragStartPosition = details.globalPosition;
+                setState(() => _isFabDragging = true);
+              },
+              onLongPressMoveUpdate: (details) {
+                if (_isFabDragging && _dragStartPosition != null) {
+                  final delta = details.globalPosition - _dragStartPosition!;
+                  if (delta.distance > 10) {
+                    _fabPosition = details.globalPosition - const Offset(28, 28);
+                    setState(() {});
+                  }
+                }
+              },
+              onLongPressEnd: (_) {
+                setState(() {
+                  _isFabDragging = false;
+                  _dragStartPosition = null;
+                });
+                _saveFabPosition();
+              },
+              child: AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) {
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _isFabDragging ? null : _showCreateContractForm,
+                      customBorder: const CircleBorder(),
+                      splashColor: theme.colorScheme.primary.withOpacity(0.5),
+                      highlightColor: theme.colorScheme.primary.withOpacity(0.2),
+                      splashFactory: InkRipple.splashFactory,
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _isFabDragging
+                              ? theme.colorScheme.primary.withOpacity(0.7)
+                              : theme.colorScheme.primary.withOpacity(0.85 * _pulseAnimation.value),
+                          boxShadow: [
+                            // Outer glow - pulsing and visible
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withOpacity(
+                                _isFabDragging ? 0.7 : (0.5 * _pulseAnimation.value)
+                              ),
+                              blurRadius: _isFabDragging ? 28 : (20 * _pulseAnimation.value),
+                              spreadRadius: _isFabDragging ? 8 : (5 * _pulseAnimation.value),
+                              offset: const Offset(0, 0),
+                            ),
+                            // Middle shadow for depth
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withOpacity(
+                                _isFabDragging ? 0.5 : (0.35 * _pulseAnimation.value)
+                              ),
+                              blurRadius: _isFabDragging ? 16 : (12 * _pulseAnimation.value),
+                              spreadRadius: _isFabDragging ? 4 : (2 * _pulseAnimation.value),
+                              offset: const Offset(0, 2),
+                            ),
+                            // Bottom shadow - visible edge
+                            BoxShadow(
+                              color: Colors.black.withOpacity(
+                                _isFabDragging ? 0.35 : (0.25 * _pulseAnimation.value)
+                              ),
+                              blurRadius: _isFabDragging ? 18 : (14 * _pulseAnimation.value),
+                              spreadRadius: _isFabDragging ? 3 : (1 * _pulseAnimation.value),
+                              offset: Offset(0, _isFabDragging ? 6 : (4 * _pulseAnimation.value)),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Inner circle glow - pulsing
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(
+                                  _isFabDragging ? 0.2 : (0.12 * _pulseAnimation.value)
+                                ),
+                              ),
+                            ),
+                            // Icon
+                            Icon(
+                              Icons.add,
+                              color: theme.colorScheme.onPrimary,
+                              size: 28,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+      ],
     );
   }
 

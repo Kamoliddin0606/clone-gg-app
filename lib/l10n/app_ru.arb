@@ -608,7 +608,12 @@
   "clearBalanceCache": "Очистить кэш баланса",
   "clearBalanceCacheConfirm": "Очистить все кэшированные данные баланса?",
   "balanceCacheCleared": "Кэш баланса очищен",
-  "fakturaNetworkError": "Ошибка сети. Проверьте подключение к интернету",
+  "fakturaNetworkError": "Ошибка сети при подключении к Faktura.uz",
+  "visited": "Посещено",
+  "plannedForToday": "Запланировано на сегодня",
+  "additionalInformation": "Дополнительная информация",
+  "locationInformation": "Информация о местоположении",
+  "businessInformation": "Бизнес информация",
   "tradePointTypesEmpty": "Список типов торговых точек пуст. Пожалуйста, сначала добавьте торговые точки.",
   "tradePointTypesLoadError": "Ошибка загрузки типов торговых точек.",
   "timeoutError": "Время запроса истекло. Попробуйте снова.",
@@ -2565,5 +2570,39 @@
   "monthlySales": "Месячные продажи",
   "monthlyGrowth": "Месячный рост",
   "kpiCompletion": "Выполнение KPI",
-  "salaryAmount": "Сумма зарплаты"
+  "salaryAmount": "Сумма зарплаты",
+  "scannerTitle": "Сканер документов",
+  "scannerSubtitle": "Сканируйте сертификат для автозаполнения",
+  "scannerTakePhoto": "Снять фото",
+  "scannerChoosePhoto": "Галерея",
+  "scannerProcessing": "Анализ документа...",
+  "scannerPleaseWait": "ИИ извлекает данные из изображения",
+  "scannerDataExtracted": "Извлечено {count} полей",
+  "@scannerDataExtracted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scannerCameraError": "Ошибка доступа к камере. Проверьте разрешения",
+  "scannerGalleryError": "Ошибка доступа к галерее. Проверьте разрешения",
+  "scannerImageEmpty": "Выбранное изображение пустое или повреждено",
+  "scannerNetworkError": "Ошибка сети. Проверьте интернет-соединение",
+  "scannerAuthError": "Ошибка аутентификации ИИ. Попробуйте снова",
+  "scannerRateLimitError": "Слишком много запросов. Подождите немного",
+  "scannerNoDataExtracted": "Не удалось извлечь данные. Попробуйте более четкое изображение",
+  "scannerParseError": "Ошибка обработки ответа ИИ. Попробуйте снова",
+  "scannerUnknownError": "Произошла непредвиденная ошибка. Попробуйте снова",
+  "scannerFormUpdated": "Форма обновлена отсканированными данными",
+  "scannerVerifyingWithFaktura": "Проверка данных через Faktura.uz...",
+  "scannerDataVerified": "Данные проверены и обновлены из Faktura.uz",
+  "scannerDataMismatch": "{count} полей обновлено из Faktura.uz",
+  "@scannerDataMismatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

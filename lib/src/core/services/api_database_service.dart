@@ -4690,7 +4690,7 @@ class ApiDatabaseService {
     return orderDetails.isNotEmpty ? orderDetails.first : null;
   }
 
-  Future<void> saveOrderDetail(OrderDetail orderDetail) async {
+  Future<void> saveOrderDetail(OrderDetail orderDetail, {bool validateOrderExists = false}) async {
     // Ensure order_details tables exist before performing operations
     await ensureOrderDetailsTablesExist();
     
@@ -4711,10 +4711,12 @@ class ApiDatabaseService {
       throw ArgumentError('OrderDetail codeOrg cannot be empty');
     }
 
-    // Validate foreign key references
-    final orderExists = await db.query('orders', where: 'num_order = ?', whereArgs: [orderDetail.numOrder]);
-    if (orderExists.isEmpty) {
-      throw Exception('Referenced order ${orderDetail.numOrder} does not exist');
+    // Validate foreign key references (optional - skip when caching server data)
+    if (validateOrderExists) {
+      final orderExists = await db.query('orders', where: 'num_order = ?', whereArgs: [orderDetail.numOrder]);
+      if (orderExists.isEmpty) {
+        throw Exception('Referenced order ${orderDetail.numOrder} does not exist');
+      }
     }
 
     // Use transaction for atomicity

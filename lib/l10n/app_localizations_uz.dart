@@ -224,7 +224,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get syncComplete => 'Sinxronizatsiya tugadi';
 
   @override
-  String get syncError => 'Sinxronizatsiyada xatolik yuz berdi';
+  String syncError(String error) {
+    return 'Sinxronizatsiya xatosi: $error';
+  }
 
   @override
   String get noInternet => 'Internet mavjud emas';
@@ -902,7 +904,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get okb => 'OKB';
 
   @override
-  String get akbPlan => 'AKB reja';
+  String get akbPlan => 'AKB rejasi';
 
   @override
   String get akbFact => 'AKB fakt';
@@ -1347,7 +1349,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get locationServicesDisabledSortingNotWork => 'Joylashuv xizmatlari o\'chirilgan. Masofa bo\'yicha tartiblash ishlamaydi.';
 
   @override
-  String get userDataNotFound => 'Foydalanuvchi ma\'lumotlari mavjud emas';
+  String get userDataNotFound => 'Foydalanuvchi ma\'lumotlari topilmadi';
 
   @override
   String get phoneNumberNotSpecified => 'Telefon raqami ko\'rsatilmagan';
@@ -1630,7 +1632,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get balanceCacheCleared => 'Balans keshi tozalandi';
 
   @override
-  String get fakturaNetworkError => 'Tarmoq xatosi';
+  String get fakturaNetworkError => 'Faktura.uz ga ulanishda tarmoq xatosi';
 
   @override
   String get tradePointTypesEmpty => 'Trade point types list is empty. Please add trade points first.';
@@ -4145,6 +4147,21 @@ class AppLocalizationsUz extends AppLocalizations {
   String get apiKeyStatusNotConfigured => 'sozlanmagan';
 
   @override
+  String get visited => 'Visited';
+
+  @override
+  String get plannedForToday => 'Planned for today';
+
+  @override
+  String get additionalInformation => 'Additional Information';
+
+  @override
+  String get locationInformation => 'Location Information';
+
+  @override
+  String get businessInformation => 'Business Information';
+
+  @override
   String get apiKeyStatusNotRequired => 'kalit shart emas';
 
   @override
@@ -4194,4 +4211,173 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get fakturaTokenRefreshError => 'Token yangilash xatosi';
+
+  @override
+  String get reportMenuTitle => 'Hisobotlar menyusi';
+
+  @override
+  String get reportAlreadySent => 'Hisobot allaqachon sizning Telegram guruhingizga yuborilgan. Qayta yuborishni xohlaysizmi?';
+
+  @override
+  String get reportSentSuccess => 'Hisobot yuborilgan';
+
+  @override
+  String get resendReport => 'Qayta yuborish';
+
+  @override
+  String get toggleHeaderShow => 'Headerni ko\'rsatish';
+
+  @override
+  String get toggleHeaderHide => 'Headerni yashirish';
+
+  @override
+  String get periodNotSelected => 'Davr tanlanmadi';
+
+  @override
+  String get dataSyncing => 'Ma\'lumotlar sinxronlanmoqda...';
+
+  @override
+  String get reportsUpdated => 'Hisobotlar yangilandi';
+
+  @override
+  String get applyButton => 'Qo\'llash';
+
+  @override
+  String get reportMainEvyap => 'Asosiy hisobotlar(EVYAP uchun)';
+
+  @override
+  String get reportMainEvyapDesc => 'KPI ko\'rsatkichlari va asosiy statistikalar';
+
+  @override
+  String get reportVisits => 'Vizitlar bo\'yicha hisobot';
+
+  @override
+  String get reportVisitsDesc => 'Mijozlarga qilingan tashriflar haqida ma\'lumot';
+
+  @override
+  String get reportAkbClient => 'AKB Client';
+
+  @override
+  String get reportAkbClientDesc => 'AKB mijozlari bo\'yicha hisobot';
+
+  @override
+  String get reportAkbSum => 'AKB Sum';
+
+  @override
+  String get reportAkbSumDesc => 'AKB summalari bo\'yicha moliyaviy hisobot';
+
+  @override
+  String get reportAkbProduct => 'AKB Product';
+
+  @override
+  String get reportAkbProductDesc => 'AKB mahsulotlari bo\'yicha hisobot';
+
+  @override
+  String get reportCategory => 'Category hisobotlari';
+
+  @override
+  String get reportCategoryDesc => 'Kategoriyalar bo\'yicha savdo tahlili';
+
+  @override
+  String get reportMonthlyResults => 'Oylik natijalar';
+
+  @override
+  String get reportMonthlyResultsDesc => 'Oylik savdo natijalari va tendensiyalar';
+
+  @override
+  String get reportMonthlyKpi => 'Oylik KPI (maosh)';
+
+  @override
+  String get reportMonthlyKpiDesc => 'Oylik KPI bajarilishi va maosh hisoboti';
+
+  @override
+  String get akbAmount => 'AKB summasi';
+
+  @override
+  String get akbProducts => 'AKB mahsulotlar';
+
+  @override
+  String get productTypes => 'Mahsulot turlari';
+
+  @override
+  String get categoriesCount => 'Kategoriyalar soni';
+
+  @override
+  String get topSelling => 'Eng ko\'p sotilgan';
+
+  @override
+  String get monthlySales => 'Oylik savdo';
+
+  @override
+  String get monthlyGrowth => 'Oylik o\'sish';
+
+  @override
+  String get kpiCompletion => 'KPI bajarilishi';
+
+  @override
+  String get salaryAmount => 'Maosh miqdori';
+
+  @override
+  String get scannerTitle => 'Hujjat skaneri';
+
+  @override
+  String get scannerSubtitle => 'Formani avtomatik to\'ldirish uchun guvohnomani skanerlang';
+
+  @override
+  String get scannerTakePhoto => 'Rasm olish';
+
+  @override
+  String get scannerChoosePhoto => 'Galereya';
+
+  @override
+  String get scannerProcessing => 'Hujjat tahlil qilinmoqda...';
+
+  @override
+  String get scannerPleaseWait => 'AI rasmdan ma\'lumotlarni ajratib olmoqda';
+
+  @override
+  String scannerDataExtracted(int count) {
+    return '$count ta maydon muvaffaqiyatli ajratildi';
+  }
+
+  @override
+  String get scannerCameraError => 'Kameraga kirish xatosi. Ruxsatlarni tekshiring';
+
+  @override
+  String get scannerGalleryError => 'Galereyaga kirish xatosi. Ruxsatlarni tekshiring';
+
+  @override
+  String get scannerImageEmpty => 'Tanlangan rasm bo\'sh yoki buzilgan';
+
+  @override
+  String get scannerNetworkError => 'Tarmoq xatosi. Internet ulanishini tekshiring';
+
+  @override
+  String get scannerAuthError => 'AI xizmati autentifikatsiya xatosi. Qayta urinib ko\'ring';
+
+  @override
+  String get scannerRateLimitError => 'Juda ko\'p so\'rov. Biroz kuting';
+
+  @override
+  String get scannerNoDataExtracted => 'Hujjatdan ma\'lumot ajratib bo\'lmadi. Aniqroq rasm bilan urinib ko\'ring';
+
+  @override
+  String get scannerParseError => 'AI javobini qayta ishlashda xatolik. Qayta urinib ko\'ring';
+
+  @override
+  String get scannerUnknownError => 'Kutilmagan xatolik yuz berdi. Qayta urinib ko\'ring';
+
+  @override
+  String get scannerFormUpdated => 'Forma skanerlangan ma\'lumotlar bilan yangilandi';
+
+  @override
+  String get scannerVerifyingWithFaktura => 'Ma\'lumotlar Faktura.uz orqali tekshirilmoqda...';
+
+  @override
+  String get scannerDataVerified => 'Ma\'lumotlar Faktura.uz dan tekshirildi va yangilandi';
+
+  @override
+  String scannerDataMismatch(int count) {
+    return '$count ta maydon Faktura.uz dan yangilandi';
+  }
 }

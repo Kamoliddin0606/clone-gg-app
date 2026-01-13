@@ -526,8 +526,8 @@ abstract class AppLocalizations {
   /// No description provided for @syncError.
   ///
   /// In en, this message translates to:
-  /// **'Sync error occurred'**
-  String get syncError;
+  /// **'Sync error: {error}'**
+  String syncError(String error);
 
   /// No description provided for @noInternet.
   ///
@@ -1882,7 +1882,7 @@ abstract class AppLocalizations {
   /// No description provided for @akbPlan.
   ///
   /// In en, this message translates to:
-  /// **'AKB Plan'**
+  /// **'AKB plan'**
   String get akbPlan;
 
   /// No description provided for @akbFact.
@@ -3298,7 +3298,7 @@ abstract class AppLocalizations {
   /// No description provided for @fakturaNetworkError.
   ///
   /// In en, this message translates to:
-  /// **'Network error. Please check your internet connection'**
+  /// **'Network error while connecting to Faktura.uz'**
   String get fakturaNetworkError;
 
   /// No description provided for @tradePointTypesEmpty.
@@ -7882,8 +7882,38 @@ abstract class AppLocalizations {
   /// No description provided for @apiKeyStatusNotConfigured.
   ///
   /// In en, this message translates to:
-  /// **'not configured'**
+  /// **'Not configured'**
   String get apiKeyStatusNotConfigured;
+
+  /// No description provided for @visited.
+  ///
+  /// In en, this message translates to:
+  /// **'Visited'**
+  String get visited;
+
+  /// No description provided for @plannedForToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned for today'**
+  String get plannedForToday;
+
+  /// No description provided for @additionalInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Information'**
+  String get additionalInformation;
+
+  /// No description provided for @locationInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location Information'**
+  String get locationInformation;
+
+  /// No description provided for @businessInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Business Information'**
+  String get businessInformation;
 
   /// No description provided for @apiKeyStatusNotRequired.
   ///
@@ -7974,6 +8004,336 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Token refresh error'**
   String get fakturaTokenRefreshError;
+
+  /// No description provided for @reportMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports menu'**
+  String get reportMenuTitle;
+
+  /// No description provided for @reportAlreadySent.
+  ///
+  /// In en, this message translates to:
+  /// **'Report has already been sent to your Telegram group. Do you want to send it again?'**
+  String get reportAlreadySent;
+
+  /// No description provided for @reportSentSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Report sent'**
+  String get reportSentSuccess;
+
+  /// No description provided for @resendReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend'**
+  String get resendReport;
+
+  /// No description provided for @toggleHeaderShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show header'**
+  String get toggleHeaderShow;
+
+  /// No description provided for @toggleHeaderHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide header'**
+  String get toggleHeaderHide;
+
+  /// No description provided for @periodNotSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Period not selected'**
+  String get periodNotSelected;
+
+  /// No description provided for @dataSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing data...'**
+  String get dataSyncing;
+
+  /// No description provided for @reportsUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports updated'**
+  String get reportsUpdated;
+
+  /// No description provided for @applyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get applyButton;
+
+  /// No description provided for @reportMainEvyap.
+  ///
+  /// In en, this message translates to:
+  /// **'Main reports(for EVYAP)'**
+  String get reportMainEvyap;
+
+  /// No description provided for @reportMainEvyapDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'KPI indicators and main statistics'**
+  String get reportMainEvyapDesc;
+
+  /// No description provided for @reportVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits report'**
+  String get reportVisits;
+
+  /// No description provided for @reportVisitsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Information about visits to clients'**
+  String get reportVisitsDesc;
+
+  /// No description provided for @reportAkbClient.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB Client'**
+  String get reportAkbClient;
+
+  /// No description provided for @reportAkbClientDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Report on AKB clients'**
+  String get reportAkbClientDesc;
+
+  /// No description provided for @reportAkbSum.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB Sum'**
+  String get reportAkbSum;
+
+  /// No description provided for @reportAkbSumDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial report on AKB amounts'**
+  String get reportAkbSumDesc;
+
+  /// No description provided for @reportAkbProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB Product'**
+  String get reportAkbProduct;
+
+  /// No description provided for @reportAkbProductDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Report on AKB products'**
+  String get reportAkbProductDesc;
+
+  /// No description provided for @reportCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category reports'**
+  String get reportCategory;
+
+  /// No description provided for @reportCategoryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales analysis by categories'**
+  String get reportCategoryDesc;
+
+  /// No description provided for @reportMonthlyResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly results'**
+  String get reportMonthlyResults;
+
+  /// No description provided for @reportMonthlyResultsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly sales results and trends'**
+  String get reportMonthlyResultsDesc;
+
+  /// No description provided for @reportMonthlyKpi.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly KPI (salary)'**
+  String get reportMonthlyKpi;
+
+  /// No description provided for @reportMonthlyKpiDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly KPI completion and salary report'**
+  String get reportMonthlyKpiDesc;
+
+  /// No description provided for @akbAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB amount'**
+  String get akbAmount;
+
+  /// No description provided for @akbProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'AKB products'**
+  String get akbProducts;
+
+  /// No description provided for @productTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Product types'**
+  String get productTypes;
+
+  /// No description provided for @categoriesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories count'**
+  String get categoriesCount;
+
+  /// No description provided for @topSelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Top selling'**
+  String get topSelling;
+
+  /// No description provided for @monthlySales.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly sales'**
+  String get monthlySales;
+
+  /// No description provided for @monthlyGrowth.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly growth'**
+  String get monthlyGrowth;
+
+  /// No description provided for @kpiCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'KPI completion'**
+  String get kpiCompletion;
+
+  /// No description provided for @salaryAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary amount'**
+  String get salaryAmount;
+
+  /// No description provided for @scannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Document Scanner'**
+  String get scannerTitle;
+
+  /// No description provided for @scannerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan certificate to auto-fill form'**
+  String get scannerSubtitle;
+
+  /// No description provided for @scannerTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo'**
+  String get scannerTakePhoto;
+
+  /// No description provided for @scannerChoosePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get scannerChoosePhoto;
+
+  /// No description provided for @scannerProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing document...'**
+  String get scannerProcessing;
+
+  /// No description provided for @scannerPleaseWait.
+  ///
+  /// In en, this message translates to:
+  /// **'AI is extracting data from the image'**
+  String get scannerPleaseWait;
+
+  /// No description provided for @scannerDataExtracted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} fields extracted successfully'**
+  String scannerDataExtracted(int count);
+
+  /// No description provided for @scannerCameraError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to access camera. Please check permissions'**
+  String get scannerCameraError;
+
+  /// No description provided for @scannerGalleryError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to access gallery. Please check permissions'**
+  String get scannerGalleryError;
+
+  /// No description provided for @scannerImageEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected image is empty or corrupted'**
+  String get scannerImageEmpty;
+
+  /// No description provided for @scannerNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Please check your internet connection'**
+  String get scannerNetworkError;
+
+  /// No description provided for @scannerAuthError.
+  ///
+  /// In en, this message translates to:
+  /// **'AI service authentication failed. Please try again'**
+  String get scannerAuthError;
+
+  /// No description provided for @scannerRateLimitError.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many requests. Please wait a moment'**
+  String get scannerRateLimitError;
+
+  /// No description provided for @scannerNoDataExtracted.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not extract data from the document. Please try a clearer image'**
+  String get scannerNoDataExtracted;
+
+  /// No description provided for @scannerParseError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to process AI response. Please try again'**
+  String get scannerParseError;
+
+  /// No description provided for @scannerUnknownError.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred. Please try again'**
+  String get scannerUnknownError;
+
+  /// No description provided for @scannerFormUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Form updated with scanned data'**
+  String get scannerFormUpdated;
+
+  /// No description provided for @scannerVerifyingWithFaktura.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying data with Faktura.uz...'**
+  String get scannerVerifyingWithFaktura;
+
+  /// No description provided for @scannerDataVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Data verified and updated from Faktura.uz'**
+  String get scannerDataVerified;
+
+  /// No description provided for @scannerDataMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} fields updated from Faktura.uz'**
+  String scannerDataMismatch(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

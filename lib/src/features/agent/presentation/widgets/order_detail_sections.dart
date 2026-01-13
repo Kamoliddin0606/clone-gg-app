@@ -83,21 +83,37 @@ class OrderDetailsSection extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     
     final pairs = <Widget>[
-      _tile(context, l10n.clientNameLabel, order.clientName.isNotEmpty ? order.clientName : order.clientCode, icon: Icons.store_rounded),
+      _tile(
+        context,
+        l10n.clientNameLabel,
+        order.clientName.isNotEmpty ? order.clientName : order.clientCode,
+        icon: Icons.store_rounded,
+      ),
       _tile(context, l10n.orderNumberLabel, order.numOrder, icon: Icons.receipt_long_rounded),
       _tile(context, l10n.orderDateLabel, dateTimeFormat.format(order.dateOrder), icon: Icons.calendar_today_rounded),
+      if (order.shippingDate != null)
+        _tile(
+          context,
+          l10n.shippingDate,
+          dateTimeFormat.format(order.shippingDate!),
+          icon: Icons.local_shipping_rounded,
+        ),
       _tile(context, l10n.orderTotalLabel, uzsFormat.format(order.total), icon: Icons.payments_rounded),
       _tile(context, l10n.mainStatusLabel, order.mainStatus, icon: Icons.info_outline_rounded),
       _tile(context, l10n.statusCodeLabel, order.status.toString(), icon: Icons.tag_rounded),
       _tile(context, '${l10n.priceTypeLabel} (code)', order.typePriceCode, icon: Icons.sell_outlined),
-      _tile(context, l10n.clientCodeLabel, order.clientCode, icon: Icons.qr_code_2_rounded),
-      _tile(context, l10n.organizationCodeLabel, order.codeOrg, icon: Icons.business_rounded),
+      _tile(
+        context,
+        l10n.organizationLabel,
+        (order.organizationName ?? '').isNotEmpty
+            ? order.organizationName!
+            : order.codeOrg,
+        icon: Icons.business_rounded,
+      ),
       if ((order.courierName ?? '').isNotEmpty)
         _tile(context, l10n.courierLabel, order.courierName!, icon: Icons.delivery_dining_rounded),
       if ((order.courierCar ?? '').isNotEmpty)
         _tile(context, l10n.vehicleLabel, order.courierCar!, icon: Icons.directions_car_rounded),
-      if ((order.courierPlate ?? '').isNotEmpty)
-        _tile(context, l10n.licensePlateLabel, order.courierPlate!, icon: Icons.pin_rounded),
       if ((order.commentSupervisor ?? '').isNotEmpty)
         _buildCommentCard(context, l10n.supervisorCommentLabel, order.commentSupervisor!, Icons.supervisor_account_rounded, cs.tertiary),
       if ((order.commentForwarder ?? '').isNotEmpty)

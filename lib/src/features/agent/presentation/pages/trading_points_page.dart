@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_map/flutter_map.dart' as osm;
@@ -222,7 +223,11 @@ class TradingPointsPage extends StatefulWidget {
   State<TradingPointsPage> createState() => _TradingPointsPageState();
 }
 
-class _TradingPointsPageState extends State<TradingPointsPage> {
+class _TradingPointsPageState extends State<TradingPointsPage>
+    with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
   // PageStorage keys for state persistence
   static const String _searchTextKey = 'trading_points_search';
   static const String _filtersKey = 'trading_points_filters';
@@ -294,9 +299,29 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   // Newly created client code for highlighting
   String? _newlyCreatedClientCode;
 
+  // FAB draggable state
+  Offset _fabPosition = const Offset(0, 0);
+  bool _isFabDragging = false;
+  bool _fabPositionLoaded = false;
+
   @override
   void initState() {
     super.initState();
+    
+    // Initialize pulse animation for FAB
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
+    
+    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pulseController,
+        curve: Curves.easeInOut,
+      ),
+    );
+    
+    _loadFabPosition();
     _storageBucket = PageStorageBucket();
     _initializeClientImagesService();
     _initializePermissions();
@@ -559,8 +584,42 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
     }
   }
 
+  /// Load FAB position from SharedPreferences
+  Future<void> _loadFabPosition() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final xStr = prefs.getString('trading_points_fab_x');
+      final yStr = prefs.getString('trading_points_fab_y');
+      final x = xStr != null ? double.tryParse(xStr) ?? 0.0 : 0.0;
+      final y = yStr != null ? double.tryParse(yStr) ?? 0.0 : 0.0;
+      if (mounted) {
+        setState(() {
+          _fabPosition = Offset(x, y);
+          _fabPositionLoaded = true;
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) print('Error loading FAB position: $e');
+      if (mounted) {
+        setState(() => _fabPositionLoaded = true);
+      }
+    }
+  }
+
+  /// Save FAB position to SharedPreferences
+  Future<void> _saveFabPosition() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('trading_points_fab_x', _fabPosition.dx.toString());
+      await prefs.setString('trading_points_fab_y', _fabPosition.dy.toString());
+    } catch (e) {
+      if (kDebugMode) print('Error saving FAB position: $e');
+    }
+  }
+
   @override
   void dispose() {
+    _pulseController.dispose();
     _saveState();
     _searchController.dispose();
     _locationCheckTimer?.cancel();
@@ -1551,9 +1610,11 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return PageStorage(
-      bucket: PageStorageBucket(),
-      child: Scaffold(
+    return Stack(
+      children: [
+        PageStorage(
+          bucket: PageStorageBucket(),
+          child: Scaffold(
         // AppBar — Material 3, AgentHome uslubi
         appBar: AppBar(
           title: Text(
@@ -1856,18 +1917,112 @@ class _TradingPointsPageState extends State<TradingPointsPage> {
         //   initialIndex: 2,
         // ),
 
-        // Floating action button for creating new client
-        // Always show FAB - permission check handled in _navigateToCreateClient
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _navigateToCreateClient,
-          icon: const Icon(Icons.add),
-          label: Text(AppLocalizations.of(context)?.newClient ?? 'Yangi mijoz'),
-          backgroundColor: theme.colorScheme.primary,
-          foregroundColor: theme.colorScheme.onPrimary,
-          elevation: 4,
-        ),
+        // Floating action button removed - now in Stack overlay
+        floatingActionButton: null,
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      ),
+          ),
+        ),
+        // Draggable FAB overlay with smooth drag
+        if (_fabPositionLoaded)
+          Positioned(
+            left: _fabPosition.dx == 0 ? null : _fabPosition.dx,
+            top: _fabPosition.dy == 0 ? null : _fabPosition.dy,
+            right: _fabPosition.dx == 0 ? 16 : null,
+            bottom: _fabPosition.dy == 0 ? 16 : null,
+            child: GestureDetector(
+              onLongPressStart: (_) {
+                setState(() => _isFabDragging = true);
+              },
+              onLongPressMoveUpdate: (details) {
+                if (_isFabDragging) {
+                  setState(() {
+                    _fabPosition = details.globalPosition - const Offset(28, 28);
+                  });
+                }
+              },
+              onLongPressEnd: (_) {
+                setState(() => _isFabDragging = false);
+                _saveFabPosition();
+              },
+              child: AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) {
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _isFabDragging ? null : _navigateToCreateClient,
+                      customBorder: const CircleBorder(),
+                      splashColor: theme.colorScheme.primary.withOpacity(0.5),
+                      highlightColor: theme.colorScheme.primary.withOpacity(0.2),
+                      splashFactory: InkRipple.splashFactory,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeOut,
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _isFabDragging
+                              ? theme.colorScheme.primary.withOpacity(0.7)
+                              : theme.colorScheme.primary.withOpacity(0.85 * _pulseAnimation.value),
+                          boxShadow: [
+                            // Outer glow - enhanced when dragging
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withOpacity(
+                                _isFabDragging ? 0.6 : (0.4 * _pulseAnimation.value)
+                              ),
+                              blurRadius: _isFabDragging ? 24 : (16 * _pulseAnimation.value),
+                              spreadRadius: _isFabDragging ? 6 : (4 * _pulseAnimation.value),
+                              offset: const Offset(0, 0),
+                            ),
+                            // Inner shadow for depth
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withOpacity(0.6),
+                              blurRadius: 8,
+                              spreadRadius: -2,
+                              offset: const Offset(0, 2),
+                            ),
+                            // Bottom shadow - enhanced when dragging
+                            BoxShadow(
+                              color: Colors.black.withOpacity(
+                                _isFabDragging ? 0.3 : (0.2 * _pulseAnimation.value)
+                              ),
+                              blurRadius: _isFabDragging ? 16 : 12,
+                              spreadRadius: _isFabDragging ? 2 : 1,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Inner circle glow - enhanced when dragging
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(
+                                  _isFabDragging ? 0.15 : (0.1 * _pulseAnimation.value)
+                                ),
+                              ),
+                            ),
+                            // Icon
+                            Icon(
+                              Icons.add,
+                              color: theme.colorScheme.onPrimary,
+                              size: 28,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -2091,64 +2246,64 @@ class TradingPointCard extends StatelessWidget {
           onExpand?.call(newExpanded);
         },
         onDoubleTap: onDoubleTapFetchImages ?? onOpenDetails,
-        child: ExpansionTile(
-          key: PageStorageKey<String>(
-            'tp_expand_${tradingPoint.id}',
-          ), // FIXED: alohida kalit faqat ExpansionTile uchun
-          initiallyExpanded: expanded ?? false, // NEW: tashqaridan boshqariladi
-          onExpansionChanged: null,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          collapsedShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          leading: _AvatarLeading(
-            tp: tradingPoint,
-            visited: tradingPoint.isVisited,
-          ),
+        child: PageStorage(
+          bucket: PageStorageBucket(),
+          child: ExpansionTile(
+            // Isolated PageStorageBucket prevents bool/double restore collisions
+            initiallyExpanded: expanded ?? false, // NEW: tashqaridan boshqariladi
+            onExpansionChanged: null,
+            tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            collapsedShape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            leading: _AvatarLeading(
+              tp: tradingPoint,
+              visited: tradingPoint.isVisited,
+            ),
 
-          title: Row(
-            children: [
-              Expanded(
-                child: _buildScrollableText(
-                  tradingPoint.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                  maxLines: 3,
-                ),
-              ),
-              const SizedBox(width: 8),
-              VisitIndicators(
-                visitToday: tradingPoint.visitToday,
-                isVisited: tradingPoint.isVisited,
-                visitStepNumber: tradingPoint.visitStepNumber,
-              ),
-            ],
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            title: Row(
               children: [
-                _line(
-                  context,
-                  Icons.place_outlined,
-                  tradingPoint.address,
-                  soft: true,
-                  maxLines: 3,
-                  scrollable: true,
+                Expanded(
+                  child: _buildScrollableText(
+                    tradingPoint.name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                    maxLines: 3,
+                  ),
                 ),
-                const SizedBox(height: 2),
-                _line(
-                  context,
-                  Icons.badge_outlined,
-                  'INN: ${tradingPoint.inn}',
-                  maxLines: 2,
+                const SizedBox(width: 8),
+                VisitIndicators(
+                  visitToday: tradingPoint.visitToday,
+                  isVisited: tradingPoint.isVisited,
+                  visitStepNumber: tradingPoint.visitStepNumber,
                 ),
+              ],
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _line(
+                    context,
+                    Icons.place_outlined,
+                    tradingPoint.address,
+                    soft: true,
+                    maxLines: 3,
+                    scrollable: true,
+                  ),
+                  const SizedBox(height: 2),
+                  _line(
+                    context,
+                    Icons.badge_outlined,
+                    'INN: ${tradingPoint.inn}',
+                    maxLines: 2,
+                  ),
 
                 // Add distance display for list view
                 if (locationService != null) ...[
@@ -2228,7 +2383,8 @@ class TradingPointCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _line(

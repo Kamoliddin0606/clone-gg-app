@@ -2524,7 +2524,12 @@
   "refusalReasonWorksWithOtherSupplier": "Works with other supplier",
   "refusalReasonOther": "Other reason",
   "apiKeyStatusConfigured": "configured",
-  "apiKeyStatusNotConfigured": "not configured",
+  "apiKeyStatusNotConfigured": "Not configured",
+  "visited": "Visited",
+  "plannedForToday": "Planned for today",
+  "additionalInformation": "Additional Information",
+  "locationInformation": "Location Information",
+  "businessInformation": "Business Information",
   "apiKeyStatusNotRequired": "key not required",
   "apiKeyStatusError": "error",
   "fakturaFetchCompanyData": "Load",
@@ -2606,5 +2611,40 @@
   "monthlySales": "Monthly sales",
   "monthlyGrowth": "Monthly growth",
   "kpiCompletion": "KPI completion",
-  "salaryAmount": "Salary amount"
+  "salaryAmount": "Salary amount",
+  "scannerTitle": "Document Scanner",
+  "scannerSubtitle": "Scan certificate to auto-fill form",
+  "scannerTakePhoto": "Take Photo",
+  "scannerChoosePhoto": "Gallery",
+  "scannerProcessing": "Analyzing document...",
+  "scannerPleaseWait": "AI is extracting data from the image",
+  "scannerDataExtracted": "{count} fields extracted successfully",
+  "@scannerDataExtracted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scannerCameraError": "Failed to access camera. Please check permissions",
+  "scannerGalleryError": "Failed to access gallery. Please check permissions",
+  "scannerImageEmpty": "Selected image is empty or corrupted",
+  "scannerNetworkError": "Network error. Please check your internet connection",
+  "scannerAuthError": "AI service authentication failed. Please try again",
+  "scannerRateLimitError": "Too many requests. Please wait a moment",
+  "scannerNoDataExtracted": "Could not extract data from the document. Please try a clearer image",
+  "scannerParseError": "Failed to process AI response. Please try again",
+  "scannerUnknownError": "An unexpected error occurred. Please try again",
+  "scannerFormUpdated": "Form updated with scanned data",
+  "scannerVerifyingWithFaktura": "Verifying data with Faktura.uz...",
+  "scannerDataVerified": "Data verified and updated from Faktura.uz",
+  "scannerDataMismatch": "{count} fields updated from Faktura.uz",
+  "@scannerDataMismatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fakturaNetworkError": "Network error while connecting to Faktura.uz"
 }

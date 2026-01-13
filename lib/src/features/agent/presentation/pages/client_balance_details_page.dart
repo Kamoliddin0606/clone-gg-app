@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_balance.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/balance_charts.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/formatters.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 /// ============================================================================
@@ -150,11 +151,13 @@ class _ClientBalanceDetailsPageState extends State<ClientBalanceDetailsPage>
     final hasOverpayment = balance.hasOverpayment;
     final l10n = AppLocalizations.of(context);
 
+    final formattedAmount = uzsFormat.format(balance.absoluteBalance);
+    
     String statusText;
     if (isDebtor) {
-      statusText = l10n?.clientIsDebtor as String? ?? 'Client is debtor';
+      statusText = l10n?.clientIsDebtor(formattedAmount) ?? 'Client is debtor';
     } else if (hasOverpayment) {
-      statusText = l10n?.clientHasOverpayment as String? ?? 'Overpayment available';
+      statusText = l10n?.clientHasOverpayment(formattedAmount) ?? 'Overpayment available';
     } else {
       statusText = l10n?.balanceIsZero ?? 'Balance is zero';
     }

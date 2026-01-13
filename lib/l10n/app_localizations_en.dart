@@ -224,7 +224,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncComplete => 'Synchronization completed';
 
   @override
-  String get syncError => 'Sync error occurred';
+  String syncError(String error) {
+    return 'Sync error: $error';
+  }
 
   @override
   String get noInternet => 'No internet connection';
@@ -902,7 +904,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get okb => 'OKB';
 
   @override
-  String get akbPlan => 'AKB Plan';
+  String get akbPlan => 'AKB plan';
 
   @override
   String get akbFact => 'AKB Fact';
@@ -1630,7 +1632,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get balanceCacheCleared => 'Balance cache cleared';
 
   @override
-  String get fakturaNetworkError => 'Network error. Please check your internet connection';
+  String get fakturaNetworkError => 'Network error while connecting to Faktura.uz';
 
   @override
   String get tradePointTypesEmpty => 'Trade point types list is empty. Please add trade points first.';
@@ -4142,7 +4144,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiKeyStatusConfigured => 'configured';
 
   @override
-  String get apiKeyStatusNotConfigured => 'not configured';
+  String get apiKeyStatusNotConfigured => 'Not configured';
+
+  @override
+  String get visited => 'Visited';
+
+  @override
+  String get plannedForToday => 'Planned for today';
+
+  @override
+  String get additionalInformation => 'Additional Information';
+
+  @override
+  String get locationInformation => 'Location Information';
+
+  @override
+  String get businessInformation => 'Business Information';
 
   @override
   String get apiKeyStatusNotRequired => 'key not required';
@@ -4194,4 +4211,173 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fakturaTokenRefreshError => 'Token refresh error';
+
+  @override
+  String get reportMenuTitle => 'Reports menu';
+
+  @override
+  String get reportAlreadySent => 'Report has already been sent to your Telegram group. Do you want to send it again?';
+
+  @override
+  String get reportSentSuccess => 'Report sent';
+
+  @override
+  String get resendReport => 'Resend';
+
+  @override
+  String get toggleHeaderShow => 'Show header';
+
+  @override
+  String get toggleHeaderHide => 'Hide header';
+
+  @override
+  String get periodNotSelected => 'Period not selected';
+
+  @override
+  String get dataSyncing => 'Syncing data...';
+
+  @override
+  String get reportsUpdated => 'Reports updated';
+
+  @override
+  String get applyButton => 'Apply';
+
+  @override
+  String get reportMainEvyap => 'Main reports(for EVYAP)';
+
+  @override
+  String get reportMainEvyapDesc => 'KPI indicators and main statistics';
+
+  @override
+  String get reportVisits => 'Visits report';
+
+  @override
+  String get reportVisitsDesc => 'Information about visits to clients';
+
+  @override
+  String get reportAkbClient => 'AKB Client';
+
+  @override
+  String get reportAkbClientDesc => 'Report on AKB clients';
+
+  @override
+  String get reportAkbSum => 'AKB Sum';
+
+  @override
+  String get reportAkbSumDesc => 'Financial report on AKB amounts';
+
+  @override
+  String get reportAkbProduct => 'AKB Product';
+
+  @override
+  String get reportAkbProductDesc => 'Report on AKB products';
+
+  @override
+  String get reportCategory => 'Category reports';
+
+  @override
+  String get reportCategoryDesc => 'Sales analysis by categories';
+
+  @override
+  String get reportMonthlyResults => 'Monthly results';
+
+  @override
+  String get reportMonthlyResultsDesc => 'Monthly sales results and trends';
+
+  @override
+  String get reportMonthlyKpi => 'Monthly KPI (salary)';
+
+  @override
+  String get reportMonthlyKpiDesc => 'Monthly KPI completion and salary report';
+
+  @override
+  String get akbAmount => 'AKB amount';
+
+  @override
+  String get akbProducts => 'AKB products';
+
+  @override
+  String get productTypes => 'Product types';
+
+  @override
+  String get categoriesCount => 'Categories count';
+
+  @override
+  String get topSelling => 'Top selling';
+
+  @override
+  String get monthlySales => 'Monthly sales';
+
+  @override
+  String get monthlyGrowth => 'Monthly growth';
+
+  @override
+  String get kpiCompletion => 'KPI completion';
+
+  @override
+  String get salaryAmount => 'Salary amount';
+
+  @override
+  String get scannerTitle => 'Document Scanner';
+
+  @override
+  String get scannerSubtitle => 'Scan certificate to auto-fill form';
+
+  @override
+  String get scannerTakePhoto => 'Take Photo';
+
+  @override
+  String get scannerChoosePhoto => 'Gallery';
+
+  @override
+  String get scannerProcessing => 'Analyzing document...';
+
+  @override
+  String get scannerPleaseWait => 'AI is extracting data from the image';
+
+  @override
+  String scannerDataExtracted(int count) {
+    return '$count fields extracted successfully';
+  }
+
+  @override
+  String get scannerCameraError => 'Failed to access camera. Please check permissions';
+
+  @override
+  String get scannerGalleryError => 'Failed to access gallery. Please check permissions';
+
+  @override
+  String get scannerImageEmpty => 'Selected image is empty or corrupted';
+
+  @override
+  String get scannerNetworkError => 'Network error. Please check your internet connection';
+
+  @override
+  String get scannerAuthError => 'AI service authentication failed. Please try again';
+
+  @override
+  String get scannerRateLimitError => 'Too many requests. Please wait a moment';
+
+  @override
+  String get scannerNoDataExtracted => 'Could not extract data from the document. Please try a clearer image';
+
+  @override
+  String get scannerParseError => 'Failed to process AI response. Please try again';
+
+  @override
+  String get scannerUnknownError => 'An unexpected error occurred. Please try again';
+
+  @override
+  String get scannerFormUpdated => 'Form updated with scanned data';
+
+  @override
+  String get scannerVerifyingWithFaktura => 'Verifying data with Faktura.uz...';
+
+  @override
+  String get scannerDataVerified => 'Data verified and updated from Faktura.uz';
+
+  @override
+  String scannerDataMismatch(int count) {
+    return '$count fields updated from Faktura.uz';
+  }
 }

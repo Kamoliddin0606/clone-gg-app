@@ -20,12 +20,20 @@ typedef SimplePicker = Future<void> Function();
 
 class OrdersFiltersPanel extends StatelessWidget {
   final OrdersFilterState state;
-  final List<MapEntry<String,int?>> statusMap; // tab label -> code (null=Barchasi)
-  final List<String> clients; // future: id-title
   final OrdersFilterOnChange onChange;
   final SimplePicker onPickDateRange;
   final VoidCallback onClearDateRange;
-  const OrdersFiltersPanel({super.key, required this.state, required this.statusMap, required this.clients, required this.onChange, required this.onPickDateRange, required this.onClearDateRange});
+  final VoidCallback onPickClients;
+  final VoidCallback onClearClients;
+  const OrdersFiltersPanel({
+    super.key,
+    required this.state,
+    required this.onChange,
+    required this.onPickDateRange,
+    required this.onClearDateRange,
+    required this.onPickClients,
+    required this.onClearClients,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,34 +43,6 @@ class OrdersFiltersPanel extends StatelessWidget {
       decoration: BoxDecoration(color: cs.surfaceContainerLowest, borderRadius: BorderRadius.circular(16)),
       padding: const EdgeInsets.all(12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
-        Text(l10n.labelStatus, style: Theme.of(context).textTheme.labelLarge),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 120, // Fixed height for 3 rows (approximately 40px per row)
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              direction: Axis.vertical,
-              alignment: WrapAlignment.start,
-              children: [
-                for(final e in statusMap)
-                  if(e.value!=null)
-                    FilterChip(
-                      label: Text(e.key),
-                      selected: state.statuses.contains(e.value),
-                      onSelected: (v){
-                        final ns = {...state.statuses};
-                        if(v) ns.add(e.value!); else ns.remove(e.value!);
-                        onChange(OrdersFilterState(statuses: ns, clients: state.clients, range: state.range));
-                      },
-                    ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
         Text(l10n.labelDateRange, style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
         Row(children:[
@@ -72,28 +52,25 @@ class OrdersFiltersPanel extends StatelessWidget {
         const SizedBox(height: 12),
         Text(l10n.labelClients, style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 160, // Fixed height for scrollable container
-          child: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for(final c in clients)
-                  FilterChip(
-                    label: Text(c, overflow: TextOverflow.ellipsis),
-                    selected: state.clients.contains(c),
-                    onSelected: (v){
-                      final nc = {...state.clients};
-                      if(v) nc.add(c); else nc.remove(c);
-                      onChange(OrdersFilterState(statuses: state.statuses, clients: nc, range: state.range));
-                    },
-                  ),
-              ],
+        Row(children:[
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: onPickClients,
+              icon: const Icon(Icons.groups_rounded),
+              label: Text(
+                state.clients.isEmpty
+                    ? l10n.all
+                    : '${state.clients.length}',
+              ),
             ),
           ),
-        ),
+          if (state.clients.isNotEmpty)
+            IconButton(
+              tooltip: l10n.clear,
+              onPressed: onClearClients,
+              icon: const Icon(Icons.clear),
+            ),
+        ]),
       ]),
     );
   }

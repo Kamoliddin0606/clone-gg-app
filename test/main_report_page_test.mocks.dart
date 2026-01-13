@@ -1354,9 +1354,16 @@ class MockApiDatabaseService extends _i1.Mock
           as _i12.Future<_i5.OrderDetail?>);
 
   @override
-  _i12.Future<void> saveOrderDetail(_i5.OrderDetail? orderDetail) =>
+  _i12.Future<void> saveOrderDetail(
+    _i5.OrderDetail? orderDetail, {
+    bool? validateOrderExists = false,
+  }) =>
       (super.noSuchMethod(
-            Invocation.method(#saveOrderDetail, [orderDetail]),
+            Invocation.method(
+              #saveOrderDetail,
+              [orderDetail],
+              {#validateOrderExists: validateOrderExists},
+            ),
             returnValue: _i12.Future<void>.value(),
             returnValueForMissingStub: _i12.Future<void>.value(),
           )

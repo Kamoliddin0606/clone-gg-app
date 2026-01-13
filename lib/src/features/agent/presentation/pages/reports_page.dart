@@ -737,7 +737,7 @@ class _ReportsPageState extends State<ReportsPage>
                               final l10n = AppLocalizations.of(context);
                               _showErrorSnackBar(
                                 context,
-                                l10n?.syncError.replaceAll('{error}', e.toString()) ?? "Sinxronizatsiya xatosi: $e",
+                                l10n?.syncError(e.toString()) ?? "Sinxronizatsiya xatosi: $e",
                               );
                             }
                           },

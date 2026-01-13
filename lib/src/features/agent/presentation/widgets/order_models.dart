@@ -6,14 +6,16 @@ class OrderItem {
   final double quantity;
   final double price;
   final String priceType;
+  final double? lineTotal;
   const OrderItem({
     required this.productName,
     required this.article,
     required this.quantity,
     required this.price,
     required this.priceType,
+    this.lineTotal,
   });
-  double get sum => quantity * price;
+  double get sum => lineTotal ?? (quantity * price);
 }
 
 
@@ -27,10 +29,12 @@ class OrderModel {
   final String? commentSupervisor;
   final String? commentForwarder;
   final String? commentAgent;
+  final DateTime? shippingDate;
   final double total;
   final String clientCode;
   final String clientName;
   final String codeOrg;
+  final String? organizationName;
   final String mainStatus;
   final String? courierName;
   final String? courierCar;
@@ -46,10 +50,12 @@ class OrderModel {
     this.commentSupervisor,
     this.commentForwarder,
     this.commentAgent,
+    this.shippingDate,
     required this.total,
     required this.clientCode,
     required this.clientName,
     required this.codeOrg,
+    this.organizationName,
     required this.mainStatus,
     this.courierName,
     this.courierCar,
@@ -67,10 +73,12 @@ class OrderModel {
     String? commentSupervisor,
     String? commentForwarder,
     String? commentAgent,
+    DateTime? shippingDate,
     double? total,
     String? clientCode,
     String? clientName,
     String? codeOrg,
+    String? organizationName,
     String? mainStatus,
     String? courierName,
     String? courierCar,
@@ -87,10 +95,12 @@ class OrderModel {
       commentSupervisor: commentSupervisor ?? this.commentSupervisor,
       commentForwarder: commentForwarder ?? this.commentForwarder,
       commentAgent: commentAgent ?? this.commentAgent,
+      shippingDate: shippingDate ?? this.shippingDate,
       total: total ?? this.total,
       clientCode: clientCode ?? this.clientCode,
       clientName: clientName ?? this.clientName,
       codeOrg: codeOrg ?? this.codeOrg,
+      organizationName: organizationName ?? this.organizationName,
       mainStatus: mainStatus ?? this.mainStatus,
       courierName: courierName ?? this.courierName,
       courierCar: courierCar ?? this.courierCar,

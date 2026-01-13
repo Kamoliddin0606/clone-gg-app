@@ -8,6 +8,7 @@ import '../widgets/order_models.dart';
 import '../widgets/order_detail_sections.dart';
 import '../widgets/order_items_card_view.dart';
 import '../widgets/status_chip.dart';
+import '../../../../core/services/api_database_service.dart';
 import '../../../../core/services/data_sync_service.dart';
 import '../../../../core/services/shared_preferences_service.dart';
 import '../../../agent/data/models/order_detail.dart';
@@ -46,7 +47,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           'Loading order details from cache for order: ${widget.order.numOrder}',
         );
         // Convert OrderDetail to OrderModel with additional data
-        _detailedOrder = _convertOrderDetailToOrderModel(
+        _detailedOrder = await _convertOrderDetailToOrderModel(
           cachedOrderDetail,
           widget.order,
         );
@@ -79,7 +80,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         );
 
         // Convert and merge with existing order data
-        _detailedOrder = _convertOrderDetailToOrderModel(
+        _detailedOrder = await _convertOrderDetailToOrderModel(
           freshOrderDetail,
           widget.order,
         );
@@ -121,7 +122,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
   /// Convert OrderDetail to OrderModel with merged data
-  OrderModel _convertOrderDetailToOrderModel(
+  Future<OrderModel> _convertOrderDetailToOrderModel(
     OrderDetail orderDetail,
     OrderModel originalOrder,
   ) {
@@ -131,67 +132,104 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         debugPrint(
           'Warning: orderDetail.productRows is null or empty for order ${originalOrder.numOrder}',
         );
-        return originalOrder.copyWith(items: []);
+        return Future.value(originalOrder.copyWith(items: []));
       }
 
       // Convert order detail products to order items with validation
-      final items = <OrderItem>[];
-      for (final product in orderDetail.productRows!) {
-        if (product == null) continue;
+      return _buildOrderItems(orderDetail, originalOrder).then((items) async {
+        final shippingDate = DateTime.tryParse(orderDetail.shippingDate);
 
+        String? organizationName;
         try {
-          // Validate required fields
-          final codeProduct = product.codeProduct?.trim();
-          if (codeProduct == null || codeProduct.isEmpty) continue;
-
-          final orderItem = OrderItem(
-            productName: product.nameProduct?.trim().isNotEmpty == true
-                ? product.nameProduct!.trim()
-                : (AppLocalizations.of(context)?.unknownProduct ??
-                      'Noma\'lum mahsulot'),
-            article: codeProduct,
-            quantity: (product.amount ?? 0).toDouble(),
-            price: product.price ?? 0.0,
-            priceType: originalOrder.typePriceCode,
-          );
-          items.add(orderItem);
+          final db = GetIt.I<ApiDatabaseService>();
+          final org = await db.getUserOrganizationByCode(originalOrder.codeOrg);
+          organizationName = org?.name;
         } catch (e) {
-          debugPrint('Error converting product ${product.codeProduct}: $e');
-          // Skip invalid products instead of adding error items
+          debugPrint('Error resolving organization name: $e');
         }
-      }
 
-      debugPrint(
-        'Successfully converted ${items.length} items for order ${originalOrder.numOrder}',
-      );
+        debugPrint(
+          'Successfully converted ${items.length} items for order ${originalOrder.numOrder}',
+        );
 
-      return OrderModel(
-        id: originalOrder.id,
-        numOrder: originalOrder.numOrder,
-        dateOrder: originalOrder.dateOrder,
-        captionOrder: originalOrder.captionOrder,
-        typePriceCode: originalOrder.typePriceCode,
-        status: originalOrder.status,
-        commentSupervisor: orderDetail.commentSupervisor,
-        commentForwarder: orderDetail.commentForwarder,
-        commentAgent: orderDetail.commentAgent,
-        total: originalOrder.total,
-        clientCode: originalOrder.clientCode,
-        clientName: originalOrder.clientName,
-        codeOrg: originalOrder.codeOrg,
-        mainStatus: originalOrder.mainStatus,
-        courierName: originalOrder.courierName,
-        courierCar: originalOrder.courierCar,
-        courierPlate: originalOrder.courierPlate,
-        items: items,
-      );
+        return OrderModel(
+          id: originalOrder.id,
+          numOrder: originalOrder.numOrder,
+          dateOrder: originalOrder.dateOrder,
+          captionOrder: originalOrder.captionOrder,
+          typePriceCode: originalOrder.typePriceCode,
+          status: originalOrder.status,
+          commentSupervisor: orderDetail.commentSupervisor,
+          commentForwarder: orderDetail.commentForwarder,
+          commentAgent: orderDetail.commentAgent,
+          shippingDate: shippingDate,
+          total: originalOrder.total,
+          clientCode: originalOrder.clientCode,
+          clientName: originalOrder.clientName,
+          codeOrg: originalOrder.codeOrg,
+          organizationName: organizationName,
+          mainStatus: originalOrder.mainStatus,
+          courierName: originalOrder.courierName,
+          courierCar: originalOrder.courierCar,
+          courierPlate: originalOrder.courierPlate,
+          items: items,
+        );
+      });
     } catch (e) {
       debugPrint(
         'Error converting OrderDetail to OrderModel for order ${originalOrder.numOrder}: $e',
       );
       // Return original order with empty items as fallback
-      return originalOrder.copyWith(items: []);
+      return Future.value(originalOrder.copyWith(items: []));
     }
+  }
+
+  Future<List<OrderItem>> _buildOrderItems(
+    OrderDetail orderDetail,
+    OrderModel originalOrder,
+  ) async {
+    final items = <OrderItem>[];
+    final db = GetIt.I<ApiDatabaseService>();
+    final vendorCache = <String, String>{};
+
+    for (final product in orderDetail.productRows!) {
+      if (product == null) continue;
+
+      try {
+        final codeProduct = product.codeProduct.trim();
+        if (codeProduct.isEmpty) continue;
+
+        final cachedVendor = vendorCache[codeProduct];
+        final vendorCode = cachedVendor ??
+            (await db.getProductByCode(codeProduct))?.vendorCode.trim();
+
+        if (vendorCode != null && vendorCode.isNotEmpty) {
+          vendorCache[codeProduct] = vendorCode;
+        }
+
+        final article = (vendorCode != null && vendorCode.isNotEmpty)
+            ? vendorCode
+            : codeProduct;
+
+        items.add(
+          OrderItem(
+            productName: product.nameProduct.trim().isNotEmpty
+                ? product.nameProduct.trim()
+                : (AppLocalizations.of(context)?.unknownProduct ??
+                    'Noma\'lum mahsulot'),
+            article: article,
+            quantity: product.amount.toDouble(),
+            price: product.price,
+            priceType: originalOrder.typePriceCode,
+            lineTotal: product.total,
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error converting product ${product.codeProduct}: $e');
+      }
+    }
+
+    return items;
   }
 
   /// Get user code from shared preferences

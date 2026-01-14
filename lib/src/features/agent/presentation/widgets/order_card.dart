@@ -58,31 +58,37 @@ class OrderCard extends StatelessWidget {
                       // Header: Order number and status
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: cs.primaryContainer,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.receipt_long_rounded, color: cs.onPrimaryContainer, size: 16),
-                                const SizedBox(width: 6),
-                                Text(
-                                  order.numOrder,
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    color: cs.onPrimaryContainer,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.5,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: cs.primaryContainer,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.receipt_long_rounded, color: cs.onPrimaryContainer, size: 16),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      order.numOrder,
+                                      style: theme.textTheme.labelLarge?.copyWith(
+                                        color: cs.onPrimaryContainer,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.5,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           StatusChip(status: order.mainStatus),
-                          const Spacer(),
+                          const SizedBox(width: 4),
                           Icon(
                             Icons.chevron_right_rounded,
                             color: cs.outline.withOpacity(0.5),

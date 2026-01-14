@@ -2,8 +2,15 @@
 // presentation/widgets/order_items_card_view.dart
 // =============================
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:get_it/get_it.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import '../../../../core/services/api_database_service.dart';
+import '../../../../core/widgets/product_image_widget.dart';
+import '../../../../core/services/product_image_service.dart';
+import '../../data/models/product_with_price.dart';
+import '../pages/product_detail_page.dart';
 import '../shared/formatters.dart';
 import 'order_models.dart';
 
@@ -87,7 +94,7 @@ class OrderItemsCardView extends StatelessWidget {
                 return _OrderItemCard(
                   item: item,
                   index: i,
-                  onDoubleTap: () => _showItemDetails(context, item),
+                  onDoubleTap: () => _openProductDetail(context, item),
                 );
               },
             ),
@@ -147,7 +154,76 @@ class OrderItemsCardView extends StatelessWidget {
     );
   }
   
-  void _showItemDetails(BuildContext context, OrderItem item) {
+  /// Navigate to product detail page with full product info lookup
+  Future<void> _openProductDetail(BuildContext context, OrderItem item) async {
+    HapticFeedback.lightImpact();
+    
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    
+    try {
+      final db = GetIt.I<ApiDatabaseService>();
+      
+      // Try to find product by article code
+      final product = await db.getProductByCode(item.article);
+      
+      // Close loading dialog
+      if (context.mounted) Navigator.of(context).pop();
+      
+      if (product != null && context.mounted) {
+        // Create ProductWithPrice from database product and order item data
+        final productWithPrice = ProductWithPrice(
+          productCode: product.code,
+          productName: product.name,
+          vendorCode: product.vendorCode,
+          unit: product.unit,
+          quantity: item.quantity,
+          reserved: 0,
+          available: 0,
+          category: product.category,
+          barcode: product.barcode,
+          have: 0,
+          warehouseCode: '',
+          warehouseName: '',
+          weight: product.weight,
+          capacity: product.capacity,
+          productBrand: product.productBrand,
+          productSeries: product.productSeries,
+          codeProject: '',
+          priceTypeCode: item.priceType,
+          priceTypeName: item.priceType,
+          price: item.price,
+          currency: 'UZS',
+          validFrom: '',
+          validTo: '',
+          stock: 0,
+        );
+        
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ProductDetailPage(
+              product: productWithPrice,
+              heroTag: 'order_item_${item.article}',
+            ),
+          ),
+        );
+      } else if (context.mounted) {
+        // Fallback to bottom sheet if product not found in database
+        _showItemDetailsBottomSheet(context, item);
+      }
+    } catch (e) {
+      // Close loading dialog on error
+      if (context.mounted) Navigator.of(context).pop();
+      // Fallback to bottom sheet
+      if (context.mounted) _showItemDetailsBottomSheet(context, item);
+    }
+  }
+
+  void _showItemDetailsBottomSheet(BuildContext context, OrderItem item) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -195,20 +271,18 @@ class _OrderItemCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Product icon/number
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: cs.primaryContainer.withOpacity(0.5),
+            // Product image with fallback to number
+            Hero(
+              tag: 'order_item_${item.article}',
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: cs.primary,
+                child: SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: ProductImageWidget(
+                    productCode: item.article,
+                    size: ProductImageSize.thumbnail,
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),

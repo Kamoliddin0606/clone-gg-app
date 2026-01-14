@@ -4380,4 +4380,311 @@ class AppLocalizationsUz extends AppLocalizations {
   String scannerDataMismatch(int count) {
     return '$count ta maydon Faktura.uz dan yangilandi';
   }
+
+  @override
+  String get faqPageTitle => 'Nizom';
+
+  @override
+  String get faqSupervisorSubtitle => 'Supervayzer vazifalari';
+
+  @override
+  String get faqSalesRepSubtitle => 'Savdo vakili nizomi';
+
+  @override
+  String get faqRoleSupervisor => 'Supervayzer';
+
+  @override
+  String get faqRoleSalesRep => 'Savdo vakili';
+
+  @override
+  String get faqSectionsCount => 'ta bo\'lim';
+
+  @override
+  String get faqSvGpsTitle => 'GPS-monitoring';
+
+  @override
+  String get faqSvGpsMorningTitle => 'Ertalabki hisobot (9:15 gacha)';
+
+  @override
+  String get faqSvGpsMorningContent => 'Har kuni ertalab soat 9:15 gacha supervayzer ish guruhiga savdo vakillarining marshrutga chiqish holati haqida hisobot yuborishi shart.';
+
+  @override
+  String get faqSvGpsEveningTitle => 'Kechki hisobot (18:00 gacha)';
+
+  @override
+  String get faqSvGpsEveningContent => 'Soat 18:00 gacha — ish kunining yakuniy GPS-hisoboti yuboriladi.';
+
+  @override
+  String get faqSvSalesTitle => 'Sotuvlar hisoboti';
+
+  @override
+  String get faqSvSalesInterimTitle => 'Oraliq hisobot (13:00 gacha)';
+
+  @override
+  String get faqSvSalesInterimContent => 'Soat 13:00 gacha — yig\'ilgan buyurtmalar summasi va soni bilan oraliq hisobot yuboriladi.';
+
+  @override
+  String get faqSvSalesFinalTitle => 'Yakuniy hisobot (18:00 gacha)';
+
+  @override
+  String get faqSvSalesFinalContent => 'Soat 18:00 gacha — yakuniy hisobot: kunlik sotuvlar summasi, buyurtmalar soni, ertangi rejalar va qaytarishlar.';
+
+  @override
+  String get faqSvKpiTitle => 'KPI va rejalashtirish';
+
+  @override
+  String get faqSvKpiMondayTitle => 'Ofis kuni (dushanba)';
+
+  @override
+  String get faqSvKpiMondayContent => 'Har dushanba — ofis kuni.';
+
+  @override
+  String get faqSvKpiAnalysisTitle => 'Tahlil va vazifalar';
+
+  @override
+  String get faqSvKpiAnalysisContent => 'O\'tgan hafta natijalari jamlanadi, KPI tahlili va joriy hafta uchun vazifalar belgilanadi.';
+
+  @override
+  String get faqSvTravelTitle => 'Travel Plans';
+
+  @override
+  String get faqSvTravelMonthlyTitle => 'Oylik rejalashtirish';
+
+  @override
+  String get faqSvTravelMonthlyContent => 'Har oy 30-31 sanalarida supervayzerlar regional menejerga keyingi oy uchun shaxsiy Travel Plans yuboradilar.';
+
+  @override
+  String get faqSvTimeTitle => 'Ish vaqti hisobi';
+
+  @override
+  String get faqSvTimeWeeklyTitle => 'Haftalik tabel';
+
+  @override
+  String get faqSvTimeWeeklyContent => 'Tabel haftalik asosda (dushanbada) tuziladi, savdo vakillarining ishlagan kunlari soni ko\'rsatiladi.';
+
+  @override
+  String get faqSvTimeMonthlyTitle => 'Oylik tabel';
+
+  @override
+  String get faqSvTimeMonthlyContent => 'Oyning yakuniy tabeli kalendar oyining oxirgi kunida taqdim etiladi.';
+
+  @override
+  String get faqSvSalaryTitle => 'Maosh va KPI';
+
+  @override
+  String get faqSvSalaryKpiTitle => 'KPI natijalari';
+
+  @override
+  String get faqSvSalaryKpiContent => 'Har oy 1-3 sanalarida supervayzer butun oy uchun KPI natijalarini jamlashi shart.';
+
+  @override
+  String get faqSvSalaryCalcTitle => 'Maosh hisoblash';
+
+  @override
+  String get faqSvSalaryCalcContent => 'Bajarilgan ko\'rsatkichlar asosida EVYAP savdo vakillarining maosh hisobini tayyorlash va topshirish.';
+
+  @override
+  String get faqTpGeneralTitle => 'Umumiy qoidalar';
+
+  @override
+  String get faqTpGeneralPurposeTitle => 'Hujjat maqsadi';
+
+  @override
+  String get faqTpGeneralPurposeContent => 'Ushbu nizom savdo vakillarining vazifalarini tashkil etish qoidalarini belgilaydi. Maqsad — intizom va samaradorlikni ta\'minlash.';
+
+  @override
+  String get faqTpHoursTitle => 'Ish vaqti va marshrut';
+
+  @override
+  String get faqTpHoursScheduleTitle => 'Ish jadvali';
+
+  @override
+  String get faqTpHoursScheduleContent => 'Ish kuni soat 9:00 da boshlanadi va 18:00 da tugaydi.';
+
+  @override
+  String get faqTpHoursRouteTitle => 'Marshrutga chiqish';
+
+  @override
+  String get faqTpHoursRouteContent => 'Savdo vakili tasdiqlangan jadvalga muvofiq o\'z vaqtida marshrutga chiqishi shart.';
+
+  @override
+  String get faqTpHoursDelayTitle => 'Kechikishlar';
+
+  @override
+  String get faqTpHoursDelayContent => 'Uzrli sabablarsiz 15 daqiqadan ortiq kechikish mehnat intizomini buzish sifatida qayd etiladi.';
+
+  @override
+  String get faqTpVisitsTitle => 'Savdo nuqtalariga tashrif';
+
+  @override
+  String get faqTpVisitsDailyTitle => 'Kunlik tashriflar';
+
+  @override
+  String get faqTpVisitsDailyContent => 'Har bir savdo vakili har kuni marshrutga muvofiq barcha savdo nuqtalarini ziyorat qilishi shart.';
+
+  @override
+  String get faqTpVisitsChangesTitle => 'Marshrut o\'zgarishlari';
+
+  @override
+  String get faqTpVisitsChangesContent => 'Marshrut o\'zgargan holda sababini ko\'rsatib ish chatiga xabar berish kerak.';
+
+  @override
+  String get faqTpVisitsPhotoTitle => 'Foto/video hisobot';
+
+  @override
+  String get faqTpVisitsPhotoContent => 'Har bir nuqta bo\'yicha foto yoki video hisobot taqdim etish kerak.';
+
+  @override
+  String get faqTpVideoTitle => 'Video hisobotlar (Telegram)';
+
+  @override
+  String get faqTpVideoMorningTitle => 'Ertalabki video hisobot';
+
+  @override
+  String get faqTpVideoMorningContent => 'Ish kunining boshida (9:30 gacha) savdo vakili Telegram chatiga video xabar yuborishi shart.';
+
+  @override
+  String get faqTpVideoDuringTitle => 'Kun davomida hisobotlar';
+
+  @override
+  String get faqTpVideoDuringContent => 'Kun davomida savdo nuqtalaridan qisqa video xabarlar yuborish tavsiya etiladi.';
+
+  @override
+  String get faqTpVideoEndTitle => 'Yakuniy video hisobot';
+
+  @override
+  String get faqTpVideoEndContent => 'Kun oxirida natijalar bilan qisqa video hisobot tavsiya etiladi.';
+
+  @override
+  String get faqTpReportingTitle => 'Hisobotlar';
+
+  @override
+  String get faqTpReportingRealTimeTitle => 'Real vaqtda yuborish';
+
+  @override
+  String get faqTpReportingRealTimeContent => 'Barcha foto, video va izohlar tashrif paytida yuborilishi kerak.';
+
+  @override
+  String get faqTpReportingConsequenceTitle => 'Bajarmaslik oqibatlari';
+
+  @override
+  String get faqTpReportingConsequenceContent => 'Kunlik hisobot bermasa marshrutga chiqmagan yoki faoliyat ko\'rsatmagan deb hisoblanadi.';
+
+  @override
+  String get faqTpResponsibilityTitle => 'Javobgarlik';
+
+  @override
+  String get faqTpResponsibilityRulesTitle => 'Intizomiy javobgarlik';
+
+  @override
+  String get faqTpResponsibilityRulesContent => 'Ushbu nizomga rioya qilmaslik kompaniyaning ichki qoidalariga muvofiq intizomiy javobgarlikka olib keladi.';
+
+  @override
+  String get faqTpResponsibilityMeasuresTitle => 'Jazo choralari';
+
+  @override
+  String get faqTpResponsibilityMeasuresContent => 'Javobgarlik choralari: ogohlantirish → hayfsan → mukofotni ushlab qolish.';
+
+  @override
+  String get productImageLoading => 'Rasm yuklanmoqda...';
+
+  @override
+  String get productImageError => 'Rasmni yuklab bo\'lmadi';
+
+  @override
+  String get productNoImage => 'Rasm mavjud emas';
+
+  @override
+  String productImageSyncProgress(int current, int total) {
+    return 'Rasmlar sinxronlanmoqda: $current/$total';
+  }
+
+  @override
+  String get productImageSyncComplete => 'Rasmlar sinxronlandi';
+
+  @override
+  String get productImageSyncFailed => 'Rasmlarni sinxronlashda xatolik';
+
+  @override
+  String get productImageTapToView => 'To\'liq ko\'rish uchun bosing';
+
+  @override
+  String productImageCount(int count) {
+    return '$count ta rasm';
+  }
+
+  @override
+  String get productBasicInfo => 'Asosiy ma\'lumotlar';
+
+  @override
+  String get productPricingInfo => 'Narx ma\'lumotlari';
+
+  @override
+  String get productStockInfo => 'Ombor ma\'lumotlari';
+
+  @override
+  String get productAdditionalInfo => 'Qo\'shimcha ma\'lumotlar';
+
+  @override
+  String get productCode => 'Mahsulot kodi';
+
+  @override
+  String get productVendorCode => 'Artikul';
+
+  @override
+  String get productBarcode => 'Shtrix kod';
+
+  @override
+  String get productCategory => 'Kategoriya';
+
+  @override
+  String get productSeries => 'Seriya';
+
+  @override
+  String get productPriceType => 'Narx turi';
+
+  @override
+  String get productPrice => 'Narx';
+
+  @override
+  String get productPriceValidFrom => 'Amal qilish sanasi';
+
+  @override
+  String get productPriceValidTo => 'Tugash sanasi';
+
+  @override
+  String get productWarehouse => 'Ombor';
+
+  @override
+  String get productStock => 'Qoldiq';
+
+  @override
+  String get productQuantity => 'Umumiy miqdor';
+
+  @override
+  String get productReserved => 'Band qilingan';
+
+  @override
+  String get productAvailable => 'Mavjud';
+
+  @override
+  String get productUnit => 'O\'lchov birligi';
+
+  @override
+  String get productWeight => 'Og\'irlik';
+
+  @override
+  String get productCapacity => 'Sig\'im';
+
+  @override
+  String get productBrand => 'Brend';
+
+  @override
+  String get productProject => 'Loyiha kodi';
+
+  @override
+  String get copiedToClipboard => 'Nusxalandi';
+
+  @override
+  String get productInfoCopied => 'Mahsulot ma\'lumotlari nusxalandi';
 }

@@ -65,6 +65,7 @@ dependencies:
 
   # UI enhancements
   shimmer: ^3.0.0
+  cached_network_image: ^3.4.1
 
   # Connectivity
   connectivity_plus: ^7.0.0
@@ -77,6 +78,7 @@ dependencies:
   flutter_polyline_points: ^2.0.0
   camera: ^0.11.3
   image_picker: ^1.2.0
+  flutter_image_compress: ^2.3.0
   photo_view: ^0.15.0
   flutter_staggered_grid_view: ^0.7.0
   open_file: ^3.5.10

@@ -4380,4 +4380,311 @@ class AppLocalizationsEn extends AppLocalizations {
   String scannerDataMismatch(int count) {
     return '$count fields updated from Faktura.uz';
   }
+
+  @override
+  String get faqPageTitle => 'Regulations';
+
+  @override
+  String get faqSupervisorSubtitle => 'Supervisor duties';
+
+  @override
+  String get faqSalesRepSubtitle => 'Sales representative regulations';
+
+  @override
+  String get faqRoleSupervisor => 'Supervisor';
+
+  @override
+  String get faqRoleSalesRep => 'Sales Representative';
+
+  @override
+  String get faqSectionsCount => 'sections';
+
+  @override
+  String get faqSvGpsTitle => 'GPS Monitoring';
+
+  @override
+  String get faqSvGpsMorningTitle => 'Morning report (by 9:15)';
+
+  @override
+  String get faqSvGpsMorningContent => 'Daily by 9:15 AM, the supervisor must send a report to the work group about the status of sales representatives\' route departure.';
+
+  @override
+  String get faqSvGpsEveningTitle => 'Evening report (by 18:00)';
+
+  @override
+  String get faqSvGpsEveningContent => 'By 18:00 — the final GPS report is sent at the end of the work day.';
+
+  @override
+  String get faqSvSalesTitle => 'Sales Report';
+
+  @override
+  String get faqSvSalesInterimTitle => 'Interim report (by 13:00)';
+
+  @override
+  String get faqSvSalesInterimContent => 'By 13:00 — an interim report is sent with the sum and number of collected orders.';
+
+  @override
+  String get faqSvSalesFinalTitle => 'Final report (by 18:00)';
+
+  @override
+  String get faqSvSalesFinalContent => 'By 18:00 — final report including: total sales for the day, number of orders, departure plan and forecast for the next day, returns report.';
+
+  @override
+  String get faqSvKpiTitle => 'KPI and Planning';
+
+  @override
+  String get faqSvKpiMondayTitle => 'Office day (Monday)';
+
+  @override
+  String get faqSvKpiMondayContent => 'Every Monday is an office day.';
+
+  @override
+  String get faqSvKpiAnalysisTitle => 'Analysis and tasks';
+
+  @override
+  String get faqSvKpiAnalysisContent => 'Weekly results are summarized, KPI analysis is conducted, and tasks for the current week are set.';
+
+  @override
+  String get faqSvTravelTitle => 'Travel Plans';
+
+  @override
+  String get faqSvTravelMonthlyTitle => 'Monthly planning';
+
+  @override
+  String get faqSvTravelMonthlyContent => 'Monthly, on the 30th-31st, supervisors send individual Travel Plans for the next month to the regional manager.';
+
+  @override
+  String get faqSvTimeTitle => 'Time Tracking';
+
+  @override
+  String get faqSvTimeWeeklyTitle => 'Weekly timesheet';
+
+  @override
+  String get faqSvTimeWeeklyContent => 'The timesheet is compiled weekly (on Mondays) indicating the number of days worked by sales representatives.';
+
+  @override
+  String get faqSvTimeMonthlyTitle => 'Monthly timesheet';
+
+  @override
+  String get faqSvTimeMonthlyContent => 'The final monthly timesheet is provided on the last day of the calendar month.';
+
+  @override
+  String get faqSvSalaryTitle => 'Salary and KPI';
+
+  @override
+  String get faqSvSalaryKpiTitle => 'KPI summary';
+
+  @override
+  String get faqSvSalaryKpiContent => 'Monthly, from the 1st to 3rd (depending on weekends), the supervisor must summarize KPI results for the entire month.';
+
+  @override
+  String get faqSvSalaryCalcTitle => 'Salary calculation';
+
+  @override
+  String get faqSvSalaryCalcContent => 'Prepare and submit salary calculations for EVYAP sales representatives based on achieved indicators.';
+
+  @override
+  String get faqTpGeneralTitle => 'General Provisions';
+
+  @override
+  String get faqTpGeneralPurposeTitle => 'Document purpose';
+
+  @override
+  String get faqTpGeneralPurposeContent => 'This regulation establishes rules for organizing and performing duties by sales representatives. The goal is to ensure discipline, transparency and efficiency.';
+
+  @override
+  String get faqTpHoursTitle => 'Working Hours and Route';
+
+  @override
+  String get faqTpHoursScheduleTitle => 'Work schedule';
+
+  @override
+  String get faqTpHoursScheduleContent => 'The work day starts at 9:00 and ends at 18:00.';
+
+  @override
+  String get faqTpHoursRouteTitle => 'Route departure';
+
+  @override
+  String get faqTpHoursRouteContent => 'The sales representative must leave for the route on time according to the approved schedule.';
+
+  @override
+  String get faqTpHoursDelayTitle => 'Delays';
+
+  @override
+  String get faqTpHoursDelayContent => 'Being more than 15 minutes late without a valid reason is recorded as a violation of labor discipline.';
+
+  @override
+  String get faqTpVisitsTitle => 'Trade Point Visits';
+
+  @override
+  String get faqTpVisitsDailyTitle => 'Daily visits';
+
+  @override
+  String get faqTpVisitsDailyContent => 'Each sales representative must visit all trade points daily according to the route.';
+
+  @override
+  String get faqTpVisitsChangesTitle => 'Route changes';
+
+  @override
+  String get faqTpVisitsChangesContent => 'In case of route changes (client absence, point closure, etc.), notify the work chat with the reason.';
+
+  @override
+  String get faqTpVisitsPhotoTitle => 'Photo/video report';
+
+  @override
+  String get faqTpVisitsPhotoContent => 'For each point, a photo or video report must be provided (display, activity, order).';
+
+  @override
+  String get faqTpVideoTitle => 'Video Reports (Telegram)';
+
+  @override
+  String get faqTpVideoMorningTitle => 'Morning video report';
+
+  @override
+  String get faqTpVideoMorningContent => 'At the start of the work day (by 9:30), the sales representative must send a video message to the Telegram chat.';
+
+  @override
+  String get faqTpVideoDuringTitle => 'Reports during the day';
+
+  @override
+  String get faqTpVideoDuringContent => 'During the day, sending short video messages from trade points is encouraged — demonstrating displays, new products or activities.';
+
+  @override
+  String get faqTpVideoEndTitle => 'End of day video report';
+
+  @override
+  String get faqTpVideoEndContent => 'At the end of the day, a brief video report with results is recommended.';
+
+  @override
+  String get faqTpReportingTitle => 'Reporting';
+
+  @override
+  String get faqTpReportingRealTimeTitle => 'Real-time submission';
+
+  @override
+  String get faqTpReportingRealTimeContent => 'All photos, videos and comments on the route must be sent at the time of the visit.';
+
+  @override
+  String get faqTpReportingConsequenceTitle => 'Non-compliance consequences';
+
+  @override
+  String get faqTpReportingConsequenceContent => 'Failure to submit daily reports is considered as not going on the route or lack of activity.';
+
+  @override
+  String get faqTpResponsibilityTitle => 'Responsibility';
+
+  @override
+  String get faqTpResponsibilityRulesTitle => 'Disciplinary responsibility';
+
+  @override
+  String get faqTpResponsibilityRulesContent => 'Non-compliance with these regulations entails disciplinary responsibility in accordance with company internal rules.';
+
+  @override
+  String get faqTpResponsibilityMeasuresTitle => 'Penalty measures';
+
+  @override
+  String get faqTpResponsibilityMeasuresContent => 'Responsibility measures: warning → reprimand → bonus deduction.';
+
+  @override
+  String get productImageLoading => 'Loading image...';
+
+  @override
+  String get productImageError => 'Failed to load image';
+
+  @override
+  String get productNoImage => 'No image available';
+
+  @override
+  String productImageSyncProgress(int current, int total) {
+    return 'Syncing images: $current/$total';
+  }
+
+  @override
+  String get productImageSyncComplete => 'Image sync complete';
+
+  @override
+  String get productImageSyncFailed => 'Image sync failed';
+
+  @override
+  String get productImageTapToView => 'Tap to view full image';
+
+  @override
+  String productImageCount(int count) {
+    return '$count images';
+  }
+
+  @override
+  String get productBasicInfo => 'Basic Information';
+
+  @override
+  String get productPricingInfo => 'Pricing Information';
+
+  @override
+  String get productStockInfo => 'Stock Information';
+
+  @override
+  String get productAdditionalInfo => 'Additional Information';
+
+  @override
+  String get productCode => 'Product Code';
+
+  @override
+  String get productVendorCode => 'Article';
+
+  @override
+  String get productBarcode => 'Barcode';
+
+  @override
+  String get productCategory => 'Category';
+
+  @override
+  String get productSeries => 'Series';
+
+  @override
+  String get productPriceType => 'Price Type';
+
+  @override
+  String get productPrice => 'Price';
+
+  @override
+  String get productPriceValidFrom => 'Valid From';
+
+  @override
+  String get productPriceValidTo => 'Valid To';
+
+  @override
+  String get productWarehouse => 'Warehouse';
+
+  @override
+  String get productStock => 'Stock';
+
+  @override
+  String get productQuantity => 'Total Quantity';
+
+  @override
+  String get productReserved => 'Reserved';
+
+  @override
+  String get productAvailable => 'Available';
+
+  @override
+  String get productUnit => 'Unit';
+
+  @override
+  String get productWeight => 'Weight';
+
+  @override
+  String get productCapacity => 'Capacity';
+
+  @override
+  String get productBrand => 'Brand';
+
+  @override
+  String get productProject => 'Project Code';
+
+  @override
+  String get copiedToClipboard => 'Copied to clipboard';
+
+  @override
+  String get productInfoCopied => 'Product information copied';
 }

@@ -25,6 +25,7 @@ import 'package:gloria_marketing_flutter/src/core/services/local_uuid_service.da
 import 'package:gloria_marketing_flutter/src/core/services/startup_access_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/startup_access_bloc.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
@@ -221,6 +222,13 @@ Future<void> setupServiceLocator() async {
       orderDraftService: sl<OrderDraftService>(),
       prefs: sl<SharedPreferencesService>(),
       locationService: sl<LocationService>(),
+    ));
+  }
+
+  // Product Image Service - caching and size-aware URL selection
+  if (!sl.isRegistered<ProductImageService>()) {
+    sl.registerLazySingleton<ProductImageService>(() => ProductImageService(
+      dbService: sl<ApiDatabaseService>(),
     ));
   }
 

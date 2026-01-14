@@ -26,6 +26,7 @@ import 'package:gloria_marketing_flutter/src/core/widgets/access_blocked_page.da
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/startup_access_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart' show sl;
+import 'package:gloria_marketing_flutter/src/features/faq/presentation/pages/faq_page.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -54,6 +55,7 @@ class AppRouter {
   static const String settingsRoute = '/settings';
   static const String ordersRoute = '/orders';
   static const String dbViewRoute = '/db-view';
+  static const String faqRoute = '/faq';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -160,6 +162,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const OrdersPage());
       case dbViewRoute:
         return MaterialPageRoute(builder: (_) => const DbViewPage());
+      case faqRoute:
+        return MaterialPageRoute(builder: (_) => const FaqPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

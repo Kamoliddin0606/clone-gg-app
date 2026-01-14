@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -4389,224 +4390,152 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Map component with marker rotation support
-          Container(
-            height: 200,
-            margin: const EdgeInsets.only(bottom: 16),
-            child: _locationPermissionGranted
-                ? _buildMapWidget(
-                    _getValidLatLng(
-                      widget.tradingPoint.latitude,
-                      widget.tradingPoint.longitude,
-                      widget.tradingPoint.name,
-                    ),
-                    widget.tradingPoint.name,
-                    widget.tradingPoint.id,
-                  )
-                : Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.location_off,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          AppLocalizations.of(
-                                context,
-                              )?.locationPermissionDenied ??
-                              'Joylashuv ruxsati berilmagan',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
+          // Compact Map Preview with modern card design
+          _CompactMapCard(
+            locationPermissionGranted: _locationPermissionGranted,
+            buildMapWidget: () => _buildMapWidget(
+              _getValidLatLng(
+                widget.tradingPoint.latitude,
+                widget.tradingPoint.longitude,
+                widget.tradingPoint.name,
+              ),
+              widget.tradingPoint.name,
+              widget.tradingPoint.id,
+            ),
           ),
+          const SizedBox(height: 16),
 
+          // Client Name Header with modern typography
           Text(
             widget.tradingPoint.name,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 20),
 
-          // Address
-          Row(
+          // Business Information Section (Collapsible)
+          _ModernCollapsibleSection(
+            title: l10n.organization,
+            icon: Icons.business_outlined,
+            initiallyExpanded: true,
             children: [
-              const Icon(Icons.place_outlined, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  widget.tradingPoint.address,
-                  style: theme.textTheme.bodyMedium,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
+              if (widget.tradingPoint.inn.isNotEmpty)
+                _ModernInfoTile(
+                  icon: Icons.badge_outlined,
+                  label: l10n.inn,
+                  value: widget.tradingPoint.inn,
+                  onCopy: () => _copyToClipboard(context, widget.tradingPoint.inn),
                 ),
-              ),
+              if (widget.tradingPoint.tradePointType.isNotEmpty)
+                _ModernInfoTile(
+                  icon: Icons.storefront_outlined,
+                  label: l10n.tradePointType,
+                  value: widget.tradingPoint.tradePointType,
+                ),
+              if (widget.tradingPoint.ownerName.isNotEmpty)
+                _ModernInfoTile(
+                  icon: Icons.person_outlined,
+                  label: l10n.ownerName,
+                  value: widget.tradingPoint.ownerName,
+                ),
+              if (widget.tradingPoint.signboard.isNotEmpty)
+                _ModernInfoTile(
+                  icon: Icons.signpost_outlined,
+                  label: l10n.signboard,
+                  value: widget.tradingPoint.signboard,
+                ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
 
-          // INN
-          Row(
+          // Contact Information Section (Collapsible)
+          _ModernCollapsibleSection(
+            title: l10n.contactPerson,
+            icon: Icons.contacts_outlined,
+            initiallyExpanded: true,
             children: [
-              const Icon(Icons.badge_outlined, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${AppLocalizations.of(context)?.innLabel ?? 'INN'}: ${widget.tradingPoint.inn}',
-                ),
+              _ModernInfoTile(
+                icon: Icons.person_outline,
+                label: l10n.contactPerson,
+                value: widget.tradingPoint.contactPerson,
               ),
-            ],
-          ),
-          const SizedBox(height: 6),
-
-          // Owner Name
-          if (widget.tradingPoint.ownerName.isNotEmpty)
-            Row(
-              children: [
-                const Icon(Icons.person, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${AppLocalizations.of(context)?.ownerName ?? 'Egasi'}: ${widget.tradingPoint.ownerName}',
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(height: 6),
-
-          // Contact Person
-          Row(
-            children: [
-              const Icon(Icons.person_outline, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${AppLocalizations.of(context)?.contactPerson ?? 'Aloqa'}: ${widget.tradingPoint.contactPerson}',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-
-          // Phone
-          Row(
-            children: [
-              const Icon(Icons.phone_outlined, size: 18),
-              const SizedBox(width: 8),
-              InkWell(
+              _ModernInfoTile(
+                icon: Icons.phone_outlined,
+                label: l10n.phone,
+                value: widget.tradingPoint.phone,
+                isClickable: true,
                 onTap: widget.onCall,
-                borderRadius: BorderRadius.circular(6),
-                child: Text(
-                  widget.tradingPoint.phone,
-                  style: TextStyle(
-                    color: cs.primary,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
+                valueColor: cs.primary,
               ),
+              if (widget.tradingPoint.responsiblePerson.isNotEmpty)
+                _ModernInfoTile(
+                  icon: Icons.account_circle_outlined,
+                  label: l10n.responsiblePerson,
+                  value: widget.tradingPoint.responsiblePerson,
+                ),
+              if (widget.tradingPoint.responsiblePersonPhone.isNotEmpty)
+                _ModernInfoTile(
+                  icon: Icons.phone_android_outlined,
+                  label: l10n.responsiblePersonPhone,
+                  value: widget.tradingPoint.responsiblePersonPhone,
+                  isClickable: true,
+                  onTap: () => _makePhoneCall(context, widget.tradingPoint.responsiblePersonPhone),
+                  valueColor: cs.primary,
+                ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
 
-          // Responsible Person
-          if (widget.tradingPoint.responsiblePerson.isNotEmpty)
-            Row(
-              children: [
-                const Icon(Icons.account_circle_outlined, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Mas\'ul: ${widget.tradingPoint.responsiblePerson}',
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(height: 6),
-
-          // Responsible Person Phone
-          if (widget.tradingPoint.responsiblePersonPhone.isNotEmpty)
-            Row(
-              children: [
-                const Icon(Icons.phone_android_outlined, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Mas\'ul tel: ${widget.tradingPoint.responsiblePersonPhone}',
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(height: 6),
-
-          // Trade Point Type
-          if (widget.tradingPoint.tradePointType.isNotEmpty)
-            Row(
-              children: [
-                const Icon(Icons.storefront_outlined, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${AppLocalizations.of(context)?.tradePointType ?? 'Turi'}: ${widget.tradingPoint.tradePointType}',
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(height: 6),
-
-          // Region and District
-          Row(
+          // Location Details Section (Collapsible)
+          _ModernCollapsibleSection(
+            title: l10n.location,
+            icon: Icons.location_on_outlined,
+            initiallyExpanded: false,
             children: [
-              const Icon(Icons.location_city_outlined, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${widget.tradingPoint.region}, ${widget.tradingPoint.district}',
-                ),
+              _ModernInfoTile(
+                icon: Icons.place_outlined,
+                label: l10n.address,
+                value: widget.tradingPoint.address,
+                maxLines: 3,
+                onCopy: () => _copyToClipboard(context, widget.tradingPoint.address),
               ),
+              _ModernInfoTile(
+                icon: Icons.location_city_outlined,
+                label: l10n.region,
+                value: widget.tradingPoint.region,
+              ),
+              _ModernInfoTile(
+                icon: Icons.map_outlined,
+                label: l10n.district,
+                value: widget.tradingPoint.district,
+              ),
+              if (widget.tradingPoint.referencePoint.isNotEmpty)
+                _ModernInfoTile(
+                  icon: Icons.gps_fixed_outlined,
+                  label: l10n.referencePoint,
+                  value: widget.tradingPoint.referencePoint,
+                  maxLines: 2,
+                ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
 
-          // Signboard
-          if (widget.tradingPoint.signboard.isNotEmpty)
-            Row(
-              children: [
-                const Icon(Icons.signpost_outlined, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${AppLocalizations.of(context)?.signboard ?? 'Belgi'}: ${widget.tradingPoint.signboard}',
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(height: 6),
-
-          // Reference Point
-          if (widget.tradingPoint.referencePoint.isNotEmpty)
-            Row(
-              children: [
-                const Icon(Icons.gps_fixed_outlined, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Mo\'ljal: ${widget.tradingPoint.referencePoint}',
-                  ),
-                ),
-              ],
+          // Client Images Gallery (if available)
+          if (_clientImages.isNotEmpty)
+            _ClientImagesGallerySection(
+              clientImages: _clientImages,
+              tradingPoint: widget.tradingPoint,
             ),
         ],
       ),
@@ -6037,5 +5966,472 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
         ],
       ),
     );
+  }
+}
+
+// =============================================================================
+// MODERN REUSABLE UI COMPONENTS FOR CLIENT DETAILS
+// =============================================================================
+
+/// Modern collapsible section with smooth animations and Material 3 design
+/// Used to organize information into logical, expandable groups
+class _ModernCollapsibleSection extends StatefulWidget {
+  final String title;
+  final IconData icon;
+  final List<Widget> children;
+  final bool initiallyExpanded;
+
+  const _ModernCollapsibleSection({
+    required this.title,
+    required this.icon,
+    required this.children,
+    this.initiallyExpanded = false,
+  });
+
+  @override
+  State<_ModernCollapsibleSection> createState() => _ModernCollapsibleSectionState();
+}
+
+class _ModernCollapsibleSectionState extends State<_ModernCollapsibleSection>
+    with SingleTickerProviderStateMixin {
+  late bool _isExpanded;
+  late AnimationController _animationController;
+  late Animation<double> _iconRotation;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _iconRotation = Tween<double>(begin: 0.0, end: 0.5).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    if (_isExpanded) {
+      _animationController.value = 1.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: _toggleExpanded,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(widget.icon, size: 22, color: cs.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ),
+                  RotationTransition(
+                    turns: _iconRotation,
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: widget.children,
+              ),
+            ),
+            crossFadeState: _isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Modern info tile with icon, label, value, and optional actions
+/// Supports copy to clipboard and clickable values (e.g., phone numbers)
+class _ModernInfoTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool isClickable;
+  final VoidCallback? onTap;
+  final VoidCallback? onCopy;
+  final Color? valueColor;
+  final int maxLines;
+
+  const _ModernInfoTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.isClickable = false,
+    this.onTap,
+    this.onCopy,
+    this.valueColor,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: cs.onSurfaceVariant),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                isClickable
+                    ? InkWell(
+                        onTap: onTap,
+                        borderRadius: BorderRadius.circular(4),
+                        child: Text(
+                          value,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: valueColor ?? cs.primary,
+                            decoration: TextDecoration.underline,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: maxLines,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )
+                    : Text(
+                        value,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: valueColor ?? cs.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: maxLines,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+              ],
+            ),
+          ),
+          if (onCopy != null)
+            IconButton(
+              icon: Icon(Icons.copy_outlined, size: 18, color: cs.onSurfaceVariant),
+              onPressed: onCopy,
+              tooltip: 'Copy',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact map card with modern design and rounded corners
+class _CompactMapCard extends StatelessWidget {
+  final bool locationPermissionGranted;
+  final Widget Function() buildMapWidget;
+
+  const _CompactMapCard({
+    required this.locationPermissionGranted,
+    required this.buildMapWidget,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: locationPermissionGranted
+          ? buildMapWidget()
+          : Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.location_off_outlined,
+                    size: 48,
+                    color: cs.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    AppLocalizations.of(context)?.locationPermissionDenied ??
+                        'Location permission denied',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+}
+
+/// Client images gallery section with horizontal scrollable thumbnails
+class _ClientImagesGallerySection extends StatelessWidget {
+  final List<ClientImage> clientImages;
+  final TradingPoint tradingPoint;
+
+  const _ClientImagesGallerySection({
+    required this.clientImages,
+    required this.tradingPoint,
+  });
+
+  void _openFullScreenViewer(BuildContext context, int initialIndex) {
+    final largeImageUrls = clientImages
+        .map((img) => _getLargeImageUrl(img))
+        .whereType<String>()
+        .where((u) => u.trim().isNotEmpty)
+        .toList();
+
+    if (largeImageUrls.isEmpty) return;
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black87,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return _FullScreenImageViewer(
+            imageUrls: largeImageUrls,
+            initialIndex: initialIndex,
+            clientName: tradingPoint.name,
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.photo_library_outlined, size: 22, color: cs.primary),
+                const SizedBox(width: 12),
+                Text(
+                  AppLocalizations.of(context)?.manageClientImages ?? 'Client Images',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${clientImages.length}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: clientImages.length,
+                itemBuilder: (context, index) {
+                  final image = clientImages[index];
+                  final imageUrl = _getMediumImageUrl(image);
+                  final provider = _clientImageProvider(imageUrl);
+
+                  return Padding(
+                    padding: EdgeInsets.only(right: index < clientImages.length - 1 ? 8 : 0),
+                    child: InkWell(
+                      onTap: () => _openFullScreenViewer(context, index),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 100,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: cs.outlineVariant),
+                          image: provider != null
+                              ? DecorationImage(
+                                  image: provider,
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: Stack(
+                          children: [
+                            if (provider == null)
+                              Center(
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ),
+                            if (image.isMain)
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'Main',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+/// Copy text to clipboard with user feedback
+void _copyToClipboard(BuildContext context, String text) {
+  if (text.isEmpty) return;
+  
+  Clipboard.setData(ClipboardData(text: text));
+  
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Copied'),
+      duration: Duration(seconds: 2),
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
+
+/// Make phone call with confirmation dialog
+Future<void> _makePhoneCall(BuildContext context, String rawPhone) async {
+  if (rawPhone.isEmpty) return;
+
+  final phone = rawPhone.replaceAll(RegExp(r'[^\d+]'), '');
+  final uri = Uri(scheme: 'tel', path: phone);
+  final l10n = AppLocalizations.of(context)!;
+
+  final bool? confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.callClientTitle),
+      content: Text(l10n.callClientConfirmation(rawPhone)),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: Text(l10n.callClientTitle),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed == true && context.mounted) {
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.dialerNotAvailable)),
+        );
+      }
+    }
   }
 }

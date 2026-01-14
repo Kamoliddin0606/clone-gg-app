@@ -10,6 +10,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/formatters.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/create_order_page.dart';
+import 'package:gloria_marketing_flutter/src/core/widgets/product_image_widget.dart';
+import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
 
 // Local copy of matchesSearch function for transliteration search
 bool matchesSearch(String text, String query) {
@@ -1274,26 +1276,16 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
               Expanded(
                 child: Stack(
                   children: [
-                    // Background image
-                    Container(
+                    // Background image - uses ProductImageWidget for dynamic loading
+                    SizedBox(
                       width: double.infinity,
                       height: double.infinity,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
+                      child: ProductImageWidget(
+                        productCode: product.productCode,
+                        size: ProductImageSize.medium,
+                        fit: BoxFit.cover,
                         borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(
-                          'assets/images/pruduct/default_product.png',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Icon(
-                            Icons.image_outlined,
-                            size: 40,
-                            color: theme.colorScheme.onSurfaceVariant
-                                .withOpacity(0.5),
-                          ),
-                        ),
+                        heroTag: 'product_selection_grid_${product.productCode}',
                       ),
                     ),
                     // Overlaid text at bottom
@@ -1457,18 +1449,12 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background image covering the entire container
-        Image.asset(
-          'assets/images/pruduct/default_product.png',
+        // Background image - uses ProductImageWidget for dynamic loading
+        ProductImageWidget(
+          productCode: product.productCode,
+          size: ProductImageSize.large,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            color: theme.colorScheme.surfaceContainerHighest,
-            child: Icon(
-              Icons.image_outlined,
-              size: 80,
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
-            ),
-          ),
+          heroTag: 'product_selection_large_${product.productCode}',
         ),
         // Gradient overlay for better text readability
         Container(

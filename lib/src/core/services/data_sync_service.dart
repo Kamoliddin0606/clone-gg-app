@@ -2158,6 +2158,18 @@ class DataSyncService {
     }
   }
 
+  /// Sync product images from server with proper code_1c matching
+  /// 
+  /// This method fetches images from the nomenklatura-image API endpoint
+  /// and only saves images where the API's code_1c matches an existing
+  /// product's code in the local database.
+  /// 
+  /// Algorithm:
+  /// 1. Fetch all local product codes (efficient single query)
+  /// 2. Fetch all images from server API
+  /// 3. Extract code_1c from API response (nomenklatura_code field)
+  /// 4. Filter images - only keep those matching local product codes
+  /// 5. Upsert matched images (update existing, insert new)
   Future<List<ProductImage>> _syncProductImagesFromServer() async {
     try {
       // Get REST API service and token
@@ -2172,7 +2184,32 @@ class DataSyncService {
         return [];
       }
 
-      // Fetch all product images from server
+      // Step 1: Get all local product codes for O(1) matching
+      final localProductCodes = await _dbService.getAllProductCodes();
+      final productCodeSet = localProductCodes.toSet();
+
+      if (productCodeSet.isEmpty) {
+        if (kDebugMode) {
+          print('DataSyncService: No local products found, skipping image sync');
+        }
+        return [];
+      }
+
+      if (kDebugMode) {
+        print('DataSyncService: Found ${productCodeSet.length} local product codes for matching');
+      }
+
+      // Step 1.5: Fetch nomenklatura ID to code_1c mapping
+      // This is needed because API returns nomenklatura as integer ID, not code_1c
+      final nomenklaturaIdToCode = await restApiService.getNomenklaturaIdToCodeMapping(
+        authToken: token,
+      );
+      
+      if (kDebugMode) {
+        print('DataSyncService: Got ${nomenklaturaIdToCode.length} nomenklatura ID->code mappings');
+      }
+
+      // Step 2: Fetch all product images from server
       final rawImages = await restApiService.getAllProductImages(
         authToken: token,
         onProgress: (fetched, total) {
@@ -2189,39 +2226,100 @@ class DataSyncService {
         return [];
       }
 
-      // Convert to ProductImage models
-      final images = <ProductImage>[];
+      if (kDebugMode) {
+        print('DataSyncService: Received ${rawImages.length} images from server');
+      }
+
+      // Step 3 & 4: Extract code_1c and filter by matching local products
+      final matchedImages = <ProductImage>[];
+      int skippedCount = 0;
+      final unmatchedCodes = <String>{};
+
+      // Debug: print first 3 raw image responses to see structure
+      if (kDebugMode && rawImages.isNotEmpty) {
+        print('DataSyncService: Sample raw image response keys: ${rawImages.first.keys.toList()}');
+        print('DataSyncService: Sample raw image response: ${rawImages.first}');
+        print('DataSyncService: Sample local product codes: ${productCodeSet.take(5).toList()}');
+      }
+
       for (final raw in rawImages) {
-        // Extract product code from nomenklatura field
-        final nomenklaturaId = raw['nomenklatura'];
-        String productCode = '';
+        // Extract product code from API response
+        // Priority: 
+        // 1. nomenklatura_code (direct code_1c field)
+        // 2. code_1c (alternative field name)
+        // 3. nomenklatura as integer ID -> lookup in mapping
+        // 4. nomenklatura as string (fallback)
+        String? code1c;
         
-        // Get product code - it might be in the response or we need to look it up
         if (raw['nomenklatura_code'] != null) {
-          productCode = raw['nomenklatura_code'].toString();
-        } else if (nomenklaturaId != null) {
-          // Use nomenklatura ID as fallback - the API might return numeric ID
-          productCode = nomenklaturaId.toString();
+          // Direct code_1c field from API
+          code1c = raw['nomenklatura_code'].toString().trim();
+        } else if (raw['code_1c'] != null) {
+          // Alternative field name
+          code1c = raw['code_1c'].toString().trim();
+        } else if (raw['nomenklatura'] != null) {
+          final nomenklatura = raw['nomenklatura'];
+          if (nomenklatura is int) {
+            // Numeric ID - lookup code_1c from mapping
+            code1c = nomenklaturaIdToCode[nomenklatura];
+            if (kDebugMode && code1c != null) {
+              print('DataSyncService: Mapped nomenklatura ID $nomenklatura -> code_1c: $code1c');
+            }
+          } else if (nomenklatura is String) {
+            // Try to parse as int first for ID lookup
+            final parsedId = int.tryParse(nomenklatura);
+            if (parsedId != null && nomenklaturaIdToCode.containsKey(parsedId)) {
+              code1c = nomenklaturaIdToCode[parsedId];
+            } else {
+              // Use as-is if it's already a code
+              code1c = nomenklatura.trim();
+            }
+          }
         }
 
-        if (productCode.isNotEmpty) {
-          images.add(ProductImage.fromApiResponse(raw, productCode));
+        // Skip if no valid code found
+        if (code1c == null || code1c.isEmpty) {
+          skippedCount++;
+          continue;
         }
+
+        // Only save if product exists in local database
+        if (productCodeSet.contains(code1c)) {
+          matchedImages.add(ProductImage.fromApiResponse(raw, code1c));
+        } else {
+          skippedCount++;
+          if (unmatchedCodes.length < 5) {
+            unmatchedCodes.add(code1c);
+          }
+        }
+      }
+      
+      if (kDebugMode && unmatchedCodes.isNotEmpty) {
+        print('DataSyncService: Sample unmatched codes from API: $unmatchedCodes');
       }
 
       if (kDebugMode) {
-        print('DataSyncService: Saving ${images.length} product images to database');
+        print('DataSyncService: Matched ${matchedImages.length} images, skipped $skippedCount (no matching product)');
       }
 
-      // Clear existing and save new images
-      await _dbService.clearProductImages();
-      await _dbService.saveProductImages(images);
+      if (matchedImages.isEmpty) {
+        if (kDebugMode) {
+          print('DataSyncService: No matching product images to save');
+        }
+        return [];
+      }
+
+      // Step 5: Upsert matched images (smart update/insert)
+      final upsertedCount = await _dbService.upsertProductImages(
+        matchedImages,
+        validProductCodes: productCodeSet,
+      );
 
       if (kDebugMode) {
-        print('DataSyncService: Product images sync completed: ${images.length} images');
+        print('DataSyncService: Product images sync completed: $upsertedCount images upserted');
       }
 
-      return images;
+      return matchedImages;
     } catch (e) {
       if (kDebugMode) {
         print('DataSyncService: Error fetching product images from server: $e');

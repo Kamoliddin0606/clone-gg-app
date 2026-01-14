@@ -12,6 +12,9 @@ import '../../data/models/product_with_price.dart';
 import '../../data/models/user_warehouse.dart';
 import '../../data/models/product_brand.dart';
 import '../../data/models/product_series.dart';
+import '../../../../core/widgets/product_image_widget.dart';
+import '../../../../core/services/product_image_service.dart';
+import 'product_detail_page.dart';
 
 enum _ViewMode { list, grid }
 
@@ -1136,6 +1139,17 @@ class ProductCard extends StatelessWidget {
   final ProductWithPrice product;
   const ProductCard({super.key, required this.product});
 
+  void _openProductDetail(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProductDetailPage(
+          product: product,
+          heroTag: 'product_list_${product.productCode}',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1145,13 +1159,35 @@ class ProductCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: cs.surface,
-      child: Padding(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _openProductDetail(context),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Product image thumbnail
+                Hero(
+                  tag: 'product_list_${product.productCode}',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 72,
+                      height: 72,
+                      child: ProductImageWidget(
+                        productCode: product.productCode,
+                        size: ProductImageSize.small,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1161,7 +1197,7 @@ class ProductCard extends StatelessWidget {
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
-                        maxLines: 4,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
@@ -1265,6 +1301,7 @@ class ProductCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 }
@@ -1272,6 +1309,17 @@ class ProductCard extends StatelessWidget {
 class ProductGridTile extends StatelessWidget {
   final ProductWithPrice product;
   const ProductGridTile({super.key, required this.product});
+
+  void _openProductDetail(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProductDetailPage(
+          product: product,
+          heroTag: 'product_grid_${product.productCode}',
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1285,19 +1333,24 @@ class ProductGridTile extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {}, // Add tap functionality if needed
+        onTap: () => _openProductDetail(context),
         borderRadius: BorderRadius.circular(16),
         splashColor: cs.primary.withValues(alpha: 0.10),
         highlightColor: cs.primary.withValues(alpha: 0.10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // TOP: product icon
+            // TOP: product image
             SizedBox(
               height: 120,
-              child: Container(
-                color: cs.primaryContainer,
-                child: const Center(child: Icon(Icons.inventory, size: 40)),
+              child: Hero(
+                tag: 'product_grid_${product.productCode}',
+                child: ProductImageWidget(
+                  productCode: product.productCode,
+                  size: ProductImageSize.medium,
+                  fit: BoxFit.cover,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                ),
               ),
             ),
             // BODY: details

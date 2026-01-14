@@ -2,32 +2,52 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:gloria_marketing_flutter/src/core/models/scanned_document_data.dart';
 
 /// Service for scanning organization certificates using Google Gemini AI
 /// Uses Gemini 2.0 Flash model for fast and efficient document processing
 class GeminiDocumentScannerService {
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-  // Using Gemini 2.0 Flash - stable model with best price-performance for image analysis
-  static const String _model = 'gemini-2.0-flash';
-  static const int _maxRetries = 2;
-  static const Duration _timeout = Duration(seconds: 30);
+  
+  // Smart fallback system: Try models in priority order with 10s timeout each
+  // Only includes tested and working models (Jan 2026)
+  // Priority: Flash 2.5 > Flash 2.0 Exp > Flash 2.0
+  // Note: 10s timeout needed for large images (5-6MB) in production
+  static const List<String> _modelFallbackChain = [
+    'gemini-2.5-flash',          // v2.5: Latest working - 1.2s response time
+    'gemini-2.0-flash-exp',      // v2.0: Fastest - 1.0s response time
+    'gemini-2.0-flash',          // v2.0: Stable - 1.1s response time
+  ];
+  
+  static const Duration _timeout = Duration(seconds: 10); // 10s for large images in production
 
   final String _apiKey;
 
   GeminiDocumentScannerService({required String apiKey}) : _apiKey = apiKey;
 
   /// Scan organization certificate image and extract data
+  /// Uses smart fallback: tries models in priority order with 10s timeout each
+  /// Compresses image before sending to reduce size and improve speed
   /// Returns ScannedDocumentData with extracted fields
-  /// Throws GeminiScanException on errors
+  /// Throws GeminiScanException if all models fail
   Future<ScannedDocumentData> scanDocument(Uint8List imageBytes) async {
     if (imageBytes.isEmpty) {
       throw GeminiScanException('IMAGE_EMPTY', message: 'Image data is empty');
     }
 
-    // Convert image to base64
-    final base64Image = base64Encode(imageBytes);
-    final mimeType = _detectMimeType(imageBytes);
+    // Compress image before sending to API (reduces 5MB to ~500KB)
+    final compressedBytes = await _compressImage(imageBytes);
+    
+    if (kDebugMode) {
+      print('GeminiScanner: Original size: ${imageBytes.length} bytes (${(imageBytes.length / 1024 / 1024).toStringAsFixed(2)} MB)');
+      print('GeminiScanner: Compressed size: ${compressedBytes.length} bytes (${(compressedBytes.length / 1024 / 1024).toStringAsFixed(2)} MB)');
+      print('GeminiScanner: Compression ratio: ${((1 - compressedBytes.length / imageBytes.length) * 100).toStringAsFixed(1)}%');
+    }
+
+    // Convert compressed image to base64
+    final base64Image = base64Encode(compressedBytes);
+    final mimeType = _detectMimeType(compressedBytes);
 
     // Build the prompt for document extraction
     final prompt = _buildExtractionPrompt();
@@ -62,18 +82,48 @@ class GeminiDocumentScannerService {
       ],
     };
 
-    // Make API request with retry logic
-    for (int attempt = 0; attempt <= _maxRetries; attempt++) {
+    // Try each model in fallback chain with 15s timeout
+    final errors = <String>[];
+    
+    for (int modelIndex = 0; modelIndex < _modelFallbackChain.length; modelIndex++) {
+      final model = _modelFallbackChain[modelIndex];
+      
+      if (kDebugMode) {
+        print('GeminiScanner: Trying model $model (${modelIndex + 1}/${_modelFallbackChain.length})');
+      }
+      
       try {
-        final response = await _makeRequest(requestBody);
-        return _parseResponse(response);
-      } on GeminiScanException {
-        if (attempt == _maxRetries) rethrow;
-        await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+        final response = await _makeRequest(requestBody, model);
+        final result = _parseResponse(response);
+        
+        if (kDebugMode) {
+          print('GeminiScanner: ✅ Success with model $model');
+        }
+        
+        return result;
+      } catch (e) {
+        final errorMsg = '$model failed: $e';
+        errors.add(errorMsg);
+        
+        if (kDebugMode) {
+          print('GeminiScanner: ❌ $errorMsg');
+        }
+        
+        // If not the last model, continue to next
+        if (modelIndex < _modelFallbackChain.length - 1) {
+          if (kDebugMode) {
+            print('GeminiScanner: Falling back to next model...');
+          }
+          continue;
+        }
       }
     }
 
-    throw GeminiScanException('MAX_RETRIES', message: 'Maximum retries exceeded');
+    // All models failed
+    throw GeminiScanException(
+      'ALL_MODELS_FAILED',
+      message: 'All ${_modelFallbackChain.length} models failed. Errors: ${errors.join("; ")}',
+    );
   }
 
   /// Build the extraction prompt for Gemini
@@ -103,9 +153,9 @@ Important rules:
 Return JSON object with extracted fields:''';
   }
 
-  /// Make HTTP request to Gemini API
-  Future<Map<String, dynamic>> _makeRequest(Map<String, dynamic> body) async {
-    final url = Uri.parse('$_baseUrl/models/$_model:generateContent?key=$_apiKey');
+  /// Make HTTP request to Gemini API with specified model
+  Future<Map<String, dynamic>> _makeRequest(Map<String, dynamic> body, String model) async {
+    final url = Uri.parse('$_baseUrl/models/$model:generateContent?key=$_apiKey');
 
     if (kDebugMode) {
       print('GeminiScanner: Making request to Gemini API');
@@ -222,6 +272,37 @@ Return JSON object with extracted fields:''';
       return json.decode(jsonStr) as Map<String, dynamic>;
     } catch (e) {
       throw GeminiScanException('JSON_PARSE_ERROR', message: 'Invalid JSON in response');
+    }
+  }
+
+  /// Compress image to reduce size while maintaining text readability
+  /// Reduces 5-6MB images to ~500KB for faster API calls
+  /// Uses max 1920px dimension and 85% quality for optimal balance
+  Future<Uint8List> _compressImage(Uint8List imageBytes) async {
+    try {
+      // Compress image with optimal settings for document scanning
+      final compressedBytes = await FlutterImageCompress.compressWithList(
+        imageBytes,
+        minWidth: 1920,        // Max width for good text readability
+        minHeight: 1920,       // Max height for good text readability
+        quality: 85,           // 85% quality - good balance for text
+        format: CompressFormat.jpeg, // JPEG for smaller size
+      );
+
+      // If compression failed or made it bigger, return original
+      if (compressedBytes.isEmpty || compressedBytes.length >= imageBytes.length) {
+        if (kDebugMode) {
+          print('GeminiScanner: Compression skipped (result larger or empty)');
+        }
+        return imageBytes;
+      }
+
+      return compressedBytes;
+    } catch (e) {
+      if (kDebugMode) {
+        print('GeminiScanner: Compression error: $e, using original image');
+      }
+      return imageBytes; // Return original on error
     }
   }
 

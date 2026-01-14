@@ -7427,6 +7427,16 @@ class ApiDatabaseService {
   Future<ProductImage?> getMainProductImage(String productCode) async {
     try {
       final db = await database;
+      
+      if (kDebugMode) {
+        // Debug: Check total images and sample product codes
+        final countResult = await db.rawQuery('SELECT COUNT(*) as cnt FROM product_images');
+        final sampleCodes = await db.rawQuery('SELECT DISTINCT product_code FROM product_images LIMIT 5');
+        print('ApiDatabaseService: Total images in DB: ${countResult.first['cnt']}');
+        print('ApiDatabaseService: Sample product_codes in product_images: ${sampleCodes.map((e) => e['product_code']).toList()}');
+        print('ApiDatabaseService: Looking for productCode: $productCode');
+      }
+      
       final results = await db.query(
         'product_images',
         where: 'product_code = ? AND is_main = 1',
@@ -7443,6 +7453,9 @@ class ApiDatabaseService {
           orderBy: 'created_at DESC',
           limit: 1,
         );
+        if (kDebugMode) {
+          print('ApiDatabaseService: No main image, fallback query returned ${anyResults.length} results');
+        }
         if (anyResults.isEmpty) return null;
         return ProductImage.fromMap(anyResults.first);
       }
@@ -7538,6 +7551,264 @@ class ApiDatabaseService {
         print('ApiDatabaseService: Error deleting product images: $e');
       }
       rethrow;
+    }
+  }
+
+  // =========================================================================
+  // Product Code Lookup Methods (for image matching)
+  // =========================================================================
+
+  /// Get all product codes from the products table
+  /// 
+  /// Returns a list of all product codes for efficient O(1) lookup when 
+  /// matching API images with local products. This is used during sync
+  /// to verify that a product exists before saving its image.
+  Future<List<String>> getAllProductCodes() async {
+    try {
+      final db = await database;
+      final results = await db.query(
+        'products',
+        columns: ['code'],
+      );
+
+      final codes = results
+          .map((row) => row['code'] as String)
+          .where((code) => code.isNotEmpty)
+          .toList();
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Retrieved ${codes.length} product codes');
+      }
+
+      return codes;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting all product codes: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Check if a product exists by its code
+  /// 
+  /// Returns true if a product with the given code exists in the database.
+  Future<bool> productExists(String productCode) async {
+    if (productCode.isEmpty) return false;
+
+    try {
+      final db = await database;
+      final result = await db.query(
+        'products',
+        columns: ['code'],
+        where: 'code = ?',
+        whereArgs: [productCode],
+        limit: 1,
+      );
+      return result.isNotEmpty;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error checking product existence: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Upsert product images with smart matching
+  /// 
+  /// Updates existing images (by server_id) or inserts new ones.
+  /// Only saves images for products that exist in the local database.
+  /// Uses batch operations for optimal performance.
+  /// 
+  /// Parameters:
+  /// - [images] - List of ProductImage objects to upsert
+  /// - [validProductCodes] - Optional set of valid product codes for filtering
+  /// 
+  /// Returns the number of images successfully upserted.
+  Future<int> upsertProductImages(
+    List<ProductImage> images, {
+    Set<String>? validProductCodes,
+  }) async {
+    if (images.isEmpty) return 0;
+
+    try {
+      final db = await database;
+      final now = DateTime.now().toIso8601String();
+      int upsertedCount = 0;
+
+      // Filter images to only those with valid product codes if provided
+      final imagesToSave = validProductCodes != null
+          ? images.where((img) => validProductCodes.contains(img.productCode)).toList()
+          : images;
+
+      if (imagesToSave.isEmpty) {
+        if (kDebugMode) {
+          print('ApiDatabaseService: No valid images to upsert after filtering');
+        }
+        return 0;
+      }
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Upserting ${imagesToSave.length} product images');
+      }
+
+      await db.transaction((txn) async {
+        for (final image in imagesToSave) {
+          final map = image.toMap();
+          map.remove('id'); // Remove local id for upsert
+          map['updated_at'] = now; // Update timestamp
+
+          // Check if image with same server_id exists
+          if (image.serverId != null) {
+            final existing = await txn.query(
+              'product_images',
+              where: 'server_id = ?',
+              whereArgs: [image.serverId],
+              limit: 1,
+            );
+
+            if (existing.isNotEmpty) {
+              // Update existing record
+              await txn.update(
+                'product_images',
+                map,
+                where: 'server_id = ?',
+                whereArgs: [image.serverId],
+              );
+            } else {
+              // Insert new record
+              map['created_at'] = now;
+              await txn.insert(
+                'product_images',
+                map,
+                conflictAlgorithm: ConflictAlgorithm.replace,
+              );
+            }
+          } else {
+            // No server_id, check by product_code and image_url
+            final existing = await txn.query(
+              'product_images',
+              where: 'product_code = ? AND image_url = ?',
+              whereArgs: [image.productCode, image.imageUrl],
+              limit: 1,
+            );
+
+            if (existing.isNotEmpty) {
+              await txn.update(
+                'product_images',
+                map,
+                where: 'product_code = ? AND image_url = ?',
+                whereArgs: [image.productCode, image.imageUrl],
+              );
+            } else {
+              map['created_at'] = now;
+              await txn.insert(
+                'product_images',
+                map,
+                conflictAlgorithm: ConflictAlgorithm.replace,
+              );
+            }
+          }
+          upsertedCount++;
+        }
+      });
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Successfully upserted $upsertedCount product images');
+      }
+
+      return upsertedCount;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error upserting product images: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Get product images by multiple product codes efficiently
+  /// 
+  /// Returns a map of product code to list of ProductImage objects.
+  /// Optimized for batch loading when displaying product lists.
+  Future<Map<String, List<ProductImage>>> getProductImagesBatch(
+    List<String> productCodes,
+  ) async {
+    if (productCodes.isEmpty) return {};
+
+    try {
+      final db = await database;
+      
+      // Build IN clause for efficiency
+      final placeholders = List.filled(productCodes.length, '?').join(',');
+      final results = await db.rawQuery(
+        'SELECT * FROM product_images WHERE product_code IN ($placeholders) ORDER BY is_main DESC, created_at DESC',
+        productCodes,
+      );
+
+      // Group results by product_code
+      final Map<String, List<ProductImage>> grouped = {};
+      for (final row in results) {
+        final image = ProductImage.fromMap(row);
+        grouped.putIfAbsent(image.productCode, () => []).add(image);
+      }
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Retrieved images for ${grouped.length} products');
+      }
+
+      return grouped;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting product images batch: $e');
+      }
+      return {};
+    }
+  }
+
+  /// Get main product images for multiple product codes efficiently
+  /// 
+  /// Returns a map of product code to main ProductImage.
+  /// Optimized for displaying product thumbnails in lists.
+  Future<Map<String, ProductImage>> getMainProductImagesBatch(
+    List<String> productCodes,
+  ) async {
+    if (productCodes.isEmpty) return {};
+
+    try {
+      final db = await database;
+      
+      // Build IN clause
+      final placeholders = List.filled(productCodes.length, '?').join(',');
+      
+      // Get all images for these products, ordered by is_main and created_at
+      final results = await db.rawQuery(
+        '''
+        SELECT * FROM product_images 
+        WHERE product_code IN ($placeholders) 
+        ORDER BY product_code, is_main DESC, created_at DESC
+        ''',
+        productCodes,
+      );
+
+      // Group by product_code and take first (main or most recent) for each
+      final Map<String, ProductImage> mainImages = {};
+      for (final row in results) {
+        final image = ProductImage.fromMap(row);
+        // Only add if not already present (first one is the main/most recent)
+        if (!mainImages.containsKey(image.productCode)) {
+          mainImages[image.productCode] = image;
+        }
+      }
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Retrieved main images for ${mainImages.length} products');
+      }
+
+      return mainImages;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting main product images batch: $e');
+      }
+      return {};
     }
   }
 }

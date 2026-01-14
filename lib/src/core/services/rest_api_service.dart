@@ -604,6 +604,72 @@ class RestApiService {
     }
   }
 
+  /// Fetch nomenklatura list to get ID to code_1c mapping
+  ///
+  /// This method fetches all nomenklatura items to create a mapping
+  /// from nomenklatura ID to code_1c, which is needed to match
+  /// product images with products.
+  ///
+  /// @param authToken The authentication token for API access
+  /// @return Future<Map<int, String>> Mapping of nomenklatura ID to code_1c
+  Future<Map<int, String>> getNomenklaturaIdToCodeMapping({
+    required String authToken,
+  }) async {
+    const String baseUrl = 'http://178.218.200.120:1596';
+    final endpoint = '$baseUrl/api/v1/nomenklatura/';
+    final mapping = <int, String>{};
+    int page = 1;
+    bool hasMore = true;
+
+    try {
+      while (hasMore) {
+        final response = await _dio.get(
+          endpoint,
+          options: Options(
+            headers: {'Authorization': 'Bearer $authToken'},
+          ),
+          queryParameters: {'page': page, 'page_size': 500},
+        );
+
+        final raw = response.data;
+        List<Map<String, dynamic>> pageResults = [];
+
+        if (raw is Map<String, dynamic>) {
+          final data = raw['results'] ?? raw['data'];
+          if (data is List) {
+            pageResults = List<Map<String, dynamic>>.from(data);
+          }
+          hasMore = raw['next'] != null;
+        } else if (raw is List) {
+          pageResults = List<Map<String, dynamic>>.from(raw);
+          hasMore = false;
+        }
+
+        for (final item in pageResults) {
+          final id = item['id'] as int?;
+          final code1c = item['code_1c'] as String?;
+          if (id != null && code1c != null && code1c.isNotEmpty) {
+            mapping[id] = code1c;
+          }
+        }
+
+        if (pageResults.isEmpty) hasMore = false;
+        page++;
+      }
+
+      if (kDebugMode) {
+        print('RestApiService: Fetched ${mapping.length} nomenklatura ID->code_1c mappings');
+      }
+
+      return mapping;
+    } catch (e) {
+      if (kDebugMode) {
+        print('RestApiService: Error fetching nomenklatura mapping: $e');
+      }
+      return mapping;
+    }
+  }
+
   /// Fetch all product images with pagination support
   ///
   /// This method fetches all pages of product images from the server.

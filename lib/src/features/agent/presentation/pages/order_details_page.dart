@@ -211,6 +211,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             ? vendorCode
             : codeProduct;
 
+        // Use price and price type from order_detail_products table (primary source)
+        // Fall back to order's price type if product doesn't have one
+        final productPriceType = product.priceTypeCode?.isNotEmpty == true
+            ? product.priceTypeCode!
+            : originalOrder.typePriceCode;
+        
         items.add(
           OrderItem(
             productName: product.nameProduct.trim().isNotEmpty
@@ -220,7 +226,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             article: article,
             quantity: product.amount.toDouble(),
             price: product.price,
-            priceType: originalOrder.typePriceCode,
+            priceType: productPriceType,
             lineTotal: product.total,
           ),
         );

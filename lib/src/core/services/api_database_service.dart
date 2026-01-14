@@ -54,7 +54,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 29, // Incremented to version 29 for product_images table
+      version: 30, // Incremented to version 30 for price_type fields in order_detail_products
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -1073,6 +1073,34 @@ class ApiDatabaseService {
 
       if (kDebugMode) {
         print('ApiDatabaseService: Created product_images table (version 29)');
+      }
+    }
+
+    // =========================================================================
+    // Version 30: Add price_type fields to order_detail_products table
+    // =========================================================================
+    if (oldVersion < 30) {
+      // Add price_type_code and price_type_name columns to order_detail_products
+      final columns = await db.rawQuery("PRAGMA table_info(order_detail_products)");
+      
+      final hasPriceTypeCode = columns.any((col) => col['name'] == 'price_type_code');
+      if (!hasPriceTypeCode) {
+        await db.execute('ALTER TABLE order_detail_products ADD COLUMN price_type_code TEXT');
+        if (kDebugMode) {
+          print('ApiDatabaseService: Added price_type_code column to order_detail_products table');
+        }
+      }
+
+      final hasPriceTypeName = columns.any((col) => col['name'] == 'price_type_name');
+      if (!hasPriceTypeName) {
+        await db.execute('ALTER TABLE order_detail_products ADD COLUMN price_type_name TEXT');
+        if (kDebugMode) {
+          print('ApiDatabaseService: Added price_type_name column to order_detail_products table');
+        }
+      }
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Added price_type fields to order_detail_products (version 30)');
       }
     }
   }
@@ -4473,8 +4501,27 @@ class ApiDatabaseService {
       return; // Nothing to save
     }
 
+    // Filter out orders with price code "00000000321" - these should not be saved
+    final filteredOrderDetails = orderDetails.where((od) {
+      if (od.codePrice == '00000000321') {
+        if (kDebugMode) {
+          print('ApiDatabaseService: Skipping order ${od.numOrder} with price code 00000000321');
+        }
+        return false;
+      }
+      return true;
+    }).toList();
+
+    // Return early if all orders were filtered out
+    if (filteredOrderDetails.isEmpty) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: All orders filtered out (price code 00000000321)');
+      }
+      return;
+    }
+
     // Validate each order detail
-    for (final orderDetail in orderDetails) {
+    for (final orderDetail in filteredOrderDetails) {
       if (orderDetail.numOrder.isEmpty) {
         throw ArgumentError('OrderDetail numOrder cannot be empty');
       }
@@ -4516,7 +4563,7 @@ class ApiDatabaseService {
     }
 
     // Validate foreign key references for all orders
-    final orderNumbers = orderDetails.map((od) => od.numOrder).toSet();
+    final orderNumbers = filteredOrderDetails.map((od) => od.numOrder).toSet();
     for (final numOrder in orderNumbers) {
       final orderExists = await db.query('orders', where: 'num_order = ?', whereArgs: [numOrder]);
       if (orderExists.isEmpty) {
@@ -4537,7 +4584,7 @@ class ApiDatabaseService {
 
         // Deduplicate order details by num_order to avoid UNIQUE constraint violations
         final uniqueOrderDetails = <String, OrderDetail>{};
-        for (final orderDetail in orderDetails) {
+        for (final orderDetail in filteredOrderDetails) {
           uniqueOrderDetails[orderDetail.numOrder] = orderDetail;
         }
 
@@ -4559,7 +4606,7 @@ class ApiDatabaseService {
             'updated_at': now,
           }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-          // Insert product rows
+          // Insert product rows with price type information
           for (final product in orderDetail.productRows) {
             batch.insert('order_detail_products', {
               'order_detail_id': orderDetailId,
@@ -4571,6 +4618,8 @@ class ApiDatabaseService {
               'discount_rate': product.discountRate,
               'weight': product.weight,
               'capacity': product.capacity,
+              'price_type_code': product.priceTypeCode,
+              'price_type_name': product.priceTypeName,
               'created_at': now,
               'updated_at': now,
             });
@@ -4646,7 +4695,7 @@ class ApiDatabaseService {
 
       final orderDetail = orderDetailsMap[orderNum]!;
 
-      // Add product if exists
+      // Add product if exists - load price type from order_detail_products table
       if (row['code_product'] != null) {
         final product = OrderDetailProduct(
           id: row['odp.id'] as int? ?? 0,
@@ -4658,6 +4707,8 @@ class ApiDatabaseService {
           discountRate: (row['discount_rate'] as num?)?.toDouble() ?? 0.0,
           weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
           capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
+          priceTypeCode: row['price_type_code'] as String?,
+          priceTypeName: row['price_type_name'] as String?,
         );
 
         if (!orderDetail.productRows.any((p) => p.codeProduct == product.codeProduct)) {
@@ -4763,6 +4814,8 @@ class ApiDatabaseService {
             'discount_rate': product.discountRate,
             'weight': product.weight,
             'capacity': product.capacity,
+            'price_type_code': product.priceTypeCode,
+            'price_type_name': product.priceTypeName,
             'created_at': now,
             'updated_at': now,
           }, conflictAlgorithm: ConflictAlgorithm.replace);
@@ -4886,6 +4939,8 @@ class ApiDatabaseService {
               'discount_rate': product.discountRate,
               'weight': product.weight,
               'capacity': product.capacity,
+              'price_type_code': product.priceTypeCode,
+              'price_type_name': product.priceTypeName,
               'created_at': now,
               'updated_at': now,
             });
@@ -6752,6 +6807,8 @@ class ApiDatabaseService {
             discount_rate REAL NOT NULL DEFAULT 0.0,
             weight REAL NOT NULL DEFAULT 0.0,
             capacity REAL NOT NULL DEFAULT 0.0,
+            price_type_code TEXT,
+            price_type_name TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             FOREIGN KEY (order_detail_id) REFERENCES order_details (id) ON DELETE CASCADE

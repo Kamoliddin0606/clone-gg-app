@@ -1654,21 +1654,34 @@ class SoapApiService {
       final orderType = int.tryParse(_getElementText(returnElement, 'm:OrderType') ?? '0') ?? 0;
       final codeOrg = _getElementText(returnElement, 'm:CodeOrg') ?? '';
 
-      // Parse product rows
+      // Parse product rows - only add products with non-zero price
       final productRows = <OrderDetailProduct>[];
       final productRowsElement = returnElement.findAllElements('m:ProductRows').firstOrNull;
       if (productRowsElement != null) {
         final rowsElements = productRowsElement.findAllElements('m:Rows');
         for (final row in rowsElements) {
+          final price = double.tryParse(_getElementText(row, 'm:Price') ?? '0') ?? 0.0;
+          // Skip products with negative price only - allow zero price products
+          if (price < 0) {
+            if (kDebugMode) {
+              print('SOAP API: Skipping product with negative price: ${_getElementText(row, 'm:CodeProduct')}');
+            }
+            continue;
+          }
+          // Get price type from product row or use order's price type as default
+          final productPriceTypeCode = _getElementText(row, 'm:CodePrice') ?? codePrice;
+          final productPriceTypeName = _getElementText(row, 'm:NamePrice') ?? '';
           final product = OrderDetailProduct(
             codeProduct: _getElementText(row, 'm:CodeProduct') ?? '',
             nameProduct: _getElementText(row, 'm:NameProduct') ?? '',
             amount: int.tryParse(_getElementText(row, 'm:Amount') ?? '0') ?? 0,
-            price: double.tryParse(_getElementText(row, 'm:Price') ?? '0') ?? 0.0,
+            price: price,
             total: double.tryParse(_getElementText(row, 'm:Total') ?? '0') ?? 0.0,
             discountRate: double.tryParse(_getElementText(row, 'm:DiscountRate') ?? '0') ?? 0.0,
             weight: double.tryParse(_getElementText(row, 'm:Weight') ?? '0') ?? 0.0,
             capacity: double.tryParse(_getElementText(row, 'm:Capacity') ?? '0') ?? 0.0,
+            priceTypeCode: productPriceTypeCode,
+            priceTypeName: productPriceTypeName,
           );
           productRows.add(product);
         }

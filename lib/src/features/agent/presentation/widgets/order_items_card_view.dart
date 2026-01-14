@@ -1,5 +1,7 @@
 // =============================
 // presentation/widgets/order_items_card_view.dart
+// Modern, expandable order items view with price focus
+// Localized for en/ru/uz languages
 // =============================
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,8 +16,10 @@ import '../pages/product_detail_page.dart';
 import '../shared/formatters.dart';
 import 'order_models.dart';
 
-/// Modern card-based view for order items matching the design
-class OrderItemsCardView extends StatelessWidget {
+/// Modern card-based view for order items with expandable details
+/// Prioritizes price information from order_detail_products table
+/// UI: Clean, professional, user-friendly with expandable sections
+class OrderItemsCardView extends StatefulWidget {
   final OrderModel order;
   final ScrollController? controller;
   
@@ -24,6 +28,14 @@ class OrderItemsCardView extends StatelessWidget {
     required this.order,
     this.controller,
   });
+
+  @override
+  State<OrderItemsCardView> createState() => _OrderItemsCardViewState();
+}
+
+class _OrderItemsCardViewState extends State<OrderItemsCardView> {
+  // Track which items are expanded for detail view
+  final Set<int> _expandedItems = {};
   
   @override
   Widget build(BuildContext context) {
@@ -32,7 +44,7 @@ class OrderItemsCardView extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     // Handle empty items case
-    if (order.items.isEmpty) {
+    if (widget.order.items.isEmpty) {
       return Container(
         color: cs.surfaceContainerLowest,
         child: Center(
@@ -75,38 +87,48 @@ class OrderItemsCardView extends StatelessWidget {
       );
     }
 
-    final totalItems = order.items.fold<double>(0, (p, e) => p + e.quantity);
-    final totalSum = order.items.fold<double>(0, (p, e) => p + e.sum);
+    final totalItems = widget.order.items.fold<double>(0, (p, e) => p + e.quantity);
+    final totalSum = widget.order.items.fold<double>(0, (p, e) => p + e.sum);
 
     return Container(
       color: cs.surfaceContainerLowest,
       child: Column(
         children: [
-          // Items list
+          // Items list with expandable cards
           Expanded(
             child: ListView.separated(
-              controller: controller,
+              controller: widget.controller,
               padding: const EdgeInsets.all(16),
-              itemCount: order.items.length,
+              itemCount: widget.order.items.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (_, i) {
-                final item = order.items[i];
-                return _OrderItemCard(
+                final item = widget.order.items[i];
+                final isExpanded = _expandedItems.contains(i);
+                return _ExpandableOrderItemCard(
                   item: item,
                   index: i,
+                  isExpanded: isExpanded,
+                  onTap: () => setState(() {
+                    if (isExpanded) {
+                      _expandedItems.remove(i);
+                    } else {
+                      _expandedItems.add(i);
+                    }
+                  }),
                   onDoubleTap: () => _openProductDetail(context, item),
                 );
               },
             ),
           ),
-          // Footer with totals
-          _buildFooter(context, totalItems, totalSum),
+          // Footer with purchase summary - focused on totals
+          _buildPurchaseSummaryFooter(context, totalItems, totalSum),
         ],
       ),
     );
   }
   
-  Widget _buildFooter(BuildContext context, double totalItems, double totalSum) {
+  /// Purchase summary footer with clear price focus
+  Widget _buildPurchaseSummaryFooter(BuildContext context, double totalItems, double totalSum) {
     final cs = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
@@ -124,30 +146,111 @@ class OrderItemsCardView extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${NumberFormat('#,##0').format(totalItems.toInt())} ${l10n.items}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: cs.onSurface,
+          // Summary row with items count and total
+          Row(
+            children: [
+              // Items count section
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.shopping_bag_outlined,
+                        color: cs.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.products,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: cs.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            '${NumberFormat('#,##0').format(totalItems.toInt())} ${l10n.items}',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  uzsFormat.format(totalSum),
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: cs.primary,
+              ),
+              const SizedBox(width: 12),
+              // Total sum section - highlighted
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        cs.primary.withOpacity(0.1),
+                        cs.primary.withOpacity(0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: cs.primary.withOpacity(0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: cs.primary.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.payments_rounded,
+                          color: cs.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.amountLabel,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              uzsFormat.format(totalSum),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: cs.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -233,15 +336,20 @@ class OrderItemsCardView extends StatelessWidget {
   }
 }
 
-/// Individual order item card
-class _OrderItemCard extends StatelessWidget {
+/// Expandable order item card with price focus
+/// Shows basic info in collapsed state, detailed pricing when expanded
+class _ExpandableOrderItemCard extends StatelessWidget {
   final OrderItem item;
   final int index;
+  final bool isExpanded;
+  final VoidCallback onTap;
   final VoidCallback onDoubleTap;
   
-  const _OrderItemCard({
+  const _ExpandableOrderItemCard({
     required this.item,
     required this.index,
+    required this.isExpanded,
+    required this.onTap,
     required this.onDoubleTap,
   });
   
@@ -249,95 +357,191 @@ class _OrderItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     
     return GestureDetector(
+      onTap: onTap,
       onDoubleTap: onDoubleTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: cs.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: cs.outlineVariant.withOpacity(0.3),
-            width: 1,
+            color: isExpanded 
+                ? cs.primary.withOpacity(0.4) 
+                : cs.outlineVariant.withOpacity(0.3),
+            width: isExpanded ? 1.5 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: cs.shadow.withOpacity(0.04),
-              blurRadius: 8,
+              color: cs.shadow.withOpacity(isExpanded ? 0.08 : 0.04),
+              blurRadius: isExpanded ? 12 : 8,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product image with fallback to number
-            Hero(
-              tag: 'order_item_${item.article}',
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: ProductImageWidget(
-                    productCode: item.article,
-                    size: ProductImageSize.thumbnail,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            // Product info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SizedBox(
-                    height: 44,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: IntrinsicWidth(
-                        child: Text(
-                          item.productName,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: cs.onSurface,
-                            height: 1.3,
-                          ),
-                        ),
+            // Main row - always visible
+            Row(
+              children: [
+                // Product image
+                Hero(
+                  tag: 'order_item_${item.article}',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: ProductImageWidget(
+                        productCode: item.article,
+                        size: ProductImageSize.thumbnail,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
+                ),
+                const SizedBox(width: 14),
+                // Product info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '${NumberFormat('#,##0.###').format(item.quantity)}x ${item.article}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: cs.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
+                        item.productName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface,
+                          height: 1.3,
                         ),
                       ),
-                      Text(
-                        uzsFormat.format(item.sum),
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: cs.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${NumberFormat('#,##0.###').format(item.quantity)}x ${item.article}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: cs.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            uzsFormat.format(item.sum),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: cs.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
+                // Expand indicator
+                AnimatedRotation(
+                  turns: isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            // Expanded details - price breakdown
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 200),
+              crossFadeState: isExpanded 
+                  ? CrossFadeState.showSecond 
+                  : CrossFadeState.showFirst,
+              firstChild: const SizedBox.shrink(),
+              secondChild: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      // Unit price row
+                      _buildDetailRow(
+                        context,
+                        icon: Icons.sell_outlined,
+                        label: l10n.priceLabel,
+                        value: uzsFormat.format(item.price),
+                      ),
+                      const SizedBox(height: 8),
+                      // Price type row
+                      _buildDetailRow(
+                        context,
+                        icon: Icons.category_outlined,
+                        label: l10n.priceTypeLabel,
+                        value: item.priceType.isNotEmpty ? item.priceType : '-',
+                      ),
+                      const SizedBox(height: 8),
+                      // Line total row - highlighted
+                      _buildDetailRow(
+                        context,
+                        icon: Icons.calculate_rounded,
+                        label: l10n.amountLabel,
+                        value: uzsFormat.format(item.sum),
+                        isHighlighted: true,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+  
+  Widget _buildDetailRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isHighlighted = false,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: isHighlighted ? cs.primary : cs.onSurfaceVariant,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$label:',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: cs.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w600,
+            color: isHighlighted ? cs.primary : cs.onSurface,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -163,6 +163,8 @@ class OrderDetailProduct {
   final double discountRate;
   final double weight;
   final double capacity;
+  final String? priceTypeCode;
+  final String? priceTypeName;
 
   const OrderDetailProduct({
     this.id,
@@ -174,6 +176,8 @@ class OrderDetailProduct {
     required this.discountRate,
     required this.weight,
     required this.capacity,
+    this.priceTypeCode,
+    this.priceTypeName,
   });
 
   factory OrderDetailProduct.fromJson(Map<String, dynamic> json) {
@@ -187,6 +191,8 @@ class OrderDetailProduct {
       discountRate: (json['discountRate'] as num?)?.toDouble() ?? 0.0,
       weight: (json['weight'] as num?)?.toDouble() ?? 0.0,
       capacity: (json['capacity'] as num?)?.toDouble() ?? 0.0,
+      priceTypeCode: json['priceTypeCode']?.toString(),
+      priceTypeName: json['priceTypeName']?.toString(),
     );
   }
 
@@ -201,6 +207,8 @@ class OrderDetailProduct {
       'discountRate': discountRate,
       'weight': weight,
       'capacity': capacity,
+      'priceTypeCode': priceTypeCode,
+      'priceTypeName': priceTypeName,
     };
   }
 
@@ -214,6 +222,8 @@ class OrderDetailProduct {
     double? discountRate,
     double? weight,
     double? capacity,
+    String? priceTypeCode,
+    String? priceTypeName,
   }) {
     return OrderDetailProduct(
       id: id ?? this.id,
@@ -225,6 +235,8 @@ class OrderDetailProduct {
       discountRate: discountRate ?? this.discountRate,
       weight: weight ?? this.weight,
       capacity: capacity ?? this.capacity,
+      priceTypeCode: priceTypeCode ?? this.priceTypeCode,
+      priceTypeName: priceTypeName ?? this.priceTypeName,
     );
   }
 
@@ -240,7 +252,9 @@ class OrderDetailProduct {
         other.total == total &&
         other.discountRate == discountRate &&
         other.weight == weight &&
-        other.capacity == capacity;
+        other.capacity == capacity &&
+        other.priceTypeCode == priceTypeCode &&
+        other.priceTypeName == priceTypeName;
   }
 
   @override
@@ -255,12 +269,14 @@ class OrderDetailProduct {
       discountRate,
       weight,
       capacity,
+      priceTypeCode,
+      priceTypeName,
     );
   }
 
   @override
   String toString() {
-    return 'OrderDetailProduct(id: $id, codeProduct: $codeProduct, nameProduct: $nameProduct, amount: $amount, price: $price, total: $total, discountRate: $discountRate, weight: $weight, capacity: $capacity)';
+    return 'OrderDetailProduct(id: $id, codeProduct: $codeProduct, nameProduct: $nameProduct, amount: $amount, price: $price, total: $total, discountRate: $discountRate, weight: $weight, capacity: $capacity, priceTypeCode: $priceTypeCode, priceTypeName: $priceTypeName)';
   }
 }
 

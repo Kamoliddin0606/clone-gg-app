@@ -1334,7 +1334,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get manageClientImages => 'Mijoz rasmlarini boshqarish';
 
   @override
-  String get ordersCount => 'Buyurtmalar soni';
+  String ordersCount(int count) {
+    return '$count ta buyurtma';
+  }
 
   @override
   String get orderNumberPrefix => 'Buyurtma №';
@@ -1439,7 +1441,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get searchHint => 'Qidirish...';
 
   @override
-  String get pullToRefresh => 'Pastga surib yangilash uchun urinib ko\'ring!';
+  String get pullToRefresh => 'Yangilash uchun torting';
 
   @override
   String get pullToRefreshOrSyncData => 'Pastga surish ish bermasa sozlamalar menyusida joylashgan \'barcha ma\'lumotlarni yangilash\' amalini bajaring';
@@ -4687,4 +4689,54 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get productInfoCopied => 'Mahsulot ma\'lumotlari nusxalandi';
+
+  @override
+  String get checkingCache => 'Kesh tekshirilmoqda...';
+
+  @override
+  String get loadingFromDatabase => 'Bazadan yuklanmoqda...';
+
+  @override
+  String get syncingFromServer => 'Serverdan sinxronlanmoqda...';
+
+  @override
+  String get databaseEmpty => 'Mahalliy buyurtmalar topilmadi';
+
+  @override
+  String get databaseEmptyDescription => 'Serverdan buyurtmalarni sinxronlashni xohlaysizmi?';
+
+  @override
+  String get syncFromServer => 'Sinxronlash';
+
+  @override
+  String get refreshingData => 'Ma\'lumotlar yangilanmoqda...';
+
+  @override
+  String get dataLoadedFromCache => 'Ma\'lumotlar keshdan yuklandi';
+
+  @override
+  String get dataLoadedFromDatabase => 'Ma\'lumotlar bazadan yuklandi';
+
+  @override
+  String get dataSyncedFromServer => 'Buyurtmalar muvaffaqiyatli sinxronlandi';
+
+  @override
+  String get syncFailed => 'Sinxronlashda xatolik. Qaytadan urinib ko\'ring.';
+
+  @override
+  String get noInternetForSync => 'Internet aloqasi yo\'q. Tarmoqni tekshiring.';
+
+  @override
+  String get retrySync => 'Qaytadan';
+
+  @override
+  String lastUpdated(String time) {
+    return 'Yangilangan: $time';
+  }
+
+  @override
+  String get connectionRestored => 'Aloqa tiklandi';
+
+  @override
+  String get youAreOffline => 'Siz oflayn rejimdasiz';
 }

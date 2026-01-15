@@ -2833,5 +2833,34 @@
   "allowPermissionQuestion": "Would you like to grant permission?",
   "later": "Later",
   "grantPermission": "Grant Permission",
-  "checking": "Checking..."
+  "checking": "Checking...",
+
+  "pullToRefresh": "Pull to refresh",
+  "checkingCache": "Checking cache...",
+  "loadingFromDatabase": "Loading from database...",
+  "syncingFromServer": "Syncing from server...",
+  "databaseEmpty": "No orders found locally",
+  "databaseEmptyDescription": "Would you like to sync orders from the server?",
+  "syncFromServer": "Sync from Server",
+  "refreshingData": "Refreshing data...",
+  "dataLoadedFromCache": "Data loaded from cache",
+  "dataLoadedFromDatabase": "Data loaded from database",
+  "dataSyncedFromServer": "Orders synced successfully",
+  "syncFailed": "Sync failed. Please try again.",
+  "noInternetForSync": "No internet connection. Please check your network.",
+  "retrySync": "Retry",
+  "ordersCount": "{count} orders",
+  "@ordersCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "lastUpdated": "Last updated: {time}",
+  "@lastUpdated": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "connectionRestored": "Connection restored",
+  "youAreOffline": "You are offline"
 }

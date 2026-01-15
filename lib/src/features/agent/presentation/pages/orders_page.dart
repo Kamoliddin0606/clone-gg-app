@@ -1,11 +1,13 @@
 // =============================
 // presentation/pages/orders_page.dart
 // =============================
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:get_it/get_it.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../widgets/order_card.dart';
 import '../widgets/order_card_grid.dart';
 import '../widgets/order_models.dart';
@@ -56,6 +58,13 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   bool _isLoading = true;
   String? _error;
 
+  // Connectivity and refresh state
+  late Connectivity _connectivity;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  bool _isOnline = true;
+  bool _isRefreshing = false;
+  String? _refreshStatus;
+
   ScrollController _scrollController = ScrollController();
 
   @override
@@ -67,15 +76,329 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
         setState(() => _showFilters = false);
       }
     });
+    _initConnectivity();
     _loadOrderStatusesAndOrders();
-    // Initial filter endi _loadOrderStatusesAndOrders() ichida qo'llanadi
   }
 
   @override
   void dispose() {
     _search.dispose();
     _scrollController.dispose();
+    _connectivitySubscription?.cancel();
     super.dispose();
+  }
+
+  /// Initialize connectivity monitoring
+  Future<void> _initConnectivity() async {
+    _connectivity = Connectivity();
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_onConnectivityChanged);
+    final result = await _connectivity.checkConnectivity();
+    _isOnline = result.isNotEmpty && result.first != ConnectivityResult.none;
+  }
+
+  /// Handle connectivity changes
+  void _onConnectivityChanged(List<ConnectivityResult> results) {
+    final wasOnline = _isOnline;
+    _isOnline = results.isNotEmpty && results.first != ConnectivityResult.none;
+    
+    if (mounted && wasOnline != _isOnline) {
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                _isOnline ? Icons.wifi_rounded : Icons.wifi_off_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Text(_isOnline 
+                ? (l10n?.connectionRestored ?? 'Connection restored')
+                : (l10n?.youAreOffline ?? 'You are offline')),
+            ],
+          ),
+          backgroundColor: _isOnline 
+            ? Colors.green.shade600 
+            : Colors.orange.shade700,
+          duration: Duration(seconds: _isOnline ? 2 : 4),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    }
+  }
+
+  /// Handle pull-to-refresh with multi-tier loading
+  Future<void> _handleRefresh() async {
+    if (_isRefreshing) return;
+    
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _isRefreshing = true;
+      _refreshStatus = l10n?.checkingCache ?? 'Checking cache...';
+    });
+
+    try {
+      final dataSyncService = GetIt.I<DataSyncService>();
+      
+      // Tier 1: Try cache first
+      final cachedOrders = await dataSyncService.getCachedOrders();
+      if (cachedOrders.isNotEmpty) {
+        _allOrders = cachedOrders;
+        _all = _convertOrdersToOrderModels(_allOrders);
+        _filtered = List.from(_all);
+        _applyAllFilters();
+        
+        if (mounted) {
+          setState(() {
+            _isRefreshing = false;
+            _refreshStatus = null;
+          });
+          _showFeedback(
+            l10n?.dataLoadedFromCache ?? 'Data loaded from cache',
+            Icons.cached_rounded,
+            Colors.blue,
+          );
+        }
+        return;
+      }
+
+      // Tier 2: Try database
+      setState(() => _refreshStatus = l10n?.loadingFromDatabase ?? 'Loading from database...');
+      
+      final dbOrders = await dataSyncService.getCachedOrders();
+      if (dbOrders.isNotEmpty) {
+        _allOrders = dbOrders;
+        _all = _convertOrdersToOrderModels(_allOrders);
+        _filtered = List.from(_all);
+        _applyAllFilters();
+        
+        if (mounted) {
+          setState(() {
+            _isRefreshing = false;
+            _refreshStatus = null;
+          });
+          _showFeedback(
+            l10n?.dataLoadedFromDatabase ?? 'Data loaded from database',
+            Icons.storage_rounded,
+            Colors.teal,
+          );
+        }
+        return;
+      }
+
+      // Tier 3: Database is empty - prompt for server sync
+      setState(() {
+        _isRefreshing = false;
+        _refreshStatus = null;
+      });
+      
+      await _showSyncPromptSheet();
+      
+    } catch (e) {
+      debugPrint('Error in refresh: $e');
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+          _refreshStatus = null;
+        });
+        _showFeedback(
+          l10n?.syncFailed ?? 'Sync failed. Please try again.',
+          Icons.error_outline_rounded,
+          Colors.red,
+        );
+      }
+    }
+  }
+
+  /// Show sync prompt bottom sheet when database is empty
+  Future<void> _showSyncPromptSheet() async {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    
+    final shouldSync = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: cs.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: _isOnline 
+                  ? cs.primaryContainer.withOpacity(0.5)
+                  : cs.errorContainer.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _isOnline ? Icons.cloud_download_rounded : Icons.cloud_off_rounded,
+                size: 48,
+                color: _isOnline ? cs.primary : cs.error,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _isOnline 
+                ? (l10n?.databaseEmpty ?? 'No orders found locally')
+                : (l10n?.noInternetForSync ?? 'No internet connection'),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _isOnline 
+                ? (l10n?.databaseEmptyDescription ?? 'Would you like to sync orders from the server?')
+                : (l10n?.noInternetForSync ?? 'Please check your network.'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(l10n?.cancel ?? 'Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: _isOnline ? () => Navigator.pop(ctx, true) : null,
+                    icon: Icon(_isOnline ? Icons.sync_rounded : Icons.wifi_off_rounded),
+                    label: Text(
+                      _isOnline 
+                        ? (l10n?.syncFromServer ?? 'Sync from Server')
+                        : (l10n?.retrySync ?? 'Retry'),
+                    ),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
+          ],
+        ),
+      ),
+    );
+
+    if (shouldSync == true && mounted) {
+      await _syncFromServer();
+    }
+  }
+
+  /// Sync orders from server
+  Future<void> _syncFromServer() async {
+    final l10n = AppLocalizations.of(context);
+    
+    setState(() {
+      _isRefreshing = true;
+      _refreshStatus = l10n?.syncingFromServer ?? 'Syncing from server...';
+    });
+
+    try {
+      final dataSyncService = GetIt.I<DataSyncService>();
+      final userCode = await _getUserCode();
+      
+      if (userCode == null) {
+        throw Exception('User code not found');
+      }
+
+      // Sync order statuses first
+      await dataSyncService.syncOrderStatuses(userCode: userCode, forceRefresh: true);
+      await _loadOrderStatuses();
+
+      // Sync orders
+      final freshOrders = await dataSyncService.syncOrders(
+        userCode: userCode,
+        forceRefresh: true,
+      );
+      
+      _allOrders = freshOrders;
+      _all = _convertOrdersToOrderModels(_allOrders);
+      _filtered = List.from(_all);
+      _applyAllFilters();
+
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+          _refreshStatus = null;
+        });
+        _showFeedback(
+          l10n?.dataSyncedFromServer ?? 'Orders synced successfully',
+          Icons.cloud_done_rounded,
+          Colors.green,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error syncing from server: $e');
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+          _refreshStatus = null;
+        });
+        _showFeedback(
+          l10n?.syncFailed ?? 'Sync failed. Please try again.',
+          Icons.error_outline_rounded,
+          Colors.red,
+        );
+      }
+    }
+  }
+
+  /// Show feedback snackbar
+  void _showFeedback(String message, IconData icon, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   void _toggleFilters() {
@@ -713,13 +1036,14 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
             return Column(
               children: [
                 // Status multi-select chips (collapsible)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  height: _showStatusFilter ? null : 0,
-                  color: cs.surface,
-                  child: _showStatusFilter
-                      ? Column(
+                ClipRect(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    height: _showStatusFilter ? null : 0,
+                    color: cs.surface,
+                    child: _showStatusFilter
+                        ? Column(
                           children: [
                             Container(
                               padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
@@ -770,7 +1094,8 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                             ),
                           ],
                         )
-                      : null,
+                        : null,
+                  ),
                 ),
                 // Collapsed state indicator
                 if (!_showStatusFilter)
@@ -988,41 +1313,100 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                     )
                   : const SizedBox.shrink(),
             ),
-            // Content
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 350),
-                switchInCurve: Curves.easeInOut,
-                switchOutCurve: Curves.easeInOut,
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 0.02),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
+            // Refresh status indicator
+            if (_isRefreshing && _refreshStatus != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                color: cs.primaryContainer.withOpacity(0.3),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: cs.primary,
+                      ),
                     ),
-                  );
-                },
-                child: _isGrid
-                    ? Padding(
-                        key: const ValueKey('grid'),
-                        padding: const EdgeInsets.all(8),
-                        child: GridView.builder(
+                    const SizedBox(width: 12),
+                    Text(
+                      _refreshStatus!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // Content with pull-to-refresh
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _handleRefresh,
+                color: cs.primary,
+                backgroundColor: cs.surface,
+                strokeWidth: 3,
+                displacement: 40,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 350),
+                  switchInCurve: Curves.easeInOut,
+                  switchOutCurve: Curves.easeInOut,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.02),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: _isGrid
+                      ? Padding(
+                          key: const ValueKey('grid'),
+                          padding: const EdgeInsets.all(8),
+                          child: GridView.builder(
+                            controller: _scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 12,
+                                  childAspectRatio: 0.7,
+                                ),
+                            itemCount: _filtered.length,
+                            itemBuilder: (_, i) {
+                              final o = _filtered[i];
+                              return OrderCardGrid(
+                                order: o,
+                                onTap: () => _openBottomSheet(context, o),
+                                onDoubleTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OrderDetailsPage(order: o),
+                                  ),
+                                ).then((_) {
+                                  // Refresh list after returning from details
+                                  setState(() {});
+                                }),
+                              );
+                            },
+                          ),
+                        )
+                      : ListView.builder(
+                          key: const ValueKey('list'),
                           controller: _scrollController,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 0.7,
-                              ),
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                           itemCount: _filtered.length,
                           itemBuilder: (_, i) {
                             final o = _filtered[i];
-                            return OrderCardGrid(
+                            return OrderCard(
                               order: o,
                               onTap: () => _openBottomSheet(context, o),
                               onDoubleTap: () => Navigator.push(
@@ -1037,29 +1421,7 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                             );
                           },
                         ),
-                      )
-                    : ListView.builder(
-                        key: const ValueKey('list'),
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: _filtered.length,
-                        itemBuilder: (_, i) {
-                          final o = _filtered[i];
-                          return OrderCard(
-                            order: o,
-                            onTap: () => _openBottomSheet(context, o),
-                            onDoubleTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => OrderDetailsPage(order: o),
-                              ),
-                            ).then((_) {
-                              // Refresh list after returning from details
-                              setState(() {});
-                            }),
-                          );
-                        },
-                      ),
+                ),
               ),
             ),
           ],

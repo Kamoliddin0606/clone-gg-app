@@ -2711,5 +2711,33 @@
   "productBrand": "Brend",
   "productProject": "Loyiha kodi",
   "copiedToClipboard": "Nusxalandi",
-  "productInfoCopied": "Mahsulot ma'lumotlari nusxalandi"
+  "productInfoCopied": "Mahsulot ma'lumotlari nusxalandi",
+  "pullToRefresh": "Yangilash uchun torting",
+  "checkingCache": "Kesh tekshirilmoqda...",
+  "loadingFromDatabase": "Bazadan yuklanmoqda...",
+  "syncingFromServer": "Serverdan sinxronlanmoqda...",
+  "databaseEmpty": "Mahalliy buyurtmalar topilmadi",
+  "databaseEmptyDescription": "Serverdan buyurtmalarni sinxronlashni xohlaysizmi?",
+  "syncFromServer": "Sinxronlash",
+  "refreshingData": "Ma'lumotlar yangilanmoqda...",
+  "dataLoadedFromCache": "Ma'lumotlar keshdan yuklandi",
+  "dataLoadedFromDatabase": "Ma'lumotlar bazadan yuklandi",
+  "dataSyncedFromServer": "Buyurtmalar muvaffaqiyatli sinxronlandi",
+  "syncFailed": "Sinxronlashda xatolik. Qaytadan urinib ko'ring.",
+  "noInternetForSync": "Internet aloqasi yo'q. Tarmoqni tekshiring.",
+  "retrySync": "Qaytadan",
+  "ordersCount": "{count} ta buyurtma",
+  "@ordersCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "lastUpdated": "Yangilangan: {time}",
+  "@lastUpdated": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "connectionRestored": "Aloqa tiklandi",
+  "youAreOffline": "Siz oflayn rejimdasiz"
 }

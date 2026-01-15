@@ -168,7 +168,8 @@ class _OrderItemsCardViewState extends State<OrderItemsCardView> {
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Column(
+                      Flexible(
+                        child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -186,6 +187,7 @@ class _OrderItemsCardViewState extends State<OrderItemsCardView> {
                             ),
                           ),
                         ],
+                      ),
                       ),
                     ],
                   ),

@@ -1334,7 +1334,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get manageClientImages => 'Управление изображениями клиента';
 
   @override
-  String get ordersCount => 'Количество заказов';
+  String ordersCount(int count) {
+    return '$count заказов';
+  }
 
   @override
   String get orderNumberPrefix => 'Заказ №';
@@ -1439,7 +1441,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get searchHint => 'Поиск...';
 
   @override
-  String get pullToRefresh => 'Потяните вниз для обновления!';
+  String get pullToRefresh => 'Потяните для обновления';
 
   @override
   String get pullToRefreshOrSyncData => 'Если обновление не работает, используйте опцию \'синхронизировать все данные\' в меню настроек';
@@ -4687,4 +4689,54 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get productInfoCopied => 'Информация о товаре скопирована';
+
+  @override
+  String get checkingCache => 'Проверка кэша...';
+
+  @override
+  String get loadingFromDatabase => 'Загрузка из базы данных...';
+
+  @override
+  String get syncingFromServer => 'Синхронизация с сервером...';
+
+  @override
+  String get databaseEmpty => 'Заказы не найдены локально';
+
+  @override
+  String get databaseEmptyDescription => 'Хотите синхронизировать заказы с сервера?';
+
+  @override
+  String get syncFromServer => 'Синхронизировать';
+
+  @override
+  String get refreshingData => 'Обновление данных...';
+
+  @override
+  String get dataLoadedFromCache => 'Данные загружены из кэша';
+
+  @override
+  String get dataLoadedFromDatabase => 'Данные загружены из базы';
+
+  @override
+  String get dataSyncedFromServer => 'Заказы успешно синхронизированы';
+
+  @override
+  String get syncFailed => 'Ошибка синхронизации. Попробуйте снова.';
+
+  @override
+  String get noInternetForSync => 'Нет подключения к интернету. Проверьте сеть.';
+
+  @override
+  String get retrySync => 'Повторить';
+
+  @override
+  String lastUpdated(String time) {
+    return 'Обновлено: $time';
+  }
+
+  @override
+  String get connectionRestored => 'Соединение восстановлено';
+
+  @override
+  String get youAreOffline => 'Вы не в сети';
 }

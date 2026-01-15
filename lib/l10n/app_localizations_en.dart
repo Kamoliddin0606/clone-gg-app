@@ -1334,7 +1334,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageClientImages => 'Manage client images';
 
   @override
-  String get ordersCount => 'Orders Count';
+  String ordersCount(int count) {
+    return '$count orders';
+  }
 
   @override
   String get orderNumberPrefix => 'Order №';
@@ -1439,7 +1441,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchHint => 'Search...';
 
   @override
-  String get pullToRefresh => 'Pull down to refresh!';
+  String get pullToRefresh => 'Pull to refresh';
 
   @override
   String get pullToRefreshOrSyncData => 'If pull to refresh doesn\'t work, use \'sync all data\' option in settings menu';
@@ -4687,4 +4689,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get productInfoCopied => 'Product information copied';
+
+  @override
+  String get checkingCache => 'Checking cache...';
+
+  @override
+  String get loadingFromDatabase => 'Loading from database...';
+
+  @override
+  String get syncingFromServer => 'Syncing from server...';
+
+  @override
+  String get databaseEmpty => 'No orders found locally';
+
+  @override
+  String get databaseEmptyDescription => 'Would you like to sync orders from the server?';
+
+  @override
+  String get syncFromServer => 'Sync from Server';
+
+  @override
+  String get refreshingData => 'Refreshing data...';
+
+  @override
+  String get dataLoadedFromCache => 'Data loaded from cache';
+
+  @override
+  String get dataLoadedFromDatabase => 'Data loaded from database';
+
+  @override
+  String get dataSyncedFromServer => 'Orders synced successfully';
+
+  @override
+  String get syncFailed => 'Sync failed. Please try again.';
+
+  @override
+  String get noInternetForSync => 'No internet connection. Please check your network.';
+
+  @override
+  String get retrySync => 'Retry';
+
+  @override
+  String lastUpdated(String time) {
+    return 'Last updated: $time';
+  }
+
+  @override
+  String get connectionRestored => 'Connection restored';
+
+  @override
+  String get youAreOffline => 'You are offline';
 }

@@ -2734,8 +2734,8 @@ abstract class AppLocalizations {
   /// No description provided for @ordersCount.
   ///
   /// In en, this message translates to:
-  /// **'Orders Count'**
-  String get ordersCount;
+  /// **'{count} orders'**
+  String ordersCount(int count);
 
   /// No description provided for @orderNumberPrefix.
   ///
@@ -2944,7 +2944,7 @@ abstract class AppLocalizations {
   /// No description provided for @pullToRefresh.
   ///
   /// In en, this message translates to:
-  /// **'Pull down to refresh!'**
+  /// **'Pull to refresh'**
   String get pullToRefresh;
 
   /// No description provided for @pullToRefreshOrSyncData.
@@ -8940,6 +8940,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Product information copied'**
   String get productInfoCopied;
+
+  /// No description provided for @checkingCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking cache...'**
+  String get checkingCache;
+
+  /// No description provided for @loadingFromDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading from database...'**
+  String get loadingFromDatabase;
+
+  /// No description provided for @syncingFromServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing from server...'**
+  String get syncingFromServer;
+
+  /// No description provided for @databaseEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders found locally'**
+  String get databaseEmpty;
+
+  /// No description provided for @databaseEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Would you like to sync orders from the server?'**
+  String get databaseEmptyDescription;
+
+  /// No description provided for @syncFromServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync from Server'**
+  String get syncFromServer;
+
+  /// No description provided for @refreshingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing data...'**
+  String get refreshingData;
+
+  /// No description provided for @dataLoadedFromCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Data loaded from cache'**
+  String get dataLoadedFromCache;
+
+  /// No description provided for @dataLoadedFromDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Data loaded from database'**
+  String get dataLoadedFromDatabase;
+
+  /// No description provided for @dataSyncedFromServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders synced successfully'**
+  String get dataSyncedFromServer;
+
+  /// No description provided for @syncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed. Please try again.'**
+  String get syncFailed;
+
+  /// No description provided for @noInternetForSync.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Please check your network.'**
+  String get noInternetForSync;
+
+  /// No description provided for @retrySync.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retrySync;
+
+  /// No description provided for @lastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated: {time}'**
+  String lastUpdated(String time);
+
+  /// No description provided for @connectionRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection restored'**
+  String get connectionRestored;
+
+  /// No description provided for @youAreOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'You are offline'**
+  String get youAreOffline;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

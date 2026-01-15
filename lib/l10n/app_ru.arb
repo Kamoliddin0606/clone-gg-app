@@ -2791,5 +2791,33 @@
   "allowPermissionQuestion": "Хотите предоставить разрешение?",
   "later": "Позже",
   "grantPermission": "Предоставить разрешение",
-  "checking": "Проверка..."
+  "checking": "Проверка...",
+  "pullToRefresh": "Потяните для обновления",
+  "checkingCache": "Проверка кэша...",
+  "loadingFromDatabase": "Загрузка из базы данных...",
+  "syncingFromServer": "Синхронизация с сервером...",
+  "databaseEmpty": "Заказы не найдены локально",
+  "databaseEmptyDescription": "Хотите синхронизировать заказы с сервера?",
+  "syncFromServer": "Синхронизировать",
+  "refreshingData": "Обновление данных...",
+  "dataLoadedFromCache": "Данные загружены из кэша",
+  "dataLoadedFromDatabase": "Данные загружены из базы",
+  "dataSyncedFromServer": "Заказы успешно синхронизированы",
+  "syncFailed": "Ошибка синхронизации. Попробуйте снова.",
+  "noInternetForSync": "Нет подключения к интернету. Проверьте сеть.",
+  "retrySync": "Повторить",
+  "ordersCount": "{count} заказов",
+  "@ordersCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "lastUpdated": "Обновлено: {time}",
+  "@lastUpdated": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "connectionRestored": "Соединение восстановлено",
+  "youAreOffline": "Вы не в сети"
 }

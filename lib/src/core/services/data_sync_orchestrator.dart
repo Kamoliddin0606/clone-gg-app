@@ -332,10 +332,18 @@ class DataSyncOrchestrator {
     }
   }
 
-  /// Sync all tables in a group
+  /// Sync all tables in a group.
   ///
   /// Syncs each table in the group sequentially, respecting dependencies.
-  Stream<SyncProgress> syncGroup(String groupId) async* {
+  /// 
+  /// Parameters:
+  /// - [groupId]: ID of the group to sync
+  /// - [forceResync]: If true, re-sync all tables even if already synced (default: false)
+  ///   Set to true for user-triggered syncs to ensure fresh data.
+  Stream<SyncProgress> syncGroup(
+    String groupId, {
+    bool forceResync = false,
+  }) async* {
     final group = DataSyncConfig.getGroup(groupId);
     if (group == null) {
       yield SyncProgress.error(groupId, groupId, 'Group not found: $groupId');
@@ -348,12 +356,21 @@ class DataSyncOrchestrator {
       return;
     }
 
+    // Track overall progress for the group
+    final totalTables = tables.length;
+    var completedTables = 0;
+
     for (final table in tables) {
       await for (final progress in syncTableWithCascade(
         table.id,
         cascadeToChildren: false, // Don't cascade outside group
+        forceSyncDependencies: forceResync, // Respect force resync flag
       )) {
-        yield progress;
+        // Emit progress with group context
+        yield progress.copyWith(
+          totalTablesInCascade: totalTables,
+          completedTablesInCascade: completedTables,
+        );
 
         if (progress.hasError) {
           // Log but continue with next table in group
@@ -362,7 +379,14 @@ class DataSyncOrchestrator {
           }
         }
       }
+      completedTables++;
     }
+
+    // Emit final group completion
+    yield SyncProgress.completed(groupId, group.nameEn).copyWith(
+      totalTablesInCascade: totalTables,
+      completedTablesInCascade: totalTables,
+    );
   }
 
   /// Sync all tables in all groups

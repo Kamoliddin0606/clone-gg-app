@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/models/sync_progress.dart';
@@ -26,7 +28,7 @@ import 'package:gloria_marketing_flutter/src/core/services/sync_notification_ser
 /// )
 /// ```
 
-/// Sync a table from anywhere in the app with non-blocking progress UI
+/// Sync a table from anywhere in the app with non-blocking progress UI.
 ///
 /// This is the most convenient method for triggering table sync from UI.
 /// It automatically:
@@ -40,6 +42,7 @@ import 'package:gloria_marketing_flutter/src/core/services/sync_notification_ser
 /// - [tableId]: ID of table to sync (e.g., 'products', 'clients')
 /// - [withCascade]: If true, also sync all dependent children (default: true)
 /// - [withDependencies]: If true, auto-sync parent dependencies (default: true)
+/// - [forceResync]: If true, re-sync even if already synced (default: true for UI)
 /// - [showSuccessMessage]: If true, show snackbar on success (default: true)
 ///
 /// Returns [true] if sync completed successfully, [false] if failed.
@@ -48,31 +51,50 @@ Future<bool> syncTableFromAnywhere(
   String tableId, {
   bool withCascade = true,
   bool withDependencies = true,
+  bool forceResync = true,
   bool showSuccessMessage = true,
 }) async {
   try {
     final orchestrator = sl<DataSyncOrchestrator>();
     final notificationService = sl<SyncNotificationService>();
 
+    // Create a broadcast controller to safely share stream with multiple listeners.
+    // This fixes the race condition where asBroadcastStream() could lose events
+    // if the stream completes before all listeners attach.
+    final controller = StreamController<SyncProgress>.broadcast();
+    SyncProgress? lastProgress;
+    bool hasError = false;
+
     // Choose sync method based on parameters
-    final Stream<SyncProgress> stream;
+    final Stream<SyncProgress> sourceStream;
     if (withDependencies) {
-      stream = orchestrator.syncTableWithCascade(
+      sourceStream = orchestrator.syncTableWithCascade(
         tableId,
         cascadeToChildren: withCascade,
-      ).asBroadcastStream();
+        forceSyncDependencies: forceResync,
+      );
     } else {
-      stream = orchestrator.syncTable(tableId).asBroadcastStream();
+      sourceStream = orchestrator.syncTable(tableId);
     }
 
-    // Show background progress notification
-    notificationService.showProgress(stream, 'Syncing $tableId');
+    // Show background progress notification with the broadcast controller's stream
+    notificationService.showProgress(controller.stream, 'Syncing $tableId');
 
-    // Wait for the stream to complete to determine the result
-    final result = await stream.last.then((progress) => !(progress as SyncProgress).hasError);
+    // Consume source stream and forward events to controller while tracking state
+    await for (final progress in sourceStream) {
+      lastProgress = progress;
+      if (progress.hasError) hasError = true;
+      controller.add(progress);
+    }
+
+    // Close controller after source stream completes
+    await controller.close();
+
+    // Determine final result based on tracked state
+    final result = !hasError && lastProgress != null;
 
     // Show success message if requested
-    if (result == true && showSuccessMessage) {
+    if (result && showSuccessMessage) {
       AppRouter.scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
           content: Text('Sync of $tableId completed successfully'),
@@ -95,7 +117,16 @@ Future<bool> syncTableFromAnywhere(
   }
 }
 
-/// Sync an entire group of tables from anywhere
+/// Sync an entire group of tables from anywhere.
+///
+/// This method syncs all tables in the specified group with proper
+/// progress tracking and UI notifications.
+///
+/// Parameters:
+/// - [context]: Build context (for showing snackbars)
+/// - [groupId]: ID of the group to sync (e.g., 'product_catalog', 'clients')
+/// - [forceResync]: If true, re-sync all tables even if already synced (default: true)
+/// - [showSuccessMessage]: If true, show snackbar on success (default: true)
 ///
 /// Example:
 /// ```dart
@@ -105,20 +136,43 @@ Future<bool> syncTableFromAnywhere(
 Future<bool> syncGroupFromAnywhere(
   BuildContext context,
   String groupId, {
+  bool forceResync = true,
   bool showSuccessMessage = true,
 }) async {
   try {
     final orchestrator = sl<DataSyncOrchestrator>();
     final notificationService = sl<SyncNotificationService>();
-    final stream = orchestrator.syncGroup(groupId).asBroadcastStream();
 
-    // Show background progress notification
-    notificationService.showProgress(stream, 'Syncing Group: $groupId');
+    // Create a broadcast controller to safely share stream with multiple listeners.
+    // This fixes the race condition where asBroadcastStream() could lose events
+    // if the stream completes before all listeners attach.
+    final controller = StreamController<SyncProgress>.broadcast();
+    SyncProgress? lastProgress;
+    bool hasError = false;
 
-    // Wait for the stream to complete to determine the result
-    final result = await stream.last.then((progress) => !(progress as SyncProgress).hasError);
+    // Get source stream with force resync option
+    final sourceStream = orchestrator.syncGroup(
+      groupId,
+      forceResync: forceResync,
+    );
 
-    if (result == true && showSuccessMessage) {
+    // Show background progress notification with the broadcast controller's stream
+    notificationService.showProgress(controller.stream, 'Syncing Group: $groupId');
+
+    // Consume source stream and forward events to controller while tracking state
+    await for (final progress in sourceStream) {
+      lastProgress = progress;
+      if (progress.hasError) hasError = true;
+      controller.add(progress);
+    }
+
+    // Close controller after source stream completes
+    await controller.close();
+
+    // Determine final result based on tracked state
+    final result = !hasError && lastProgress != null;
+
+    if (result && showSuccessMessage) {
       AppRouter.scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
           content: Text('Group sync ($groupId) completed successfully'),
@@ -141,10 +195,14 @@ Future<bool> syncGroupFromAnywhere(
   }
 }
 
-/// Sync all data from anywhere (complete refresh)
+/// Sync all data from anywhere (complete refresh).
 ///
 /// This performs a full data refresh, syncing all tables in dependency order.
 /// Use sparingly as it may take significant time.
+///
+/// Parameters:
+/// - [context]: Build context (for showing snackbars)
+/// - [showSuccessMessage]: If true, show snackbar on success (default: true)
 ///
 /// Example:
 /// ```dart
@@ -158,15 +216,34 @@ Future<bool> syncAllDataFromAnywhere(
   try {
     final orchestrator = sl<DataSyncOrchestrator>();
     final notificationService = sl<SyncNotificationService>();
-    final stream = orchestrator.syncAll().asBroadcastStream();
 
-    // Show background progress notification
-    notificationService.showProgress(stream, 'Full Data Refresh');
+    // Create a broadcast controller to safely share stream with multiple listeners.
+    // This fixes the race condition where asBroadcastStream() could lose events
+    // if the stream completes before all listeners attach.
+    final controller = StreamController<SyncProgress>.broadcast();
+    SyncProgress? lastProgress;
+    bool hasError = false;
 
-    // Wait for the stream to complete to determine the result
-    final result = await stream.last.then((progress) => !(progress as SyncProgress).hasError);
+    // Get source stream for full sync
+    final sourceStream = orchestrator.syncAll();
 
-    if (result == true && showSuccessMessage) {
+    // Show background progress notification with the broadcast controller's stream
+    notificationService.showProgress(controller.stream, 'Full Data Refresh');
+
+    // Consume source stream and forward events to controller while tracking state
+    await for (final progress in sourceStream) {
+      lastProgress = progress;
+      if (progress.hasError) hasError = true;
+      controller.add(progress);
+    }
+
+    // Close controller after source stream completes
+    await controller.close();
+
+    // Determine final result based on tracked state
+    final result = !hasError && lastProgress != null;
+
+    if (result && showSuccessMessage) {
       AppRouter.scaffoldMessengerKey.currentState?.showSnackBar(
         const SnackBar(
           content: Text('All data synced successfully'),

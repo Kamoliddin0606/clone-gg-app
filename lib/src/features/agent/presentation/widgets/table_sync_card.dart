@@ -4,7 +4,6 @@ import 'package:gloria_marketing_flutter/src/core/models/data_sync_table.dart';
 import 'package:gloria_marketing_flutter/src/core/models/sync_table_metadata.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
-import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/utils/sync_helpers.dart';
 
 /// Card widget displaying sync status and controls for a single table.
@@ -21,6 +20,7 @@ import 'package:gloria_marketing_flutter/src/core/utils/sync_helpers.dart';
 /// ```dart
 /// TableSyncCard(
 ///   table: DataSyncConfig.getTable('products')!,
+///   onSyncComplete: () => refreshParentState(),
 /// )
 /// ```
 class TableSyncCard extends StatefulWidget {
@@ -33,11 +33,16 @@ class TableSyncCard extends StatefulWidget {
   /// Whether this card is compact (used inside group card)
   final bool isCompact;
 
+  /// Callback invoked when sync completes (success or failure)
+  /// Used to notify parent widgets to refresh their state
+  final VoidCallback? onSyncComplete;
+
   const TableSyncCard({
     super.key,
     required this.table,
     this.showDependencies = false,
     this.isCompact = false,
+    this.onSyncComplete,
   });
 
   @override
@@ -48,6 +53,7 @@ class _TableSyncCardState extends State<TableSyncCard> {
   late final DataSyncOrchestrator _orchestrator;
   SyncTableMetadata? _metadata;
   bool _isExpanded = false;
+  bool _isSyncing = false;
 
   @override
   void initState() {
@@ -56,10 +62,19 @@ class _TableSyncCardState extends State<TableSyncCard> {
     _loadMetadata();
   }
 
+  /// Load metadata from orchestrator cache
   void _loadMetadata() {
+    if (!mounted) return;
     setState(() {
       _metadata = _orchestrator.getTableMetadata(widget.table.id);
     });
+  }
+
+  /// Refresh metadata from orchestrator (async reload)
+  Future<void> _refreshMetadata() async {
+    await _orchestrator.loadMetadata();
+    await _orchestrator.refreshRecordCounts();
+    _loadMetadata();
   }
 
   /// Show sync mode selection menu
@@ -108,17 +123,44 @@ class _TableSyncCardState extends State<TableSyncCard> {
     }
   }
 
-  /// Perform sync with selected mode
+  /// Perform sync with selected mode.
+  /// 
+  /// This method:
+  /// 1. Sets syncing state to show loading indicator
+  /// 2. Calls syncTableFromAnywhere with forceResync=true
+  /// 3. Always refreshes metadata after sync
+  /// 4. Updates UI state regardless of success or failure
+  /// 5. Notifies parent via callback if provided
   Future<void> _performSync(SyncMode mode) async {
-    final success = await syncTableFromAnywhere(
-      context,
-      widget.table.id,
-      withCascade: mode == SyncMode.withCascade,
-      withDependencies: mode != SyncMode.tableOnly,
-    );
+    if (_isSyncing) return; // Prevent double sync
+    
+    setState(() {
+      _isSyncing = true;
+    });
 
-    if (success && mounted) {
-      _loadMetadata();
+    try {
+      // Force resync is enabled by default in syncTableFromAnywhere
+      // This ensures tables are re-synced even if previously successful
+      await syncTableFromAnywhere(
+        context,
+        widget.table.id,
+        withCascade: mode == SyncMode.withCascade,
+        withDependencies: mode != SyncMode.tableOnly,
+        forceResync: true,
+      );
+    } finally {
+      // Always refresh metadata and UI state after sync attempt
+      // This ensures UI shows current state even if sync failed
+      if (mounted) {
+        await _refreshMetadata();
+        
+        setState(() {
+          _isSyncing = false;
+        });
+        
+        // Notify parent widget to refresh its state
+        widget.onSyncComplete?.call();
+      }
     }
   }
 
@@ -224,13 +266,19 @@ class _TableSyncCardState extends State<TableSyncCard> {
                 ),
             ],
           ),
-          trailing: IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _orchestrator.isSyncing(widget.table.id)
-                ? null
-                : () => _showSyncModeMenu(context),
-            tooltip: AppLocalizations.of(context)?.syncTable ?? 'Sync table',
-          ),
+          trailing: _isSyncing
+              ? SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : IconButton(
+                  icon: Icon(Icons.refresh),
+                  onPressed: _orchestrator.isSyncing(widget.table.id)
+                      ? null
+                      : () => _showSyncModeMenu(context),
+                  tooltip: AppLocalizations.of(context)?.syncTable ?? 'Sync table',
+                ),
           initiallyExpanded: _isExpanded,
           onExpansionChanged: (expanded) {
             setState(() {

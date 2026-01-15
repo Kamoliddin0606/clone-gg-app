@@ -2716,5 +2716,80 @@
   "productBrand": "Бренд",
   "productProject": "Код проекта",
   "copiedToClipboard": "Скопировано в буфер обмена",
-  "productInfoCopied": "Информация о товаре скопирована"
+  "productInfoCopied": "Информация о товаре скопирована",
+  "permissionsChecking": "Проверка разрешений...",
+  "permissionsCheckTitle": "Проверка разрешений",
+  "permissionsCheckDescription": "Для полной работы приложения требуются следующие разрешения:",
+  "permissionFileStorage": "Хранение файлов",
+  "permissionFileStorageDesc": "Для сохранения данных",
+  "permissionLocation": "Местоположение",
+  "permissionLocationDesc": "Для карт и расчёта расстояния",
+  "permissionCamera": "Камера",
+  "permissionCameraDesc": "Для съёмки фото",
+  "permissionMicrophone": "Микрофон",
+  "permissionMicrophoneDesc": "Для записи аудио",
+  "permissionNotifications": "Уведомления",
+  "permissionNotificationsDesc": "Для показа сообщений",
+  "permissionAudio": "Музыка и аудио",
+  "permissionAudioDesc": "Для работы с аудиофайлами",
+  "permissionPhotosVideos": "Фото и видео",
+  "permissionPhotosVideosDesc": "Для работы с медиафайлами",
+  "permissionsLimitedWarning": "Без разрешений приложение будет работать в ограниченном режиме.",
+  "startButton": "Начать",
+  "permissionStorageTitle": "Разрешение на хранение файлов",
+  "permissionStorageDescAndroid13": "Выберите папку для сохранения данных приложения",
+  "permissionStorageDescOther": "Для сохранения и загрузки данных приложения",
+  "permissionStoragePurposeAndroid13": "Выберите папку для сохранения фото, документов и данных",
+  "permissionStoragePurposeOther": "Для сохранения фото, документов и данных",
+  "permissionLocationTitle": "Разрешение на местоположение",
+  "permissionLocationDescription": "Для сортировки торговых точек по расстоянию",
+  "permissionLocationPurpose": "Для показа местоположения на карте и расчёта расстояния",
+  "permissionLocationAlwaysTitle": "Разрешение на фоновое местоположение",
+  "permissionLocationAlwaysDescription": "Для определения местоположения в фоновом режиме",
+  "permissionLocationAlwaysPurpose": "Фоновые сервисы и уведомления",
+  "permissionCameraTitle": "Разрешение на камеру",
+  "permissionCameraDescription": "Для съёмки фото и сканирования штрих-кодов",
+  "permissionCameraPurpose": "Для фотографирования товаров и торговых точек",
+  "permissionMicrophoneTitle": "Разрешение на микрофон",
+  "permissionMicrophoneDescription": "Для записи голоса и аудиосообщений",
+  "permissionMicrophonePurpose": "Голосовые заметки и аудиозаписи",
+  "permissionNotificationTitle": "Разрешение на уведомления",
+  "permissionNotificationDescription": "Для показа важных сообщений",
+  "permissionNotificationPurpose": "Напоминания, новости и уведомления",
+  "permissionAudioTitle": "Разрешение на музыку и аудио",
+  "permissionAudioDescription": "Для работы с аудиофайлами",
+  "permissionAudioPurpose": "Музыка, аудиосообщения и голосовые файлы",
+  "permissionPhotosVideosTitle": "Разрешение на фото и видео",
+  "permissionPhotosVideosDescription": "Для работы с медиафайлами",
+  "permissionPhotosVideosPurpose": "Фото, видео и медиафайлы",
+  "permissionRequired": "Требуется {permission}",
+  "@permissionRequired": {
+    "placeholders": {
+      "permission": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionRequiredSettings": "{description}. Пожалуйста, предоставьте разрешение в настройках приложения.",
+  "@permissionRequiredSettings": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "laterButton": "Позже",
+  "goToSettings": "Перейти в настройки",
+  "permissionPurpose": "Цель: {purpose}",
+  "@permissionPurpose": {
+    "placeholders": {
+      "purpose": {
+        "type": "String"
+      }
+    }
+  },
+  "allowPermissionQuestion": "Хотите предоставить разрешение?",
+  "later": "Позже",
+  "grantPermission": "Предоставить разрешение",
+  "checking": "Проверка..."
 }

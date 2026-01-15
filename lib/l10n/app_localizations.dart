@@ -6010,7 +6010,7 @@ abstract class AppLocalizations {
   /// No description provided for @permissionsCheckTitle.
   ///
   /// In en, this message translates to:
-  /// **'Permissions check'**
+  /// **'Permissions Check'**
   String get permissionsCheckTitle;
 
   /// No description provided for @permissionsCheckDescription.
@@ -6022,13 +6022,13 @@ abstract class AppLocalizations {
   /// No description provided for @permissionFileStorage.
   ///
   /// In en, this message translates to:
-  /// **'File storage'**
+  /// **'File Storage'**
   String get permissionFileStorage;
 
   /// No description provided for @permissionFileStorageDesc.
   ///
   /// In en, this message translates to:
-  /// **'Store data'**
+  /// **'To save data'**
   String get permissionFileStorageDesc;
 
   /// No description provided for @permissionLocation.
@@ -6040,7 +6040,7 @@ abstract class AppLocalizations {
   /// No description provided for @permissionLocationDesc.
   ///
   /// In en, this message translates to:
-  /// **'Map and distance calculation'**
+  /// **'For maps and distance calculation'**
   String get permissionLocationDesc;
 
   /// No description provided for @permissionCamera.
@@ -6052,7 +6052,7 @@ abstract class AppLocalizations {
   /// No description provided for @permissionCameraDesc.
   ///
   /// In en, this message translates to:
-  /// **'Take photos'**
+  /// **'To take photos'**
   String get permissionCameraDesc;
 
   /// No description provided for @permissionMicrophone.
@@ -6064,7 +6064,7 @@ abstract class AppLocalizations {
   /// No description provided for @permissionMicrophoneDesc.
   ///
   /// In en, this message translates to:
-  /// **'Record audio'**
+  /// **'To record audio'**
   String get permissionMicrophoneDesc;
 
   /// No description provided for @permissionNotifications.
@@ -6076,31 +6076,31 @@ abstract class AppLocalizations {
   /// No description provided for @permissionNotificationsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Show messages'**
+  /// **'To show messages'**
   String get permissionNotificationsDesc;
 
   /// No description provided for @permissionAudio.
   ///
   /// In en, this message translates to:
-  /// **'Music and audio'**
+  /// **'Music and Audio'**
   String get permissionAudio;
 
   /// No description provided for @permissionAudioDesc.
   ///
   /// In en, this message translates to:
-  /// **'Work with audio files'**
+  /// **'To work with audio files'**
   String get permissionAudioDesc;
 
   /// No description provided for @permissionPhotosVideos.
   ///
   /// In en, this message translates to:
-  /// **'Photos and videos'**
+  /// **'Photos and Videos'**
   String get permissionPhotosVideos;
 
   /// No description provided for @permissionPhotosVideosDesc.
   ///
   /// In en, this message translates to:
-  /// **'Work with media files'**
+  /// **'To work with media files'**
   String get permissionPhotosVideosDesc;
 
   /// No description provided for @permissionsLimitedWarning.
@@ -6118,61 +6118,61 @@ abstract class AppLocalizations {
   /// No description provided for @permissionStorageTitle.
   ///
   /// In en, this message translates to:
-  /// **'File storage permission'**
+  /// **'File Storage Permission'**
   String get permissionStorageTitle;
 
   /// No description provided for @permissionStorageDescAndroid13.
   ///
   /// In en, this message translates to:
-  /// **'Select folder to store app data'**
+  /// **'Select folder to save app data'**
   String get permissionStorageDescAndroid13;
 
   /// No description provided for @permissionStorageDescOther.
   ///
   /// In en, this message translates to:
-  /// **'Store and load app data'**
+  /// **'To save and load app data'**
   String get permissionStorageDescOther;
 
   /// No description provided for @permissionStoragePurposeAndroid13.
   ///
   /// In en, this message translates to:
-  /// **'Select folder to store photos, documents and data'**
+  /// **'Select a folder to save photos, documents and data'**
   String get permissionStoragePurposeAndroid13;
 
   /// No description provided for @permissionStoragePurposeOther.
   ///
   /// In en, this message translates to:
-  /// **'Store photos, documents and data'**
+  /// **'To save photos, documents and data'**
   String get permissionStoragePurposeOther;
 
   /// No description provided for @permissionLocationTitle.
   ///
   /// In en, this message translates to:
-  /// **'Location permission'**
+  /// **'Location Permission'**
   String get permissionLocationTitle;
 
   /// No description provided for @permissionLocationDescription.
   ///
   /// In en, this message translates to:
-  /// **'Sort trading points by distance'**
+  /// **'To sort trading points by distance'**
   String get permissionLocationDescription;
 
   /// No description provided for @permissionLocationPurpose.
   ///
   /// In en, this message translates to:
-  /// **'Show location on map and calculate distance'**
+  /// **'To show location on map and calculate distance'**
   String get permissionLocationPurpose;
 
   /// No description provided for @permissionLocationAlwaysTitle.
   ///
   /// In en, this message translates to:
-  /// **'Always allow location permission'**
+  /// **'Background Location Permission'**
   String get permissionLocationAlwaysTitle;
 
   /// No description provided for @permissionLocationAlwaysDescription.
   ///
   /// In en, this message translates to:
-  /// **'Detect location when app is in background'**
+  /// **'To detect location when app is in background'**
   String get permissionLocationAlwaysDescription;
 
   /// No description provided for @permissionLocationAlwaysPurpose.
@@ -6184,49 +6184,49 @@ abstract class AppLocalizations {
   /// No description provided for @permissionCameraTitle.
   ///
   /// In en, this message translates to:
-  /// **'Camera permission'**
+  /// **'Camera Permission'**
   String get permissionCameraTitle;
 
   /// No description provided for @permissionCameraDescription.
   ///
   /// In en, this message translates to:
-  /// **'Take photos and scan barcodes'**
+  /// **'To take photos and scan barcodes'**
   String get permissionCameraDescription;
 
   /// No description provided for @permissionCameraPurpose.
   ///
   /// In en, this message translates to:
-  /// **'Take photos of products and trading points'**
+  /// **'To photograph products and trading points'**
   String get permissionCameraPurpose;
 
   /// No description provided for @permissionMicrophoneTitle.
   ///
   /// In en, this message translates to:
-  /// **'Microphone permission'**
+  /// **'Microphone Permission'**
   String get permissionMicrophoneTitle;
 
   /// No description provided for @permissionMicrophoneDescription.
   ///
   /// In en, this message translates to:
-  /// **'Record audio and audio messages'**
+  /// **'For voice recording and audio messages'**
   String get permissionMicrophoneDescription;
 
   /// No description provided for @permissionMicrophonePurpose.
   ///
   /// In en, this message translates to:
-  /// **'Voice reminders and audio recordings'**
+  /// **'Voice notes and audio recordings'**
   String get permissionMicrophonePurpose;
 
   /// No description provided for @permissionNotificationTitle.
   ///
   /// In en, this message translates to:
-  /// **'Notification permission'**
+  /// **'Notification Permission'**
   String get permissionNotificationTitle;
 
   /// No description provided for @permissionNotificationDescription.
   ///
   /// In en, this message translates to:
-  /// **'Show important messages'**
+  /// **'To show important messages'**
   String get permissionNotificationDescription;
 
   /// No description provided for @permissionNotificationPurpose.
@@ -6238,37 +6238,37 @@ abstract class AppLocalizations {
   /// No description provided for @permissionAudioTitle.
   ///
   /// In en, this message translates to:
-  /// **'Music and audio permission'**
+  /// **'Music and Audio Permission'**
   String get permissionAudioTitle;
 
   /// No description provided for @permissionAudioDescription.
   ///
   /// In en, this message translates to:
-  /// **'Work with audio files'**
+  /// **'To work with audio files'**
   String get permissionAudioDescription;
 
   /// No description provided for @permissionAudioPurpose.
   ///
   /// In en, this message translates to:
-  /// **'Work with music, audio messages and voice files'**
+  /// **'Music, audio messages and voice files'**
   String get permissionAudioPurpose;
 
   /// No description provided for @permissionPhotosVideosTitle.
   ///
   /// In en, this message translates to:
-  /// **'Photos and videos permission'**
+  /// **'Photos and Videos Permission'**
   String get permissionPhotosVideosTitle;
 
   /// No description provided for @permissionPhotosVideosDescription.
   ///
   /// In en, this message translates to:
-  /// **'Work with media files'**
+  /// **'To work with media files'**
   String get permissionPhotosVideosDescription;
 
   /// No description provided for @permissionPhotosVideosPurpose.
   ///
   /// In en, this message translates to:
-  /// **'Work with photos, videos and media files'**
+  /// **'Photos, videos and media files'**
   String get permissionPhotosVideosPurpose;
 
   /// No description provided for @permissionRequired.
@@ -6292,7 +6292,7 @@ abstract class AppLocalizations {
   /// No description provided for @goToSettings.
   ///
   /// In en, this message translates to:
-  /// **'Go to settings'**
+  /// **'Go to Settings'**
   String get goToSettings;
 
   /// No description provided for @permissionPurpose.
@@ -6304,13 +6304,13 @@ abstract class AppLocalizations {
   /// No description provided for @allowPermissionQuestion.
   ///
   /// In en, this message translates to:
-  /// **'Do you want to grant permission?'**
+  /// **'Would you like to grant permission?'**
   String get allowPermissionQuestion;
 
   /// No description provided for @grantPermission.
   ///
   /// In en, this message translates to:
-  /// **'Grant permission'**
+  /// **'Grant Permission'**
   String get grantPermission;
 
   /// No description provided for @checking.

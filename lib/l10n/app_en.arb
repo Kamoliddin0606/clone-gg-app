@@ -2758,5 +2758,80 @@
   "productBrand": "Brand",
   "productProject": "Project Code",
   "copiedToClipboard": "Copied to clipboard",
-  "productInfoCopied": "Product information copied"
+  "productInfoCopied": "Product information copied",
+  "permissionsChecking": "Checking permissions...",
+  "permissionsCheckTitle": "Permissions Check",
+  "permissionsCheckDescription": "The following permissions are required for the app to work properly:",
+  "permissionFileStorage": "File Storage",
+  "permissionFileStorageDesc": "To save data",
+  "permissionLocation": "Location",
+  "permissionLocationDesc": "For maps and distance calculation",
+  "permissionCamera": "Camera",
+  "permissionCameraDesc": "To take photos",
+  "permissionMicrophone": "Microphone",
+  "permissionMicrophoneDesc": "To record audio",
+  "permissionNotifications": "Notifications",
+  "permissionNotificationsDesc": "To show messages",
+  "permissionAudio": "Music and Audio",
+  "permissionAudioDesc": "To work with audio files",
+  "permissionPhotosVideos": "Photos and Videos",
+  "permissionPhotosVideosDesc": "To work with media files",
+  "permissionsLimitedWarning": "Without permissions, the app will work in limited mode.",
+  "startButton": "Start",
+  "permissionStorageTitle": "File Storage Permission",
+  "permissionStorageDescAndroid13": "Select folder to save app data",
+  "permissionStorageDescOther": "To save and load app data",
+  "permissionStoragePurposeAndroid13": "Select a folder to save photos, documents and data",
+  "permissionStoragePurposeOther": "To save photos, documents and data",
+  "permissionLocationTitle": "Location Permission",
+  "permissionLocationDescription": "To sort trading points by distance",
+  "permissionLocationPurpose": "To show location on map and calculate distance",
+  "permissionLocationAlwaysTitle": "Background Location Permission",
+  "permissionLocationAlwaysDescription": "To detect location when app is in background",
+  "permissionLocationAlwaysPurpose": "Background service and notifications",
+  "permissionCameraTitle": "Camera Permission",
+  "permissionCameraDescription": "To take photos and scan barcodes",
+  "permissionCameraPurpose": "To photograph products and trading points",
+  "permissionMicrophoneTitle": "Microphone Permission",
+  "permissionMicrophoneDescription": "For voice recording and audio messages",
+  "permissionMicrophonePurpose": "Voice notes and audio recordings",
+  "permissionNotificationTitle": "Notification Permission",
+  "permissionNotificationDescription": "To show important messages",
+  "permissionNotificationPurpose": "Reminders, news and notifications",
+  "permissionAudioTitle": "Music and Audio Permission",
+  "permissionAudioDescription": "To work with audio files",
+  "permissionAudioPurpose": "Music, audio messages and voice files",
+  "permissionPhotosVideosTitle": "Photos and Videos Permission",
+  "permissionPhotosVideosDescription": "To work with media files",
+  "permissionPhotosVideosPurpose": "Photos, videos and media files",
+  "permissionRequired": "{permission} required",
+  "@permissionRequired": {
+    "placeholders": {
+      "permission": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionRequiredSettings": "{description}. Please grant permission in app settings.",
+  "@permissionRequiredSettings": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "laterButton": "Later",
+  "goToSettings": "Go to Settings",
+  "permissionPurpose": "Purpose: {purpose}",
+  "@permissionPurpose": {
+    "placeholders": {
+      "purpose": {
+        "type": "String"
+      }
+    }
+  },
+  "allowPermissionQuestion": "Would you like to grant permission?",
+  "later": "Later",
+  "grantPermission": "Grant Permission",
+  "checking": "Checking..."
 }

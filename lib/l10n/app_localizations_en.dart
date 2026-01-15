@@ -3148,52 +3148,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionsChecking => 'Checking permissions...';
 
   @override
-  String get permissionsCheckTitle => 'Permissions check';
+  String get permissionsCheckTitle => 'Permissions Check';
 
   @override
   String get permissionsCheckDescription => 'The following permissions are required for the app to work properly:';
 
   @override
-  String get permissionFileStorage => 'File storage';
+  String get permissionFileStorage => 'File Storage';
 
   @override
-  String get permissionFileStorageDesc => 'Store data';
+  String get permissionFileStorageDesc => 'To save data';
 
   @override
   String get permissionLocation => 'Location';
 
   @override
-  String get permissionLocationDesc => 'Map and distance calculation';
+  String get permissionLocationDesc => 'For maps and distance calculation';
 
   @override
   String get permissionCamera => 'Camera';
 
   @override
-  String get permissionCameraDesc => 'Take photos';
+  String get permissionCameraDesc => 'To take photos';
 
   @override
   String get permissionMicrophone => 'Microphone';
 
   @override
-  String get permissionMicrophoneDesc => 'Record audio';
+  String get permissionMicrophoneDesc => 'To record audio';
 
   @override
   String get permissionNotifications => 'Notifications';
 
   @override
-  String get permissionNotificationsDesc => 'Show messages';
+  String get permissionNotificationsDesc => 'To show messages';
 
   @override
-  String get permissionAudio => 'Music and audio';
+  String get permissionAudio => 'Music and Audio';
 
   @override
-  String get permissionAudioDesc => 'Work with audio files';
+  String get permissionAudioDesc => 'To work with audio files';
 
   @override
-  String get permissionPhotosVideos => 'Photos and videos';
+  String get permissionPhotosVideos => 'Photos and Videos';
 
   @override
-  String get permissionPhotosVideosDesc => 'Work with media files';
+  String get permissionPhotosVideosDesc => 'To work with media files';
 
   @override
   String get permissionsLimitedWarning => 'Without permissions, the app will work in limited mode.';
@@ -3202,82 +3202,82 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startButton => 'Start';
 
   @override
-  String get permissionStorageTitle => 'File storage permission';
+  String get permissionStorageTitle => 'File Storage Permission';
 
   @override
-  String get permissionStorageDescAndroid13 => 'Select folder to store app data';
+  String get permissionStorageDescAndroid13 => 'Select folder to save app data';
 
   @override
-  String get permissionStorageDescOther => 'Store and load app data';
+  String get permissionStorageDescOther => 'To save and load app data';
 
   @override
-  String get permissionStoragePurposeAndroid13 => 'Select folder to store photos, documents and data';
+  String get permissionStoragePurposeAndroid13 => 'Select a folder to save photos, documents and data';
 
   @override
-  String get permissionStoragePurposeOther => 'Store photos, documents and data';
+  String get permissionStoragePurposeOther => 'To save photos, documents and data';
 
   @override
-  String get permissionLocationTitle => 'Location permission';
+  String get permissionLocationTitle => 'Location Permission';
 
   @override
-  String get permissionLocationDescription => 'Sort trading points by distance';
+  String get permissionLocationDescription => 'To sort trading points by distance';
 
   @override
-  String get permissionLocationPurpose => 'Show location on map and calculate distance';
+  String get permissionLocationPurpose => 'To show location on map and calculate distance';
 
   @override
-  String get permissionLocationAlwaysTitle => 'Always allow location permission';
+  String get permissionLocationAlwaysTitle => 'Background Location Permission';
 
   @override
-  String get permissionLocationAlwaysDescription => 'Detect location when app is in background';
+  String get permissionLocationAlwaysDescription => 'To detect location when app is in background';
 
   @override
   String get permissionLocationAlwaysPurpose => 'Background service and notifications';
 
   @override
-  String get permissionCameraTitle => 'Camera permission';
+  String get permissionCameraTitle => 'Camera Permission';
 
   @override
-  String get permissionCameraDescription => 'Take photos and scan barcodes';
+  String get permissionCameraDescription => 'To take photos and scan barcodes';
 
   @override
-  String get permissionCameraPurpose => 'Take photos of products and trading points';
+  String get permissionCameraPurpose => 'To photograph products and trading points';
 
   @override
-  String get permissionMicrophoneTitle => 'Microphone permission';
+  String get permissionMicrophoneTitle => 'Microphone Permission';
 
   @override
-  String get permissionMicrophoneDescription => 'Record audio and audio messages';
+  String get permissionMicrophoneDescription => 'For voice recording and audio messages';
 
   @override
-  String get permissionMicrophonePurpose => 'Voice reminders and audio recordings';
+  String get permissionMicrophonePurpose => 'Voice notes and audio recordings';
 
   @override
-  String get permissionNotificationTitle => 'Notification permission';
+  String get permissionNotificationTitle => 'Notification Permission';
 
   @override
-  String get permissionNotificationDescription => 'Show important messages';
+  String get permissionNotificationDescription => 'To show important messages';
 
   @override
   String get permissionNotificationPurpose => 'Reminders, news and notifications';
 
   @override
-  String get permissionAudioTitle => 'Music and audio permission';
+  String get permissionAudioTitle => 'Music and Audio Permission';
 
   @override
-  String get permissionAudioDescription => 'Work with audio files';
+  String get permissionAudioDescription => 'To work with audio files';
 
   @override
-  String get permissionAudioPurpose => 'Work with music, audio messages and voice files';
+  String get permissionAudioPurpose => 'Music, audio messages and voice files';
 
   @override
-  String get permissionPhotosVideosTitle => 'Photos and videos permission';
+  String get permissionPhotosVideosTitle => 'Photos and Videos Permission';
 
   @override
-  String get permissionPhotosVideosDescription => 'Work with media files';
+  String get permissionPhotosVideosDescription => 'To work with media files';
 
   @override
-  String get permissionPhotosVideosPurpose => 'Work with photos, videos and media files';
+  String get permissionPhotosVideosPurpose => 'Photos, videos and media files';
 
   @override
   String permissionRequired(String permission) {
@@ -3293,7 +3293,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get laterButton => 'Later';
 
   @override
-  String get goToSettings => 'Go to settings';
+  String get goToSettings => 'Go to Settings';
 
   @override
   String permissionPurpose(String purpose) {
@@ -3301,10 +3301,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get allowPermissionQuestion => 'Do you want to grant permission?';
+  String get allowPermissionQuestion => 'Would you like to grant permission?';
 
   @override
-  String get grantPermission => 'Grant permission';
+  String get grantPermission => 'Grant Permission';
 
   @override
   String get checking => 'Checking...';

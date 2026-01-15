@@ -4,7 +4,6 @@ import 'package:gloria_marketing_flutter/src/core/models/data_sync_group.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_config.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
-import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/utils/sync_helpers.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/table_sync_card.dart';
 
@@ -21,6 +20,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets
 /// ```dart
 /// GroupSyncCard(
 ///   group: DataSyncConfig.getGroup('product_catalog')!,
+///   onSyncComplete: () => refreshParentState(),
 /// )
 /// ```
 class GroupSyncCard extends StatefulWidget {
@@ -30,10 +30,15 @@ class GroupSyncCard extends StatefulWidget {
   /// Whether the group should be initially expanded
   final bool initiallyExpanded;
 
+  /// Callback invoked when sync completes (success or failure)
+  /// Used to notify parent widgets to refresh their state
+  final VoidCallback? onSyncComplete;
+
   const GroupSyncCard({
     super.key,
     required this.group,
     this.initiallyExpanded = false,
+    this.onSyncComplete,
   });
 
   @override
@@ -97,23 +102,37 @@ class _GroupSyncCardState extends State<GroupSyncCard> {
     );
   }
 
-  /// Sync entire group
+  /// Sync entire group with force resync enabled.
+  /// 
+  /// This method:
+  /// 1. Sets syncing state to show loading indicator
+  /// 2. Calls syncGroupFromAnywhere with forceResync=true
+  /// 3. Always refreshes metadata and record counts after sync
+  /// 4. Updates UI state regardless of success or failure
+  /// 5. Notifies parent via callback if provided
   Future<void> _syncGroup() async {
     setState(() {
       _isSyncing = true;
     });
 
     try {
-     final success = await syncGroupFromAnywhere(context, widget.group.id);
-      
-      if (success && mounted) {
-        setState(() {});
-      }
+      // Force resync is enabled by default in syncGroupFromAnywhere
+      // This ensures all tables are re-synced even if previously successful
+      await syncGroupFromAnywhere(context, widget.group.id);
     } finally {
+      // Always refresh metadata and UI state after sync attempt
+      // This ensures UI shows current state even if sync failed
       if (mounted) {
+        // Reload metadata from orchestrator to get latest sync status
+        await _orchestrator.loadMetadata();
+        await _orchestrator.refreshRecordCounts();
+        
         setState(() {
           _isSyncing = false;
         });
+        
+        // Notify parent widget to refresh its state (e.g., DataSyncTab)
+        widget.onSyncComplete?.call();
       }
     }
   }

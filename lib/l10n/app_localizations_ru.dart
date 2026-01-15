@@ -3151,49 +3151,49 @@ class AppLocalizationsRu extends AppLocalizations {
   String get permissionsCheckTitle => 'Проверка разрешений';
 
   @override
-  String get permissionsCheckDescription => 'Для полноценной работы приложения требуются следующие разрешения:';
+  String get permissionsCheckDescription => 'Для полной работы приложения требуются следующие разрешения:';
 
   @override
   String get permissionFileStorage => 'Хранение файлов';
 
   @override
-  String get permissionFileStorageDesc => 'Сохранение данных';
+  String get permissionFileStorageDesc => 'Для сохранения данных';
 
   @override
   String get permissionLocation => 'Местоположение';
 
   @override
-  String get permissionLocationDesc => 'Карта и расчет расстояния';
+  String get permissionLocationDesc => 'Для карт и расчёта расстояния';
 
   @override
   String get permissionCamera => 'Камера';
 
   @override
-  String get permissionCameraDesc => 'Фотосъемка';
+  String get permissionCameraDesc => 'Для съёмки фото';
 
   @override
   String get permissionMicrophone => 'Микрофон';
 
   @override
-  String get permissionMicrophoneDesc => 'Запись звука';
+  String get permissionMicrophoneDesc => 'Для записи аудио';
 
   @override
   String get permissionNotifications => 'Уведомления';
 
   @override
-  String get permissionNotificationsDesc => 'Показ сообщений';
+  String get permissionNotificationsDesc => 'Для показа сообщений';
 
   @override
   String get permissionAudio => 'Музыка и аудио';
 
   @override
-  String get permissionAudioDesc => 'Работа с аудио файлами';
+  String get permissionAudioDesc => 'Для работы с аудиофайлами';
 
   @override
   String get permissionPhotosVideos => 'Фото и видео';
 
   @override
-  String get permissionPhotosVideosDesc => 'Работа с медиа файлами';
+  String get permissionPhotosVideosDesc => 'Для работы с медиафайлами';
 
   @override
   String get permissionsLimitedWarning => 'Без разрешений приложение будет работать в ограниченном режиме.';
@@ -3205,58 +3205,58 @@ class AppLocalizationsRu extends AppLocalizations {
   String get permissionStorageTitle => 'Разрешение на хранение файлов';
 
   @override
-  String get permissionStorageDescAndroid13 => 'Выбор папки для хранения данных приложения';
+  String get permissionStorageDescAndroid13 => 'Выберите папку для сохранения данных приложения';
 
   @override
-  String get permissionStorageDescOther => 'Сохранение и загрузка данных приложения';
+  String get permissionStorageDescOther => 'Для сохранения и загрузки данных приложения';
 
   @override
-  String get permissionStoragePurposeAndroid13 => 'Выберите папку для хранения фото, документов и данных';
+  String get permissionStoragePurposeAndroid13 => 'Выберите папку для сохранения фото, документов и данных';
 
   @override
-  String get permissionStoragePurposeOther => 'Хранение фото, документов и данных';
+  String get permissionStoragePurposeOther => 'Для сохранения фото, документов и данных';
 
   @override
   String get permissionLocationTitle => 'Разрешение на местоположение';
 
   @override
-  String get permissionLocationDescription => 'Сортировка торговых точек по расстоянию';
+  String get permissionLocationDescription => 'Для сортировки торговых точек по расстоянию';
 
   @override
-  String get permissionLocationPurpose => 'Показ местоположения на карте и расчет расстояния';
+  String get permissionLocationPurpose => 'Для показа местоположения на карте и расчёта расстояния';
 
   @override
-  String get permissionLocationAlwaysTitle => 'Разрешение на постоянное местоположение';
+  String get permissionLocationAlwaysTitle => 'Разрешение на фоновое местоположение';
 
   @override
-  String get permissionLocationAlwaysDescription => 'Определение местоположения при работе приложения в фоновом режиме';
+  String get permissionLocationAlwaysDescription => 'Для определения местоположения в фоновом режиме';
 
   @override
-  String get permissionLocationAlwaysPurpose => 'Фоновый сервис и уведомления';
+  String get permissionLocationAlwaysPurpose => 'Фоновые сервисы и уведомления';
 
   @override
   String get permissionCameraTitle => 'Разрешение на камеру';
 
   @override
-  String get permissionCameraDescription => 'Фотосъемка и сканирование штрих-кодов';
+  String get permissionCameraDescription => 'Для съёмки фото и сканирования штрих-кодов';
 
   @override
-  String get permissionCameraPurpose => 'Фотосъемка товаров и торговых точек';
+  String get permissionCameraPurpose => 'Для фотографирования товаров и торговых точек';
 
   @override
   String get permissionMicrophoneTitle => 'Разрешение на микрофон';
 
   @override
-  String get permissionMicrophoneDescription => 'Запись звука и аудио сообщений';
+  String get permissionMicrophoneDescription => 'Для записи голоса и аудиосообщений';
 
   @override
-  String get permissionMicrophonePurpose => 'Голосовые напоминания и аудио записи';
+  String get permissionMicrophonePurpose => 'Голосовые заметки и аудиозаписи';
 
   @override
   String get permissionNotificationTitle => 'Разрешение на уведомления';
 
   @override
-  String get permissionNotificationDescription => 'Показ важных сообщений';
+  String get permissionNotificationDescription => 'Для показа важных сообщений';
 
   @override
   String get permissionNotificationPurpose => 'Напоминания, новости и уведомления';
@@ -3265,23 +3265,23 @@ class AppLocalizationsRu extends AppLocalizations {
   String get permissionAudioTitle => 'Разрешение на музыку и аудио';
 
   @override
-  String get permissionAudioDescription => 'Работа с аудио файлами';
+  String get permissionAudioDescription => 'Для работы с аудиофайлами';
 
   @override
-  String get permissionAudioPurpose => 'Работа с музыкой, аудио сообщениями и голосовыми файлами';
+  String get permissionAudioPurpose => 'Музыка, аудиосообщения и голосовые файлы';
 
   @override
   String get permissionPhotosVideosTitle => 'Разрешение на фото и видео';
 
   @override
-  String get permissionPhotosVideosDescription => 'Работа с медиа файлами';
+  String get permissionPhotosVideosDescription => 'Для работы с медиафайлами';
 
   @override
-  String get permissionPhotosVideosPurpose => 'Работа с фото, видео и медиа файлами';
+  String get permissionPhotosVideosPurpose => 'Фото, видео и медиафайлы';
 
   @override
   String permissionRequired(String permission) {
-    return '$permission требуется';
+    return 'Требуется $permission';
   }
 
   @override
@@ -3304,7 +3304,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get allowPermissionQuestion => 'Хотите предоставить разрешение?';
 
   @override
-  String get grantPermission => 'Разрешить';
+  String get grantPermission => 'Предоставить разрешение';
 
   @override
   String get checking => 'Проверка...';

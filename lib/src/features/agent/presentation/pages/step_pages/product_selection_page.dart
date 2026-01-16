@@ -13,6 +13,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/s
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/product_detail_page.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/product_image_widget.dart';
 import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
 
 // Local copy of matchesSearch function for transliteration search
 bool matchesSearch(String text, String query) {
@@ -241,6 +242,16 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
   int _currentFullScreenIndex = 0;
   late PageController _fullScreenPageController;
 
+  /// Image carousel state for fullscreen view
+  /// Caches loaded images per product to avoid repeated API calls
+  final Map<String, List<ProductImage>> _productImagesCache = {};
+  
+  /// Tracks current image index for each product in carousel
+  final Map<String, int> _productImageIndices = {};
+  
+  /// Tracks loading state per product
+  final Set<String> _loadingProductImages = {};
+
   /// Search and filter state
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _filterAnimationController;
@@ -351,6 +362,67 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
       debugPrint('ProductSelectionPage: Stack trace: $stackTrace');
       // Don't set error message for filter data, as it's not critical
     }
+  }
+
+  // ===========================================================================
+  // Image Carousel Methods
+  // ===========================================================================
+
+  /// Load all images for a product (used in fullscreen carousel)
+  /// Uses caching to avoid repeated API calls for same product
+  Future<void> _loadProductImages(String productCode) async {
+    // Skip if already cached or currently loading
+    if (_productImagesCache.containsKey(productCode) ||
+        _loadingProductImages.contains(productCode)) {
+      return;
+    }
+
+    _loadingProductImages.add(productCode);
+
+    try {
+      final imageService = sl<ProductImageService>();
+      final images = await imageService.getAllImages(productCode);
+      
+      // Debug: Log loaded images count
+      debugPrint('ProductSelectionPage: Loaded ${images.length} images for $productCode');
+      
+      if (mounted) {
+        setState(() {
+          // Sort: main image first, then by date
+          _productImagesCache[productCode] = _sortImagesMainFirst(images);
+          _productImageIndices[productCode] = 0;
+          _loadingProductImages.remove(productCode);
+        });
+      }
+    } catch (e) {
+      _loadingProductImages.remove(productCode);
+      debugPrint('ProductSelectionPage: Error loading images for $productCode: $e');
+    }
+  }
+
+  /// Sort images with main image first, then by creation date
+  List<ProductImage> _sortImagesMainFirst(List<ProductImage> images) {
+    if (images.isEmpty) return images;
+    
+    final sorted = List<ProductImage>.from(images);
+    sorted.sort((a, b) {
+      if (a.isMain && !b.isMain) return -1;
+      if (!a.isMain && b.isMain) return 1;
+      return b.createdAt.compareTo(a.createdAt);
+    });
+    return sorted;
+  }
+
+  /// Get current image index for a product
+  int _getProductImageIndex(String productCode) {
+    return _productImageIndices[productCode] ?? 0;
+  }
+
+  /// Set current image index for a product
+  void _setProductImageIndex(String productCode, int index) {
+    setState(() {
+      _productImageIndices[productCode] = index;
+    });
   }
 
   /// Toggle filter panel visibility with animation
@@ -1298,21 +1370,24 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Product image with overlaid text - fills remaining space
+              // Double-tap opens fullscreen image viewer
               Expanded(
-                child: Stack(
-                  children: [
-                    // Background image - uses ProductImageWidget for dynamic loading
-                    SizedBox(
-                      width: double.infinity,
-                      height: double.infinity,
-                      child: ProductImageWidget(
-                        productCode: product.productCode,
-                        size: ProductImageSize.medium,
-                        fit: BoxFit.cover,
-                        borderRadius: BorderRadius.circular(8),
-                        heroTag: 'product_selection_grid_${product.productCode}',
+                child: GestureDetector(
+                  onDoubleTap: () => _openProductImageFullScreen(product.productCode),
+                  child: Stack(
+                    children: [
+                      // Background image - uses ProductImageWidget for dynamic loading
+                      SizedBox(
+                        width: double.infinity,
+                        height: double.infinity,
+                        child: ProductImageWidget(
+                          productCode: product.productCode,
+                          size: ProductImageSize.medium,
+                          fit: BoxFit.cover,
+                          borderRadius: BorderRadius.circular(8),
+                          heroTag: 'product_selection_grid_${product.productCode}',
+                        ),
                       ),
-                    ),
                     // Overlaid text at bottom
                     Positioned(
                       bottom: 8,
@@ -1390,7 +1465,8 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
                         ],
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 
@@ -1471,16 +1547,18 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     final price = product.price ?? 0.0;
     final canAdd = price > 0 && quantity < stock;
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Background image - uses ProductImageWidget for dynamic loading
-        ProductImageWidget(
-          productCode: product.productCode,
-          size: ProductImageSize.large,
-          fit: BoxFit.cover,
-          heroTag: 'product_selection_large_${product.productCode}',
-        ),
+    return GestureDetector(
+      onDoubleTap: () => _openProductImageFullScreen(product.productCode),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Background image - uses ProductImageWidget for dynamic loading
+          ProductImageWidget(
+            productCode: product.productCode,
+            size: ProductImageSize.large,
+            fit: BoxFit.cover,
+            heroTag: 'product_selection_large_${product.productCode}',
+          ),
         // Gradient overlay for better text readability
         Container(
           decoration: BoxDecoration(
@@ -1642,7 +1720,8 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
             ],
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1677,11 +1756,18 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
       );
     }
 
+    // Get current product images for arrow navigation
+    final currentProduct = filteredProducts[_currentFullScreenIndex];
+    final currentImages = _productImagesCache[currentProduct.productCode] ?? [];
+    final currentImageIndex = _getProductImageIndex(currentProduct.productCode);
+    final hasMultipleImages = currentImages.length > 1;
+
     return Stack(
       children: [
-        // Main product PageView
+        // Main product PageView - swipe navigates between products
         PageView.builder(
           controller: _fullScreenPageController,
+          physics: const ClampingScrollPhysics(),
           itemCount: filteredProducts.length,
           onPageChanged: (index) {
             setState(() {
@@ -1828,40 +1914,40 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
           child: _buildPageIndicator(filteredProducts.length, theme),
         ),
 
-        // Navigation arrows for convenience
-        if (filteredProducts.length > 1) ...[
-          // Left arrow
+        // Image navigation arrows (only if product has multiple images)
+        if (hasMultipleImages) ...[
+          // Left arrow - previous image
           Positioned(
             left: 8,
             top: 0,
             bottom: 0,
             child: Center(
-              child: _currentFullScreenIndex > 0
+              child: currentImageIndex > 0
                   ? _buildNavigationArrow(
                       icon: Icons.chevron_left,
                       onTap: () {
-                        _fullScreenPageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
+                        _setProductImageIndex(
+                          currentProduct.productCode,
+                          currentImageIndex - 1,
                         );
                       },
                     )
                   : const SizedBox.shrink(),
             ),
           ),
-          // Right arrow
+          // Right arrow - next image
           Positioned(
             right: 8,
             top: 0,
             bottom: 0,
             child: Center(
-              child: _currentFullScreenIndex < filteredProducts.length - 1
+              child: currentImageIndex < currentImages.length - 1
                   ? _buildNavigationArrow(
                       icon: Icons.chevron_right,
                       onTap: () {
-                        _fullScreenPageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
+                        _setProductImageIndex(
+                          currentProduct.productCode,
+                          currentImageIndex + 1,
                         );
                       },
                     )
@@ -1983,7 +2069,199 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     }
   }
 
+  /// Build image carousel for fullscreen view
+  /// Navigation via arrows only (swipe reserved for product navigation)
+  Widget _buildImageCarousel({
+    required List<ProductImage> images,
+    required String productCode,
+    required int currentIndex,
+  }) {
+    // Show the image at currentIndex directly (no PageView needed since no swipe)
+    final image = images[currentIndex];
+    final imageUrl = image.imageLgUrl ?? 
+                     image.imageMdUrl ?? 
+                     image.imageUrl ?? 
+                     image.imageThumbnailUrl;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Image with loading and error handling
+        if (imageUrl != null && imageUrl.isNotEmpty)
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: Image.network(
+              imageUrl,
+              key: ValueKey(imageUrl),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stack) => _buildImagePlaceholder(),
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _buildImagePlaceholder(),
+                    Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          )
+        else
+          _buildImagePlaceholder(),
+
+        // Main image badge
+        if (image.isMain)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 60,
+            left: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.star_rounded,
+                    size: 14,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Asosiy',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Build placeholder for missing/loading images
+  Widget _buildImagePlaceholder() {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      color: cs.surfaceContainerHighest,
+      child: Center(
+        child: Icon(
+          Icons.inventory_2_outlined,
+          size: 64,
+          color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+        ),
+      ),
+    );
+  }
+
+  /// Open fullscreen image viewer for a product
+  /// Loads images if not cached, then opens zoom-capable viewer
+  void _openProductImageFullScreen(String productCode, [int initialIndex = 0]) {
+    // Load images first if not cached
+    _loadProductImages(productCode);
+    
+    final images = _productImagesCache[productCode] ?? [];
+    
+    if (images.isEmpty) {
+      // Show snackbar if no images available
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Rasm yuklanmoqda...'),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black87,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return _ProductImageFullScreenViewer(
+            images: images,
+            initialIndex: initialIndex,
+            productCode: productCode,
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
+
+  /// Build carousel indicator dots for image navigation
+  Widget _buildImageCarouselIndicator({
+    required int count,
+    required int currentIndex,
+    required ThemeData theme,
+  }) {
+    // Use dots for small number of images, otherwise show counter
+    if (count <= 5) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(count, (index) {
+          final isActive = index == currentIndex;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: isActive ? 20 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? theme.colorScheme.primary
+                  : Colors.white.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          );
+        }),
+      );
+    } else {
+      // Show counter for many images
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          '${currentIndex + 1} / $count',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+  }
+
   /// Build fullscreen product card with improved layout
+  /// Supports image carousel when product has multiple images
   Widget _buildFullScreenProductCard(
     ThemeData theme,
     ProductWithPrice product,
@@ -1993,17 +2271,47 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     final price = product.price ?? 0.0;
     final canAdd = price > 0 && quantity < stock;
     final colorScheme = theme.colorScheme;
+    final productCode = product.productCode;
+
+    // Load images for this product if not cached
+    _loadProductImages(productCode);
+
+    // Get cached images
+    final images = _productImagesCache[productCode] ?? [];
+    final currentImageIndex = _getProductImageIndex(productCode);
+    final hasMultipleImages = images.length > 1;
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background image
-        ProductImageWidget(
-          productCode: product.productCode,
-          size: ProductImageSize.large,
-          fit: BoxFit.cover,
-          heroTag: 'product_fullscreen_${product.productCode}',
-        ),
+        // Image area - carousel or single image
+        if (images.isNotEmpty)
+          _buildImageCarousel(
+            images: images,
+            productCode: productCode,
+            currentIndex: currentImageIndex,
+          )
+        else
+          // Fallback to ProductImageWidget while loading
+          ProductImageWidget(
+            productCode: productCode,
+            size: ProductImageSize.large,
+            fit: BoxFit.cover,
+            heroTag: 'product_fullscreen_$productCode',
+          ),
+
+        // Image carousel indicators (only if multiple images)
+        if (hasMultipleImages)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 60,
+            left: 0,
+            right: 0,
+            child: _buildImageCarouselIndicator(
+              count: images.length,
+              currentIndex: currentImageIndex,
+              theme: theme,
+            ),
+          ),
 
         // Gradient overlay for better text readability
         Container(
@@ -2727,6 +3035,232 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
           tooltip: AppLocalizations.of(context)?.filter ?? 'Filtr',
         ),
       ],
+    );
+  }
+}
+
+// =============================================================================
+// Full Screen Image Viewer Widget
+// =============================================================================
+
+/// Fullscreen image viewer with zoom and swipe capabilities
+/// Used for viewing product images in detail from grid views
+class _ProductImageFullScreenViewer extends StatefulWidget {
+  final List<ProductImage> images;
+  final int initialIndex;
+  final String productCode;
+
+  const _ProductImageFullScreenViewer({
+    required this.images,
+    required this.initialIndex,
+    required this.productCode,
+  });
+
+  @override
+  State<_ProductImageFullScreenViewer> createState() =>
+      _ProductImageFullScreenViewerState();
+}
+
+class _ProductImageFullScreenViewerState
+    extends State<_ProductImageFullScreenViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+  final TransformationController _transformationController =
+      TransformationController();
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _transformationController.dispose();
+    super.dispose();
+  }
+
+  void _resetZoom() {
+    _transformationController.value = Matrix4.identity();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Image viewer with zoom
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.images.length,
+              onPageChanged: (index) {
+                setState(() => _currentIndex = index);
+                _resetZoom();
+              },
+              itemBuilder: (context, index) {
+                final image = widget.images[index];
+                final imageUrl =
+                    image.imageLgUrl ?? image.imageMdUrl ?? image.imageUrl;
+
+                return InteractiveViewer(
+                  transformationController: _transformationController,
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Center(
+                    child: imageUrl != null && imageUrl.isNotEmpty
+                        ? Image.network(
+                            imageUrl,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stack) => const Icon(
+                              Icons.broken_image_outlined,
+                              size: 64,
+                              color: Colors.white54,
+                            ),
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              );
+                            },
+                          )
+                        : const Icon(
+                            Icons.inventory_2_outlined,
+                            size: 64,
+                            color: Colors.white54,
+                          ),
+                  ),
+                );
+              },
+            ),
+
+            // Top bar with close button
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.black54, Colors.transparent],
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Close button
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded, color: Colors.white),
+                      style: IconButton.styleFrom(backgroundColor: Colors.black38),
+                    ),
+                    // Image counter
+                    if (widget.images.length > 1)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          '${_currentIndex + 1} / ${widget.images.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    // Placeholder for symmetry
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ),
+            ),
+
+            // Bottom indicators
+            if (widget.images.length > 1)
+              Positioned(
+                bottom: 24,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    widget.images.length,
+                    (index) => GestureDetector(
+                      onTap: () {
+                        _pageController.animateToPage(
+                          index,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: index == _currentIndex ? 24 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          color: index == _currentIndex
+                              ? Colors.white
+                              : Colors.white38,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Zoom hint
+            Positioned(
+              bottom: 60,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.pinch_outlined, size: 16, color: Colors.white70),
+                      SizedBox(width: 6),
+                      Text(
+                        'Kattalashtirish uchun qisib torting',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

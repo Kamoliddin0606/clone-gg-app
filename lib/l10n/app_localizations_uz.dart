@@ -4739,4 +4739,19 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get youAreOffline => 'Siz oflayn rejimdasiz';
+
+  @override
+  String get lineTotal => 'Qator summasi';
+
+  @override
+  String get totalMismatchWarning => 'Hisoblangan summa server qiymatidan farq qiladi';
+
+  @override
+  String get bonus => 'Bonus';
+
+  @override
+  String get unitPrice => 'Birlik narxi';
+
+  @override
+  String get orderTotalMismatch => 'Buyurtma umumiy summasi mos kelmayapti';
 }

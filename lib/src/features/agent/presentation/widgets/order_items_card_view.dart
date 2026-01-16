@@ -34,9 +34,6 @@ class OrderItemsCardView extends StatefulWidget {
 }
 
 class _OrderItemsCardViewState extends State<OrderItemsCardView> {
-  // Track which items are expanded for detail view
-  final Set<int> _expandedItems = {};
-  
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -89,6 +86,9 @@ class _OrderItemsCardViewState extends State<OrderItemsCardView> {
 
     final totalItems = widget.order.items.fold<double>(0, (p, e) => p + e.quantity);
     final totalSum = widget.order.items.fold<double>(0, (p, e) => p + e.sum);
+    final calculatedTotal = widget.order.items.fold<double>(0, (p, e) => p + e.calculatedTotal);
+    final orderTotal = widget.order.total;
+    final hasOrderTotalMismatch = (orderTotal - calculatedTotal).abs() > 0.01;
 
     return Container(
       color: cs.surfaceContainerLowest,
@@ -103,32 +103,31 @@ class _OrderItemsCardViewState extends State<OrderItemsCardView> {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (_, i) {
                 final item = widget.order.items[i];
-                final isExpanded = _expandedItems.contains(i);
                 return _ExpandableOrderItemCard(
                   item: item,
                   index: i,
-                  isExpanded: isExpanded,
-                  onTap: () => setState(() {
-                    if (isExpanded) {
-                      _expandedItems.remove(i);
-                    } else {
-                      _expandedItems.add(i);
-                    }
-                  }),
+                  isExpanded: false,
+                  onTap: () {},
                   onDoubleTap: () => _openProductDetail(context, item),
                 );
               },
             ),
           ),
           // Footer with purchase summary - focused on totals
-          _buildPurchaseSummaryFooter(context, totalItems, totalSum),
+          _buildPurchaseSummaryFooter(context, totalItems, totalSum, calculatedTotal, hasOrderTotalMismatch),
         ],
       ),
     );
   }
   
-  /// Purchase summary footer with clear price focus
-  Widget _buildPurchaseSummaryFooter(BuildContext context, double totalItems, double totalSum) {
+  /// Purchase summary footer with clear price focus and order total validation
+  Widget _buildPurchaseSummaryFooter(
+    BuildContext context,
+    double totalItems,
+    double totalSum,
+    double calculatedTotal,
+    bool hasOrderTotalMismatch,
+  ) {
     final cs = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
@@ -149,6 +148,44 @@ class _OrderItemsCardViewState extends State<OrderItemsCardView> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Order total mismatch warning
+          if (hasOrderTotalMismatch)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: cs.errorContainer.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.error.withOpacity(0.4)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 20, color: cs.error),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.orderTotalMismatch,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: cs.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${l10n.lineTotal}: ${uzsFormat.format(calculatedTotal)}',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: cs.onErrorContainer,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // Summary row with items count and total
           Row(
             children: [
@@ -273,68 +310,60 @@ class _OrderItemsCardViewState extends State<OrderItemsCardView> {
     try {
       final db = GetIt.I<ApiDatabaseService>();
       
-      // Try to find product by article code
-      final product = await db.getProductByCode(item.article);
+      // Try to find product with full details including prices and stock
+      final products = await db.getProductsWithPrices(
+        searchQuery: item.article,
+        priceTypeCode: item.priceTypeCode,
+      );
       
       // Close loading dialog
       if (context.mounted) Navigator.of(context).pop();
       
-      if (product != null && context.mounted) {
-        // Create ProductWithPrice from database product and order item data
-        final productWithPrice = ProductWithPrice(
-          productCode: product.code,
-          productName: product.name,
-          vendorCode: product.vendorCode,
-          unit: product.unit,
-          quantity: item.quantity,
-          reserved: 0,
-          available: 0,
-          category: product.category,
-          barcode: product.barcode,
-          have: 0,
-          warehouseCode: '',
-          warehouseName: '',
-          weight: product.weight,
-          capacity: product.capacity,
-          productBrand: product.productBrand,
-          productSeries: product.productSeries,
-          codeProject: '',
-          priceTypeCode: item.priceType,
-          priceTypeName: item.priceType,
-          price: item.price,
-          currency: 'UZS',
-          validFrom: '',
-          validTo: '',
-          stock: 0,
-        );
-        
+      // Find exact match by article code
+      ProductWithPrice? productWithPrice;
+      if (products.isNotEmpty) {
+        try {
+          productWithPrice = products.firstWhere(
+            (p) => p.productCode == item.article || p.vendorCode == item.article,
+          );
+        } catch (e) {
+          productWithPrice = products.first;
+        }
+      }
+      
+      if (productWithPrice != null && context.mounted) {
+        // Navigate to full ProductDetailPage
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => ProductDetailPage(
-              product: productWithPrice,
+              product: productWithPrice!,
               heroTag: 'order_item_${item.article}',
             ),
           ),
         );
       } else if (context.mounted) {
-        // Fallback to bottom sheet if product not found in database
-        _showItemDetailsBottomSheet(context, item);
+        // Show error message if product not found
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)?.noData ?? 'Mahsulot topilmadi'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } catch (e) {
       // Close loading dialog on error
       if (context.mounted) Navigator.of(context).pop();
-      // Fallback to bottom sheet
-      if (context.mounted) _showItemDetailsBottomSheet(context, item);
+      
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)?.error ?? "Xatolik"}: ${e.toString()}'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
-  }
-
-  void _showItemDetailsBottomSheet(BuildContext context, OrderItem item) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _ProductDetailBottomSheet(item: item),
-    );
   }
 }
 
@@ -362,7 +391,7 @@ class _ExpandableOrderItemCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     
     return GestureDetector(
-      onTap: onTap,
+      onTap: onDoubleTap,
       onDoubleTap: onDoubleTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -436,7 +465,7 @@ class _ExpandableOrderItemCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            uzsFormat.format(item.sum),
+                            uzsFormat.format(item.calculatedTotal),
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: cs.primary,
                               fontWeight: FontWeight.w700,
@@ -483,20 +512,20 @@ class _ExpandableOrderItemCard extends StatelessWidget {
                         value: uzsFormat.format(item.price),
                       ),
                       const SizedBox(height: 8),
-                      // Price type row
+                      // Price type row - uses display name with fallback logic
                       _buildDetailRow(
                         context,
                         icon: Icons.category_outlined,
                         label: l10n.priceTypeLabel,
-                        value: item.priceType.isNotEmpty ? item.priceType : '-',
+                        value: item.priceTypeDisplayName,
                       ),
                       const SizedBox(height: 8),
-                      // Line total row - highlighted
+                      // Line total row - shows calculated total (price × quantity)
                       _buildDetailRow(
                         context,
                         icon: Icons.calculate_rounded,
-                        label: l10n.amountLabel,
-                        value: uzsFormat.format(item.sum),
+                        label: l10n.lineTotal,
+                        value: uzsFormat.format(item.calculatedTotal),
                         isHighlighted: true,
                       ),
                     ],
@@ -548,210 +577,3 @@ class _ExpandableOrderItemCard extends StatelessWidget {
   }
 }
 
-/// Bottom sheet with detailed product information
-class _ProductDetailBottomSheet extends StatelessWidget {
-  final OrderItem item;
-  
-  const _ProductDetailBottomSheet({required this.item});
-  
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-    
-    return DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: cs.onSurfaceVariant.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: cs.primaryContainer,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(
-                        Icons.inventory_2_rounded,
-                        color: cs.onPrimaryContainer,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.productDetails,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: cs.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item.productName,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: cs.onSurface,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close_rounded, color: cs.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(height: 1, color: cs.outlineVariant.withOpacity(0.3)),
-              // Content
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(24),
-                  children: [
-                    _DetailRow(
-                      label: l10n.articleLabel,
-                      value: item.article,
-                      icon: Icons.qr_code_2_rounded,
-                    ),
-                    const SizedBox(height: 16),
-                    _DetailRow(
-                      label: l10n.quantityLabel,
-                      value: NumberFormat('#,##0.###').format(item.quantity),
-                      icon: Icons.shopping_cart_rounded,
-                    ),
-                    const SizedBox(height: 16),
-                    _DetailRow(
-                      label: l10n.priceLabel,
-                      value: uzsFormat.format(item.price),
-                      icon: Icons.payments_rounded,
-                    ),
-                    const SizedBox(height: 16),
-                    _DetailRow(
-                      label: l10n.amountLabel,
-                      value: uzsFormat.format(item.sum),
-                      icon: Icons.calculate_rounded,
-                      isHighlighted: true,
-                    ),
-                    const SizedBox(height: 16),
-                    _DetailRow(
-                      label: l10n.priceTypeLabel,
-                      value: item.priceType,
-                      icon: Icons.sell_outlined,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Detail row in bottom sheet
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final bool isHighlighted;
-  
-  const _DetailRow({
-    required this.label,
-    required this.value,
-    required this.icon,
-    this.isHighlighted = false,
-  });
-  
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-    
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isHighlighted
-            ? cs.primaryContainer.withOpacity(0.5)
-            : cs.surfaceContainerHigh.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isHighlighted
-              ? cs.primary.withOpacity(0.3)
-              : cs.outlineVariant.withOpacity(0.2),
-          width: isHighlighted ? 2 : 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: isHighlighted
-                  ? cs.primary.withOpacity(0.15)
-                  : cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: isHighlighted ? cs.primary : cs.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: cs.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  value,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: isHighlighted ? FontWeight.w800 : FontWeight.w700,
-                    color: isHighlighted ? cs.primary : cs.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

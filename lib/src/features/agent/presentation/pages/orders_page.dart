@@ -1384,7 +1384,6 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                               final o = _filtered[i];
                               return OrderCardGrid(
                                 order: o,
-                                onTap: () => _openBottomSheet(context, o),
                                 onDoubleTap: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -1408,7 +1407,6 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
                             final o = _filtered[i];
                             return OrderCard(
                               order: o,
-                              onTap: () => _openBottomSheet(context, o),
                               onDoubleTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -1478,14 +1476,14 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
               article: 'SHX-250',
               quantity: 10,
               price: 25000,
-              priceType: 'Retail',
+              priceTypeCode: 'Retail',
             ),
             OrderItem(
               productName: 'Soap Y',
               article: 'SPY-100',
               quantity: 24,
               price: 9000,
-              priceType: 'Retail',
+              priceTypeCode: 'Retail',
             ),
           ],
         ),
@@ -1585,7 +1583,9 @@ class _OrderBottomSheetState extends State<_OrderBottomSheet> {
             article: codeProduct,
             quantity: product.amount.toDouble(),
             price: product.price,
-            priceType: originalOrder.typePriceCode,
+            priceTypeCode: product.priceTypeCode ?? originalOrder.typePriceCode,
+            priceTypeName: product.priceTypeName,
+            lineTotal: product.total,
           );
           items.add(orderItem);
         } catch (e) {

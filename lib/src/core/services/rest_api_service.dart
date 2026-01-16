@@ -274,25 +274,8 @@ class RestApiService {
           return handler.next(options);
         },
         onError: (DioException error, handler) async {
-          // Retry logic for network errors
-          if (_shouldRetry(error)) {
-            try {
-              final response = await _dio.request(
-                error.requestOptions.path,
-                options: Options(
-                  method: error.requestOptions.method,
-                  headers: error.requestOptions.headers,
-                ),
-                data: error.requestOptions.data,
-                queryParameters: error.requestOptions.queryParameters,
-              );
-              return handler.resolve(response);
-            } catch (e) {
-              // If retry fails, continue with original error
-            }
-          }
-
-          // Enhanced error handling
+          // Enhanced error handling without retry logic
+          // Retry removed to prevent duplicate requests
           final errorMessage = _getErrorMessage(error);
           final enhancedError = DioException(
             requestOptions: error.requestOptions,
@@ -305,15 +288,6 @@ class RestApiService {
         },
       ),
     ]);
-  }
-
-  /// Determine if request should be retried based on error type
-  bool _shouldRetry(DioException error) {
-    return error.type == DioExceptionType.connectionTimeout ||
-           error.type == DioExceptionType.receiveTimeout ||
-           error.type == DioExceptionType.sendTimeout ||
-           (error.type == DioExceptionType.badResponse &&
-            error.response?.statusCode == 500);
   }
 
   /// Get user-friendly error message from DioException

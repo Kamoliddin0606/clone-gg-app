@@ -2862,5 +2862,10 @@
     }
   },
   "connectionRestored": "Connection restored",
-  "youAreOffline": "You are offline"
+  "youAreOffline": "You are offline",
+  "lineTotal": "Line Total",
+  "totalMismatchWarning": "Calculated total differs from server value",
+  "bonus": "Bonus",
+  "unitPrice": "Unit Price",
+  "orderTotalMismatch": "Order total mismatch detected"
 }

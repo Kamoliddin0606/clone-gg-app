@@ -51,9 +51,10 @@ class OrderCard extends StatelessWidget {
                 onDoubleTap: onDoubleTap,
                 borderRadius: BorderRadius.circular(20),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       // Header: Order number and status
                       Row(
@@ -96,7 +97,7 @@ class OrderCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       // Client name
                       Row(
                         children: [
@@ -126,7 +127,7 @@ class OrderCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 10),
                       // Date and amount
                       Container(
                         padding: const EdgeInsets.all(12),

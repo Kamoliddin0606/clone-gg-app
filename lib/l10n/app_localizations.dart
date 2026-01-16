@@ -9036,6 +9036,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You are offline'**
   String get youAreOffline;
+
+  /// No description provided for @lineTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Line Total'**
+  String get lineTotal;
+
+  /// No description provided for @totalMismatchWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculated total differs from server value'**
+  String get totalMismatchWarning;
+
+  /// No description provided for @bonus.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonus'**
+  String get bonus;
+
+  /// No description provided for @unitPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit Price'**
+  String get unitPrice;
+
+  /// No description provided for @orderTotalMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Order total mismatch detected'**
+  String get orderTotalMismatch;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

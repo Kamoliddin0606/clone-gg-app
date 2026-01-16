@@ -4739,4 +4739,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get youAreOffline => 'Вы не в сети';
+
+  @override
+  String get lineTotal => 'Сумма строки';
+
+  @override
+  String get totalMismatchWarning => 'Расчётная сумма отличается от значения на сервере';
+
+  @override
+  String get bonus => 'Подарок';
+
+  @override
+  String get unitPrice => 'Цена за единицу';
+
+  @override
+  String get orderTotalMismatch => 'Обнаружено несоответствие общей суммы заказа';
 }

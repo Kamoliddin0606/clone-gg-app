@@ -328,7 +328,7 @@ class _VisitCompletionPageState extends State<VisitCompletionPage> {
         article: product.codeProduct,
         quantity: product.amount.toDouble(),
         price: product.price,
-        priceType: l10n?.retail ?? 'Retail',
+        priceTypeCode: createOrder.codePrice,
       )).toList(),
     );
   }

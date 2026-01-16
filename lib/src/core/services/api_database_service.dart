@@ -2328,6 +2328,46 @@ class ApiDatabaseService {
         .toList();
   }
 
+  /// Get price type by code
+  /// Returns null if not found
+  Future<PriceType?> getPriceTypeByCode(String code) async {
+    if (code.isEmpty) return null;
+    
+    final db = await database;
+    final result = await db.query(
+      'price_types',
+      where: 'code = ?',
+      whereArgs: [code],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+
+    final row = result.first;
+    return PriceType(
+      code: row['code'] as String,
+      name: row['name'] as String,
+      description: row['description'] as String? ?? '',
+      isDefault: (row['is_default'] as int?) == 1,
+    );
+  }
+
+  /// Get price type name by code with fallback logic
+  /// Returns: price type name if found, 'Bonus' if price is 0, or code as fallback
+  Future<String> getPriceTypeDisplayName(String code, {double price = 0}) async {
+    if (code.isEmpty) {
+      return price == 0 ? 'Bonus' : '';
+    }
+    
+    final priceType = await getPriceTypeByCode(code);
+    if (priceType != null && priceType.name.isNotEmpty) {
+      return priceType.name;
+    }
+    
+    // Fallback: if price is 0, show "Bonus", otherwise show code
+    return price == 0 ? 'Bonus' : code;
+  }
+
   // Product prices methods
   Future<void> saveProductPrices(List<ProductPrice> productPrices) async {
     // Validate input data

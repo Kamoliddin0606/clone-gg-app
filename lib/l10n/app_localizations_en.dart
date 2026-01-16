@@ -4739,4 +4739,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get youAreOffline => 'You are offline';
+
+  @override
+  String get lineTotal => 'Line Total';
+
+  @override
+  String get totalMismatchWarning => 'Calculated total differs from server value';
+
+  @override
+  String get bonus => 'Bonus';
+
+  @override
+  String get unitPrice => 'Unit Price';
+
+  @override
+  String get orderTotalMismatch => 'Order total mismatch detected';
 }

@@ -217,6 +217,18 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             ? product.priceTypeCode!
             : originalOrder.typePriceCode;
         
+        // Get price type name from database
+        String? priceTypeName;
+        try {
+          final db = GetIt.I<ApiDatabaseService>();
+          priceTypeName = await db.getPriceTypeDisplayName(
+            productPriceType,
+            price: product.price,
+          );
+        } catch (e) {
+          debugPrint('Error getting price type name: $e');
+        }
+        
         items.add(
           OrderItem(
             productName: product.nameProduct.trim().isNotEmpty
@@ -226,7 +238,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             article: article,
             quantity: product.amount.toDouble(),
             price: product.price,
-            priceType: productPriceType,
+            priceTypeCode: productPriceType,
+            priceTypeName: priceTypeName,
             lineTotal: product.total,
           ),
         );

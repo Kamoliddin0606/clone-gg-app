@@ -2739,5 +2739,10 @@
     }
   },
   "connectionRestored": "Aloqa tiklandi",
-  "youAreOffline": "Siz oflayn rejimdasiz"
+  "youAreOffline": "Siz oflayn rejimdasiz",
+  "lineTotal": "Qator summasi",
+  " ": "Hisoblangan summa server qiymatidan farq qiladi",
+  "bonus": "Bonus",
+  "unitPrice": "Birlik narxi",
+  "orderTotalMismatch": "Buyurtma umumiy summasi mos kelmayapti"
 }

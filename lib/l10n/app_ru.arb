@@ -2819,5 +2819,10 @@
     }
   },
   "connectionRestored": "Соединение восстановлено",
-  "youAreOffline": "Вы не в сети"
+  "youAreOffline": "Вы не в сети",
+  "lineTotal": "Сумма строки",
+  "totalMismatchWarning": "Расчётная сумма отличается от значения на сервере",
+  "bonus": "Подарок",
+  "unitPrice": "Цена за единицу",
+  "orderTotalMismatch": "Обнаружено несоответствие общей суммы заказа"
 }

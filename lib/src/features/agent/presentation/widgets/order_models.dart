@@ -5,17 +5,46 @@ class OrderItem {
   final String article;
   final double quantity;
   final double price;
-  final String priceType;
+  final String priceTypeCode;
+  final String? priceTypeName;
   final double? lineTotal;
+  
   const OrderItem({
     required this.productName,
     required this.article,
     required this.quantity,
     required this.price,
-    required this.priceType,
+    required this.priceTypeCode,
+    this.priceTypeName,
     this.lineTotal,
   });
-  double get sum => lineTotal ?? (quantity * price);
+  
+  /// Calculated total: price × quantity
+  double get calculatedTotal => quantity * price;
+  
+  /// Actual sum from server or calculated
+  double get sum => lineTotal ?? calculatedTotal;
+  
+  /// Check if calculated total matches the line total from server
+  bool get hasTotalMismatch => 
+      lineTotal != null && (lineTotal! - calculatedTotal).abs() > 0.01;
+  
+  /// Display name for price type with fallback logic:
+  /// 1. priceTypeName if available
+  /// 2. "Bonus" if price is 0
+  /// 3. priceTypeCode as fallback
+  String get priceTypeDisplayName {
+    if (priceTypeName != null && priceTypeName!.isNotEmpty) {
+      return priceTypeName!;
+    }
+    if (price == 0) {
+      return 'Bonus';
+    }
+    return priceTypeCode.isNotEmpty ? priceTypeCode : '-';
+  }
+  
+  /// Legacy getter for backward compatibility
+  String get priceType => priceTypeCode;
 }
 
 

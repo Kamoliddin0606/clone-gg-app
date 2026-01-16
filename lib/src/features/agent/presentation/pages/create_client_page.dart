@@ -16,9 +16,7 @@ import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.
 import 'package:gloria_marketing_flutter/src/core/models/faktura_company_details.dart';
 import 'package:gloria_marketing_flutter/src/core/models/scanned_document_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/document_scanner_widget.dart';
-
-/// Gemini AI API key for document scanning
-const String _geminiApiKey = 'AIzaSyDeIApWRmFwNOr5pQVvs_xwba0woIS3xYE';
+import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
 
 /// Page for creating a new client (trading point)
 /// Beautiful, user-friendly form with all required fields
@@ -936,7 +934,7 @@ class _CreateClientPageState extends State<CreateClientPage>
 
                 // AI Document Scanner
                 DocumentScannerWidget(
-                  apiKey: _geminiApiKey,
+                  scannerService: sl<GeminiDocumentScannerService>(),
                   onScanStarted: _clearFormForScan,
                   onDataExtracted: _handleScannedData,
                 ),

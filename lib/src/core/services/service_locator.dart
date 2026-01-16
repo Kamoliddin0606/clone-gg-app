@@ -26,6 +26,11 @@ import 'package:gloria_marketing_flutter/src/core/services/startup_access_servic
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/access_validity_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/gemini_time_verification_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/app_access_control_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/startup_access_bloc.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
@@ -241,6 +246,54 @@ Future<void> setupServiceLocator() async {
       localUuidService: sl<LocalUuidService>(),
       prefsService: sl<SharedPreferencesService>(),
       soapApiService: sl<SoapApiService>(),
+    ));
+  }
+
+  // Access Control Services - App access validity and time verification
+  if (!sl.isRegistered<AccessValidityService>()) {
+    sl.registerLazySingleton<AccessValidityService>(() => AccessValidityService(
+      prefsService: sl<SharedPreferencesService>(),
+    ));
+  }
+  if (!sl.isRegistered<ConnectivityMonitoringService>()) {
+    sl.registerLazySingleton<ConnectivityMonitoringService>(() => ConnectivityMonitoringService());
+  }
+  // Gemini AI Services - Unified API key management
+  // All Gemini services use ApiKeyService for centralized key management
+  // IMPORTANT: Gemini services need a SEPARATE Dio instance without auth interceptors
+  // The shared Dio instance has SoapApiService interceptors that add wrong headers
+  // (Authorization Bearer, SOAP Accept headers) which cause 401 errors with Gemini API
+  if (!sl.isRegistered<GeminiDocumentScannerService>()) {
+    // Create dedicated Dio instance for Gemini - no interceptors
+    final geminiDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+    sl.registerLazySingleton<GeminiDocumentScannerService>(() => GeminiDocumentScannerService(
+      apiKeyService: sl<ApiKeyService>(),
+      dio: geminiDio,
+    ));
+  }
+  if (!sl.isRegistered<GeminiTimeVerificationService>()) {
+    // Create dedicated Dio instance for Gemini Time Verification - no interceptors
+    final geminiTimeDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+    sl.registerLazySingleton<GeminiTimeVerificationService>(() => GeminiTimeVerificationService(
+      apiKeyService: sl<ApiKeyService>(),
+      dio: geminiTimeDio,
+    ));
+  }
+  if (!sl.isRegistered<AppAccessControlService>()) {
+    sl.registerLazySingleton<AppAccessControlService>(() => AppAccessControlService(
+      validityService: sl<AccessValidityService>(),
+      connectivityService: sl<ConnectivityMonitoringService>(),
+      soapApiService: sl<SoapApiService>(),
+      prefsService: sl<SharedPreferencesService>(),
+      databaseHelper: sl<DatabaseHelper>(),
     ));
   }
 

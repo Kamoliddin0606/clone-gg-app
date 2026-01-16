@@ -3,19 +3,37 @@ import 'package:image_picker/image_picker.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/models/scanned_document_data.dart';
 import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/gemini_base_service.dart';
 
 /// Widget for scanning organization certificates using AI
-/// Provides camera capture and gallery selection with visual feedback
+/// 
+/// Provides camera capture and gallery selection with visual feedback.
+/// Uses GeminiDocumentScannerService for AI-powered document scanning.
+/// 
+/// The scanner service should be obtained from the service locator:
+/// ```dart
+/// DocumentScannerWidget(
+///   scannerService: sl<GeminiDocumentScannerService>(),
+///   onDataExtracted: (data) => handleData(data),
+/// )
+/// ```
 class DocumentScannerWidget extends StatefulWidget {
+  /// Callback when document data is successfully extracted
   final Function(ScannedDocumentData data) onDataExtracted;
-  final String apiKey;
+  
+  /// Gemini document scanner service instance
+  final GeminiDocumentScannerService scannerService;
+  
+  /// Callback when scan operation starts
   final VoidCallback? onScanStarted;
+  
+  /// Callback when scan operation completes
   final VoidCallback? onScanCompleted;
 
   const DocumentScannerWidget({
     super.key,
     required this.onDataExtracted,
-    required this.apiKey,
+    required this.scannerService,
     this.onScanStarted,
     this.onScanCompleted,
   });
@@ -27,7 +45,6 @@ class DocumentScannerWidget extends StatefulWidget {
 class _DocumentScannerWidgetState extends State<DocumentScannerWidget>
     with SingleTickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
-  late GeminiDocumentScannerService _scannerService;
   late AnimationController _animationController;
   late Animation<double> _pulseAnimation;
 
@@ -35,10 +52,12 @@ class _DocumentScannerWidgetState extends State<DocumentScannerWidget>
   String? _errorMessage;
   ScannedDocumentData? _lastScanResult;
 
+  /// Get scanner service from widget
+  GeminiDocumentScannerService get _scannerService => widget.scannerService;
+
   @override
   void initState() {
     super.initState();
-    _scannerService = GeminiDocumentScannerService(apiKey: widget.apiKey);
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -116,12 +135,12 @@ class _DocumentScannerWidgetState extends State<DocumentScannerWidget>
           _showError('NO_DATA_EXTRACTED');
         }
       }
-    } on GeminiScanException catch (e) {
+    } on GeminiException catch (e) {
       if (mounted) {
         setState(() => _isScanning = false);
         _animationController.stop();
         _animationController.reset();
-        _showError(e.code);
+        _showError(_mapGeminiErrorCode(e.code));
       }
     } catch (e) {
       if (mounted) {
@@ -135,6 +154,29 @@ class _DocumentScannerWidgetState extends State<DocumentScannerWidget>
 
   void _showError(String code) {
     setState(() => _errorMessage = code);
+  }
+
+  /// Map GeminiErrorCode to legacy error code string for localization
+  String _mapGeminiErrorCode(GeminiErrorCode code) {
+    switch (code) {
+      case GeminiErrorCode.networkError:
+        return 'NETWORK_ERROR';
+      case GeminiErrorCode.authError:
+        return 'AUTH_ERROR';
+      case GeminiErrorCode.apiKeyNotFound:
+      case GeminiErrorCode.apiKeyError:
+        return 'AUTH_ERROR';
+      case GeminiErrorCode.rateLimitError:
+        return 'RATE_LIMIT';
+      case GeminiErrorCode.parseError:
+        return 'PARSE_ERROR';
+      case GeminiErrorCode.noContent:
+        return 'NO_DATA_EXTRACTED';
+      case GeminiErrorCode.invalidRequest:
+        return 'IMAGE_EMPTY';
+      default:
+        return 'UNKNOWN_ERROR';
+    }
   }
 
   String _getLocalizedError(BuildContext context, String code) {

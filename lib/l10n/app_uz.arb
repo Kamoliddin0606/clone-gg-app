@@ -2741,8 +2741,74 @@
   "connectionRestored": "Aloqa tiklandi",
   "youAreOffline": "Siz oflayn rejimdasiz",
   "lineTotal": "Qator summasi",
-  " ": "Hisoblangan summa server qiymatidan farq qiladi",
+  "totalMismatchWarning": "Hisoblangan summa server qiymatidan farq qiladi",
   "bonus": "Bonus",
   "unitPrice": "Birlik narxi",
-  "orderTotalMismatch": "Buyurtma umumiy summasi mos kelmayapti"
+  "orderTotalMismatch": "Buyurtma umumiy summasi mos kelmayapti",
+  "accessControlTitle": "Kirish tekshiruvi",
+  "accessControlChecking": "Kirish tekshirilmoqda...",
+  "accessControlCheckingInternet": "Internet aloqasi tekshirilmoqda...",
+  "accessControlVerifyingTime": "Vaqt tekshirilmoqda...",
+  "accessControlGranted": "Kirish ruxsat etildi",
+  "accessControlDenied": "Kirish rad etildi",
+  "accessExpired": "Kirish muddati tugadi",
+  "accessExpiredMessage": "Kirish muddatingiz tugadi. Kirish muddatini uzaytirish uchun qo'llab-quvvatlash xizmatiga murojaat qiling.",
+  "accessExpiredDate": "Tugagan sana: {date}",
+  "@accessExpiredDate": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "accessValidUntil": "Amal qilish muddati: {date}",
+  "@accessValidUntil": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "accessDaysRemaining": "{days} kun qoldi",
+  "@accessDaysRemaining": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "accessTimeManipulation": "Vaqt o'zgartirilganligi aniqlandi",
+  "accessTimeManipulationMessage": "Qurilma vaqti o'zgartirilgan. Iltimos, qurilma vaqti to'g'ri o'rnatilganligiga ishonch hosil qiling.",
+  "accessInternetRequired": "Internet talab qilinadi",
+  "accessInternetRequiredMessage": "Dastlabki sozlash uchun internet aloqasi talab qilinadi. Iltimos, internetga ulaning va qaytadan urinib ko'ring.",
+  "accessOfflineMode": "Oflayn rejim",
+  "accessOfflineModeMessage": "Siz ilovadan oflayn rejimda foydalanmoqdasiz. Ba'zi funksiyalar cheklangan bo'lishi mumkin.",
+  "accessVerificationError": "Tekshiruvda xatolik",
+  "accessVerificationErrorMessage": "Kirishni tekshirishda xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.",
+  "accessContactSupport": "Qo'llab-quvvatlash bilan bog'lanish",
+  "accessRetry": "Qaytadan",
+  "accessExit": "Chiqish",
+  "accessCheckingStatus": "Kirish holati tekshirilmoqda...",
+  "accessWaitingForInternet": "Internet aloqasi kutilmoqda...",
+  "accessVerifyingWithServer": "Server bilan tekshirilmoqda...",
+  "accessLoadingApp": "Ilova yuklanmoqda...",
+  "accessWarningExpiringSoon": "Kirish muddati tez orada tugaydi",
+  "accessWarningExpiringSoonMessage": "Kirish muddatingiz {days} kundan keyin tugaydi. Iltimos, uzaytirish uchun qo'llab-quvvatlash bilan bog'laning.",
+  "@accessWarningExpiringSoonMessage": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "accessContinue": "Davom etish",
+  "accessRemindLater": "Keyinroq eslatish",
+  "accessNoInternetOfflineCheck": "Internet aloqasi yo'q. Oflayn tekshiruv ishlatilmoqda.",
+  "accessInternetRestored": "Internet aloqasi tiklandi. Tekshirilmoqda...",
+  "accessCleaningData": "Ma'lumotlar tozalanmoqda...",
+  "accessRevoking": "Kirish bekor qilinmoqda...",
+
+  "geminiApiKeyNotFound": "Gemini API kaliti sozlanmagan",
+  "geminiNetworkError": "Tarmoq xatosi yuz berdi. Ulanishni tekshiring",
+  "geminiAuthError": "Autentifikatsiya xatosi. Sozlamalarda API kalitini tekshiring",
+  "geminiRateLimitError": "So'rovlar limiti oshib ketdi. Bir necha daqiqadan keyin urinib ko'ring",
+  "geminiServerError": "Server xatosi yuz berdi. Keyinroq urinib ko'ring",
+  "geminiTimeoutError": "So'rov vaqti tugadi. Internet ulanishini tekshiring",
+  "geminiApiKeyConfigured": "Gemini API kaliti muvaffaqiyatli sozlandi",
+  "geminiApiKeyLabel": "Gemini API kaliti",
+  "geminiApiKeyHint": "Gemini API kalitingizni kiriting (AIza bilan boshlanadi)",
+  "geminiApiKeyDescription": "Hujjat skanerlash va AI funksiyalari uchun ishlatiladi",
+  "geminiApiKeyInvalid": "Kalit formati noto'g'ri. Kalit 'AIza' bilan boshlanishi kerak"
 }

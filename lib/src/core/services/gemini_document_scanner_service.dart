@@ -1,48 +1,86 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:gloria_marketing_flutter/src/core/models/scanned_document_data.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/gemini_base_service.dart';
 
 /// Service for scanning organization certificates using Google Gemini AI
-/// Uses Gemini 2.0 Flash model for fast and efficient document processing
-class GeminiDocumentScannerService {
-  static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-  
-  // Smart fallback system: Try models in priority order with 10s timeout each
-  // Only includes tested and working models (Jan 2026)
-  // Priority: Flash 2.5 > Flash 2.0 Exp > Flash 2.0
-  // Note: 10s timeout needed for large images (5-6MB) in production
-  static const List<String> _modelFallbackChain = [
-    'gemini-2.5-flash',          // v2.5: Latest working - 1.2s response time
+/// 
+/// This service uses Gemini's vision capabilities to extract structured data
+/// from organization certificates, business licenses, and similar documents.
+/// 
+/// Features:
+/// - Smart model fallback (tries 3 models in priority order)
+/// - Automatic image compression (5MB → 500KB)
+/// - 10-second timeout per model attempt
+/// - Structured data extraction with confidence scores
+/// - Support for multiple image formats (JPEG, PNG, WebP, HEIC)
+/// 
+/// This service extends [GeminiBaseService] for unified API key management
+/// and consistent error handling across all Gemini services.
+/// 
+/// Usage:
+/// ```dart
+/// final scanner = sl<GeminiDocumentScannerService>();
+/// final data = await scanner.scanDocument(imageBytes);
+/// print('Organization: ${data.organizationName}');
+/// print('INN: ${data.inn}');
+/// ```
+class GeminiDocumentScannerService extends GeminiBaseService {
+  /// Model fallback chain in priority order
+  /// Priority: Flash 2.5 > Flash 2.0 Exp > Flash 2.0
+  /// These models are tested and working as of Jan 2026
+  static const List<String> modelFallbackChain = [
+    'gemini-2.5-flash',          // v2.5: Latest - 1.2s response time
     'gemini-2.0-flash-exp',      // v2.0: Fastest - 1.0s response time
     'gemini-2.0-flash',          // v2.0: Stable - 1.1s response time
   ];
   
-  static const Duration _timeout = Duration(seconds: 10); // 10s for large images in production
-
-  final String _apiKey;
-
-  GeminiDocumentScannerService({required String apiKey}) : _apiKey = apiKey;
+  /// Timeout for document scanning requests
+  /// 10 seconds is needed for large images (5-6MB) in production
+  static const Duration scanTimeout = Duration(seconds: 10);
+  
+  /// Constructor for GeminiDocumentScannerService
+  /// 
+  /// @param apiKeyService Service for managing API keys
+  /// @param dio HTTP client for making requests
+  GeminiDocumentScannerService({
+    required ApiKeyService apiKeyService,
+    required Dio dio,
+  }) : super(apiKeyService: apiKeyService, dio: dio);
 
   /// Scan organization certificate image and extract data
-  /// Uses smart fallback: tries models in priority order with 10s timeout each
-  /// Compresses image before sending to reduce size and improve speed
-  /// Returns ScannedDocumentData with extracted fields
-  /// Throws GeminiScanException if all models fail
+  /// 
+  /// Compresses the image, sends it to Gemini AI, and extracts structured
+  /// data including organization name, INN, director, address, etc.
+  /// 
+  /// Uses smart fallback: tries models in priority order with 10s timeout each.
+  /// 
+  /// @param imageBytes The image data as bytes (supports JPEG, PNG, WebP, HEIC)
+  /// @returns Extracted document data as [ScannedDocumentData]
+  /// @throws GeminiException if all models fail or image is empty
   Future<ScannedDocumentData> scanDocument(Uint8List imageBytes) async {
+    // Validate input
     if (imageBytes.isEmpty) {
-      throw GeminiScanException('IMAGE_EMPTY', message: 'Image data is empty');
+      throw GeminiException(
+        code: GeminiErrorCode.invalidRequest,
+        message: 'Image data is empty',
+      );
     }
 
     // Compress image before sending to API (reduces 5MB to ~500KB)
     final compressedBytes = await _compressImage(imageBytes);
     
     if (kDebugMode) {
-      print('GeminiScanner: Original size: ${imageBytes.length} bytes (${(imageBytes.length / 1024 / 1024).toStringAsFixed(2)} MB)');
-      print('GeminiScanner: Compressed size: ${compressedBytes.length} bytes (${(compressedBytes.length / 1024 / 1024).toStringAsFixed(2)} MB)');
-      print('GeminiScanner: Compression ratio: ${((1 - compressedBytes.length / imageBytes.length) * 100).toStringAsFixed(1)}%');
+      final originalSizeMB = (imageBytes.length / 1024 / 1024).toStringAsFixed(2);
+      final compressedSizeMB = (compressedBytes.length / 1024 / 1024).toStringAsFixed(2);
+      final ratio = ((1 - compressedBytes.length / imageBytes.length) * 100).toStringAsFixed(1);
+      debugPrint('[GeminiDocumentScanner] Original: ${imageBytes.length} bytes ($originalSizeMB MB)');
+      debugPrint('[GeminiDocumentScanner] Compressed: ${compressedBytes.length} bytes ($compressedSizeMB MB)');
+      debugPrint('[GeminiDocumentScanner] Compression ratio: $ratio%');
     }
 
     // Convert compressed image to base64
@@ -52,8 +90,43 @@ class GeminiDocumentScannerService {
     // Build the prompt for document extraction
     final prompt = _buildExtractionPrompt();
 
-    // Build request body
-    final requestBody = {
+    // Build request body with vision content
+    final requestBody = _buildRequestBody(prompt, base64Image, mimeType);
+
+    // Use base service fallback mechanism
+    try {
+      final response = await makeGeminiRequestWithFallback(
+        models: modelFallbackChain,
+        body: requestBody,
+        timeout: scanTimeout,
+      );
+      
+      return _parseResponse(response);
+    } on GeminiException {
+      rethrow;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[GeminiDocumentScanner] Unexpected error: $e');
+      }
+      throw GeminiException(
+        code: GeminiErrorCode.unknownError,
+        message: 'Document scanning failed: $e',
+      );
+    }
+  }
+
+  /// Build request body for document extraction
+  /// 
+  /// @param prompt The extraction prompt
+  /// @param base64Image Base64 encoded image data
+  /// @param mimeType MIME type of the image
+  /// @returns Request body map
+  Map<String, dynamic> _buildRequestBody(
+    String prompt, 
+    String base64Image, 
+    String mimeType,
+  ) {
+    return {
       'contents': [
         {
           'parts': [
@@ -81,52 +154,14 @@ class GeminiDocumentScannerService {
         {'category': 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold': 'BLOCK_NONE'},
       ],
     };
-
-    // Try each model in fallback chain with 15s timeout
-    final errors = <String>[];
-    
-    for (int modelIndex = 0; modelIndex < _modelFallbackChain.length; modelIndex++) {
-      final model = _modelFallbackChain[modelIndex];
-      
-      if (kDebugMode) {
-        print('GeminiScanner: Trying model $model (${modelIndex + 1}/${_modelFallbackChain.length})');
-      }
-      
-      try {
-        final response = await _makeRequest(requestBody, model);
-        final result = _parseResponse(response);
-        
-        if (kDebugMode) {
-          print('GeminiScanner: ✅ Success with model $model');
-        }
-        
-        return result;
-      } catch (e) {
-        final errorMsg = '$model failed: $e';
-        errors.add(errorMsg);
-        
-        if (kDebugMode) {
-          print('GeminiScanner: ❌ $errorMsg');
-        }
-        
-        // If not the last model, continue to next
-        if (modelIndex < _modelFallbackChain.length - 1) {
-          if (kDebugMode) {
-            print('GeminiScanner: Falling back to next model...');
-          }
-          continue;
-        }
-      }
-    }
-
-    // All models failed
-    throw GeminiScanException(
-      'ALL_MODELS_FAILED',
-      message: 'All ${_modelFallbackChain.length} models failed. Errors: ${errors.join("; ")}',
-    );
   }
 
   /// Build the extraction prompt for Gemini
+  /// 
+  /// Creates a detailed prompt instructing Gemini to extract
+  /// specific fields from the document image.
+  /// 
+  /// @returns The extraction prompt string
   String _buildExtractionPrompt() {
     return '''Analyze this organization certificate/business document image and extract the following information in JSON format.
 
@@ -153,100 +188,43 @@ Important rules:
 Return JSON object with extracted fields:''';
   }
 
-  /// Make HTTP request to Gemini API with specified model
-  Future<Map<String, dynamic>> _makeRequest(Map<String, dynamic> body, String model) async {
-    final url = Uri.parse('$_baseUrl/models/$model:generateContent?key=$_apiKey');
-
-    if (kDebugMode) {
-      print('GeminiScanner: Making request to Gemini API');
-    }
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(body),
-      ).timeout(_timeout);
-
-      if (kDebugMode) {
-        print('GeminiScanner: Response status: ${response.statusCode}');
-        if (response.statusCode != 200) {
-          print('GeminiScanner: Error response: ${response.body}');
-        }
-      }
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body) as Map<String, dynamic>;
-      } else if (response.statusCode == 400) {
-        throw GeminiScanException('BAD_REQUEST', 
-            statusCode: 400, 
-            message: 'Invalid request format');
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        throw GeminiScanException('AUTH_ERROR', 
-            statusCode: response.statusCode, 
-            message: 'API key is invalid or expired');
-      } else if (response.statusCode == 404) {
-        throw GeminiScanException('NOT_FOUND', 
-            statusCode: 404, 
-            message: 'API endpoint not found. Check model name');
-      } else if (response.statusCode == 429) {
-        throw GeminiScanException('RATE_LIMIT', 
-            statusCode: 429, 
-            message: 'API rate limit exceeded');
-      } else if (response.statusCode >= 500) {
-        throw GeminiScanException('SERVER_ERROR', 
-            statusCode: response.statusCode, 
-            message: 'Gemini server error');
-      } else {
-        throw GeminiScanException('UNKNOWN_ERROR', 
-            statusCode: response.statusCode, 
-            message: response.body);
-      }
-    } on GeminiScanException {
-      rethrow;
-    } catch (e) {
-      if (kDebugMode) print('GeminiScanner: Network error: $e');
-      throw GeminiScanException('NETWORK_ERROR', message: e.toString());
-    }
-  }
-
   /// Parse Gemini API response and extract document data
+  /// 
+  /// @param response The raw API response
+  /// @returns Parsed document data
+  /// @throws GeminiException if parsing fails
   ScannedDocumentData _parseResponse(Map<String, dynamic> response) {
     try {
-      // Navigate to the text content
-      final candidates = response['candidates'] as List<dynamic>?;
-      if (candidates == null || candidates.isEmpty) {
-        throw GeminiScanException('NO_CONTENT', message: 'No response from AI');
-      }
-
-      final content = candidates[0]['content'] as Map<String, dynamic>?;
-      final parts = content?['parts'] as List<dynamic>?;
-      if (parts == null || parts.isEmpty) {
-        throw GeminiScanException('NO_CONTENT', message: 'Empty response parts');
-      }
-
-      final textContent = parts[0]['text'] as String?;
-      if (textContent == null || textContent.isEmpty) {
-        throw GeminiScanException('NO_CONTENT', message: 'Empty text response');
-      }
-
+      // Use base service method to extract text
+      final textContent = extractTextFromResponse(response);
+      
       if (kDebugMode) {
-        print('GeminiScanner: Raw response text: $textContent');
+        debugPrint('[GeminiDocumentScanner] Raw response text: $textContent');
       }
 
       // Parse JSON from response
       final jsonData = _extractJsonFromText(textContent);
       return ScannedDocumentData.fromJson(jsonData);
+    } on GeminiException {
+      rethrow;
     } catch (e) {
-      if (e is GeminiScanException) rethrow;
-      if (kDebugMode) print('GeminiScanner: Parse error: $e');
-      throw GeminiScanException('PARSE_ERROR', message: 'Failed to parse AI response: $e');
+      if (kDebugMode) {
+        debugPrint('[GeminiDocumentScanner] Parse error: $e');
+      }
+      throw GeminiException(
+        code: GeminiErrorCode.parseError,
+        message: 'Failed to parse AI response: $e',
+      );
     }
   }
 
-  /// Extract JSON object from response text (handles markdown code blocks)
+  /// Extract JSON object from response text
+  /// 
+  /// Handles markdown code blocks and finds JSON object boundaries.
+  /// 
+  /// @param text The raw text response
+  /// @returns Parsed JSON map
+  /// @throws GeminiException if JSON parsing fails
   Map<String, dynamic> _extractJsonFromText(String text) {
     String jsonStr = text.trim();
 
@@ -271,13 +249,20 @@ Return JSON object with extracted fields:''';
     try {
       return json.decode(jsonStr) as Map<String, dynamic>;
     } catch (e) {
-      throw GeminiScanException('JSON_PARSE_ERROR', message: 'Invalid JSON in response');
+      throw GeminiException(
+        code: GeminiErrorCode.parseError,
+        message: 'Invalid JSON in response: $e',
+      );
     }
   }
 
   /// Compress image to reduce size while maintaining text readability
-  /// Reduces 5-6MB images to ~500KB for faster API calls
-  /// Uses max 1920px dimension and 85% quality for optimal balance
+  /// 
+  /// Reduces 5-6MB images to ~500KB for faster API calls.
+  /// Uses max 1920px dimension and 85% quality for optimal balance.
+  /// 
+  /// @param imageBytes Original image bytes
+  /// @returns Compressed image bytes (or original if compression fails/increases size)
   Future<Uint8List> _compressImage(Uint8List imageBytes) async {
     try {
       // Compress image with optimal settings for document scanning
@@ -292,7 +277,7 @@ Return JSON object with extracted fields:''';
       // If compression failed or made it bigger, return original
       if (compressedBytes.isEmpty || compressedBytes.length >= imageBytes.length) {
         if (kDebugMode) {
-          print('GeminiScanner: Compression skipped (result larger or empty)');
+          debugPrint('[GeminiDocumentScanner] Compression skipped (result larger or empty)');
         }
         return imageBytes;
       }
@@ -300,28 +285,37 @@ Return JSON object with extracted fields:''';
       return compressedBytes;
     } catch (e) {
       if (kDebugMode) {
-        print('GeminiScanner: Compression error: $e, using original image');
+        debugPrint('[GeminiDocumentScanner] Compression error: $e, using original image');
       }
       return imageBytes; // Return original on error
     }
   }
 
-  /// Detect MIME type from image bytes (JPEG, PNG, WebP, HEIC)
+  /// Detect MIME type from image bytes
+  /// 
+  /// Checks magic bytes to determine image format.
+  /// Supports JPEG, PNG, WebP, and HEIC formats.
+  /// 
+  /// @param bytes Image bytes to analyze
+  /// @returns MIME type string (defaults to 'image/jpeg')
   String _detectMimeType(Uint8List bytes) {
     if (bytes.length < 4) return 'image/jpeg';
 
     // Check magic bytes for image type
+    // JPEG: FF D8 FF
     if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) {
       return 'image/jpeg';
     }
+    // PNG: 89 50 4E 47
     if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) {
       return 'image/png';
     }
+    // WebP: 52 49 46 46 (RIFF)
     if (bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46) {
       return 'image/webp';
     }
+    // HEIC: Check for ftyp
     if (bytes.length >= 12) {
-      // HEIC check
       final ftypStr = String.fromCharCodes(bytes.sublist(4, 8));
       if (ftypStr == 'ftyp') {
         return 'image/heic';
@@ -330,16 +324,4 @@ Return JSON object with extracted fields:''';
 
     return 'image/jpeg'; // Default fallback
   }
-}
-
-/// Exception for Gemini document scanner errors
-class GeminiScanException implements Exception {
-  final String code;
-  final String? message;
-  final int? statusCode;
-
-  GeminiScanException(this.code, {this.message, this.statusCode});
-
-  @override
-  String toString() => 'GeminiScanException: $code${message != null ? ' - $message' : ''}';
 }

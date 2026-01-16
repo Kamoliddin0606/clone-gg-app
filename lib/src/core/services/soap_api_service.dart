@@ -2433,4 +2433,108 @@ class SoapApiService {
       return {'success': false, 'message': e.toString()};
     }
   }
+
+  /// Get server time for time verification
+  /// 
+  /// Returns the current server time as DateTime.
+  /// This is used for access control time verification instead of Gemini AI.
+  /// 
+  /// @returns DateTime from server
+  /// @throws ServerTimeException if request fails
+  Future<DateTime> getServerTime() async {
+    const soapEnvelope = '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/>
+   <soap:Body>
+      <sam:GetServerTime/>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      if (kDebugMode) {
+        print('[SoapApiService] Getting server time from: $_baseUrl');
+      }
+
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      if (kDebugMode) {
+        print('[SoapApiService] Server time response status: ${response.statusCode}');
+      }
+
+      final responseData = response.data?.toString() ?? '';
+
+      // Check for SOAP Fault
+      if (responseData.contains('Fault') || response.statusCode != 200) {
+        String? faultMsg;
+        try {
+          if (responseData.contains('Fault')) {
+            final doc = XmlDocument.parse(responseData);
+            faultMsg = doc.findAllElements('soap:Text').firstOrNull?.innerText.trim() ??
+                       doc.findAllElements('faultstring').firstOrNull?.innerText.trim();
+          }
+        } catch (_) {}
+        throw ServerTimeException(
+          faultMsg ?? 'Server time request failed with status: ${response.statusCode}',
+        );
+      }
+
+      final document = XmlDocument.parse(responseData);
+      
+      // Extract DateTime from response: <m:DateTime>2026-01-16T19:47:47</m:DateTime>
+      final dateTimeElement = document.findAllElements('m:DateTime').firstOrNull;
+      
+      if (dateTimeElement == null) {
+        throw ServerTimeException('DateTime element not found in server response');
+      }
+
+      final dateTimeString = dateTimeElement.innerText.trim();
+      
+      if (kDebugMode) {
+        print('[SoapApiService] Server time string: $dateTimeString');
+      }
+
+      // Parse the datetime string
+      final serverTime = DateTime.parse(dateTimeString);
+
+      if (kDebugMode) {
+        print('[SoapApiService] Parsed server time: $serverTime');
+      }
+
+      return serverTime;
+    } on ServerTimeException {
+      rethrow;
+    } on FormatException catch (e) {
+      throw ServerTimeException('Failed to parse server time: ${e.message}');
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        print('[SoapApiService] Server time request error: ${e.message}');
+      }
+      throw ServerTimeException('Network error getting server time: ${_getErrorMessage(e)}');
+    } catch (e) {
+      if (kDebugMode) {
+        print('[SoapApiService] Unexpected error getting server time: $e');
+      }
+      throw ServerTimeException('Unexpected error getting server time: $e');
+    }
+  }
+}
+
+/// Exception thrown when server time retrieval fails
+class ServerTimeException implements Exception {
+  final String message;
+  
+  const ServerTimeException(this.message);
+  
+  @override
+  String toString() => 'ServerTimeException: $message';
 }

@@ -8,6 +8,9 @@ import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
+import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/app_access_control_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_dialog.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
@@ -50,6 +53,52 @@ void main() async {
 
   // Initialize Database
   await sl<DatabaseHelper>().database;
+
+  // Initialize Gemini API key
+  // In production, this should be fetched from server
+  try {
+    final apiKeyService = sl<ApiKeyService>();
+    
+    // Check if Gemini API key exists, if not - set default
+    final hasGeminiKey = await apiKeyService.hasApiKey(ApiKeyService.geminiApiKey);
+    
+    if (!hasGeminiKey) {
+      // Use default key for development
+      // TODO: Replace with server-provided key in production
+      const defaultGeminiKey = 'AIzaSyDeIApWRmFwNOr5pQVvs_xwba0woIS3xYE';
+      await apiKeyService.storeApiKey(ApiKeyService.geminiApiKey, defaultGeminiKey);
+      
+      if (kDebugMode) {
+        debugPrint('[Main] Gemini API key initialized with default');
+      }
+    } else {
+      if (kDebugMode) {
+        debugPrint('[Main] Gemini API key already configured');
+      }
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Error initializing Gemini API key: $e');
+    }
+  }
+
+  // Initialize Access Control Services
+  // These services must be initialized before app starts
+  try {
+    final connectivityService = sl<ConnectivityMonitoringService>();
+    await connectivityService.initialize();
+    
+    final accessControlService = sl<AppAccessControlService>();
+    await accessControlService.initialize();
+    
+    if (kDebugMode) {
+      debugPrint('[Main] Access control services initialized');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Error initializing access control services: $e');
+    }
+  }
 
   // Initialize Permission Manager (lazy singleton, no need for isReady)
   // PermissionManager is ready when accessed
@@ -294,7 +343,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 themeMode: themeMode,
                 locale: localeProvider.locale,
                 onGenerateRoute: AppRouter.generateRoute,
-                initialRoute: AppRouter.securityCheckRoute,
+                initialRoute: AppRouter.accessControlRoute,
                 localizationsDelegates: AppLocalizations.localizationsDelegates,
                 supportedLocales: AppLocalizations.supportedLocales,
               );

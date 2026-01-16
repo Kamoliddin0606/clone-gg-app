@@ -9066,6 +9066,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Order total mismatch detected'**
   String get orderTotalMismatch;
+
+  /// No description provided for @accessControlTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Verification'**
+  String get accessControlTitle;
+
+  /// No description provided for @accessControlChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying access...'**
+  String get accessControlChecking;
+
+  /// No description provided for @accessControlCheckingInternet.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking internet connection...'**
+  String get accessControlCheckingInternet;
+
+  /// No description provided for @accessControlVerifyingTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying time...'**
+  String get accessControlVerifyingTime;
+
+  /// No description provided for @accessControlGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Access granted'**
+  String get accessControlGranted;
+
+  /// No description provided for @accessControlDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Access denied'**
+  String get accessControlDenied;
+
+  /// No description provided for @accessExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Expired'**
+  String get accessExpired;
+
+  /// No description provided for @accessExpiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your access period has expired. Please contact support to renew access.'**
+  String get accessExpiredMessage;
+
+  /// No description provided for @accessExpiredDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired on: {date}'**
+  String accessExpiredDate(String date);
+
+  /// No description provided for @accessValidUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until: {date}'**
+  String accessValidUntil(String date);
+
+  /// No description provided for @accessDaysRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days remaining'**
+  String accessDaysRemaining(int days);
+
+  /// No description provided for @accessTimeManipulation.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Manipulation Detected'**
+  String get accessTimeManipulation;
+
+  /// No description provided for @accessTimeManipulationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Device time has been manipulated. Please ensure your device time is set correctly.'**
+  String get accessTimeManipulationMessage;
+
+  /// No description provided for @accessInternetRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Internet Required'**
+  String get accessInternetRequired;
+
+  /// No description provided for @accessInternetRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Internet connection is required for first-time setup. Please connect to the internet and try again.'**
+  String get accessInternetRequiredMessage;
+
+  /// No description provided for @accessOfflineMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline Mode'**
+  String get accessOfflineMode;
+
+  /// No description provided for @accessOfflineModeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You are using the app in offline mode. Some features may be limited.'**
+  String get accessOfflineModeMessage;
+
+  /// No description provided for @accessVerificationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Error'**
+  String get accessVerificationError;
+
+  /// No description provided for @accessVerificationErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while verifying access. Please try again.'**
+  String get accessVerificationErrorMessage;
+
+  /// No description provided for @accessContactSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Support'**
+  String get accessContactSupport;
+
+  /// No description provided for @accessRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get accessRetry;
+
+  /// No description provided for @accessExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get accessExit;
+
+  /// No description provided for @accessCheckingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking access status...'**
+  String get accessCheckingStatus;
+
+  /// No description provided for @accessWaitingForInternet.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for internet connection...'**
+  String get accessWaitingForInternet;
+
+  /// No description provided for @accessVerifyingWithServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying with server...'**
+  String get accessVerifyingWithServer;
+
+  /// No description provided for @accessLoadingApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading application...'**
+  String get accessLoadingApp;
+
+  /// No description provided for @accessWarningExpiringSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Expiring Soon'**
+  String get accessWarningExpiringSoon;
+
+  /// No description provided for @accessWarningExpiringSoonMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your access will expire in {days} days. Please contact support to renew.'**
+  String accessWarningExpiringSoonMessage(int days);
+
+  /// No description provided for @accessContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get accessContinue;
+
+  /// No description provided for @accessRemindLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind Later'**
+  String get accessRemindLater;
+
+  /// No description provided for @accessNoInternetOfflineCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Using offline verification.'**
+  String get accessNoInternetOfflineCheck;
+
+  /// No description provided for @accessInternetRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Internet connection restored. Verifying...'**
+  String get accessInternetRestored;
+
+  /// No description provided for @accessCleaningData.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaning up data...'**
+  String get accessCleaningData;
+
+  /// No description provided for @accessRevoking.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoking access...'**
+  String get accessRevoking;
+
+  /// No description provided for @geminiApiKeyNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Gemini API key not configured'**
+  String get geminiApiKeyNotFound;
+
+  /// No description provided for @geminiNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error occurred. Please check your connection'**
+  String get geminiNetworkError;
+
+  /// No description provided for @geminiAuthError.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication failed. Please check your API key in settings'**
+  String get geminiAuthError;
+
+  /// No description provided for @geminiRateLimitError.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate limit exceeded. Please try again in a few minutes'**
+  String get geminiRateLimitError;
+
+  /// No description provided for @geminiServerError.
+  ///
+  /// In en, this message translates to:
+  /// **'Server error occurred. Please try again later'**
+  String get geminiServerError;
+
+  /// No description provided for @geminiTimeoutError.
+  ///
+  /// In en, this message translates to:
+  /// **'Request timeout. Please check your internet connection'**
+  String get geminiTimeoutError;
+
+  /// No description provided for @geminiApiKeyConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Gemini API key configured successfully'**
+  String get geminiApiKeyConfigured;
+
+  /// No description provided for @geminiApiKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gemini API Key'**
+  String get geminiApiKeyLabel;
+
+  /// No description provided for @geminiApiKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your Gemini API key (starts with AIza)'**
+  String get geminiApiKeyHint;
+
+  /// No description provided for @geminiApiKeyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for document scanning and AI features'**
+  String get geminiApiKeyDescription;
+
+  /// No description provided for @geminiApiKeyInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid API key format. Key should start with \'AIza\''**
+  String get geminiApiKeyInvalid;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -4754,4 +4754,147 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get orderTotalMismatch => 'Обнаружено несоответствие общей суммы заказа';
+
+  @override
+  String get accessControlTitle => 'Проверка доступа';
+
+  @override
+  String get accessControlChecking => 'Проверка доступа...';
+
+  @override
+  String get accessControlCheckingInternet => 'Проверка подключения к интернету...';
+
+  @override
+  String get accessControlVerifyingTime => 'Проверка времени...';
+
+  @override
+  String get accessControlGranted => 'Доступ предоставлен';
+
+  @override
+  String get accessControlDenied => 'Доступ запрещён';
+
+  @override
+  String get accessExpired => 'Доступ истёк';
+
+  @override
+  String get accessExpiredMessage => 'Срок действия вашего доступа истёк. Пожалуйста, свяжитесь с поддержкой для продления доступа.';
+
+  @override
+  String accessExpiredDate(String date) {
+    return 'Истёк: $date';
+  }
+
+  @override
+  String accessValidUntil(String date) {
+    return 'Действителен до: $date';
+  }
+
+  @override
+  String accessDaysRemaining(int days) {
+    return 'Осталось дней: $days';
+  }
+
+  @override
+  String get accessTimeManipulation => 'Обнаружена манипуляция временем';
+
+  @override
+  String get accessTimeManipulationMessage => 'Время на устройстве было изменено. Пожалуйста, убедитесь, что время на устройстве установлено правильно.';
+
+  @override
+  String get accessInternetRequired => 'Требуется интернет';
+
+  @override
+  String get accessInternetRequiredMessage => 'Для первоначальной настройки требуется подключение к интернету. Пожалуйста, подключитесь к интернету и повторите попытку.';
+
+  @override
+  String get accessOfflineMode => 'Автономный режим';
+
+  @override
+  String get accessOfflineModeMessage => 'Вы используете приложение в автономном режиме. Некоторые функции могут быть ограничены.';
+
+  @override
+  String get accessVerificationError => 'Ошибка проверки';
+
+  @override
+  String get accessVerificationErrorMessage => 'Произошла ошибка при проверке доступа. Пожалуйста, попробуйте снова.';
+
+  @override
+  String get accessContactSupport => 'Связаться с поддержкой';
+
+  @override
+  String get accessRetry => 'Повторить';
+
+  @override
+  String get accessExit => 'Выход';
+
+  @override
+  String get accessCheckingStatus => 'Проверка статуса доступа...';
+
+  @override
+  String get accessWaitingForInternet => 'Ожидание подключения к интернету...';
+
+  @override
+  String get accessVerifyingWithServer => 'Проверка на сервере...';
+
+  @override
+  String get accessLoadingApp => 'Загрузка приложения...';
+
+  @override
+  String get accessWarningExpiringSoon => 'Доступ скоро истечёт';
+
+  @override
+  String accessWarningExpiringSoonMessage(int days) {
+    return 'Ваш доступ истечёт через $days дней. Пожалуйста, свяжитесь с поддержкой для продления.';
+  }
+
+  @override
+  String get accessContinue => 'Продолжить';
+
+  @override
+  String get accessRemindLater => 'Напомнить позже';
+
+  @override
+  String get accessNoInternetOfflineCheck => 'Нет подключения к интернету. Используется автономная проверка.';
+
+  @override
+  String get accessInternetRestored => 'Подключение к интернету восстановлено. Проверка...';
+
+  @override
+  String get accessCleaningData => 'Очистка данных...';
+
+  @override
+  String get accessRevoking => 'Отзыв доступа...';
+
+  @override
+  String get geminiApiKeyNotFound => 'Ключ API Gemini не настроен';
+
+  @override
+  String get geminiNetworkError => 'Произошла ошибка сети. Проверьте подключение';
+
+  @override
+  String get geminiAuthError => 'Ошибка аутентификации. Проверьте ключ API в настройках';
+
+  @override
+  String get geminiRateLimitError => 'Превышен лимит запросов. Попробуйте через несколько минут';
+
+  @override
+  String get geminiServerError => 'Ошибка сервера. Попробуйте позже';
+
+  @override
+  String get geminiTimeoutError => 'Превышено время ожидания. Проверьте интернет-соединение';
+
+  @override
+  String get geminiApiKeyConfigured => 'Ключ API Gemini успешно настроен';
+
+  @override
+  String get geminiApiKeyLabel => 'Ключ API Gemini';
+
+  @override
+  String get geminiApiKeyHint => 'Введите ваш ключ API Gemini (начинается с AIza)';
+
+  @override
+  String get geminiApiKeyDescription => 'Используется для сканирования документов и AI функций';
+
+  @override
+  String get geminiApiKeyInvalid => 'Неверный формат ключа. Ключ должен начинаться с \'AIza\'';
 }

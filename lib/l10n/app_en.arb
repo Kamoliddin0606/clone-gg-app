@@ -2867,5 +2867,72 @@
   "totalMismatchWarning": "Calculated total differs from server value",
   "bonus": "Bonus",
   "unitPrice": "Unit Price",
-  "orderTotalMismatch": "Order total mismatch detected"
+  "orderTotalMismatch": "Order total mismatch detected",
+  
+  "accessControlTitle": "Access Verification",
+  "accessControlChecking": "Verifying access...",
+  "accessControlCheckingInternet": "Checking internet connection...",
+  "accessControlVerifyingTime": "Verifying time...",
+  "accessControlGranted": "Access granted",
+  "accessControlDenied": "Access denied",
+  "accessExpired": "Access Expired",
+  "accessExpiredMessage": "Your access period has expired. Please contact support to renew access.",
+  "accessExpiredDate": "Expired on: {date}",
+  "@accessExpiredDate": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "accessValidUntil": "Valid until: {date}",
+  "@accessValidUntil": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "accessDaysRemaining": "{days} days remaining",
+  "@accessDaysRemaining": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "accessTimeManipulation": "Time Manipulation Detected",
+  "accessTimeManipulationMessage": "Device time has been manipulated. Please ensure your device time is set correctly.",
+  "accessInternetRequired": "Internet Required",
+  "accessInternetRequiredMessage": "Internet connection is required for first-time setup. Please connect to the internet and try again.",
+  "accessOfflineMode": "Offline Mode",
+  "accessOfflineModeMessage": "You are using the app in offline mode. Some features may be limited.",
+  "accessVerificationError": "Verification Error",
+  "accessVerificationErrorMessage": "An error occurred while verifying access. Please try again.",
+  "accessContactSupport": "Contact Support",
+  "accessRetry": "Retry",
+  "accessExit": "Exit",
+  "accessCheckingStatus": "Checking access status...",
+  "accessWaitingForInternet": "Waiting for internet connection...",
+  "accessVerifyingWithServer": "Verifying with server...",
+  "accessLoadingApp": "Loading application...",
+  "accessWarningExpiringSoon": "Access Expiring Soon",
+  "accessWarningExpiringSoonMessage": "Your access will expire in {days} days. Please contact support to renew.",
+  "@accessWarningExpiringSoonMessage": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "accessContinue": "Continue",
+  "accessRemindLater": "Remind Later",
+  "accessNoInternetOfflineCheck": "No internet connection. Using offline verification.",
+  "accessInternetRestored": "Internet connection restored. Verifying...",
+  "accessCleaningData": "Cleaning up data...",
+  "accessRevoking": "Revoking access...",
+
+  "geminiApiKeyNotFound": "Gemini API key not configured",
+  "geminiNetworkError": "Network error occurred. Please check your connection",
+  "geminiAuthError": "Authentication failed. Please check your API key in settings",
+  "geminiRateLimitError": "Rate limit exceeded. Please try again in a few minutes",
+  "geminiServerError": "Server error occurred. Please try again later",
+  "geminiTimeoutError": "Request timeout. Please check your internet connection",
+  "geminiApiKeyConfigured": "Gemini API key configured successfully",
+  "geminiApiKeyLabel": "Gemini API Key",
+  "geminiApiKeyHint": "Enter your Gemini API key (starts with AIza)",
+  "geminiApiKeyDescription": "Used for document scanning and AI features",
+  "geminiApiKeyInvalid": "Invalid API key format. Key should start with 'AIza'"
 }

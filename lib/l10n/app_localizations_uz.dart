@@ -4754,4 +4754,147 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get orderTotalMismatch => 'Buyurtma umumiy summasi mos kelmayapti';
+
+  @override
+  String get accessControlTitle => 'Kirish tekshiruvi';
+
+  @override
+  String get accessControlChecking => 'Kirish tekshirilmoqda...';
+
+  @override
+  String get accessControlCheckingInternet => 'Internet aloqasi tekshirilmoqda...';
+
+  @override
+  String get accessControlVerifyingTime => 'Vaqt tekshirilmoqda...';
+
+  @override
+  String get accessControlGranted => 'Kirish ruxsat etildi';
+
+  @override
+  String get accessControlDenied => 'Kirish rad etildi';
+
+  @override
+  String get accessExpired => 'Kirish muddati tugadi';
+
+  @override
+  String get accessExpiredMessage => 'Kirish muddatingiz tugadi. Kirish muddatini uzaytirish uchun qo\'llab-quvvatlash xizmatiga murojaat qiling.';
+
+  @override
+  String accessExpiredDate(String date) {
+    return 'Tugagan sana: $date';
+  }
+
+  @override
+  String accessValidUntil(String date) {
+    return 'Amal qilish muddati: $date';
+  }
+
+  @override
+  String accessDaysRemaining(int days) {
+    return '$days kun qoldi';
+  }
+
+  @override
+  String get accessTimeManipulation => 'Vaqt o\'zgartirilganligi aniqlandi';
+
+  @override
+  String get accessTimeManipulationMessage => 'Qurilma vaqti o\'zgartirilgan. Iltimos, qurilma vaqti to\'g\'ri o\'rnatilganligiga ishonch hosil qiling.';
+
+  @override
+  String get accessInternetRequired => 'Internet talab qilinadi';
+
+  @override
+  String get accessInternetRequiredMessage => 'Dastlabki sozlash uchun internet aloqasi talab qilinadi. Iltimos, internetga ulaning va qaytadan urinib ko\'ring.';
+
+  @override
+  String get accessOfflineMode => 'Oflayn rejim';
+
+  @override
+  String get accessOfflineModeMessage => 'Siz ilovadan oflayn rejimda foydalanmoqdasiz. Ba\'zi funksiyalar cheklangan bo\'lishi mumkin.';
+
+  @override
+  String get accessVerificationError => 'Tekshiruvda xatolik';
+
+  @override
+  String get accessVerificationErrorMessage => 'Kirishni tekshirishda xatolik yuz berdi. Iltimos, qaytadan urinib ko\'ring.';
+
+  @override
+  String get accessContactSupport => 'Qo\'llab-quvvatlash bilan bog\'lanish';
+
+  @override
+  String get accessRetry => 'Qaytadan';
+
+  @override
+  String get accessExit => 'Chiqish';
+
+  @override
+  String get accessCheckingStatus => 'Kirish holati tekshirilmoqda...';
+
+  @override
+  String get accessWaitingForInternet => 'Internet aloqasi kutilmoqda...';
+
+  @override
+  String get accessVerifyingWithServer => 'Server bilan tekshirilmoqda...';
+
+  @override
+  String get accessLoadingApp => 'Ilova yuklanmoqda...';
+
+  @override
+  String get accessWarningExpiringSoon => 'Kirish muddati tez orada tugaydi';
+
+  @override
+  String accessWarningExpiringSoonMessage(int days) {
+    return 'Kirish muddatingiz $days kundan keyin tugaydi. Iltimos, uzaytirish uchun qo\'llab-quvvatlash bilan bog\'laning.';
+  }
+
+  @override
+  String get accessContinue => 'Davom etish';
+
+  @override
+  String get accessRemindLater => 'Keyinroq eslatish';
+
+  @override
+  String get accessNoInternetOfflineCheck => 'Internet aloqasi yo\'q. Oflayn tekshiruv ishlatilmoqda.';
+
+  @override
+  String get accessInternetRestored => 'Internet aloqasi tiklandi. Tekshirilmoqda...';
+
+  @override
+  String get accessCleaningData => 'Ma\'lumotlar tozalanmoqda...';
+
+  @override
+  String get accessRevoking => 'Kirish bekor qilinmoqda...';
+
+  @override
+  String get geminiApiKeyNotFound => 'Gemini API kaliti sozlanmagan';
+
+  @override
+  String get geminiNetworkError => 'Tarmoq xatosi yuz berdi. Ulanishni tekshiring';
+
+  @override
+  String get geminiAuthError => 'Autentifikatsiya xatosi. Sozlamalarda API kalitini tekshiring';
+
+  @override
+  String get geminiRateLimitError => 'So\'rovlar limiti oshib ketdi. Bir necha daqiqadan keyin urinib ko\'ring';
+
+  @override
+  String get geminiServerError => 'Server xatosi yuz berdi. Keyinroq urinib ko\'ring';
+
+  @override
+  String get geminiTimeoutError => 'So\'rov vaqti tugadi. Internet ulanishini tekshiring';
+
+  @override
+  String get geminiApiKeyConfigured => 'Gemini API kaliti muvaffaqiyatli sozlandi';
+
+  @override
+  String get geminiApiKeyLabel => 'Gemini API kaliti';
+
+  @override
+  String get geminiApiKeyHint => 'Gemini API kalitingizni kiriting (AIza bilan boshlanadi)';
+
+  @override
+  String get geminiApiKeyDescription => 'Hujjat skanerlash va AI funksiyalari uchun ishlatiladi';
+
+  @override
+  String get geminiApiKeyInvalid => 'Kalit formati noto\'g\'ri. Kalit \'AIza\' bilan boshlanishi kerak';
 }

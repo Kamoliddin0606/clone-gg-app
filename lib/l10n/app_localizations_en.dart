@@ -4754,4 +4754,147 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get orderTotalMismatch => 'Order total mismatch detected';
+
+  @override
+  String get accessControlTitle => 'Access Verification';
+
+  @override
+  String get accessControlChecking => 'Verifying access...';
+
+  @override
+  String get accessControlCheckingInternet => 'Checking internet connection...';
+
+  @override
+  String get accessControlVerifyingTime => 'Verifying time...';
+
+  @override
+  String get accessControlGranted => 'Access granted';
+
+  @override
+  String get accessControlDenied => 'Access denied';
+
+  @override
+  String get accessExpired => 'Access Expired';
+
+  @override
+  String get accessExpiredMessage => 'Your access period has expired. Please contact support to renew access.';
+
+  @override
+  String accessExpiredDate(String date) {
+    return 'Expired on: $date';
+  }
+
+  @override
+  String accessValidUntil(String date) {
+    return 'Valid until: $date';
+  }
+
+  @override
+  String accessDaysRemaining(int days) {
+    return '$days days remaining';
+  }
+
+  @override
+  String get accessTimeManipulation => 'Time Manipulation Detected';
+
+  @override
+  String get accessTimeManipulationMessage => 'Device time has been manipulated. Please ensure your device time is set correctly.';
+
+  @override
+  String get accessInternetRequired => 'Internet Required';
+
+  @override
+  String get accessInternetRequiredMessage => 'Internet connection is required for first-time setup. Please connect to the internet and try again.';
+
+  @override
+  String get accessOfflineMode => 'Offline Mode';
+
+  @override
+  String get accessOfflineModeMessage => 'You are using the app in offline mode. Some features may be limited.';
+
+  @override
+  String get accessVerificationError => 'Verification Error';
+
+  @override
+  String get accessVerificationErrorMessage => 'An error occurred while verifying access. Please try again.';
+
+  @override
+  String get accessContactSupport => 'Contact Support';
+
+  @override
+  String get accessRetry => 'Retry';
+
+  @override
+  String get accessExit => 'Exit';
+
+  @override
+  String get accessCheckingStatus => 'Checking access status...';
+
+  @override
+  String get accessWaitingForInternet => 'Waiting for internet connection...';
+
+  @override
+  String get accessVerifyingWithServer => 'Verifying with server...';
+
+  @override
+  String get accessLoadingApp => 'Loading application...';
+
+  @override
+  String get accessWarningExpiringSoon => 'Access Expiring Soon';
+
+  @override
+  String accessWarningExpiringSoonMessage(int days) {
+    return 'Your access will expire in $days days. Please contact support to renew.';
+  }
+
+  @override
+  String get accessContinue => 'Continue';
+
+  @override
+  String get accessRemindLater => 'Remind Later';
+
+  @override
+  String get accessNoInternetOfflineCheck => 'No internet connection. Using offline verification.';
+
+  @override
+  String get accessInternetRestored => 'Internet connection restored. Verifying...';
+
+  @override
+  String get accessCleaningData => 'Cleaning up data...';
+
+  @override
+  String get accessRevoking => 'Revoking access...';
+
+  @override
+  String get geminiApiKeyNotFound => 'Gemini API key not configured';
+
+  @override
+  String get geminiNetworkError => 'Network error occurred. Please check your connection';
+
+  @override
+  String get geminiAuthError => 'Authentication failed. Please check your API key in settings';
+
+  @override
+  String get geminiRateLimitError => 'Rate limit exceeded. Please try again in a few minutes';
+
+  @override
+  String get geminiServerError => 'Server error occurred. Please try again later';
+
+  @override
+  String get geminiTimeoutError => 'Request timeout. Please check your internet connection';
+
+  @override
+  String get geminiApiKeyConfigured => 'Gemini API key configured successfully';
+
+  @override
+  String get geminiApiKeyLabel => 'Gemini API Key';
+
+  @override
+  String get geminiApiKeyHint => 'Enter your Gemini API key (starts with AIza)';
+
+  @override
+  String get geminiApiKeyDescription => 'Used for document scanning and AI features';
+
+  @override
+  String get geminiApiKeyInvalid => 'Invalid API key format. Key should start with \'AIza\'';
 }

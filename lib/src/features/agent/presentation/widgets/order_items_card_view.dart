@@ -85,10 +85,10 @@ class _OrderItemsCardViewState extends State<OrderItemsCardView> {
     }
 
     final totalItems = widget.order.items.fold<double>(0, (p, e) => p + e.quantity);
-    final totalSum = widget.order.items.fold<double>(0, (p, e) => p + e.sum);
+    final totalSum = widget.order.items.fold<double>(0, (p, e) => p + (e.lineTotal ?? e.calculatedTotal));
     final calculatedTotal = widget.order.items.fold<double>(0, (p, e) => p + e.calculatedTotal);
     final orderTotal = widget.order.total;
-    final hasOrderTotalMismatch = (orderTotal - calculatedTotal).abs() > 0.01;
+    final hasOrderTotalMismatch = (orderTotal - totalSum).abs() > 0.01;
 
     return Container(
       color: cs.surfaceContainerLowest,
@@ -114,7 +114,7 @@ class _OrderItemsCardViewState extends State<OrderItemsCardView> {
             ),
           ),
           // Footer with purchase summary - focused on totals
-          _buildPurchaseSummaryFooter(context, totalItems, totalSum, calculatedTotal, hasOrderTotalMismatch),
+          _buildPurchaseSummaryFooter(context, totalItems, orderTotal, calculatedTotal, hasOrderTotalMismatch),
         ],
       ),
     );

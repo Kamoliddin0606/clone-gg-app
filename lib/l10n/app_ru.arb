@@ -2824,5 +2824,70 @@
   "totalMismatchWarning": "Расчётная сумма отличается от значения на сервере",
   "bonus": "Подарок",
   "unitPrice": "Цена за единицу",
-  "orderTotalMismatch": "Обнаружено несоответствие общей суммы заказа"
+  "orderTotalMismatch": "Обнаружено несоответствие общей суммы заказа",
+  "accessControlTitle": "Проверка доступа",
+  "accessControlChecking": "Проверка доступа...",
+  "accessControlCheckingInternet": "Проверка подключения к интернету...",
+  "accessControlVerifyingTime": "Проверка времени...",
+  "accessControlGranted": "Доступ предоставлен",
+  "accessControlDenied": "Доступ запрещён",
+  "accessExpired": "Доступ истёк",
+  "accessExpiredMessage": "Срок действия вашего доступа истёк. Пожалуйста, свяжитесь с поддержкой для продления доступа.",
+  "accessExpiredDate": "Истёк: {date}",
+  "@accessExpiredDate": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "accessValidUntil": "Действителен до: {date}",
+  "@accessValidUntil": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "accessDaysRemaining": "Осталось дней: {days}",
+  "@accessDaysRemaining": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "accessTimeManipulation": "Обнаружена манипуляция временем",
+  "accessTimeManipulationMessage": "Время на устройстве было изменено. Пожалуйста, убедитесь, что время на устройстве установлено правильно.",
+  "accessInternetRequired": "Требуется интернет",
+  "accessInternetRequiredMessage": "Для первоначальной настройки требуется подключение к интернету. Пожалуйста, подключитесь к интернету и повторите попытку.",
+  "accessOfflineMode": "Автономный режим",
+  "accessOfflineModeMessage": "Вы используете приложение в автономном режиме. Некоторые функции могут быть ограничены.",
+  "accessVerificationError": "Ошибка проверки",
+  "accessVerificationErrorMessage": "Произошла ошибка при проверке доступа. Пожалуйста, попробуйте снова.",
+  "accessContactSupport": "Связаться с поддержкой",
+  "accessRetry": "Повторить",
+  "accessExit": "Выход",
+  "accessCheckingStatus": "Проверка статуса доступа...",
+  "accessWaitingForInternet": "Ожидание подключения к интернету...",
+  "accessVerifyingWithServer": "Проверка на сервере...",
+  "accessLoadingApp": "Загрузка приложения...",
+  "accessWarningExpiringSoon": "Доступ скоро истечёт",
+  "accessWarningExpiringSoonMessage": "Ваш доступ истечёт через {days} дней. Пожалуйста, свяжитесь с поддержкой для продления.",
+  "@accessWarningExpiringSoonMessage": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "accessContinue": "Продолжить",
+  "accessRemindLater": "Напомнить позже",
+  "accessNoInternetOfflineCheck": "Нет подключения к интернету. Используется автономная проверка.",
+  "accessInternetRestored": "Подключение к интернету восстановлено. Проверка...",
+  "accessCleaningData": "Очистка данных...",
+  "accessRevoking": "Отзыв доступа...",
+  "geminiApiKeyNotFound": "Ключ API Gemini не настроен",
+  "geminiNetworkError": "Произошла ошибка сети. Проверьте подключение",
+  "geminiAuthError": "Ошибка аутентификации. Проверьте ключ API в настройках",
+  "geminiRateLimitError": "Превышен лимит запросов. Попробуйте через несколько минут",
+  "geminiServerError": "Ошибка сервера. Попробуйте позже",
+  "geminiTimeoutError": "Превышено время ожидания. Проверьте интернет-соединение",
+  "geminiApiKeyConfigured": "Ключ API Gemini успешно настроен",
+  "geminiApiKeyLabel": "Ключ API Gemini",
+  "geminiApiKeyHint": "Введите ваш ключ API Gemini (начинается с AIza)",
+  "geminiApiKeyDescription": "Используется для сканирования документов и AI функций",
+  "geminiApiKeyInvalid": "Неверный формат ключа. Ключ должен начинаться с 'AIza'"
 }

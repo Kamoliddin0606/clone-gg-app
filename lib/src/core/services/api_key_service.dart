@@ -3,6 +3,22 @@ import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 
 /// Service for managing API keys with SharedPreferences persistence
+/// 
+/// This service provides centralized API key management for all external services
+/// including Google Maps, Yandex Maps, OpenStreetMap, Server APIs, and Gemini AI.
+/// 
+/// Features:
+/// - Secure storage using SharedPreferences
+/// - Format validation for each key type
+/// - Singleton pattern for global access
+/// - Support for fallback keys
+/// 
+/// Usage:
+/// ```dart
+/// final apiKeyService = sl<ApiKeyService>();
+/// await apiKeyService.storeApiKey(ApiKeyService.geminiApiKey, 'your-key');
+/// final key = await apiKeyService.getApiKey(ApiKeyService.geminiApiKey);
+/// ```
 class ApiKeyService {
   static final ApiKeyService _instance = ApiKeyService._internal();
   static ApiKeyService get instance => _instance;
@@ -24,6 +40,10 @@ class ApiKeyService {
   static const String yandexMapsApiKey = 'yandex_maps_api_key';
   static const String openStreetMapsApiKey = 'openstreetmap_api_key';
   static const String serverApiKey = 'server_api_key';
+  
+  /// API key type for Google Gemini AI services
+  /// Used for document scanning, time verification, and other AI features
+  static const String geminiApiKey = 'gemini_api_key';
 
   /// Store API key for a specific service
   Future<bool> storeApiKey(String keyType, String apiKey) async {
@@ -85,7 +105,9 @@ class ApiKeyService {
 
     switch (keyType) {
       case googleMapsApiKey:
-        // Google API keys typically start with specific prefixes and have certain lengths
+      case geminiApiKey:
+        // Google API keys (Maps and Gemini) start with 'AIza' prefix
+        // and are typically 35-45 characters long
         return apiKey.startsWith('AIza') && apiKey.length >= 35 && apiKey.length <= 45;
 
       case yandexMapsApiKey:
@@ -128,7 +150,13 @@ class ApiKeyService {
     try {
       final keys = <String, String>{};
 
-      for (final keyType in [googleMapsApiKey, yandexMapsApiKey, openStreetMapsApiKey, serverApiKey]) {
+      for (final keyType in [
+        googleMapsApiKey, 
+        yandexMapsApiKey, 
+        openStreetMapsApiKey, 
+        serverApiKey,
+        geminiApiKey,
+      ]) {
         final apiKey = await getApiKey(keyType);
         if (apiKey != null) {
           keys[keyType] = apiKey;
@@ -149,7 +177,13 @@ class ApiKeyService {
     try {
       bool allCleared = true;
 
-      for (final keyType in [googleMapsApiKey, yandexMapsApiKey, openStreetMapsApiKey, serverApiKey]) {
+      for (final keyType in [
+        googleMapsApiKey, 
+        yandexMapsApiKey, 
+        openStreetMapsApiKey, 
+        serverApiKey,
+        geminiApiKey,
+      ]) {
         final result = await removeApiKey(keyType);
         if (!result) {
           allCleared = false;

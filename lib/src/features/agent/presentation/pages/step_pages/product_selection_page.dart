@@ -10,6 +10,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/formatters.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/create_order_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/product_detail_page.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/product_image_widget.dart';
 import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
 
@@ -237,6 +238,8 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
 
   /// UI state for full screen mode
   bool _isFullScreen = false;
+  int _currentFullScreenIndex = 0;
+  late PageController _fullScreenPageController;
 
   /// Search and filter state
   final TextEditingController _searchController = TextEditingController();
@@ -289,6 +292,8 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
       ),
     );
 
+    _fullScreenPageController = PageController();
+
     _initializeProductSelections();
     _loadFilterData();
     debugPrint(
@@ -302,6 +307,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     _viewModeToggleAnimationController.dispose();
     _filterAnimationController.dispose();
     _searchController.dispose();
+    _fullScreenPageController.dispose();
     super.dispose();
   }
 
@@ -1154,102 +1160,121 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+        padding: const EdgeInsets.all(12),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product name and article
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
+            // Product image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 72,
+                height: 72,
+                child: ProductImageWidget(
+                  productCode: product.productCode,
+                  size: ProductImageSize.small,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Product details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Product name and article
+                  Text(
                     product.productName,
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Text(
-                  'Art: ${product.vendorCode}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  const SizedBox(height: 4),
+                  Text(
+                    'Art: ${product.vendorCode}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Stock display
-            Text(
-              'Mavjud: $stock dona',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface,
+                  const SizedBox(height: 4),
+                  // Stock display
+                  Text(
+                    'Mavjud: $stock dona',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Price and quantity controls
+                  Row(
+                    children: [
+                      // Price
+                      Text(
+                        uzsFormat.format(price),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      // Quantity controls
+                      IconButton(
+                        icon: const Icon(Icons.remove, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: quantity > 0
+                            ? () => _updateProductQuantity(
+                                product.productCode,
+                                quantity - 1,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () => _showQuantityInputDialog(product.productCode),
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: theme.dividerColor),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text('$quantity', style: theme.textTheme.bodyMedium),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: Icon(
+                          Icons.add,
+                          size: 20,
+                          color: canAdd ? null : theme.disabledColor,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: canAdd
+                            ? () => _handleAddProduct(product.productCode)
+                            : null,
+                      ),
+                    ],
+                  ),
+                  // Total (only show if quantity > 0)
+                  if (quantity > 0)
+                    Text(
+                      'Jami: ${uzsFormat.format(quantity * price)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-
-            // Price and quantity controls
-            Row(
-              children: [
-                // Price
-                Text(
-                  uzsFormat.format(price),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-
-                // Quantity controls
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: quantity > 0
-                      ? () => _updateProductQuantity(
-                          product.productCode,
-                          quantity - 1,
-                        )
-                      : null,
-                ),
-                InkWell(
-                  onTap: () => _showQuantityInputDialog(product.productCode),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text('$quantity', style: theme.textTheme.bodyLarge),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.add,
-                    color: canAdd ? null : theme.disabledColor,
-                  ),
-                  onPressed: canAdd
-                      ? () => _handleAddProduct(product.productCode)
-                      : null,
-                ),
-              ],
-            ),
-
-            // Total (only show if quantity > 0)
-            if (quantity > 0)
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  uzsFormat.format(quantity * price),
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -1621,30 +1646,662 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     );
   }
 
+  /// Build improved fullscreen view with better UX
+  Widget _buildFullScreenView(ThemeData theme) {
+    final filteredProducts = _getFilteredProducts();
+    final colorScheme = theme.colorScheme;
+
+    if (filteredProducts.isEmpty) {
+      return SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 64,
+                color: Colors.white54,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Mahsulot topilmadi',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildFullScreenExitButton(theme),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        // Main product PageView
+        PageView.builder(
+          controller: _fullScreenPageController,
+          itemCount: filteredProducts.length,
+          onPageChanged: (index) {
+            setState(() {
+              _currentFullScreenIndex = index;
+            });
+          },
+          itemBuilder: (context, index) {
+            final product = filteredProducts[index];
+            return _buildFullScreenProductCard(theme, product);
+          },
+        ),
+
+        // Top gradient overlay for better visibility of controls
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: 120,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.6),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Exit button - top left with semi-transparent background
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 12,
+          left: 16,
+          child: _buildFullScreenExitButton(theme),
+        ),
+
+        // Product counter indicator - top center
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 16,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${_currentFullScreenIndex + 1} / ${filteredProducts.length}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Top right area - product detail button and cart badge
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 12,
+          right: 16,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Product detail button
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    final product = filteredProducts[_currentFullScreenIndex];
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetailPage(
+                          product: product,
+                          heroTag: 'fullscreen_${product.productCode}',
+                        ),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  splashColor: Colors.white.withValues(alpha: 0.3),
+                  highlightColor: Colors.white.withValues(alpha: 0.1),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.info_outline_rounded,
+                      size: 22,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ),
+              ),
+              // Cart badge (if items selected)
+              if (_productSelections.isNotEmpty) ...[
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 16,
+                        color: colorScheme.onPrimary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$_totalItems',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        // Page indicator dots - bottom
+        Positioned(
+          bottom: MediaQuery.of(context).padding.bottom + 16,
+          left: 0,
+          right: 0,
+          child: _buildPageIndicator(filteredProducts.length, theme),
+        ),
+
+        // Navigation arrows for convenience
+        if (filteredProducts.length > 1) ...[
+          // Left arrow
+          Positioned(
+            left: 8,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _currentFullScreenIndex > 0
+                  ? _buildNavigationArrow(
+                      icon: Icons.chevron_left,
+                      onTap: () {
+                        _fullScreenPageController.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
+          // Right arrow
+          Positioned(
+            right: 8,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _currentFullScreenIndex < filteredProducts.length - 1
+                  ? _buildNavigationArrow(
+                      icon: Icons.chevron_right,
+                      onTap: () {
+                        _fullScreenPageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Build semi-transparent exit button for fullscreen mode
+  Widget _buildFullScreenExitButton(ThemeData theme) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _toggleFullScreen,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Chiqish',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build navigation arrow button for fullscreen
+  Widget _buildNavigationArrow({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.3),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white.withValues(alpha: 0.8),
+            size: 28,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build page indicator dots
+  Widget _buildPageIndicator(int count, ThemeData theme) {
+    // Limit displayed dots for large collections
+    const maxDots = 7;
+    final showDots = count <= maxDots;
+
+    if (showDots) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(count, (index) {
+          final isActive = index == _currentFullScreenIndex;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: isActive ? 24 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          );
+        }),
+      );
+    } else {
+      // For large lists, show a progress bar style indicator
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 48),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: count > 1
+                ? _currentFullScreenIndex / (count - 1)
+                : 1.0,
+            backgroundColor: Colors.white.withValues(alpha: 0.3),
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            minHeight: 4,
+          ),
+        ),
+      );
+    }
+  }
+
+  /// Build fullscreen product card with improved layout
+  Widget _buildFullScreenProductCard(
+    ThemeData theme,
+    ProductWithPrice product,
+  ) {
+    final quantity = _getProductQuantity(product.productCode);
+    final stock = product.stock;
+    final price = product.price ?? 0.0;
+    final canAdd = price > 0 && quantity < stock;
+    final colorScheme = theme.colorScheme;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Background image
+        ProductImageWidget(
+          productCode: product.productCode,
+          size: ProductImageSize.large,
+          fit: BoxFit.cover,
+          heroTag: 'product_fullscreen_${product.productCode}',
+        ),
+
+        // Gradient overlay for better text readability
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: const [0.0, 0.3, 0.6, 1.0],
+              colors: [
+                Colors.black.withValues(alpha: 0.4),
+                Colors.transparent,
+                Colors.transparent,
+                Colors.black.withValues(alpha: 0.75),
+              ],
+            ),
+          ),
+        ),
+
+        // Product info at bottom
+        Positioned(
+          bottom: MediaQuery.of(context).padding.bottom + 50,
+          left: 20,
+          right: 20,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+              // Product name
+              Text(
+                product.productName,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      offset: const Offset(0, 2),
+                      blurRadius: 4,
+                      color: Colors.black.withValues(alpha: 0.5),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: 8),
+
+              // Article and stock info badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Art: ${product.vendorCode} • Mavjud: $stock dona',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Price display
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  uzsFormat.format(price),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Quantity controls - modern pill style
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(40),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Decrease button
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: quantity > 0
+                            ? () => _updateProductQuantity(
+                                product.productCode,
+                                quantity - 1,
+                              )
+                            : null,
+                        borderRadius: BorderRadius.circular(30),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: quantity > 0
+                                ? colorScheme.errorContainer
+                                : Colors.grey.shade200,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.remove,
+                            color: quantity > 0
+                                ? colorScheme.onErrorContainer
+                                : Colors.grey,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Quantity display (tappable)
+                    GestureDetector(
+                      onTap: () => _showQuantityInputDialog(product.productCode),
+                      child: Container(
+                        constraints: const BoxConstraints(minWidth: 80),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        child: Text(
+                          '$quantity',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+
+                    // Increase button
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: canAdd
+                            ? () => _handleAddProduct(product.productCode)
+                            : null,
+                        borderRadius: BorderRadius.circular(30),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: canAdd
+                                ? colorScheme.primaryContainer
+                                : Colors.grey.shade200,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.add,
+                            color: canAdd
+                                ? colorScheme.onPrimaryContainer
+                                : Colors.grey,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Total for this product
+              if (quantity > 0)
+                Text(
+                  'Jami: ${uzsFormat.format(quantity * price)}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    shadows: [
+                      Shadow(
+                        offset: const Offset(0, 1),
+                        blurRadius: 3,
+                        color: Colors.black.withValues(alpha: 0.5),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+            ),
+          ),
+        ),
+
+        // Stock warning badge (if low stock)
+        if (stock <= 10 && stock > 0)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 70,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Kam qoldi!',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Out of stock overlay
+        if (stock == 0)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.6),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Mavjud emas',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     if (_isFullScreen) {
-      return WillPopScope(
-        onWillPop: () async {
-          _toggleFullScreen();
-          return false;
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) {
+            _toggleFullScreen();
+          }
         },
         child: Scaffold(
-          body: Stack(
-            children: [
-              _buildLargeImageView(theme),
-              Positioned(
-                top: 20,
-                right: 20,
-                child: IconButton(
-                  icon: const Icon(Icons.fullscreen_exit, color: Colors.white),
-                  onPressed: _toggleFullScreen,
-                ),
-              ),
-            ],
-          ),
+          backgroundColor: Colors.black,
+          body: _buildFullScreenView(theme),
         ),
       );
     }

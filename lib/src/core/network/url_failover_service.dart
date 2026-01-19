@@ -149,10 +149,23 @@ class UrlFailoverService {
   }
 
   /// Get ordered list of URLs to try, starting with most likely to work
-  List<String> _getUrlsToTry() {
+  /// 
+  /// [customUrlConfig] - Optional custom URL configuration for specific endpoints
+  /// If provided, uses custom URLs instead of default server URLs
+  /// 
+  /// [customUrlConfig] - Опциональная пользовательская конфигурация URL для специфических endpoint'ов
+  /// Если указана, использует пользовательские URL вместо URL по умолчанию
+  /// 
+  /// [customUrlConfig] - Maxsus endpoint'lar uchun ixtiyoriy URL konfiguratsiyasi
+  /// Agar berilgan bo'lsa, standart URL'lar o'rniga maxsus URL'lardan foydalanadi
+  List<String> _getUrlsToTry({ServerUrlConfig? customUrlConfig}) {
     _initUrlStatuses();
-    final urls = _serverService.allUrls;
-    final currentUrl = _serverService.baseUrl;
+    
+    // Use custom URLs if provided, otherwise use default server URLs
+    // Используем пользовательские URL если указаны, иначе URL по умолчанию
+    // Agar berilgan bo'lsa maxsus URL'lardan, aks holda standart URL'lardan foydalanish
+    final urls = customUrlConfig?.allUrls ?? _serverService.allUrls;
+    final currentUrl = customUrlConfig?.primaryUrl ?? _serverService.baseUrl;
     
     // If using fallback and should retry primary, put primary first
     if (_serverService.isUsingFallback.value && _shouldRetryPrimaryUrl()) {
@@ -172,19 +185,37 @@ class UrlFailoverService {
 
   /// Execute a request with automatic URL failover.
   /// Returns result with the response data and information about which URL worked.
+  /// 
+  /// [request] - Function that performs the actual HTTP request
+  /// [forceRetryPrimary] - Force retry from primary URL
+  /// [customUrlConfig] - Optional custom URL configuration for specific endpoints
+  /// 
+  /// [request] - Функция, выполняющая фактический HTTP запрос
+  /// [forceRetryPrimary] - Принудительная попытка с основного URL
+  /// [customUrlConfig] - Опциональная пользовательская конфигурация URL
+  /// 
+  /// [request] - Haqiqiy HTTP so'rovni bajaradigan funksiya
+  /// [forceRetryPrimary] - Asosiy URL'dan majburiy urinish
+  /// [customUrlConfig] - Ixtiyoriy maxsus URL konfiguratsiyasi
   Future<FailoverRequestResult<Response>> executeWithFailover({
     required Future<Response> Function(Dio dio, String baseUrl) request,
     bool forceRetryPrimary = false,
+    ServerUrlConfig? customUrlConfig,
   }) async {
     final urlsToTry = forceRetryPrimary 
-        ? _serverService.allUrls 
-        : _getUrlsToTry();
+        ? (customUrlConfig?.allUrls ?? _serverService.allUrls)
+        : _getUrlsToTry(customUrlConfig: customUrlConfig);
     
     String? lastError;
     
     for (int i = 0; i < urlsToTry.length; i++) {
       final url = urlsToTry[i];
-      final urlIndex = _serverService.getUrlIndex(url);
+      // Use custom config index if provided, otherwise use server service index
+      // Используем индекс из пользовательской конфигурации если указана, иначе из server service
+      // Agar berilgan bo'lsa maxsus konfiguratsiya indeksidan, aks holda server service indeksidan foydalanish
+      final urlIndex = customUrlConfig != null 
+          ? customUrlConfig.allUrls.indexOf(url)
+          : _serverService.getUrlIndex(url);
       final isFallback = urlIndex > 0;
       
       try {
@@ -203,15 +234,22 @@ class UrlFailoverService {
         final response = await request(_dio, url);
         
         // Success - update status and save working URL
+        // Only update server service if not using custom config
+        // Обновляем server service только если не используется пользовательская конфигурация
+        // Faqat maxsus konfiguratsiya ishlatilmasa server service'ni yangilash
         _urlStatuses[url]?.recordSuccess();
-        await _serverService.setWorkingUrl(url);
+        if (customUrlConfig == null) {
+          await _serverService.setWorkingUrl(url);
+        }
         
         if (kDebugMode) {
           print('[UrlFailover] Success with URL: $url (fallback: $isFallback)');
         }
         
-        // Notify listeners if URL changed
-        if (url != _serverService.baseUrl) {
+        // Notify listeners if URL changed (only for default config)
+        // Уведомляем слушателей об изменении URL (только для конфигурации по умолчанию)
+        // URL o'zgarganligi haqida xabar berish (faqat standart konfiguratsiya uchun)
+        if (customUrlConfig == null && url != _serverService.baseUrl) {
           _notifyUrlChange(url, isFallback);
         }
         
@@ -273,9 +311,25 @@ class UrlFailoverService {
   }
 
   /// Execute a SOAP request with automatic URL failover
+  /// 
+  /// [body] - SOAP request body (XML)
+  /// [headers] - Optional HTTP headers
+  /// [customUrlConfig] - Optional custom URL configuration for specific endpoints
+  ///                     (e.g., accounting API that differs from project-specific endpoints)
+  /// 
+  /// [body] - Тело SOAP запроса (XML)
+  /// [headers] - Опциональные HTTP заголовки
+  /// [customUrlConfig] - Опциональная пользовательская конфигурация URL для специфических endpoint'ов
+  ///                     (например, API бухгалтерии, отличающийся от endpoint'ов проекта)
+  /// 
+  /// [body] - SOAP so'rov tanasi (XML)
+  /// [headers] - Ixtiyoriy HTTP headerlar
+  /// [customUrlConfig] - Maxsus endpoint'lar uchun ixtiyoriy URL konfiguratsiyasi
+  ///                     (masalan, loyiha-spetsifik endpoint'lardan farq qiladigan buxgalteriya API)
   Future<FailoverRequestResult<String>> executeSoapWithFailover({
     required String body,
     Map<String, String>? headers,
+    ServerUrlConfig? customUrlConfig,
   }) async {
     final result = await executeWithFailover(
       request: (dio, baseUrl) => dio.post(
@@ -285,6 +339,7 @@ class UrlFailoverService {
           headers: headers ?? {'Content-Type': 'text/xml; charset=utf-8'},
         ),
       ),
+      customUrlConfig: customUrlConfig,
     );
     
     if (result.isSuccess && result.data != null) {

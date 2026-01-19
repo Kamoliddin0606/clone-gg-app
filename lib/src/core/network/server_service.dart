@@ -41,6 +41,24 @@ class _ServerHosts {
   static String buildUrl(String host, String servicePath) {
     return 'http://$host:$port$servicePath';
   }
+
+  /// Accounting API service path - shared across all projects
+  /// This is used for client balance queries via SOAP API
+  /// Путь к API бухгалтерии - общий для всех проектов
+  /// Buxgalteriya API yo'li - barcha loyihalar uchun umumiy
+  static const String accountingApiPath = '/gloriya_buh2/gloriya_buh2.1cws';
+
+  /// Returns accounting API URL configuration with failover support
+  /// Возвращает конфигурацию URL API бухгалтерии с поддержкой резервных адресов
+  /// Failover qo'llab-quvvatlash bilan buxgalteriya API URL konfiguratsiyasini qaytaradi
+  static ServerUrlConfig get accountingApiConfig => ServerUrlConfig(
+    primaryUrl: buildUrl(domainHost, accountingApiPath),
+    fallbackUrls: [
+      buildUrl(ipHost1, accountingApiPath),
+      buildUrl(ipHost2, accountingApiPath),
+    ],
+    servicePath: accountingApiPath,
+  );
 }
 
 extension ServerEnvX on ServerEnv {
@@ -207,4 +225,12 @@ class ServerService {
   String? getCurrentServerName() {
     return _prefs.getServerName();
   }
+
+  /// Returns accounting API URL configuration for client balance queries.
+  /// This is a shared endpoint across all projects.
+  /// Возвращает конфигурацию URL API бухгалтерии для запросов баланса клиентов.
+  /// Это общая конечная точка для всех проектов.
+  /// Mijoz balansi so'rovlari uchun buxgalteriya API URL konfiguratsiyasini qaytaradi.
+  /// Bu barcha loyihalar uchun umumiy endpoint.
+  ServerUrlConfig get accountingApiConfig => _ServerHosts.accountingApiConfig;
 }

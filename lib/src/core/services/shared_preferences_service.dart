@@ -219,6 +219,17 @@ class SharedPreferencesService {
     }
   }
 
+  String? getLanguageCodeOrNull() {
+    try {
+      final languageCode = _preferences.getString(_languageCodeKey);
+      if (kDebugMode) print('Retrieved language code or null: $languageCode');
+      return languageCode;
+    } catch (e) {
+      if (kDebugMode) print('Error retrieving language code: $e');
+      return null;
+    }
+  }
+
   Future<void> clearLanguageCode() async {
     try {
       await _preferences.remove(_languageCodeKey);

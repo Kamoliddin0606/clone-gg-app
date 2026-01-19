@@ -182,13 +182,25 @@ Future<void> setupServiceLocator() async {
     ));
   }
 
-  // ClientBalanceService - Mijoz balansi ma'lumotlarini olish va saqlash uchun
-  // SOAP API orqali http://kit.gloriya.uz:5443/gloriya_buh2/gloriya_buh2.1cws manzilidan
-  // balans ma'lumotlarini oladi. 10 soniyalik cooldown bilan yangilanadi.
+  // ClientBalanceService - Client balance data fetching and management
+  // Uses SOAP API with automatic failover between domain and IP addresses
+  // Fetches data via accounting API endpoint shared across all projects
+  // 10-second cooldown between refreshes
+  // 
+  // Сервис баланса клиентов - получение и управление данными баланса
+  // Использует SOAP API с автоматическим переключением между доменом и IP адресами
+  // Получает данные через endpoint API бухгалтерии, общий для всех проектов
+  // 10-секундный кулдаун между обновлениями
+  // 
+  // Mijoz balansi servisi - balans ma'lumotlarini olish va boshqarish
+  // Domen va IP manzillar o'rtasida avtomatik o'tish bilan SOAP API ishlatadi
+  // Barcha loyihalar uchun umumiy buxgalteriya API endpoint orqali ma'lumot oladi
+  // Yangilashlar orasida 10 soniyalik cooldown
   if (!sl.isRegistered<ClientBalanceService>()) {
     sl.registerLazySingleton<ClientBalanceService>(() => ClientBalanceService(
-      dio: Dio(), // Alohida Dio instance - boshqa interceptorlardan ta'sirlanmaydi
       dbService: sl<ApiDatabaseService>(),
+      failoverService: sl<UrlFailoverService>(),
+      serverService: sl<ServerService>(),
       prefs: sl<SharedPreferencesService>(),
     ));
   }

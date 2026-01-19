@@ -9,14 +9,22 @@ import 'package:gloria_marketing_flutter/src/features/navbars/agent_bottom_nav_b
 /// Main screen for Agent role with tab-based navigation
 /// This prevents page recreation and maintains state across navigation
 class MainAgentScreen extends StatefulWidget {
-  const MainAgentScreen({super.key});
+  final int initialIndex;
+  
+  const MainAgentScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainAgentScreen> createState() => _MainAgentScreenState();
 }
 
 class _MainAgentScreenState extends State<MainAgentScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+  }
 
   // Pages are created once and cached
   late final List<Widget> _pages = [

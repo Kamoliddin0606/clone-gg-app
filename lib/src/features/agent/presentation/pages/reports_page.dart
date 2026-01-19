@@ -5,7 +5,6 @@ import '../../../../core/services/reports_sync_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/shared_preferences_service.dart';
 import '../../../../core/services/telegram_bot_service.dart';
-import '../../../navbars/agent_bottom_nav_bar.dart';
 import 'main_report_page.dart';
 import 'visits_report_page.dart';
 import 'akb_client_report_page.dart';
@@ -360,9 +359,8 @@ class _ReportsPageState extends State<ReportsPage>
           _buildSlideMenu(context),
         ],
       ),
-      // bottomNavigationBar: const AgentBottomNavBar(
-      //   initialIndex: 4,
-      // ),
+      // No bottom navigation bar needed here since Reports is accessed through MainAgentScreen
+      // which already has its own bottom navbar
     );
   }
 

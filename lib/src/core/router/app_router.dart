@@ -88,7 +88,10 @@ class AppRouter {
         // For backward compatibility, redirect to main agent screen
         return MaterialPageRoute(builder: (_) => const MainAgentScreen());
       case mainAgentScreenRoute:
-        return MaterialPageRoute(builder: (_) => const MainAgentScreen());
+        final initialIndex = settings.arguments as int?;
+        return MaterialPageRoute(
+          builder: (_) => MainAgentScreen(initialIndex: initialIndex ?? 0),
+        );
       case bossHomeRoute:
         return MaterialPageRoute(builder: (_) => const BossHomePage());
       case collectorHomeRoute:

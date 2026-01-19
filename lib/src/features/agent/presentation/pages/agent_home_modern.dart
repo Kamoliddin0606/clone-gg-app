@@ -2066,7 +2066,14 @@ class _AppDrawer extends StatelessWidget {
                 _MenuItem(
                   icon: Icons.bar_chart,
                   title: AppLocalizations.of(context)!.reports,
-                  onTap: () => Navigator.pushNamed(context, AppRouter.reportsRoute),
+                  onTap: () {
+                    Navigator.pop(context); // Close drawer
+                    Navigator.pushNamed(
+                      context,
+                      AppRouter.mainAgentScreenRoute,
+                      arguments: 4, // Reports tab index
+                    );
+                  },
                 ),
 
                 _MenuItem(

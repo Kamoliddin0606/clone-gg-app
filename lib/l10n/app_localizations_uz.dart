@@ -5036,4 +5036,19 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get backupServer => 'Zaxira';
+
+  @override
+  String get visitDuration => 'Tashrif davomiyligi';
+
+  @override
+  String get stepDuration => 'Qadam davomiyligi';
+
+  @override
+  String get totalVisitTime => 'Jami tashrif vaqti';
+
+  @override
+  String get stepTime => 'Qadam vaqti';
+
+  @override
+  String get elapsedTime => 'O\'tgan vaqt';
 }

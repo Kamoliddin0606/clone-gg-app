@@ -22,6 +22,10 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/product_selection_page.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/product_image_widget.dart';
 import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/visit_steps_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/visit_timer_widget.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/floating_timer_overlay.dart';
 
 /// View modes for product display in the order creation interface
 enum ViewMode {
@@ -131,7 +135,10 @@ class _CreateOrderPageState extends State<CreateOrderPage>
   bool _hasUnsavedChanges = false;
   DateTime? _lastSaveTime;
   String? _lastSaveError;
-  bool _isAutoSaveEnabled = false;
+  bool _isAutoSaveEnabled = true;
+
+  // Floating timer overlay
+  bool _showTimerOverlay = false;
 
   // Summary data
   int get _totalItems =>
@@ -1168,6 +1175,19 @@ class _CreateOrderPageState extends State<CreateOrderPage>
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Timer icon button - toggles floating overlay
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  _showTimerOverlay = !_showTimerOverlay;
+                });
+              },
+              icon: Icon(
+                _showTimerOverlay ? Icons.timer_off : Icons.timer,
+                color: _showTimerOverlay ? theme.colorScheme.primary : null,
+              ),
+              tooltip: 'Timer',
+            ),
             // Other icons - visible only when in tune mode
             if (_isTuneMode) ...[
               // Manual save button
@@ -2890,6 +2910,36 @@ class _CreateOrderPageState extends State<CreateOrderPage>
                       AppLocalizations.of(context)?.addProduct ??
                       'Mahsulot qo\'shish',
                 ),
+              ),
+            
+            // Floating timer overlay
+            if (_showTimerOverlay)
+              BlocBuilder<VisitStepsBloc, VisitStepsState>(
+                builder: (context, state) {
+                  if (state is VisitStepsLoaded) {
+                    // Prepare all steps with their timer info
+                    final allSteps = state.stepProgress.map((stepProgress) {
+                      return StepTimerInfo(
+                        stepName: stepProgress.step.stepName,
+                        stepCode: stepProgress.step.stepCode,
+                        durationSeconds: state.stepTimers[stepProgress.step.stepCode],
+                        isActive: stepProgress.step.stepCode == widget.stepCode,
+                        isCompleted: stepProgress.status == VisitStepStatus.completed,
+                      );
+                    }).toList();
+
+                    return FloatingTimerOverlay(
+                      visitDurationSeconds: state.visitDurationSeconds,
+                      allSteps: allSteps,
+                      onClose: () {
+                        setState(() {
+                          _showTimerOverlay = false;
+                        });
+                      },
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
           ],
         ),

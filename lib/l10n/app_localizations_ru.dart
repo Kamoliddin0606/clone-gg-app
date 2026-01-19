@@ -5036,4 +5036,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get backupServer => 'Резервный';
+
+  @override
+  String get visitDuration => 'Длительность визита';
+
+  @override
+  String get stepDuration => 'Длительность шага';
+
+  @override
+  String get totalVisitTime => 'Общее время визита';
+
+  @override
+  String get stepTime => 'Время шага';
+
+  @override
+  String get elapsedTime => 'Прошедшее время';
 }

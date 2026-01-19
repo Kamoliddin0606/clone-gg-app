@@ -9570,6 +9570,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backup'**
   String get backupServer;
+
+  /// No description provided for @visitDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Duration'**
+  String get visitDuration;
+
+  /// No description provided for @stepDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Step Duration'**
+  String get stepDuration;
+
+  /// No description provided for @totalVisitTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Visit Time'**
+  String get totalVisitTime;
+
+  /// No description provided for @stepTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Step Time'**
+  String get stepTime;
+
+  /// No description provided for @elapsedTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Elapsed Time'**
+  String get elapsedTime;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

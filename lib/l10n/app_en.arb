@@ -3036,5 +3036,10 @@
     }
   },
   "primaryServer": "Primary",
-  "backupServer": "Backup"
+  "backupServer": "Backup",
+  "visitDuration": "Visit Duration",
+  "stepDuration": "Step Duration",
+  "totalVisitTime": "Total Visit Time",
+  "stepTime": "Step Time",
+  "elapsedTime": "Elapsed Time"
 }

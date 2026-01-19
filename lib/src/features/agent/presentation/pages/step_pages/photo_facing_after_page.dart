@@ -11,6 +11,10 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/photo_storage_service.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/visit_steps_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/visit_timer_widget.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/floating_timer_overlay.dart';
 
 /// Фото ПОСЛЕ (Facing correction) - After photos page
 /// Supports read-only mode for completed steps
@@ -49,8 +53,9 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
   late Animation<double> _fabAnimation;
 
   // Camera related
-  List<CameraDescription>? _cameras;
+  List<CameraDescription> _cameras = [];
   CameraController? _cameraController;
+  bool _showTimerOverlay = false;
   bool _isCameraInitialized = false;
 
   @override
@@ -460,23 +465,18 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
         title: Text(widget.stepName),
         centerTitle: true,
         actions: [
-          if (_photos.isNotEmpty) ...[
-            IconButton(
-              icon: Icon(
-                _viewMode == ViewMode.grid ? Icons.list : Icons.grid_view,
-              ),
-              onPressed: () {
-                setState(() {
-                  _viewMode = _viewMode == ViewMode.grid
-                      ? ViewMode.list
-                      : ViewMode.grid;
-                });
-              },
-              tooltip: _viewMode == ViewMode.grid
-                  ? 'Ro\'yxat ko\'rinishi'
-                  : 'Panjara ko\'rinishi',
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _showTimerOverlay = !_showTimerOverlay;
+              });
+            },
+            icon: Icon(
+              _showTimerOverlay ? Icons.timer_off : Icons.timer,
+              color: _showTimerOverlay ? theme.colorScheme.primary : null,
             ),
-          ],
+            tooltip: 'Timer',
+          ),
           if (widget.readOnly) ...[
             const Icon(Icons.visibility, color: Colors.grey),
             const SizedBox(width: 8),
@@ -490,7 +490,38 @@ class _PhotoFacingAfterPageState extends State<PhotoFacingAfterPage>
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildPhotoContent(theme, l10n),
+          : Stack(
+              children: [
+                _buildPhotoContent(theme, l10n),
+                if (_showTimerOverlay)
+                  BlocBuilder<VisitStepsBloc, VisitStepsState>(
+                    builder: (context, state) {
+                      if (state is VisitStepsLoaded) {
+                        final allSteps = state.stepProgress.map((stepProgress) {
+                          return StepTimerInfo(
+                            stepName: stepProgress.step.stepName,
+                            stepCode: stepProgress.step.stepCode,
+                            durationSeconds: state.stepTimers[stepProgress.step.stepCode],
+                            isActive: stepProgress.step.stepCode == widget.stepCode,
+                            isCompleted: stepProgress.status == VisitStepStatus.completed,
+                          );
+                        }).toList();
+
+                        return FloatingTimerOverlay(
+                          visitDurationSeconds: state.visitDurationSeconds,
+                          allSteps: allSteps,
+                          onClose: () {
+                            setState(() {
+                              _showTimerOverlay = false;
+                            });
+                          },
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+              ],
+            ),
       floatingActionButton: widget.readOnly
           ? null
           : _buildFloatingActionButton(),

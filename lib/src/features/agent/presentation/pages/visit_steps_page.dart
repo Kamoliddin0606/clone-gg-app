@@ -20,6 +20,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/s
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/create_order_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/photo_facing_after_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/order_models.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/visit_timer_widget.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/floating_timer_overlay.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/order_details_page.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
@@ -48,6 +50,9 @@ class VisitStepsLoaded extends VisitStepsState {
   final bool isStrictSequence;
   final bool canProceedToNext;
   final bool isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
+  final int? visitDurationSeconds; // Total visit duration in seconds
+  final int? currentStepDuration; // Current step duration in seconds (deprecated - use stepTimers)
+  final Map<int, int> stepTimers; // Individual timer for each step (stepCode -> durationSeconds)
 
   const VisitStepsLoaded({
     required this.tradingPoint,
@@ -57,6 +62,9 @@ class VisitStepsLoaded extends VisitStepsState {
     required this.isStrictSequence,
     required this.canProceedToNext,
     required this.isUnplannedOrder,
+    this.visitDurationSeconds,
+    this.currentStepDuration,
+    this.stepTimers = const {},
   });
 
   @override
@@ -68,7 +76,37 @@ class VisitStepsLoaded extends VisitStepsState {
         isStrictSequence,
         canProceedToNext,
         isUnplannedOrder,
+        visitDurationSeconds,
+        currentStepDuration,
+        stepTimers,
       ];
+
+  /// Create a copy of this state with updated fields
+  VisitStepsLoaded copyWith({
+    TradingPointWithPermissions? tradingPoint,
+    SalesReqPermissions? permissions,
+    List<VisitStepProgress>? stepProgress,
+    int? currentStepIndex,
+    bool? isStrictSequence,
+    bool? canProceedToNext,
+    bool? isUnplannedOrder,
+    int? visitDurationSeconds,
+    int? currentStepDuration,
+    Map<int, int>? stepTimers,
+  }) {
+    return VisitStepsLoaded(
+      tradingPoint: tradingPoint ?? this.tradingPoint,
+      permissions: permissions ?? this.permissions,
+      stepProgress: stepProgress ?? this.stepProgress,
+      currentStepIndex: currentStepIndex ?? this.currentStepIndex,
+      isStrictSequence: isStrictSequence ?? this.isStrictSequence,
+      canProceedToNext: canProceedToNext ?? this.canProceedToNext,
+      isUnplannedOrder: isUnplannedOrder ?? this.isUnplannedOrder,
+      visitDurationSeconds: visitDurationSeconds ?? this.visitDurationSeconds,
+      currentStepDuration: currentStepDuration ?? this.currentStepDuration,
+      stepTimers: stepTimers ?? this.stepTimers,
+    );
+  }
 }
 
 class VisitStepsError extends VisitStepsState {
@@ -163,6 +201,39 @@ class FinishVisit extends VisitStepsEvent {}
 
 class CancelVisit extends VisitStepsEvent {}
 
+/// Event to update timer durations in UI
+/// Triggered periodically to refresh timer display
+class UpdateTimers extends VisitStepsEvent {}
+
+/// Event to pause step timer when viewing completed (read-only) step
+/// Saves current timer state before pausing
+class PauseStepTimer extends VisitStepsEvent {
+  final int stepCode;
+  const PauseStepTimer(this.stepCode);
+  
+  @override
+  List<Object?> get props => [stepCode];
+}
+
+/// Event to resume step timer when returning from read-only view
+class ResumeStepTimer extends VisitStepsEvent {
+  final int stepCode;
+  const ResumeStepTimer(this.stepCode);
+  
+  @override
+  List<Object?> get props => [stepCode];
+}
+
+/// Event to start step timer when user navigates to a step page
+/// This ensures step timer only counts time spent inside the step page
+class StartStepTimer extends VisitStepsEvent {
+  final int stepCode;
+  const StartStepTimer(this.stepCode);
+  
+  @override
+  List<Object?> get props => [stepCode];
+}
+
 /// Visit Step Progress Model
 class VisitStepProgress {
   final VisitStep step;
@@ -212,6 +283,17 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   final bool _isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
   late String _visitId; // Unique identifier for this visit session
 
+  // Timer fields for visit duration tracking (StartTime-based for persistence)
+  Timer? _visitTimer;
+  DateTime? _visitStartTime;
+  int _visitDurationSeconds = 0;
+
+  // Timer fields for step duration tracking
+  Timer? _stepTimer;
+  DateTime? _stepStartTime;
+  int _stepDurationSeconds = 0;
+  int _currentStepCode = -1;
+
   AppLocalizations _l10n() {
     try {
       final ctx = AppRouter.navigatorKey.currentContext;
@@ -241,12 +323,239 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     on<PreviousStep>(_onPreviousStep);
     on<FinishVisit>(_onFinishVisit);
     on<CancelVisit>(_onCancelVisit);
+    on<UpdateTimers>(_onUpdateTimers);
+    on<PauseStepTimer>(_onPauseStepTimer);
+    on<ResumeStepTimer>(_onResumeStepTimer);
+    on<StartStepTimer>(_onStartStepTimer);
   }
 
   @override
   Future<void> close() {
     debugPrint('VisitStepsBloc closed for visit ID: $_visitId');
+    _stopVisitTimer();
+    _stopStepTimer();
     return super.close();
+  }
+
+  /// Start visit timer - uses StartTime for persistence across navigations
+  void _startVisitTimer({DateTime? savedStartTime, int accumulatedSeconds = 0}) {
+    _visitStartTime = savedStartTime ?? DateTime.now();
+    _visitTimer?.cancel();
+    
+    _visitDurationSeconds = accumulatedSeconds + 
+        DateTime.now().difference(_visitStartTime!).inSeconds;
+    
+    _visitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _visitDurationSeconds = accumulatedSeconds + 
+          DateTime.now().difference(_visitStartTime!).inSeconds;
+    });
+    
+    debugPrint('VisitStepsBloc: Visit timer started at $_visitStartTime');
+  }
+
+  /// Stop visit timer
+  void _stopVisitTimer() {
+    _visitTimer?.cancel();
+    _visitTimer = null;
+    debugPrint('VisitStepsBloc: Visit timer stopped. Duration: $_visitDurationSeconds');
+  }
+
+  /// Start step timer with persistence support
+  void _startStepTimer({required int stepCode, DateTime? savedStartTime, int accumulatedSeconds = 0}) {
+    _currentStepCode = stepCode;
+    _stepStartTime = savedStartTime ?? DateTime.now();
+    _stepTimer?.cancel();
+    
+    _stepDurationSeconds = accumulatedSeconds + 
+        DateTime.now().difference(_stepStartTime!).inSeconds;
+    
+    _stepTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _stepDurationSeconds = accumulatedSeconds + 
+          DateTime.now().difference(_stepStartTime!).inSeconds;
+    });
+    
+    debugPrint('VisitStepsBloc: Step $stepCode timer started at $_stepStartTime');
+  }
+
+  /// Stop step timer
+  void _stopStepTimer() {
+    _stepTimer?.cancel();
+    _stepTimer = null;
+    debugPrint('VisitStepsBloc: Step timer stopped. Duration: $_stepDurationSeconds');
+  }
+
+  /// Save visit timer state to database
+  Future<void> _saveVisitTimerState() async {
+    if (_visitStartTime == null) return;
+    try {
+      await _visitDataRepository.saveVisitStepData(VisitData(
+        visitId: _visitId,
+        clientCode: 'timer_metadata',
+        stepCode: 0,
+        stepName: 'Visit Timer',
+        dataType: 'timer_state',
+        dataContent: jsonEncode({
+          'visitStartTime': _visitStartTime!.toIso8601String(),
+          'accumulatedSeconds': _visitDurationSeconds,
+        }),
+        timestamp: DateTime.now(),
+      ));
+    } catch (e) {
+      debugPrint('Error saving visit timer state: $e');
+    }
+  }
+
+  /// Save step timer state to database
+  Future<void> _saveStepTimerState(int stepCode) async {
+    if (_stepStartTime == null) return;
+    try {
+      await _visitDataRepository.saveVisitStepData(VisitData(
+        visitId: _visitId,
+        clientCode: 'timer_metadata',
+        stepCode: stepCode,
+        stepName: 'Step Timer',
+        dataType: 'step_timer_state',
+        dataContent: jsonEncode({
+          'stepStartTime': _stepStartTime!.toIso8601String(),
+          'accumulatedSeconds': _stepDurationSeconds,
+        }),
+        timestamp: DateTime.now(),
+      ));
+    } catch (e) {
+      debugPrint('Error saving step timer state: $e');
+    }
+  }
+
+  /// Load visit timer state from database
+  Future<Map<String, dynamic>?> _loadVisitTimerState() async {
+    try {
+      final timerData = await _visitDataRepository.getVisitStepDataByStep(_visitId, 0);
+      final timerState = timerData.where((d) => d.dataType == 'timer_state').toList();
+      if (timerState.isNotEmpty) {
+        final latest = timerState.reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
+        return jsonDecode(latest.dataContent) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Error loading visit timer state: $e');
+    }
+    return null;
+  }
+
+  /// Load step timer state from database
+  Future<Map<String, dynamic>?> _loadStepTimerState(int stepCode) async {
+    try {
+      final timerData = await _visitDataRepository.getVisitStepDataByStep(_visitId, stepCode);
+      final timerState = timerData.where((d) => d.dataType == 'step_timer_state').toList();
+      if (timerState.isNotEmpty) {
+        final latest = timerState.reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
+        return jsonDecode(latest.dataContent) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Error loading step timer state: $e');
+    }
+    return null;
+  }
+
+  /// Load all step timers from completion data
+  /// This method loads timer values for all steps from their completion records
+  /// Returns a Map of stepCode -> durationSeconds
+  Future<Map<int, int>> _loadAllStepTimers(List<VisitStep> visitSteps) async {
+    final stepTimers = <int, int>{};
+    
+    try {
+      // Get all visit data for this visit
+      final existingData = await _visitDataRepository.getVisitStepDataByVisitId(_visitId);
+      
+      // Extract timer values from completion data
+      for (final step in visitSteps) {
+        final completionData = existingData
+            .where((d) => d.stepCode == step.stepCode && d.dataType == 'completion')
+            .toList();
+        
+        if (completionData.isNotEmpty) {
+          try {
+            final latest = completionData.reduce((a, b) => 
+                a.timestamp.isAfter(b.timestamp) ? a : b);
+            final parsedData = latest.parsedDataContent;
+            final durationSeconds = parsedData['durationSeconds'] as int?;
+            
+            if (durationSeconds != null && durationSeconds > 0) {
+              stepTimers[step.stepCode] = durationSeconds;
+              debugPrint('VisitStepsBloc: Loaded timer for step ${step.stepCode}: ${durationSeconds}s');
+            }
+          } catch (e) {
+            debugPrint('VisitStepsBloc: Error parsing completion data for step ${step.stepCode}: $e');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('VisitStepsBloc: Error loading step timers: $e');
+    }
+    
+    return stepTimers;
+  }
+
+  /// Handle UpdateTimers event - refreshes UI with current timer values
+  void _onUpdateTimers(UpdateTimers event, Emitter<VisitStepsState> emit) {
+    if (state is! VisitStepsLoaded) return;
+    final currentState = state as VisitStepsLoaded;
+    
+    // Update stepTimers map with current step timer value
+    final updatedStepTimers = Map<int, int>.from(currentState.stepTimers);
+    if (_currentStepCode > 0) {
+      updatedStepTimers[_currentStepCode] = _stepDurationSeconds;
+    }
+    
+    emit(currentState.copyWith(
+      visitDurationSeconds: _visitDurationSeconds,
+      currentStepDuration: _stepDurationSeconds,
+      stepTimers: updatedStepTimers,
+    ));
+  }
+
+  /// Handle PauseStepTimer event - pauses step timer when viewing read-only step
+  /// Saves current timer state before pausing so it can be resumed later
+  Future<void> _onPauseStepTimer(PauseStepTimer event, Emitter<VisitStepsState> emit) async {
+    if (_currentStepCode > 0) {
+      // Save current step timer state before pausing
+      await _saveStepTimerState(_currentStepCode);
+      _stopStepTimer();
+      debugPrint('VisitStepsBloc: Step timer paused for read-only view of step ${event.stepCode}');
+    }
+  }
+
+  /// Handle ResumeStepTimer event - resumes step timer after returning from read-only view
+  Future<void> _onResumeStepTimer(ResumeStepTimer event, Emitter<VisitStepsState> emit) async {
+    // Load and restart step timer from saved state
+    final stepTimerState = await _loadStepTimerState(event.stepCode);
+    if (stepTimerState != null) {
+      // Resume from accumulated time, but use CURRENT time as new start point
+      final accumulatedSeconds = stepTimerState['accumulatedSeconds'] as int? ?? 0;
+      _startStepTimer(stepCode: event.stepCode, savedStartTime: DateTime.now(), accumulatedSeconds: accumulatedSeconds);
+      debugPrint('VisitStepsBloc: Step timer resumed for step ${event.stepCode} with ${accumulatedSeconds}s accumulated');
+    } else {
+      _startStepTimer(stepCode: event.stepCode);
+      debugPrint('VisitStepsBloc: Step timer started fresh for step ${event.stepCode}');
+    }
+  }
+
+  /// Handle StartStepTimer event - starts step timer when user navigates to a step page
+  /// This ensures step timer only counts time spent inside the step page
+  Future<void> _onStartStepTimer(StartStepTimer event, Emitter<VisitStepsState> emit) async {
+    // Load any existing timer state for this step (for persistence across navigation)
+    final stepTimerState = await _loadStepTimerState(event.stepCode);
+    if (stepTimerState != null) {
+      // Resume from accumulated time, but use CURRENT time as new start point
+      // This prevents incorrect calculation when resuming after a pause
+      final accumulatedSeconds = stepTimerState['accumulatedSeconds'] as int? ?? 0;
+      _startStepTimer(stepCode: event.stepCode, savedStartTime: DateTime.now(), accumulatedSeconds: accumulatedSeconds);
+      debugPrint('VisitStepsBloc: Step timer resumed from saved state for step ${event.stepCode} with ${accumulatedSeconds}s accumulated');
+    } else {
+      // Start fresh timer for this step
+      _startStepTimer(stepCode: event.stepCode);
+      await _saveStepTimerState(event.stepCode);
+      debugPrint('VisitStepsBloc: Step timer started fresh for step ${event.stepCode}');
+    }
   }
 
   Future<void> _onLoadVisitSteps(
@@ -312,6 +621,28 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
       debugPrint('VisitStepsBloc: Loaded ${stepProgress.length} steps, current step index: $currentStepIndex, strict sequence: $isStrictSequence, unplanned order: $_isUnplannedOrder');
 
+      // Load and start visit timer with persistence
+      final visitTimerState = await _loadVisitTimerState();
+      if (visitTimerState != null) {
+        final savedStartTime = DateTime.tryParse(visitTimerState['visitStartTime'] ?? '');
+        final accumulatedSeconds = visitTimerState['accumulatedSeconds'] as int? ?? 0;
+        _startVisitTimer(savedStartTime: savedStartTime, accumulatedSeconds: accumulatedSeconds);
+        debugPrint('VisitStepsBloc: Resumed visit timer from saved state');
+      } else {
+        _startVisitTimer();
+        await _saveVisitTimerState();
+        debugPrint('VisitStepsBloc: Started new visit timer');
+      }
+
+      // Step timer is NOT started here - it will start when user navigates to step page
+      // This ensures step timer only counts time spent inside the step page
+      _stepDurationSeconds = 0;
+
+      // Load step timers from completion data for all steps
+      // This ensures timer values are preserved and displayed in FloatingTimerOverlay
+      final initialStepTimers = await _loadAllStepTimers(modifiedPermissions.visitSteps);
+      debugPrint('VisitStepsBloc: Loaded step timers: $initialStepTimers');
+
       emit(VisitStepsLoaded(
         tradingPoint: tradingPoint,
         permissions: modifiedPermissions,
@@ -320,6 +651,9 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         isStrictSequence: isStrictSequence,
         canProceedToNext: _canProceedToNext(stepProgress, currentStepIndex, isStrictSequence, _isUnplannedOrder),
         isUnplannedOrder: _isUnplannedOrder,
+        visitDurationSeconds: _visitDurationSeconds,
+        currentStepDuration: _stepDurationSeconds,
+        stepTimers: initialStepTimers,
       ));
 
       debugPrint('VisitStepsBloc: Visit steps loaded successfully for trading point ${tradingPoint.tradingPoint.name}');
@@ -386,13 +720,17 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       completedAt: DateTime.now(),
     );
 
-    // 2. Save completion data to persistent storage
-    // Include all data from the event, plus completion metadata
-    // This ensures that complex data like order details with shipping dates are preserved
+    // 2. Save completion data to persistent storage with timer data
+    // Include all data from the event, plus completion metadata and duration
+    // Use stepTimers map to get the actual accumulated timer value for this step
+    final stepTimerValue = currentState.stepTimers[step.stepCode] ?? _stepDurationSeconds;
     final completionData = Map<String, dynamic>.from(event.data);
     completionData.addAll({
       'completedAt': DateTime.now().toIso8601String(),
       'status': 'completed',
+      'durationSeconds': stepTimerValue,
+      'startTime': _stepStartTime?.toIso8601String(),
+      'endTime': DateTime.now().toIso8601String(),
     });
 
     await _saveStepDataToStorage(
@@ -403,11 +741,16 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     );
 
     // 3. Clear any "in progress" data for this step to prevent conflicts on reload
-    // This ensures that _loadStepProgressFromStorage won't prioritize old progress data over this new completion
     await _removeStepProgressData(step.stepCode);
 
-    // 4. Determine next step and update state
+    // 4. Stop current step timer and reset duration for next step
+    _stopStepTimer();
+    _stepDurationSeconds = 0;
+
+    // 5. Determine next step and update state
     final newCurrentStepIndex = _getCurrentStepIndex(updatedProgress, currentState.isStrictSequence);
+
+    // Next step timer will start when user navigates to step page (via StartStepTimer event)
 
     emit(VisitStepsLoaded(
       tradingPoint: currentState.tradingPoint,
@@ -417,6 +760,8 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       isStrictSequence: currentState.isStrictSequence,
       canProceedToNext: _canProceedToNext(updatedProgress, newCurrentStepIndex, currentState.isStrictSequence, currentState.isUnplannedOrder),
       isUnplannedOrder: currentState.isUnplannedOrder,
+      visitDurationSeconds: _visitDurationSeconds,
+      currentStepDuration: _stepDurationSeconds,
     ));
   }
 
@@ -651,6 +996,27 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       );
 
       if (success) {
+        // Stop all timers and save final visit completion data
+        _stopVisitTimer();
+        _stopStepTimer();
+        
+        // Save visit completion data with end time
+        await _visitDataRepository.saveVisitStepData(VisitData(
+          visitId: _visitId,
+          clientCode: 'timer_metadata',
+          stepCode: 0,
+          stepName: 'Visit Completion',
+          dataType: 'visit_completion',
+          dataContent: jsonEncode({
+            'visitStartTime': _visitStartTime?.toIso8601String(),
+            'visitEndTime': DateTime.now().toIso8601String(),
+            'totalDurationSeconds': _visitDurationSeconds,
+            'completedAt': DateTime.now().toIso8601String(),
+          }),
+          timestamp: DateTime.now(),
+        ));
+        debugPrint('VisitStepsBloc: Visit completion data saved with endTime');
+        
         // Clear all visit data after successful completion (like canceling visit)
         await _visitFinishService.cancelAllSteps(visitId: _visitId);
 
@@ -1040,8 +1406,26 @@ class _VisitStepsViewState extends State<VisitStepsView> {
   PostOrderSyncManager? _postOrderSyncManager;
   bool _syncStarted = false;
 
+  /// Timer to periodically update UI with current timer values
+  Timer? _uiUpdateTimer;
+
+  /// Show/hide floating timer overlay
+  bool _showTimerOverlay = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start periodic timer to update UI every second
+    _uiUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        context.read<VisitStepsBloc>().add(UpdateTimers());
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _uiUpdateTimer?.cancel();
     _postOrderSyncManager?.dispose();
     super.dispose();
   }
@@ -1130,6 +1514,35 @@ class _VisitStepsViewState extends State<VisitStepsView> {
         title: Text(l10n.visitClient),
         centerTitle: true,
         actions: [
+          // Timer icon button - toggles floating overlay
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _showTimerOverlay = !_showTimerOverlay;
+              });
+            },
+            icon: Icon(
+              _showTimerOverlay ? Icons.timer_off : Icons.timer,
+              color: _showTimerOverlay ? theme.colorScheme.primary : null,
+            ),
+            tooltip: 'Timer',
+          ),
+          BlocBuilder<VisitStepsBloc, VisitStepsState>(
+            builder: (context, state) {
+              if (state is VisitStepsLoaded && state.visitDurationSeconds != null) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Center(
+                    child: CompactVisitTimerWidget(
+                      durationSeconds: state.visitDurationSeconds!,
+                      isActive: true,
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           BlocBuilder<VisitStepsBloc, VisitStepsState>(
             builder: (context, state) {
               if (state is VisitStepsLoaded) {
@@ -1146,7 +1559,9 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           ),
         ],
       ),
-      body: BlocConsumer<VisitStepsBloc, VisitStepsState>(
+      body: Stack(
+        children: [
+          BlocConsumer<VisitStepsBloc, VisitStepsState>(
         listener: (context, state) {
           if (state is VisitStepsError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1207,6 +1622,39 @@ class _VisitStepsViewState extends State<VisitStepsView> {
 
           return Center(child: Text(l10n.unknownState));
         },
+      ),
+          // Floating timer overlay
+          if (_showTimerOverlay)
+            BlocBuilder<VisitStepsBloc, VisitStepsState>(
+              builder: (context, state) {
+                if (state is VisitStepsLoaded) {
+                  // Prepare all steps with their timer info
+                  final allSteps = state.stepProgress.map((stepProgress) {
+                    return StepTimerInfo(
+                      stepName: stepProgress.step.stepName,
+                      stepCode: stepProgress.step.stepCode,
+                      durationSeconds: state.stepTimers[stepProgress.step.stepCode],
+                      isActive: state.currentStepIndex >= 0 && 
+                                state.currentStepIndex < state.stepProgress.length &&
+                                state.stepProgress[state.currentStepIndex].step.stepCode == stepProgress.step.stepCode,
+                      isCompleted: stepProgress.status == VisitStepStatus.completed,
+                    );
+                  }).toList();
+
+                  return FloatingTimerOverlay(
+                    visitDurationSeconds: state.visitDurationSeconds,
+                    allSteps: allSteps,
+                    onClose: () {
+                      setState(() {
+                        _showTimerOverlay = false;
+                      });
+                    },
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+        ],
       ),
     );
   }
@@ -2560,13 +3008,54 @@ class _VisitStepCardState extends State<_VisitStepCard> {
 
     if (page != null) {
       // Navigate and wait for result
+      // Wrap with BlocProvider.value to share VisitStepsBloc with step pages
+      // This allows step pages to access timer state for display
+      final bloc = context.read<VisitStepsBloc>();
+      
+      // Pause step timer if viewing a read-only (completed) step
+      // This prevents timer from running while viewing completed steps
+      if (readOnly) {
+        bloc.add(PauseStepTimer(step.stepCode));
+        debugPrint('VisitStepsPage: Paused step timer for read-only navigation');
+      } else {
+        // Start step timer when entering an editable (current) step
+        // This ensures step timer only counts time spent inside the step page
+        bloc.add(StartStepTimer(step.stepCode));
+        debugPrint('VisitStepsPage: Started step timer for step ${step.stepCode}');
+      }
+      
       final result = await Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => page!),
+        MaterialPageRoute(
+          builder: (navContext) => BlocProvider.value(
+            value: bloc,
+            child: page!,
+          ),
+        ),
       );
+
+      // Handle timer state after returning from step page
+      if (readOnly && currentState.currentStepIndex >= 0) {
+        // Resume step timer for the current active step after viewing read-only step
+        final activeStep = currentState.stepProgress[currentState.currentStepIndex].step;
+        bloc.add(ResumeStepTimer(activeStep.stepCode));
+        debugPrint('VisitStepsPage: Resumed step timer after read-only navigation');
+      } else if (!readOnly) {
+        // Pause step timer when returning from editable step (saves timer state)
+        bloc.add(PauseStepTimer(step.stepCode));
+        debugPrint('VisitStepsPage: Paused step timer after returning from step ${step.stepCode}');
+      }
 
       // Handle the result if step was completed
       if (result != null && result is Map<String, dynamic> && result['completed'] == true) {
         final stepIndex = currentState.stepProgress.indexOf(stepProgress);
+        
+        // IMPORTANT: Update timers before completing step to ensure current timer value is captured
+        // This triggers UpdateTimers event which updates stepTimers map with current _stepDurationSeconds
+        bloc.add(UpdateTimers());
+        
+        // Wait a brief moment for UpdateTimers to process and update the state
+        await Future.delayed(const Duration(milliseconds: 50));
+        
         // Pass the full result data (including order and shipping date) to completion
         // This ensures that complex step data like order information is preserved in the completion record
         final completionData = Map<String, dynamic>.from(result);

@@ -2981,5 +2981,10 @@
     }
   },
   "primaryServer": "Основной",
-  "backupServer": "Резервный"
+  "backupServer": "Резервный",
+  "visitDuration": "Длительность визита",
+  "stepDuration": "Длительность шага",
+  "totalVisitTime": "Общее время визита",
+  "stepTime": "Время шага",
+  "elapsedTime": "Прошедшее время"
 }

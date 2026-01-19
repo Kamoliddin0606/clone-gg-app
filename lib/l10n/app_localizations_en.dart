@@ -5036,4 +5036,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupServer => 'Backup';
+
+  @override
+  String get visitDuration => 'Visit Duration';
+
+  @override
+  String get stepDuration => 'Step Duration';
+
+  @override
+  String get totalVisitTime => 'Total Visit Time';
+
+  @override
+  String get stepTime => 'Step Time';
+
+  @override
+  String get elapsedTime => 'Elapsed Time';
 }

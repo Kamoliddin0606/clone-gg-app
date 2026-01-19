@@ -348,26 +348,27 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
       // Save user data to preferences
       await _saveUserData(state);
-      //
-      // // Save user to database for future offline use
-      // await dbHelper.saveUser({
-      //   'code': state.user.code,
-      //   'username': state.user.username,
-      //   'password': '', // Don't store password in database
-      //   'name': state.user.name,
-      //   'role': state.user.role,
-      //   'warehouse_code': state.user.warehouseCode,
-      //   'code_project': state.user.codeProject,
-      //   'base_url': state.user.baseUrl,
-      //   'telegram_id': state.user.telegramID,
-      //   'chat_id': state.user.chatID,
-      //   'topic_id': state.user.topicID,
-      // });
 
-      // // If user data doesn't match, show sync progress dialog
-      // if (needsDataSync && mounted) {
-      //   await _showDataSyncDialog(state.user);
-      // }
+      // Save user to database for future offline use
+      try {
+        await dbHelper.saveUser({
+          'code': state.user.code,
+          'username': state.user.username,
+          'password': '', // Don't store password in database for security
+          'name': state.user.name,
+          'role': state.user.role,
+          'warehouse_code': state.user.warehouseCode,
+          'code_project': state.user.codeProject,
+          'base_url': state.user.baseUrl,
+          'telegram_id': state.user.telegramID,
+          'chat_id': state.user.chatID,
+          'topic_id': state.user.topicID,
+        });
+        if (kDebugMode) print('User saved to database for offline use');
+      } catch (e) {
+        // Don't fail login if offline save fails - it's non-critical
+        if (kDebugMode) print('Error saving user for offline use: $e');
+      }
 
       // Show success message and navigate
       if (mounted) {

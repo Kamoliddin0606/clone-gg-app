@@ -1957,6 +1957,8 @@
   "syncStepError": "An error occurred",
   "syncSuccessTitle": "Success!",
   "syncUpdatingTitle": "Updating data...",
+  "syncSkippedRecent": "Skipped (recently synced)",
+  "syncBackgroundContinues": "Sync continues in background",
   "paymentRequiredError": "Payment required. Please check your subscription.",
   "authenticationError": "Authentication error. Please login again.",
   "accessForbiddenError": "Access forbidden. You don't have permission.",

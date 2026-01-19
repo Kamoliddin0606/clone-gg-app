@@ -31,6 +31,13 @@ class AppAccessControlService {
   // Stream subscription for connectivity changes
   StreamSubscription<bool>? _connectivitySubscription;
   
+  // Stream controller for access revocation events (notifies UI to navigate to login)
+  final StreamController<AccessCheckResult> _accessRevokedController = 
+      StreamController<AccessCheckResult>.broadcast();
+  
+  /// Stream that emits when access is revoked. UI should listen to navigate to login.
+  Stream<AccessCheckResult> get accessRevokedStream => _accessRevokedController.stream;
+  
   // Flag to track if service is initialized
   bool _isInitialized = false;
   
@@ -118,6 +125,14 @@ class AppAccessControlService {
         
         // Revoke access and cleanup
         await revokeAccessAndCleanup();
+        
+        // Notify UI to navigate to login
+        _accessRevokedController.add(AccessCheckResult(
+          isAccessGranted: false,
+          reason: AccessDenialReason.expired,
+          message: 'Access period has expired',
+          verifiedTime: verifiedTime,
+        ));
       } else {
         if (kDebugMode) {
           debugPrint('[AppAccessControlService] Access still valid');
@@ -246,15 +261,31 @@ class AppAccessControlService {
       final lastAccess = _validityService.getLastAccessTimestamp();
       
       if (lastAccess == null) {
-        // No previous access recorded - require internet for first time setup
+        // No previous access - check validity with device time for first-time offline access
         if (kDebugMode) {
-          debugPrint('[AppAccessControlService] No previous access - internet required');
+          debugPrint('[AppAccessControlService] No previous access - checking with device time');
         }
         
+        // Allow first-time access if device time is before validity date
+        if (_validityService.isAccessValid(deviceTime)) {
+          await _validityService.saveLastAccessTimestamp(deviceTime);
+          
+          if (kDebugMode) {
+            debugPrint('[AppAccessControlService] First-time offline access granted');
+          }
+          
+          return AccessCheckResult(
+            isAccessGranted: true,
+            isOfflineMode: true,
+            daysRemaining: _validityService.getDaysRemaining(deviceTime),
+          );
+        }
+        
+        // Device time shows expired - deny access
         return AccessCheckResult(
           isAccessGranted: false,
-          reason: AccessDenialReason.internetRequired,
-          message: 'Internet connection required for first time setup',
+          reason: AccessDenialReason.expired,
+          message: 'Access period has expired',
         );
       }
       
@@ -423,6 +454,7 @@ class AppAccessControlService {
   /// Dispose of resources
   void dispose() {
     _connectivitySubscription?.cancel();
+    _accessRevokedController.close();
     _connectivityService.dispose();
     
     if (kDebugMode) {

@@ -3535,6 +3535,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncUpdatingTitle => 'Updating data...';
 
   @override
+  String get syncSkippedRecent => 'Skipped (recently synced)';
+
+  @override
+  String get syncBackgroundContinues => 'Sync continues in background';
+
+  @override
   String get paymentRequiredError => 'Payment required. Please check your subscription.';
 
   @override

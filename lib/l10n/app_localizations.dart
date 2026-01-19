@@ -6733,6 +6733,18 @@ abstract class AppLocalizations {
   /// **'Updating data...'**
   String get syncUpdatingTitle;
 
+  /// No description provided for @syncSkippedRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped (recently synced)'**
+  String get syncSkippedRecent;
+
+  /// No description provided for @syncBackgroundContinues.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync continues in background'**
+  String get syncBackgroundContinues;
+
   /// No description provided for @paymentRequiredError.
   ///
   /// In en, this message translates to:

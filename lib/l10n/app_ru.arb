@@ -1963,6 +1963,8 @@
   "syncStepError": "Произошла ошибка",
   "syncSuccessTitle": "Успех!",
   "syncUpdatingTitle": "Обновление данных...",
+  "syncSkippedRecent": "Пропущено (недавно синхронизировано)",
+  "syncBackgroundContinues": "Синхронизация продолжается в фоне",
   "paymentRequiredError": "Требуется оплата. Проверьте подписку.",
   "authenticationError": "Ошибка аутентификации. Войдите снова.",
   "accessForbiddenError": "Доступ запрещён. У вас нет разрешения.",

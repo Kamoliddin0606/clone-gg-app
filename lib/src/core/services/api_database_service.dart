@@ -54,7 +54,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 31, // Incremented to version 31 for map_tokens table
+      version: 32, // Incremented to version 32 for sync_metadata table
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -1131,6 +1131,24 @@ class ApiDatabaseService {
 
       if (kDebugMode) {
         print('ApiDatabaseService: Created map_tokens table (version 31)');
+      }
+    }
+
+    // =========================================================================
+    // Version 32: Add sync_metadata table for conditional sync optimization
+    // =========================================================================
+    if (oldVersion < 32) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS sync_metadata (
+          table_name TEXT PRIMARY KEY,
+          last_sync_at TEXT NOT NULL,
+          records_count INTEGER DEFAULT 0,
+          sync_duration_ms INTEGER DEFAULT 0
+        )
+      ''');
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Created sync_metadata table (version 32)');
       }
     }
   }
@@ -7574,7 +7592,129 @@ class ApiDatabaseService {
         ''',
         'indexes': <String>[],
       },
+      'sync_metadata': {
+        'sql': '''
+          CREATE TABLE sync_metadata (
+            table_name TEXT PRIMARY KEY,
+            last_sync_at TEXT NOT NULL,
+            records_count INTEGER DEFAULT 0,
+            sync_duration_ms INTEGER DEFAULT 0
+          )
+        ''',
+        'indexes': <String>[],
+      },
     };
+  }
+
+  // ===========================================================================
+  // SYNC METADATA METHODS - For conditional sync optimization
+  // ===========================================================================
+
+  /// Gets the last sync timestamp for a specific table.
+  /// 
+  /// Returns null if the table has never been synced.
+  Future<DateTime?> getLastSyncTime(String tableName) async {
+    try {
+      final db = await database;
+      final result = await db.query(
+        'sync_metadata',
+        where: 'table_name = ?',
+        whereArgs: [tableName],
+        limit: 1,
+      );
+      
+      if (result.isEmpty) return null;
+      
+      final lastSyncAt = result.first['last_sync_at'] as String?;
+      return lastSyncAt != null ? DateTime.parse(lastSyncAt) : null;
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting last sync time for $tableName: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Updates the sync metadata for a table after successful sync.
+  /// 
+  /// Parameters:
+  /// - [tableName] - Name of the synced table
+  /// - [recordsCount] - Number of records synced
+  /// - [durationMs] - Duration of sync operation in milliseconds
+  Future<void> updateSyncMetadata(String tableName, {int recordsCount = 0, int durationMs = 0}) async {
+    try {
+      final db = await database;
+      final now = DateTime.now().toIso8601String();
+      
+      await db.insert(
+        'sync_metadata',
+        {
+          'table_name': tableName,
+          'last_sync_at': now,
+          'records_count': recordsCount,
+          'sync_duration_ms': durationMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      
+      if (kDebugMode) {
+        print('ApiDatabaseService: Updated sync metadata for $tableName (records: $recordsCount, duration: ${durationMs}ms)');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error updating sync metadata for $tableName: $e');
+      }
+    }
+  }
+
+  /// Checks if a table needs synchronization based on max age.
+  /// 
+  /// Parameters:
+  /// - [tableName] - Name of the table to check
+  /// - [maxAge] - Maximum age before re-sync is required
+  /// 
+  /// Returns: true if sync is needed, false if recent sync exists
+  Future<bool> shouldSync(String tableName, Duration maxAge) async {
+    final lastSync = await getLastSyncTime(tableName);
+    if (lastSync == null) return true;
+    return DateTime.now().difference(lastSync) > maxAge;
+  }
+
+  /// Gets all sync metadata for debugging and monitoring.
+  Future<List<Map<String, dynamic>>> getAllSyncMetadata() async {
+    try {
+      final db = await database;
+      return await db.query('sync_metadata', orderBy: 'last_sync_at DESC');
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting all sync metadata: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Clears sync metadata for a specific table (forces re-sync).
+  Future<void> clearSyncMetadata(String tableName) async {
+    try {
+      final db = await database;
+      await db.delete('sync_metadata', where: 'table_name = ?', whereArgs: [tableName]);
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error clearing sync metadata for $tableName: $e');
+      }
+    }
+  }
+
+  /// Clears all sync metadata (forces full re-sync).
+  Future<void> clearAllSyncMetadata() async {
+    try {
+      final db = await database;
+      await db.delete('sync_metadata');
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error clearing all sync metadata: $e');
+      }
+    }
   }
 
   /// Ensure user_organizations table exists (for migration issues)

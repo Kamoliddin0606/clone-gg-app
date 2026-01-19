@@ -1972,6 +1972,8 @@
   "syncStepError": "Xatolik yuz berdi",
   "syncSuccessTitle": "Muvaffaqiyat!",
   "syncUpdatingTitle": "Ma'lumotlar yangilanmoqda...",
+  "syncSkippedRecent": "O'tkazib yuborildi (yaqinda sinxronlangan)",
+  "syncBackgroundContinues": "Sinxronlash fonda davom etmoqda",
   "paymentRequiredError": "To'lov talab qilinadi. Obunangizni tekshiring.",
   "authenticationError": "Autentifikatsiya xatosi. Qayta kiring.",
   "accessForbiddenError": "Kirish taqiqlangan. Sizda ruxsat yo'q.",

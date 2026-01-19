@@ -3535,6 +3535,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get syncUpdatingTitle => 'Ma\'lumotlar yangilanmoqda...';
 
   @override
+  String get syncSkippedRecent => 'O\'tkazib yuborildi (yaqinda sinxronlangan)';
+
+  @override
+  String get syncBackgroundContinues => 'Sinxronlash fonda davom etmoqda';
+
+  @override
   String get paymentRequiredError => 'To\'lov talab qilinmoqda. Iltimos, obunangizni tekshiring.';
 
   @override

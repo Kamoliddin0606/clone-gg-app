@@ -3535,6 +3535,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncUpdatingTitle => 'Обновление данных...';
 
   @override
+  String get syncSkippedRecent => 'Пропущено (недавно синхронизировано)';
+
+  @override
+  String get syncBackgroundContinues => 'Синхронизация продолжается в фоне';
+
+  @override
   String get paymentRequiredError => 'Требуется оплата. Проверьте вашу подписку.';
 
   @override

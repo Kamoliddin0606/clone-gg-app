@@ -2434,13 +2434,13 @@ class SoapApiService {
     }
   }
 
-  /// Get server time for time verification
+  /// Get server time with automatic URL failover for time verification.
   /// 
-  /// Returns the current server time as DateTime.
-  /// This is used for access control time verification instead of Gemini AI.
+  /// Tries URLs in priority order: domain → IP1 → IP2.
+  /// Uses short timeouts for fast failover when servers are unavailable.
   /// 
   /// @returns DateTime from server
-  /// @throws ServerTimeException if request fails
+  /// @throws ServerTimeException if all servers fail
   Future<DateTime> getServerTime() async {
     const soapEnvelope = '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
@@ -2451,81 +2451,98 @@ class SoapApiService {
 </soap:Envelope>
 ''';
 
-    try {
-      if (kDebugMode) {
-        print('[SoapApiService] Getting server time from: $_baseUrl');
-      }
+    final urls = _serverService.allUrls;
+    String? lastError;
 
-      final response = await _dio.post(
-        _baseUrl,
-        data: soapEnvelope,
-        options: Options(
-          headers: {
-            'Content-Type': 'application/soap+xml; charset=utf-8',
-            'SOAPAction': '',
-          },
-        ),
-      );
+    // Try each URL with short timeout for fast failover
+    for (int i = 0; i < urls.length; i++) {
+      final url = urls[i];
+      
+      try {
+        if (kDebugMode) {
+          print('[SoapApiService] Getting server time from URL[$i]: $url');
+        }
 
-      if (kDebugMode) {
-        print('[SoapApiService] Server time response status: ${response.statusCode}');
-      }
-
-      final responseData = response.data?.toString() ?? '';
-
-      // Check for SOAP Fault
-      if (responseData.contains('Fault') || response.statusCode != 200) {
-        String? faultMsg;
-        try {
-          if (responseData.contains('Fault')) {
-            final doc = XmlDocument.parse(responseData);
-            faultMsg = doc.findAllElements('soap:Text').firstOrNull?.innerText.trim() ??
-                       doc.findAllElements('faultstring').firstOrNull?.innerText.trim();
-          }
-        } catch (_) {}
-        throw ServerTimeException(
-          faultMsg ?? 'Server time request failed with status: ${response.statusCode}',
+        final response = await _dio.post(
+          url,
+          data: soapEnvelope,
+          options: Options(
+            headers: {
+              'Content-Type': 'application/soap+xml; charset=utf-8',
+              'SOAPAction': '',
+            },
+            sendTimeout: const Duration(seconds: 5),
+            receiveTimeout: const Duration(seconds: 5),
+          ),
         );
-      }
 
-      final document = XmlDocument.parse(responseData);
-      
-      // Extract DateTime from response: <m:DateTime>2026-01-16T19:47:47</m:DateTime>
-      final dateTimeElement = document.findAllElements('m:DateTime').firstOrNull;
-      
-      if (dateTimeElement == null) {
-        throw ServerTimeException('DateTime element not found in server response');
-      }
+        final responseData = response.data?.toString() ?? '';
 
-      final dateTimeString = dateTimeElement.innerText.trim();
-      
-      if (kDebugMode) {
-        print('[SoapApiService] Server time string: $dateTimeString');
-      }
+        // Check for SOAP Fault
+        if (responseData.contains('Fault') || response.statusCode != 200) {
+          lastError = _extractSoapFault(responseData) ?? 
+              'Server time request failed with status: ${response.statusCode}';
+          if (kDebugMode) print('[SoapApiService] SOAP Fault from $url: $lastError');
+          continue;
+        }
 
-      // Parse the datetime string
-      final serverTime = DateTime.parse(dateTimeString);
+        // Parse server time from response
+        final serverTime = _parseServerTimeResponse(responseData);
+        
+        // Update working URL on success
+        await _serverService.setWorkingUrl(url);
+        
+        if (kDebugMode) {
+          print('[SoapApiService] Server time obtained: $serverTime (from URL[$i])');
+        }
+        
+        return serverTime;
 
-      if (kDebugMode) {
-        print('[SoapApiService] Parsed server time: $serverTime');
+      } on DioException catch (e) {
+        lastError = _getErrorMessage(e);
+        if (kDebugMode) {
+          print('[SoapApiService] URL[$i] failed: $lastError');
+        }
+        continue;
+      } on FormatException catch (e) {
+        lastError = 'Parse error: ${e.message}';
+        if (kDebugMode) print('[SoapApiService] URL[$i] parse error: $lastError');
+        continue;
+      } catch (e) {
+        lastError = e.toString();
+        if (kDebugMode) print('[SoapApiService] URL[$i] error: $lastError');
+        continue;
       }
-
-      return serverTime;
-    } on ServerTimeException {
-      rethrow;
-    } on FormatException catch (e) {
-      throw ServerTimeException('Failed to parse server time: ${e.message}');
-    } on DioException catch (e) {
-      if (kDebugMode) {
-        print('[SoapApiService] Server time request error: ${e.message}');
-      }
-      throw ServerTimeException('Network error getting server time: ${_getErrorMessage(e)}');
-    } catch (e) {
-      if (kDebugMode) {
-        print('[SoapApiService] Unexpected error getting server time: $e');
-      }
-      throw ServerTimeException('Unexpected error getting server time: $e');
     }
+
+    // All URLs failed
+    throw ServerTimeException(
+      'All servers unavailable. Last error: ${lastError ?? "Unknown"}',
+    );
+  }
+
+  /// Extracts SOAP fault message from response XML.
+  String? _extractSoapFault(String responseData) {
+    if (!responseData.contains('Fault')) return null;
+    try {
+      final doc = XmlDocument.parse(responseData);
+      return doc.findAllElements('soap:Text').firstOrNull?.innerText.trim() ??
+             doc.findAllElements('faultstring').firstOrNull?.innerText.trim();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Parses server time from SOAP response XML.
+  DateTime _parseServerTimeResponse(String responseData) {
+    final document = XmlDocument.parse(responseData);
+    final dateTimeElement = document.findAllElements('m:DateTime').firstOrNull;
+    
+    if (dateTimeElement == null) {
+      throw const FormatException('DateTime element not found in response');
+    }
+
+    return DateTime.parse(dateTimeElement.innerText.trim());
   }
 }
 

@@ -1477,7 +1477,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncStatusError => 'Sync error';
 
   @override
-  String get syncInProgress => 'Syncing...';
+  String get syncInProgress => 'Synchronization in Progress';
 
   @override
   String get syncErrorUserNotFound => 'User code not found';
@@ -4876,6 +4876,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accessRevoking => 'Revoking access...';
+
+  @override
+  String get syncRequiredFirstTime => 'Sync required for first login';
+
+  @override
+  String get syncRecommended => 'Data sync recommended';
+
+  @override
+  String get goToSyncSettings => 'Open sync settings to update data';
+
+  @override
+  String get openSettings => 'Open Settings';
+
+  @override
+  String get initialSyncRequired => 'Data Synchronization Required';
+
+  @override
+  String get initialSyncMessage => 'This is your first login. We need to download essential data to get started. This may take a few minutes.';
+
+  @override
+  String get dataSyncRequired => 'Data Synchronization Required';
+
+  @override
+  String get dataSyncMessage => 'Your local data needs to be updated. Would you like to synchronize now?';
+
+  @override
+  String get startSync => 'Start Sync';
+
+  @override
+  String get syncLater => 'Later';
+
+  @override
+  String get syncCompleteMessage => 'Data synchronization completed successfully!';
+
+  @override
+  String get syncWillContinueBackground => 'Sync will continue in the background';
 
   @override
   String get geminiApiKeyNotFound => 'Gemini API key not configured';

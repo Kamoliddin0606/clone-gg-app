@@ -23,6 +23,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  int _initialTabIndex = 0;
 
   @override
   void initState() {
@@ -30,7 +31,22 @@ class _SettingsPageState extends State<SettingsPage>
     _tabController = TabController(
       length: 4,
       vsync: this,
+      initialIndex: _initialTabIndex,
     ); // Changed from 3 to 4
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check if we should navigate to DataSyncTab
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null && args['openDataSyncTab'] == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _tabController.animateTo(2); // DataSyncTab is at index 2
+        }
+      });
+    }
   }
 
   @override

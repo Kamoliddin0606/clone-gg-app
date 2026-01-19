@@ -166,7 +166,10 @@ class AppRouter {
       case reportsRoute:
         return MaterialPageRoute(builder: (_) => const ReportsPage());
       case settingsRoute:
-        return MaterialPageRoute(builder: (_) => const SettingsPage());
+        return MaterialPageRoute(
+          builder: (_) => const SettingsPage(),
+          settings: settings,
+        );
       case ordersRoute:
         return MaterialPageRoute(builder: (_) => const OrdersPage());
       case dbViewRoute:

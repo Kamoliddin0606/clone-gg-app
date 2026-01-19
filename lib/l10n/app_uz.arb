@@ -2804,6 +2804,11 @@
   "accessCleaningData": "Ma'lumotlar tozalanmoqda...",
   "accessRevoking": "Kirish bekor qilinmoqda...",
 
+  "syncRequiredFirstTime": "Birinchi kirishda sinxronlash talab qilinadi",
+  "syncRecommended": "Ma'lumotlarni sinxronlash tavsiya etiladi",
+  "goToSyncSettings": "Ma'lumotlarni yangilash uchun sozlamalarni oching",
+  "openSettings": "Sozlamalarni ochish",
+
   "geminiApiKeyNotFound": "Gemini API kaliti sozlanmagan",
   "geminiNetworkError": "Tarmoq xatosi yuz berdi. Ulanishni tekshiring",
   "geminiAuthError": "Autentifikatsiya xatosi. Sozlamalarda API kalitini tekshiring",

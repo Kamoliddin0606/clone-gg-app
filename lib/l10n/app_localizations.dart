@@ -3016,7 +3016,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncInProgress.
   ///
   /// In en, this message translates to:
-  /// **'Syncing...'**
+  /// **'Synchronization in Progress'**
   String get syncInProgress;
 
   /// No description provided for @syncErrorUserNotFound.
@@ -9294,6 +9294,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Revoking access...'**
   String get accessRevoking;
+
+  /// No description provided for @syncRequiredFirstTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync required for first login'**
+  String get syncRequiredFirstTime;
+
+  /// No description provided for @syncRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Data sync recommended'**
+  String get syncRecommended;
+
+  /// No description provided for @goToSyncSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open sync settings to update data'**
+  String get goToSyncSettings;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get openSettings;
+
+  /// No description provided for @initialSyncRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Synchronization Required'**
+  String get initialSyncRequired;
+
+  /// No description provided for @initialSyncMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This is your first login. We need to download essential data to get started. This may take a few minutes.'**
+  String get initialSyncMessage;
+
+  /// No description provided for @dataSyncRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Synchronization Required'**
+  String get dataSyncRequired;
+
+  /// No description provided for @dataSyncMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your local data needs to be updated. Would you like to synchronize now?'**
+  String get dataSyncMessage;
+
+  /// No description provided for @startSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Sync'**
+  String get startSync;
+
+  /// No description provided for @syncLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get syncLater;
+
+  /// No description provided for @syncCompleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Data synchronization completed successfully!'**
+  String get syncCompleteMessage;
+
+  /// No description provided for @syncWillContinueBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync will continue in the background'**
+  String get syncWillContinueBackground;
 
   /// No description provided for @geminiApiKeyNotFound.
   ///

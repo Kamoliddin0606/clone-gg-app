@@ -196,6 +196,17 @@ class _AgentHomePageState extends State<AgentHomePage>
         return;
       }
 
+      // Check if sync is needed from login
+      final syncNeeded = prefs.isSyncNeeded();
+      if (syncNeeded) {
+        // Show sync navigation prompt
+        final isFirstTime = prefs.isFirstTimeSync();
+        await _showSyncNavigationPrompt(isFirstTime);
+        // Clear the flag
+        await prefs.setSyncNeeded(false);
+        await prefs.setIsFirstTimeSync(false);
+      }
+
       // Online mode - check if preferences user matches database user
       final isValid = await dataSyncService.validateUserWithDatabase();
 
@@ -218,6 +229,67 @@ class _AgentHomePageState extends State<AgentHomePage>
       if (kDebugMode) print('Error checking user data: $e');
       // Load cached data as fallback
       await _loadKpiData();
+    }
+  }
+
+  /// Shows minimal prompt to navigate to sync settings page
+  Future<void> _showSyncNavigationPrompt(bool isFirstTimeUser) async {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    
+    final shouldNavigate = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.sync_outlined,
+              size: 56,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              isFirstTimeUser
+                  ? (l10n?.syncRequiredFirstTime ?? 'Sync required for first login')
+                  : (l10n?.syncRecommended ?? 'Data sync recommended'),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l10n?.goToSyncSettings ?? 'Open sync settings to update data',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n?.later ?? 'Later'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(context).pop(true),
+            icon: const Icon(Icons.settings, size: 18),
+            label: Text(l10n?.openSettings ?? 'Open Settings'),
+          ),
+        ],
+      ),
+    );
+    
+    // Navigate to settings sync tab if user confirmed
+    if (shouldNavigate == true && mounted) {
+      Navigator.pushNamed(
+        context, 
+        AppRouter.settingsRoute,
+        arguments: {'openDataSyncTab': true},
+      );
     }
   }
 

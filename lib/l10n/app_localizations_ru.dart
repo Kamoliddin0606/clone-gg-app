@@ -4878,6 +4878,42 @@ class AppLocalizationsRu extends AppLocalizations {
   String get accessRevoking => 'Отзыв доступа...';
 
   @override
+  String get syncRequiredFirstTime => 'Требуется синхронизация при первом входе';
+
+  @override
+  String get syncRecommended => 'Рекомендуется синхронизация данных';
+
+  @override
+  String get goToSyncSettings => 'Откройте настройки синхронизации для обновления данных';
+
+  @override
+  String get openSettings => 'Открыть настройки';
+
+  @override
+  String get initialSyncRequired => 'Data Synchronization Required';
+
+  @override
+  String get initialSyncMessage => 'This is your first login. We need to download essential data to get started. This may take a few minutes.';
+
+  @override
+  String get dataSyncRequired => 'Data Synchronization Required';
+
+  @override
+  String get dataSyncMessage => 'Your local data needs to be updated. Would you like to synchronize now?';
+
+  @override
+  String get startSync => 'Start Sync';
+
+  @override
+  String get syncLater => 'Later';
+
+  @override
+  String get syncCompleteMessage => 'Data synchronization completed successfully!';
+
+  @override
+  String get syncWillContinueBackground => 'Sync will continue in the background';
+
+  @override
   String get geminiApiKeyNotFound => 'Ключ API Gemini не настроен';
 
   @override

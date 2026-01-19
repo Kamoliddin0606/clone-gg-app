@@ -4878,6 +4878,42 @@ class AppLocalizationsUz extends AppLocalizations {
   String get accessRevoking => 'Kirish bekor qilinmoqda...';
 
   @override
+  String get syncRequiredFirstTime => 'Birinchi kirishda sinxronlash talab qilinadi';
+
+  @override
+  String get syncRecommended => 'Ma\'lumotlarni sinxronlash tavsiya etiladi';
+
+  @override
+  String get goToSyncSettings => 'Ma\'lumotlarni yangilash uchun sozlamalarni oching';
+
+  @override
+  String get openSettings => 'Sozlamalarni ochish';
+
+  @override
+  String get initialSyncRequired => 'Data Synchronization Required';
+
+  @override
+  String get initialSyncMessage => 'This is your first login. We need to download essential data to get started. This may take a few minutes.';
+
+  @override
+  String get dataSyncRequired => 'Data Synchronization Required';
+
+  @override
+  String get dataSyncMessage => 'Your local data needs to be updated. Would you like to synchronize now?';
+
+  @override
+  String get startSync => 'Start Sync';
+
+  @override
+  String get syncLater => 'Later';
+
+  @override
+  String get syncCompleteMessage => 'Data synchronization completed successfully!';
+
+  @override
+  String get syncWillContinueBackground => 'Sync will continue in the background';
+
+  @override
   String get geminiApiKeyNotFound => 'Gemini API kaliti sozlanmagan';
 
   @override

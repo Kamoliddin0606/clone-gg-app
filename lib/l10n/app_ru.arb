@@ -2883,6 +2883,12 @@
   "accessInternetRestored": "Подключение к интернету восстановлено. Проверка...",
   "accessCleaningData": "Очистка данных...",
   "accessRevoking": "Отзыв доступа...",
+
+  "syncRequiredFirstTime": "Требуется синхронизация при первом входе",
+  "syncRecommended": "Рекомендуется синхронизация данных",
+  "goToSyncSettings": "Откройте настройки синхронизации для обновления данных",
+  "openSettings": "Открыть настройки",
+
   "geminiApiKeyNotFound": "Ключ API Gemini не настроен",
   "geminiNetworkError": "Произошла ошибка сети. Проверьте подключение",
   "geminiAuthError": "Ошибка аутентификации. Проверьте ключ API в настройках",

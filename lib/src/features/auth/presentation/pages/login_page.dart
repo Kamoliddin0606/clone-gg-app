@@ -5,11 +5,8 @@ import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
-import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 
 import '../../../../core/network/server_service.dart';
 
@@ -324,25 +321,22 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       final dbHelper = sl<DatabaseHelper>();
       final dbUser = await dbHelper.getUserByCode(state.user.code);
 
-      bool needsDataSync = false;
-      if (dbUser == null) {
-        // No user in database, need to sync all data
-        needsDataSync = true;
-        if (kDebugMode) print('No user found in database, will sync all data');
-      } else {
-        // Check if user data matches
-        final userMatches = dbUser['code'] == state.user.code &&
-            dbUser['name'] == state.user.name &&
-            dbUser['warehouse_code'] == state.user.warehouseCode &&
-            dbUser['code_project'] == state.user.codeProject &&
-            dbUser['base_url'] == state.user.baseUrl;
-
-        if (!userMatches) {
-          // User data doesn't match, need to sync all data
-          needsDataSync = true;
-          if (kDebugMode) print('User data mismatch, will sync all data');
+      if (kDebugMode) {
+        if (dbUser == null) {
+          print('No user found in database, will sync all data');
         } else {
-          if (kDebugMode) print('User data matches, no sync needed');
+          // Check if user data matches
+          final userMatches = dbUser['code'] == state.user.code &&
+              dbUser['name'] == state.user.name &&
+              dbUser['warehouse_code'] == state.user.warehouseCode &&
+              dbUser['code_project'] == state.user.codeProject &&
+              dbUser['base_url'] == state.user.baseUrl;
+
+          if (!userMatches) {
+            print('User data mismatch, will sync all data');
+          } else {
+            print('User data matches, no sync needed');
+          }
         }
       }
 
@@ -370,6 +364,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         if (kDebugMode) print('Error saving user for offline use: $e');
       }
 
+      // Always show sync prompt on every login
+      await prefs.setSyncNeeded(true);
+      await prefs.setIsFirstTimeSync(dbUser == null);
+
       // Show success message and navigate
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -390,68 +388,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
   }
 
-  Future<void> _showDataSyncDialog(UserEntity user) async {
-    final dataSyncService = sl<DataSyncService>();
-
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)?.dataUpdating ?? 'Updating data...'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: StreamBuilder<SyncStep>(
-            stream: dataSyncService.syncAllUserDataWithProgress(
-              userCode: user.code,
-              password: '', // Password not needed for sync
-              codeProject: user.codeProject,
-              codeSklad: user.warehouseCode,
-            ),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error, color: Colors.red, size: 48),
-                    const SizedBox(height: 16),
-                    Text('${AppLocalizations.of(context)?.errorPrefix ?? "Error"}: ${snapshot.error}'),
-                    const SizedBox(height: 16),
-                    Text(AppLocalizations.of(context)?.cacheDataUsed ?? 'Cache data is being used'),
-                  ],
-                );
-              }
-
-              final step = snapshot.data ?? SyncStep.checkingUser;
-              final progress = (SyncStep.values.indexOf(step) + 1) / SyncStep.values.length;
-
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(step.icon, size: 48, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(height: 16),
-                  Text(
-                    step.getMessage(context),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  LinearProgressIndicator(value: progress),
-                  const SizedBox(height: 8),
-                  Text('${(progress * 100).round()}%'),
-                ],
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _navigateToHomePage(String role) {
     switch (role) {

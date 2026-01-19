@@ -21,28 +21,26 @@ class SharedPreferencesService {
   static const String _bgSyncEnabledKey = 'bg_sync_enabled';
   static const String _bgSyncIntervalKey = 'bg_sync_interval_hours';
   static const String _bgSyncCustomMinutesKey = 'bg_sync_custom_minutes';
-  // static const String _serverName = 'selected_server_name';
+  static const String _syncNeededKey = 'sync_needed';
+  static const String _isFirstTimeSyncKey = 'is_first_time_sync';
 
   static SharedPreferencesService? _instance;
-  // static SharedPreferences? _preferences;
   bool _isInitialized = false;
-  // Singleton pattern to ensure only one instance of SharedPreferencesService
-Future<void> init() async {
-  if (!_isInitialized) {
-    _preferences = await SharedPreferences.getInstance();
-    _isInitialized = true;
-  }
-}
-  // Future<void> init() async {
-  //   _preferences = await SharedPreferences.getInstance();
-  // }
+
   SharedPreferencesService._();
 
+  Future<void> init() async {
+    if (!_isInitialized) {
+      _preferences = await SharedPreferences.getInstance();
+      _isInitialized = true;
+    }
+  }
+
   static Future<SharedPreferencesService> getInstance() async {
-    _instance ??= SharedPreferencesService._();
-    // _preferences ??= await SharedPreferences.getInstance();
-    await _instance!.init();
-    // Ensure the instance is initialized
+    if (_instance == null) {
+      _instance = SharedPreferencesService._();
+      await _instance!.init();
+    }
     return _instance!;
   }
 
@@ -389,5 +387,22 @@ Future<void> init() async {
 
   int? getBgSyncCustomMinutes() {
     return _preferences.getInt(_bgSyncCustomMinutesKey);
+  }
+
+  // Sync needed flag methods
+  Future<void> setSyncNeeded(bool value) async {
+    await _preferences.setBool(_syncNeededKey, value);
+  }
+
+  bool isSyncNeeded() {
+    return _preferences.getBool(_syncNeededKey) ?? false;
+  }
+
+  Future<void> setIsFirstTimeSync(bool value) async {
+    await _preferences.setBool(_isFirstTimeSyncKey, value);
+  }
+
+  bool isFirstTimeSync() {
+    return _preferences.getBool(_isFirstTimeSyncKey) ?? false;
   }
 }

@@ -2928,6 +2928,21 @@
   "accessCleaningData": "Cleaning up data...",
   "accessRevoking": "Revoking access...",
 
+  "syncRequiredFirstTime": "Sync required for first login",
+  "syncRecommended": "Data sync recommended",
+  "goToSyncSettings": "Open sync settings to update data",
+  "openSettings": "Open Settings",
+
+  "initialSyncRequired": "Data Synchronization Required",
+  "initialSyncMessage": "This is your first login. We need to download essential data to get started. This may take a few minutes.",
+  "dataSyncRequired": "Data Synchronization Required",
+  "dataSyncMessage": "Your local data needs to be updated. Would you like to synchronize now?",
+  "startSync": "Start Sync",
+  "syncLater": "Later",
+  "syncInProgress": "Synchronization in Progress",
+  "syncCompleteMessage": "Data synchronization completed successfully!",
+  "syncWillContinueBackground": "Sync will continue in the background",
+
   "geminiApiKeyNotFound": "Gemini API key not configured",
   "geminiNetworkError": "Network error occurred. Please check your connection",
   "geminiAuthError": "Authentication failed. Please check your API key in settings",

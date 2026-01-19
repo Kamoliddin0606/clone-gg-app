@@ -3490,6 +3490,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get syncStepUpdatingClientContractStatus => 'Shartnoma statuslari yangilanmoqda...';
 
   @override
+  String get syncStepSyncingContractTypes => 'Shartnoma turlari yuklanmoqda...';
+
+  @override
+  String get syncStepSyncingDistrictContracting => 'Tumanlar yuklanmoqda...';
+
+  @override
   String get syncStepSyncingOrderStatuses => 'Buyurtma statuslari yuklanmoqda...';
 
   @override
@@ -4897,4 +4903,95 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get geminiApiKeyInvalid => 'Kalit formati noto\'g\'ri. Kalit \'AIza\' bilan boshlanishi kerak';
+
+  @override
+  String get syncOptimizedMode => 'Optimallashtirilgan sinxronizatsiya rejimi';
+
+  @override
+  String syncParallelProgress(int count) {
+    return '$count ta jadval parallel sinxronlanmoqda...';
+  }
+
+  @override
+  String get syncDeltaMode => 'Qo\'shimcha yangilanish';
+
+  @override
+  String syncSkippedUnchanged(int count) {
+    return '$count ta o\'zgarishmagan yozuv o\'tkazib yuborildi';
+  }
+
+  @override
+  String syncInserted(int count) {
+    return '$count ta yangi yozuv qo\'shildi';
+  }
+
+  @override
+  String syncUpdated(int count) {
+    return '$count ta yozuv yangilandi';
+  }
+
+  @override
+  String syncDeleted(int count) {
+    return '$count ta yozuv o\'chirildi';
+  }
+
+  @override
+  String syncLevelProgress(int level, int total, String tables) {
+    return 'Daraja $level/$total: $tables';
+  }
+
+  @override
+  String syncCacheSaved(int count) {
+    return '$count ta takroriy API so\'rov tejaldi';
+  }
+
+  @override
+  String syncOptimizedComplete(String seconds) {
+    return 'Optimallashtirilgan sinxronizatsiya ${seconds}s da yakunlandi';
+  }
+
+  @override
+  String get serverConnectionFailed => 'Serverga ulanishda xatolik';
+
+  @override
+  String get tryingAlternativeServer => 'Muqobil serverga ulanish...';
+
+  @override
+  String get connectedToAlternativeServer => 'Muqobil serverga ulandi';
+
+  @override
+  String get allServersUnavailable => 'Barcha serverlar mavjud emas';
+
+  @override
+  String get checkInternetConnection => 'Internet ulanishini tekshiring';
+
+  @override
+  String get usingFallbackServer => 'Zaxira server ishlatilmoqda';
+
+  @override
+  String get primaryServerRestored => 'Asosiy serverga ulanish tiklandi';
+
+  @override
+  String serverSwitchedTo(String url) {
+    return 'Server o\'zgartirildi: $url';
+  }
+
+  @override
+  String get retryingPrimaryServer => 'Asosiy serverga qayta ulanish...';
+
+  @override
+  String connectionAttempt(int current, int total) {
+    return 'Ulanish urinishi $current/$total';
+  }
+
+  @override
+  String serverUrlInfo(String name, String type) {
+    return 'Server: $name ($type)';
+  }
+
+  @override
+  String get primaryServer => 'Asosiy';
+
+  @override
+  String get backupServer => 'Zaxira';
 }

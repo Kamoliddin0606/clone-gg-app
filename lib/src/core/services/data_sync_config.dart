@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/models/data_sync_table.dart';
 import 'package:gloria_marketing_flutter/src/core/models/data_sync_group.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/sync_function_cache.dart';
 
 /// Ultra-comprehensive configuration for all syncable tables and groups in the application.
 /// 
@@ -163,7 +164,11 @@ class DataSyncConfig {
       dependsOn: ['user_warehouses', 'products'],
       cascadeTo: ['product_brands', 'product_series'],
       groupId: 'product_catalog',
-      syncFunction: () => ds.syncProductBalances(codeProject: codeProject, codeSklad: codeSklad, forceRefresh: true),
+      // Uses cache to prevent duplicate API calls for related tables
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'product_balances_group',
+        () => ds.syncProductBalances(codeProject: codeProject, codeSklad: codeSklad, forceRefresh: true),
+      ),
     );
 
     _tables['product_brands'] = DataSyncTable(
@@ -176,7 +181,11 @@ class DataSyncConfig {
       dependsOn: ['product_balances'],
       cascadeTo: [],
       groupId: 'product_catalog',
-      syncFunction: () => ds.syncProductBalances(codeProject: codeProject, codeSklad: codeSklad, forceRefresh: true),
+      // Shares sync with product_balances - cache prevents duplicate call
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'product_balances_group',
+        () => ds.syncProductBalances(codeProject: codeProject, codeSklad: codeSklad, forceRefresh: true),
+      ),
     );
 
     _tables['product_series'] = DataSyncTable(
@@ -189,7 +198,11 @@ class DataSyncConfig {
       dependsOn: ['product_balances'],
       cascadeTo: [],
       groupId: 'product_catalog',
-      syncFunction: () => ds.syncProductBalances(codeProject: codeProject, codeSklad: codeSklad, forceRefresh: true),
+      // Shares sync with product_balances - cache prevents duplicate call
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'product_balances_group',
+        () => ds.syncProductBalances(codeProject: codeProject, codeSklad: codeSklad, forceRefresh: true),
+      ),
     );
 
     _tables['product_images'] = DataSyncTable(
@@ -308,7 +321,11 @@ class DataSyncConfig {
       dependsOn: ['clients', 'products', 'order_statuses'],
       cascadeTo: ['couriers', 'courier_cars', 'order_couriers', 'order_details', 'kpi_data'],
       groupId: 'orders',
-      syncFunction: () => ds.syncOrders(userCode: userCode, forceRefresh: true),
+      // Uses cache to prevent duplicate API calls for order-related tables
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'orders_group',
+        () => ds.syncOrders(userCode: userCode, forceRefresh: true),
+      ),
     );
 
     _tables['order_details'] = DataSyncTable(
@@ -360,7 +377,11 @@ class DataSyncConfig {
       dependsOn: ['orders'],
       cascadeTo: [],
       groupId: 'orders',
-      syncFunction: () => ds.syncOrders(userCode: userCode, forceRefresh: true),
+      // Shares sync with orders - cache prevents duplicate call
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'orders_group',
+        () => ds.syncOrders(userCode: userCode, forceRefresh: true),
+      ),
     );
 
     _tables['courier_cars'] = DataSyncTable(
@@ -373,7 +394,11 @@ class DataSyncConfig {
       dependsOn: ['orders'],
       cascadeTo: [],
       groupId: 'orders',
-      syncFunction: () => ds.syncOrders(userCode: userCode, forceRefresh: true),
+      // Shares sync with orders - cache prevents duplicate call
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'orders_group',
+        () => ds.syncOrders(userCode: userCode, forceRefresh: true),
+      ),
     );
 
     _tables['order_couriers'] = DataSyncTable(
@@ -386,7 +411,11 @@ class DataSyncConfig {
       dependsOn: ['orders', 'couriers'],
       cascadeTo: [],
       groupId: 'orders',
-      syncFunction: () => ds.syncOrders(userCode: userCode, forceRefresh: true),
+      // Shares sync with orders - cache prevents duplicate call
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'orders_group',
+        () => ds.syncOrders(userCode: userCode, forceRefresh: true),
+      ),
     );
 
     _tables['create_order'] = DataSyncTable(
@@ -416,7 +445,11 @@ class DataSyncConfig {
       dependsOn: ['products'],
       cascadeTo: ['promotion_product_list', 'promotion_bonus_list', 'promotion_class_list'],
       groupId: 'promotions',
-      syncFunction: () => ds.syncPromotions(authToken: null, forceRefresh: true),
+      // Uses cache to prevent duplicate API calls for promotion tables
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'promotions_group',
+        () => ds.syncPromotions(authToken: null, forceRefresh: true),
+      ),
     );
 
     _tables['promotion_product_list'] = DataSyncTable(
@@ -429,7 +462,11 @@ class DataSyncConfig {
       dependsOn: ['promotions'],
       cascadeTo: [],
       groupId: 'promotions',
-      syncFunction: () => ds.syncPromotions(authToken: null, forceRefresh: true),
+      // Shares sync with promotions - cache prevents duplicate call
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'promotions_group',
+        () => ds.syncPromotions(authToken: null, forceRefresh: true),
+      ),
     );
 
     _tables['promotion_bonus_list'] = DataSyncTable(
@@ -442,7 +479,11 @@ class DataSyncConfig {
       dependsOn: ['promotions'],
       cascadeTo: [],
       groupId: 'promotions',
-      syncFunction: () => ds.syncPromotions(authToken: null, forceRefresh: true),
+      // Shares sync with promotions - cache prevents duplicate call
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'promotions_group',
+        () => ds.syncPromotions(authToken: null, forceRefresh: true),
+      ),
     );
 
     _tables['promotion_class_list'] = DataSyncTable(
@@ -455,7 +496,11 @@ class DataSyncConfig {
       dependsOn: ['promotions'],
       cascadeTo: [],
       groupId: 'promotions',
-      syncFunction: () => ds.syncPromotions(authToken: null, forceRefresh: true),
+      // Shares sync with promotions - cache prevents duplicate call
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'promotions_group',
+        () => ds.syncPromotions(authToken: null, forceRefresh: true),
+      ),
     );
 
     // =========================================================================
@@ -489,7 +534,11 @@ class DataSyncConfig {
       dependsOn: [],
       cascadeTo: ['business_region_reports', 'akb_by_categories', 'visit_plans'],
       groupId: 'analytics',
-      syncFunction: () => ds.syncReportByPeriod(userCode: userCode, dateStart: startOfMonth, dateEnd: endOfMonth, forceRefresh: true),
+      // Uses cache to prevent duplicate API calls for report tables
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'reports_group',
+        () => ds.syncReportByPeriod(userCode: userCode, dateStart: startOfMonth, dateEnd: endOfMonth, forceRefresh: true),
+      ),
     );
 
     _tables['business_region_reports'] = DataSyncTable(
@@ -502,7 +551,11 @@ class DataSyncConfig {
       dependsOn: ['main_reports'],
       cascadeTo: [],
       groupId: 'analytics',
-      syncFunction: () => ds.syncReportByPeriod(userCode: userCode, dateStart: startOfMonth, dateEnd: endOfMonth, forceRefresh: true),
+      // Shares sync with main_reports - cache prevents duplicate call
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'reports_group',
+        () => ds.syncReportByPeriod(userCode: userCode, dateStart: startOfMonth, dateEnd: endOfMonth, forceRefresh: true),
+      ),
     );
 
     _tables['akb_by_categories'] = DataSyncTable(
@@ -515,7 +568,11 @@ class DataSyncConfig {
       dependsOn: ['main_reports'],
       cascadeTo: [],
       groupId: 'analytics',
-      syncFunction: () => ds.syncReportByPeriod(userCode: userCode, dateStart: startOfMonth, dateEnd: endOfMonth, forceRefresh: true),
+      // Shares sync with main_reports - cache prevents duplicate call
+      syncFunction: () => SyncFunctionCache.instance.runOnce(
+        'reports_group',
+        () => ds.syncReportByPeriod(userCode: userCode, dateStart: startOfMonth, dateEnd: endOfMonth, forceRefresh: true),
+      ),
     );
 
     _tables['visit_plans'] = DataSyncTable(

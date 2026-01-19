@@ -1942,6 +1942,8 @@
   "syncStepSyncingProductBalances": "Loading product balances...",
   "syncStepSyncingClientContracts": "Loading client contracts...",
   "syncStepUpdatingClientContractStatus": "Updating client contract statuses...",
+  "syncStepSyncingContractTypes": "Loading contract types...",
+  "syncStepSyncingDistrictContracting": "Loading districts...",
   "syncStepSyncingOrderStatuses": "Loading order statuses...",
   "syncStepSyncingOrders": "Loading orders...",
   "syncStepSyncingSalesReqPermissions": "Loading agent permissions...",
@@ -2934,5 +2936,88 @@
   "geminiApiKeyLabel": "Gemini API Key",
   "geminiApiKeyHint": "Enter your Gemini API key (starts with AIza)",
   "geminiApiKeyDescription": "Used for document scanning and AI features",
-  "geminiApiKeyInvalid": "Invalid API key format. Key should start with 'AIza'"
+  "geminiApiKeyInvalid": "Invalid API key format. Key should start with 'AIza'",
+
+  "syncOptimizedMode": "Optimized sync mode",
+  "syncParallelProgress": "Syncing {count} tables in parallel...",
+  "@syncParallelProgress": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncDeltaMode": "Incremental update",
+  "syncSkippedUnchanged": "Skipped {count} unchanged records",
+  "@syncSkippedUnchanged": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncInserted": "{count} new records added",
+  "@syncInserted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncUpdated": "{count} records updated",
+  "@syncUpdated": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncDeleted": "{count} records removed",
+  "@syncDeleted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncLevelProgress": "Level {level}/{total}: {tables}",
+  "@syncLevelProgress": {
+    "placeholders": {
+      "level": {"type": "int"},
+      "total": {"type": "int"},
+      "tables": {"type": "String"}
+    }
+  },
+  "syncCacheSaved": "Saved {count} duplicate API calls",
+  "@syncCacheSaved": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncOptimizedComplete": "Optimized sync completed in {seconds}s",
+  "@syncOptimizedComplete": {
+    "placeholders": {
+      "seconds": {"type": "String"}
+    }
+  },
+  "serverConnectionFailed": "Server connection failed",
+  "tryingAlternativeServer": "Trying alternative server...",
+  "connectedToAlternativeServer": "Connected to alternative server",
+  "allServersUnavailable": "All servers are unavailable",
+  "checkInternetConnection": "Please check your internet connection",
+  "usingFallbackServer": "Using backup server",
+  "primaryServerRestored": "Primary server connection restored",
+  "serverSwitchedTo": "Server switched to: {url}",
+  "@serverSwitchedTo": {
+    "placeholders": {
+      "url": {"type": "String"}
+    }
+  },
+  "retryingPrimaryServer": "Retrying primary server...",
+  "connectionAttempt": "Connection attempt {current}/{total}",
+  "@connectionAttempt": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "serverUrlInfo": "Server: {name} ({type})",
+  "@serverUrlInfo": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "type": {"type": "String"}
+    }
+  },
+  "primaryServer": "Primary",
+  "backupServer": "Backup"
 }

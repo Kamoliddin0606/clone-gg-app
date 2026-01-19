@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/network/url_failover_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
@@ -69,6 +70,14 @@ Future<void> setupServiceLocator() async {
   }
   await sl.isReady<ServerService>();
 
+  // 2.5) UrlFailoverService - URL failover mechanism for automatic switching
+  // between domain and IP-based URLs when connection issues occur
+  if (!sl.isRegistered<UrlFailoverService>()) {
+    sl.registerLazySingleton<UrlFailoverService>(() => UrlFailoverService(
+      serverService: sl<ServerService>(),
+    ));
+  }
+
   // 3) Pastdagilar endi xavfsiz
   if (!sl.isRegistered<DatabaseHelper>()) {
     sl.registerLazySingleton(() => DatabaseHelper());
@@ -77,9 +86,10 @@ Future<void> setupServiceLocator() async {
     sl.registerLazySingleton(() => Dio());
   }
   if (!sl.isRegistered<ApiService>()) {
-    sl.registerLazySingleton(() => ApiService());
-    // Agar ApiService serverga bog‘lanishi kerak bo‘lsa:
-    // sl.registerLazySingleton(() => ApiService.fromServer(sl<ServerService>()));
+    sl.registerLazySingleton(() => ApiService(
+      serverService: sl<ServerService>(),
+      failoverService: sl<UrlFailoverService>(),
+    ));
   }
   if (!sl.isRegistered<SoapApiService>()) {
     sl.registerLazySingleton<SoapApiService>(() => SoapApiService(sl<Dio>(), sl<ServerService>()));

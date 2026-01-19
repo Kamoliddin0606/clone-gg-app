@@ -6643,6 +6643,18 @@ abstract class AppLocalizations {
   /// **'Updating client contract statuses...'**
   String get syncStepUpdatingClientContractStatus;
 
+  /// No description provided for @syncStepSyncingContractTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading contract types...'**
+  String get syncStepSyncingContractTypes;
+
+  /// No description provided for @syncStepSyncingDistrictContracting.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading districts...'**
+  String get syncStepSyncingDistrictContracting;
+
   /// No description provided for @syncStepSyncingOrderStatuses.
   ///
   /// In en, this message translates to:
@@ -9336,6 +9348,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid API key format. Key should start with \'AIza\''**
   String get geminiApiKeyInvalid;
+
+  /// No description provided for @syncOptimizedMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimized sync mode'**
+  String get syncOptimizedMode;
+
+  /// No description provided for @syncParallelProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing {count} tables in parallel...'**
+  String syncParallelProgress(int count);
+
+  /// No description provided for @syncDeltaMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Incremental update'**
+  String get syncDeltaMode;
+
+  /// No description provided for @syncSkippedUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped {count} unchanged records'**
+  String syncSkippedUnchanged(int count);
+
+  /// No description provided for @syncInserted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} new records added'**
+  String syncInserted(int count);
+
+  /// No description provided for @syncUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} records updated'**
+  String syncUpdated(int count);
+
+  /// No description provided for @syncDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} records removed'**
+  String syncDeleted(int count);
+
+  /// No description provided for @syncLevelProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {level}/{total}: {tables}'**
+  String syncLevelProgress(int level, int total, String tables);
+
+  /// No description provided for @syncCacheSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {count} duplicate API calls'**
+  String syncCacheSaved(int count);
+
+  /// No description provided for @syncOptimizedComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimized sync completed in {seconds}s'**
+  String syncOptimizedComplete(String seconds);
+
+  /// No description provided for @serverConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Server connection failed'**
+  String get serverConnectionFailed;
+
+  /// No description provided for @tryingAlternativeServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Trying alternative server...'**
+  String get tryingAlternativeServer;
+
+  /// No description provided for @connectedToAlternativeServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to alternative server'**
+  String get connectedToAlternativeServer;
+
+  /// No description provided for @allServersUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'All servers are unavailable'**
+  String get allServersUnavailable;
+
+  /// No description provided for @checkInternetConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your internet connection'**
+  String get checkInternetConnection;
+
+  /// No description provided for @usingFallbackServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Using backup server'**
+  String get usingFallbackServer;
+
+  /// No description provided for @primaryServerRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary server connection restored'**
+  String get primaryServerRestored;
+
+  /// No description provided for @serverSwitchedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Server switched to: {url}'**
+  String serverSwitchedTo(String url);
+
+  /// No description provided for @retryingPrimaryServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrying primary server...'**
+  String get retryingPrimaryServer;
+
+  /// No description provided for @connectionAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection attempt {current}/{total}'**
+  String connectionAttempt(int current, int total);
+
+  /// No description provided for @serverUrlInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Server: {name} ({type})'**
+  String serverUrlInfo(String name, String type);
+
+  /// No description provided for @primaryServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary'**
+  String get primaryServer;
+
+  /// No description provided for @backupServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get backupServer;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

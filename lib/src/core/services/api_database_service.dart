@@ -54,7 +54,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 30, // Incremented to version 30 for price_type fields in order_detail_products
+      version: 31, // Incremented to version 31 for map_tokens table
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -105,6 +105,17 @@ class ApiDatabaseService {
     // Create indexes for user_organizations table
     await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_code ON user_organizations(code)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_user_code ON user_organizations(user_code)');
+
+    // Ensure map_tokens table exists for fresh installations
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS map_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        yandex_token TEXT,
+        google_token TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -1103,6 +1114,25 @@ class ApiDatabaseService {
         print('ApiDatabaseService: Added price_type fields to order_detail_products (version 30)');
       }
     }
+
+    // =========================================================================
+    // Version 31: Add map_tokens table for storing Yandex/Google map API tokens
+    // =========================================================================
+    if (oldVersion < 31) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS map_tokens (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          yandex_token TEXT,
+          google_token TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Created map_tokens table (version 31)');
+      }
+    }
   }
 
   Future<void> _createTables(Database db) async {
@@ -2079,6 +2109,131 @@ class ApiDatabaseService {
     await batch.commit(noResult: true);
   }
 
+  /// Save clients with delta sync - only insert/update/delete changed records.
+  /// 
+  /// Performance: O(n) where n = changed records, not total records.
+  /// Memory: O(m) where m = existing codes set size.
+  /// 
+  /// Returns statistics about the sync operation.
+  Future<Map<String, int>> saveClientsIncremental(List<TradingPoint> clients) async {
+    final stopwatch = Stopwatch()..start();
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Get existing client codes - O(n) query, minimal memory
+    final existingRows = await db.rawQuery('SELECT code FROM clients');
+    final existingCodes = existingRows.map((r) => r['code'] as String).toSet();
+
+    // Deduplicate incoming clients
+    final uniqueClients = <String, TradingPoint>{};
+    for (final client in clients) {
+      uniqueClients[client.id] = client;
+    }
+    final newCodes = uniqueClients.keys.toSet();
+
+    // Calculate deltas
+    final toDelete = existingCodes.difference(newCodes);
+    final toInsert = newCodes.difference(existingCodes);
+    final toUpdate = newCodes.intersection(existingCodes);
+
+    int insertedCount = 0;
+    int updatedCount = 0;
+    int deletedCount = 0;
+
+    // Use batch for efficiency
+    final batch = db.batch();
+
+    // Delete removed clients
+    if (toDelete.isNotEmpty) {
+      for (final code in toDelete) {
+        batch.delete('clients', where: 'code = ?', whereArgs: [code]);
+        deletedCount++;
+      }
+    }
+
+    // Insert new clients
+    for (final code in toInsert) {
+      final client = uniqueClients[code]!;
+      batch.insert('clients', {
+        'code': client.id,
+        'name': client.name,
+        'address': client.address,
+        'phone': client.phone,
+        'inn': client.inn,
+        'contact_person': client.contactPerson,
+        'latitude': client.latitude,
+        'longitude': client.longitude,
+        'region': client.region,
+        'district': client.district,
+        'status': client.status,
+        'last_visit_date': client.lastVisitDate,
+        'has_orders': client.hasOrders ? 1 : 0,
+        'has_contracts': client.hasContracts ? 1 : 0,
+        'is_visited': client.isVisited ? 1 : 0,
+        'has_contract': client.hasContract ? 1 : 0,
+        'owner_name': client.ownerName,
+        'signboard': client.signboard,
+        'reference_point': client.referencePoint,
+        'responsible_person': client.responsiblePerson,
+        'responsible_person_phone': client.responsiblePersonPhone,
+        'trade_point_type': client.tradePointType,
+        'credit_limit': client.creditLimit,
+        'accumulated_credit': client.accumulatedCredit,
+        'code_region': client.codeRegion,
+        'created_at': now,
+        'updated_at': now,
+      });
+      insertedCount++;
+    }
+
+    // Update existing clients (only update if needed)
+    for (final code in toUpdate) {
+      final client = uniqueClients[code]!;
+      batch.update('clients', {
+        'name': client.name,
+        'address': client.address,
+        'phone': client.phone,
+        'inn': client.inn,
+        'contact_person': client.contactPerson,
+        'latitude': client.latitude,
+        'longitude': client.longitude,
+        'region': client.region,
+        'district': client.district,
+        'status': client.status,
+        'last_visit_date': client.lastVisitDate,
+        'has_orders': client.hasOrders ? 1 : 0,
+        'has_contracts': client.hasContracts ? 1 : 0,
+        'is_visited': client.isVisited ? 1 : 0,
+        'has_contract': client.hasContract ? 1 : 0,
+        'owner_name': client.ownerName,
+        'signboard': client.signboard,
+        'reference_point': client.referencePoint,
+        'responsible_person': client.responsiblePerson,
+        'responsible_person_phone': client.responsiblePersonPhone,
+        'trade_point_type': client.tradePointType,
+        'credit_limit': client.creditLimit,
+        'accumulated_credit': client.accumulatedCredit,
+        'code_region': client.codeRegion,
+        'updated_at': now,
+      }, where: 'code = ?', whereArgs: [code]);
+      updatedCount++;
+    }
+
+    await batch.commit(noResult: true);
+    stopwatch.stop();
+
+    if (kDebugMode) {
+      print('[DeltaSync] Clients: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)');
+    }
+
+    return {
+      'inserted': insertedCount,
+      'updated': updatedCount,
+      'deleted': deletedCount,
+      'duration_ms': stopwatch.elapsedMilliseconds,
+    };
+  }
+
   Future<List<TradingPoint>> getClients() async {
     final db = await database;
     final result = await db.query('clients', orderBy: 'name ASC');
@@ -2189,6 +2344,113 @@ class ApiDatabaseService {
 
     // Execute batch operation
     await batch.commit(noResult: true);
+  }
+
+  /// Save products with delta sync - only insert/update/delete changed records.
+  /// 
+  /// Performance: O(n) where n = changed records, not total records.
+  /// Memory: O(m) where m = existing codes set size.
+  /// 
+  /// Returns statistics about the sync operation.
+  Future<Map<String, int>> saveProductsIncremental(List<ProductData> products) async {
+    final stopwatch = Stopwatch()..start();
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Get existing product codes - O(n) query, minimal memory
+    final existingRows = await db.rawQuery('SELECT code FROM products');
+    final existingCodes = existingRows.map((r) => r['code'] as String).toSet();
+
+    // Deduplicate incoming products
+    final uniqueProducts = <String, ProductData>{};
+    for (final product in products) {
+      uniqueProducts[product.code] = product;
+    }
+    final newCodes = uniqueProducts.keys.toSet();
+
+    // Calculate deltas
+    final toDelete = existingCodes.difference(newCodes);
+    final toInsert = newCodes.difference(existingCodes);
+    final toUpdate = newCodes.intersection(existingCodes);
+
+    int insertedCount = 0;
+    int updatedCount = 0;
+    int deletedCount = 0;
+
+    // Use batch for efficiency
+    final batch = db.batch();
+
+    // Delete removed products
+    if (toDelete.isNotEmpty) {
+      for (final code in toDelete) {
+        batch.delete('products', where: 'code = ?', whereArgs: [code]);
+        deletedCount++;
+      }
+    }
+
+    // Insert new products
+    for (final code in toInsert) {
+      final product = uniqueProducts[code]!;
+      batch.insert('products', {
+        'code': product.code,
+        'name': product.name,
+        'unit': product.unit,
+        'quantity': product.quantity,
+        'reserved': product.reserved,
+        'available': product.available,
+        'category': product.category,
+        'barcode': product.barcode,
+        'have': product.have,
+        'warehouse_code': product.warehouseCode,
+        'weight': product.weight,
+        'capacity': product.capacity,
+        'vendor_code': product.vendorCode,
+        'product_brand': product.productBrand,
+        'product_series': product.productSeries,
+        'code_project': product.codeProject,
+        'created_at': now,
+        'updated_at': now,
+      });
+      insertedCount++;
+    }
+
+    // Update existing products
+    for (final code in toUpdate) {
+      final product = uniqueProducts[code]!;
+      batch.update('products', {
+        'name': product.name,
+        'unit': product.unit,
+        'quantity': product.quantity,
+        'reserved': product.reserved,
+        'available': product.available,
+        'category': product.category,
+        'barcode': product.barcode,
+        'have': product.have,
+        'warehouse_code': product.warehouseCode,
+        'weight': product.weight,
+        'capacity': product.capacity,
+        'vendor_code': product.vendorCode,
+        'product_brand': product.productBrand,
+        'product_series': product.productSeries,
+        'code_project': product.codeProject,
+        'updated_at': now,
+      }, where: 'code = ?', whereArgs: [code]);
+      updatedCount++;
+    }
+
+    await batch.commit(noResult: true);
+    stopwatch.stop();
+
+    if (kDebugMode) {
+      print('[DeltaSync] Products: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)');
+    }
+
+    return {
+      'inserted': insertedCount,
+      'updated': updatedCount,
+      'deleted': deletedCount,
+      'duration_ms': stopwatch.elapsedMilliseconds,
+    };
   }
 
   Future<List<ProductData>> getProducts() async {
@@ -2420,6 +2682,99 @@ class ApiDatabaseService {
 
     // Execute batch operation
     await batch.commit(noResult: true);
+  }
+
+  /// Save product prices with delta sync - only insert/update/delete changed records.
+  /// 
+  /// Performance: O(n) where n = changed records, not total records.
+  /// Memory: O(m) where m = existing keys set size.
+  /// 
+  /// Returns statistics about the sync operation.
+  Future<Map<String, int>> saveProductPricesIncremental(List<ProductPrice> productPrices) async {
+    final stopwatch = Stopwatch()..start();
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Get existing product price keys - O(n) query, minimal memory
+    final existingRows = await db.rawQuery('SELECT product_code, price_type_code FROM product_prices');
+    final existingKeys = existingRows.map((r) => '${r['product_code']}_${r['price_type_code']}').toSet();
+
+    // Deduplicate incoming product prices
+    final uniquePrices = <String, ProductPrice>{};
+    for (final price in productPrices) {
+      final key = '${price.productCode}_${price.priceTypeCode}';
+      uniquePrices[key] = price;
+    }
+    final newKeys = uniquePrices.keys.toSet();
+
+    // Calculate deltas
+    final toDelete = existingKeys.difference(newKeys);
+    final toInsert = newKeys.difference(existingKeys);
+    final toUpdate = newKeys.intersection(existingKeys);
+
+    int insertedCount = 0;
+    int updatedCount = 0;
+    int deletedCount = 0;
+
+    // Use batch for efficiency
+    final batch = db.batch();
+
+    // Delete removed prices
+    for (final key in toDelete) {
+      final parts = key.split('_');
+      if (parts.length >= 2) {
+        final productCode = parts[0];
+        final priceTypeCode = parts.sublist(1).join('_');
+        batch.delete('product_prices', 
+          where: 'product_code = ? AND price_type_code = ?', 
+          whereArgs: [productCode, priceTypeCode]);
+        deletedCount++;
+      }
+    }
+
+    // Insert new prices
+    for (final key in toInsert) {
+      final price = uniquePrices[key]!;
+      batch.insert('product_prices', {
+        'product_code': price.productCode,
+        'price_type_code': price.priceTypeCode,
+        'price': price.price,
+        'currency': price.currency,
+        'valid_from': price.validFrom,
+        'valid_to': price.validTo,
+        'created_at': now,
+        'updated_at': now,
+      });
+      insertedCount++;
+    }
+
+    // Update existing prices
+    for (final key in toUpdate) {
+      final price = uniquePrices[key]!;
+      batch.update('product_prices', {
+        'price': price.price,
+        'currency': price.currency,
+        'valid_from': price.validFrom,
+        'valid_to': price.validTo,
+        'updated_at': now,
+      }, where: 'product_code = ? AND price_type_code = ?', 
+         whereArgs: [price.productCode, price.priceTypeCode]);
+      updatedCount++;
+    }
+
+    await batch.commit(noResult: true);
+    stopwatch.stop();
+
+    if (kDebugMode) {
+      print('[DeltaSync] ProductPrices: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)');
+    }
+
+    return {
+      'inserted': insertedCount,
+      'updated': updatedCount,
+      'deleted': deletedCount,
+      'duration_ms': stopwatch.elapsedMilliseconds,
+    };
   }
 
   Future<List<ProductPrice>> getProductPrices({String? priceTypeCode}) async {
@@ -3233,6 +3588,111 @@ class ApiDatabaseService {
 
     // Execute batch operation
     await batch.commit(noResult: true);
+  }
+
+  /// Save product balances with delta sync - only insert/update/delete changed records.
+  /// 
+  /// Performance: O(n) where n = changed records, not total records.
+  /// Memory: O(m) where m = existing keys set size.
+  /// 
+  /// Returns statistics about the sync operation.
+  Future<Map<String, int>> saveProductBalancesIncremental(List<ProductBalance> balances) async {
+    final stopwatch = Stopwatch()..start();
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // Get existing balance keys - O(n) query, minimal memory
+    final existingRows = await db.rawQuery('SELECT code_sklad, code_product FROM product_balances');
+    final existingKeys = existingRows.map((r) => '${r['code_sklad']}_${r['code_product']}').toSet();
+
+    // Deduplicate incoming balances
+    final uniqueBalances = <String, ProductBalance>{};
+    for (final balance in balances) {
+      final key = '${balance.codeSklad}_${balance.codeProduct}';
+      uniqueBalances[key] = balance;
+    }
+    final newKeys = uniqueBalances.keys.toSet();
+
+    // Calculate deltas
+    final toDelete = existingKeys.difference(newKeys);
+    final toInsert = newKeys.difference(existingKeys);
+    final toUpdate = newKeys.intersection(existingKeys);
+
+    int insertedCount = 0;
+    int updatedCount = 0;
+    int deletedCount = 0;
+
+    // Use batch for efficiency
+    final batch = db.batch();
+
+    // Delete removed balances
+    for (final key in toDelete) {
+      final parts = key.split('_');
+      if (parts.length >= 2) {
+        final codeSklad = parts[0];
+        final codeProduct = parts.sublist(1).join('_');
+        batch.delete('product_balances', 
+          where: 'code_sklad = ? AND code_product = ?', 
+          whereArgs: [codeSklad, codeProduct]);
+        deletedCount++;
+      }
+    }
+
+    // Insert new balances
+    for (final key in toInsert) {
+      final balance = uniqueBalances[key]!;
+      batch.insert('product_balances', {
+        'code_sklad': balance.codeSklad,
+        'code_product': balance.codeProduct,
+        'name_product': balance.nameProduct,
+        'have': balance.have,
+        'reserved': balance.reserved,
+        'available': balance.available,
+        'weight': balance.weight,
+        'capacity': balance.capacity,
+        'code_project': balance.codeProject,
+        'vendor_code': balance.vendorCode,
+        'product_brand': balance.productBrand,
+        'product_series': balance.productSeries,
+        'created_at': now,
+        'updated_at': now,
+      });
+      insertedCount++;
+    }
+
+    // Update existing balances
+    for (final key in toUpdate) {
+      final balance = uniqueBalances[key]!;
+      batch.update('product_balances', {
+        'name_product': balance.nameProduct,
+        'have': balance.have,
+        'reserved': balance.reserved,
+        'available': balance.available,
+        'weight': balance.weight,
+        'capacity': balance.capacity,
+        'code_project': balance.codeProject,
+        'vendor_code': balance.vendorCode,
+        'product_brand': balance.productBrand,
+        'product_series': balance.productSeries,
+        'updated_at': now,
+      }, where: 'code_sklad = ? AND code_product = ?', 
+         whereArgs: [balance.codeSklad, balance.codeProduct]);
+      updatedCount++;
+    }
+
+    await batch.commit(noResult: true);
+    stopwatch.stop();
+
+    if (kDebugMode) {
+      print('[DeltaSync] ProductBalances: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)');
+    }
+
+    return {
+      'inserted': insertedCount,
+      'updated': updatedCount,
+      'deleted': deletedCount,
+      'duration_ms': stopwatch.elapsedMilliseconds,
+    };
   }
 
   Future<List<ProductBalance>> getProductBalances({
@@ -6140,7 +6600,8 @@ class ApiDatabaseService {
         uniqueOrganizations[organization.code] = organization;
       }
 
-      // Add all inserts to batch
+      // Add all inserts to batch with REPLACE conflict algorithm
+      // This handles cases where the same organization code exists for different users
       for (final organization in uniqueOrganizations.values) {
         batch.insert('user_organizations', {
           'code': organization.code,
@@ -6148,7 +6609,7 @@ class ApiDatabaseService {
           'user_code': userCode,
           'created_at': now,
           'updated_at': now,
-        });
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 
       // Execute batch operation
@@ -7100,6 +7561,18 @@ class ApiDatabaseService {
           'CREATE INDEX idx_client_images_status_code ON client_images(status_code)',
           'CREATE INDEX idx_client_images_created_at_server ON client_images(created_at_server)',
         ],
+      },
+      'map_tokens': {
+        'sql': '''
+          CREATE TABLE map_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            yandex_token TEXT,
+            google_token TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': <String>[],
       },
     };
   }

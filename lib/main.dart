@@ -155,6 +155,28 @@ void main() async {
     // Xato bo'lsa ham ilova ishlashni davom ettiradi
   }
 
+  // =========================================================================
+  // Background Data Sync - avto sinxronizatsiya
+  // =========================================================================
+  // Agar foydalanuvchi avval background sync'ni yoqgan bo'lsa,
+  // ilova qayta ishga tushganda WorkManager task'ni qayta ro'yxatga olish
+  try {
+    final prefs = sl<SharedPreferencesService>();
+    if (prefs.isBgSyncEnabled()) {
+      final dataSyncService = sl<DataSyncService>();
+      await dataSyncService.toggleBackgroundSync(true);
+      if (kDebugMode) {
+        final intervalMinutes = prefs.getBgSyncCustomMinutes() ?? (prefs.getBgSyncInterval() * 60);
+        debugPrint('BackgroundDataSync: Re-registered on app startup');
+        debugPrint('BackgroundDataSync: Interval: $intervalMinutes minutes');
+      }
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('BackgroundDataSync: Error re-registering: $e');
+    }
+  }
+
   runApp(const App());
 }
 

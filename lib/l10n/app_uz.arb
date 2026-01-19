@@ -1957,6 +1957,8 @@
   "syncStepSyncingProductBalances": "Tovar qoldiqlari yuklanmoqda...",
   "syncStepSyncingClientContracts": "Mijoz shartnomalari yuklanmoqda...",
   "syncStepUpdatingClientContractStatus": "Shartnoma statuslari yangilanmoqda...",
+  "syncStepSyncingContractTypes": "Shartnoma turlari yuklanmoqda...",
+  "syncStepSyncingDistrictContracting": "Tumanlar yuklanmoqda...",
   "syncStepSyncingOrderStatuses": "Buyurtma statuslari yuklanmoqda...",
   "syncStepSyncingOrders": "Buyurtmalar yuklanmoqda...",
   "syncStepSyncingSalesReqPermissions": "Agent ruxsatlari yuklanmoqda...",
@@ -2810,5 +2812,88 @@
   "geminiApiKeyLabel": "Gemini API kaliti",
   "geminiApiKeyHint": "Gemini API kalitingizni kiriting (AIza bilan boshlanadi)",
   "geminiApiKeyDescription": "Hujjat skanerlash va AI funksiyalari uchun ishlatiladi",
-  "geminiApiKeyInvalid": "Kalit formati noto'g'ri. Kalit 'AIza' bilan boshlanishi kerak"
+  "geminiApiKeyInvalid": "Kalit formati noto'g'ri. Kalit 'AIza' bilan boshlanishi kerak",
+
+  "syncOptimizedMode": "Optimallashtirilgan sinxronizatsiya rejimi",
+  "syncParallelProgress": "{count} ta jadval parallel sinxronlanmoqda...",
+  "@syncParallelProgress": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncDeltaMode": "Qo'shimcha yangilanish",
+  "syncSkippedUnchanged": "{count} ta o'zgarishmagan yozuv o'tkazib yuborildi",
+  "@syncSkippedUnchanged": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncInserted": "{count} ta yangi yozuv qo'shildi",
+  "@syncInserted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncUpdated": "{count} ta yozuv yangilandi",
+  "@syncUpdated": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncDeleted": "{count} ta yozuv o'chirildi",
+  "@syncDeleted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncLevelProgress": "Daraja {level}/{total}: {tables}",
+  "@syncLevelProgress": {
+    "placeholders": {
+      "level": {"type": "int"},
+      "total": {"type": "int"},
+      "tables": {"type": "String"}
+    }
+  },
+  "syncCacheSaved": "{count} ta takroriy API so'rov tejaldi",
+  "@syncCacheSaved": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncOptimizedComplete": "Optimallashtirilgan sinxronizatsiya {seconds}s da yakunlandi",
+  "@syncOptimizedComplete": {
+    "placeholders": {
+      "seconds": {"type": "String"}
+    }
+  },
+  "serverConnectionFailed": "Serverga ulanishda xatolik",
+  "tryingAlternativeServer": "Muqobil serverga ulanish...",
+  "connectedToAlternativeServer": "Muqobil serverga ulandi",
+  "allServersUnavailable": "Barcha serverlar mavjud emas",
+  "checkInternetConnection": "Internet ulanishini tekshiring",
+  "usingFallbackServer": "Zaxira server ishlatilmoqda",
+  "primaryServerRestored": "Asosiy serverga ulanish tiklandi",
+  "serverSwitchedTo": "Server o'zgartirildi: {url}",
+  "@serverSwitchedTo": {
+    "placeholders": {
+      "url": {"type": "String"}
+    }
+  },
+  "retryingPrimaryServer": "Asosiy serverga qayta ulanish...",
+  "connectionAttempt": "Ulanish urinishi {current}/{total}",
+  "@connectionAttempt": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "serverUrlInfo": "Server: {name} ({type})",
+  "@serverUrlInfo": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "type": {"type": "String"}
+    }
+  },
+  "primaryServer": "Asosiy",
+  "backupServer": "Zaxira"
 }

@@ -289,7 +289,6 @@ class _TradingPointsPageState extends State<TradingPointsPage>
 
   // Image service for client images
   ClientImagesService? _clientImagesService;
-  bool _isFetchingClientImages = false;
 
   // PageStorage bucket for state persistence
   late final PageStorageBucket _storageBucket;
@@ -1473,138 +1472,23 @@ class _TradingPointsPageState extends State<TradingPointsPage>
     );
   }
 
-  /// Handle double-tap on client card to fetch images and open details
-  /// This method fetches all client images from DB, if not available fetches from server,
-  /// saves to DB, loads to cache, and then opens the client details with swipeable images
-  Future<void> _handleDoubleTapFetchImages(
-    TradingPointWithPermissions tp,
-  ) async {
-    try {
-      if (_isFetchingClientImages) {
-        return;
-      }
-      _isFetchingClientImages = true;
-      if (kDebugMode) {
-        print(
-          'TradingPointsPage: Handling double-tap for client ${tp.tradingPoint.name} (${tp.tradingPoint.id})',
-        );
-      }
-
-      // Show loading indicator
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)?.loadingClientImages ??
-                  'Loading client images...',
-            ),
-          ),
-        );
-      }
-
-      // Ensure ClientImagesService is initialized
-      ClientImagesService? clientImagesService = _clientImagesService;
-      if (clientImagesService == null) {
+  /// Handle double-tap on client card - opens details immediately (non-blocking)
+  /// Images are loaded asynchronously inside the details sheet with shimmer placeholder
+  void _handleDoubleTapFetchImages(TradingPointWithPermissions tp) {
+    // Ensure ClientImagesService is initialized for later use in details sheet
+    if (_clientImagesService == null) {
+      try {
+        if (sl.isRegistered<ClientImagesService>()) {
+          _clientImagesService = sl<ClientImagesService>();
+        }
+      } catch (e) {
         if (kDebugMode) {
-          print(
-            'TradingPointsPage: ClientImagesService not initialized, trying to initialize...',
-          );
-        }
-
-        // Try to initialize the service
-        try {
-          if (!sl.isRegistered<ClientImagesService>()) {
-            throw Exception('ClientImagesService is not registered');
-          }
-          clientImagesService = sl<ClientImagesService>();
-          _clientImagesService = clientImagesService; // Cache it for future use
-
-          if (kDebugMode) {
-            print(
-              'TradingPointsPage: ClientImagesService initialized successfully on demand',
-            );
-          }
-        } catch (e) {
-          if (kDebugMode) {
-            print(
-              'TradingPointsPage: Failed to initialize ClientImagesService: $e',
-            );
-          }
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  AppLocalizations.of(context)?.imageServiceNotAvailable ??
-                      'Image service not available',
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          return;
+          print('TradingPointsPage: ClientImagesService init warning: $e');
         }
       }
-
-      // Check if client images are already in database
-      final cachedImages = await clientImagesService.getClientImages(
-        tp.tradingPoint.id,
-      );
-
-      if (cachedImages.isEmpty) {
-        if (kDebugMode) {
-          print(
-            'TradingPointsPage: No cached images found, fetching from server',
-          );
-        }
-
-        // Fetch images from server and save to database
-        await clientImagesService.fetchAndSaveClientImages(tp.tradingPoint.id);
-
-        if (kDebugMode) {
-          print('TradingPointsPage: Images fetched and saved to database');
-        }
-      } else {
-        if (kDebugMode) {
-          print(
-            'TradingPointsPage: Using cached images (${cachedImages.length} images)',
-          );
-        }
-      }
-
-      // Images are now in database/cache, open details
-      _openTpDetails(tp);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)?.clientImagesLoaded ??
-                  'Client images loaded',
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('TradingPointsPage: Error fetching client images: $e');
-      }
-
-      // Still open details even if image fetch fails
-      _openTpDetails(tp);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${AppLocalizations.of(context)?.imageLoadError ?? "Error loading images"}: $e',
-            ),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } finally {
-      _isFetchingClientImages = false;
     }
+    // Open details immediately - no blocking, no waiting
+    _openTpDetails(tp);
   }
 
   @override
@@ -3869,50 +3753,86 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   MapProvider _defaultMapProvider = MapProvider.google;
   List<ClientImage> _clientImages = [];
   bool _isLoadingImages = true;
+  bool _isFetchingFromServer = false;
 
   @override
   void initState() {
     super.initState();
     _checkLocationPermission();
     _loadDefaultMapProvider();
-    _loadClientImages();
+    _loadClientImagesWithLazyFetch();
   }
 
-  /// Load client images from database
-  Future<void> _loadClientImages() async {
+  /// Load client images from database with lazy server fetch
+  /// 1. First check local DB (fast)
+  /// 2. If empty, fetch from server in background (lazy)
+  /// 3. Update UI when ready
+  Future<void> _loadClientImagesWithLazyFetch() async {
     try {
-      // Use the passed ClientImagesService instance
       final clientImagesService = widget.clientImagesService;
       if (clientImagesService == null) {
         if (kDebugMode) {
           print('ClientImagesService not available in ClientDetailsPage');
         }
-        if (mounted) {
-          setState(() {
-            _isLoadingImages = false;
-          });
-        }
+        if (mounted) setState(() => _isLoadingImages = false);
         return;
       }
 
-      final images = await clientImagesService.getClientImages(
+      // Step 1: Quick DB lookup (non-blocking for UI)
+      final cachedImages = await clientImagesService.getClientImages(
         widget.tradingPoint.id,
       );
+
       if (mounted) {
         setState(() {
-          _clientImages = images;
+          _clientImages = cachedImages;
           _isLoadingImages = false;
         });
+      }
+
+      // Step 2: If no cached images, lazy fetch from server
+      if (cachedImages.isEmpty && !_isFetchingFromServer) {
+        _lazyFetchFromServer(clientImagesService);
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error loading client images: $e');
       }
-      if (mounted) {
-        setState(() {
-          _isLoadingImages = false;
-        });
+      if (mounted) setState(() => _isLoadingImages = false);
+    }
+  }
+
+  /// Lazy fetch images from server in background
+  /// Does not block UI - updates when complete
+  Future<void> _lazyFetchFromServer(ClientImagesService service) async {
+    if (_isFetchingFromServer) return;
+    
+    setState(() => _isFetchingFromServer = true);
+    
+    try {
+      if (kDebugMode) {
+        print('ClientDetailsPage: Lazy fetching images from server for ${widget.tradingPoint.id}');
       }
+
+      await service.fetchAndSaveClientImages(widget.tradingPoint.id);
+
+      // Reload from DB after server fetch
+      if (mounted) {
+        final freshImages = await service.getClientImages(widget.tradingPoint.id);
+        setState(() {
+          _clientImages = freshImages;
+          _isFetchingFromServer = false;
+        });
+        
+        if (kDebugMode) {
+          print('ClientDetailsPage: Loaded ${freshImages.length} images from server');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ClientDetailsPage: Server fetch failed (non-critical): $e');
+      }
+      if (mounted) setState(() => _isFetchingFromServer = false);
     }
   }
 
@@ -4531,13 +4451,251 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
           ),
           const SizedBox(height: 12),
 
-          // Client Images Gallery (if available)
-          if (_clientImages.isNotEmpty)
-            _ClientImagesGallerySection(
-              clientImages: _clientImages,
-              tradingPoint: widget.tradingPoint,
-            ),
+          // Client Images Gallery with shimmer loading
+          _buildClientImagesSection(theme, cs, l10n),
         ],
+      ),
+    );
+  }
+
+  /// Build client images section with shimmer loading state
+  Widget _buildClientImagesSection(ThemeData theme, ColorScheme cs, AppLocalizations l10n) {
+    // Show shimmer while loading
+    if (_isLoadingImages) {
+      return _ClientImagesShimmer();
+    }
+
+    // Show images if available
+    if (_clientImages.isNotEmpty) {
+      return _ClientImagesGallerySection(
+        clientImages: _clientImages,
+        tradingPoint: widget.tradingPoint,
+        isFetchingFromServer: _isFetchingFromServer,
+      );
+    }
+
+    // Show fetching indicator when loading from server
+    if (_isFetchingFromServer) {
+      return _ClientImagesFetchingIndicator();
+    }
+
+    // No images available - show empty state with option to fetch
+    return _ClientImagesEmptyState(
+      onFetch: widget.clientImagesService != null
+          ? () => _lazyFetchFromServer(widget.clientImagesService!)
+          : null,
+    );
+  }
+}
+
+/// Shimmer placeholder for client images while loading
+class _ClientImagesShimmer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.photo_library_outlined, size: 22, color: cs.primary),
+                const SizedBox(width: 12),
+                Text(
+                  AppLocalizations.of(context)?.manageClientImages ?? 'Client Images',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: 3,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
+                    child: _ShimmerBox(width: 100, height: 100, borderRadius: 8),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shimmer box widget for loading animation
+class _ShimmerBox extends StatefulWidget {
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  const _ShimmerBox({
+    required this.width,
+    required this.height,
+    this.borderRadius = 4,
+  });
+
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat();
+    _animation = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            gradient: LinearGradient(
+              begin: Alignment(_animation.value - 1, 0),
+              end: Alignment(_animation.value, 0),
+              colors: isDark
+                  ? [
+                      cs.surfaceContainerHighest,
+                      cs.surfaceContainerHighest.withOpacity(0.5),
+                      cs.surfaceContainerHighest,
+                    ]
+                  : [
+                      cs.surfaceContainerHighest,
+                      cs.surface,
+                      cs.surfaceContainerHighest,
+                    ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Indicator shown when fetching images from server
+class _ClientImagesFetchingIndicator extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: cs.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              AppLocalizations.of(context)?.loadingClientImages ?? 'Loading images...',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Empty state when no images available
+class _ClientImagesEmptyState extends StatelessWidget {
+  final VoidCallback? onFetch;
+
+  const _ClientImagesEmptyState({this.onFetch});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(
+              Icons.photo_library_outlined,
+              size: 22,
+              color: cs.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)?.noImagesAvailable ?? 'No images available',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            ),
+            if (onFetch != null)
+              TextButton.icon(
+                onPressed: onFetch,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(AppLocalizations.of(context)?.refresh ?? 'Refresh'),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -6235,10 +6393,12 @@ class _CompactMapCard extends StatelessWidget {
 class _ClientImagesGallerySection extends StatelessWidget {
   final List<ClientImage> clientImages;
   final TradingPoint tradingPoint;
+  final bool isFetchingFromServer;
 
   const _ClientImagesGallerySection({
     required this.clientImages,
     required this.tradingPoint,
+    this.isFetchingFromServer = false,
   });
 
   void _openFullScreenViewer(BuildContext context, int initialIndex) {

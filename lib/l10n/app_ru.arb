@@ -1948,6 +1948,8 @@
   "syncStepSyncingProductBalances": "Загрузка остатков товаров...",
   "syncStepSyncingClientContracts": "Загрузка контрактов клиентов...",
   "syncStepUpdatingClientContractStatus": "Обновление статусов контрактов...",
+  "syncStepSyncingContractTypes": "Загрузка типов договоров...",
+  "syncStepSyncingDistrictContracting": "Загрузка районов...",
   "syncStepSyncingOrderStatuses": "Загрузка статусов заказов...",
   "syncStepSyncingOrders": "Загрузка заказов...",
   "syncStepSyncingSalesReqPermissions": "Загрузка разрешений агента...",
@@ -2889,5 +2891,87 @@
   "geminiApiKeyLabel": "Ключ API Gemini",
   "geminiApiKeyHint": "Введите ваш ключ API Gemini (начинается с AIza)",
   "geminiApiKeyDescription": "Используется для сканирования документов и AI функций",
-  "geminiApiKeyInvalid": "Неверный формат ключа. Ключ должен начинаться с 'AIza'"
+  "geminiApiKeyInvalid": "Неверный формат ключа. Ключ должен начинаться с 'AIza'",
+  "syncOptimizedMode": "Оптимизированный режим синхронизации",
+  "syncParallelProgress": "Параллельная синхронизация {count} таблиц...",
+  "@syncParallelProgress": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncDeltaMode": "Инкрементное обновление",
+  "syncSkippedUnchanged": "Пропущено {count} неизменённых записей",
+  "@syncSkippedUnchanged": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncInserted": "Добавлено {count} новых записей",
+  "@syncInserted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncUpdated": "Обновлено {count} записей",
+  "@syncUpdated": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncDeleted": "Удалено {count} записей",
+  "@syncDeleted": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncLevelProgress": "Уровень {level}/{total}: {tables}",
+  "@syncLevelProgress": {
+    "placeholders": {
+      "level": {"type": "int"},
+      "total": {"type": "int"},
+      "tables": {"type": "String"}
+    }
+  },
+  "syncCacheSaved": "Сэкономлено {count} дублирующих API-запросов",
+  "@syncCacheSaved": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "syncOptimizedComplete": "Оптимизированная синхронизация завершена за {seconds}с",
+  "@syncOptimizedComplete": {
+    "placeholders": {
+      "seconds": {"type": "String"}
+    }
+  },
+  "serverConnectionFailed": "Ошибка подключения к серверу",
+  "tryingAlternativeServer": "Попытка подключения к альтернативному серверу...",
+  "connectedToAlternativeServer": "Подключено к альтернативному серверу",
+  "allServersUnavailable": "Все серверы недоступны",
+  "checkInternetConnection": "Пожалуйста, проверьте подключение к интернету",
+  "usingFallbackServer": "Используется резервный сервер",
+  "primaryServerRestored": "Подключение к основному серверу восстановлено",
+  "serverSwitchedTo": "Сервер переключен на: {url}",
+  "@serverSwitchedTo": {
+    "placeholders": {
+      "url": {"type": "String"}
+    }
+  },
+  "retryingPrimaryServer": "Повторная попытка подключения к основному серверу...",
+  "connectionAttempt": "Попытка подключения {current}/{total}",
+  "@connectionAttempt": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "serverUrlInfo": "Сервер: {name} ({type})",
+  "@serverUrlInfo": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "type": {"type": "String"}
+    }
+  },
+  "primaryServer": "Основной",
+  "backupServer": "Резервный"
 }

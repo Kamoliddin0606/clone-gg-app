@@ -3490,6 +3490,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncStepUpdatingClientContractStatus => 'Updating client contract statuses...';
 
   @override
+  String get syncStepSyncingContractTypes => 'Loading contract types...';
+
+  @override
+  String get syncStepSyncingDistrictContracting => 'Loading districts...';
+
+  @override
   String get syncStepSyncingOrderStatuses => 'Loading order statuses...';
 
   @override
@@ -4897,4 +4903,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get geminiApiKeyInvalid => 'Invalid API key format. Key should start with \'AIza\'';
+
+  @override
+  String get syncOptimizedMode => 'Optimized sync mode';
+
+  @override
+  String syncParallelProgress(int count) {
+    return 'Syncing $count tables in parallel...';
+  }
+
+  @override
+  String get syncDeltaMode => 'Incremental update';
+
+  @override
+  String syncSkippedUnchanged(int count) {
+    return 'Skipped $count unchanged records';
+  }
+
+  @override
+  String syncInserted(int count) {
+    return '$count new records added';
+  }
+
+  @override
+  String syncUpdated(int count) {
+    return '$count records updated';
+  }
+
+  @override
+  String syncDeleted(int count) {
+    return '$count records removed';
+  }
+
+  @override
+  String syncLevelProgress(int level, int total, String tables) {
+    return 'Level $level/$total: $tables';
+  }
+
+  @override
+  String syncCacheSaved(int count) {
+    return 'Saved $count duplicate API calls';
+  }
+
+  @override
+  String syncOptimizedComplete(String seconds) {
+    return 'Optimized sync completed in ${seconds}s';
+  }
+
+  @override
+  String get serverConnectionFailed => 'Server connection failed';
+
+  @override
+  String get tryingAlternativeServer => 'Trying alternative server...';
+
+  @override
+  String get connectedToAlternativeServer => 'Connected to alternative server';
+
+  @override
+  String get allServersUnavailable => 'All servers are unavailable';
+
+  @override
+  String get checkInternetConnection => 'Please check your internet connection';
+
+  @override
+  String get usingFallbackServer => 'Using backup server';
+
+  @override
+  String get primaryServerRestored => 'Primary server connection restored';
+
+  @override
+  String serverSwitchedTo(String url) {
+    return 'Server switched to: $url';
+  }
+
+  @override
+  String get retryingPrimaryServer => 'Retrying primary server...';
+
+  @override
+  String connectionAttempt(int current, int total) {
+    return 'Connection attempt $current/$total';
+  }
+
+  @override
+  String serverUrlInfo(String name, String type) {
+    return 'Server: $name ($type)';
+  }
+
+  @override
+  String get primaryServer => 'Primary';
+
+  @override
+  String get backupServer => 'Backup';
 }

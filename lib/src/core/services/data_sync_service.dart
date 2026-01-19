@@ -17,6 +17,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_ty
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart';
@@ -114,10 +115,18 @@ class DataSyncService {
       final customMinutes = _prefs.getBgSyncCustomMinutes();
       
       Duration frequency;
-      if (customMinutes != null && customMinutes >= 60) {
+      if (customMinutes != null && customMinutes >= 15) {
+        // Use custom minutes (minimum 15 minutes - Android WorkManager limit)
         frequency = Duration(minutes: customMinutes);
-      } else {
+      } else if (intervalHours > 0) {
         frequency = Duration(hours: intervalHours);
+      } else {
+        // Default to 6 hours
+        frequency = Duration(hours: 6);
+      }
+      
+      if (kDebugMode) {
+        print('Background sync: Registering with frequency: ${frequency.inMinutes} minutes');
       }
       
       await registerBackgroundSync(frequency: frequency);
@@ -453,7 +462,15 @@ class DataSyncService {
       yield SyncStep.updatingClientContractStatus;
       await updateClientsHasContractField();
 
-      // Step 13: Sync order statuses
+      // Step 13: Sync contract types (for contract creation)
+      yield SyncStep.syncingContractTypes;
+      await _syncContractTypes();
+
+      // Step 14: Sync district contracting (for contract creation)
+      yield SyncStep.syncingDistrictContracting;
+      await _syncDistrictContracting(userCode, codeProject);
+
+      // Step 15: Sync order statuses
       yield SyncStep.syncingOrderStatuses;
       await _syncOrderStatuses(userCode);
 
@@ -603,7 +620,13 @@ class DataSyncService {
     if (kDebugMode) {
       print('Mijozlar ma\'lumotlari yuklandi: ${clients.length} ta mijoz');
     }
-    await _dbService.saveClients(clients);
+    
+    // Use incremental sync for better performance
+    final stats = await _dbService.saveClientsIncremental(clients);
+    if (kDebugMode) {
+      print('[DeltaSync] Clients: +${stats['inserted']}, ~${stats['updated']}, -${stats['deleted']} (${stats['duration_ms']}ms)');
+    }
+    
     return clients;
   }
 
@@ -631,7 +654,13 @@ class DataSyncService {
     if (kDebugMode) {
       print('Mahsulotlar ma\'lumotlari yuklandi: ${products.length} ta mahsulot');
     }
-    await _dbService.saveProducts(products);
+    
+    // Use incremental sync for better performance
+    final stats = await _dbService.saveProductsIncremental(products);
+    if (kDebugMode) {
+      print('[DeltaSync] Products: +${stats['inserted']}, ~${stats['updated']}, -${stats['deleted']} (${stats['duration_ms']}ms)');
+    }
+    
     return products;
   }
 
@@ -680,7 +709,13 @@ class DataSyncService {
     if (kDebugMode) {
       print('Mahsulot narxlari ma\'lumotlari yuklandi: ${productPrices.length} ta narx');
     }
-    await _dbService.saveProductPrices(productPrices);
+    
+    // Use incremental sync for better performance
+    final stats = await _dbService.saveProductPricesIncremental(productPrices);
+    if (kDebugMode) {
+      print('[DeltaSync] ProductPrices: +${stats['inserted']}, ~${stats['updated']}, -${stats['deleted']} (${stats['duration_ms']}ms)');
+    }
+    
     return productPrices;
   }
 
@@ -799,7 +834,12 @@ class DataSyncService {
       print('Mahsulot balanslari ma\'lumotlari yuklandi: ${balances.length} ta balans, ${brands.length} ta brand, ${series.length} ta seriya');
     }
 
-    await _dbService.saveProductBalances(balances);
+    // Use incremental sync for better performance
+    final stats = await _dbService.saveProductBalancesIncremental(balances);
+    if (kDebugMode) {
+      print('[DeltaSync] ProductBalances: +${stats['inserted']}, ~${stats['updated']}, -${stats['deleted']} (${stats['duration_ms']}ms)');
+    }
+    
     await _dbService.saveProductBrands(brands);
     await _dbService.saveProductSeries(series);
 
@@ -1016,6 +1056,33 @@ class DataSyncService {
     }
     await _dbService.saveClientContracts(contracts);
     return contracts;
+  }
+
+  /// Syncs contract types from server to local database.
+  /// 
+  /// Contract types are required for creating new contracts.
+  /// This data is relatively static and changes infrequently.
+  /// 
+  /// Returns: List of contract types synced
+  Future<List<ContractType>> _syncContractTypes() async {
+    try {
+      final contractTypes = await _apiService.getTypeOfContract();
+      if (kDebugMode) {
+        print('DataSyncService: Contract types loaded: ${contractTypes.length} types');
+      }
+      
+      if (contractTypes.isNotEmpty) {
+        await _dbService.saveContractTypes(contractTypes);
+      }
+      
+      return contractTypes;
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: Error syncing contract types: $e');
+      }
+      // Return empty list on error - non-critical data
+      return [];
+    }
   }
 
   /// Update clients has_contract field based on active contracts

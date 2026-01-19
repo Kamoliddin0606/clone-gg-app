@@ -3490,6 +3490,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncStepUpdatingClientContractStatus => 'Обновление статусов контрактов...';
 
   @override
+  String get syncStepSyncingContractTypes => 'Загрузка типов договоров...';
+
+  @override
+  String get syncStepSyncingDistrictContracting => 'Загрузка районов...';
+
+  @override
   String get syncStepSyncingOrderStatuses => 'Загрузка статусов заказов...';
 
   @override
@@ -4897,4 +4903,95 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get geminiApiKeyInvalid => 'Неверный формат ключа. Ключ должен начинаться с \'AIza\'';
+
+  @override
+  String get syncOptimizedMode => 'Оптимизированный режим синхронизации';
+
+  @override
+  String syncParallelProgress(int count) {
+    return 'Параллельная синхронизация $count таблиц...';
+  }
+
+  @override
+  String get syncDeltaMode => 'Инкрементное обновление';
+
+  @override
+  String syncSkippedUnchanged(int count) {
+    return 'Пропущено $count неизменённых записей';
+  }
+
+  @override
+  String syncInserted(int count) {
+    return 'Добавлено $count новых записей';
+  }
+
+  @override
+  String syncUpdated(int count) {
+    return 'Обновлено $count записей';
+  }
+
+  @override
+  String syncDeleted(int count) {
+    return 'Удалено $count записей';
+  }
+
+  @override
+  String syncLevelProgress(int level, int total, String tables) {
+    return 'Уровень $level/$total: $tables';
+  }
+
+  @override
+  String syncCacheSaved(int count) {
+    return 'Сэкономлено $count дублирующих API-запросов';
+  }
+
+  @override
+  String syncOptimizedComplete(String seconds) {
+    return 'Оптимизированная синхронизация завершена за $secondsс';
+  }
+
+  @override
+  String get serverConnectionFailed => 'Ошибка подключения к серверу';
+
+  @override
+  String get tryingAlternativeServer => 'Попытка подключения к альтернативному серверу...';
+
+  @override
+  String get connectedToAlternativeServer => 'Подключено к альтернативному серверу';
+
+  @override
+  String get allServersUnavailable => 'Все серверы недоступны';
+
+  @override
+  String get checkInternetConnection => 'Пожалуйста, проверьте подключение к интернету';
+
+  @override
+  String get usingFallbackServer => 'Используется резервный сервер';
+
+  @override
+  String get primaryServerRestored => 'Подключение к основному серверу восстановлено';
+
+  @override
+  String serverSwitchedTo(String url) {
+    return 'Сервер переключен на: $url';
+  }
+
+  @override
+  String get retryingPrimaryServer => 'Повторная попытка подключения к основному серверу...';
+
+  @override
+  String connectionAttempt(int current, int total) {
+    return 'Попытка подключения $current/$total';
+  }
+
+  @override
+  String serverUrlInfo(String name, String type) {
+    return 'Сервер: $name ($type)';
+  }
+
+  @override
+  String get primaryServer => 'Основной';
+
+  @override
+  String get backupServer => 'Резервный';
 }

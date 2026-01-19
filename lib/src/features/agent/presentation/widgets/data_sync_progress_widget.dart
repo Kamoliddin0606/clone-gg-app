@@ -15,6 +15,8 @@ enum SyncStep {
   syncingProductBalances(Icons.balance),
   syncingClientContracts(Icons.description),
   updatingClientContractStatus(Icons.update),
+  syncingContractTypes(Icons.category),
+  syncingDistrictContracting(Icons.location_city),
   syncingOrderStatuses(Icons.list_alt),
   syncingOrders(Icons.shopping_cart),
   syncingSalesReqPermissions(Icons.security),
@@ -57,6 +59,10 @@ enum SyncStep {
         return l10n?.syncStepSyncingClientContracts ?? 'Loading client contracts...';
       case SyncStep.updatingClientContractStatus:
         return l10n?.syncStepUpdatingClientContractStatus ?? 'Updating client contract statuses...';
+      case SyncStep.syncingContractTypes:
+        return l10n?.syncStepSyncingContractTypes ?? 'Loading contract types...';
+      case SyncStep.syncingDistrictContracting:
+        return l10n?.syncStepSyncingDistrictContracting ?? 'Loading districts...';
       case SyncStep.syncingOrderStatuses:
         return l10n?.syncStepSyncingOrderStatuses ?? 'Loading order statuses...';
       case SyncStep.syncingOrders:

@@ -46,10 +46,10 @@ class _DataSyncTabState extends State<DataSyncTab>
 
   // Background Sync Settings state
   bool _bgSyncEnabled = false;
-  int _bgSyncInterval = 6;
-  int? _bgSyncCustomMinutes;
+  int _selectedMinutes = 360; // Default 6 hours in minutes
   final TextEditingController _customMinutesController =
       TextEditingController();
+  bool _isCustomMinutes = false;
 
   // Client Balance Cache state
   int _balanceCacheCount = 0;
@@ -132,11 +132,19 @@ class _DataSyncTabState extends State<DataSyncTab>
     // Load background sync settings
     final prefs = sl<SharedPreferencesService>();
     _bgSyncEnabled = prefs.isBgSyncEnabled();
-    _bgSyncInterval = prefs.getBgSyncInterval();
-    _bgSyncCustomMinutes = prefs.getBgSyncCustomMinutes();
-
-    if (_bgSyncCustomMinutes != null) {
-      _customMinutesController.text = _bgSyncCustomMinutes.toString();
+    
+    // Load saved interval in minutes
+    final customMinutes = prefs.getBgSyncCustomMinutes();
+    final intervalHours = prefs.getBgSyncInterval();
+    
+    if (customMinutes != null && customMinutes >= 15) {
+      _selectedMinutes = customMinutes;
+      _isCustomMinutes = !_predefinedMinutes.contains(customMinutes);
+      if (_isCustomMinutes) {
+        _customMinutesController.text = customMinutes.toString();
+      }
+    } else {
+      _selectedMinutes = intervalHours * 60;
     }
 
     // Load balance cache count
@@ -248,34 +256,56 @@ class _DataSyncTabState extends State<DataSyncTab>
     );
   }
 
-  /// Update sync interval
-  Future<void> _onIntervalChanged(int? value) async {
-    if (value == null) return;
+  // Predefined interval options in minutes
+  static const List<int> _predefinedMinutes = [15, 30, 60, 120, 240, 360, 720, 1440];
+  
+  String _formatMinutes(int minutes) {
+    if (minutes < 60) {
+      return '$minutes daqiqa';
+    } else if (minutes < 1440) {
+      final hours = minutes ~/ 60;
+      final remainingMinutes = minutes % 60;
+      if (remainingMinutes == 0) {
+        return '$hours soat';
+      }
+      return '$hours soat $remainingMinutes daqiqa';
+    } else {
+      final days = minutes ~/ 1440;
+      return '$days kun';
+    }
+  }
+
+  /// Update sync interval from predefined options
+  Future<void> _onIntervalChanged(int? minutes) async {
+    if (minutes == null) return;
 
     final prefs = sl<SharedPreferencesService>();
-    await prefs.setBgSyncInterval(value);
+    await prefs.setBgSyncCustomMinutes(minutes);
+    await prefs.setBgSyncInterval(minutes ~/ 60); // Also save in hours for backward compatibility
 
     if (_bgSyncEnabled) {
       final syncService = sl<DataSyncService>();
-      await syncService.toggleBackgroundSync(
-        true,
-      ); // Re-register with new interval
+      await syncService.toggleBackgroundSync(true);
     }
 
     setState(() {
-      _bgSyncInterval = value;
+      _selectedMinutes = minutes;
+      _isCustomMinutes = false;
+      _customMinutesController.clear();
     });
+    
+    _showIntervalUpdatedSnackbar(minutes);
   }
 
-  /// Update custom minutes
+  /// Update custom minutes from text field
   Future<void> _onCustomMinutesSubmitted(String value) async {
     final minutes = int.tryParse(value);
-    if (minutes != null && minutes < 60) {
+    if (minutes == null || minutes < 15) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             AppLocalizations.of(context)?.minimumIntervalIs60 ??
-                'Minimum interval is 60 minutes',
+                'Minimum interval 15 daqiqa',
           ),
           backgroundColor: Colors.orange,
         ),
@@ -285,15 +315,31 @@ class _DataSyncTabState extends State<DataSyncTab>
 
     final prefs = sl<SharedPreferencesService>();
     await prefs.setBgSyncCustomMinutes(minutes);
+    await prefs.setBgSyncInterval(minutes ~/ 60);
 
     if (_bgSyncEnabled) {
       final syncService = sl<DataSyncService>();
-      await syncService.toggleBackgroundSync(true); // Re-register
+      await syncService.toggleBackgroundSync(true);
     }
 
     setState(() {
-      _bgSyncCustomMinutes = minutes;
+      _selectedMinutes = minutes;
+      _isCustomMinutes = true;
     });
+    
+    _showIntervalUpdatedSnackbar(minutes);
+  }
+  
+  void _showIntervalUpdatedSnackbar(int minutes) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Sinxronizatsiya intervali: ${_formatMinutes(minutes)}',
+        ),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   /// Sync all data
@@ -707,7 +753,7 @@ class _DataSyncTabState extends State<DataSyncTab>
               Expanded(
                 child: Text(
                   AppLocalizations.of(context)?.backgroundAutoSync ??
-                      'Background Auto-Sync',
+                      'Avto Sinxronizatsiya',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -719,115 +765,144 @@ class _DataSyncTabState extends State<DataSyncTab>
           SizedBox(height: 8),
           Text(
             AppLocalizations.of(context)?.backgroundSyncDescription ??
-                'Keep your data fresh even when the app is closed. Requires internet connection.',
+                'Ilova yopiq bo\'lganda ham ma\'lumotlarni yangilab turadi. Internet talab qilinadi.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),
           if (_bgSyncEnabled) ...[
             Divider(height: 32),
+            
+            // Current interval display
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.schedule, color: colorScheme.primary, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Joriy interval: ',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  Text(
+                    _formatMinutes(_selectedMinutes),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context)?.syncInterval ?? 'Sync Interval',
+              'Taklif qilingan intervallar',
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 12),
-            DropdownButtonFormField<int>(
-              value: _bgSyncInterval,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: colorScheme.surface,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              items: [
-                DropdownMenuItem(
-                  value: 1,
-                  child: Text(
-                    AppLocalizations.of(context)?.every1Hour ?? 'Every 1 hour',
+            
+            // Predefined interval chips
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _predefinedMinutes.map((minutes) {
+                final isSelected = _selectedMinutes == minutes && !_isCustomMinutes;
+                return ChoiceChip(
+                  label: Text(_formatMinutes(minutes)),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      _onIntervalChanged(minutes);
+                    }
+                  },
+                  selectedColor: colorScheme.primaryContainer,
+                  backgroundColor: colorScheme.surface,
+                  labelStyle: TextStyle(
+                    color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
-                ),
-                DropdownMenuItem(
-                  value: 4,
-                  child: Text(
-                    AppLocalizations.of(context)?.every4Hours ??
-                        'Every 4 hours',
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 6,
-                  child: Text(
-                    AppLocalizations.of(context)?.every6Hours ??
-                        'Every 6 hours',
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 12,
-                  child: Text(
-                    AppLocalizations.of(context)?.every12Hours ??
-                        'Every 12 hours',
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 24,
-                  child: Text(
-                    AppLocalizations.of(context)?.daily24h ?? 'Daily (24h)',
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 168,
-                  child: Text(
-                    AppLocalizations.of(context)?.weekly1Week ??
-                        'Weekly (1 week)',
-                  ),
-                ),
-              ],
-              onChanged: _onIntervalChanged,
+                );
+              }).toList(),
             ),
-            SizedBox(height: 16),
+            
+            SizedBox(height: 20),
             Text(
-              AppLocalizations.of(context)?.customIntervalMinutes ??
-                  'Custom Interval (Minutes)',
+              'Yoki qo\'lda kiriting (daqiqa)',
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 8),
-            TextField(
-              controller: _customMinutesController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                hintText:
-                    AppLocalizations.of(context)?.minimum60Minutes ??
-                    'Minimum 60 minutes',
-                filled: true,
-                fillColor: colorScheme.surface,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _customMinutesController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'Masalan: 45, 90, 180...',
+                      filled: true,
+                      fillColor: colorScheme.surface,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      prefixIcon: Icon(Icons.edit, size: 20),
+                      suffixText: 'daq',
+                    ),
+                    onSubmitted: _onCustomMinutesSubmitted,
+                  ),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_customMinutesController.text.isNotEmpty) {
+                      _onCustomMinutesSubmitted(_customMinutesController.text);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
+                  ),
+                  child: Text('Saqlash'),
                 ),
-                suffixText: 'min',
-              ),
-              onSubmitted: _onCustomMinutesSubmitted,
+              ],
             ),
-            SizedBox(height: 4),
+            SizedBox(height: 8),
             Text(
-              AppLocalizations.of(context)?.customIntervalNote ??
-                  '* Custom interval takes priority if set to 60 or more',
+              '* Minimum 15 daqiqa (Android WorkManager cheklovi)',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary,
+                color: colorScheme.onSurfaceVariant,
                 fontStyle: FontStyle.italic,
               ),
             ),
+            if (_isCustomMinutes) ...[
+              SizedBox(height: 8),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Maxsus interval ishlatilmoqda: ${_formatMinutes(_selectedMinutes)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.green[700],
+                  ),
+                ),
+              ),
+            ],
           ],
         ],
       ),

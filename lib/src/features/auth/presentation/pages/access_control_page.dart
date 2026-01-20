@@ -129,17 +129,14 @@ class _AccessControlPageState extends State<AccessControlPage>
   }
   
   /// Retry access check
+  /// Resets navigation stack to restart the app flow
   void _retryCheck() {
-    setState(() {
-      _checkResult = null;
-      _isChecking = true;
-      _currentStatus = '';
-    });
-    
-    _animationController.reset();
-    _animationController.forward();
-    
-    _performAccessCheck();
+    // Reset navigation stack to access control page
+    // This ensures a clean restart of the access verification flow
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRouter.accessControlRoute,
+      (route) => false,
+    );
   }
   
   /// Exit app
@@ -506,7 +503,13 @@ class _AccessControlPageState extends State<AccessControlPage>
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: () {
-                // TODO: Implement contact support functionality
+                // Data is already cleared by TimeVerificationService.blockUserAndClearData()
+                // Reset navigation stack to access control page to restart the app flow
+                // This will re-run the access check and navigate to login
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  AppRouter.accessControlRoute,
+                  (route) => false,
+                );
               },
               icon: const Icon(Icons.support_agent),
               label: Text(l10n.accessContactSupport),

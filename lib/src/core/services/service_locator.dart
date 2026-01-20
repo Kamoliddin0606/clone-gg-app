@@ -27,7 +27,6 @@ import 'package:gloria_marketing_flutter/src/core/services/startup_access_servic
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/access_validity_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/gemini_time_verification_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
@@ -276,11 +275,8 @@ Future<void> setupServiceLocator() async {
   }
 
   // Access Control Services - App access validity and time verification
-  if (!sl.isRegistered<AccessValidityService>()) {
-    sl.registerLazySingleton<AccessValidityService>(() => AccessValidityService(
-      prefsService: sl<SharedPreferencesService>(),
-    ));
-  }
+  // Note: AccessValidityService is deprecated and replaced by TimeVerificationService
+  // which fetches timeLimit from server instead of using hardcoded date
   if (!sl.isRegistered<ConnectivityMonitoringService>()) {
     sl.registerLazySingleton<ConnectivityMonitoringService>(() => ConnectivityMonitoringService());
   }
@@ -315,11 +311,9 @@ Future<void> setupServiceLocator() async {
   }
   if (!sl.isRegistered<AppAccessControlService>()) {
     sl.registerLazySingleton<AppAccessControlService>(() => AppAccessControlService(
-      validityService: sl<AccessValidityService>(),
+      timeVerificationService: sl<TimeVerificationService>(),
       connectivityService: sl<ConnectivityMonitoringService>(),
-      soapApiService: sl<SoapApiService>(),
       prefsService: sl<SharedPreferencesService>(),
-      databaseHelper: sl<DatabaseHelper>(),
     ));
   }
 

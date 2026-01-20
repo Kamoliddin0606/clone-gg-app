@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
-import 'package:gloria_marketing_flutter/src/core/services/access_validity_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/time_verification_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
+import 'package:gloria_marketing_flutter/src/features/time_verification/domain/entities/time_verification_result.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 
 /// Main orchestrator service for app access control
@@ -22,11 +21,9 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 /// 4. Monitor internet restoration and auto-verify
 /// 5. Revoke access and cleanup data if expired
 class AppAccessControlService {
-  final AccessValidityService _validityService;
+  final TimeVerificationService _timeVerificationService;
   final ConnectivityMonitoringService _connectivityService;
-  final SoapApiService _soapApiService;
   final SharedPreferencesService _prefsService;
-  final DatabaseHelper _databaseHelper;
   
   // Stream subscription for connectivity changes
   StreamSubscription<bool>? _connectivitySubscription;
@@ -42,16 +39,12 @@ class AppAccessControlService {
   bool _isInitialized = false;
   
   AppAccessControlService({
-    required AccessValidityService validityService,
+    required TimeVerificationService timeVerificationService,
     required ConnectivityMonitoringService connectivityService,
-    required SoapApiService soapApiService,
     required SharedPreferencesService prefsService,
-    required DatabaseHelper databaseHelper,
-  }) : _validityService = validityService,
+  }) : _timeVerificationService = timeVerificationService,
        _connectivityService = connectivityService,
-       _soapApiService = soapApiService,
-       _prefsService = prefsService,
-       _databaseHelper = databaseHelper;
+       _prefsService = prefsService;
   
   /// Initialize the access control service
   /// 
@@ -111,35 +104,34 @@ class AppAccessControlService {
     }
     
     try {
-      // Verify real time with server SOAP API
-      final verifiedTime = await _soapApiService.getServerTime();
+      // Verify time limit with TimeVerificationService
+      final result = await _timeVerificationService.verifyTimeLimit();
       
-      // Save verified time
-      await _validityService.saveLastVerifiedRealTime(verifiedTime);
+      if (kDebugMode) {
+        debugPrint('[AppAccessControlService] Time verification result: ${result.status}');
+      }
       
-      // Check if access is still valid
-      if (!_validityService.isAccessValid(verifiedTime)) {
+      // Check if access should be blocked
+      if (result.shouldBlock) {
         if (kDebugMode) {
           debugPrint('[AppAccessControlService] Access expired - revoking access');
         }
         
-        // Revoke access and cleanup
-        await revokeAccessAndCleanup();
+        // Block user and cleanup data
+        await _timeVerificationService.blockUserAndClearData(
+          result.message ?? 'Access expired',
+        );
         
         // Notify UI to navigate to login
         _accessRevokedController.add(AccessCheckResult(
           isAccessGranted: false,
           reason: AccessDenialReason.expired,
-          message: 'Access period has expired',
-          verifiedTime: verifiedTime,
+          message: result.message ?? 'Access period has expired',
         ));
       } else {
         if (kDebugMode) {
           debugPrint('[AppAccessControlService] Access still valid');
         }
-        
-        // Update last access timestamp
-        await _validityService.saveLastAccessTimestamp(verifiedTime);
       }
     } catch (e) {
       if (kDebugMode) {
@@ -187,41 +179,42 @@ class AppAccessControlService {
         debugPrint('[AppAccessControlService] Checking access with internet');
       }
       
-      // Get verified real time from server SOAP API
-      final verifiedTime = await _soapApiService.getServerTime();
+      // Verify time limit with TimeVerificationService
+      final result = await _timeVerificationService.verifyTimeLimit();
       
-      // Save verified time
-      await _validityService.saveLastVerifiedRealTime(verifiedTime);
+      if (kDebugMode) {
+        debugPrint('[AppAccessControlService] Time verification result: ${result.status}');
+      }
       
-      // Check if access is valid
-      final isValid = _validityService.isAccessValid(verifiedTime);
-      
-      if (isValid) {
-        // Save last access timestamp
-        await _validityService.saveLastAccessTimestamp(verifiedTime);
-        
+      if (result.status == VerificationStatus.valid) {
         if (kDebugMode) {
-          debugPrint('[AppAccessControlService] Access granted - valid until ${_validityService.validityDate}');
+          debugPrint('[AppAccessControlService] Access granted');
         }
         
         return AccessCheckResult(
           isAccessGranted: true,
-          verifiedTime: verifiedTime,
-          daysRemaining: _validityService.getDaysRemaining(verifiedTime),
+          message: result.message,
         );
-      } else {
+      } else if (result.shouldBlock) {
         if (kDebugMode) {
-          debugPrint('[AppAccessControlService] Access denied - expired');
+          debugPrint('[AppAccessControlService] Access denied - ${result.status}');
         }
         
-        // Revoke access and cleanup
-        await revokeAccessAndCleanup();
+        // Block user and cleanup data
+        await _timeVerificationService.blockUserAndClearData(
+          result.message ?? 'Access expired',
+        );
         
         return AccessCheckResult(
           isAccessGranted: false,
           reason: AccessDenialReason.expired,
-          message: 'Access period has expired',
-          verifiedTime: verifiedTime,
+          message: result.message ?? 'Access period has expired',
+        );
+      } else {
+        // Network error or other issue - allow with warning
+        return AccessCheckResult(
+          isAccessGranted: true,
+          message: result.message ?? 'Verification pending',
         );
       }
     } catch (e) {
@@ -229,7 +222,7 @@ class AppAccessControlService {
         debugPrint('[AppAccessControlService] Error checking access with internet: $e');
       }
       
-      // Fallback to offline check if server time fails
+      // Fallback to offline check if verification fails
       return await _checkAccessWithoutInternet();
     }
   }
@@ -241,95 +234,44 @@ class AppAccessControlService {
         debugPrint('[AppAccessControlService] Checking access without internet');
       }
       
-      // Get device time
-      final deviceTime = DateTime.now();
+      // Verify time limit with TimeVerificationService (offline mode)
+      final result = await _timeVerificationService.verifyTimeLimit();
       
-      // Check for time manipulation
-      if (_validityService.isTimeManipulated()) {
-        if (kDebugMode) {
-          debugPrint('[AppAccessControlService] Time manipulation detected');
-        }
-        
-        return AccessCheckResult(
-          isAccessGranted: false,
-          reason: AccessDenialReason.timeManipulation,
-          message: 'Device time has been manipulated',
-        );
+      if (kDebugMode) {
+        debugPrint('[AppAccessControlService] Offline verification result: ${result.status}');
       }
       
-      // Get last access timestamp
-      final lastAccess = _validityService.getLastAccessTimestamp();
-      
-      if (lastAccess == null) {
-        // No previous access - check validity with device time for first-time offline access
+      if (result.status == VerificationStatus.valid) {
         if (kDebugMode) {
-          debugPrint('[AppAccessControlService] No previous access - checking with device time');
-        }
-        
-        // Allow first-time access if device time is before validity date
-        if (_validityService.isAccessValid(deviceTime)) {
-          await _validityService.saveLastAccessTimestamp(deviceTime);
-          
-          if (kDebugMode) {
-            debugPrint('[AppAccessControlService] First-time offline access granted');
-          }
-          
-          return AccessCheckResult(
-            isAccessGranted: true,
-            isOfflineMode: true,
-            daysRemaining: _validityService.getDaysRemaining(deviceTime),
-          );
-        }
-        
-        // Device time shows expired - deny access
-        return AccessCheckResult(
-          isAccessGranted: false,
-          reason: AccessDenialReason.expired,
-          message: 'Access period has expired',
-        );
-      }
-      
-      // Verify device time is after last access
-      if (deviceTime.isBefore(lastAccess)) {
-        if (kDebugMode) {
-          debugPrint('[AppAccessControlService] Device time is before last access');
-        }
-        
-        return AccessCheckResult(
-          isAccessGranted: false,
-          reason: AccessDenialReason.timeManipulation,
-          message: 'Device time inconsistency detected',
-        );
-      }
-      
-      // Check if access is still valid based on device time
-      final isValid = _validityService.isAccessValid(deviceTime);
-      
-      if (isValid) {
-        // Update last access timestamp
-        await _validityService.saveLastAccessTimestamp(deviceTime);
-        
-        if (kDebugMode) {
-          debugPrint('[AppAccessControlService] Access granted (offline mode)');
+          debugPrint('[AppAccessControlService] Offline access granted');
         }
         
         return AccessCheckResult(
           isAccessGranted: true,
           isOfflineMode: true,
-          daysRemaining: _validityService.getDaysRemaining(deviceTime),
+          message: result.message,
         );
-      } else {
+      } else if (result.status == VerificationStatus.noTimeLimit) {
+        // No time limit stored - first-time user must be online
         if (kDebugMode) {
-          debugPrint('[AppAccessControlService] Access denied - expired (offline mode)');
+          debugPrint('[AppAccessControlService] No time limit - internet required');
         }
         
-        // Revoke access and cleanup
-        await revokeAccessAndCleanup();
+        return AccessCheckResult(
+          isAccessGranted: false,
+          reason: AccessDenialReason.noInternet,
+          message: result.message ?? 'Internet connection required for first-time access',
+        );
+      } else {
+        // Expired or other blocking status
+        if (kDebugMode) {
+          debugPrint('[AppAccessControlService] Offline access denied - ${result.status}');
+        }
         
         return AccessCheckResult(
           isAccessGranted: false,
           reason: AccessDenialReason.expired,
-          message: 'Access period has expired',
+          message: result.message ?? 'Access expired',
         );
       }
     } catch (e) {
@@ -345,110 +287,34 @@ class AppAccessControlService {
     }
   }
   
-  /// Revoke access and cleanup all data
-  /// 
-  /// This method:
-  /// - Clears all local database data
-  /// - Clears all cached data
-  /// - Clears all SharedPreferences data
-  /// - Clears access timestamps
-  Future<void> revokeAccessAndCleanup() async {
-    try {
-      if (kDebugMode) {
-        debugPrint('[AppAccessControlService] Revoking access and cleaning up data');
-      }
-      
-      // Clear database
-      await _clearDatabase();
-      
-      // Clear SharedPreferences (except critical system data)
-      await _clearSharedPreferences();
-      
-      // Clear access data
-      await _validityService.clearAccessData();
-      
-      if (kDebugMode) {
-        debugPrint('[AppAccessControlService] Data cleanup completed');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[AppAccessControlService] Error during data cleanup: $e');
-      }
-      rethrow;
-    }
-  }
-  
-  /// Clear all database data
-  Future<void> _clearDatabase() async {
-    try {
-      final db = await _databaseHelper.database;
-      
-      // Get all table names
-      final tables = await db.rawQuery(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-      );
-      
-      // Delete all data from each table
-      for (final table in tables) {
-        final tableName = table['name'] as String;
-        await db.delete(tableName);
-        if (kDebugMode) {
-          debugPrint('[AppAccessControlService] Cleared table: $tableName');
-        }
-      }
-      
-      if (kDebugMode) {
-        debugPrint('[AppAccessControlService] Database cleared');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[AppAccessControlService] Error clearing database: $e');
-      }
-    }
-  }
-  
-  /// Clear SharedPreferences data
-  /// 
-  /// Preserves critical system settings like language preference
-  Future<void> _clearSharedPreferences() async {
-    try {
-      // Get current language setting to preserve it
-      final currentLanguage = _prefsService.preferences.getString('language');
-      
-      // Clear all preferences
-      await _prefsService.preferences.clear();
-      
-      // Restore language setting
-      if (currentLanguage != null) {
-        await _prefsService.preferences.setString('language', currentLanguage);
-      }
-      
-      if (kDebugMode) {
-        debugPrint('[AppAccessControlService] SharedPreferences cleared (language preserved)');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[AppAccessControlService] Error clearing SharedPreferences: $e');
-      }
-    }
-  }
-  
   /// Get access status information
-  AccessStatusInfo getAccessStatusInfo() {
-    final deviceTime = DateTime.now();
-    final lastAccess = _validityService.getLastAccessTimestamp();
-    final lastVerified = _validityService.getLastVerifiedRealTime();
-    final daysRemaining = _validityService.getDaysRemaining(deviceTime);
-    final isValid = _validityService.isAccessValid(deviceTime);
-    
-    return AccessStatusInfo(
-      validityDate: _validityService.validityDate,
-      daysRemaining: daysRemaining,
-      isValid: isValid,
-      lastAccessTimestamp: lastAccess,
-      lastVerifiedTime: lastVerified,
-      statusDescription: _validityService.getAccessStatusDescription(deviceTime),
-    );
+  Future<AccessStatusInfo?> getAccessStatusInfo() async {
+    try {
+      final timeLimit = _prefsService.getTimeLimit();
+      if (timeLimit == null) {
+        return null;
+      }
+      
+      final now = DateTime.now();
+      final daysRemaining = timeLimit.difference(now).inDays;
+      final isValid = now.isBefore(timeLimit);
+      
+      return AccessStatusInfo(
+        validityDate: timeLimit,
+        daysRemaining: daysRemaining,
+        isValid: isValid,
+        lastAccessTimestamp: null,
+        lastVerifiedTime: null,
+        statusDescription: isValid 
+            ? 'Access valid until ${timeLimit.toLocal()}'
+            : 'Access expired on ${timeLimit.toLocal()}',
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[AppAccessControlService] Error getting access status: $e');
+      }
+      return null;
+    }
   }
   
   /// Dispose of resources
@@ -492,6 +358,7 @@ enum AccessDenialReason {
   expired,
   timeManipulation,
   internetRequired,
+  noInternet,
   error,
 }
 

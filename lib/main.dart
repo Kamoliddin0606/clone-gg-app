@@ -307,11 +307,13 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> with WidgetsBindingObserver {
   final LocaleProvider _localeProvider = LocaleProvider();
+  StreamSubscription? _accessRevokedSubscription;
 
   @override
   void initState() {
     super.initState();
     _initializeLocale();
+    _setupAccessRevokedListener();
     // App lifecycle events'ni kuzatish uchun observer qo'shish
     WidgetsBinding.instance.addObserver(this);
   }
@@ -320,7 +322,55 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   void dispose() {
     // Observer'ni olib tashlash
     WidgetsBinding.instance.removeObserver(this);
+    _accessRevokedSubscription?.cancel();
     super.dispose();
+  }
+
+  /// Setup listener for access revocation events
+  /// Shows dialog and navigates to login when user access is revoked
+  void _setupAccessRevokedListener() {
+    try {
+      final accessControlService = sl<AppAccessControlService>();
+      _accessRevokedSubscription = accessControlService.accessRevokedStream.listen(
+        (result) {
+          if (kDebugMode) {
+            debugPrint('[App] Access revoked: ${result.message}');
+          }
+          
+          // Show dialog and navigate to login
+          _handleAccessRevoked(result);
+        },
+        onError: (error) {
+          if (kDebugMode) {
+            debugPrint('[App] Error in access revoked stream: $error');
+          }
+        },
+      );
+      
+      if (kDebugMode) {
+        debugPrint('[App] Access revoked listener setup complete');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[App] Error setting up access revoked listener: $e');
+      }
+    }
+  }
+
+  /// Handle access revoked event
+  /// Navigates to access control page which shows blocking UI
+  Future<void> _handleAccessRevoked(AccessCheckResult result) async {
+    if (kDebugMode) {
+      debugPrint('[App] Access revoked - navigating to access control page');
+      debugPrint('[App] Reason: ${result.reason}, Message: ${result.message}');
+    }
+
+    // Navigate to access control page which will show the blocking UI
+    // The access control page already handles expired access with proper UI
+    AppRouter.navigatorKey.currentState?.pushNamedAndRemoveUntil(
+      AppRouter.accessControlRoute,
+      (route) => false,
+    );
   }
 
   /// App lifecycle state o'zgarganda chaqiriladi

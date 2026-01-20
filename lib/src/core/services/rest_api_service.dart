@@ -54,7 +54,22 @@ class RestApiService {
         queryParameters: query.isEmpty ? null : query,
       );
 
+      if (kDebugMode) {
+        print('RestApiService: getClientImages queryParameters: ${query.isEmpty ? null : query}');
+      }
+
       final raw = response.data;
+      
+      // Debug: Print response data to terminal
+      if (kDebugMode) {
+        print('=== CLIENT IMAGES API RESPONSE ===');
+        print('Endpoint: $endpoint');
+        print('Client Code: ${clientCode ?? "ALL"}');
+        print('Response Type: ${raw.runtimeType}');
+        print('Response Data: $raw');
+        print('==================================');
+      }
+      
       if (raw is List) {
         return List<Map<String, dynamic>>.from(raw);
       }

@@ -20,6 +20,8 @@ import 'package:gloria_marketing_flutter/src/core/services/permissions_service.d
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
+import 'package:gloria_marketing_flutter/src/core/widgets/client_image_widget.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart'
     hide MapType;
 import 'package:gloria_marketing_flutter/src/core/maps/services/map_cache_service.dart';
@@ -144,46 +146,28 @@ enum _ViewMode { list, grid }
 /// Client detail va to'liq ekran ko'rish uchun mos o'lchamli rasmlar:
 /// - Medium: Client detail sheet carousel uchun - optimal sifat va tezlik
 /// - Large/Original: To'liq ekran ko'rish uchun - eng yuqori sifat
+/// Uses new on-demand loading with CachedNetworkImage
 /// =============================================================================
 
 /// Medium rasm URL - Client detail sheet uchun
 /// O'rtacha sifat, detail ko'rinishi uchun optimal
 String? _getMediumImageUrl(ClientImage img) {
-  final candidates = <String?>[
-    img.imageMdUrl, // Birinchi - Medium
-    img.imageSmUrl, // Fallback - Small
-    img.imageUrl, // Fallback - Original
-    img.imageThumbnailUrl, // Fallback - Thumbnail
-    img.image,
-  ];
-  for (final s in candidates) {
-    if (s != null && s.trim().isNotEmpty) return s;
-  }
-  return null;
+  return selectClientImageUrl(img, ClientImageSize.medium);
 }
 
 /// Large/Original rasm URL - To'liq ekran ko'rish uchun
 /// Eng yuqori sifat, katta rasmlar uchun
 String? _getLargeImageUrl(ClientImage img) {
-  final candidates = <String?>[
-    img.imageUrl, // Birinchi - Original/Large
-    img.imageMdUrl, // Fallback - Medium
-    img.imageSmUrl, // Fallback - Small
-    img.imageThumbnailUrl, // Fallback - Thumbnail
-    img.image,
-  ];
-  for (final s in candidates) {
-    if (s != null && s.trim().isNotEmpty) return s;
-  }
-  return null;
+  return selectClientImageUrl(img, ClientImageSize.large);
 }
 
+/// Image provider with on-demand caching
 ImageProvider? _clientImageProvider(String? url) {
   if (url == null) return null;
   final u = url.trim();
   if (u.isEmpty) return null;
   if (u.startsWith('http://') || u.startsWith('https://')) {
-    return NetworkImage(u);
+    return CachedNetworkImageProvider(u);
   }
   return FileImage(File(u));
 }
@@ -780,6 +764,9 @@ class _TradingPointsPageState extends State<TradingPointsPage>
       ); // Re-apply current filters including visit_today
       _applySorting(); // Apply initial sorting
       setState(() => _isLoading = false);
+      
+      // Fetch client images metadata for visible clients in background
+      _fetchClientImagesMetadataForVisibleClients();
     } catch (e) {
       setState(() => _isLoading = false);
       if (kDebugMode) {
@@ -794,6 +781,91 @@ class _TradingPointsPageState extends State<TradingPointsPage>
             backgroundColor: Colors.red,
           ),
         );
+      }
+    }
+  }
+
+  /// Fetch client images metadata for visible clients if not in cache
+  /// 
+  /// This method runs in background without blocking UI.
+  /// It checks first 20 visible clients and fetches metadata from API
+  /// only for clients that don't have metadata in local database.
+  Future<void> _fetchClientImagesMetadataForVisibleClients() async {
+    if (_clientImagesService == null) {
+      if (kDebugMode) {
+        print('ClientImagesService not available for batch metadata fetch');
+      }
+      return;
+    }
+
+    try {
+      // Get first 20 visible clients (or less if filtered list is smaller)
+      final visibleClients = _filteredTradingPoints
+          .take(20)
+          .map((tp) => tp.tradingPoint.id)
+          .toList();
+
+      if (visibleClients.isEmpty) return;
+
+      if (kDebugMode) {
+        print('Checking metadata for ${visibleClients.length} visible clients');
+      }
+
+      // Check which clients need metadata (don't have it in DB)
+      final clientsNeedingMetadata = <String>[];
+      for (final clientCode in visibleClients) {
+        final existing = await _clientImagesService!.getClientImages(clientCode);
+        if (existing.isEmpty) {
+          clientsNeedingMetadata.add(clientCode);
+        }
+      }
+
+      if (clientsNeedingMetadata.isEmpty) {
+        if (kDebugMode) {
+          print('All visible clients already have metadata cached');
+        }
+        return;
+      }
+
+      if (kDebugMode) {
+        print('Fetching metadata for ${clientsNeedingMetadata.length} clients from API');
+      }
+
+      // Fetch metadata from API for clients that need it
+      // Run in background without blocking UI
+      int successCount = 0;
+      int failCount = 0;
+      
+      for (final clientCode in clientsNeedingMetadata) {
+        try {
+          await _clientImagesService!.fetchAndSaveClientImages(clientCode);
+          successCount++;
+          
+          if (kDebugMode && successCount % 5 == 0) {
+            print('Fetched metadata for $successCount/${clientsNeedingMetadata.length} clients');
+          }
+        } catch (e) {
+          failCount++;
+          // Silent fail - continue with next client
+          if (kDebugMode) {
+            print('Failed to fetch metadata for $clientCode: $e');
+          }
+        }
+      }
+
+      if (kDebugMode) {
+        print('Batch metadata fetch complete: $successCount success, $failCount failed');
+      }
+
+      // Refresh UI to show new thumbnails if any metadata was fetched
+      if (mounted && successCount > 0) {
+        setState(() {
+          // UI will automatically reload images via ClientImageWidget
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error in batch metadata fetch: $e');
       }
     }
   }
@@ -2840,6 +2912,10 @@ class TradingPointGridCard extends StatelessWidget {
   }
 }
 
+/// Avatar leading widget for trading point list items
+/// 
+/// Uses ClientImageWidget for automatic metadata loading and on-demand image caching.
+/// Falls back to default avatar if no image metadata exists.
 class _AvatarLeading extends StatelessWidget {
   final TradingPoint tp;
   final bool visited;
@@ -2847,19 +2923,24 @@ class _AvatarLeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final url = _safePhotoUrl(tp);
-
     Widget img = ClipOval(
       child: SizedBox(
         width: 56,
         height: 56,
-        child: url == null
-            ? _DefaultAvatar(name: tp.name) // default avatar
-            : _NetAvatar(url: url, visited: visited), // network avatar
+        child: ClientImageWidget(
+          clientCode: tp.id,
+          size: ClientImageSize.thumbnail,
+          width: 56,
+          height: 56,
+          fit: BoxFit.cover,
+          borderRadius: BorderRadius.zero,
+          showShimmer: false,
+          errorWidget: _DefaultAvatar(name: tp.name),
+        ),
       ),
     );
 
-    // Tashrif qilinganida — engil kulrang shaffof qatlam
+    // Apply grayscale filter for visited clients
     if (visited) {
       img = ColorFiltered(
         colorFilter: const ColorFilter.matrix(<double>[
@@ -2880,31 +2961,6 @@ class _AvatarLeading extends StatelessWidget {
       );
     }
     return SizedBox(width: 56, height: 56, child: img);
-  }
-}
-
-class _NetAvatar extends StatelessWidget {
-  final String url;
-  final bool visited;
-  const _NetAvatar({required this.url, required this.visited});
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = _clientImageProvider(url);
-    final image = provider == null
-        ? const _DefaultAvatar(name: null)
-        : Image(
-            image: provider,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const _DefaultAvatar(name: null),
-          );
-    // Yengil blur ham qo‘shmoqchi bo‘lsangiz (visited payti):
-    return visited
-        ? ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
-            child: image,
-          )
-        : image;
   }
 }
 

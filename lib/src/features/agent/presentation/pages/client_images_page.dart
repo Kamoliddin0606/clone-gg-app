@@ -6,51 +6,35 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/photo_storage_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
+import 'package:gloria_marketing_flutter/src/core/widgets/client_image_widget.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
+/// Helper function to get image provider from URL (backward compatibility)
 ImageProvider? _clientImageProviderFromUrl(String? url) {
   if (url == null) return null;
   final u = url.trim();
   if (u.isEmpty) return null;
   if (u.startsWith('http://') || u.startsWith('https://')) {
-    return NetworkImage(u);
+    return CachedNetworkImageProvider(u);
   }
   return FileImage(File(u));
 }
 
+/// Helper function to get best preview URL (backward compatibility)
 String? _bestClientImagePreviewUrl(ClientImage img) {
-  final candidates = <String?>[
-    img.imageThumbnailUrl,
-    img.imageSmUrl,
-    img.imageMdUrl,
-    img.imageUrl,
-    img.image,
-  ];
-  for (final s in candidates) {
-    if (s != null && s.trim().isNotEmpty) return s;
-  }
-  return null;
+  return selectClientImageUrl(img, ClientImageSize.small);
 }
 
+/// Helper function to get best fullscreen URL (backward compatibility)
 String? _bestClientImageFullscreenUrl(ClientImage img) {
-  final candidates = <String?>[
-    img.imageLgUrl,
-    img.imageMdUrl,
-    img.imageSmUrl,
-    img.imageUrl,
-    img.imageThumbnailUrl,
-    img.image,
-  ];
-  for (final s in candidates) {
-    if (s != null && s.trim().isNotEmpty) return s;
-  }
-  return null;
+  return selectClientImageUrl(img, ClientImageSize.large);
 }
 
 /// Client Images Management Page

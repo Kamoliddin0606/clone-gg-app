@@ -1,13 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:sqflite/sqflite.dart';
 import 'api_database_service.dart';
 import 'rest_api_service.dart';
 import 'token_service.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/services/client_image_storage_service.dart';
 
 /// Model class for client images
 class ClientImage {
@@ -146,19 +144,16 @@ class ClientImagesService {
   final RestApiService _apiService;
   final TokenService _tokenService;
   final Dio _dio;
-  final ClientImageStorageService _clientImageStorageService;
 
   ClientImagesService({
     required ApiDatabaseService databaseService,
     required RestApiService apiService,
     required TokenService tokenService,
     required Dio dio,
-    ClientImageStorageService? clientImageStorageService,
   })  : _databaseService = databaseService,
         _apiService = apiService,
         _tokenService = tokenService,
-        _dio = dio,
-        _clientImageStorageService = clientImageStorageService ?? ClientImageStorageService();
+        _dio = dio;
 
   /// Callback for progress updates
   Function(double progress, String message)? onProgressUpdate;
@@ -183,70 +178,16 @@ class ClientImagesService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _cacheImagesLocally({
-    required String clientCode,
-    required List<Map<String, dynamic>> images,
-  }) async {
-    final out = <Map<String, dynamic>>[];
-
-    for (final image in images) {
-      String? pickUrl(Map<String, dynamic> img) {
-        final candidates = <dynamic>[
-          img['image_thumbnail_url'],
-          img['image_sm_url'],
-          img['image_md_url'],
-          img['image_lg_url'],
-          img['image_url'],
-          img['image'],
-        ];
-        for (final c in candidates) {
-          if (c is String && c.trim().isNotEmpty) return c;
-        }
-        return null;
-      }
-
-      final url = pickUrl(image);
-      if (url == null) {
-        out.add(image);
-        continue;
-      }
-
-      try {
-        final resp = await _dio.get<List<int>>(
-          url,
-          options: Options(responseType: ResponseType.bytes),
-        );
-        final bytes = resp.data;
-        if (bytes == null || bytes.isEmpty) {
-          out.add(image);
-          continue;
-        }
-
-        final tmpDir = await Directory.systemTemp.createTemp('client_img_');
-        final tmpFile = File('${tmpDir.path}/img_${DateTime.now().microsecondsSinceEpoch}.jpg');
-        await tmpFile.writeAsBytes(bytes, flush: true);
-
-        final saved = await _clientImageStorageService.saveClientImage(
-          clientCode: clientCode,
-          imageFile: tmpFile,
-          description: 'Client image',
-        );
-
-        out.add({
-          ...image,
-          // Store local paths so UI can render offline
-          'image': saved['imagePath'],
-          'image_thumbnail_url': saved['previewPath'],
-        });
-      } catch (_) {
-        out.add(image);
-      }
-    }
-
-    return out;
-  }
-
-  /// Fetch all images for a specific client and save to client_images table
+  /// Fetch client images metadata from server and save to database
+  /// 
+  /// This method only fetches and stores image metadata (URLs, dimensions, etc.)
+  /// without downloading actual image files. Images are loaded on-demand by UI.
+  /// 
+  /// Flow:
+  /// 1. Get valid authentication token
+  /// 2. Fetch metadata from server API
+  /// 3. Save metadata to local database
+  /// 4. UI loads images on-demand using CachedNetworkImage
   Future<void> fetchAndSaveClientImages(String? clientCode, {bool? replaceExisting = false}) async {
     try {
       if (clientCode == null || clientCode.trim().isEmpty) {
@@ -254,11 +195,13 @@ class ClientImagesService {
       }
 
       if (kDebugMode) {
-        print('ClientImagesService: Starting client image fetch for client: $clientCode');
+        print('ClientImagesService: Fetching metadata for client: $clientCode');
+        print('ClientImagesService: Client code length: ${clientCode.length}');
+        print('ClientImagesService: Client code bytes: ${clientCode.codeUnits}');
       }
 
       _checkCancelled();
-      onProgressUpdate?.call(0.0, 'Starting client image fetch...');
+      onProgressUpdate?.call(0.0, 'Starting metadata fetch...');
 
       // Ensure we have a valid token using the full authentication flow:
       // 1. Check access token validity
@@ -267,38 +210,30 @@ class ClientImagesService {
       final token = await _tokenService.ensureValidToken();
       if (token == null || token.trim().isEmpty) {
         if (kDebugMode) {
-          print('ClientImagesService: Failed to obtain valid token after all attempts');
+          print('ClientImagesService: Failed to obtain valid token');
         }
         throw Exception('Autentifikatsiya muddati tugadi. Iltimos, qayta kiring.');
       }
 
-      onProgressUpdate?.call(25.0, 'Fetching images from server...');
+      onProgressUpdate?.call(30.0, 'Fetching metadata from server...');
 
-      // Fetch client images from API (filtered by client)
+      // Fetch client images metadata from API (filtered by client)
       final images = await _apiService.getClientImages(
         authToken: token,
         clientCode: clientCode,
       );
 
-      // Always clear existing locally cached images for this client before saving new ones
-      await _clientImageStorageService.clearClientImages(clientCode);
+      onProgressUpdate?.call(70.0, 'Saving metadata to database...');
 
-      final cachedImages = await _cacheImagesLocally(
-        clientCode: clientCode,
-        images: images,
-      );
-
-      onProgressUpdate?.call(75.0, 'Saving images to database...');
-
-      if (cachedImages.isNotEmpty) {
-        // Save images to database
-        await _saveClientImagesToDatabase(clientCode, cachedImages, replaceExisting == true);
+      if (images.isNotEmpty) {
+        // Save only metadata to database (no image downloads)
+        await _saveClientImagesToDatabase(clientCode, images, replaceExisting == true);
       }
 
-      onProgressUpdate?.call(100.0, 'Client images saved successfully');
+      onProgressUpdate?.call(100.0, 'Metadata saved successfully');
 
       if (kDebugMode) {
-        print('ClientImagesService: Client image fetch completed for client: $clientCode');
+        print('ClientImagesService: Saved ${images.length} image metadata records for client: $clientCode');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -338,7 +273,10 @@ class ClientImagesService {
     return [];
   }
 
-  /// Save client images to database
+  /// Save client images metadata to database
+  /// 
+  /// Stores only metadata (URLs, dimensions, flags) without downloading images.
+  /// Actual images are loaded on-demand by UI components.
   Future<void> _saveClientImagesToDatabase(
     String clientCode,
     List<Map<String, dynamic>> images,
@@ -396,19 +334,19 @@ class ClientImagesService {
       );
     }
 
-    // Insert new images
+    // Insert new image metadata (URLs only, no file downloads)
     for (final image in images) {
       final int? serverId = (image['id'] as num?)?.toInt();
       batch.insert('client_images', {
         'server_id': serverId,
         'client_code': clientCode,
         'client_id': image['client'],
-        'image': image['image'],
-        'image_url': image['image_url'],
-        'image_sm_url': image['image_sm_url'],
-        'image_md_url': image['image_md_url'],
-        'image_lg_url': image['image_lg_url'],
-        'image_thumbnail_url': image['image_thumbnail_url'],
+        'image': image['image'],  // Server URL
+        'image_url': image['image_url'],  // Server URL
+        'image_sm_url': image['image_sm_url'],  // Server URL
+        'image_md_url': image['image_md_url'],  // Server URL
+        'image_lg_url': image['image_lg_url'],  // Server URL
+        'image_thumbnail_url': image['image_thumbnail_url'],  // Server URL
         'image_dimensions': normalizeJson(image['image_dimensions']),
         'image_sm_dimensions': normalizeJson(image['image_sm_dimensions']),
         'image_md_dimensions': normalizeJson(image['image_md_dimensions']),
@@ -512,24 +450,6 @@ class ClientImagesService {
         where: 'server_id = ?',
         whereArgs: [image.serverId],
       );
-
-      // Clear locally cached image file if exists
-      if (image.image != null && image.image!.isNotEmpty) {
-        try {
-          final localFile = File(image.image!);
-          if (await localFile.exists()) {
-            await localFile.delete();
-            if (kDebugMode) {
-              print('ClientImagesService: Deleted local file: ${image.image}');
-            }
-          }
-        } catch (e) {
-          // Ignore file deletion errors - not critical
-          if (kDebugMode) {
-            print('ClientImagesService: Could not delete local file: $e');
-          }
-        }
-      }
 
       if (kDebugMode) {
         print('ClientImagesService: Successfully deleted image ID: ${image.serverId}');

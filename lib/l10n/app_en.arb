@@ -3041,5 +3041,20 @@
   "stepDuration": "Step Duration",
   "totalVisitTime": "Total Visit Time",
   "stepTime": "Step Time",
-  "elapsedTime": "Elapsed Time"
+  "elapsedTime": "Elapsed Time",
+  "timeLimitExpired": "Access Period Expired",
+  "timeLimitExpiredMessage": "Your access period has expired. Please contact support to renew your access.",
+  "timeLimitExpiredNote": "All local data will be cleared for security.",
+  "offlineAccessBlocked": "Internet Connection Required",
+  "offlineAccessBlockedMessage": "First-time access requires an internet connection. Please connect and try again.",
+  "offlineAccessBlockedNote": "After first connection, you can use the app offline.",
+  "offlineAccessNoLimit": "Offline Access Unavailable",
+  "offlineAccessNoLimitMessage": "You need to connect to the internet at least once before using offline mode.",
+  "contactSupport": "Contact Support",
+  "retryConnection": "Retry Connection",
+  "connectToInternet": "Connect to Internet",
+  "verifyingAccess": "Verifying access...",
+  "accessVerified": "Access verified successfully",
+  "verificationFailed": "Verification failed",
+  "timeLimitUpdated": "Access period updated"
 }

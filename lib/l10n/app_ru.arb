@@ -2986,5 +2986,20 @@
   "stepDuration": "Длительность шага",
   "totalVisitTime": "Общее время визита",
   "stepTime": "Время шага",
-  "elapsedTime": "Прошедшее время"
+  "elapsedTime": "Прошедшее время",
+  "timeLimitExpired": "Срок доступа истек",
+  "timeLimitExpiredMessage": "Срок вашего доступа истек. Пожалуйста, свяжитесь с поддержкой для продления доступа.",
+  "timeLimitExpiredNote": "Все локальные данные будут удалены в целях безопасности.",
+  "offlineAccessBlocked": "Требуется подключение к интернету",
+  "offlineAccessBlockedMessage": "Первый вход требует подключения к интернету. Пожалуйста, подключитесь и попробуйте снова.",
+  "offlineAccessBlockedNote": "После первого подключения вы сможете использовать приложение офлайн.",
+  "offlineAccessNoLimit": "Офлайн-режим недоступен",
+  "offlineAccessNoLimitMessage": "Необходимо подключиться к интернету хотя бы один раз перед использованием офлайн-режима.",
+  "contactSupport": "Связаться с поддержкой",
+  "retryConnection": "Повторить подключение",
+  "connectToInternet": "Подключиться к интернету",
+  "verifyingAccess": "Проверка доступа...",
+  "accessVerified": "Доступ подтвержден",
+  "verificationFailed": "Проверка не удалась",
+  "timeLimitUpdated": "Срок доступа обновлен"
 }

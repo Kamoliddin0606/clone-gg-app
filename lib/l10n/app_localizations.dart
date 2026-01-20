@@ -592,7 +592,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactSupport.
   ///
   /// In en, this message translates to:
-  /// **'Contact support'**
+  /// **'Contact Support'**
   String get contactSupport;
 
   /// No description provided for @version.
@@ -9600,6 +9600,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Elapsed Time'**
   String get elapsedTime;
+
+  /// No description provided for @timeLimitExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Period Expired'**
+  String get timeLimitExpired;
+
+  /// No description provided for @timeLimitExpiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your access period has expired. Please contact support to renew your access.'**
+  String get timeLimitExpiredMessage;
+
+  /// No description provided for @timeLimitExpiredNote.
+  ///
+  /// In en, this message translates to:
+  /// **'All local data will be cleared for security.'**
+  String get timeLimitExpiredNote;
+
+  /// No description provided for @offlineAccessBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Internet Connection Required'**
+  String get offlineAccessBlocked;
+
+  /// No description provided for @offlineAccessBlockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'First-time access requires an internet connection. Please connect and try again.'**
+  String get offlineAccessBlockedMessage;
+
+  /// No description provided for @offlineAccessBlockedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'After first connection, you can use the app offline.'**
+  String get offlineAccessBlockedNote;
+
+  /// No description provided for @offlineAccessNoLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline Access Unavailable'**
+  String get offlineAccessNoLimit;
+
+  /// No description provided for @offlineAccessNoLimitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You need to connect to the internet at least once before using offline mode.'**
+  String get offlineAccessNoLimitMessage;
+
+  /// No description provided for @retryConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry Connection'**
+  String get retryConnection;
+
+  /// No description provided for @connectToInternet.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to Internet'**
+  String get connectToInternet;
+
+  /// No description provided for @verifyingAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying access...'**
+  String get verifyingAccess;
+
+  /// No description provided for @accessVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Access verified successfully'**
+  String get accessVerified;
+
+  /// No description provided for @verificationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification failed'**
+  String get verificationFailed;
+
+  /// No description provided for @timeLimitUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Access period updated'**
+  String get timeLimitUpdated;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

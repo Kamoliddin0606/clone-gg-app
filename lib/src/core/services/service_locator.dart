@@ -32,6 +32,10 @@ import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitori
 import 'package:gloria_marketing_flutter/src/core/services/gemini_time_verification_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/app_access_control_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/time_verification_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
+import 'package:gloria_marketing_flutter/src/features/time_verification/domain/repositories/time_verification_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/time_verification/data/repositories/time_verification_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/startup_access_bloc.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
@@ -317,6 +321,26 @@ Future<void> setupServiceLocator() async {
       prefsService: sl<SharedPreferencesService>(),
       databaseHelper: sl<DatabaseHelper>(),
     ));
+  }
+
+  // Time Verification Services - Server time-based access control
+  // Fetches server time and time limit via GetServerTime SOAP endpoint
+  // Supports both online (server time) and offline (local time) verification
+  // Automatically clears data when access expires
+  if (!sl.isRegistered<TimeVerificationRepository>()) {
+    sl.registerLazySingleton<TimeVerificationRepository>(() => TimeVerificationRepositoryImpl(
+      apiService: sl<ApiService>(),
+    ));
+  }
+  if (!sl.isRegistered<TimeVerificationService>()) {
+    sl.registerLazySingleton<TimeVerificationService>(() => TimeVerificationService(
+      repository: sl<TimeVerificationRepository>(),
+      prefs: sl<SharedPreferencesService>(),
+      dataSyncService: sl<DataSyncService>(),
+    ));
+  }
+  if (!sl.isRegistered<ConnectivityMonitorService>()) {
+    sl.registerLazySingleton<ConnectivityMonitorService>(() => ConnectivityMonitorService());
   }
 
   // Blocs

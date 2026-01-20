@@ -11,6 +11,8 @@ import 'package:gloria_marketing_flutter/src/core/services/permission_manager.da
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/app_access_control_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/time_verification_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_dialog.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
@@ -97,6 +99,53 @@ void main() async {
   } catch (e) {
     if (kDebugMode) {
       debugPrint('[Main] Error initializing access control services: $e');
+    }
+  }
+
+  // Initialize Time Verification Services
+  // ConnectivityMonitorService monitors network changes
+  // TimeVerificationService verifies user access based on server time
+  try {
+    final connectivityMonitor = sl<ConnectivityMonitorService>();
+    await connectivityMonitor.initialize();
+    
+    // Setup global connectivity listener
+    // Automatically triggers verification when connectivity is restored
+    connectivityMonitor.connectivityStream.listen((hasConnection) {
+      if (hasConnection) {
+        if (kDebugMode) {
+          debugPrint('[Main] Connectivity restored - triggering time verification');
+        }
+        
+        // Trigger verification on connectivity restore
+        sl<TimeVerificationService>().verifyTimeLimit().then((result) {
+          if (kDebugMode) {
+            debugPrint('[Main] Time verification result: ${result.status}');
+          }
+          
+          // If user should be blocked, clear data
+          if (result.shouldBlock) {
+            if (kDebugMode) {
+              debugPrint('[Main] User access expired - blocking and clearing data');
+            }
+            sl<TimeVerificationService>().blockUserAndClearData(
+              result.message ?? 'Access expired',
+            );
+          }
+        }).catchError((error) {
+          if (kDebugMode) {
+            debugPrint('[Main] Time verification error: $error');
+          }
+        });
+      }
+    });
+    
+    if (kDebugMode) {
+      debugPrint('[Main] Time verification services initialized');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Error initializing time verification services: $e');
     }
   }
 

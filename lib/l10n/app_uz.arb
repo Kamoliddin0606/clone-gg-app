@@ -2907,5 +2907,20 @@
   "stepDuration": "Qadam davomiyligi",
   "totalVisitTime": "Jami tashrif vaqti",
   "stepTime": "Qadam vaqti",
-  "elapsedTime": "O'tgan vaqt"
+  "elapsedTime": "O'tgan vaqt",
+  "timeLimitExpired": "Kirish muddati tugadi",
+  "timeLimitExpiredMessage": "Kirish muddatingiz tugadi. Iltimos, kirish muddatini uzaytirish uchun qo'llab-quvvatlash xizmatiga murojaat qiling.",
+  "timeLimitExpiredNote": "Xavfsizlik uchun barcha mahalliy ma'lumotlar tozalanadi.",
+  "offlineAccessBlocked": "Internet aloqasi talab qilinadi",
+  "offlineAccessBlockedMessage": "Birinchi marta kirish uchun internet aloqasi kerak. Iltimos, internetga ulanib qayta urinib ko'ring.",
+  "offlineAccessBlockedNote": "Birinchi ulanishdan keyin ilovadan oflayn foydalanishingiz mumkin.",
+  "offlineAccessNoLimit": "Oflayn rejim mavjud emas",
+  "offlineAccessNoLimitMessage": "Oflayn rejimdan foydalanishdan oldin kamida bir marta internetga ulanish kerak.",
+  "contactSupport": "Qo'llab-quvvatlash bilan bog'lanish",
+  "retryConnection": "Qayta ulanish",
+  "connectToInternet": "Internetga ulaning",
+  "verifyingAccess": "Kirish tekshirilmoqda...",
+  "accessVerified": "Kirish tasdiqlandi",
+  "verificationFailed": "Tekshirish muvaffaqiyatsiz",
+  "timeLimitUpdated": "Kirish muddati yangilandi"
 }

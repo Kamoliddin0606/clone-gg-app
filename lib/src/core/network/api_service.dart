@@ -196,6 +196,51 @@ class ApiService {
   /// Get all available URLs for current server environment
   List<String> get allUrls => _server.allUrls;
 
+  /// Get server time and time limit from GetServerTime SOAP endpoint
+  /// 
+  /// Returns SOAP response string containing:
+  /// - DateTime: Current server time
+  /// - DateTimeLimit: User access expiration time
+  /// 
+  /// Throws:
+  /// - [ConnectivityException] on network errors
+  /// - [AllServersUnavailableException] if all servers fail
+  /// - [ServerException] on SOAP Fault or server errors
+  Future<String> getServerTime() async {
+    final result = await _failoverService.executeSoapWithFailover(
+      body: '''<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+  <soap:Header/>
+  <soap:Body>
+    <sam:GetServerTime/>
+  </soap:Body>
+</soap:Envelope>''',
+    );
+    
+    if (result.isSuccess && result.data != null) {
+      return result.data!;
+    }
+    
+    // Handle different error scenarios
+    if (result.allUrlsFailed) {
+      throw AllServersUnavailableException(
+        'All servers are unavailable. Please check your internet connection.',
+        triedUrls: _server.allUrls,
+      );
+    }
+    
+    // Check if it's a connectivity error
+    if (result.error?.contains('Connection') == true ||
+        result.error?.contains('timeout') == true) {
+      throw ConnectivityException(
+        'Network connection error: ${result.error}',
+        allServersFailed: result.allUrlsFailed,
+      );
+    }
+    
+    throw ServerException('Server error: ${result.error}');
+  }
+
   bool _isConnectionError(DioException e) {
     return e.type == DioExceptionType.connectionTimeout ||
            e.type == DioExceptionType.receiveTimeout ||

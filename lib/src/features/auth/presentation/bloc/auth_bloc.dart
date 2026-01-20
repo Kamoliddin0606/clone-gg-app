@@ -59,7 +59,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthErrorType errorType;
       String message;
 
-      if (e is ConnectivityException) {
+      if (e is ConnectivityException || e is AllServersUnavailableException) {
         errorType = AuthErrorType.connectivity;
         message = 'Internet bilan bog\'lanishda xatolik. Iltimos, internetni tekshiring.';
       } else if (e is ServerException) {

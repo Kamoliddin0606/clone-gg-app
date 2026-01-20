@@ -23,6 +23,7 @@ class SharedPreferencesService {
   static const String _bgSyncCustomMinutesKey = 'bg_sync_custom_minutes';
   static const String _syncNeededKey = 'sync_needed';
   static const String _isFirstTimeSyncKey = 'is_first_time_sync';
+  static const String _timeLimitKey = 'time_limit';
 
   static SharedPreferencesService? _instance;
   bool _isInitialized = false;
@@ -415,5 +416,86 @@ class SharedPreferencesService {
 
   bool isFirstTimeSync() {
     return _preferences.getBool(_isFirstTimeSyncKey) ?? false;
+  }
+
+  // Time limit management for server time verification
+  
+  /// Save time limit to preferences
+  /// Time limit is stored in ISO 8601 format for consistency
+  Future<void> setTimeLimit(DateTime limit) async {
+    try {
+      await _preferences.setString(_timeLimitKey, limit.toIso8601String());
+      if (kDebugMode) {
+        print('Time limit saved: ${limit.toIso8601String()}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error saving time limit: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Get time limit from preferences
+  /// Returns null if no time limit is stored
+  DateTime? getTimeLimit() {
+    try {
+      final limitStr = _preferences.getString(_timeLimitKey);
+      if (limitStr == null) {
+        if (kDebugMode) {
+          print('No time limit found in preferences');
+        }
+        return null;
+      }
+      final limit = DateTime.parse(limitStr);
+      if (kDebugMode) {
+        print('Retrieved time limit: ${limit.toIso8601String()}');
+      }
+      return limit;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error retrieving time limit: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Clear time limit from preferences
+  Future<void> clearTimeLimit() async {
+    try {
+      await _preferences.remove(_timeLimitKey);
+      if (kDebugMode) {
+        print('Time limit cleared from preferences');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error clearing time limit: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Check if time limit exists in preferences
+  bool hasTimeLimit() {
+    final hasLimit = _preferences.containsKey(_timeLimitKey);
+    if (kDebugMode) {
+      print('Has time limit: $hasLimit');
+    }
+    return hasLimit;
+  }
+
+  /// Check if stored time limit is still valid (not expired)
+  /// Uses local device time for comparison
+  bool isTimeLimitValid() {
+    final limit = getTimeLimit();
+    if (limit == null) {
+      return false;
+    }
+    final now = DateTime.now();
+    final isValid = now.isBefore(limit);
+    if (kDebugMode) {
+      print('Time limit validity check: $isValid (now: $now, limit: $limit)');
+    }
+    return isValid;
   }
 }

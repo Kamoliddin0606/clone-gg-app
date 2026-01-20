@@ -5051,4 +5051,46 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get elapsedTime => 'Прошедшее время';
+
+  @override
+  String get timeLimitExpired => 'Срок доступа истек';
+
+  @override
+  String get timeLimitExpiredMessage => 'Срок вашего доступа истек. Пожалуйста, свяжитесь с поддержкой для продления доступа.';
+
+  @override
+  String get timeLimitExpiredNote => 'Все локальные данные будут удалены в целях безопасности.';
+
+  @override
+  String get offlineAccessBlocked => 'Требуется подключение к интернету';
+
+  @override
+  String get offlineAccessBlockedMessage => 'Первый вход требует подключения к интернету. Пожалуйста, подключитесь и попробуйте снова.';
+
+  @override
+  String get offlineAccessBlockedNote => 'После первого подключения вы сможете использовать приложение офлайн.';
+
+  @override
+  String get offlineAccessNoLimit => 'Офлайн-режим недоступен';
+
+  @override
+  String get offlineAccessNoLimitMessage => 'Необходимо подключиться к интернету хотя бы один раз перед использованием офлайн-режима.';
+
+  @override
+  String get retryConnection => 'Повторить подключение';
+
+  @override
+  String get connectToInternet => 'Подключиться к интернету';
+
+  @override
+  String get verifyingAccess => 'Проверка доступа...';
+
+  @override
+  String get accessVerified => 'Доступ подтвержден';
+
+  @override
+  String get verificationFailed => 'Проверка не удалась';
+
+  @override
+  String get timeLimitUpdated => 'Срок доступа обновлен';
 }

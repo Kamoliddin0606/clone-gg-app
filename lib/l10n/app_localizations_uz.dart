@@ -259,7 +259,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get tryAgain => 'Iltimos, qayta urinib ko\'ring';
 
   @override
-  String get contactSupport => 'Qo\'llab-quvvatlash bilan bog\'laning';
+  String get contactSupport => 'Qo\'llab-quvvatlash bilan bog\'lanish';
 
   @override
   String get version => 'Versiya';
@@ -5051,4 +5051,46 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get elapsedTime => 'O\'tgan vaqt';
+
+  @override
+  String get timeLimitExpired => 'Kirish muddati tugadi';
+
+  @override
+  String get timeLimitExpiredMessage => 'Kirish muddatingiz tugadi. Iltimos, kirish muddatini uzaytirish uchun qo\'llab-quvvatlash xizmatiga murojaat qiling.';
+
+  @override
+  String get timeLimitExpiredNote => 'Xavfsizlik uchun barcha mahalliy ma\'lumotlar tozalanadi.';
+
+  @override
+  String get offlineAccessBlocked => 'Internet aloqasi talab qilinadi';
+
+  @override
+  String get offlineAccessBlockedMessage => 'Birinchi marta kirish uchun internet aloqasi kerak. Iltimos, internetga ulanib qayta urinib ko\'ring.';
+
+  @override
+  String get offlineAccessBlockedNote => 'Birinchi ulanishdan keyin ilovadan oflayn foydalanishingiz mumkin.';
+
+  @override
+  String get offlineAccessNoLimit => 'Oflayn rejim mavjud emas';
+
+  @override
+  String get offlineAccessNoLimitMessage => 'Oflayn rejimdan foydalanishdan oldin kamida bir marta internetga ulanish kerak.';
+
+  @override
+  String get retryConnection => 'Qayta ulanish';
+
+  @override
+  String get connectToInternet => 'Internetga ulaning';
+
+  @override
+  String get verifyingAccess => 'Kirish tekshirilmoqda...';
+
+  @override
+  String get accessVerified => 'Kirish tasdiqlandi';
+
+  @override
+  String get verificationFailed => 'Tekshirish muvaffaqiyatsiz';
+
+  @override
+  String get timeLimitUpdated => 'Kirish muddati yangilandi';
 }

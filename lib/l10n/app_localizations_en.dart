@@ -259,7 +259,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tryAgain => 'Please try again';
 
   @override
-  String get contactSupport => 'Contact support';
+  String get contactSupport => 'Contact Support';
 
   @override
   String get version => 'Version';
@@ -5051,4 +5051,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get elapsedTime => 'Elapsed Time';
+
+  @override
+  String get timeLimitExpired => 'Access Period Expired';
+
+  @override
+  String get timeLimitExpiredMessage => 'Your access period has expired. Please contact support to renew your access.';
+
+  @override
+  String get timeLimitExpiredNote => 'All local data will be cleared for security.';
+
+  @override
+  String get offlineAccessBlocked => 'Internet Connection Required';
+
+  @override
+  String get offlineAccessBlockedMessage => 'First-time access requires an internet connection. Please connect and try again.';
+
+  @override
+  String get offlineAccessBlockedNote => 'After first connection, you can use the app offline.';
+
+  @override
+  String get offlineAccessNoLimit => 'Offline Access Unavailable';
+
+  @override
+  String get offlineAccessNoLimitMessage => 'You need to connect to the internet at least once before using offline mode.';
+
+  @override
+  String get retryConnection => 'Retry Connection';
+
+  @override
+  String get connectToInternet => 'Connect to Internet';
+
+  @override
+  String get verifyingAccess => 'Verifying access...';
+
+  @override
+  String get accessVerified => 'Access verified successfully';
+
+  @override
+  String get verificationFailed => 'Verification failed';
+
+  @override
+  String get timeLimitUpdated => 'Access period updated';
 }

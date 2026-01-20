@@ -35,7 +35,7 @@ class SoapApiService {
   }
 
   String get _baseUrl => _serverService.baseUrl;
-  
+
   void _configureDio() {
     _dio.options.connectTimeout = const Duration(seconds: 30);
     _dio.options.receiveTimeout = const Duration(seconds: 30);
@@ -95,9 +95,9 @@ class SoapApiService {
 
   bool _shouldRetry(DioException error) {
     return error.type == DioExceptionType.connectionTimeout ||
-           error.type == DioExceptionType.receiveTimeout ||
-           error.type == DioExceptionType.sendTimeout ||
-           (error.type == DioExceptionType.badResponse &&
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        (error.type == DioExceptionType.badResponse &&
             error.response?.statusCode == 500);
   }
 
@@ -139,7 +139,8 @@ class SoapApiService {
     required String userCode,
     required String password,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -167,13 +168,22 @@ class SoapApiService {
 
       final returnElement = document.findAllElements('m:return').first;
       if (kDebugMode) print('KPI data response: $returnElement');
-     
+
       return KpiData(
         plan: returnElement.findElements('m:TotalPlan').first.innerText,
         fact: returnElement.findElements('m:TotalFact').first.innerText,
-        totalPercent: returnElement.findElements('m:TotalPercent').first.innerText,
-        totalForecast: returnElement.findElements('m:TotalForecast').first.innerText,
-        totalPercentForecastFact: returnElement.findElements('m:TotalPercentForecastFact').first.innerText,
+        totalPercent: returnElement
+            .findElements('m:TotalPercent')
+            .first
+            .innerText,
+        totalForecast: returnElement
+            .findElements('m:TotalForecast')
+            .first
+            .innerText,
+        totalPercentForecastFact: returnElement
+            .findElements('m:TotalPercentForecastFact')
+            .first
+            .innerText,
         okb: returnElement.findElements('m:OKB').first.innerText,
         akbPlan: returnElement.findElements('m:AKBPlan').first.innerText,
         akbFact: returnElement.findElements('m:AKBFact').first.innerText,
@@ -190,7 +200,8 @@ class SoapApiService {
     required String userCode,
     required String password,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -216,33 +227,55 @@ class SoapApiService {
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 
-      return rowsElements.map((row) => TradingPoint(
-        id: _getElementText(row, 'm:Code') ?? '',
-        name: _getElementText(row, 'm:Name') ?? '',
-        address: _getElementText(row, 'm:AdressDelivery') ?? '',
-        phone: _getElementText(row, 'm:ContactPersonPhone') ?? '',
-        ownerName: _getElementText(row, 'm:ContactPerson') ?? '',
-        contactPerson: _getElementText(row, 'm:ContactPerson') ?? '',
-        inn: _getElementText(row, 'm:INN') ?? '',
-        status: 'active',
-        lastVisitDate: '',
-        hasOrders: int.tryParse(_getElementText(row, 'm:TheNumberOfOrders') ?? '0') != 0,
-        hasContracts: false,
-        isVisited: false,
-        hasContract: false,
-        latitude: double.tryParse(_getElementText(row, 'm:Latitude') ?? '0') ?? 0.0,
-        longitude: double.tryParse(_getElementText(row, 'm:Longitude') ?? '0') ?? 0.0,
-        region: '',
-        district: '',
-        signboard: _getElementText(row, 'm:Signboard') ?? '',
-        referencePoint: _getElementText(row, 'm:ReferencePoint') ?? '',
-        responsiblePerson: _getElementText(row, 'm:ResponsiblePerson') ?? '',
-        responsiblePersonPhone: _getElementText(row, 'm:ResponsiblePersonPhone') ?? '',
-        tradePointType: _getElementText(row, 'm:TradePointType') ?? '',
-        creditLimit: double.tryParse(_getElementText(row, 'm:CreditLimit') ?? '0') ?? 0.0,
-        accumulatedCredit: double.tryParse(_getElementText(row, 'm:AccumulatedCredit') ?? '0') ?? 0.0,
-        codeRegion: _getElementText(row, 'm:CodeRegion') ?? '',
-      )).toList();
+      return rowsElements
+          .map(
+            (row) => TradingPoint(
+              id: _getElementText(row, 'm:Code') ?? '',
+              name: _getElementText(row, 'm:Name') ?? '',
+              address: _getElementText(row, 'm:AdressDelivery') ?? '',
+              phone: _getElementText(row, 'm:ContactPersonPhone') ?? '',
+              ownerName: _getElementText(row, 'm:ContactPerson') ?? '',
+              contactPerson: _getElementText(row, 'm:ContactPerson') ?? '',
+              inn: _getElementText(row, 'm:INN') ?? '',
+              status: 'active',
+              lastVisitDate: '',
+              hasOrders:
+                  int.tryParse(
+                    _getElementText(row, 'm:TheNumberOfOrders') ?? '0',
+                  ) !=
+                  0,
+              hasContracts: false,
+              isVisited: false,
+              hasContract: false,
+              latitude:
+                  double.tryParse(_getElementText(row, 'm:Latitude') ?? '0') ??
+                  0.0,
+              longitude:
+                  double.tryParse(_getElementText(row, 'm:Longitude') ?? '0') ??
+                  0.0,
+              region: '',
+              district: '',
+              signboard: _getElementText(row, 'm:Signboard') ?? '',
+              referencePoint: _getElementText(row, 'm:ReferencePoint') ?? '',
+              responsiblePerson:
+                  _getElementText(row, 'm:ResponsiblePerson') ?? '',
+              responsiblePersonPhone:
+                  _getElementText(row, 'm:ResponsiblePersonPhone') ?? '',
+              tradePointType: _getElementText(row, 'm:TradePointType') ?? '',
+              creditLimit:
+                  double.tryParse(
+                    _getElementText(row, 'm:CreditLimit') ?? '0',
+                  ) ??
+                  0.0,
+              accumulatedCredit:
+                  double.tryParse(
+                    _getElementText(row, 'm:AccumulatedCredit') ?? '0',
+                  ) ??
+                  0.0,
+              codeRegion: _getElementText(row, 'm:CodeRegion') ?? '',
+            ),
+          )
+          .toList();
     } catch (e) {
       throw Exception('Mijozlar ro\'yxatini olishda xatolik: $e');
     }
@@ -252,7 +285,8 @@ class SoapApiService {
   Future<List<BusinessRegion>> getBusinessRegions({
     required String userCode,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -278,10 +312,14 @@ class SoapApiService {
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 
-      return rowsElements.map((row) => BusinessRegion(
-        code: _getElementText(row, 'm:Code') ?? '',
-        name: _getElementText(row, 'm:Name') ?? '',
-      )).toList();
+      return rowsElements
+          .map(
+            (row) => BusinessRegion(
+              code: _getElementText(row, 'm:Code') ?? '',
+              name: _getElementText(row, 'm:Name') ?? '',
+            ),
+          )
+          .toList();
     } catch (e) {
       throw Exception('Biznes rayonlari ro\'yxatini olishda xatolik: $e');
     }
@@ -291,7 +329,8 @@ class SoapApiService {
   Future<List<UserWarehouse>> getWarehousesUser({
     required String userCode,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -317,11 +356,15 @@ class SoapApiService {
       final document = XmlDocument.parse(response.data);
       final warehouseElements = document.findAllElements('m:Warehouse');
 
-      return warehouseElements.map((warehouse) => UserWarehouse(
-        code: _getElementText(warehouse, 'm:Code') ?? '',
-        name: _getElementText(warehouse, 'm:Name') ?? '',
-        organization: _getElementText(warehouse, 'm:Organization') ?? '',
-      )).toList();
+      return warehouseElements
+          .map(
+            (warehouse) => UserWarehouse(
+              code: _getElementText(warehouse, 'm:Code') ?? '',
+              name: _getElementText(warehouse, 'm:Name') ?? '',
+              organization: _getElementText(warehouse, 'm:Organization') ?? '',
+            ),
+          )
+          .toList();
     } catch (e) {
       throw Exception('Foydalanuvchi omborlarini olishda xatolik: $e');
     }
@@ -333,7 +376,8 @@ class SoapApiService {
     required String code,
     required String name,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -372,7 +416,8 @@ class SoapApiService {
     required String code,
     required String name,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -410,7 +455,8 @@ class SoapApiService {
     required String userCode,
     required String code,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -443,10 +489,9 @@ class SoapApiService {
   }
 
   /// Delete all business regions
-  Future<String> deleteAllBusinessRegions({
-    required String userCode,
-  }) async {
-    final soapEnvelope = '''
+  Future<String> deleteAllBusinessRegions({required String userCode}) async {
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -482,7 +527,8 @@ class SoapApiService {
     required String codeProject,
     required String codeSklad,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -531,24 +577,44 @@ class SoapApiService {
               for (final row in productRows) {
                 // Only process rows that have product data
                 if (_getElementText(row, 'm:CodeProduct') != null) {
-                  products.add(ProductData(
-                    code: _getElementText(row, 'm:CodeProduct') ?? '',
-                    name: _getElementText(row, 'm:NameProduct') ?? '',
-                    unit: '',
-                    quantity: 0.0,
-                    reserved: double.tryParse(_getElementText(row, 'm:Reserved') ?? '0') ?? 0.0,
-                    available: double.tryParse(_getElementText(row, 'm:Aviable') ?? '0') ?? 0.0,
-                    category: '',
-                    barcode: '',
-                    have: int.tryParse(_getElementText(row, 'm:Have') ?? '0') ?? 0,
-                    warehouseCode: _getElementText(row, 'm:CodeSklad') ?? '',
-                    weight: double.tryParse(_getElementText(row, 'm:Weight') ?? '0') ?? 0.0,
-                    capacity: double.tryParse(_getElementText(row, 'm:Capacity') ?? '0') ?? 0.0,
-                    vendorCode: _getElementText(row, 'm:VendorCode') ?? '',
-                    productBrand: brandName,
-                    productSeries: seriesName,
-                    codeProject: _getElementText(row, 'm:CodeProject') ?? '',
-                  ));
+                  products.add(
+                    ProductData(
+                      code: _getElementText(row, 'm:CodeProduct') ?? '',
+                      name: _getElementText(row, 'm:NameProduct') ?? '',
+                      unit: '',
+                      quantity: 0.0,
+                      reserved:
+                          double.tryParse(
+                            _getElementText(row, 'm:Reserved') ?? '0',
+                          ) ??
+                          0.0,
+                      available:
+                          double.tryParse(
+                            _getElementText(row, 'm:Aviable') ?? '0',
+                          ) ??
+                          0.0,
+                      category: '',
+                      barcode: '',
+                      have:
+                          int.tryParse(_getElementText(row, 'm:Have') ?? '0') ??
+                          0,
+                      warehouseCode: _getElementText(row, 'm:CodeSklad') ?? '',
+                      weight:
+                          double.tryParse(
+                            _getElementText(row, 'm:Weight') ?? '0',
+                          ) ??
+                          0.0,
+                      capacity:
+                          double.tryParse(
+                            _getElementText(row, 'm:Capacity') ?? '0',
+                          ) ??
+                          0.0,
+                      vendorCode: _getElementText(row, 'm:VendorCode') ?? '',
+                      productBrand: brandName,
+                      productSeries: seriesName,
+                      codeProject: _getElementText(row, 'm:CodeProject') ?? '',
+                    ),
+                  );
                 }
               }
             }
@@ -567,7 +633,8 @@ class SoapApiService {
     required String codeProject,
     required String codeSklad,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -621,20 +688,40 @@ class SoapApiService {
               for (final row in productRows) {
                 // Only process rows that have product data
                 if (_getElementText(row, 'm:CodeProduct') != null) {
-                  balances.add(ProductBalance(
-                    codeSklad: _getElementText(row, 'm:CodeSklad') ?? '',
-                    codeProduct: _getElementText(row, 'm:CodeProduct') ?? '',
-                    nameProduct: _getElementText(row, 'm:NameProduct') ?? '',
-                    have: int.tryParse(_getElementText(row, 'm:Have') ?? '0') ?? 0,
-                    reserved: int.tryParse(_getElementText(row, 'm:Reserved') ?? '0') ?? 0,
-                    available: int.tryParse(_getElementText(row, 'm:Aviable') ?? '0') ?? 0,
-                    weight: double.tryParse(_getElementText(row, 'm:Weight') ?? '0') ?? 0.0,
-                    capacity: double.tryParse(_getElementText(row, 'm:Capacity') ?? '0') ?? 0.0,
-                    codeProject: _getElementText(row, 'm:CodeProject') ?? '',
-                    vendorCode: _getElementText(row, 'm:VendorCode') ?? '',
-                    productBrand: brandName,
-                    productSeries: seriesName,
-                  ));
+                  balances.add(
+                    ProductBalance(
+                      codeSklad: _getElementText(row, 'm:CodeSklad') ?? '',
+                      codeProduct: _getElementText(row, 'm:CodeProduct') ?? '',
+                      nameProduct: _getElementText(row, 'm:NameProduct') ?? '',
+                      have:
+                          int.tryParse(_getElementText(row, 'm:Have') ?? '0') ??
+                          0,
+                      reserved:
+                          int.tryParse(
+                            _getElementText(row, 'm:Reserved') ?? '0',
+                          ) ??
+                          0,
+                      available:
+                          int.tryParse(
+                            _getElementText(row, 'm:Aviable') ?? '0',
+                          ) ??
+                          0,
+                      weight:
+                          double.tryParse(
+                            _getElementText(row, 'm:Weight') ?? '0',
+                          ) ??
+                          0.0,
+                      capacity:
+                          double.tryParse(
+                            _getElementText(row, 'm:Capacity') ?? '0',
+                          ) ??
+                          0.0,
+                      codeProject: _getElementText(row, 'm:CodeProject') ?? '',
+                      vendorCode: _getElementText(row, 'm:VendorCode') ?? '',
+                      productBrand: brandName,
+                      productSeries: seriesName,
+                    ),
+                  );
                 }
               }
             }
@@ -642,25 +729,20 @@ class SoapApiService {
         }
       }
 
-      return {
-        'balances': balances,
-        'brands': brands,
-        'series': series,
-      };
+      return {'balances': balances, 'brands': brands, 'series': series};
     } catch (e) {
       throw Exception('Mahsulot balanslarini olishda xatolik: $e');
     }
   }
 
   /// Get price types
-  Future<List<PriceType>> getPriceTypes({
-    required String userCode,
-  }) async {
+  Future<List<PriceType>> getPriceTypes({required String userCode}) async {
     if (userCode.isEmpty) {
       throw ArgumentError('UserCode cannot be empty');
     }
 
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -715,7 +797,9 @@ class SoapApiService {
 
       return priceTypes;
     } on XmlException catch (e) {
-      throw Exception('XML parsing error while getting price types: ${e.message}');
+      throw Exception(
+        'XML parsing error while getting price types: ${e.message}',
+      );
     } on DioException catch (e) {
       throw Exception('Network error while getting price types: ${e.message}');
     } catch (e) {
@@ -734,7 +818,8 @@ class SoapApiService {
       throw ArgumentError('UserCode cannot be empty');
     }
 
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -777,7 +862,8 @@ class SoapApiService {
           final productPrice = ProductPrice(
             priceTypeCode: _getElementText(row, 'm:CodeTypePrice') ?? '',
             productCode: _getElementText(row, 'm:CodeProduct') ?? '',
-            price: double.tryParse(_getElementText(row, 'm:Price') ?? '0') ?? 0.0,
+            price:
+                double.tryParse(_getElementText(row, 'm:Price') ?? '0') ?? 0.0,
           );
           productPrices.add(productPrice);
         } catch (e) {
@@ -790,9 +876,13 @@ class SoapApiService {
 
       return productPrices;
     } on XmlException catch (e) {
-      throw Exception('XML parsing error while getting product prices: ${e.message}');
+      throw Exception(
+        'XML parsing error while getting product prices: ${e.message}',
+      );
     } on DioException catch (e) {
-      throw Exception('Network error while getting product prices: ${e.message}');
+      throw Exception(
+        'Network error while getting product prices: ${e.message}',
+      );
     } catch (e) {
       if (e is ArgumentError) {
         rethrow; // Re-throw validation errors
@@ -802,9 +892,7 @@ class SoapApiService {
   }
 
   /// Get promotions data
-  Future<List<PromotionModel>> getPromotions({
-    String? authToken,
-  }) async {
+  Future<List<PromotionModel>> getPromotions({String? authToken}) async {
     final timestamp = DateTime.now().toIso8601String();
     if (kDebugMode) print('[$timestamp] DEBUG API: getPromotions called');
 
@@ -836,15 +924,22 @@ class SoapApiService {
       );
       if (kDebugMode) {
         print('-------------------my check___________________ \n${response}');
-        print('[$timestamp] DEBUG API: Response status: ${response.statusCode}');
-        print('[$timestamp] DEBUG API: Response data length: ${response.data.length}');
+        print(
+          '[$timestamp] DEBUG API: Response status: ${response.statusCode}',
+        );
+        print(
+          '[$timestamp] DEBUG API: Response data length: ${response.data.length}',
+        );
       }
 
       // Check for SOAP Fault or HTTP status errors
       // Fault tekshirish - statusCode qanday bo'lishidan qat'i nazar
       final responseData = response.data.toString();
       if (responseData.contains('Fault') || response.statusCode != 200) {
-        if (kDebugMode) print('[$timestamp] DEBUG API: HTTP error detected: ${response.statusCode}');
+        if (kDebugMode)
+          print(
+            '[$timestamp] DEBUG API: HTTP error detected: ${response.statusCode}',
+          );
 
         // Prepare appropriate error message based on status code
         String faultMessage;
@@ -862,43 +957,54 @@ class SoapApiService {
             faultMessage = 'Not Found: The requested resource was not found';
             break;
           case 405:
-            faultMessage = 'Method Not Allowed: The HTTP method is not supported';
+            faultMessage =
+                'Method Not Allowed: The HTTP method is not supported';
             break;
           case 408:
-            faultMessage = 'Request Timeout: The server timed out waiting for the request';
+            faultMessage =
+                'Request Timeout: The server timed out waiting for the request';
             break;
           case 429:
             faultMessage = 'Too Many Requests: Rate limit exceeded';
             break;
           case 500:
-            faultMessage = 'Internal Server Error: An error occurred on the server';
+            faultMessage =
+                'Internal Server Error: An error occurred on the server';
             break;
           case 502:
             faultMessage = 'Bad Gateway: Invalid response from upstream server';
             break;
           case 503:
-            faultMessage = 'Service Unavailable: The server is temporarily unavailable';
+            faultMessage =
+                'Service Unavailable: The server is temporarily unavailable';
             break;
           case 504:
             faultMessage = 'Gateway Timeout: The server timed out';
             break;
           default:
-            faultMessage = 'HTTP Error ${response.statusCode}: An unexpected error occurred';
+            faultMessage =
+                'HTTP Error ${response.statusCode}: An unexpected error occurred';
         }
 
         // Try to extract SOAP fault details if present
         try {
           final document = XmlDocument.parse(responseData);
-          final faultElement = document.findAllElements('soap:Fault').firstOrNull ??
-                              document.findAllElements('Fault').firstOrNull;
+          final faultElement =
+              document.findAllElements('soap:Fault').firstOrNull ??
+              document.findAllElements('Fault').firstOrNull;
           if (faultElement != null) {
-            final faultString = faultElement.findAllElements('faultstring').firstOrNull?.innerText ??
-                               faultElement.findAllElements('detail').firstOrNull?.innerText ??
-                               'Unknown SOAP fault';
+            final faultString =
+                faultElement
+                    .findAllElements('faultstring')
+                    .firstOrNull
+                    ?.innerText ??
+                faultElement.findAllElements('detail').firstOrNull?.innerText ??
+                'Unknown SOAP fault';
             faultMessage = 'SOAP Fault (${response.statusCode}): $faultString';
           }
         } catch (e) {
-          if (kDebugMode) print('[$timestamp] DEBUG API: Error parsing fault details: $e');
+          if (kDebugMode)
+            print('[$timestamp] DEBUG API: Error parsing fault details: $e');
           // Keep the HTTP status-based message
         }
 
@@ -918,16 +1024,28 @@ class SoapApiService {
       debugPrint('Document data: ${document.toString()}');
 
       final returnElement = document.findAllElements('m:return').first;
-      final rowElements = returnElement.findAllElements('m:row').where((row) =>
-        row.children.isNotEmpty && row.findElements('m:code').isNotEmpty);
-      if (kDebugMode) print('[$timestamp] DEBUG API: Found ${rowElements.length} row elements');
+      final rowElements = returnElement
+          .findAllElements('m:row')
+          .where(
+            (row) =>
+                row.children.isNotEmpty &&
+                row.findElements('m:code').isNotEmpty,
+          );
+      if (kDebugMode)
+        print(
+          '[$timestamp] DEBUG API: Found ${rowElements.length} row elements',
+        );
 
       final promotions = rowElements.map((element) {
-        if (kDebugMode) print('[$timestamp] DEBUG API: Parsing promotion from XML element');
+        if (kDebugMode)
+          print('[$timestamp] DEBUG API: Parsing promotion from XML element');
         return PromotionModel.fromXml(element);
       }).toList();
 
-      if (kDebugMode) print('[$timestamp] DEBUG API: Successfully parsed ${promotions.length} promotions');
+      if (kDebugMode)
+        print(
+          '[$timestamp] DEBUG API: Successfully parsed ${promotions.length} promotions',
+        );
       return promotions;
     } on SoapFaultException catch (e) {
       // SOAP Fault xatosi - bo'sh ro'yxat qaytarish va davom etish
@@ -937,7 +1055,8 @@ class SoapApiService {
       }
       return [];
     } catch (e) {
-      if (kDebugMode) print('[$timestamp] DEBUG API: Error in getPromotions: $e');
+      if (kDebugMode)
+        print('[$timestamp] DEBUG API: Error in getPromotions: $e');
 
       // Check if this is a method not found error or Fault (common on some servers)
       if (e.toString().contains('method') ||
@@ -945,11 +1064,15 @@ class SoapApiService {
           e.toString().contains('available') ||
           e.toString().contains('Fault') ||
           e.toString().contains('500')) {
-        if (kDebugMode) print('[$timestamp] DEBUG API: getPromo method not available on this server, returning empty list');
+        if (kDebugMode)
+          print(
+            '[$timestamp] DEBUG API: getPromo method not available on this server, returning empty list',
+          );
         return []; // Return empty list instead of throwing
       }
 
-      if (kDebugMode) print('[$timestamp] DEBUG API: Unexpected error in getPromotions: $e');
+      if (kDebugMode)
+        print('[$timestamp] DEBUG API: Unexpected error in getPromotions: $e');
       return []; // Har qanday xatolikda bo'sh ro'yxat qaytarish
     }
   }
@@ -958,7 +1081,8 @@ class SoapApiService {
   Future<List<ClientContract>> getAllContracts({
     required String userCode,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -984,26 +1108,46 @@ class SoapApiService {
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 
-      return rowsElements.map((row) => ClientContract(
-        codeContract: _getElementText(row, 'm:CodeContract') ?? '',
-        dateOfContract: _parseDate(_getElementText(row, 'm:DateOfContract')),
-        sumOfContract: double.tryParse(_getElementText(row, 'm:SumOfContract') ?? '0') ?? 0.0,
-        termOfContract: _parseDate(_getElementText(row, 'm:TermOfContract')),
-        typeContract: _getElementText(row, 'm:TypeContract'),
-        numbReference: _getElementText(row, 'm:NumbReference'),
-        numbCertificate: _getElementText(row, 'm:NumbCertificate'),
-        termReference: _parseDate(_getElementText(row, 'm:TermReference')),
-        termCertificate: _parseDate(_getElementText(row, 'm:TermCertificate')),
-        numbPassport: _getElementText(row, 'm:NumbPassport'),
-        termPassport: _parseDate(_getElementText(row, 'm:TermPassport')),
-        certificateUnlimited: int.tryParse(_getElementText(row, 'm:CertificateUnlimited') ?? '0') ?? 0,
-        codeDistrict: _getElementText(row, 'm:CodeDistrict'),
-        nameDistrict: _getElementText(row, 'm:NameDistrict'),
-        codeProject: _getElementText(row, 'm:CodeProject'),
-        codeClient: _getElementText(row, 'm:CodeClient') ?? '',
-        active: _getElementText(row, 'm:Active')?.toLowerCase() == 'true',
-        status: _getElementText(row, 'm:Status') ?? 'Неизвестно',
-      )).toList();
+      return rowsElements
+          .map(
+            (row) => ClientContract(
+              codeContract: _getElementText(row, 'm:CodeContract') ?? '',
+              dateOfContract: _parseDate(
+                _getElementText(row, 'm:DateOfContract'),
+              ),
+              sumOfContract:
+                  double.tryParse(
+                    _getElementText(row, 'm:SumOfContract') ?? '0',
+                  ) ??
+                  0.0,
+              termOfContract: _parseDate(
+                _getElementText(row, 'm:TermOfContract'),
+              ),
+              typeContract: _getElementText(row, 'm:TypeContract'),
+              numbReference: _getElementText(row, 'm:NumbReference'),
+              numbCertificate: _getElementText(row, 'm:NumbCertificate'),
+              termReference: _parseDate(
+                _getElementText(row, 'm:TermReference'),
+              ),
+              termCertificate: _parseDate(
+                _getElementText(row, 'm:TermCertificate'),
+              ),
+              numbPassport: _getElementText(row, 'm:NumbPassport'),
+              termPassport: _parseDate(_getElementText(row, 'm:TermPassport')),
+              certificateUnlimited:
+                  int.tryParse(
+                    _getElementText(row, 'm:CertificateUnlimited') ?? '0',
+                  ) ??
+                  0,
+              codeDistrict: _getElementText(row, 'm:CodeDistrict'),
+              nameDistrict: _getElementText(row, 'm:NameDistrict'),
+              codeProject: _getElementText(row, 'm:CodeProject'),
+              codeClient: _getElementText(row, 'm:CodeClient') ?? '',
+              active: _getElementText(row, 'm:Active')?.toLowerCase() == 'true',
+              status: _getElementText(row, 'm:Status') ?? 'Неизвестно',
+            ),
+          )
+          .toList();
     } catch (e) {
       throw Exception('Shartnomalar ro\'yxatini olishda xatolik: $e');
     }
@@ -1014,9 +1158,9 @@ class SoapApiService {
     required String userCode,
     required String dateStart,
     required String dateEnd,
-  }) async
-  {
-    final soapEnvelope = '''
+  }) async {
+    final soapEnvelope =
+        '''
       <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
         <soap:Header/>
         <soap:Body>
@@ -1045,14 +1189,24 @@ class SoapApiService {
       final returnElement = document.findAllElements('m:return').first;
 
       // Parse main report data
-      final countAKB = int.tryParse(_getElementText(returnElement, 'CountAKB') ?? '0') ?? 0;
-      final countOKB = int.tryParse(_getElementText(returnElement, 'CountOKB') ?? '0') ?? 0;
-      final cash = double.tryParse(_getElementText(returnElement, 'Cash') ?? '0') ?? 0.0;
-      final transfer = double.tryParse(_getElementText(returnElement, 'Transfer') ?? '0') ?? 0.0;
-      final sum = double.tryParse(_getElementText(returnElement, 'Sum') ?? '0') ?? 0.0;
-      final countVisited = int.tryParse(_getElementText(returnElement, 'CountVisited') ?? '0') ?? 0;
-      final dateStartParsed = _getElementText(returnElement, 'DateStart') ?? dateStart;
-      final dateEndParsed = _getElementText(returnElement, 'DateEnd') ?? dateEnd;
+      final countAKB =
+          int.tryParse(_getElementText(returnElement, 'CountAKB') ?? '0') ?? 0;
+      final countOKB =
+          int.tryParse(_getElementText(returnElement, 'CountOKB') ?? '0') ?? 0;
+      final cash =
+          double.tryParse(_getElementText(returnElement, 'Cash') ?? '0') ?? 0.0;
+      final transfer =
+          double.tryParse(_getElementText(returnElement, 'Transfer') ?? '0') ??
+          0.0;
+      final sum =
+          double.tryParse(_getElementText(returnElement, 'Sum') ?? '0') ?? 0.0;
+      final countVisited =
+          int.tryParse(_getElementText(returnElement, 'CountVisited') ?? '0') ??
+          0;
+      final dateStartParsed =
+          _getElementText(returnElement, 'DateStart') ?? dateStart;
+      final dateEndParsed =
+          _getElementText(returnElement, 'DateEnd') ?? dateEnd;
 
       final mainReport = MainReport(
         userCode: userCode,
@@ -1070,41 +1224,49 @@ class SoapApiService {
 
       // Parse business region reports
       final businessRegionReports = <BusinessRegionReport>[];
-      final businessRegionElements = returnElement.findAllElements('BusinessRegionReportRow');
+      final businessRegionElements = returnElement.findAllElements(
+        'BusinessRegionReportRow',
+      );
       for (final element in businessRegionElements) {
         final code = _getElementText(element, 'Code') ?? '';
         final name = _getElementText(element, 'Name') ?? '';
         final akb = int.tryParse(_getElementText(element, 'AKB') ?? '0') ?? 0;
 
         if (code.isNotEmpty) {
-          businessRegionReports.add(BusinessRegionReport(
-            mainReportId: 0, // Will be set when saving
-            code: code,
-            name: name,
-            akb: akb,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ));
+          businessRegionReports.add(
+            BusinessRegionReport(
+              mainReportId: 0, // Will be set when saving
+              code: code,
+              name: name,
+              akb: akb,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
         }
       }
 
       // Parse AKB by categories
       final akbByCategories = <AKBByCategory>[];
-      final akbCategoryElements = returnElement.findAllElements('AKBByCotegoriesRow');
+      final akbCategoryElements = returnElement.findAllElements(
+        'AKBByCotegoriesRow',
+      );
       for (final element in akbCategoryElements) {
         final code = _getElementText(element, 'Code') ?? '';
         final name = _getElementText(element, 'Name') ?? '';
         final akb = int.tryParse(_getElementText(element, 'AKB') ?? '0') ?? 0;
 
         if (code.isNotEmpty) {
-          akbByCategories.add(AKBByCategory(
-            mainReportId: 0, // Will be set when saving
-            code: code,
-            name: name,
-            akb: akb,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ));
+          akbByCategories.add(
+            AKBByCategory(
+              mainReportId: 0, // Will be set when saving
+              code: code,
+              name: name,
+              akb: akb,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
         }
       }
 
@@ -1120,7 +1282,9 @@ class SoapApiService {
 
   /// Helper method to parse date strings
   DateTime? _parseDate(String? dateString) {
-    if (dateString == null || dateString.isEmpty || dateString == '0001-01-01') {
+    if (dateString == null ||
+        dateString.isEmpty ||
+        dateString == '0001-01-01') {
       return null;
     }
     try {
@@ -1155,7 +1319,8 @@ class SoapApiService {
   Future<List<OrderStatus>> getOrderStatusList({
     required String userCode,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -1181,9 +1346,12 @@ class SoapApiService {
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Row');
 
-      return rowsElements.map((row) => OrderStatus(
-        message: _getElementText(row, 'm:message') ?? '',
-      )).toList();
+      return rowsElements
+          .map(
+            (row) =>
+                OrderStatus(message: _getElementText(row, 'm:message') ?? ''),
+          )
+          .toList();
     } catch (e) {
       throw Exception('Buyurtma statuslari ro\'yxatini olishda xatolik: $e');
     }
@@ -1191,8 +1359,9 @@ class SoapApiService {
 
   /// Generate SOAP request XML for setOrder method (for debugging/display purposes)
   String generateSetOrderSoapRequest(CreateOrder order) {
-    final productsXml = order.products.map((product) {
-      return '''
+    final productsXml = order.products
+        .map((product) {
+          return '''
       <sam:Rows>
         <sam:CodeSklad>${order.codeSklad}</sam:CodeSklad>
         <sam:CodeProduct>${product.codeProduct}</sam:CodeProduct>       
@@ -1206,9 +1375,11 @@ class SoapApiService {
         <sam:DiscountRate>${product.discountRate}</sam:DiscountRate>
         <sam:GiftAmount>${product.giftAmount}</sam:GiftAmount>
       </sam:Rows>''';
-    }).join('\n');
+        })
+        .join('\n');
 
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
   <soap:Header/>
   <soap:Body>
@@ -1246,10 +1417,9 @@ class SoapApiService {
   }
 
   /// Get order list
-  Future<List<Order>> getOrderList({
-    required String userCode,
-  }) async {
-    final soapEnvelope = '''
+  Future<List<Order>> getOrderList({required String userCode}) async {
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -1271,28 +1441,40 @@ class SoapApiService {
           },
         ),
       );
-      if (kDebugMode) print('buyurtmalar royxati soap holatda: ${response.data}');
+      if (kDebugMode)
+        print('buyurtmalar royxati soap holatda: ${response.data}');
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 
-      return rowsElements.map((row) => Order(
-        numOrder: _getElementText(row, 'm:NumOrder') ?? '',
-        dateOrder: DateTime.parse(_getElementText(row, 'm:DateOrder') ?? DateTime.now().toIso8601String()),
-        captionOrder: _getElementText(row, 'm:CaptionOrder') ?? '',
-        typePriceCode: _getElementText(row, 'm:TypePrice') ?? '',
-        status: int.tryParse(_getElementText(row, 'm:Status') ?? '0') ?? 0,
-        commentSupervisor: _getElementText(row, 'm:CommentSupervisor'),
-        commentForwarder: _getElementText(row, 'm:CommentForwarder'),
-        commentAgent: _getElementText(row, 'm:CommentAgent'),
-        total: double.tryParse(_getElementText(row, 'm:Total') ?? '0') ?? 0.0,
-        clientCode: _getElementText(row, 'm:ClientCode') ?? '',
-        clientName: _getElementText(row, 'm:ClientName') ?? '',
-        codeOrg: _getElementText(row, 'm:CodeOrg') ?? '',
-        mainStatus: _getElementText(row, 'm:mainStatus') ?? '',
-        courierName: _getElementText(row, 'm:courierName'),
-        courierCar: _getElementText(row, 'm:courierCar'),
-        server: true, // Server-sourced data
-      )).toList();
+      return rowsElements
+          .map(
+            (row) => Order(
+              numOrder: _getElementText(row, 'm:NumOrder') ?? '',
+              dateOrder: DateTime.parse(
+                _getElementText(row, 'm:DateOrder') ??
+                    DateTime.now().toIso8601String(),
+              ),
+              captionOrder: _getElementText(row, 'm:CaptionOrder') ?? '',
+              typePriceCode: _getElementText(row, 'm:TypePrice') ?? '',
+              status:
+                  int.tryParse(_getElementText(row, 'm:Status') ?? '0') ?? 0,
+              commentSupervisor: _getElementText(row, 'm:CommentSupervisor'),
+              commentForwarder: _getElementText(row, 'm:CommentForwarder'),
+              commentAgent: _getElementText(row, 'm:CommentAgent'),
+              total:
+                  double.tryParse(_getElementText(row, 'm:Total') ?? '0') ??
+                  0.0,
+              clientCode: _getElementText(row, 'm:ClientCode') ?? '',
+              clientName: _getElementText(row, 'm:ClientName') ?? '',
+              codeOrg: _getElementText(row, 'm:CodeOrg') ?? '',
+              mainStatus: _getElementText(row, 'm:mainStatus') ?? '',
+              courierName: _getElementText(row, 'm:courierName'),
+              courierCar: _getElementText(row, 'm:courierCar'),
+              server: true, // Server-sourced data
+              promo: _getElementText(row, 'm:Promo')?.toLowerCase() == 'true',
+            ),
+          )
+          .toList();
     } catch (e) {
       throw Exception('Buyurtmalar ro\'yxatini olishda xatolik: $e');
     }
@@ -1302,7 +1484,8 @@ class SoapApiService {
   Future<Map<String, dynamic>> getSalesReqPermissions({
     required String userCode,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -1337,25 +1520,64 @@ class SoapApiService {
         print('userCode: $userCoded');
         print('userCode: $userCode');
       }
-      final skipTINduplicateCheck = _getElementText(returnElement, 'm:SkipTINduplicateCheck')?.toLowerCase() == 'true';
-      final allowCreationWithoutTIN = _getElementText(returnElement, 'm:AllowCreationWithoutTIN')?.toLowerCase() == 'true';
-      final allowCreatingPointOfSale = _getElementText(returnElement, 'm:AllowCreatingPointOfSale')?.toLowerCase() == 'true';
-      final visit = _getElementText(returnElement, 'm:Visit')?.toLowerCase() == 'true';
-      final strictSequence = _getElementText(returnElement, 'm:StrictSequence')?.toLowerCase() == 'true';
-      final unplannedOrder = _getElementText(returnElement, 'm:UnplannedOrder')?.toLowerCase() == 'true';
-      final plannedRoute = _getElementText(returnElement, 'm:PlannedRoute')?.toLowerCase() == 'true';
-      final editClientCoordinates = _getElementText(returnElement, 'm:EditСlientСoordinates')?.toLowerCase() == 'true';
-      final clientZoneAccess = int.tryParse(_getElementText(returnElement, 'm:ClientZoneAccess') ?? '0') ?? 0;
-      final locationUpdateInterval = int.tryParse(_getElementText(returnElement, 'm:LocationUpdateInterval') ?? '0') ?? 0;
+      final skipTINduplicateCheck =
+          _getElementText(
+            returnElement,
+            'm:SkipTINduplicateCheck',
+          )?.toLowerCase() ==
+          'true';
+      final allowCreationWithoutTIN =
+          _getElementText(
+            returnElement,
+            'm:AllowCreationWithoutTIN',
+          )?.toLowerCase() ==
+          'true';
+      final allowCreatingPointOfSale =
+          _getElementText(
+            returnElement,
+            'm:AllowCreatingPointOfSale',
+          )?.toLowerCase() ==
+          'true';
+      final visit =
+          _getElementText(returnElement, 'm:Visit')?.toLowerCase() == 'true';
+      final strictSequence =
+          _getElementText(returnElement, 'm:StrictSequence')?.toLowerCase() ==
+          'true';
+      final unplannedOrder =
+          _getElementText(returnElement, 'm:UnplannedOrder')?.toLowerCase() ==
+          'true';
+      final plannedRoute =
+          _getElementText(returnElement, 'm:PlannedRoute')?.toLowerCase() ==
+          'true';
+      final editClientCoordinates =
+          _getElementText(
+            returnElement,
+            'm:EditСlientСoordinates',
+          )?.toLowerCase() ==
+          'true';
+      final clientZoneAccess =
+          int.tryParse(
+            _getElementText(returnElement, 'm:ClientZoneAccess') ?? '0',
+          ) ??
+          0;
+      final locationUpdateInterval =
+          int.tryParse(
+            _getElementText(returnElement, 'm:LocationUpdateInterval') ?? '0',
+          ) ??
+          0;
 
       // Parse visit steps
       final visitSteps = <Map<String, dynamic>>[];
       final stepElements = returnElement.findAllElements('m:StepList');
 
       for (final stepElement in stepElements) {
-        final stepCode = int.tryParse(_getElementText(stepElement, 'm:stepCode') ?? '0') ?? 0;
+        final stepCode =
+            int.tryParse(_getElementText(stepElement, 'm:stepCode') ?? '0') ??
+            0;
         final stepName = _getElementText(stepElement, 'm:stepName') ?? '';
-        final stepRequired = _getElementText(stepElement, 'm:stepRequired')?.toLowerCase() == 'true';
+        final stepRequired =
+            _getElementText(stepElement, 'm:stepRequired')?.toLowerCase() ==
+            'true';
 
         visitSteps.add({
           'stepCode': stepCode,
@@ -1406,7 +1628,8 @@ class SoapApiService {
   Future<List<Map<String, dynamic>>> getPlannedRouteList({
     required String userCode,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -1443,7 +1666,8 @@ class SoapApiService {
 
       for (final row in rowElements) {
         final route = {
-          'codeWeekday': int.tryParse(_getElementText(row, 'm:codeWeekday') ?? '0') ?? 0,
+          'codeWeekday':
+              int.tryParse(_getElementText(row, 'm:codeWeekday') ?? '0') ?? 0,
           'weekDay': _getElementText(row, 'm:WeekDay') ?? '',
           'codeClient': _getElementText(row, 'm:CodeClient') ?? '',
           'clientName': _getElementText(row, 'm:ClientName') ?? '',
@@ -1453,7 +1677,9 @@ class SoapApiService {
 
       return routes;
     } catch (e) {
-      throw Exception('Rejalashtirilgan marshrutlar ro\'yxatini olishda xatolik: $e');
+      throw Exception(
+        'Rejalashtirilgan marshrutlar ro\'yxatini olishda xatolik: $e',
+      );
     }
   }
 
@@ -1499,13 +1725,12 @@ class SoapApiService {
       final yandexToken = _getElementText(returnElement, 'm:yandexToken') ?? '';
       final googleToken = _getElementText(returnElement, 'm:googleToken') ?? '';
 
-      final tokens = {
-        'yandexToken': yandexToken,
-        'googleToken': googleToken,
-      };
+      final tokens = {'yandexToken': yandexToken, 'googleToken': googleToken};
 
       if (kDebugMode) {
-        print('SOAP API: Retrieved map tokens - Yandex: ${yandexToken.isNotEmpty ? 'Present' : 'Empty'}, Google: ${googleToken.isNotEmpty ? 'Present' : 'Empty'}');
+        print(
+          'SOAP API: Retrieved map tokens - Yandex: ${yandexToken.isNotEmpty ? 'Present' : 'Empty'}, Google: ${googleToken.isNotEmpty ? 'Present' : 'Empty'}',
+        );
       }
 
       return tokens;
@@ -1541,7 +1766,8 @@ class SoapApiService {
       throw ArgumentError('Longitude must be between -180 and 180 degrees');
     }
 
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
         <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
            <soap:Header/>
            <soap:Body>
@@ -1556,7 +1782,9 @@ class SoapApiService {
 
     try {
       if (kDebugMode) {
-        print('SOAP API: Updating client coordinates for client $clientCode: lat=$latitude, lng=$longitude');
+        print(
+          'SOAP API: Updating client coordinates for client $clientCode: lat=$latitude, lng=$longitude',
+        );
       }
 
       final response = await _dio.post(
@@ -1576,9 +1804,13 @@ class SoapApiService {
       // Check if return element is empty (client not found or write error)
       if (returnElement == null || returnElement.children.isEmpty) {
         if (kDebugMode) {
-          print('SOAP API: Client coordinates update failed - empty return element (client not found or write error)');
+          print(
+            'SOAP API: Client coordinates update failed - empty return element (client not found or write error)',
+          );
         }
-        throw Exception('Mijoz topilmadi yoki koordinatalarni yozishda xatolik yuz berdi');
+        throw Exception(
+          'Mijoz topilmadi yoki koordinatalarni yozishda xatolik yuz berdi',
+        );
       }
 
       // Parse successful response
@@ -1586,15 +1818,21 @@ class SoapApiService {
       final responseLongitude = _getElementText(returnElement, 'm:Longitude');
       final responseLatitude = _getElementText(returnElement, 'm:Latitude');
 
-      if (responseClientCode == null || responseLongitude == null || responseLatitude == null) {
+      if (responseClientCode == null ||
+          responseLongitude == null ||
+          responseLatitude == null) {
         if (kDebugMode) {
-          print('SOAP API: Client coordinates update failed - missing response data');
+          print(
+            'SOAP API: Client coordinates update failed - missing response data',
+          );
         }
         throw Exception('Server javobi to\'liq emas');
       }
 
       if (kDebugMode) {
-        print('SOAP API: Client coordinates update successful: client=$responseClientCode, lat=$responseLatitude, lng=$responseLongitude');
+        print(
+          'SOAP API: Client coordinates update successful: client=$responseClientCode, lat=$responseLatitude, lng=$responseLongitude',
+        );
       }
 
       return 'Muvaffaqiyatli yangilandi';
@@ -1612,7 +1850,8 @@ class SoapApiService {
     required String orderDate1,
     required String orderDate2,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -1641,45 +1880,70 @@ class SoapApiService {
       final returnElement = document.findAllElements('m:return').first;
 
       // Parse main order details
-      final credit = _getElementText(returnElement, 'm:Credit')?.toLowerCase() == 'true';
+      final credit =
+          _getElementText(returnElement, 'm:Credit')?.toLowerCase() == 'true';
       final codePrice = _getElementText(returnElement, 'm:CodePrice') ?? '';
       final dateOrderStr = _getElementText(returnElement, 'm:DateOrder') ?? '';
       final dateOrder = DateTime.parse(dateOrderStr);
       final codeSklad = _getElementText(returnElement, 'm:CodeSklad') ?? '';
-      final commentSupervisor = _getElementText(returnElement, 'm:CommentSupervisor');
-      final commentForwarder = _getElementText(returnElement, 'm:CommentForwarder');
+      final commentSupervisor = _getElementText(
+        returnElement,
+        'm:CommentSupervisor',
+      );
+      final commentForwarder = _getElementText(
+        returnElement,
+        'm:CommentForwarder',
+      );
       final commentAgent = _getElementText(returnElement, 'm:CommentAgent');
-      final shippingDateStr = _getElementText(returnElement, 'm:ShippingDate') ?? '';
+      final shippingDateStr =
+          _getElementText(returnElement, 'm:ShippingDate') ?? '';
       final shippingDate = DateTime.parse(shippingDateStr);
-      final orderType = int.tryParse(_getElementText(returnElement, 'm:OrderType') ?? '0') ?? 0;
+      final orderType =
+          int.tryParse(_getElementText(returnElement, 'm:OrderType') ?? '0') ??
+          0;
       final codeOrg = _getElementText(returnElement, 'm:CodeOrg') ?? '';
 
       // Parse product rows - only add products with non-zero price
       final productRows = <OrderDetailProduct>[];
-      final productRowsElement = returnElement.findAllElements('m:ProductRows').firstOrNull;
+      final productRowsElement = returnElement
+          .findAllElements('m:ProductRows')
+          .firstOrNull;
       if (productRowsElement != null) {
         final rowsElements = productRowsElement.findAllElements('m:Rows');
         for (final row in rowsElements) {
-          final price = double.tryParse(_getElementText(row, 'm:Price') ?? '0') ?? 0.0;
+          final price =
+              double.tryParse(_getElementText(row, 'm:Price') ?? '0') ?? 0.0;
           // Skip products with negative price only - allow zero price products
           if (price < 0) {
             if (kDebugMode) {
-              print('SOAP API: Skipping product with negative price: ${_getElementText(row, 'm:CodeProduct')}');
+              print(
+                'SOAP API: Skipping product with negative price: ${_getElementText(row, 'm:CodeProduct')}',
+              );
             }
             continue;
           }
           // Get price type from product row or use order's price type as default
-          final productPriceTypeCode = _getElementText(row, 'm:CodePrice') ?? codePrice;
-          final productPriceTypeName = _getElementText(row, 'm:NamePrice') ?? '';
+          final productPriceTypeCode =
+              _getElementText(row, 'm:CodePrice') ?? codePrice;
+          final productPriceTypeName =
+              _getElementText(row, 'm:NamePrice') ?? '';
           final product = OrderDetailProduct(
             codeProduct: _getElementText(row, 'm:CodeProduct') ?? '',
             nameProduct: _getElementText(row, 'm:NameProduct') ?? '',
             amount: int.tryParse(_getElementText(row, 'm:Amount') ?? '0') ?? 0,
             price: price,
-            total: double.tryParse(_getElementText(row, 'm:Total') ?? '0') ?? 0.0,
-            discountRate: double.tryParse(_getElementText(row, 'm:DiscountRate') ?? '0') ?? 0.0,
-            weight: double.tryParse(_getElementText(row, 'm:Weight') ?? '0') ?? 0.0,
-            capacity: double.tryParse(_getElementText(row, 'm:Capacity') ?? '0') ?? 0.0,
+            total:
+                double.tryParse(_getElementText(row, 'm:Total') ?? '0') ?? 0.0,
+            discountRate:
+                double.tryParse(
+                  _getElementText(row, 'm:DiscountRate') ?? '0',
+                ) ??
+                0.0,
+            weight:
+                double.tryParse(_getElementText(row, 'm:Weight') ?? '0') ?? 0.0,
+            capacity:
+                double.tryParse(_getElementText(row, 'm:Capacity') ?? '0') ??
+                0.0,
             priceTypeCode: productPriceTypeCode,
             priceTypeName: productPriceTypeName,
           );
@@ -1689,13 +1953,16 @@ class SoapApiService {
 
       // Parse credit details list (payments)
       final creditDetailsList = <OrderPayment>[];
-      final creditDetailsElement = returnElement.findAllElements('m:CreditDetailsList').firstOrNull;
+      final creditDetailsElement = returnElement
+          .findAllElements('m:CreditDetailsList')
+          .firstOrNull;
       if (creditDetailsElement != null) {
         final rowsElements = creditDetailsElement.findAllElements('m:Rows');
         for (final row in rowsElements) {
           final payment = OrderPayment(
             dateOfPayment: _getElementText(row, 'm:DateOfPayment') ?? '',
-            total: double.tryParse(_getElementText(row, 'm:Total') ?? '0') ?? 0.0,
+            total:
+                double.tryParse(_getElementText(row, 'm:Total') ?? '0') ?? 0.0,
           );
           creditDetailsList.add(payment);
         }
@@ -1721,14 +1988,14 @@ class SoapApiService {
     }
   }
 
-
   /// Send create order to server via SetOrder API
   /// This method sends a local order to the server for processing
-  Future<Map<String, dynamic>> setOrder({
-    required CreateOrder order,
-  }) async {
+  Future<Map<String, dynamic>> setOrder({required CreateOrder order}) async {
     // Build the SOAP envelope based on the provided XML structure
-    final productsXml = order.products.map((product) => '''
+    final productsXml = order.products
+        .map(
+          (product) =>
+              '''
       <sam:Rows>
          <sam:CodeSklad>${product.codeSklad}</sam:CodeSklad>
          <sam:CodeProduct>${product.codeProduct}</sam:CodeProduct>
@@ -1742,27 +2009,40 @@ class SoapApiService {
          <sam:DiscountRate>${product.discountRate}</sam:DiscountRate>
          <sam:GiftAmount>${product.giftAmount}</sam:GiftAmount>
       </sam:Rows>
-    ''').join();
+    ''',
+        )
+        .join();
 
-    final competitiveIntelligenceXml = order.competitiveIntelligence.map((ci) => '''
+    final competitiveIntelligenceXml = order.competitiveIntelligence
+        .map(
+          (ci) =>
+              '''
       <sam:Rows>
          <sam:Competitor>${ci.competitor}</sam:Competitor>
          <sam:Product>${ci.product}</sam:Product>
          <sam:Price>${ci.price}</sam:Price>
       </sam:Rows>
-    ''').join();
+    ''',
+        )
+        .join();
 
     // Generate XML for credit details with dates formatted as YYYYMMDD strings
     // DateOfPayment is formatted using _formatDateForApi to match server API requirements
-    final creditDetailsXml = order.creditDetails.map((cd) => '''
+    final creditDetailsXml = order.creditDetails
+        .map(
+          (cd) =>
+              '''
       <sam:Rows>
          <!-- DateOfPayment formatted as YYYYMMDD string (e.g., "20251203") as required by server API -->
          <sam:DateOfPayment>${_formatDateForApi(cd.dateOfPayment)}</sam:DateOfPayment>
          <sam:Total>${cd.total}</sam:Total>
       </sam:Rows>
-    ''').join();
+    ''',
+        )
+        .join();
 
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -1805,15 +2085,31 @@ class SoapApiService {
       if (kDebugMode) {
         print('SOAP API: Sending SetOrder request for order ${order.id}');
         print('SOAP API: SetOrder field values:');
-        print('  codeAgent: "${order.codeAgent}" (length: ${order.codeAgent.length})');
-        print('  codeClient: "${order.codeClient}" (length: ${order.codeClient.length})');
-        print('  codePrice: "${order.codePrice}" (length: ${order.codePrice.length})');
-        print('  payment: "${order.payment}" (length: ${order.payment.length})');
-        print('  codeProject: "${order.codeProject}" (length: ${order.codeProject.length})');
+        print(
+          '  codeAgent: "${order.codeAgent}" (length: ${order.codeAgent.length})',
+        );
+        print(
+          '  codeClient: "${order.codeClient}" (length: ${order.codeClient.length})',
+        );
+        print(
+          '  codePrice: "${order.codePrice}" (length: ${order.codePrice.length})',
+        );
+        print(
+          '  payment: "${order.payment}" (length: ${order.payment.length})',
+        );
+        print(
+          '  codeProject: "${order.codeProject}" (length: ${order.codeProject.length})',
+        );
         print('  orderType: ${order.orderType}');
-        print('  codeOrg: "${order.codeOrg}" (length: ${order.codeOrg.length})');
-        print('  codeSklad: "${order.codeSklad}" (length: ${order.codeSklad.length})');
-        print('  codeContract: "${order.codeContract ?? ''}" (length: ${(order.codeContract ?? '').length})');
+        print(
+          '  codeOrg: "${order.codeOrg}" (length: ${order.codeOrg.length})',
+        );
+        print(
+          '  codeSklad: "${order.codeSklad}" (length: ${order.codeSklad.length})',
+        );
+        print(
+          '  codeContract: "${order.codeContract ?? ''}" (length: ${(order.codeContract ?? '').length})',
+        );
         print('  hasPromo: ${order.hasPromo}');
         print('  products count: ${order.products.length}');
       }
@@ -1837,13 +2133,16 @@ class SoapApiService {
       }
 
       // Parse response fields as per API specification
-      final code = int.tryParse(_getElementText(returnElement, 'm:Code') ?? '0') ?? 0;
+      final code =
+          int.tryParse(_getElementText(returnElement, 'm:Code') ?? '0') ?? 0;
       final message = _getElementText(returnElement, 'm:Message') ?? '';
       final codeOrder = _getElementText(returnElement, 'm:CodeOrder') ?? '';
       final rows = _getElementText(returnElement, 'm:Rows') ?? '';
 
       if (kDebugMode) {
-        print('SOAP API: SetOrder response - Code: $code, Message: $message, CodeOrder: $codeOrder');
+        print(
+          'SOAP API: SetOrder response - Code: $code, Message: $message, CodeOrder: $codeOrder',
+        );
       }
 
       return {
@@ -1868,7 +2167,8 @@ class SoapApiService {
   Future<List<UserOrganization>> getOrganizationsByUserCode({
     required String userCode,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -1903,32 +2203,43 @@ class SoapApiService {
       final returnElement = document.findAllElements('m:return').first;
 
       // Parse organizations from response
-      final organizationElements = returnElement.findAllElements('m:Organizations');
+      final organizationElements = returnElement.findAllElements(
+        'm:Organizations',
+      );
       final organizations = <UserOrganization>[];
 
       for (final orgElement in organizationElements) {
         final code = _getElementText(orgElement, 'm:Code');
         final name = _getElementText(orgElement, 'm:Name');
 
-        if (code != null && code.isNotEmpty && name != null && name.isNotEmpty) {
-          organizations.add(UserOrganization(
-            code: code,
-            name: name,
-            userCode: userCode,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ));
+        if (code != null &&
+            code.isNotEmpty &&
+            name != null &&
+            name.isNotEmpty) {
+          organizations.add(
+            UserOrganization(
+              code: code,
+              name: name,
+              userCode: userCode,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
         }
       }
 
       if (kDebugMode) {
-        print('SOAP API: Successfully parsed ${organizations.length} organizations for user $userCode');
+        print(
+          'SOAP API: Successfully parsed ${organizations.length} organizations for user $userCode',
+        );
       }
 
       return organizations;
     } catch (e) {
       if (kDebugMode) {
-        print('SOAP API: Error retrieving organizations for user $userCode: $e');
+        print(
+          'SOAP API: Error retrieving organizations for user $userCode: $e',
+        );
       }
       throw Exception('Foydalanuvchi tashkilotlarini olishda xatolik: $e');
     }
@@ -1939,10 +2250,10 @@ class SoapApiService {
   // ===========================================================================
 
   /// Check device and account access on startup
-  /// 
+  ///
   /// Bu metod ilova ishga tushganda qurilma va account bog'liqligini tekshiradi.
   /// Server ALLOW yoki BLOCK qaytaradi.
-  /// 
+  ///
   /// Parameters:
   /// - [userId] - Foydalanuvchi identifikatori (userCode)
   /// - [localUuid] - Local UUID (flutter_secure_storage dan)
@@ -1966,7 +2277,8 @@ class SoapApiService {
     required String appVersion,
     String? deviceFingerprint,
   }) async {
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -1988,7 +2300,9 @@ class SoapApiService {
 
     try {
       if (kDebugMode) {
-        print('SOAP API: CheckAccessOnStartup for user: $userId, platform: $platform');
+        print(
+          'SOAP API: CheckAccessOnStartup for user: $userId, platform: $platform',
+        );
       }
 
       final response = await _dio.post(
@@ -2004,31 +2318,45 @@ class SoapApiService {
       );
 
       if (kDebugMode) {
-        print('SOAP API: CheckAccessOnStartup response received, statusCode: ${response.statusCode}');
+        print(
+          'SOAP API: CheckAccessOnStartup response received, statusCode: ${response.statusCode}',
+        );
       }
 
       final responseData = response.data?.toString() ?? '';
-      
+
       // Fault tekshirish - statusCode qanday bo'lishidan qat'i nazar
       if (responseData.contains('Fault') || response.statusCode != 200) {
         String? soapFaultMessage;
         try {
           if (responseData.contains('Fault')) {
             final faultDoc = XmlDocument.parse(responseData);
-            soapFaultMessage = faultDoc.findAllElements('soap:Text').firstOrNull?.innerText.trim() ??
-                               faultDoc.findAllElements('faultstring').firstOrNull?.innerText.trim();
+            soapFaultMessage =
+                faultDoc
+                    .findAllElements('soap:Text')
+                    .firstOrNull
+                    ?.innerText
+                    .trim() ??
+                faultDoc
+                    .findAllElements('faultstring')
+                    .firstOrNull
+                    ?.innerText
+                    .trim();
           }
         } catch (_) {}
-        
+
         if (kDebugMode) {
-          print('SOAP API: CheckAccessOnStartup server error ${response.statusCode}: $soapFaultMessage');
+          print(
+            'SOAP API: CheckAccessOnStartup server error ${response.statusCode}: $soapFaultMessage',
+          );
         }
-        
+
         return {
           'status': 'ALLOW',
           'riskScore': 0,
           'reason': null,
-          'message': soapFaultMessage ?? 'Server xatosi: ${response.statusCode}',
+          'message':
+              soapFaultMessage ?? 'Server xatosi: ${response.statusCode}',
         };
       }
 
@@ -2055,7 +2383,9 @@ class SoapApiService {
       final message = _getElementText(returnElement, 'm:Message');
 
       if (kDebugMode) {
-        print('SOAP API: CheckAccessOnStartup result - Status: $status, RiskScore: $riskScoreText, Reason: $reason');
+        print(
+          'SOAP API: CheckAccessOnStartup result - Status: $status, RiskScore: $riskScoreText, Reason: $reason',
+        );
       }
 
       return {
@@ -2069,12 +2399,14 @@ class SoapApiService {
         print('SOAP API: DioException in CheckAccessOnStartup: ${e.message}');
         print('SOAP API: Response: ${e.response?.data}');
       }
-      
+
       // Server 500 xatosi - metod mavjud emas yoki server xatosi
       // Bu holatda foydalanuvchini bloklash emas, davom etish kerak
       if (e.response?.statusCode == 500) {
         if (kDebugMode) {
-          print('SOAP API: Server error 500, defaulting to ALLOW (method may not exist on server)');
+          print(
+            'SOAP API: Server error 500, defaulting to ALLOW (method may not exist on server)',
+          );
         }
         return {
           'status': 'ALLOW',
@@ -2083,14 +2415,16 @@ class SoapApiService {
           'message': 'Server xatosi - tekshiruv o\'tkazib yuborildi',
         };
       }
-      
+
       // Tarmoq xatosi (connection timeout, no internet)
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.sendTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.connectionError) {
         if (kDebugMode) {
-          print('SOAP API: Network error, defaulting to ALLOW for offline mode');
+          print(
+            'SOAP API: Network error, defaulting to ALLOW for offline mode',
+          );
         }
         return {
           'status': 'ALLOW',
@@ -2099,7 +2433,7 @@ class SoapApiService {
           'message': 'Offline rejim - tekshiruv o\'tkazib yuborildi',
         };
       }
-      
+
       // Boshqa xatolar uchun ham ALLOW qaytarish
       // Foydalanuvchini bloklash emas
       if (kDebugMode) {
@@ -2143,36 +2477,48 @@ class SoapApiService {
         _baseUrl,
         data: soapEnvelope,
         options: Options(
-          headers: {'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': ''},
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
           validateStatus: (status) => true,
         ),
       );
 
       final responseData = response.data?.toString() ?? '';
-      
+
       if (responseData.contains('Fault') || response.statusCode != 200) {
-        if (kDebugMode) print('SOAP API: getTypeOfContract error ${response.statusCode}');
+        if (kDebugMode)
+          print('SOAP API: getTypeOfContract error ${response.statusCode}');
         return [];
       }
 
       final document = XmlDocument.parse(responseData);
-      
+
       // Parse contract types similar to other methods - find m:return first, then m:Rows
       final returnElement = document.findAllElements('m:return').firstOrNull;
       if (returnElement == null) {
-        if (kDebugMode) print('SOAP API: getTypeOfContract - no return element found');
+        if (kDebugMode)
+          print('SOAP API: getTypeOfContract - no return element found');
         return [];
       }
-      
+
       final rowElements = returnElement.findAllElements('m:Rows');
-      if (kDebugMode) print('SOAP API: getTypeOfContract found ${rowElements.length} contract types');
-      
-      return rowElements.map((row) => ContractType(
-        code: _getElementText(row, 'm:Code') ?? '',
-        name: _getElementText(row, 'm:Name') ?? '',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      )).toList();
+      if (kDebugMode)
+        print(
+          'SOAP API: getTypeOfContract found ${rowElements.length} contract types',
+        );
+
+      return rowElements
+          .map(
+            (row) => ContractType(
+              code: _getElementText(row, 'm:Code') ?? '',
+              name: _getElementText(row, 'm:Name') ?? '',
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          )
+          .toList();
     } catch (e) {
       if (kDebugMode) print('SOAP API: getTypeOfContract error: $e');
       return [];
@@ -2184,9 +2530,13 @@ class SoapApiService {
     required String codeUser,
     required String codeProject,
   }) async {
-    if (kDebugMode) print('SOAP API: getCitiesDistrictContracting for user: $codeUser, project: $codeProject');
+    if (kDebugMode)
+      print(
+        'SOAP API: getCitiesDistrictContracting for user: $codeUser, project: $codeProject',
+      );
 
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -2203,27 +2553,38 @@ class SoapApiService {
         _baseUrl,
         data: soapEnvelope,
         options: Options(
-          headers: {'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': ''},
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
         ),
       );
 
       final document = XmlDocument.parse(response.data);
       final returnElement = document.findAllElements('m:return').firstOrNull;
-      
+
       if (returnElement == null) {
-        if (kDebugMode) print('SOAP API: getCitiesDistrictContracting no return element');
+        if (kDebugMode)
+          print('SOAP API: getCitiesDistrictContracting no return element');
         return [];
       }
-      
+
       final rowElements = returnElement.findAllElements('m:Rows');
-      if (kDebugMode) print('SOAP API: getCitiesDistrictContracting found ${rowElements.length} districts');
-      
-      return rowElements.map((row) => DistrictContracting(
-        codeDistrict: _getElementText(row, 'm:CodeDistrict') ?? '',
-        nameDistrict: _getElementText(row, 'm:NameDistrict') ?? '',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      )).toList();
+      if (kDebugMode)
+        print(
+          'SOAP API: getCitiesDistrictContracting found ${rowElements.length} districts',
+        );
+
+      return rowElements
+          .map(
+            (row) => DistrictContracting(
+              codeDistrict: _getElementText(row, 'm:CodeDistrict') ?? '',
+              nameDistrict: _getElementText(row, 'm:NameDistrict') ?? '',
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          )
+          .toList();
     } catch (e) {
       if (kDebugMode) print('SOAP API: getCitiesDistrictContracting error: $e');
       return [];
@@ -2250,7 +2611,8 @@ class SoapApiService {
   }) async {
     if (kDebugMode) print('SOAP API: setContract for client: $codeClient');
 
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -2288,32 +2650,53 @@ class SoapApiService {
         _baseUrl,
         data: soapEnvelope,
         options: Options(
-          headers: {'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': ''},
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
           validateStatus: (status) => true,
         ),
       );
 
       final responseData = response.data?.toString() ?? '';
-      
+
       if (responseData.contains('Fault') || response.statusCode != 200) {
         String? faultMsg;
         try {
           if (responseData.contains('Fault')) {
             final doc = XmlDocument.parse(responseData);
-            faultMsg = doc.findAllElements('soap:Text').firstOrNull?.innerText.trim() ??
-                       doc.findAllElements('faultstring').firstOrNull?.innerText.trim();
+            faultMsg =
+                doc
+                    .findAllElements('soap:Text')
+                    .firstOrNull
+                    ?.innerText
+                    .trim() ??
+                doc
+                    .findAllElements('faultstring')
+                    .firstOrNull
+                    ?.innerText
+                    .trim();
           }
         } catch (_) {}
-        return {'success': false, 'message': faultMsg ?? 'Server xatosi: ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': faultMsg ?? 'Server xatosi: ${response.statusCode}',
+        };
       }
 
       final document = XmlDocument.parse(responseData);
       final returnElement = document.findAllElements('m:return').firstOrNull;
-      final contractCode = returnElement != null 
-          ? (_getElementText(returnElement, 'm:CodeContract') ?? _getElementText(returnElement, 'm:Code') ?? returnElement.innerText.trim())
+      final contractCode = returnElement != null
+          ? (_getElementText(returnElement, 'm:CodeContract') ??
+                _getElementText(returnElement, 'm:Code') ??
+                returnElement.innerText.trim())
           : null;
 
-      return {'success': true, 'message': 'Shartnoma yaratildi', 'contractCode': contractCode};
+      return {
+        'success': true,
+        'message': 'Shartnoma yaratildi',
+        'contractCode': contractCode,
+      };
     } catch (e) {
       if (kDebugMode) print('SOAP API: setContract error: $e');
       return {'success': false, 'message': e.toString()};
@@ -2344,7 +2727,8 @@ class SoapApiService {
   }) async {
     if (kDebugMode) print('SOAP API: setClient - Creating new client: $name');
 
-    final soapEnvelope = '''
+    final soapEnvelope =
+        '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
    <soap:Body>
@@ -2384,19 +2768,28 @@ class SoapApiService {
         _baseUrl,
         data: soapEnvelope,
         options: Options(
-          headers: {'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': ''},
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
           validateStatus: (status) => true,
         ),
       );
 
       final responseData = response.data?.toString() ?? '';
-      
+
       if (kDebugMode) {
-        print('═══════════════════════════════════════════════════════════════');
+        print(
+          '═══════════════════════════════════════════════════════════════',
+        );
         print('SOAP RESPONSE - SetClient');
-        print('═══════════════════════════════════════════════════════════════');
+        print(
+          '═══════════════════════════════════════════════════════════════',
+        );
         print(responseData);
-        print('═══════════════════════════════════════════════════════════════');
+        print(
+          '═══════════════════════════════════════════════════════════════',
+        );
       }
 
       if (responseData.contains('Fault') || response.statusCode != 200) {
@@ -2404,28 +2797,41 @@ class SoapApiService {
         try {
           if (responseData.contains('Fault')) {
             final doc = XmlDocument.parse(responseData);
-            faultMsg = doc.findAllElements('soap:Text').firstOrNull?.innerText.trim() ??
-                       doc.findAllElements('faultstring').firstOrNull?.innerText.trim() ??
-                       doc.findAllElements('m:Text').firstOrNull?.innerText.trim();
+            faultMsg =
+                doc
+                    .findAllElements('soap:Text')
+                    .firstOrNull
+                    ?.innerText
+                    .trim() ??
+                doc
+                    .findAllElements('faultstring')
+                    .firstOrNull
+                    ?.innerText
+                    .trim() ??
+                doc.findAllElements('m:Text').firstOrNull?.innerText.trim();
           }
         } catch (_) {}
-        return {'success': false, 'message': faultMsg ?? 'Server xatosi: ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': faultMsg ?? 'Server xatosi: ${response.statusCode}',
+        };
       }
 
       final document = XmlDocument.parse(responseData);
       final returnElement = document.findAllElements('m:return').firstOrNull;
-      
+
       // Try to extract client code from response
       String? clientCode;
       if (returnElement != null) {
-        clientCode = _getElementText(returnElement, 'm:CodeClient') ?? 
-                     _getElementText(returnElement, 'm:Code') ?? 
-                     returnElement.innerText.trim();
+        clientCode =
+            _getElementText(returnElement, 'm:CodeClient') ??
+            _getElementText(returnElement, 'm:Code') ??
+            returnElement.innerText.trim();
       }
 
       return {
-        'success': true, 
-        'message': 'Mijoz muvaffaqiyatli yaratildi', 
+        'success': true,
+        'message': 'Mijoz muvaffaqiyatli yaratildi',
         'clientCode': clientCode,
       };
     } catch (e) {
@@ -2435,10 +2841,10 @@ class SoapApiService {
   }
 
   /// Get server time with automatic URL failover for time verification.
-  /// 
+  ///
   /// Tries URLs in priority order: domain → IP1 → IP2.
   /// Uses short timeouts for fast failover when servers are unavailable.
-  /// 
+  ///
   /// @returns DateTime from server
   /// @throws ServerTimeException if all servers fail
   Future<DateTime> getServerTime() async {
@@ -2457,7 +2863,7 @@ class SoapApiService {
     // Try each URL with short timeout for fast failover
     for (int i = 0; i < urls.length; i++) {
       final url = urls[i];
-      
+
       try {
         if (kDebugMode) {
           print('[SoapApiService] Getting server time from URL[$i]: $url');
@@ -2480,24 +2886,27 @@ class SoapApiService {
 
         // Check for SOAP Fault
         if (responseData.contains('Fault') || response.statusCode != 200) {
-          lastError = _extractSoapFault(responseData) ?? 
+          lastError =
+              _extractSoapFault(responseData) ??
               'Server time request failed with status: ${response.statusCode}';
-          if (kDebugMode) print('[SoapApiService] SOAP Fault from $url: $lastError');
+          if (kDebugMode)
+            print('[SoapApiService] SOAP Fault from $url: $lastError');
           continue;
         }
 
         // Parse server time from response
         final serverTime = _parseServerTimeResponse(responseData);
-        
+
         // Update working URL on success
         await _serverService.setWorkingUrl(url);
-        
-        if (kDebugMode) {
-          print('[SoapApiService] Server time obtained: $serverTime (from URL[$i])');
-        }
-        
-        return serverTime;
 
+        if (kDebugMode) {
+          print(
+            '[SoapApiService] Server time obtained: $serverTime (from URL[$i])',
+          );
+        }
+
+        return serverTime;
       } on DioException catch (e) {
         lastError = _getErrorMessage(e);
         if (kDebugMode) {
@@ -2506,7 +2915,8 @@ class SoapApiService {
         continue;
       } on FormatException catch (e) {
         lastError = 'Parse error: ${e.message}';
-        if (kDebugMode) print('[SoapApiService] URL[$i] parse error: $lastError');
+        if (kDebugMode)
+          print('[SoapApiService] URL[$i] parse error: $lastError');
         continue;
       } catch (e) {
         lastError = e.toString();
@@ -2527,7 +2937,7 @@ class SoapApiService {
     try {
       final doc = XmlDocument.parse(responseData);
       return doc.findAllElements('soap:Text').firstOrNull?.innerText.trim() ??
-             doc.findAllElements('faultstring').firstOrNull?.innerText.trim();
+          doc.findAllElements('faultstring').firstOrNull?.innerText.trim();
     } catch (_) {
       return null;
     }
@@ -2537,7 +2947,7 @@ class SoapApiService {
   DateTime _parseServerTimeResponse(String responseData) {
     final document = XmlDocument.parse(responseData);
     final dateTimeElement = document.findAllElements('m:DateTime').firstOrNull;
-    
+
     if (dateTimeElement == null) {
       throw const FormatException('DateTime element not found in response');
     }
@@ -2549,9 +2959,9 @@ class SoapApiService {
 /// Exception thrown when server time retrieval fails
 class ServerTimeException implements Exception {
   final String message;
-  
+
   const ServerTimeException(this.message);
-  
+
   @override
   String toString() => 'ServerTimeException: $message';
 }

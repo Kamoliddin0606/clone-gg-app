@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart'
+    as permission_handler;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -13,7 +15,7 @@ enum AppPermissionStatus {
   denied,
   permanentlyDenied,
   restricted,
-  unknown
+  unknown,
 }
 
 /// Permission types for the app
@@ -63,7 +65,14 @@ class PermissionManager {
 
   /// Open app settings
   Future<bool> openAppSettings() async {
-    return await openAppSettings();
+    try {
+      return await permission_handler.openAppSettings();
+    } catch (e) {
+      if (kDebugMode) {
+        print('PermissionManager: Error opening app settings: $e');
+      }
+      return false;
+    }
   }
 
   /// Check storage permission status
@@ -73,7 +82,9 @@ class PermissionManager {
       if (isAndroid13OrHigher) {
         // For Android 13+, storage permission is not needed, SAF is used
         if (kDebugMode) {
-          print('PermissionManager: Android 13+ detected, storage permission not required');
+          print(
+            'PermissionManager: Android 13+ detected, storage permission not required',
+          );
         }
         return AppPermissionStatus.granted;
       } else {
@@ -99,7 +110,9 @@ class PermissionManager {
       if (isAndroid13OrHigher) {
         // For Android 13+, use SAF directory picker
         if (kDebugMode) {
-          print('PermissionManager: Android 13+ detected, using SAF directory picker');
+          print(
+            'PermissionManager: Android 13+ detected, using SAF directory picker',
+          );
         }
         final selectedDirectory = await FilePicker.platform.getDirectoryPath();
         if (selectedDirectory != null) {
@@ -117,7 +130,9 @@ class PermissionManager {
         // For Android < 13, use legacy storage permission
         final status = await Permission.storage.request();
         if (kDebugMode) {
-          print('PermissionManager: Storage permission request result: $status');
+          print(
+            'PermissionManager: Storage permission request result: $status',
+          );
         }
         return _mapToAppStatus(status);
       }
@@ -182,7 +197,9 @@ class PermissionManager {
     try {
       final status = await Permission.microphone.request();
       if (kDebugMode) {
-        print('PermissionManager: Microphone permission request result: $status');
+        print(
+          'PermissionManager: Microphone permission request result: $status',
+        );
       }
       return _mapToAppStatus(status);
     } catch (e) {
@@ -214,12 +231,16 @@ class PermissionManager {
     try {
       final status = await Permission.notification.request();
       if (kDebugMode) {
-        print('PermissionManager: Notification permission request result: $status');
+        print(
+          'PermissionManager: Notification permission request result: $status',
+        );
       }
       return _mapToAppStatus(status);
     } catch (e) {
       if (kDebugMode) {
-        print('PermissionManager: Error requesting notification permission: $e');
+        print(
+          'PermissionManager: Error requesting notification permission: $e',
+        );
       }
       return AppPermissionStatus.unknown;
     }
@@ -228,6 +249,18 @@ class PermissionManager {
   /// Check audio permission status
   Future<AppPermissionStatus> checkAudioPermission() async {
     try {
+      // Audio permission is only available on Android 13+ (API 33+)
+      final isAndroid13OrHigher = await _isAndroid13OrHigher();
+      if (!Platform.isAndroid || !isAndroid13OrHigher) {
+        // Audio permission not needed on iOS or Android < 13
+        if (kDebugMode) {
+          print(
+            'PermissionManager: Audio permission not required for this platform/version',
+          );
+        }
+        return AppPermissionStatus.granted;
+      }
+
       final status = await Permission.audio.status;
       if (kDebugMode) {
         print('PermissionManager: Audio permission status: $status');
@@ -235,15 +268,30 @@ class PermissionManager {
       return _mapToAppStatus(status);
     } catch (e) {
       if (kDebugMode) {
-        print('PermissionManager: Error checking audio permission: $e');
+        print(
+          'PermissionManager: Error checking audio permission (not supported on this device): $e',
+        );
       }
-      return AppPermissionStatus.unknown;
+      // If permission is not supported, consider it as granted
+      return AppPermissionStatus.granted;
     }
   }
 
   /// Request audio permission
   Future<AppPermissionStatus> requestAudioPermission() async {
     try {
+      // Audio permission is only available on Android 13+ (API 33+)
+      final isAndroid13OrHigher = await _isAndroid13OrHigher();
+      if (!Platform.isAndroid || !isAndroid13OrHigher) {
+        // Audio permission not needed on iOS or Android < 13
+        if (kDebugMode) {
+          print(
+            'PermissionManager: Audio permission not required for this platform/version',
+          );
+        }
+        return AppPermissionStatus.granted;
+      }
+
       final status = await Permission.audio.request();
       if (kDebugMode) {
         print('PermissionManager: Audio permission request result: $status');
@@ -251,9 +299,12 @@ class PermissionManager {
       return _mapToAppStatus(status);
     } catch (e) {
       if (kDebugMode) {
-        print('PermissionManager: Error requesting audio permission: $e');
+        print(
+          'PermissionManager: Error requesting audio permission (not supported on this device): $e',
+        );
       }
-      return AppPermissionStatus.unknown;
+      // If permission is not supported, consider it as granted
+      return AppPermissionStatus.granted;
     }
   }
 
@@ -267,7 +318,9 @@ class PermissionManager {
         // For Android 13+, use videos permission for photos and videos access
         status = await Permission.videos.status;
         if (kDebugMode) {
-          print('PermissionManager: Android 13+ videos permission status: $status');
+          print(
+            'PermissionManager: Android 13+ videos permission status: $status',
+          );
         }
       } else if (Platform.isIOS) {
         // For iOS, use photos permission
@@ -278,7 +331,9 @@ class PermissionManager {
       } else {
         // For other platforms or older Android versions, consider as granted
         if (kDebugMode) {
-          print('PermissionManager: Photos/videos permission not required for this platform');
+          print(
+            'PermissionManager: Photos/videos permission not required for this platform',
+          );
         }
         return AppPermissionStatus.granted;
       }
@@ -302,18 +357,24 @@ class PermissionManager {
         // For Android 13+, request videos permission for photos and videos access
         status = await Permission.videos.request();
         if (kDebugMode) {
-          print('PermissionManager: Android 13+ videos permission request result: $status');
+          print(
+            'PermissionManager: Android 13+ videos permission request result: $status',
+          );
         }
       } else if (Platform.isIOS) {
         // For iOS, request photos permission
         status = await Permission.photos.request();
         if (kDebugMode) {
-          print('PermissionManager: iOS photos permission request result: $status');
+          print(
+            'PermissionManager: iOS photos permission request result: $status',
+          );
         }
       } else {
         // For other platforms or older Android versions, consider as granted
         if (kDebugMode) {
-          print('PermissionManager: Photos/videos permission not required for this platform');
+          print(
+            'PermissionManager: Photos/videos permission not required for this platform',
+          );
         }
         return AppPermissionStatus.granted;
       }
@@ -321,7 +382,9 @@ class PermissionManager {
       return _mapToAppStatus(status);
     } catch (e) {
       if (kDebugMode) {
-        print('PermissionManager: Error requesting photos/videos permission: $e');
+        print(
+          'PermissionManager: Error requesting photos/videos permission: $e',
+        );
       }
       return AppPermissionStatus.unknown;
     }
@@ -332,12 +395,16 @@ class PermissionManager {
     try {
       final status = await Permission.locationAlways.status;
       if (kDebugMode) {
-        print('PermissionManager: Background location permission status: $status');
+        print(
+          'PermissionManager: Background location permission status: $status',
+        );
       }
       return _mapToAppStatus(status);
     } catch (e) {
       if (kDebugMode) {
-        print('PermissionManager: Error checking background location permission: $e');
+        print(
+          'PermissionManager: Error checking background location permission: $e',
+        );
       }
       return AppPermissionStatus.unknown;
     }
@@ -348,12 +415,16 @@ class PermissionManager {
     try {
       final status = await Permission.locationAlways.request();
       if (kDebugMode) {
-        print('PermissionManager: Background location permission request result: $status');
+        print(
+          'PermissionManager: Background location permission request result: $status',
+        );
       }
       return _mapToAppStatus(status);
     } catch (e) {
       if (kDebugMode) {
-        print('PermissionManager: Error requesting background location permission: $e');
+        print(
+          'PermissionManager: Error requesting background location permission: $e',
+        );
       }
       return AppPermissionStatus.unknown;
     }
@@ -385,7 +456,9 @@ class PermissionManager {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('PermissionManager: Error checking permission for type $type: $e');
+        print(
+          'PermissionManager: Error checking permission for type $type: $e',
+        );
       }
       return AppPermissionStatus.unknown;
     }
@@ -417,7 +490,9 @@ class PermissionManager {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('PermissionManager: Error requesting permission for type $type: $e');
+        print(
+          'PermissionManager: Error requesting permission for type $type: $e',
+        );
       }
       return AppPermissionStatus.unknown;
     }
@@ -430,10 +505,11 @@ class PermissionManager {
     if (!serviceEnabled) {
       if (kDebugMode) print('servis enabled');
       return await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const LocationServiceDialog(),
-      ) ?? false;
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const LocationServiceDialog(),
+          ) ??
+          false;
     }
     if (kDebugMode) print('servis not enabled');
     // Services are enabled, show permission dialog
@@ -481,7 +557,9 @@ class PermissionManager {
         return serviceStatus.isEnabled;
       } catch (e2) {
         if (kDebugMode) {
-          print('Error checking location service status with permission_handler: $e2');
+          print(
+            'Error checking location service status with permission_handler: $e2',
+          );
         }
         return false;
       }
@@ -565,7 +643,9 @@ class LocationPermissionDialog extends StatelessWidget {
     return AlertDialog(
       title: Text(
         l10n.locationPermissionNeeded,
-        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
       ),
       content: Text(
         l10n.locationPermissionRequestMessage,
@@ -580,7 +660,9 @@ class LocationPermissionDialog extends StatelessWidget {
           onPressed: () async {
             // Request permission directly from OS
             final permission = await Geolocator.requestPermission();
-            final appStatus = PermissionManager()._mapGeolocatorToAppStatus(permission);
+            final appStatus = PermissionManager()._mapGeolocatorToAppStatus(
+              permission,
+            );
             Navigator.of(context).pop(appStatus == AppPermissionStatus.granted);
           },
           child: Text(l10n.grantPermission),
@@ -601,7 +683,9 @@ class LocationSettingsDialog extends StatelessWidget {
     return AlertDialog(
       title: Text(
         l10n.locationPermissionNeeded,
-        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
       ),
       content: Text(
         l10n.locationSettingsMessage,
@@ -635,7 +719,9 @@ class LocationServiceDialog extends StatelessWidget {
     return AlertDialog(
       title: Text(
         l10n.locationServicesDisabled,
-        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
       ),
       content: Text(
         l10n.enableLocationServicesMessage,

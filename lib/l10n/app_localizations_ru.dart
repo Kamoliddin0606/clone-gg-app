@@ -5093,4 +5093,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get timeLimitUpdated => 'Срок доступа обновлен';
+
+  @override
+  String get promoOrder => 'Промо заказ';
 }

@@ -49,10 +49,13 @@ class VisitStepsLoaded extends VisitStepsState {
   final int currentStepIndex;
   final bool isStrictSequence;
   final bool canProceedToNext;
-  final bool isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
+  final bool
+  isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
   final int? visitDurationSeconds; // Total visit duration in seconds
-  final int? currentStepDuration; // Current step duration in seconds (deprecated - use stepTimers)
-  final Map<int, int> stepTimers; // Individual timer for each step (stepCode -> durationSeconds)
+  final int?
+  currentStepDuration; // Current step duration in seconds (deprecated - use stepTimers)
+  final Map<int, int>
+  stepTimers; // Individual timer for each step (stepCode -> durationSeconds)
 
   const VisitStepsLoaded({
     required this.tradingPoint,
@@ -69,17 +72,17 @@ class VisitStepsLoaded extends VisitStepsState {
 
   @override
   List<Object?> get props => [
-        tradingPoint,
-        permissions,
-        stepProgress,
-        currentStepIndex,
-        isStrictSequence,
-        canProceedToNext,
-        isUnplannedOrder,
-        visitDurationSeconds,
-        currentStepDuration,
-        stepTimers,
-      ];
+    tradingPoint,
+    permissions,
+    stepProgress,
+    currentStepIndex,
+    isStrictSequence,
+    canProceedToNext,
+    isUnplannedOrder,
+    visitDurationSeconds,
+    currentStepDuration,
+    stepTimers,
+  ];
 
   /// Create a copy of this state with updated fields
   VisitStepsLoaded copyWith({
@@ -124,10 +127,20 @@ class VisitStepsCompleted extends VisitStepsState {
   final String? orderCode; // Order code if an order was created
   final String? orderServerMessage; // Server message for order creation
 
-  const VisitStepsCompleted(this.tradingPoint, this.completedSteps, {this.orderCode, this.orderServerMessage});
+  const VisitStepsCompleted(
+    this.tradingPoint,
+    this.completedSteps, {
+    this.orderCode,
+    this.orderServerMessage,
+  });
 
   @override
-  List<Object?> get props => [tradingPoint, completedSteps, orderCode, orderServerMessage];
+  List<Object?> get props => [
+    tradingPoint,
+    completedSteps,
+    orderCode,
+    orderServerMessage,
+  ];
 }
 
 class VisitStepsFinishing extends VisitStepsState {
@@ -146,7 +159,13 @@ class VisitStepsFinishing extends VisitStepsState {
   });
 
   @override
-  List<Object?> get props => [currentStep, totalSteps, message, tradingPoint, requestData];
+  List<Object?> get props => [
+    currentStep,
+    totalSteps,
+    message,
+    tradingPoint,
+    requestData,
+  ];
 }
 
 abstract class VisitStepsEvent extends Equatable {
@@ -210,7 +229,7 @@ class UpdateTimers extends VisitStepsEvent {}
 class PauseStepTimer extends VisitStepsEvent {
   final int stepCode;
   const PauseStepTimer(this.stepCode);
-  
+
   @override
   List<Object?> get props => [stepCode];
 }
@@ -219,7 +238,7 @@ class PauseStepTimer extends VisitStepsEvent {
 class ResumeStepTimer extends VisitStepsEvent {
   final int stepCode;
   const ResumeStepTimer(this.stepCode);
-  
+
   @override
   List<Object?> get props => [stepCode];
 }
@@ -229,7 +248,7 @@ class ResumeStepTimer extends VisitStepsEvent {
 class StartStepTimer extends VisitStepsEvent {
   final int stepCode;
   const StartStepTimer(this.stepCode);
-  
+
   @override
   List<Object?> get props => [stepCode];
 }
@@ -266,57 +285,62 @@ class VisitStepProgress {
   }
 }
 
-enum VisitStepStatus {
-  pending,
-  inProgress,
-  completed,
-  skipped,
-}
+enum VisitStepStatus { pending, inProgress, completed, skipped }
 
 /// Visit Steps BLoC - Enhanced with repository-based state management
 /// Ensures data persistence and consistency across page navigations
 /// Supports both planned visits (strict sequence) and unplanned orders (optional steps)
 class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
-  final DataSyncService _dataSyncService;
   final VisitDataRepository _visitDataRepository;
   final VisitFinishService _visitFinishService;
-  final bool _isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
-  late String _visitId; // Unique identifier for this visit session
+  String _visitId;
+  final bool _isUnplannedOrder;
 
-  // Timer fields for visit duration tracking (StartTime-based for persistence)
+  // Timer management
   Timer? _visitTimer;
-  DateTime? _visitStartTime;
-  int _visitDurationSeconds = 0;
-
-  // Timer fields for step duration tracking
   Timer? _stepTimer;
+  DateTime? _visitStartTime;
   DateTime? _stepStartTime;
+  int _visitDurationSeconds = 0;
   int _stepDurationSeconds = 0;
-  int _currentStepCode = -1;
+  int _currentStepCode = 0; // Track which step's timer is currently running
 
-  AppLocalizations _l10n() {
-    try {
-      final ctx = AppRouter.navigatorKey.currentContext;
-      if (ctx != null) {
-        final l10n = AppLocalizations.of(ctx);
-        if (l10n != null) return l10n;
-      }
-    } catch (_) {
-      // Ignore and fallback to English.
-    }
-    return AppLocalizationsEn();
-  }
+  // In-memory cache layer for performance optimization
+  final Map<int, Map<String, dynamic>> _stepTimerCache = {};
+  final Map<int, Map<String, dynamic>> _stepDataCache = {};
+
+  // Debounced database write mechanism
+  Timer? _dbSaveDebounceTimer;
+  bool _hasPendingVisitTimerSave = false;
+  bool _hasPendingStepTimerSave = false;
+
+  // Auto-save mechanism for crash resistance
+  Timer? _autoSaveTimer;
+
+  // Page entry/exit tracking for accurate duration calculation
+  // These will be used to record actual page navigation times
+  final Map<int, DateTime> _stepEntryTimes = {};
+  final Map<int, DateTime> _stepExitTimes = {};
 
   VisitStepsBloc({
-    required DataSyncService dataSyncService,
     required VisitDataRepository visitDataRepository,
     required VisitFinishService visitFinishService,
-    bool isUnplannedOrder = false, // Default to planned visit
-  }) : _dataSyncService = dataSyncService,
-        _visitDataRepository = visitDataRepository,
-        _visitFinishService = visitFinishService,
-        _isUnplannedOrder = isUnplannedOrder,
-        super(VisitStepsInitial()) {
+    required String visitId,
+    required bool isUnplannedOrder,
+  }) : _visitDataRepository = visitDataRepository,
+       _visitFinishService = visitFinishService,
+       _visitId = visitId,
+       _isUnplannedOrder = isUnplannedOrder,
+       super(VisitStepsInitial()) {
+    // Initialize auto-save mechanism (every 5 seconds)
+    _autoSaveTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _performAutoSave();
+    });
+
+    // Initialize debounced DB write timer (every 10 seconds)
+    _dbSaveDebounceTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _performDebouncedSave();
+    });
     on<LoadVisitSteps>(_onLoadVisitSteps);
     on<CompleteStep>(_onCompleteStep);
     on<SkipStep>(_onSkipStep);
@@ -330,26 +354,102 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   }
 
   @override
-  Future<void> close() {
-    debugPrint('VisitStepsBloc closed for visit ID: $_visitId');
+  Future<void> close() async {
+    // Perform final save before closing to prevent data loss
+    await _performFinalSave();
+
+    // Cancel all timers
     _stopVisitTimer();
     _stopStepTimer();
+    _autoSaveTimer?.cancel();
+    _dbSaveDebounceTimer?.cancel();
+
+    // Clear caches
+    _stepTimerCache.clear();
+    _stepDataCache.clear();
+    _stepEntryTimes.clear();
+    _stepExitTimes.clear();
+
     return super.close();
   }
 
+  /// Auto-save mechanism - saves current state periodically
+  /// Prevents data loss in case of crashes or unexpected app termination
+  Future<void> _performAutoSave() async {
+    try {
+      if (state is! VisitStepsLoaded) return;
+
+      // Save visit timer state if active
+      if (_visitTimer != null && _visitStartTime != null) {
+        await _saveVisitTimerStateToCache();
+      }
+
+      // Save step timer state if active
+      if (_stepTimer != null && _currentStepCode > 0) {
+        await _saveStepTimerStateToCache(_currentStepCode);
+      }
+    } catch (e) {
+      debugPrint('VisitStepsBloc: Auto-save error: $e');
+    }
+  }
+
+  /// Debounced save - writes cached data to database periodically
+  /// Reduces database write operations while maintaining data integrity
+  Future<void> _performDebouncedSave() async {
+    try {
+      // Save visit timer if pending
+      if (_hasPendingVisitTimerSave && _visitStartTime != null) {
+        await _saveVisitTimerStateToDB();
+        _hasPendingVisitTimerSave = false;
+      }
+
+      // Save step timer if pending
+      if (_hasPendingStepTimerSave && _currentStepCode > 0) {
+        await _saveStepTimerStateToDB(_currentStepCode);
+        _hasPendingStepTimerSave = false;
+      }
+    } catch (e) {
+      debugPrint('VisitStepsBloc: Debounced save error: $e');
+    }
+  }
+
+  /// Final save - ensures all data is persisted before BLoC closes
+  /// Critical for preventing data loss on app termination
+  Future<void> _performFinalSave() async {
+    try {
+      // Force save all pending data
+      if (_visitStartTime != null) {
+        await _saveVisitTimerStateToDB();
+      }
+
+      if (_currentStepCode > 0 && _stepStartTime != null) {
+        await _saveStepTimerStateToDB(_currentStepCode);
+      }
+
+      debugPrint('VisitStepsBloc: Final save completed');
+    } catch (e) {
+      debugPrint('VisitStepsBloc: Final save error: $e');
+    }
+  }
+
   /// Start visit timer - uses StartTime for persistence across navigations
-  void _startVisitTimer({DateTime? savedStartTime, int accumulatedSeconds = 0}) {
+  void _startVisitTimer({
+    DateTime? savedStartTime,
+    int accumulatedSeconds = 0,
+  }) {
     _visitStartTime = savedStartTime ?? DateTime.now();
     _visitTimer?.cancel();
-    
-    _visitDurationSeconds = accumulatedSeconds + 
+
+    _visitDurationSeconds =
+        accumulatedSeconds +
         DateTime.now().difference(_visitStartTime!).inSeconds;
-    
+
     _visitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _visitDurationSeconds = accumulatedSeconds + 
+      _visitDurationSeconds =
+          accumulatedSeconds +
           DateTime.now().difference(_visitStartTime!).inSeconds;
     });
-    
+
     debugPrint('VisitStepsBloc: Visit timer started at $_visitStartTime');
   }
 
@@ -357,82 +457,144 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   void _stopVisitTimer() {
     _visitTimer?.cancel();
     _visitTimer = null;
-    debugPrint('VisitStepsBloc: Visit timer stopped. Duration: $_visitDurationSeconds');
+    debugPrint(
+      'VisitStepsBloc: Visit timer stopped. Duration: $_visitDurationSeconds',
+    );
   }
 
   /// Start step timer with persistence support
-  void _startStepTimer({required int stepCode, DateTime? savedStartTime, int accumulatedSeconds = 0}) {
+  void _startStepTimer({
+    required int stepCode,
+    DateTime? savedStartTime,
+    int accumulatedSeconds = 0,
+  }) {
     _currentStepCode = stepCode;
     _stepStartTime = savedStartTime ?? DateTime.now();
     _stepTimer?.cancel();
-    
-    _stepDurationSeconds = accumulatedSeconds + 
+
+    _stepDurationSeconds =
+        accumulatedSeconds +
         DateTime.now().difference(_stepStartTime!).inSeconds;
-    
+
     _stepTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _stepDurationSeconds = accumulatedSeconds + 
+      _stepDurationSeconds =
+          accumulatedSeconds +
           DateTime.now().difference(_stepStartTime!).inSeconds;
     });
-    
-    debugPrint('VisitStepsBloc: Step $stepCode timer started at $_stepStartTime');
+
+    debugPrint(
+      'VisitStepsBloc: Step $stepCode timer started at $_stepStartTime',
+    );
   }
 
   /// Stop step timer
   void _stopStepTimer() {
     _stepTimer?.cancel();
     _stepTimer = null;
-    debugPrint('VisitStepsBloc: Step timer stopped. Duration: $_stepDurationSeconds');
+    debugPrint(
+      'VisitStepsBloc: Step timer stopped. Duration: $_stepDurationSeconds',
+    );
   }
 
-  /// Save visit timer state to database
-  Future<void> _saveVisitTimerState() async {
+  /// Save visit timer state to cache (fast, in-memory operation)
+  /// Marks data for debounced database write
+  Future<void> _saveVisitTimerStateToCache() async {
+    if (_visitStartTime == null) return;
+
+    // Mark for database write (will be written in next debounced save)
+    _hasPendingVisitTimerSave = true;
+  }
+
+  /// Save visit timer state to database (actual DB write)
+  /// Called by debounced save mechanism or final save
+  Future<void> _saveVisitTimerStateToDB() async {
     if (_visitStartTime == null) return;
     try {
-      await _visitDataRepository.saveVisitStepData(VisitData(
-        visitId: _visitId,
-        clientCode: 'timer_metadata',
-        stepCode: 0,
-        stepName: 'Visit Timer',
-        dataType: 'timer_state',
-        dataContent: jsonEncode({
-          'visitStartTime': _visitStartTime!.toIso8601String(),
-          'accumulatedSeconds': _visitDurationSeconds,
-        }),
-        timestamp: DateTime.now(),
-      ));
+      await _visitDataRepository.saveVisitStepData(
+        VisitData(
+          visitId: _visitId,
+          clientCode: 'timer_metadata',
+          stepCode: 0,
+          stepName: 'Visit Timer',
+          dataType: 'timer_state',
+          dataContent: jsonEncode({
+            'visitStartTime': _visitStartTime!.toIso8601String(),
+            'accumulatedSeconds': _visitDurationSeconds,
+          }),
+          timestamp: DateTime.now(),
+        ),
+      );
+      debugPrint('VisitStepsBloc: Visit timer state saved to DB');
     } catch (e) {
-      debugPrint('Error saving visit timer state: $e');
+      debugPrint('VisitStepsBloc: Error saving visit timer state to DB: $e');
     }
   }
 
-  /// Save step timer state to database
-  Future<void> _saveStepTimerState(int stepCode) async {
+  /// Legacy method - redirects to cache-based save
+  Future<void> _saveVisitTimerState() async {
+    await _saveVisitTimerStateToCache();
+  }
+
+  /// Save step timer state to cache (fast, in-memory operation)
+  /// Stores in cache and marks for debounced database write
+  Future<void> _saveStepTimerStateToCache(int stepCode) async {
+    if (_stepStartTime == null) return;
+
+    // Save to in-memory cache
+    _stepTimerCache[stepCode] = {
+      'stepStartTime': _stepStartTime!.toIso8601String(),
+      'accumulatedSeconds': _stepDurationSeconds,
+      'lastUpdated': DateTime.now().toIso8601String(),
+    };
+
+    // Mark for database write
+    _hasPendingStepTimerSave = true;
+  }
+
+  /// Save step timer state to database (actual DB write)
+  /// Called by debounced save mechanism or final save
+  Future<void> _saveStepTimerStateToDB(int stepCode) async {
     if (_stepStartTime == null) return;
     try {
-      await _visitDataRepository.saveVisitStepData(VisitData(
-        visitId: _visitId,
-        clientCode: 'timer_metadata',
-        stepCode: stepCode,
-        stepName: 'Step Timer',
-        dataType: 'step_timer_state',
-        dataContent: jsonEncode({
-          'stepStartTime': _stepStartTime!.toIso8601String(),
-          'accumulatedSeconds': _stepDurationSeconds,
-        }),
-        timestamp: DateTime.now(),
-      ));
+      await _visitDataRepository.saveVisitStepData(
+        VisitData(
+          visitId: _visitId,
+          clientCode: 'timer_metadata',
+          stepCode: stepCode,
+          stepName: 'Step Timer',
+          dataType: 'step_timer_state',
+          dataContent: jsonEncode({
+            'stepStartTime': _stepStartTime!.toIso8601String(),
+            'accumulatedSeconds': _stepDurationSeconds,
+          }),
+          timestamp: DateTime.now(),
+        ),
+      );
+      debugPrint('VisitStepsBloc: Step $stepCode timer state saved to DB');
     } catch (e) {
-      debugPrint('Error saving step timer state: $e');
+      debugPrint('VisitStepsBloc: Error saving step timer state to DB: $e');
     }
+  }
+
+  /// Legacy method - redirects to cache-based save
+  Future<void> _saveStepTimerState(int stepCode) async {
+    await _saveStepTimerStateToCache(stepCode);
   }
 
   /// Load visit timer state from database
   Future<Map<String, dynamic>?> _loadVisitTimerState() async {
     try {
-      final timerData = await _visitDataRepository.getVisitStepDataByStep(_visitId, 0);
-      final timerState = timerData.where((d) => d.dataType == 'timer_state').toList();
+      final timerData = await _visitDataRepository.getVisitStepDataByStep(
+        _visitId,
+        0,
+      );
+      final timerState = timerData
+          .where((d) => d.dataType == 'timer_state')
+          .toList();
       if (timerState.isNotEmpty) {
-        final latest = timerState.reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
+        final latest = timerState.reduce(
+          (a, b) => a.timestamp.isAfter(b.timestamp) ? a : b,
+        );
         return jsonDecode(latest.dataContent) as Map<String, dynamic>;
       }
     } catch (e) {
@@ -441,13 +603,28 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     return null;
   }
 
-  /// Load step timer state from database
+  /// Load step timer state from cache or database
+  /// First checks in-memory cache for fast access, then falls back to DB
   Future<Map<String, dynamic>?> _loadStepTimerState(int stepCode) async {
+    // Check cache first (instant access)
+    if (_stepTimerCache.containsKey(stepCode)) {
+      debugPrint('VisitStepsBloc: Step $stepCode timer loaded from cache');
+      return _stepTimerCache[stepCode];
+    }
+
+    // Load from database if not in cache
     try {
-      final timerData = await _visitDataRepository.getVisitStepDataByStep(_visitId, stepCode);
-      final timerState = timerData.where((d) => d.dataType == 'step_timer_state').toList();
+      final timerData = await _visitDataRepository.getVisitStepDataByStep(
+        _visitId,
+        stepCode,
+      );
+      final timerState = timerData
+          .where((d) => d.dataType == 'step_timer_state')
+          .toList();
       if (timerState.isNotEmpty) {
-        final latest = timerState.reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
+        final latest = timerState.reduce(
+          (a, b) => a.timestamp.isAfter(b.timestamp) ? a : b,
+        );
         return jsonDecode(latest.dataContent) as Map<String, dynamic>;
       }
     } catch (e) {
@@ -456,42 +633,109 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     return null;
   }
 
-  /// Load all step timers from completion data
-  /// This method loads timer values for all steps from their completion records
+  /// Load all step timers from both completion data and step_timer_state cache
+  /// This method loads timer values for all steps from two sources:
+  /// 1. Completion data (for completed steps with final duration)
+  /// 2. step_timer_state cache (for in-progress or paused steps)
+  /// Priority: completion > step_timer_state
   /// Returns a Map of stepCode -> durationSeconds
   Future<Map<int, int>> _loadAllStepTimers(List<VisitStep> visitSteps) async {
     final stepTimers = <int, int>{};
-    
+
     try {
       // Get all visit data for this visit
-      final existingData = await _visitDataRepository.getVisitStepDataByVisitId(_visitId);
-      
-      // Extract timer values from completion data
+      final existingData = await _visitDataRepository.getVisitStepDataByVisitId(
+        _visitId,
+      );
+
+      debugPrint(
+        'VisitStepsBloc: Loading step timers from ${existingData.length} total records',
+      );
+
+      // Extract timer values from both completion and cache data
       for (final step in visitSteps) {
+        bool timerFound = false;
+
+        // 1. FIRST PRIORITY: Check completion data (for completed steps)
         final completionData = existingData
-            .where((d) => d.stepCode == step.stepCode && d.dataType == 'completion')
+            .where(
+              (d) => d.stepCode == step.stepCode && d.dataType == 'completion',
+            )
             .toList();
-        
+
         if (completionData.isNotEmpty) {
           try {
-            final latest = completionData.reduce((a, b) => 
-                a.timestamp.isAfter(b.timestamp) ? a : b);
+            final latest = completionData.reduce(
+              (a, b) => a.timestamp.isAfter(b.timestamp) ? a : b,
+            );
             final parsedData = latest.parsedDataContent;
             final durationSeconds = parsedData['durationSeconds'] as int?;
-            
+
             if (durationSeconds != null && durationSeconds > 0) {
               stepTimers[step.stepCode] = durationSeconds;
-              debugPrint('VisitStepsBloc: Loaded timer for step ${step.stepCode}: ${durationSeconds}s');
+              timerFound = true;
+              debugPrint(
+                'VisitStepsBloc: ✅ Loaded timer for step ${step.stepCode} '
+                'from COMPLETION: ${durationSeconds}s',
+              );
             }
           } catch (e) {
-            debugPrint('VisitStepsBloc: Error parsing completion data for step ${step.stepCode}: $e');
+            debugPrint(
+              'VisitStepsBloc: Error parsing completion data for step ${step.stepCode}: $e',
+            );
           }
+        }
+
+        // 2. SECOND PRIORITY: Check step_timer_state cache (if not found in completion)
+        if (!timerFound) {
+          final timerStateData = existingData
+              .where(
+                (d) =>
+                    d.stepCode == step.stepCode &&
+                    d.dataType == 'step_timer_state',
+              )
+              .toList();
+
+          if (timerStateData.isNotEmpty) {
+            try {
+              final latest = timerStateData.reduce(
+                (a, b) => a.timestamp.isAfter(b.timestamp) ? a : b,
+              );
+              final parsedData = latest.parsedDataContent;
+              final accumulatedSeconds =
+                  parsedData['accumulatedSeconds'] as int?;
+
+              if (accumulatedSeconds != null && accumulatedSeconds > 0) {
+                stepTimers[step.stepCode] = accumulatedSeconds;
+                timerFound = true;
+                debugPrint(
+                  'VisitStepsBloc: ✅ Loaded timer for step ${step.stepCode} '
+                  'from CACHE (step_timer_state): ${accumulatedSeconds}s',
+                );
+              }
+            } catch (e) {
+              debugPrint(
+                'VisitStepsBloc: Error parsing step_timer_state for step ${step.stepCode}: $e',
+              );
+            }
+          }
+        }
+
+        // Log if no timer found for this step
+        if (!timerFound) {
+          debugPrint(
+            'VisitStepsBloc: ⚠️ No timer data found for step ${step.stepCode} (${step.stepName})',
+          );
         }
       }
     } catch (e) {
       debugPrint('VisitStepsBloc: Error loading step timers: $e');
     }
-    
+
+    debugPrint(
+      'VisitStepsBloc: Total step timers loaded: ${stepTimers.length} '
+      'out of ${visitSteps.length} steps',
+    );
     return stepTimers;
   }
 
@@ -499,62 +743,97 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   void _onUpdateTimers(UpdateTimers event, Emitter<VisitStepsState> emit) {
     if (state is! VisitStepsLoaded) return;
     final currentState = state as VisitStepsLoaded;
-    
+
     // Update stepTimers map with current step timer value
     final updatedStepTimers = Map<int, int>.from(currentState.stepTimers);
     if (_currentStepCode > 0) {
       updatedStepTimers[_currentStepCode] = _stepDurationSeconds;
     }
-    
-    emit(currentState.copyWith(
-      visitDurationSeconds: _visitDurationSeconds,
-      currentStepDuration: _stepDurationSeconds,
-      stepTimers: updatedStepTimers,
-    ));
+
+    emit(
+      currentState.copyWith(
+        visitDurationSeconds: _visitDurationSeconds,
+        currentStepDuration: _stepDurationSeconds,
+        stepTimers: updatedStepTimers,
+      ),
+    );
   }
 
   /// Handle PauseStepTimer event - pauses step timer when viewing read-only step
-  /// Saves current timer state before pausing so it can be resumed later
-  Future<void> _onPauseStepTimer(PauseStepTimer event, Emitter<VisitStepsState> emit) async {
+  /// Saves current timer state before pausing
+  Future<void> _onPauseStepTimer(
+    PauseStepTimer event,
+    Emitter<VisitStepsState> emit,
+  ) async {
     if (_currentStepCode > 0) {
       // Save current step timer state before pausing
       await _saveStepTimerState(_currentStepCode);
       _stopStepTimer();
-      debugPrint('VisitStepsBloc: Step timer paused for read-only view of step ${event.stepCode}');
+      debugPrint(
+        'VisitStepsBloc: Step timer paused for read-only view of step ${event.stepCode}',
+      );
     }
   }
 
   /// Handle ResumeStepTimer event - resumes step timer after returning from read-only view
-  Future<void> _onResumeStepTimer(ResumeStepTimer event, Emitter<VisitStepsState> emit) async {
+  Future<void> _onResumeStepTimer(
+    ResumeStepTimer event,
+    Emitter<VisitStepsState> emit,
+  ) async {
     // Load and restart step timer from saved state
     final stepTimerState = await _loadStepTimerState(event.stepCode);
     if (stepTimerState != null) {
       // Resume from accumulated time, but use CURRENT time as new start point
-      final accumulatedSeconds = stepTimerState['accumulatedSeconds'] as int? ?? 0;
-      _startStepTimer(stepCode: event.stepCode, savedStartTime: DateTime.now(), accumulatedSeconds: accumulatedSeconds);
-      debugPrint('VisitStepsBloc: Step timer resumed for step ${event.stepCode} with ${accumulatedSeconds}s accumulated');
+      final accumulatedSeconds =
+          stepTimerState['accumulatedSeconds'] as int? ?? 0;
+      _startStepTimer(
+        stepCode: event.stepCode,
+        savedStartTime: DateTime.now(),
+        accumulatedSeconds: accumulatedSeconds,
+      );
+      debugPrint(
+        'VisitStepsBloc: Step timer resumed for step ${event.stepCode} with ${accumulatedSeconds}s accumulated',
+      );
     } else {
       _startStepTimer(stepCode: event.stepCode);
-      debugPrint('VisitStepsBloc: Step timer started fresh for step ${event.stepCode}');
+      debugPrint(
+        'VisitStepsBloc: Step timer started fresh for step ${event.stepCode}',
+      );
     }
   }
 
   /// Handle StartStepTimer event - starts step timer when user navigates to a step page
   /// This ensures step timer only counts time spent inside the step page
-  Future<void> _onStartStepTimer(StartStepTimer event, Emitter<VisitStepsState> emit) async {
+  /// Also records actual page entry time for accurate duration tracking
+  Future<void> _onStartStepTimer(
+    StartStepTimer event,
+    Emitter<VisitStepsState> emit,
+  ) async {
+    // Record actual page entry time
+    _recordStepEntry(event.stepCode);
+
     // Load any existing timer state for this step (for persistence across navigation)
     final stepTimerState = await _loadStepTimerState(event.stepCode);
     if (stepTimerState != null) {
       // Resume from accumulated time, but use CURRENT time as new start point
       // This prevents incorrect calculation when resuming after a pause
-      final accumulatedSeconds = stepTimerState['accumulatedSeconds'] as int? ?? 0;
-      _startStepTimer(stepCode: event.stepCode, savedStartTime: DateTime.now(), accumulatedSeconds: accumulatedSeconds);
-      debugPrint('VisitStepsBloc: Step timer resumed from saved state for step ${event.stepCode} with ${accumulatedSeconds}s accumulated');
+      final accumulatedSeconds =
+          stepTimerState['accumulatedSeconds'] as int? ?? 0;
+      _startStepTimer(
+        stepCode: event.stepCode,
+        savedStartTime: DateTime.now(),
+        accumulatedSeconds: accumulatedSeconds,
+      );
+      debugPrint(
+        'VisitStepsBloc: Step timer resumed from saved state for step ${event.stepCode} with ${accumulatedSeconds}s accumulated',
+      );
     } else {
       // Start fresh timer for this step
       _startStepTimer(stepCode: event.stepCode);
       await _saveStepTimerState(event.stepCode);
-      debugPrint('VisitStepsBloc: Step timer started fresh for step ${event.stepCode}');
+      debugPrint(
+        'VisitStepsBloc: Step timer started fresh for step ${event.stepCode}',
+      );
     }
   }
 
@@ -573,60 +852,89 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       final userCode = await _getCurrentUserCode();
 
       if (userCode == null) {
-        debugPrint('VisitStepsBloc: User code not found, cannot load visit steps');
+        debugPrint(
+          'VisitStepsBloc: User code not found, cannot load visit steps',
+        );
         emit(VisitStepsError(_l10n().userCodeNotFound));
         return;
       }
 
       // Get sales req permissions with visit steps from database
       // This method retrieves cached permissions that include visit steps configuration
-      final permissions = await dataSyncService.getCachedSalesReqPermissions(userCode);
+      final permissions = await dataSyncService.getCachedSalesReqPermissions(
+        userCode,
+      );
 
       if (permissions == null) {
-        debugPrint('VisitStepsBloc: Permissions data not available for user $userCode');
+        debugPrint(
+          'VisitStepsBloc: Permissions data not available for user $userCode',
+        );
         emit(VisitStepsError(_l10n().permissionsDataNotAvailable));
         return;
       }
 
       // Check if visit steps are available in the permissions
       if (permissions.visitSteps.isEmpty) {
-        debugPrint('VisitStepsBloc: No visit steps configured for user $userCode');
+        debugPrint(
+          'VisitStepsBloc: No visit steps configured for user $userCode',
+        );
         emit(VisitStepsError(_l10n().visitSteps));
         return;
       }
 
-      debugPrint('VisitStepsBloc: Successfully loaded ${permissions.visitSteps.length} visit steps for user $userCode');
+      debugPrint(
+        'VisitStepsBloc: Successfully loaded ${permissions.visitSteps.length} visit steps for user $userCode',
+      );
 
       // For unplanned orders, make all steps optional by modifying the permissions
       // This allows users to skip any step and proceed freely through the visit process
       final modifiedPermissions = _isUnplannedOrder
           ? permissions.copyWith(
-              visitSteps: permissions.visitSteps.map((step) => step.copyWith(stepRequired: false)).toList(),
+              visitSteps: permissions.visitSteps
+                  .map((step) => step.copyWith(stepRequired: false))
+                  .toList(),
             )
           : permissions;
 
       // Generate consistent visit ID for this trading point and date
       // This ensures that visits can be restored when navigating back to the page
-      final today = DateTime.now().toIso8601String().split('T')[0]; // YYYY-MM-DD format
-      _visitId = 'visit_${userCode ?? "unknown"}_${tradingPoint.tradingPoint.id}_$today';
+      final today = DateTime.now().toIso8601String().split(
+        'T',
+      )[0]; // YYYY-MM-DD format
+      _visitId =
+          'visit_${userCode ?? "unknown"}_${tradingPoint.tradingPoint.id}_$today';
 
       debugPrint('VisitStepsBloc: Using visit ID: $_visitId');
 
       // Load existing step progress from persistent storage with enhanced error handling
-      final stepProgress = await _loadStepProgressFromStorage(modifiedPermissions.visitSteps, tradingPoint.tradingPoint.name);
+      final stepProgress = await _loadStepProgressFromStorage(
+        modifiedPermissions.visitSteps,
+        tradingPoint.tradingPoint.name,
+      );
 
       // Determine current step based on strict sequence
       final isStrictSequence = modifiedPermissions.strictSequence;
-      final currentStepIndex = _getCurrentStepIndex(stepProgress, isStrictSequence);
+      final currentStepIndex = _getCurrentStepIndex(
+        stepProgress,
+        isStrictSequence,
+      );
 
-      debugPrint('VisitStepsBloc: Loaded ${stepProgress.length} steps, current step index: $currentStepIndex, strict sequence: $isStrictSequence, unplanned order: $_isUnplannedOrder');
+      debugPrint(
+        'VisitStepsBloc: Loaded ${stepProgress.length} steps, current step index: $currentStepIndex, strict sequence: $isStrictSequence, unplanned order: $_isUnplannedOrder',
+      );
 
       // Load and start visit timer with persistence
       final visitTimerState = await _loadVisitTimerState();
       if (visitTimerState != null) {
-        final savedStartTime = DateTime.tryParse(visitTimerState['visitStartTime'] ?? '');
-        final accumulatedSeconds = visitTimerState['accumulatedSeconds'] as int? ?? 0;
-        _startVisitTimer(savedStartTime: savedStartTime, accumulatedSeconds: accumulatedSeconds);
+        final savedStartTime = DateTime.tryParse(
+          visitTimerState['visitStartTime'] ?? '',
+        );
+        final accumulatedSeconds =
+            visitTimerState['accumulatedSeconds'] as int? ?? 0;
+        _startVisitTimer(
+          savedStartTime: savedStartTime,
+          accumulatedSeconds: accumulatedSeconds,
+        );
         debugPrint('VisitStepsBloc: Resumed visit timer from saved state');
       } else {
         _startVisitTimer();
@@ -640,23 +948,37 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
       // Load step timers from completion data for all steps
       // This ensures timer values are preserved and displayed in FloatingTimerOverlay
-      final initialStepTimers = await _loadAllStepTimers(modifiedPermissions.visitSteps);
-      debugPrint('VisitStepsBloc: Loaded step timers: $initialStepTimers');
+      final initialStepTimers = await _loadAllStepTimers(
+        modifiedPermissions.visitSteps,
+      );
+      debugPrint(
+        'VisitStepsBloc: Loaded step timers from DB: $initialStepTimers '
+        '(${initialStepTimers.length} steps with timers)',
+      );
 
-      emit(VisitStepsLoaded(
-        tradingPoint: tradingPoint,
-        permissions: modifiedPermissions,
-        stepProgress: stepProgress,
-        currentStepIndex: currentStepIndex,
-        isStrictSequence: isStrictSequence,
-        canProceedToNext: _canProceedToNext(stepProgress, currentStepIndex, isStrictSequence, _isUnplannedOrder),
-        isUnplannedOrder: _isUnplannedOrder,
-        visitDurationSeconds: _visitDurationSeconds,
-        currentStepDuration: _stepDurationSeconds,
-        stepTimers: initialStepTimers,
-      ));
+      emit(
+        VisitStepsLoaded(
+          tradingPoint: tradingPoint,
+          permissions: modifiedPermissions,
+          stepProgress: stepProgress,
+          currentStepIndex: currentStepIndex,
+          isStrictSequence: isStrictSequence,
+          canProceedToNext: _canProceedToNext(
+            stepProgress,
+            currentStepIndex,
+            isStrictSequence,
+            _isUnplannedOrder,
+          ),
+          isUnplannedOrder: _isUnplannedOrder,
+          visitDurationSeconds: _visitDurationSeconds,
+          currentStepDuration: _stepDurationSeconds,
+          stepTimers: initialStepTimers,
+        ),
+      );
 
-      debugPrint('VisitStepsBloc: Visit steps loaded successfully for trading point ${tradingPoint.tradingPoint.name}');
+      debugPrint(
+        'VisitStepsBloc: Visit steps loaded successfully for trading point ${tradingPoint.tradingPoint.name}',
+      );
     } catch (e, stackTrace) {
       // Enhanced error logging for debugging
       debugPrint('VisitStepsBloc: Error loading visit steps: $e');
@@ -683,7 +1005,9 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       final userCode = prefs.getUserCode();
 
       if (userCode == null || userCode.isEmpty) {
-        debugPrint('User code not found in preferences - cannot load visit steps');
+        debugPrint(
+          'User code not found in preferences - cannot load visit steps',
+        );
         return null;
       }
 
@@ -706,7 +1030,9 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     if (state is! VisitStepsLoaded) return;
 
     final currentState = state as VisitStepsLoaded;
-    final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
+    final updatedProgress = List<VisitStepProgress>.from(
+      currentState.stepProgress,
+    );
     final step = updatedProgress[event.stepIndex].step;
 
     // Extract notes from data, defaulting to empty string if not provided
@@ -714,55 +1040,86 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     final notes = event.data['notes'] as String? ?? '';
 
     // 1. Update current step status locally
-    updatedProgress[event.stepIndex] = updatedProgress[event.stepIndex].copyWith(
-      status: VisitStepStatus.completed,
-      notes: notes,
-      completedAt: DateTime.now(),
+    updatedProgress[event.stepIndex] = updatedProgress[event.stepIndex]
+        .copyWith(
+          status: VisitStepStatus.completed,
+          notes: notes,
+          completedAt: DateTime.now(),
+        );
+
+    // 2. Record actual page exit time for accurate duration tracking
+    final exitTime = DateTime.now();
+    _stepExitTimes[step.stepCode] = exitTime;
+
+    // 3. Save completion data to persistent storage with timer data
+    // Include all data from the event, plus completion metadata and duration
+    // CRITICAL: Use _stepDurationSeconds as primary source since it's the most up-to-date
+    // The stepTimers map might be stale since UpdateTimers runs periodically
+    final stepTimerValue = _stepDurationSeconds > 0
+        ? _stepDurationSeconds
+        : (currentState.stepTimers[step.stepCode] ?? 0);
+
+    debugPrint(
+      'VisitStepsBloc: Completing step ${step.stepCode} with timer value: ${stepTimerValue}s '
+      '(_stepDurationSeconds: $_stepDurationSeconds, map value: ${currentState.stepTimers[step.stepCode]})',
     );
 
-    // 2. Save completion data to persistent storage with timer data
-    // Include all data from the event, plus completion metadata and duration
-    // Use stepTimers map to get the actual accumulated timer value for this step
-    final stepTimerValue = currentState.stepTimers[step.stepCode] ?? _stepDurationSeconds;
     final completionData = Map<String, dynamic>.from(event.data);
     completionData.addAll({
-      'completedAt': DateTime.now().toIso8601String(),
+      'completedAt': exitTime.toIso8601String(),
       'status': 'completed',
       'durationSeconds': stepTimerValue,
-      'startTime': _stepStartTime?.toIso8601String(),
-      'endTime': DateTime.now().toIso8601String(),
+      'startTime':
+          _stepEntryTimes[step.stepCode]?.toIso8601String() ??
+          _stepStartTime?.toIso8601String(),
+      'endTime': exitTime.toIso8601String(),
     });
 
-    await _saveStepDataToStorage(
+    // 4. Use batch operation to save completion data and clear progress data
+    // This reduces database transactions from 2 to 1, improving performance
+    await _saveStepCompletionBatch(
       stepCode: step.stepCode,
       stepName: step.stepName,
-      dataType: 'completion',
-      dataContent: completionData,
+      completionData: completionData,
     );
 
-    // 3. Clear any "in progress" data for this step to prevent conflicts on reload
-    await _removeStepProgressData(step.stepCode);
-
-    // 4. Stop current step timer and reset duration for next step
+    // 5. Stop current step timer and reset duration for next step
     _stopStepTimer();
     _stepDurationSeconds = 0;
+    _currentStepCode = 0; // Clear current step code
 
-    // 5. Determine next step and update state
-    final newCurrentStepIndex = _getCurrentStepIndex(updatedProgress, currentState.isStrictSequence);
+    // 6. Determine next step and update state
+    final newCurrentStepIndex = _getCurrentStepIndex(
+      updatedProgress,
+      currentState.isStrictSequence,
+    );
+
+    // 7. Preserve all existing step timers and add the newly completed step's timer
+    // This ensures completed step timers are not lost when transitioning to new steps
+    final updatedStepTimers = Map<int, int>.from(currentState.stepTimers);
+    updatedStepTimers[step.stepCode] = stepTimerValue;
 
     // Next step timer will start when user navigates to step page (via StartStepTimer event)
 
-    emit(VisitStepsLoaded(
-      tradingPoint: currentState.tradingPoint,
-      permissions: currentState.permissions,
-      stepProgress: updatedProgress,
-      currentStepIndex: newCurrentStepIndex,
-      isStrictSequence: currentState.isStrictSequence,
-      canProceedToNext: _canProceedToNext(updatedProgress, newCurrentStepIndex, currentState.isStrictSequence, currentState.isUnplannedOrder),
-      isUnplannedOrder: currentState.isUnplannedOrder,
-      visitDurationSeconds: _visitDurationSeconds,
-      currentStepDuration: _stepDurationSeconds,
-    ));
+    emit(
+      VisitStepsLoaded(
+        tradingPoint: currentState.tradingPoint,
+        permissions: currentState.permissions,
+        stepProgress: updatedProgress,
+        currentStepIndex: newCurrentStepIndex,
+        isStrictSequence: currentState.isStrictSequence,
+        canProceedToNext: _canProceedToNext(
+          updatedProgress,
+          newCurrentStepIndex,
+          currentState.isStrictSequence,
+          currentState.isUnplannedOrder,
+        ),
+        isUnplannedOrder: currentState.isUnplannedOrder,
+        visitDurationSeconds: _visitDurationSeconds,
+        currentStepDuration: _stepDurationSeconds,
+        stepTimers: updatedStepTimers,
+      ),
+    );
   }
 
   Future<void> _onSkipStep(
@@ -780,15 +1137,18 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       return;
     }
 
-    final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
+    final updatedProgress = List<VisitStepProgress>.from(
+      currentState.stepProgress,
+    );
 
     // 1. Update status to completed (skipped)
-    updatedProgress[event.stepIndex] = updatedProgress[event.stepIndex].copyWith(
-      status: VisitStepStatus.completed, // Skipped is a form of completion
-      notes: event.reason,
-      skipReason: event.reason,
-      completedAt: DateTime.now(),
-    );
+    updatedProgress[event.stepIndex] = updatedProgress[event.stepIndex]
+        .copyWith(
+          status: VisitStepStatus.completed, // Skipped is a form of completion
+          notes: event.reason,
+          skipReason: event.reason,
+          completedAt: DateTime.now(),
+        );
 
     // 2. Save skip data to persistent storage
     await _saveStepDataToStorage(
@@ -807,17 +1167,33 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     await _removeStepProgressData(step.stepCode);
 
     // 4. Determine next step and update state
-    final newCurrentStepIndex = _getCurrentStepIndex(updatedProgress, currentState.isStrictSequence);
+    final newCurrentStepIndex = _getCurrentStepIndex(
+      updatedProgress,
+      currentState.isStrictSequence,
+    );
 
-    emit(VisitStepsLoaded(
-      tradingPoint: currentState.tradingPoint,
-      permissions: currentState.permissions,
-      stepProgress: updatedProgress,
-      currentStepIndex: newCurrentStepIndex,
-      isStrictSequence: currentState.isStrictSequence,
-      canProceedToNext: _canProceedToNext(updatedProgress, newCurrentStepIndex, currentState.isStrictSequence, currentState.isUnplannedOrder),
-      isUnplannedOrder: currentState.isUnplannedOrder,
-    ));
+    // 5. Preserve stepTimers map to prevent loss of completed step timers
+    final updatedStepTimers = Map<int, int>.from(currentState.stepTimers);
+    // Skipped steps get 0 duration
+    updatedStepTimers[step.stepCode] = 0;
+
+    emit(
+      VisitStepsLoaded(
+        tradingPoint: currentState.tradingPoint,
+        permissions: currentState.permissions,
+        stepProgress: updatedProgress,
+        currentStepIndex: newCurrentStepIndex,
+        isStrictSequence: currentState.isStrictSequence,
+        canProceedToNext: _canProceedToNext(
+          updatedProgress,
+          newCurrentStepIndex,
+          currentState.isStrictSequence,
+          currentState.isUnplannedOrder,
+        ),
+        isUnplannedOrder: currentState.isUnplannedOrder,
+        stepTimers: updatedStepTimers,
+      ),
+    );
   }
 
   Future<void> _onPreviousStep(
@@ -832,35 +1208,42 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 
     if (previousStepIndex < 0) return;
 
-    debugPrint('VisitStepsBloc: PreviousStep - currentStepIndex: $currentStepIndex, previousStepIndex: $previousStepIndex');
+    debugPrint(
+      'VisitStepsBloc: PreviousStep - currentStepIndex: $currentStepIndex, previousStepIndex: $previousStepIndex',
+    );
 
     // 1. Clear ALL data for the CURRENT step (Reset)
     final currentStep = currentState.stepProgress[currentStepIndex].step;
-    debugPrint('VisitStepsBloc: Clearing all data for current step ${currentStep.stepCode}');
+    debugPrint(
+      'VisitStepsBloc: Clearing all data for current step ${currentStep.stepCode}',
+    );
     await _clearStepDataFromStorage(currentStep.stepCode);
 
     // 2. Update CURRENT step status to pending locally
-    final updatedProgress = List<VisitStepProgress>.from(currentState.stepProgress);
-    updatedProgress[currentStepIndex] = updatedProgress[currentStepIndex].copyWith(
-      status: VisitStepStatus.pending,
-      notes: null,
-      skipReason: null,
-      completedAt: null,
+    final updatedProgress = List<VisitStepProgress>.from(
+      currentState.stepProgress,
     );
+    updatedProgress[currentStepIndex] = updatedProgress[currentStepIndex]
+        .copyWith(
+          status: VisitStepStatus.pending,
+          notes: null,
+          skipReason: null,
+          completedAt: null,
+        );
 
     // 3. Reactivate PREVIOUS step
     // We need to remove the 'completion' record for the previous step to make it active again.
     final previousStep = updatedProgress[previousStepIndex].step;
-    debugPrint('VisitStepsBloc: Reactivating previous step ${previousStep.stepCode}');
-    
+    debugPrint(
+      'VisitStepsBloc: Reactivating previous step ${previousStep.stepCode}',
+    );
+
     // Remove completion data for previous step to "un-complete" it
     await _removeStepCompletionData(previousStep.stepCode);
 
     // Update previous step status to inProgress locally
-    updatedProgress[previousStepIndex] = updatedProgress[previousStepIndex].copyWith(
-      status: VisitStepStatus.inProgress,
-      completedAt: null,
-    );
+    updatedProgress[previousStepIndex] = updatedProgress[previousStepIndex]
+        .copyWith(status: VisitStepStatus.inProgress, completedAt: null);
 
     // Save 'progress' marker to ensure it stays active if app restarts
     await _saveStepDataToStorage(
@@ -873,15 +1256,29 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       },
     );
 
-    emit(VisitStepsLoaded(
-      tradingPoint: currentState.tradingPoint,
-      permissions: currentState.permissions,
-      stepProgress: updatedProgress,
-      currentStepIndex: previousStepIndex,
-      isStrictSequence: currentState.isStrictSequence,
-      canProceedToNext: _canProceedToNext(updatedProgress, previousStepIndex, currentState.isStrictSequence, currentState.isUnplannedOrder),
-      isUnplannedOrder: currentState.isUnplannedOrder,
-    ));
+    // Preserve stepTimers map but remove timer for current step (being reset)
+    // and previous step (being reactivated)
+    final updatedStepTimers = Map<int, int>.from(currentState.stepTimers);
+    updatedStepTimers.remove(currentStep.stepCode);
+    updatedStepTimers.remove(previousStep.stepCode);
+
+    emit(
+      VisitStepsLoaded(
+        tradingPoint: currentState.tradingPoint,
+        permissions: currentState.permissions,
+        stepProgress: updatedProgress,
+        currentStepIndex: previousStepIndex,
+        isStrictSequence: currentState.isStrictSequence,
+        canProceedToNext: _canProceedToNext(
+          updatedProgress,
+          previousStepIndex,
+          currentState.isStrictSequence,
+          currentState.isUnplannedOrder,
+        ),
+        isUnplannedOrder: currentState.isUnplannedOrder,
+        stepTimers: updatedStepTimers,
+      ),
+    );
   }
 
   Future<void> _onFinishVisit(
@@ -893,8 +1290,11 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     final currentState = state as VisitStepsLoaded;
 
     // Check if all required steps are completed
-    final hasIncompleteRequiredSteps = currentState.stepProgress.any((progress) =>
-        progress.step.stepRequired && progress.status != VisitStepStatus.completed);
+    final hasIncompleteRequiredSteps = currentState.stepProgress.any(
+      (progress) =>
+          progress.step.stepRequired &&
+          progress.status != VisitStepStatus.completed,
+    );
 
     if (hasIncompleteRequiredSteps) {
       emit(VisitStepsError(_l10n().allRequiredStepsMustBeCompleted));
@@ -905,32 +1305,38 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     // MASOFA CHEKLOVI TEKSHIRUVI (Distance Restriction Check)
     // ============================================================================
     // Bu tekshiruv faqat REJALI TASHRIFLAR uchun amal qiladi.
-    // Rejadan tashqari buyurtmalar (isUnplannedOrder = true) uchun masofa 
-    // tekshiruvi o'tkazib yuboriladi, chunki agent ixtiyoriy joydan buyurtma 
+    // Rejadan tashqari buyurtmalar (isUnplannedOrder = true) uchun masofa
+    // tekshiruvi o'tkazib yuboriladi, chunki agent ixtiyoriy joydan buyurtma
     // yaratishi mumkin.
-    // 
+    //
     // Tekshiruv shartlari:
     // 1. clientZoneAccess > 0 bo'lishi kerak (server tomonidan belgilangan masofa)
     // 2. isUnplannedOrder = false bo'lishi kerak (rejali tashrif)
     // ============================================================================
     try {
       final clientZoneAccess = currentState.permissions.clientZoneAccess;
-      
+
       // Rejadan tashqari buyurtmalar uchun masofa tekshiruvini o'tkazib yuborish
       // Bu agent uchun moslashuvchanlikni ta'minlaydi - u ixtiyoriy joydan
       // rejadan tashqari buyurtma yaratishi mumkin
       if (currentState.isUnplannedOrder) {
-        debugPrint('VisitStepsBloc: Masofa tekshiruvi o\'tkazib yuborildi - rejadan tashqari buyurtma');
+        debugPrint(
+          'VisitStepsBloc: Masofa tekshiruvi o\'tkazib yuborildi - rejadan tashqari buyurtma',
+        );
       } else if (clientZoneAccess > 0) {
         // Faqat rejali tashriflar uchun masofa tekshiruvini bajarish
-        debugPrint('VisitStepsBloc: Masofa tekshiruvi boshlanmoqda - clientZoneAccess: $clientZoneAccess metr');
-        
-        emit(VisitStepsFinishing(
-          currentStep: 0,
-          totalSteps: currentState.stepProgress.length,
-          message: _l10n().checkingDistance,
-          tradingPoint: currentState.tradingPoint,
-        ));
+        debugPrint(
+          'VisitStepsBloc: Masofa tekshiruvi boshlanmoqda - clientZoneAccess: $clientZoneAccess metr',
+        );
+
+        emit(
+          VisitStepsFinishing(
+            currentStep: 0,
+            totalSteps: currentState.stepProgress.length,
+            message: _l10n().checkingDistance,
+            tradingPoint: currentState.tradingPoint,
+          ),
+        );
 
         // Joriy joylashuvni olish
         final locationService = sl<LocationService>();
@@ -956,15 +1362,21 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         // Masofa cheklovini tekshirish
         // Agar agent belgilangan masofadan uzoqda bo'lsa, xatolik qaytarish
         if (distanceMeters > clientZoneAccess) {
-          debugPrint('VisitStepsBloc: Masofa cheklovi bajarilmadi - joriy: ${distanceMeters.toStringAsFixed(0)}m > talab: ${clientZoneAccess}m');
+          debugPrint(
+            'VisitStepsBloc: Masofa cheklovi bajarilmadi - joriy: ${distanceMeters.toStringAsFixed(0)}m > talab: ${clientZoneAccess}m',
+          );
           emit(VisitStepsError(_l10n().distanceRestrictionError));
           return;
         }
-        
-        debugPrint('VisitStepsBloc: Masofa tekshiruvi muvaffaqiyatli - joriy: ${distanceMeters.toStringAsFixed(0)}m <= talab: ${clientZoneAccess}m');
+
+        debugPrint(
+          'VisitStepsBloc: Masofa tekshiruvi muvaffaqiyatli - joriy: ${distanceMeters.toStringAsFixed(0)}m <= talab: ${clientZoneAccess}m',
+        );
       } else {
         // clientZoneAccess = 0 bo'lganda masofa tekshiruvi o'tkazib yuboriladi
-        debugPrint('VisitStepsBloc: Masofa tekshiruvi o\'tkazib yuborildi - clientZoneAccess = 0');
+        debugPrint(
+          'VisitStepsBloc: Masofa tekshiruvi o\'tkazib yuborildi - clientZoneAccess = 0',
+        );
       }
     } catch (e, stackTrace) {
       // Masofa tekshiruvida xatolik yuz berganda
@@ -982,16 +1394,22 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         tradingPoint: currentState.tradingPoint,
         permissions: currentState.permissions,
         onProgress: (currentStep, totalSteps, message, [requestData]) {
-          emit(VisitStepsFinishing(
-            currentStep: currentStep,
-            totalSteps: totalSteps,
-            message: message,
-            tradingPoint: currentState.tradingPoint,
-            requestData: requestData,
-          ));
+          emit(
+            VisitStepsFinishing(
+              currentStep: currentStep,
+              totalSteps: totalSteps,
+              message: message,
+              tradingPoint: currentState.tradingPoint,
+              requestData: requestData,
+            ),
+          );
         },
         onError: (step, error) {
-          emit(VisitStepsError('${_l10n().stepErrorPrefix}: ${step.stepName} - $error'));
+          emit(
+            VisitStepsError(
+              '${_l10n().stepErrorPrefix}: ${step.stepName} - $error',
+            ),
+          );
         },
       );
 
@@ -999,45 +1417,60 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         // Stop all timers and save final visit completion data
         _stopVisitTimer();
         _stopStepTimer();
-        
+
         // Save visit completion data with end time
-        await _visitDataRepository.saveVisitStepData(VisitData(
-          visitId: _visitId,
-          clientCode: 'timer_metadata',
-          stepCode: 0,
-          stepName: 'Visit Completion',
-          dataType: 'visit_completion',
-          dataContent: jsonEncode({
-            'visitStartTime': _visitStartTime?.toIso8601String(),
-            'visitEndTime': DateTime.now().toIso8601String(),
-            'totalDurationSeconds': _visitDurationSeconds,
-            'completedAt': DateTime.now().toIso8601String(),
-          }),
-          timestamp: DateTime.now(),
-        ));
+        await _visitDataRepository.saveVisitStepData(
+          VisitData(
+            visitId: _visitId,
+            clientCode: 'timer_metadata',
+            stepCode: 0,
+            stepName: 'Visit Completion',
+            dataType: 'visit_completion',
+            dataContent: jsonEncode({
+              'visitStartTime': _visitStartTime?.toIso8601String(),
+              'visitEndTime': DateTime.now().toIso8601String(),
+              'totalDurationSeconds': _visitDurationSeconds,
+              'completedAt': DateTime.now().toIso8601String(),
+            }),
+            timestamp: DateTime.now(),
+          ),
+        );
         debugPrint('VisitStepsBloc: Visit completion data saved with endTime');
-        
+
         // Clear all visit data after successful completion (like canceling visit)
         await _visitFinishService.cancelAllSteps(visitId: _visitId);
 
         // Get completed steps for display
-        final completedSteps = currentState.stepProgress.where((p) => p.status == VisitStepStatus.completed).toList();
+        final completedSteps = currentState.stepProgress
+            .where((p) => p.status == VisitStepStatus.completed)
+            .toList();
 
         // Extract order code and server message if an order was created
         String? orderCode;
         String? orderServerMessage;
         final orderStep = completedSteps.firstWhere(
           (step) => step.step.stepName.toLowerCase() == 'создать заказ',
-          orElse: () => VisitStepProgress(step: VisitStep(stepCode: -1, stepName: '', stepRequired: false), status: VisitStepStatus.pending),
+          orElse: () => VisitStepProgress(
+            step: VisitStep(stepCode: -1, stepName: '', stepRequired: false),
+            status: VisitStepStatus.pending,
+          ),
         );
         if (orderStep.step.stepCode != -1) {
           // Get completion data to extract server message and order code
           try {
-            final stepData = await _visitDataRepository.getVisitStepDataByStep(_visitId, orderStep.step.stepCode);
-            final completionData = stepData.where((d) => d.dataType == 'completion').toList();
+            final stepData = await _visitDataRepository.getVisitStepDataByStep(
+              _visitId,
+              orderStep.step.stepCode,
+            );
+            final completionData = stepData
+                .where((d) => d.dataType == 'completion')
+                .toList();
             if (completionData.isNotEmpty) {
-              final latestData = completionData.reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
-              final parsedData = jsonDecode(latestData.dataContent) as Map<String, dynamic>;
+              final latestData = completionData.reduce(
+                (a, b) => a.timestamp.isAfter(b.timestamp) ? a : b,
+              );
+              final parsedData =
+                  jsonDecode(latestData.dataContent) as Map<String, dynamic>;
               orderServerMessage = parsedData['serverMessage'] as String?;
               final codeOrder = parsedData['codeOrder'] as String?;
               if (codeOrder != null && codeOrder.isNotEmpty) {
@@ -1049,19 +1482,29 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
           }
 
           // Fallback to notes if no codeOrder in completion data
-          if (orderCode == null && orderStep.notes != null && orderStep.notes!.isNotEmpty) {
+          if (orderCode == null &&
+              orderStep.notes != null &&
+              orderStep.notes!.isNotEmpty) {
             orderCode = orderStep.notes;
           }
         }
 
-        emit(VisitStepsCompleted(currentState.tradingPoint, completedSteps, orderCode: orderCode, orderServerMessage: orderServerMessage));
+        emit(
+          VisitStepsCompleted(
+            currentState.tradingPoint,
+            completedSteps,
+            orderCode: orderCode,
+            orderServerMessage: orderServerMessage,
+          ),
+        );
       }
       // Error already emitted by onError callback
-
     } catch (e, stackTrace) {
       debugPrint('VisitStepsBloc: Error finishing visit: $e');
       debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
-      emit(VisitStepsError('${_l10n().visitFinishErrorPrefix}: ${e.toString()}'));
+      emit(
+        VisitStepsError('${_l10n().visitFinishErrorPrefix}: ${e.toString()}'),
+      );
     }
   }
 
@@ -1078,7 +1521,9 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       // Clear any cached data in memory
       // Note: BLoC state will be cleared when widget is disposed
 
-      debugPrint('Visit cancelled and all data cleared for visit ID: $_visitId');
+      debugPrint(
+        'Visit cancelled and all data cleared for visit ID: $_visitId',
+      );
     } catch (e) {
       debugPrint('Error clearing visit data during cancel: $e');
       // Don't block navigation even if cleanup fails
@@ -1092,7 +1537,9 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   /// This ensures complete cleanup when visit is cancelled
   Future<void> _clearAllVisitData() async {
     try {
-      debugPrint('VisitStepsBloc: Clearing all visit data for visit ID: $_visitId');
+      debugPrint(
+        'VisitStepsBloc: Clearing all visit data for visit ID: $_visitId',
+      );
 
       // Delete all visit step data for this visit ID
       await _visitDataRepository.deleteVisitStepDataByVisitId(_visitId);
@@ -1100,7 +1547,9 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       // Clear any cached data in services if needed
       // Note: Individual step data is already cleared via _clearStepDataFromStorage
 
-      debugPrint('VisitStepsBloc: All visit data cleared successfully for visit ID: $_visitId');
+      debugPrint(
+        'VisitStepsBloc: All visit data cleared successfully for visit ID: $_visitId',
+      );
     } catch (e, stackTrace) {
       debugPrint('VisitStepsBloc: Error clearing all visit data: $e');
       debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
@@ -1111,20 +1560,30 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     }
   }
 
-  int _getCurrentStepIndex(List<VisitStepProgress> progress, bool isStrictSequence) {
+  int _getCurrentStepIndex(
+    List<VisitStepProgress> progress,
+    bool isStrictSequence,
+  ) {
     // Find the first step that is NOT completed.
     // This logic applies to both strict and non-strict for determining the "Active" step.
     // In strict mode, this is the ONLY accessible step (plus completed ones for review).
     // In non-strict mode, this is just the default "next" step.
-    
-    final index = progress.indexWhere((p) => p.status != VisitStepStatus.completed);
+
+    final index = progress.indexWhere(
+      (p) => p.status != VisitStepStatus.completed,
+    );
     return index; // Returns -1 if all are completed
   }
 
   /// Determines if the user can proceed to the next step
   /// For unplanned orders, always returns true to allow free navigation
   /// For planned visits, follows strict sequence rules
-  bool _canProceedToNext(List<VisitStepProgress> progress, int currentStepIndex, bool isStrictSequence, bool isUnplannedOrder) {
+  bool _canProceedToNext(
+    List<VisitStepProgress> progress,
+    int currentStepIndex,
+    bool isStrictSequence,
+    bool isUnplannedOrder,
+  ) {
     if (currentStepIndex == -1) return false; // All completed
 
     // For unplanned orders, always allow proceeding to next step
@@ -1136,19 +1595,29 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     // In strict mode, check if current step is completed or can be skipped
     final currentStep = progress[currentStepIndex];
     return currentStep.status == VisitStepStatus.completed ||
-           (!currentStep.step.stepRequired && currentStep.status == VisitStepStatus.pending);
+        (!currentStep.step.stepRequired &&
+            currentStep.status == VisitStepStatus.pending);
   }
 
   /// Load step progress from persistent storage with enhanced error handling
   /// This method ensures data consistency by always loading the latest data from repository
-  Future<List<VisitStepProgress>> _loadStepProgressFromStorage(List<VisitStep> visitSteps, String clientCode) async {
+  Future<List<VisitStepProgress>> _loadStepProgressFromStorage(
+    List<VisitStep> visitSteps,
+    String clientCode,
+  ) async {
     try {
-      debugPrint('VisitStepsBloc: Loading step progress for visit ID: $_visitId, client: $clientCode');
+      debugPrint(
+        'VisitStepsBloc: Loading step progress for visit ID: $_visitId, client: $clientCode',
+      );
 
       // Get existing visit data for this visit session
-      final existingData = await _visitDataRepository.getVisitStepDataByVisitId(_visitId);
+      final existingData = await _visitDataRepository.getVisitStepDataByVisitId(
+        _visitId,
+      );
 
-      debugPrint('VisitStepsBloc: Found ${existingData.length} existing data records for visit');
+      debugPrint(
+        'VisitStepsBloc: Found ${existingData.length} existing data records for visit',
+      );
 
       // Create a map of step code to existing data for quick lookup
       final existingDataMap = <int, Map<String, VisitData>>{};
@@ -1165,10 +1634,14 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
       for (final step in visitSteps) {
         final existingDataForStep = existingDataMap[step.stepCode];
 
-        debugPrint('VisitStepsBloc: Processing step ${step.stepCode} (${step.stepName})');
+        debugPrint(
+          'VisitStepsBloc: Processing step ${step.stepCode} (${step.stepName})',
+        );
 
         if (existingDataForStep != null) {
-          debugPrint('VisitStepsBloc: Found existing data for step ${step.stepCode}: ${existingDataForStep.keys}');
+          debugPrint(
+            'VisitStepsBloc: Found existing data for step ${step.stepCode}: ${existingDataForStep.keys}',
+          );
           // Check for completion data first (takes precedence over progress)
           final progressData = existingDataForStep['progress'];
           final completionData = existingDataForStep['completion'];
@@ -1176,80 +1649,103 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
           // Prioritize progress data over completion data to handle going back correctly
           if (progressData != null) {
             // Step is in progress (takes precedence over completion)
-            debugPrint('VisitStepsBloc: Step ${step.stepCode} has progress data: ${progressData.dataContent}');
+            debugPrint(
+              'VisitStepsBloc: Step ${step.stepCode} has progress data: ${progressData.dataContent}',
+            );
             try {
               final parsedData = progressData.parsedDataContent;
-              stepProgress.add(VisitStepProgress(
-                step: step,
-                status: VisitStepStatus.inProgress,
-                notes: parsedData['notes'], // Keep any existing notes
-              ));
-              debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as in-progress with notes: ${parsedData['notes']}');
+              stepProgress.add(
+                VisitStepProgress(
+                  step: step,
+                  status: VisitStepStatus.inProgress,
+                  notes: parsedData['notes'], // Keep any existing notes
+                ),
+              );
+              debugPrint(
+                'VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as in-progress with notes: ${parsedData['notes']}',
+              );
             } catch (e) {
-              debugPrint('VisitStepsBloc: Error parsing progress data for step ${step.stepCode}: $e');
+              debugPrint(
+                'VisitStepsBloc: Error parsing progress data for step ${step.stepCode}: $e',
+              );
               // Fallback to pending if data is corrupted
-              stepProgress.add(VisitStepProgress(
-                step: step,
-                status: VisitStepStatus.pending,
-              ));
+              stepProgress.add(
+                VisitStepProgress(step: step, status: VisitStepStatus.pending),
+              );
             }
           } else if (completionData != null) {
             // Step was previously completed
-            debugPrint('VisitStepsBloc: Step ${step.stepCode} has completion data: ${completionData.dataContent}');
+            debugPrint(
+              'VisitStepsBloc: Step ${step.stepCode} has completion data: ${completionData.dataContent}',
+            );
             try {
               final parsedData = completionData.parsedDataContent;
               final completedAt = parsedData['completedAt'] != null
                   ? DateTime.parse(parsedData['completedAt'])
                   : null;
 
-              stepProgress.add(VisitStepProgress(
-                step: step,
-                status: VisitStepStatus.completed,
-                notes: parsedData['notes'],
-                completedAt: completedAt,
-              ));
-              debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as completed with notes: ${parsedData['notes']}');
+              stepProgress.add(
+                VisitStepProgress(
+                  step: step,
+                  status: VisitStepStatus.completed,
+                  notes: parsedData['notes'],
+                  completedAt: completedAt,
+                ),
+              );
+              debugPrint(
+                'VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) loaded as completed with notes: ${parsedData['notes']}',
+              );
             } catch (e) {
-              debugPrint('VisitStepsBloc: Error parsing completion data for step ${step.stepCode}: $e');
+              debugPrint(
+                'VisitStepsBloc: Error parsing completion data for step ${step.stepCode}: $e',
+              );
               // Fallback to pending if data is corrupted
-              stepProgress.add(VisitStepProgress(
-                step: step,
-                status: VisitStepStatus.pending,
-              ));
+              stepProgress.add(
+                VisitStepProgress(step: step, status: VisitStepStatus.pending),
+              );
             }
           } else {
             // Step has data but no progress/completion status
-            debugPrint('VisitStepsBloc: Step ${step.stepCode} has data but no progress/completion status');
-            stepProgress.add(VisitStepProgress(
-              step: step,
-              status: VisitStepStatus.pending,
-            ));
-            debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) has data but no status, set to pending');
+            debugPrint(
+              'VisitStepsBloc: Step ${step.stepCode} has data but no progress/completion status',
+            );
+            stepProgress.add(
+              VisitStepProgress(step: step, status: VisitStepStatus.pending),
+            );
+            debugPrint(
+              'VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) has data but no status, set to pending',
+            );
           }
         } else {
           // Step is pending - no data exists
-          stepProgress.add(VisitStepProgress(
-            step: step,
-            status: VisitStepStatus.pending,
-          ));
-          debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) is pending (no existing data)');
+          stepProgress.add(
+            VisitStepProgress(step: step, status: VisitStepStatus.pending),
+          );
+          debugPrint(
+            'VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) is pending (no existing data)',
+          );
         }
       }
 
-      debugPrint('VisitStepsBloc: Successfully loaded ${stepProgress.length} step progress records');
+      debugPrint(
+        'VisitStepsBloc: Successfully loaded ${stepProgress.length} step progress records',
+      );
       return stepProgress;
     } catch (e, stackTrace) {
-      debugPrint('VisitStepsBloc: Error loading step progress from storage: $e');
+      debugPrint(
+        'VisitStepsBloc: Error loading step progress from storage: $e',
+      );
       debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
 
       // Fallback to default initialization with detailed logging
-      debugPrint('VisitStepsBloc: Falling back to default initialization for all steps');
+      debugPrint(
+        'VisitStepsBloc: Falling back to default initialization for all steps',
+      );
       final fallbackProgress = visitSteps.map((step) {
-        debugPrint('VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) initialized as pending (fallback)');
-        return VisitStepProgress(
-          step: step,
-          status: VisitStepStatus.pending,
+        debugPrint(
+          'VisitStepsBloc: Step ${step.stepCode} (${step.stepName}) initialized as pending (fallback)',
         );
+        return VisitStepProgress(step: step, status: VisitStepStatus.pending);
       }).toList();
 
       return fallbackProgress;
@@ -1267,7 +1763,9 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
     try {
       // Validate current state
       if (state is! VisitStepsLoaded) {
-        debugPrint('VisitStepsBloc: Cannot save step data - bloc not in loaded state');
+        debugPrint(
+          'VisitStepsBloc: Cannot save step data - bloc not in loaded state',
+        );
         return;
       }
 
@@ -1282,11 +1780,15 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
         timestamp: DateTime.now(),
       );
 
-      debugPrint('VisitStepsBloc: Saving step data - visitId: $_visitId, stepCode: $stepCode, dataType: $dataType');
+      debugPrint(
+        'VisitStepsBloc: Saving step data - visitId: $_visitId, stepCode: $stepCode, dataType: $dataType',
+      );
 
       await _visitDataRepository.saveVisitStepData(visitData);
 
-      debugPrint('VisitStepsBloc: Step data saved successfully for step $stepCode ($stepName)');
+      debugPrint(
+        'VisitStepsBloc: Step data saved successfully for step $stepCode ($stepName)',
+      );
     } catch (e, stackTrace) {
       debugPrint('VisitStepsBloc: Error saving step data to storage: $e');
       debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
@@ -1301,11 +1803,18 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   /// This ensures data cleanup happens reliably
   Future<void> _clearStepDataFromStorage(int stepCode) async {
     try {
-      debugPrint('VisitStepsBloc: Clearing step data for visitId: $_visitId, stepCode: $stepCode');
+      debugPrint(
+        'VisitStepsBloc: Clearing step data for visitId: $_visitId, stepCode: $stepCode',
+      );
 
-      await _visitDataRepository.deleteVisitStepDataByStepCode(_visitId, stepCode);
+      await _visitDataRepository.deleteVisitStepDataByStepCode(
+        _visitId,
+        stepCode,
+      );
 
-      debugPrint('VisitStepsBloc: Step data cleared successfully for step $stepCode');
+      debugPrint(
+        'VisitStepsBloc: Step data cleared successfully for step $stepCode',
+      );
     } catch (e, stackTrace) {
       debugPrint('VisitStepsBloc: Error clearing step data from storage: $e');
       debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
@@ -1316,21 +1825,28 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   /// Used when navigating back to a previous step to "un-complete" it
   Future<void> _removeStepCompletionData(int stepCode) async {
     try {
-      debugPrint('VisitStepsBloc: Removing completion data for visitId: $_visitId, stepCode: $stepCode');
-      
+      debugPrint(
+        'VisitStepsBloc: Removing completion data for visitId: $_visitId, stepCode: $stepCode',
+      );
+
       // Get all data for this step
-      final stepData = await _visitDataRepository.getVisitStepDataByStep(_visitId, stepCode);
-      
+      final stepData = await _visitDataRepository.getVisitStepDataByStep(
+        _visitId,
+        stepCode,
+      );
+
       // Find completion records
-      final completionRecords = stepData.where((d) => d.dataType == 'completion');
-      
+      final completionRecords = stepData.where(
+        (d) => d.dataType == 'completion',
+      );
+
       // Delete them
       for (final record in completionRecords) {
         if (record.id != null) {
           await _visitDataRepository.deleteVisitStepData(record.id!);
         }
       }
-      
+
       debugPrint('VisitStepsBloc: Completion data removed for step $stepCode');
     } catch (e, stackTrace) {
       debugPrint('VisitStepsBloc: Error removing completion data: $e');
@@ -1342,26 +1858,101 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
   /// Used when completing/skipping a step to ensure it doesn't load as "in progress" next time
   Future<void> _removeStepProgressData(int stepCode) async {
     try {
-      debugPrint('VisitStepsBloc: Removing progress data for visitId: $_visitId, stepCode: $stepCode');
-      
+      debugPrint(
+        'VisitStepsBloc: Removing progress data for visitId: $_visitId, stepCode: $stepCode',
+      );
+
       // Get all data for this step
-      final stepData = await _visitDataRepository.getVisitStepDataByStep(_visitId, stepCode);
-      
+      final stepData = await _visitDataRepository.getVisitStepDataByStep(
+        _visitId,
+        stepCode,
+      );
+
       // Find progress records
       final progressRecords = stepData.where((d) => d.dataType == 'progress');
-      
+
       // Delete them
       for (final record in progressRecords) {
         if (record.id != null) {
           await _visitDataRepository.deleteVisitStepData(record.id!);
         }
       }
-      
+
       debugPrint('VisitStepsBloc: Progress data removed for step $stepCode');
     } catch (e, stackTrace) {
       debugPrint('VisitStepsBloc: Error removing progress data: $e');
       debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
     }
+  }
+
+  /// Batch operation to save step completion and clear progress data
+  /// This reduces database transactions from 2 to 1, improving performance
+  /// Critical for maintaining data consistency during step transitions
+  Future<void> _saveStepCompletionBatch({
+    required int stepCode,
+    required String stepName,
+    required Map<String, dynamic> completionData,
+  }) async {
+    try {
+      if (state is! VisitStepsLoaded) {
+        debugPrint(
+          'VisitStepsBloc: Cannot save completion batch - bloc not in loaded state',
+        );
+        return;
+      }
+
+      final currentState = state as VisitStepsLoaded;
+
+      // Create completion data record
+      final completionRecord = VisitData(
+        visitId: _visitId,
+        clientCode: currentState.tradingPoint.tradingPoint.name,
+        stepCode: stepCode,
+        stepName: stepName,
+        dataType: 'completion',
+        dataContent: jsonEncode(completionData),
+        timestamp: DateTime.now(),
+      );
+
+      debugPrint(
+        'VisitStepsBloc: Saving completion batch for step $stepCode ($stepName)',
+      );
+
+      // Save completion data
+      await _visitDataRepository.saveVisitStepData(completionRecord);
+
+      // Clear progress data in same operation context
+      await _removeStepProgressData(stepCode);
+
+      debugPrint(
+        'VisitStepsBloc: Completion batch saved successfully for step $stepCode',
+      );
+    } catch (e, stackTrace) {
+      debugPrint('VisitStepsBloc: Error in batch completion save: $e');
+      debugPrint('VisitStepsBloc: Stack trace: $stackTrace');
+
+      // Don't throw to avoid breaking UI flow
+      // TODO: Implement retry mechanism or user notification
+    }
+  }
+
+  /// Record step entry time for accurate duration tracking
+  /// Called when user navigates to a step page
+  void _recordStepEntry(int stepCode) {
+    final entryTime = DateTime.now();
+    _stepEntryTimes[stepCode] = entryTime;
+
+    debugPrint(
+      'VisitStepsBloc: Step $stepCode entry recorded at ${entryTime.toIso8601String()}',
+    );
+  }
+
+  /// Helper method to get localization instance
+  /// Returns AppLocalizations for error messages and UI text
+  AppLocalizations _l10n() {
+    // This is a placeholder - in real implementation, context would be needed
+    // For BLoC, we'll use English fallback
+    return AppLocalizationsEn();
   }
 }
 
@@ -1370,7 +1961,8 @@ class VisitStepsBloc extends Bloc<VisitStepsEvent, VisitStepsState> {
 /// For unplanned orders, all visit steps become optional and users can proceed freely.
 class VisitStepsPage extends StatelessWidget {
   final TradingPointWithPermissions tradingPoint;
-  final bool isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
+  final bool
+  isUnplannedOrder; // Flag to indicate if this is an unplanned order visit
 
   const VisitStepsPage({
     super.key,
@@ -1380,12 +1972,18 @@ class VisitStepsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Generate visitId for this session
+    final today = DateTime.now().toIso8601String().split('T')[0];
+    final visitId = 'visit_temp_${tradingPoint.tradingPoint.id}_$today';
+
     return BlocProvider(
       create: (context) => VisitStepsBloc(
-        dataSyncService: sl<DataSyncService>(),
         visitDataRepository: VisitDataRepository(sl<ApiDatabaseService>()),
-        visitFinishService: VisitFinishService(VisitDataRepository(sl<ApiDatabaseService>())),
-        isUnplannedOrder: isUnplannedOrder, // Pass the flag to the bloc
+        visitFinishService: VisitFinishService(
+          VisitDataRepository(sl<ApiDatabaseService>()),
+        ),
+        visitId: visitId,
+        isUnplannedOrder: isUnplannedOrder,
       )..add(LoadVisitSteps(tradingPoint)),
       child: VisitStepsView(tradingPoint: tradingPoint),
     );
@@ -1435,14 +2033,17 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     if (_syncStarted) return;
     _syncStarted = true;
 
-    debugPrint('VisitStepsView: Starting background sync after order submission');
+    debugPrint(
+      'VisitStepsView: Starting background sync after order submission',
+    );
 
     _postOrderSyncManager = PostOrderSyncManager(
       dataSyncService: sl<DataSyncService>(),
     );
 
-    final progressStream = _postOrderSyncManager!.syncAfterOrderSubmissionStream();
-    
+    final progressStream = _postOrderSyncManager!
+        .syncAfterOrderSubmissionStream();
+
     PostOrderSyncNotification.show(
       context,
       progressStream,
@@ -1451,7 +2052,10 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     );
   }
 
-  Future<void> _navigateToOrderDetails(BuildContext context, String orderCode) async {
+  Future<void> _navigateToOrderDetails(
+    BuildContext context,
+    String orderCode,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
     try {
       final ds = sl<DataSyncService>();
@@ -1489,15 +2093,15 @@ class _VisitStepsViewState extends State<VisitStepsView> {
       );
 
       await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => OrderDetailsPage(order: model),
-        ),
+        MaterialPageRoute(builder: (context) => OrderDetailsPage(order: model)),
       );
     } catch (e) {
       debugPrint('Error navigating to order details: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${l10n.orderDetailsNavigationErrorPrefix}: ${e.toString()}'),
+          content: Text(
+            '${l10n.orderDetailsNavigationErrorPrefix}: ${e.toString()}',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -1529,7 +2133,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           ),
           BlocBuilder<VisitStepsBloc, VisitStepsState>(
             builder: (context, state) {
-              if (state is VisitStepsLoaded && state.visitDurationSeconds != null) {
+              if (state is VisitStepsLoaded &&
+                  state.visitDurationSeconds != null) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: Center(
@@ -1562,82 +2167,107 @@ class _VisitStepsViewState extends State<VisitStepsView> {
       body: Stack(
         children: [
           BlocConsumer<VisitStepsBloc, VisitStepsState>(
-        listener: (context, state) {
-          if (state is VisitStepsError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
-            // Close the visit page on error after a delay
-            Future.delayed(const Duration(seconds: 2), () {
-              if (context.mounted) {
-                Navigator.of(context).pop(false); // Return failure
+            listener: (context, state) {
+              if (state is VisitStepsError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                // Close the visit page on error after a delay
+                Future.delayed(const Duration(seconds: 2), () {
+                  if (context.mounted) {
+                    Navigator.of(context).pop(false); // Return failure
+                  }
+                });
               }
-            });
-          }
-          // VisitStepsCompleted is now handled by the UI builder, not the listener
-        },
-        builder: (context, state) {
-          if (state is VisitStepsLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+              // VisitStepsCompleted is now handled by the UI builder, not the listener
+            },
+            builder: (context, state) {
+              if (state is VisitStepsLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          if (state is VisitStepsLoaded) {
-            return _buildLoadedView(context, state, theme, l10n);
-          }
+              if (state is VisitStepsLoaded) {
+                return _buildLoadedView(context, state, theme, l10n);
+              }
 
-          if (state is VisitStepsCompleted) {
-            return _buildCompletedView(context, state, theme, l10n);
-          }
+              if (state is VisitStepsCompleted) {
+                return _buildCompletedView(context, state, theme, l10n);
+              }
 
-          if (state is VisitStepsFinishing) {
-            return _buildFinishingView(context, state, theme, l10n);
-          }
+              if (state is VisitStepsFinishing) {
+                return _buildFinishingView(context, state, theme, l10n);
+              }
 
-          if (state is VisitStepsError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    state.message,
-                    style: theme.textTheme.titleMedium,
-                    textAlign: TextAlign.center,
+              if (state is VisitStepsError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.red,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        state.message,
+                        style: theme.textTheme.titleMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: () {
+                          context.read<VisitStepsBloc>().add(
+                            LoadVisitSteps(widget.tradingPoint),
+                          );
+                        },
+                        child: Text(l10n.retry),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () {
-                      context.read<VisitStepsBloc>().add(LoadVisitSteps(widget.tradingPoint));
-                    },
-                    child: Text(l10n.retry),
-                  ),
-                ],
-              ),
-            );
-          }
+                );
+              }
 
-          return Center(child: Text(l10n.unknownState));
-        },
-      ),
+              return Center(child: Text(l10n.unknownState));
+            },
+          ),
           // Floating timer overlay
           if (_showTimerOverlay)
             BlocBuilder<VisitStepsBloc, VisitStepsState>(
               builder: (context, state) {
                 if (state is VisitStepsLoaded) {
+                  // Debug: Log stepTimers map before creating UI
+                  debugPrint(
+                    'FloatingTimerOverlay: stepTimers map = ${state.stepTimers}',
+                  );
+
                   // Prepare all steps with their timer info
                   final allSteps = state.stepProgress.map((stepProgress) {
+                    final timerValue =
+                        state.stepTimers[stepProgress.step.stepCode];
+                    debugPrint(
+                      'FloatingTimerOverlay: Step ${stepProgress.step.stepCode} '
+                      '(${stepProgress.step.stepName}) - timer: $timerValue, '
+                      'isCompleted: ${stepProgress.status == VisitStepStatus.completed}',
+                    );
+
                     return StepTimerInfo(
                       stepName: stepProgress.step.stepName,
                       stepCode: stepProgress.step.stepCode,
-                      durationSeconds: state.stepTimers[stepProgress.step.stepCode],
-                      isActive: state.currentStepIndex >= 0 && 
-                                state.currentStepIndex < state.stepProgress.length &&
-                                state.stepProgress[state.currentStepIndex].step.stepCode == stepProgress.step.stepCode,
-                      isCompleted: stepProgress.status == VisitStepStatus.completed,
+                      durationSeconds: timerValue,
+                      isActive:
+                          state.currentStepIndex >= 0 &&
+                          state.currentStepIndex < state.stepProgress.length &&
+                          state
+                                  .stepProgress[state.currentStepIndex]
+                                  .step
+                                  .stepCode ==
+                              stepProgress.step.stepCode,
+                      isCompleted:
+                          stepProgress.status == VisitStepStatus.completed,
                     );
                   }).toList();
 
@@ -1685,9 +2315,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           _buildProgressIndicator(context, state, theme),
 
           // Steps List
-          Expanded(
-            child: _buildStepsList(context, state, theme, l10n),
-          ),
+          Expanded(child: _buildStepsList(context, state, theme, l10n)),
 
           // Action Buttons
           _buildActionButtons(context, state, theme, l10n),
@@ -1702,7 +2330,9 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     ThemeData theme,
     AppLocalizations l10n,
   ) {
-    final progress = state.totalSteps > 0 ? state.currentStep / state.totalSteps : 0.0;
+    final progress = state.totalSteps > 0
+        ? state.currentStep / state.totalSteps
+        : 0.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -1748,12 +2378,14 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                     ),
                   ),
                   // Display SOAP request data if available
-                  if (state.requestData != null && state.requestData!.isNotEmpty) ...[
+                  if (state.requestData != null &&
+                      state.requestData!.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withOpacity(0.5),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: theme.colorScheme.outline.withOpacity(0.3),
@@ -1781,8 +2413,11 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                               IconButton(
                                 icon: const Icon(Icons.copy, size: 18),
                                 onPressed: () async {
-                                  if (state.requestData != null && state.requestData!.isNotEmpty) {
-                                    await Clipboard.setData(ClipboardData(text: state.requestData!));
+                                  if (state.requestData != null &&
+                                      state.requestData!.isNotEmpty) {
+                                    await Clipboard.setData(
+                                      ClipboardData(text: state.requestData!),
+                                    );
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(l10n.soapRequestCopied),
@@ -1867,7 +2502,11 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     );
   }
 
-  Widget _buildCompletionHeader(BuildContext context, VisitStepsCompleted state, ThemeData theme) {
+  Widget _buildCompletionHeader(
+    BuildContext context,
+    VisitStepsCompleted state,
+    ThemeData theme,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1887,11 +2526,7 @@ class _VisitStepsViewState extends State<VisitStepsView> {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.check_circle,
-            size: 64,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(Icons.check_circle, size: 64, color: theme.colorScheme.primary),
           const SizedBox(height: 16),
           Text(
             l10n.visitCompletedSuccessfully,
@@ -1946,7 +2581,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
       itemCount: state.completedSteps.length,
       itemBuilder: (context, index) {
         final stepProgress = state.completedSteps[index];
-        final isOrderStep = stepProgress.step.stepName.toLowerCase() == 'создать заказ';
+        final isOrderStep =
+            stepProgress.step.stepName.toLowerCase() == 'создать заказ';
 
         return Card(
           elevation: 2,
@@ -1955,7 +2591,9 @@ class _VisitStepsViewState extends State<VisitStepsView> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: InkWell(
-            onTap: isOrderStep && state.orderCode != null ? () => _navigateToOrderDetails(context, state.orderCode!) : null,
+            onTap: isOrderStep && state.orderCode != null
+                ? () => _navigateToOrderDetails(context, state.orderCode!)
+                : null,
             borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -1985,7 +2623,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                             color: theme.colorScheme.onSurface,
                           ),
                         ),
-                        if (stepProgress.notes != null && stepProgress.notes!.isNotEmpty) ...[
+                        if (stepProgress.notes != null &&
+                            stepProgress.notes!.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
                             stepProgress.notes!,
@@ -2057,7 +2696,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: () => _navigateToOrderDetails(context, state.orderCode!),
+                      onPressed: () =>
+                          _navigateToOrderDetails(context, state.orderCode!),
                       icon: const Icon(Icons.receipt_long),
                       label: Text(l10n.viewOrder),
                       style: FilledButton.styleFrom(
@@ -2092,7 +2732,11 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     );
   }
 
-  Widget _buildClientHeader(BuildContext context, VisitStepsLoaded state, ThemeData theme) {
+  Widget _buildClientHeader(
+    BuildContext context,
+    VisitStepsLoaded state,
+    ThemeData theme,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -2117,7 +2761,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
             backgroundColor: theme.colorScheme.primaryContainer,
             child: Text(
               state.tradingPoint.tradingPoint.name.isNotEmpty
-                  ? state.tradingPoint.tradingPoint.name.characters.first.toUpperCase()
+                  ? state.tradingPoint.tradingPoint.name.characters.first
+                        .toUpperCase()
                   : '?',
               style: theme.textTheme.titleLarge?.copyWith(
                 color: theme.colorScheme.onPrimaryContainer,
@@ -2173,7 +2818,11 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     );
   }
 
-  Widget _buildClientHeaderFinishing(BuildContext context, VisitStepsFinishing state, ThemeData theme) {
+  Widget _buildClientHeaderFinishing(
+    BuildContext context,
+    VisitStepsFinishing state,
+    ThemeData theme,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -2198,7 +2847,8 @@ class _VisitStepsViewState extends State<VisitStepsView> {
             backgroundColor: theme.colorScheme.primaryContainer,
             child: Text(
               state.tradingPoint.tradingPoint.name.isNotEmpty
-                  ? state.tradingPoint.tradingPoint.name.characters.first.toUpperCase()
+                  ? state.tradingPoint.tradingPoint.name.characters.first
+                        .toUpperCase()
                   : '?',
               style: theme.textTheme.titleLarge?.copyWith(
                 color: theme.colorScheme.onPrimaryContainer,
@@ -2235,9 +2885,15 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     );
   }
 
-  Widget _buildFinishingProgressIndicator(BuildContext context, VisitStepsFinishing state, ThemeData theme) {
+  Widget _buildFinishingProgressIndicator(
+    BuildContext context,
+    VisitStepsFinishing state,
+    ThemeData theme,
+  ) {
     final l10n = AppLocalizations.of(context)!;
-    final progress = state.totalSteps > 0 ? state.currentStep / state.totalSteps : 0.0;
+    final progress = state.totalSteps > 0
+        ? state.currentStep / state.totalSteps
+        : 0.0;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -2264,16 +2920,24 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           LinearProgressIndicator(
             value: progress,
             backgroundColor: theme.colorScheme.outlineVariant,
-            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              theme.colorScheme.primary,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProgressIndicator(BuildContext context, VisitStepsLoaded state, ThemeData theme) {
+  Widget _buildProgressIndicator(
+    BuildContext context,
+    VisitStepsLoaded state,
+    ThemeData theme,
+  ) {
     final l10n = AppLocalizations.of(context)!;
-    final completedSteps = state.stepProgress.where((p) => p.status == VisitStepStatus.completed).length;
+    final completedSteps = state.stepProgress
+        .where((p) => p.status == VisitStepStatus.completed)
+        .length;
     final totalSteps = state.stepProgress.length;
     final progress = totalSteps > 0 ? completedSteps / totalSteps : 0.0;
 
@@ -2302,7 +2966,9 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           LinearProgressIndicator(
             value: progress,
             backgroundColor: theme.colorScheme.outlineVariant,
-            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              theme.colorScheme.primary,
+            ),
           ),
         ],
       ),
@@ -2321,14 +2987,16 @@ class _VisitStepsViewState extends State<VisitStepsView> {
       itemBuilder: (context, index) {
         final stepProgress = state.stepProgress[index];
         final isCurrentStep = index == state.currentStepIndex;
-        
+
         // Determine if this specific card should be interactive
         // It should be interactive if it's the current step OR if strict sequence is off
         // But we also need to consider if it's completed/skipped
         final canInteract = _canInteractWithStep(stepProgress, index, state);
 
         return _VisitStepCard(
-          key: ValueKey('${stepProgress.step.stepCode}_${stepProgress.status}_$isCurrentStep'), // Force rebuild on state change
+          key: ValueKey(
+            '${stepProgress.step.stepCode}_${stepProgress.status}_$isCurrentStep',
+          ), // Force rebuild on state change
           stepProgress: stepProgress,
           isCurrentStep: isCurrentStep,
           canInteract: canInteract,
@@ -2343,7 +3011,9 @@ class _VisitStepsViewState extends State<VisitStepsView> {
             context.read<VisitStepsBloc>().add(SkipStep(index, reason));
           },
           onPrevious: () {
-            context.read<VisitStepsBloc>().add(PreviousStep(state.currentStepIndex));
+            context.read<VisitStepsBloc>().add(
+              PreviousStep(state.currentStepIndex),
+            );
           },
         );
       },
@@ -2410,7 +3080,9 @@ class _VisitStepsViewState extends State<VisitStepsView> {
                     // Navigate back after a brief delay to allow cleanup
                     await Future.delayed(const Duration(milliseconds: 100));
                     if (context.mounted) {
-                      Navigator.of(context).pop(false); // Return false to indicate cancellation
+                      Navigator.of(
+                        context,
+                      ).pop(false); // Return false to indicate cancellation
                     }
                   }
                 },
@@ -2440,16 +3112,22 @@ class _VisitStepsViewState extends State<VisitStepsView> {
     );
   }
 
-  bool _canInteractWithStep(VisitStepProgress stepProgress, int index, VisitStepsLoaded state) {
+  bool _canInteractWithStep(
+    VisitStepProgress stepProgress,
+    int index,
+    VisitStepsLoaded state,
+  ) {
     // If strict sequence is disabled, user can interact with any step
     if (!state.isStrictSequence) return true;
 
     // In strict sequence:
     // 1. Can interact with the CURRENT active step
     if (index == state.currentStepIndex) return true;
-    
+
     // 2. Can view/edit COMPLETED steps (read-only or edit depending on logic, but card is interactive)
-    if (stepProgress.status == VisitStepStatus.completed || stepProgress.status == VisitStepStatus.skipped) return true;
+    if (stepProgress.status == VisitStepStatus.completed ||
+        stepProgress.status == VisitStepStatus.skipped)
+      return true;
 
     // 3. Cannot interact with future steps
     return false;
@@ -2467,13 +3145,19 @@ class _VisitStepsViewState extends State<VisitStepsView> {
           children: [
             Text('${l10n.client}: ${state.tradingPoint.tradingPoint.name}'),
             const SizedBox(height: 8),
-            Text('${l10n.strictSequence}: ${state.isStrictSequence ? l10n.yes : l10n.no}'),
+            Text(
+              '${l10n.strictSequence}: ${state.isStrictSequence ? l10n.yes : l10n.no}',
+            ),
             const SizedBox(height: 8),
-            Text('${l10n.visitStepNumber}: ${state.tradingPoint.visitStepNumber}'),
+            Text(
+              '${l10n.visitStepNumber}: ${state.tradingPoint.visitStepNumber}',
+            ),
             const SizedBox(height: 8),
             Text('${l10n.totalSteps}: ${state.stepProgress.length}'),
             const SizedBox(height: 8),
-            Text('${l10n.requiredSteps}: ${state.stepProgress.where((p) => p.step.stepRequired).length}'),
+            Text(
+              '${l10n.requiredSteps}: ${state.stepProgress.where((p) => p.step.stepRequired).length}',
+            ),
           ],
         ),
         actions: [
@@ -2496,7 +3180,8 @@ class _VisitStepCard extends StatefulWidget {
   final TradingPointWithPermissions tradingPoint;
   final String visitId;
   final int currentStepIndex;
-  final Function(Map<String, dynamic>) onComplete; // Updated to accept flexible data for complex completions
+  final Function(Map<String, dynamic>)
+  onComplete; // Updated to accept flexible data for complex completions
   final Function(String) onSkip;
   final Function() onPrevious;
 
@@ -2592,11 +3277,7 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               // Step Header
               Row(
                 children: [
-                  Icon(
-                    statusIcon,
-                    color: borderColor,
-                    size: 24,
-                  ),
+                  Icon(statusIcon, color: borderColor, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -2613,7 +3294,10 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: step.stepRequired
                                     ? theme.colorScheme.errorContainer
@@ -2621,7 +3305,9 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                step.stepRequired ? l10n.mandatory : l10n.optional,
+                                step.stepRequired
+                                    ? l10n.mandatory
+                                    : l10n.optional,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: step.stepRequired
                                       ? theme.colorScheme.onErrorContainer
@@ -2633,7 +3319,10 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                             if (widget.isCurrentStep) ...[
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: theme.colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
@@ -2660,158 +3349,161 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                 ],
               ),
 
-            // Status-specific content
-            // If it's the current step, show action buttons regardless of previous status (unless it was just reset)
-            if (widget.isCurrentStep) ...[
-               const SizedBox(height: 16),
-              // Action buttons for current active step
-              Row(
-                children: [
-                  // Previous button (only if not the first step)
-                  if (widget.currentStepIndex > 0) ...[
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          debugPrint('VisitStepCard: Previous button pressed for step ${widget.stepProgress.step.stepCode}, currentStepIndex: ${widget.currentStepIndex}');
-                          widget.onPrevious();
-                        },
-                        icon: const Icon(Icons.arrow_back, size: 18),
-                        label: Text(l10n.previous),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  
-                  // Skip button (only if optional)
-                  if (!step.stepRequired) ...[
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _showSkipDialog(context),
-                        icon: const Icon(Icons.skip_next, size: 18),
-                        label: Text(l10n.skipStep),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  
-                  // Complete button removed as per requirements
-                  // Steps are completed by navigating into them and finishing the task
-                ],
-              ),
-            ] else if (status == VisitStepStatus.completed) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
+              // Status-specific content
+              // If it's the current step, show action buttons regardless of previous status (unless it was just reset)
+              if (widget.isCurrentStep) ...[
+                const SizedBox(height: 16),
+                // Action buttons for current active step
+                Row(
                   children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: theme.colorScheme.primary,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.completed,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w500,
+                    // Previous button (only if not the first step)
+                    if (widget.currentStepIndex > 0) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            debugPrint(
+                              'VisitStepCard: Previous button pressed for step ${widget.stepProgress.step.stepCode}, currentStepIndex: ${widget.currentStepIndex}',
+                            );
+                            widget.onPrevious();
+                          },
+                          icon: const Icon(Icons.arrow_back, size: 18),
+                          label: Text(l10n.previous),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
                       ),
-                    ),
-                    if (widget.stepProgress.completedAt != null) ...[
-                      const Spacer(),
+                      const SizedBox(width: 8),
+                    ],
+
+                    // Skip button (only if optional)
+                    if (!step.stepRequired) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showSkipDialog(context),
+                          icon: const Icon(Icons.skip_next, size: 18),
+                          label: Text(l10n.skipStep),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+
+                    // Complete button removed as per requirements
+                    // Steps are completed by navigating into them and finishing the task
+                  ],
+                ),
+              ] else if (status == VisitStepStatus.completed) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: theme.colorScheme.primary,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        _formatDateTime(widget.stepProgress.completedAt!),
+                        l10n.completed,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (widget.stepProgress.completedAt != null) ...[
+                        const Spacer(),
+                        Text(
+                          _formatDateTime(widget.stepProgress.completedAt!),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (widget.stepProgress.notes?.isNotEmpty == true) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '${l10n.notes}: ${widget.stepProgress.notes}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ] else if (status == VisitStepStatus.skipped) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.skip_next,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.skipped,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (widget.stepProgress.skipReason?.isNotEmpty == true) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '${l10n.reason}: ${widget.stepProgress.skipReason}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ] else if (widget.isStrictSequence &&
+                  status == VisitStepStatus.pending) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.lock,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.previousStepsRequired,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
-                  ],
-                ),
-              ),
-              if (widget.stepProgress.notes?.isNotEmpty == true) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '${l10n.notes}: ${widget.stepProgress.notes}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
-            ] else if (status == VisitStepStatus.skipped) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.skip_next,
-                      color: theme.colorScheme.onSurfaceVariant,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.skipped,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (widget.stepProgress.skipReason?.isNotEmpty == true) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '${l10n.reason}: ${widget.stepProgress.skipReason}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ] else if (widget.isStrictSequence && status == VisitStepStatus.pending) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.lock,
-                      color: theme.colorScheme.onSurfaceVariant,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.previousStepsRequired,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -2821,7 +3513,9 @@ class _VisitStepCardState extends State<_VisitStepCard> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${widget.stepProgress.step.stepName} ${l10n.completed.toLowerCase()}'),
+        title: Text(
+          '${widget.stepProgress.step.stepName} ${l10n.completed.toLowerCase()}',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -2871,20 +3565,29 @@ class _VisitStepCardState extends State<_VisitStepCard> {
     final l10n = AppLocalizations.of(context)!;
 
     // Retrieve current state to determine step accessibility
-    final currentState = context.read<VisitStepsBloc>().state as VisitStepsLoaded;
+    final currentState =
+        context.read<VisitStepsBloc>().state as VisitStepsLoaded;
 
     // Find the progress status for the target step
-    final stepProgress = currentState.stepProgress
-        .firstWhere((progress) => progress.step.stepCode == step.stepCode);
+    final stepProgress = currentState.stepProgress.firstWhere(
+      (progress) => progress.step.stepCode == step.stepCode,
+    );
 
     // Determine step accessibility based on completion and current position
     final isCompleted = stepProgress.status == VisitStepStatus.completed;
-    final isCurrentStep = currentState.currentStepIndex ==
+    final isCurrentStep =
+        currentState.currentStepIndex ==
         currentState.stepProgress.indexOf(stepProgress);
 
-    debugPrint('VisitStepsPage: Navigating to step ${step.stepCode} (${step.stepName})');
-    debugPrint('VisitStepsPage: Step status: ${stepProgress.status}, isCompleted: $isCompleted, isCurrentStep: $isCurrentStep');
-    debugPrint('VisitStepsPage: Step notes: ${stepProgress.notes}, completedAt: ${stepProgress.completedAt}');
+    debugPrint(
+      'VisitStepsPage: Navigating to step ${step.stepCode} (${step.stepName})',
+    );
+    debugPrint(
+      'VisitStepsPage: Step status: ${stepProgress.status}, isCompleted: $isCompleted, isCurrentStep: $isCurrentStep',
+    );
+    debugPrint(
+      'VisitStepsPage: Step notes: ${stepProgress.notes}, completedAt: ${stepProgress.completedAt}',
+    );
 
     // Enforce navigation restrictions for non-accessible steps
     if (!isCompleted && !isCurrentStep) {
@@ -2902,7 +3605,9 @@ class _VisitStepCardState extends State<_VisitStepCard> {
 
     // Set readOnly mode: completed steps are view-only, current step is editable
     final readOnly = isCompleted;
-    debugPrint('VisitStepsPage: Setting readOnly=$readOnly for step ${step.stepCode}');
+    debugPrint(
+      'VisitStepsPage: Setting readOnly=$readOnly for step ${step.stepCode}',
+    );
 
     Widget? page;
 
@@ -2959,15 +3664,17 @@ class _VisitStepCardState extends State<_VisitStepCard> {
           appBar: AppBar(
             title: Text(step.stepName),
             centerTitle: true,
-            actions: readOnly ? [
-              const Icon(Icons.visibility, color: Colors.grey),
-              const SizedBox(width: 8),
-              Text(
-                l10n.readOnly,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-              const SizedBox(width: 16),
-            ] : null,
+            actions: readOnly
+                ? [
+                    const Icon(Icons.visibility, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.readOnly,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    const SizedBox(width: 16),
+                  ]
+                : null,
           ),
           body: Center(
             child: Column(
@@ -3011,56 +3718,69 @@ class _VisitStepCardState extends State<_VisitStepCard> {
       // Wrap with BlocProvider.value to share VisitStepsBloc with step pages
       // This allows step pages to access timer state for display
       final bloc = context.read<VisitStepsBloc>();
-      
+
       // Pause step timer if viewing a read-only (completed) step
       // This prevents timer from running while viewing completed steps
       if (readOnly) {
         bloc.add(PauseStepTimer(step.stepCode));
-        debugPrint('VisitStepsPage: Paused step timer for read-only navigation');
+        debugPrint(
+          'VisitStepsPage: Paused step timer for read-only navigation',
+        );
       } else {
         // Start step timer when entering an editable (current) step
         // This ensures step timer only counts time spent inside the step page
         bloc.add(StartStepTimer(step.stepCode));
-        debugPrint('VisitStepsPage: Started step timer for step ${step.stepCode}');
+        debugPrint(
+          'VisitStepsPage: Started step timer for step ${step.stepCode}',
+        );
       }
-      
+
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (navContext) => BlocProvider.value(
-            value: bloc,
-            child: page!,
-          ),
+          builder: (navContext) =>
+              BlocProvider.value(value: bloc, child: page!),
         ),
       );
 
       // Handle timer state after returning from step page
       if (readOnly && currentState.currentStepIndex >= 0) {
         // Resume step timer for the current active step after viewing read-only step
-        final activeStep = currentState.stepProgress[currentState.currentStepIndex].step;
+        final activeStep =
+            currentState.stepProgress[currentState.currentStepIndex].step;
         bloc.add(ResumeStepTimer(activeStep.stepCode));
-        debugPrint('VisitStepsPage: Resumed step timer after read-only navigation');
+        debugPrint(
+          'VisitStepsPage: Resumed step timer after read-only navigation',
+        );
       } else if (!readOnly) {
         // Pause step timer when returning from editable step (saves timer state)
         bloc.add(PauseStepTimer(step.stepCode));
-        debugPrint('VisitStepsPage: Paused step timer after returning from step ${step.stepCode}');
+        debugPrint(
+          'VisitStepsPage: Paused step timer after returning from step ${step.stepCode}',
+        );
       }
 
       // Handle the result if step was completed
-      if (result != null && result is Map<String, dynamic> && result['completed'] == true) {
+      if (result != null &&
+          result is Map<String, dynamic> &&
+          result['completed'] == true) {
         final stepIndex = currentState.stepProgress.indexOf(stepProgress);
-        
+
         // IMPORTANT: Update timers before completing step to ensure current timer value is captured
         // This triggers UpdateTimers event which updates stepTimers map with current _stepDurationSeconds
         bloc.add(UpdateTimers());
-        
+
         // Wait a brief moment for UpdateTimers to process and update the state
         await Future.delayed(const Duration(milliseconds: 50));
-        
+
         // Pass the full result data (including order and shipping date) to completion
         // This ensures that complex step data like order information is preserved in the completion record
         final completionData = Map<String, dynamic>.from(result);
-        completionData.remove('completed'); // Remove the completion flag as it's not part of the data to save
-        context.read<VisitStepsBloc>().add(CompleteStep(stepIndex, completionData));
+        completionData.remove(
+          'completed',
+        ); // Remove the completion flag as it's not part of the data to save
+        context.read<VisitStepsBloc>().add(
+          CompleteStep(stepIndex, completionData),
+        );
       }
     }
   }

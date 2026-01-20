@@ -54,7 +54,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 32, // Incremented to version 32 for sync_metadata table
+      version: 33, // Incremented to version 33 for promo column in orders table
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -83,12 +83,24 @@ class ApiDatabaseService {
     ''');
 
     // Create indexes for visit_steps_data table
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)',
+    );
 
     // Ensure user_organizations table exists for fresh installations
     await db.execute('''
@@ -103,8 +115,12 @@ class ApiDatabaseService {
     ''');
 
     // Create indexes for user_organizations table
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_code ON user_organizations(code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_user_code ON user_organizations(user_code)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_user_organizations_code ON user_organizations(code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_user_organizations_user_code ON user_organizations(user_code)',
+    );
 
     // Ensure map_tokens table exists for fresh installations
     await db.execute('''
@@ -158,7 +174,7 @@ class ApiDatabaseService {
           UNIQUE(promotion_code, product_code)
         )
       ''');
- 
+
       // Create promotion bonus list table
       await db.execute('''
         CREATE TABLE IF NOT EXISTS promotion_bonus_list (
@@ -171,7 +187,7 @@ class ApiDatabaseService {
           UNIQUE(promotion_code, product_code)
         )
       ''');
- 
+
       // Create promotion class list table
       await db.execute('''
         CREATE TABLE IF NOT EXISTS promotion_class_list (
@@ -186,11 +202,21 @@ class ApiDatabaseService {
       ''');
 
       await db.execute('CREATE INDEX idx_promotions_code ON promotions(code)');
-      await db.execute('CREATE INDEX idx_promotions_active ON promotions(is_active)');
-      await db.execute('CREATE INDEX idx_promotions_date_range ON promotions(date_start, date_end)');
-      await db.execute('CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)');
-      await db.execute('CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)');
-      await db.execute('CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)');
+      await db.execute(
+        'CREATE INDEX idx_promotions_active ON promotions(is_active)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_promotions_date_range ON promotions(date_start, date_end)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)',
+      );
     } else if (oldVersion < 4) {
       // Migrate from old promotion_products table to separate tables
       // First, create the new tables
@@ -233,7 +259,9 @@ class ApiDatabaseService {
       // Migrate data from old table
       final oldProducts = await db.query('promotion_products');
       for (final product in oldProducts) {
-        final table = product['product_type'] == 'product' ? 'promotion_product_list' : 'promotion_bonus_list';
+        final table = product['product_type'] == 'product'
+            ? 'promotion_product_list'
+            : 'promotion_bonus_list';
         await db.insert(table, {
           'promotion_code': product['promotion_code'],
           'product_code': product['product_code'],
@@ -246,9 +274,15 @@ class ApiDatabaseService {
       await db.execute('DROP TABLE promotion_products');
 
       // Create indexes
-      await db.execute('CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)');
-      await db.execute('CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)');
-      await db.execute('CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)');
+      await db.execute(
+        'CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)',
+      );
     } else if (oldVersion < 5) {
       // Add business regions table for version 5
       await db.execute('''
@@ -325,11 +359,21 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for better performance
-      await db.execute('CREATE INDEX idx_product_balances_code_sklad ON product_balances(code_sklad)');
-      await db.execute('CREATE INDEX idx_product_balances_code_product ON product_balances(code_product)');
-      await db.execute('CREATE INDEX idx_product_balances_product_brand ON product_balances(product_brand)');
-      await db.execute('CREATE INDEX idx_product_balances_product_series ON product_balances(product_series)');
-      await db.execute('CREATE INDEX idx_product_series_brand_name ON product_series(brand_name)');
+      await db.execute(
+        'CREATE INDEX idx_product_balances_code_sklad ON product_balances(code_sklad)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_product_balances_code_product ON product_balances(code_product)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_product_balances_product_brand ON product_balances(product_brand)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_product_balances_product_series ON product_balances(product_series)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_product_series_brand_name ON product_series(brand_name)',
+      );
     } else if (oldVersion < 8) {
       // Add foreign key constraints for version 8
       // Since this is a cache database that gets cleared and reloaded,
@@ -365,10 +409,18 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for better performance
-      await db.execute('CREATE INDEX idx_client_contracts_code_contract ON client_contracts(code_contract)');
-      await db.execute('CREATE INDEX idx_client_contracts_code_client ON client_contracts(code_client)');
-      await db.execute('CREATE INDEX idx_client_contracts_active ON client_contracts(active)');
-      await db.execute('CREATE INDEX idx_client_contracts_status ON client_contracts(status)');
+      await db.execute(
+        'CREATE INDEX idx_client_contracts_code_contract ON client_contracts(code_contract)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_client_contracts_code_client ON client_contracts(code_client)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_client_contracts_active ON client_contracts(active)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_client_contracts_status ON client_contracts(status)',
+      );
     } else if (oldVersion < 10) {
       // Add report tables for version 10
       await db.execute('''
@@ -446,13 +498,27 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for better performance
-      await db.execute('CREATE INDEX idx_main_reports_user_code ON main_reports(user_code)');
-      await db.execute('CREATE INDEX idx_main_reports_date_range ON main_reports(date_start, date_end)');
-      await db.execute('CREATE INDEX idx_business_region_reports_main_report_id ON business_region_reports(main_report_id)');
-      await db.execute('CREATE INDEX idx_akb_by_categories_main_report_id ON akb_by_categories(main_report_id)');
-      await db.execute('CREATE INDEX idx_visit_plans_main_report_id ON visit_plans(main_report_id)');
-      await db.execute('CREATE INDEX idx_visit_plans_client_code ON visit_plans(client_code)');
-      await db.execute('CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)');
+      await db.execute(
+        'CREATE INDEX idx_main_reports_user_code ON main_reports(user_code)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_main_reports_date_range ON main_reports(date_start, date_end)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_business_region_reports_main_report_id ON business_region_reports(main_report_id)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_akb_by_categories_main_report_id ON akb_by_categories(main_report_id)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_visit_plans_main_report_id ON visit_plans(main_report_id)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_visit_plans_client_code ON visit_plans(client_code)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)',
+      );
     } else if (oldVersion < 11) {
       // Add order statuses and orders tables for version 11
       await db.execute('''
@@ -511,6 +577,7 @@ class ApiDatabaseService {
           courier_name TEXT,
           courier_car TEXT,
           server INTEGER NOT NULL DEFAULT 0,
+          promo INTEGER NOT NULL DEFAULT 0,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL,
           FOREIGN KEY (type_price_code) REFERENCES price_types (code) ON DELETE CASCADE,
@@ -522,14 +589,28 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for orders table
-      await db.execute('CREATE INDEX idx_orders_num_order ON orders(num_order)');
-      await db.execute('CREATE INDEX idx_orders_client_code ON orders(client_code)');
-      await db.execute('CREATE INDEX idx_orders_type_price_code ON orders(type_price_code)');
-      await db.execute('CREATE INDEX idx_orders_main_status ON orders(main_status)');
-      await db.execute('CREATE INDEX idx_order_statuses_message ON order_statuses(message)');
+      await db.execute(
+        'CREATE INDEX idx_orders_num_order ON orders(num_order)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_orders_client_code ON orders(client_code)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_orders_type_price_code ON orders(type_price_code)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_orders_main_status ON orders(main_status)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_order_statuses_message ON order_statuses(message)',
+      );
       await db.execute('CREATE INDEX idx_couriers_name ON couriers(name)');
-      await db.execute('CREATE INDEX idx_courier_cars_car ON courier_cars(car)');
-      await db.execute('CREATE INDEX idx_order_couriers_order_num ON order_couriers(order_num)');
+      await db.execute(
+        'CREATE INDEX idx_courier_cars_car ON courier_cars(car)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_order_couriers_order_num ON order_couriers(order_num)',
+      );
     } else if (oldVersion < 12) {
       // Add order details tables for version 12
       await db.execute('''
@@ -583,9 +664,15 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for order details tables
-      await db.execute('CREATE INDEX idx_order_details_num_order ON order_details(num_order)');
-      await db.execute('CREATE INDEX idx_order_detail_products_order_detail_id ON order_detail_products(order_detail_id)');
-      await db.execute('CREATE INDEX idx_order_payments_order_detail_id ON order_payments(order_detail_id)');
+      await db.execute(
+        'CREATE INDEX idx_order_details_num_order ON order_details(num_order)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_order_detail_products_order_detail_id ON order_detail_products(order_detail_id)',
+      );
+      await db.execute(
+        'CREATE INDEX idx_order_payments_order_detail_id ON order_payments(order_detail_id)',
+      );
     } else if (oldVersion < 13) {
       // Add sales req permissions and visit steps tables for version 13
       await db.execute('''
@@ -618,9 +705,15 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for sales req permissions tables
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)',
+      );
     } else if (oldVersion < 14) {
       // Add visit_steps_data table for version 14
       await db.execute('''
@@ -642,12 +735,24 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for visit_steps_data table
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)',
+      );
     } else if (oldVersion < 15) {
       // Add create_order tables for version 15
       await db.execute('''
@@ -729,14 +834,30 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for new tables
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_code_agent ON create_order(code_agent)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_code_client ON create_order(code_client)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_is_synced ON create_order(is_synced)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_create_date ON create_order(create_date)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_products_create_order_id ON create_order_products(create_order_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_create_order_products_code_product ON create_order_products(code_product)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_competitive_intelligence_create_order_id ON competitive_intelligence(create_order_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_credit_details_create_order_id ON credit_details(create_order_id)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_create_order_code_agent ON create_order(code_agent)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_create_order_code_client ON create_order(code_client)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_create_order_is_synced ON create_order(is_synced)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_create_order_create_date ON create_order(create_date)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_create_order_products_create_order_id ON create_order_products(create_order_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_create_order_products_code_product ON create_order_products(code_product)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_competitive_intelligence_create_order_id ON competitive_intelligence(create_order_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_credit_details_create_order_id ON credit_details(create_order_id)',
+      );
     } else if (oldVersion < 16) {
       // Add user_organizations table for version 16
       await db.execute('''
@@ -751,24 +872,42 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for user_organizations table
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_code ON user_organizations(code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_user_organizations_user_code ON user_organizations(user_code)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_user_organizations_code ON user_organizations(code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_user_organizations_user_code ON user_organizations(user_code)',
+      );
     } else if (oldVersion < 17) {
       // Add new fields to sales_req_permissions table for version 17
-      await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0');
-      await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0');
+      await db.execute(
+        'ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0',
+      );
+      await db.execute(
+        'ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0',
+      );
     } else if (oldVersion < 18) {
       // Add new fields to sales_req_permissions table for version 18
       // Check if columns exist before adding to avoid errors
-      final columns = await db.rawQuery("PRAGMA table_info(sales_req_permissions)");
-      final hasClientZoneAccess = columns.any((col) => col['name'] == 'client_zone_access');
+      final columns = await db.rawQuery(
+        "PRAGMA table_info(sales_req_permissions)",
+      );
+      final hasClientZoneAccess = columns.any(
+        (col) => col['name'] == 'client_zone_access',
+      );
       if (!hasClientZoneAccess) {
-        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0',
+        );
       }
 
-      final hasLocationUpdateInterval = columns.any((col) => col['name'] == 'location_update_interval');
+      final hasLocationUpdateInterval = columns.any(
+        (col) => col['name'] == 'location_update_interval',
+      );
       if (!hasLocationUpdateInterval) {
-        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0',
+        );
       }
     } else if (oldVersion < 19) {
       // Ensure sales_req_permissions table exists with new fields for version 19
@@ -792,15 +931,25 @@ class ApiDatabaseService {
       ''');
 
       // Check if columns exist before adding to avoid errors
-      final columns = await db.rawQuery("PRAGMA table_info(sales_req_permissions)");
-      final hasClientZoneAccess = columns.any((col) => col['name'] == 'client_zone_access');
+      final columns = await db.rawQuery(
+        "PRAGMA table_info(sales_req_permissions)",
+      );
+      final hasClientZoneAccess = columns.any(
+        (col) => col['name'] == 'client_zone_access',
+      );
       if (!hasClientZoneAccess) {
-        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0',
+        );
       }
 
-      final hasLocationUpdateInterval = columns.any((col) => col['name'] == 'location_update_interval');
+      final hasLocationUpdateInterval = columns.any(
+        (col) => col['name'] == 'location_update_interval',
+      );
       if (!hasLocationUpdateInterval) {
-        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0',
+        );
       }
     } else if (oldVersion < 22) {
       // Add client_images table for version 22
@@ -838,13 +987,27 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for client_images table
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_code ON client_images(client_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)');
-      await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_client_images_client_code_server_id ON client_images(client_code, server_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_images_client_code ON client_images(client_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)',
+      );
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS ux_client_images_client_code_server_id ON client_images(client_code, server_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)',
+      );
     } else if (oldVersion < 24) {
       // Align client_images table to latest API response structure
       //
@@ -860,7 +1023,9 @@ class ApiDatabaseService {
         if (!hasColumn) {
           await db.execute('ALTER TABLE client_images ADD COLUMN $name $type');
           if (kDebugMode) {
-            print('ApiDatabaseService: Added $name column to client_images table');
+            print(
+              'ApiDatabaseService: Added $name column to client_images table',
+            );
           }
         }
       }
@@ -871,11 +1036,17 @@ class ApiDatabaseService {
       await addColumnIfMissing('status', 'TEXT');
       await addColumnIfMissing('source', 'TEXT');
 
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)');
-      await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_client_images_client_code_server_id ON client_images(client_code, server_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)',
+      );
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS ux_client_images_client_code_server_id ON client_images(client_code, server_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)',
+      );
     }
-    
+
     // =========================================================================
     // Version 25: Client Balance tables for storing balance data from buh2 API
     // =========================================================================
@@ -938,17 +1109,35 @@ class ApiDatabaseService {
       ''');
 
       // Indekslar
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_inn ON client_balances(inn)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_last_updated ON client_balances(last_updated)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_inn ON client_balance_contracts(inn)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_contract_code ON client_balance_contracts(contract_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_inn ON client_balance_orders(inn)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_number ON client_balance_orders(order_number)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_status ON client_balance_orders(status)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_date ON client_balance_orders(order_date)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balances_inn ON client_balances(inn)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balances_last_updated ON client_balances(last_updated)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_inn ON client_balance_contracts(inn)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_contract_code ON client_balance_contracts(contract_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balance_orders_inn ON client_balance_orders(inn)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_number ON client_balance_orders(order_number)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balance_orders_status ON client_balance_orders(status)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_date ON client_balance_orders(order_date)',
+      );
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Created client_balances tables (version 25)');
+        print(
+          'ApiDatabaseService: Created client_balances tables (version 25)',
+        );
       }
     }
 
@@ -957,42 +1146,74 @@ class ApiDatabaseService {
     // =========================================================================
     if (oldVersion < 26) {
       // client_balances jadvaliga client_code ustunini qo'shish
-      final balanceColumns = await db.rawQuery("PRAGMA table_info(client_balances)");
-      final hasClientCode = balanceColumns.any((col) => col['name'] == 'client_code');
+      final balanceColumns = await db.rawQuery(
+        "PRAGMA table_info(client_balances)",
+      );
+      final hasClientCode = balanceColumns.any(
+        (col) => col['name'] == 'client_code',
+      );
       if (!hasClientCode) {
-        await db.execute('ALTER TABLE client_balances ADD COLUMN client_code TEXT REFERENCES clients(code) ON DELETE CASCADE');
+        await db.execute(
+          'ALTER TABLE client_balances ADD COLUMN client_code TEXT REFERENCES clients(code) ON DELETE CASCADE',
+        );
         if (kDebugMode) {
-          print('ApiDatabaseService: Added client_code column to client_balances table');
+          print(
+            'ApiDatabaseService: Added client_code column to client_balances table',
+          );
         }
       }
 
       // client_balance_contracts jadvaliga client_code ustunini qo'shish
-      final contractColumns = await db.rawQuery("PRAGMA table_info(client_balance_contracts)");
-      final contractHasClientCode = contractColumns.any((col) => col['name'] == 'client_code');
+      final contractColumns = await db.rawQuery(
+        "PRAGMA table_info(client_balance_contracts)",
+      );
+      final contractHasClientCode = contractColumns.any(
+        (col) => col['name'] == 'client_code',
+      );
       if (!contractHasClientCode) {
-        await db.execute('ALTER TABLE client_balance_contracts ADD COLUMN client_code TEXT REFERENCES clients(code) ON DELETE CASCADE');
+        await db.execute(
+          'ALTER TABLE client_balance_contracts ADD COLUMN client_code TEXT REFERENCES clients(code) ON DELETE CASCADE',
+        );
         if (kDebugMode) {
-          print('ApiDatabaseService: Added client_code column to client_balance_contracts table');
+          print(
+            'ApiDatabaseService: Added client_code column to client_balance_contracts table',
+          );
         }
       }
 
       // client_balance_orders jadvaliga client_code ustunini qo'shish
-      final orderColumns = await db.rawQuery("PRAGMA table_info(client_balance_orders)");
-      final orderHasClientCode = orderColumns.any((col) => col['name'] == 'client_code');
+      final orderColumns = await db.rawQuery(
+        "PRAGMA table_info(client_balance_orders)",
+      );
+      final orderHasClientCode = orderColumns.any(
+        (col) => col['name'] == 'client_code',
+      );
       if (!orderHasClientCode) {
-        await db.execute('ALTER TABLE client_balance_orders ADD COLUMN client_code TEXT REFERENCES clients(code) ON DELETE CASCADE');
+        await db.execute(
+          'ALTER TABLE client_balance_orders ADD COLUMN client_code TEXT REFERENCES clients(code) ON DELETE CASCADE',
+        );
         if (kDebugMode) {
-          print('ApiDatabaseService: Added client_code column to client_balance_orders table');
+          print(
+            'ApiDatabaseService: Added client_code column to client_balance_orders table',
+          );
         }
       }
 
       // Indekslar yaratish
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_client_code ON client_balances(client_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_client_code ON client_balance_contracts(client_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_client_code ON client_balance_orders(client_code)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balances_client_code ON client_balances(client_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_client_code ON client_balance_contracts(client_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_client_balance_orders_client_code ON client_balance_orders(client_code)',
+      );
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Added client_code relationships (version 26)');
+        print(
+          'ApiDatabaseService: Added client_code relationships (version 26)',
+        );
       }
     }
 
@@ -1012,7 +1233,9 @@ class ApiDatabaseService {
       ''');
 
       // Create index for contract_types table
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_contract_types_code ON contract_types(code)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_contract_types_code ON contract_types(code)',
+      );
 
       if (kDebugMode) {
         print('ApiDatabaseService: Created contract_types table (version 27)');
@@ -1035,10 +1258,14 @@ class ApiDatabaseService {
       ''');
 
       // Create index for district_contracting table
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_district_contracting_code ON district_contracting(code_district)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_district_contracting_code ON district_contracting(code_district)',
+      );
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Created district_contracting table (version 28)');
+        print(
+          'ApiDatabaseService: Created district_contracting table (version 28)',
+        );
       }
     }
 
@@ -1077,10 +1304,18 @@ class ApiDatabaseService {
       ''');
 
       // Create indexes for product_images table
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_product_code ON product_images(product_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_server_id ON product_images(server_id)');
-      await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_product_images_product_code_server_id ON product_images(product_code, server_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_is_main ON product_images(is_main)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_product_images_product_code ON product_images(product_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_product_images_server_id ON product_images(server_id)',
+      );
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS ux_product_images_product_code_server_id ON product_images(product_code, server_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_product_images_is_main ON product_images(is_main)',
+      );
 
       if (kDebugMode) {
         print('ApiDatabaseService: Created product_images table (version 29)');
@@ -1092,26 +1327,42 @@ class ApiDatabaseService {
     // =========================================================================
     if (oldVersion < 30) {
       // Add price_type_code and price_type_name columns to order_detail_products
-      final columns = await db.rawQuery("PRAGMA table_info(order_detail_products)");
-      
-      final hasPriceTypeCode = columns.any((col) => col['name'] == 'price_type_code');
+      final columns = await db.rawQuery(
+        "PRAGMA table_info(order_detail_products)",
+      );
+
+      final hasPriceTypeCode = columns.any(
+        (col) => col['name'] == 'price_type_code',
+      );
       if (!hasPriceTypeCode) {
-        await db.execute('ALTER TABLE order_detail_products ADD COLUMN price_type_code TEXT');
+        await db.execute(
+          'ALTER TABLE order_detail_products ADD COLUMN price_type_code TEXT',
+        );
         if (kDebugMode) {
-          print('ApiDatabaseService: Added price_type_code column to order_detail_products table');
+          print(
+            'ApiDatabaseService: Added price_type_code column to order_detail_products table',
+          );
         }
       }
 
-      final hasPriceTypeName = columns.any((col) => col['name'] == 'price_type_name');
+      final hasPriceTypeName = columns.any(
+        (col) => col['name'] == 'price_type_name',
+      );
       if (!hasPriceTypeName) {
-        await db.execute('ALTER TABLE order_detail_products ADD COLUMN price_type_name TEXT');
+        await db.execute(
+          'ALTER TABLE order_detail_products ADD COLUMN price_type_name TEXT',
+        );
         if (kDebugMode) {
-          print('ApiDatabaseService: Added price_type_name column to order_detail_products table');
+          print(
+            'ApiDatabaseService: Added price_type_name column to order_detail_products table',
+          );
         }
       }
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Added price_type fields to order_detail_products (version 30)');
+        print(
+          'ApiDatabaseService: Added price_type fields to order_detail_products (version 30)',
+        );
       }
     }
 
@@ -1149,6 +1400,21 @@ class ApiDatabaseService {
 
       if (kDebugMode) {
         print('ApiDatabaseService: Created sync_metadata table (version 32)');
+      }
+    }
+
+    // =========================================================================
+    // Version 33: Add promo column to orders table
+    // =========================================================================
+    if (oldVersion < 33) {
+      await db.execute(
+        'ALTER TABLE orders ADD COLUMN promo INTEGER NOT NULL DEFAULT 0',
+      );
+
+      if (kDebugMode) {
+        print(
+          'ApiDatabaseService: Added promo column to orders table (version 33)',
+        );
       }
     }
   }
@@ -1332,8 +1598,12 @@ class ApiDatabaseService {
     ''');
 
     // Create indexes for products
-    await db.execute('CREATE INDEX idx_products_warehouse_code ON products(warehouse_code)');
-    await db.execute('CREATE INDEX idx_products_code_project ON products(code_project)');
+    await db.execute(
+      'CREATE INDEX idx_products_warehouse_code ON products(warehouse_code)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_products_code_project ON products(code_project)',
+    );
 
     // Create price types table
     await db.execute('''
@@ -1367,8 +1637,12 @@ class ApiDatabaseService {
     ''');
 
     // Create indexes for product prices
-    await db.execute('CREATE INDEX idx_product_prices_price_type_code ON product_prices(price_type_code)');
-    await db.execute('CREATE INDEX idx_product_prices_product_code ON product_prices(product_code)');
+    await db.execute(
+      'CREATE INDEX idx_product_prices_price_type_code ON product_prices(price_type_code)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_product_prices_product_code ON product_prices(product_code)',
+    );
 
     // Create promotions table
     await db.execute('''
@@ -1429,24 +1703,52 @@ class ApiDatabaseService {
 
     // Create indexes for better performance
     await db.execute('CREATE INDEX idx_promotions_code ON promotions(code)');
-    await db.execute('CREATE INDEX idx_promotions_active ON promotions(is_active)');
-    await db.execute('CREATE INDEX idx_promotions_date_range ON promotions(date_start, date_end)');
-    await db.execute('CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)');
-    await db.execute('CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)');
-    await db.execute('CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)');
+    await db.execute(
+      'CREATE INDEX idx_promotions_active ON promotions(is_active)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_promotions_date_range ON promotions(date_start, date_end)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)',
+    );
 
     // Indexes for product balance tables
-    await db.execute('CREATE INDEX idx_product_balances_code_sklad ON product_balances(code_sklad)');
-    await db.execute('CREATE INDEX idx_product_balances_code_product ON product_balances(code_product)');
-    await db.execute('CREATE INDEX idx_product_balances_product_brand ON product_balances(product_brand)');
-    await db.execute('CREATE INDEX idx_product_balances_product_series ON product_balances(product_series)');
-    await db.execute('CREATE INDEX idx_product_series_brand_name ON product_series(brand_name)');
+    await db.execute(
+      'CREATE INDEX idx_product_balances_code_sklad ON product_balances(code_sklad)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_product_balances_code_product ON product_balances(code_product)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_product_balances_product_brand ON product_balances(product_brand)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_product_balances_product_series ON product_balances(product_series)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_product_series_brand_name ON product_series(brand_name)',
+    );
 
     // Indexes for client contracts table
-    await db.execute('CREATE INDEX idx_client_contracts_code_contract ON client_contracts(code_contract)');
-    await db.execute('CREATE INDEX idx_client_contracts_code_client ON client_contracts(code_client)');
-    await db.execute('CREATE INDEX idx_client_contracts_active ON client_contracts(active)');
-    await db.execute('CREATE INDEX idx_client_contracts_status ON client_contracts(status)');
+    await db.execute(
+      'CREATE INDEX idx_client_contracts_code_contract ON client_contracts(code_contract)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_client_contracts_code_client ON client_contracts(code_client)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_client_contracts_active ON client_contracts(active)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_client_contracts_status ON client_contracts(status)',
+    );
 
     // Create report tables
     await db.execute('''
@@ -1524,13 +1826,27 @@ class ApiDatabaseService {
     ''');
 
     // Indexes for report tables
-    await db.execute('CREATE INDEX idx_main_reports_user_code ON main_reports(user_code)');
-    await db.execute('CREATE INDEX idx_main_reports_date_range ON main_reports(date_start, date_end)');
-    await db.execute('CREATE INDEX idx_business_region_reports_main_report_id ON business_region_reports(main_report_id)');
-    await db.execute('CREATE INDEX idx_akb_by_categories_main_report_id ON akb_by_categories(main_report_id)');
-    await db.execute('CREATE INDEX idx_visit_plans_main_report_id ON visit_plans(main_report_id)');
-    await db.execute('CREATE INDEX idx_visit_plans_client_code ON visit_plans(client_code)');
-    await db.execute('CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)');
+    await db.execute(
+      'CREATE INDEX idx_main_reports_user_code ON main_reports(user_code)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_main_reports_date_range ON main_reports(date_start, date_end)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_business_region_reports_main_report_id ON business_region_reports(main_report_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_akb_by_categories_main_report_id ON akb_by_categories(main_report_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_visit_plans_main_report_id ON visit_plans(main_report_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_visit_plans_client_code ON visit_plans(client_code)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)',
+    );
 
     // Create order statuses table
     await db.execute('''
@@ -1589,6 +1905,7 @@ class ApiDatabaseService {
       courier_name TEXT,
       courier_car TEXT,
       server INTEGER NOT NULL DEFAULT 0,
+      promo INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (type_price_code) REFERENCES price_types (code) ON DELETE CASCADE,
@@ -1600,10 +1917,18 @@ class ApiDatabaseService {
 
     // Create indexes for orders table
     await db.execute('CREATE INDEX idx_orders_num_order ON orders(num_order)');
-    await db.execute('CREATE INDEX idx_orders_client_code ON orders(client_code)');
-    await db.execute('CREATE INDEX idx_orders_type_price_code ON orders(type_price_code)');
-    await db.execute('CREATE INDEX idx_orders_main_status ON orders(main_status)');
-    await db.execute('CREATE INDEX idx_order_statuses_message ON order_statuses(message)');
+    await db.execute(
+      'CREATE INDEX idx_orders_client_code ON orders(client_code)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_orders_type_price_code ON orders(type_price_code)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_orders_main_status ON orders(main_status)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_order_statuses_message ON order_statuses(message)',
+    );
 
     // Create create_order table for local order creation
     await db.execute('''
@@ -1688,14 +2013,30 @@ class ApiDatabaseService {
     ''');
 
     // Create indexes for new tables
-    await db.execute('CREATE INDEX idx_create_order_code_agent ON create_order(code_agent)');
-    await db.execute('CREATE INDEX idx_create_order_code_client ON create_order(code_client)');
-    await db.execute('CREATE INDEX idx_create_order_is_synced ON create_order(is_synced)');
-    await db.execute('CREATE INDEX idx_create_order_create_date ON create_order(create_date)');
-    await db.execute('CREATE INDEX idx_create_order_products_create_order_id ON create_order_products(create_order_id)');
-    await db.execute('CREATE INDEX idx_create_order_products_code_product ON create_order_products(code_product)');
-    await db.execute('CREATE INDEX idx_competitive_intelligence_create_order_id ON competitive_intelligence(create_order_id)');
-    await db.execute('CREATE INDEX idx_credit_details_create_order_id ON credit_details(create_order_id)');
+    await db.execute(
+      'CREATE INDEX idx_create_order_code_agent ON create_order(code_agent)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_create_order_code_client ON create_order(code_client)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_create_order_is_synced ON create_order(is_synced)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_create_order_create_date ON create_order(create_date)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_create_order_products_create_order_id ON create_order_products(create_order_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_create_order_products_code_product ON create_order_products(code_product)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_competitive_intelligence_create_order_id ON competitive_intelligence(create_order_id)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_credit_details_create_order_id ON credit_details(create_order_id)',
+    );
 
     // Create sales_req_permissions table
     await db.execute('''
@@ -1800,30 +2141,68 @@ class ApiDatabaseService {
     ''');
 
     // Create indexes for new tables
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_user_code ON planned_routes(user_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_weekday ON planned_routes(code_weekday)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_code ON client_images(client_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)');
-    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_client_images_client_code_server_id ON client_images(client_code, server_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_planned_routes_user_code ON planned_routes(user_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_planned_routes_code_weekday ON planned_routes(code_weekday)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_images_client_code ON client_images(client_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_images_server_id ON client_images(server_id)',
+    );
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS ux_client_images_client_code_server_id ON client_images(client_code, server_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_images_client_id ON client_images(client_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_images_is_main ON client_images(is_main)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_images_status_code ON client_images(status_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_images_created_at_server ON client_images(created_at_server)',
+    );
 
     // =========================================================================
     // Client Balance tables - Mijoz balansi ma'lumotlari uchun
     // =========================================================================
-    
+
     // Asosiy mijoz balansi jadvali - clients table bilan bog'langan
     await db.execute('''
       CREATE TABLE IF NOT EXISTS client_balances (
@@ -1888,17 +2267,39 @@ class ApiDatabaseService {
     ''');
 
     // Client Balance indekslari
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_inn ON client_balances(inn)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_client_code ON client_balances(client_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balances_last_updated ON client_balances(last_updated)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_inn ON client_balance_contracts(inn)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_client_code ON client_balance_contracts(client_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_contract_code ON client_balance_contracts(contract_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_inn ON client_balance_orders(inn)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_client_code ON client_balance_orders(client_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_number ON client_balance_orders(order_number)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_status ON client_balance_orders(status)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_date ON client_balance_orders(order_date)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balances_inn ON client_balances(inn)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balances_client_code ON client_balances(client_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balances_last_updated ON client_balances(last_updated)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_inn ON client_balance_contracts(inn)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_client_code ON client_balance_contracts(client_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balance_contracts_contract_code ON client_balance_contracts(contract_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balance_orders_inn ON client_balance_orders(inn)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balance_orders_client_code ON client_balance_orders(client_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_number ON client_balance_orders(order_number)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balance_orders_status ON client_balance_orders(status)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_client_balance_orders_order_date ON client_balance_orders(order_date)',
+    );
 
     // =========================================================================
     // Contract Types table - Shartnoma turlari uchun
@@ -1914,7 +2315,9 @@ class ApiDatabaseService {
     ''');
 
     // Contract Types indekslari
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_contract_types_code ON contract_types(code)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_contract_types_code ON contract_types(code)',
+    );
 
     // =========================================================================
     // District Contracting table - Shartnoma uchun shahar/tuman ma'lumotlari
@@ -1930,7 +2333,9 @@ class ApiDatabaseService {
     ''');
 
     // District Contracting indekslari
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_district_contracting_code ON district_contracting(code_district)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_district_contracting_code ON district_contracting(code_district)',
+    );
 
     // =========================================================================
     // Product Images table - Mahsulot rasmlari uchun (REST API)
@@ -1965,10 +2370,18 @@ class ApiDatabaseService {
     ''');
 
     // Product Images indekslari
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_product_code ON product_images(product_code)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_server_id ON product_images(server_id)');
-    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS ux_product_images_product_code_server_id ON product_images(product_code, server_id)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_is_main ON product_images(is_main)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_product_images_product_code ON product_images(product_code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_product_images_server_id ON product_images(server_id)',
+    );
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS ux_product_images_product_code_server_id ON product_images(product_code, server_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_product_images_is_main ON product_images(is_main)',
+    );
 
     if (kDebugMode) print('API cache database tables created successfully');
   }
@@ -1986,13 +2399,21 @@ class ApiDatabaseService {
       // Ensure table exists before performing operations
       final tableInfo = getTableCreationSql()['kpi_data'];
       if (tableInfo != null) {
-        await ensureTableExists('kpi_data', tableInfo['sql'] as String, tableInfo['indexes'] as List<String>);
+        await ensureTableExists(
+          'kpi_data',
+          tableInfo['sql'] as String,
+          tableInfo['indexes'] as List<String>,
+        );
       }
 
       final db = await database;
       final now = DateTime.now().toIso8601String();
 
-      await db.delete('kpi_data', where: 'user_code = ?', whereArgs: [userCode]);
+      await db.delete(
+        'kpi_data',
+        where: 'user_code = ?',
+        whereArgs: [userCode],
+      );
 
       await db.insert('kpi_data', {
         'user_code': userCode,
@@ -2010,11 +2431,15 @@ class ApiDatabaseService {
       });
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Successfully saved KPI data for user: $userCode');
+        print(
+          'ApiDatabaseService: Successfully saved KPI data for user: $userCode',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
-        print('ApiDatabaseService: Error saving KPI data for user $userCode: $e');
+        print(
+          'ApiDatabaseService: Error saving KPI data for user $userCode: $e',
+        );
       }
       // Re-throw to allow caller to handle the error
       rethrow;
@@ -2030,7 +2455,11 @@ class ApiDatabaseService {
       // Ensure table exists before querying
       final tableInfo = getTableCreationSql()['kpi_data'];
       if (tableInfo != null) {
-        await ensureTableExists('kpi_data', tableInfo['sql'] as String, tableInfo['indexes'] as List<String>);
+        await ensureTableExists(
+          'kpi_data',
+          tableInfo['sql'] as String,
+          tableInfo['indexes'] as List<String>,
+        );
       }
 
       final db = await database;
@@ -2041,11 +2470,13 @@ class ApiDatabaseService {
         orderBy: 'created_at DESC',
         limit: 1,
       );
-      
+
       if (kDebugMode) {
-        print('ApiDatabaseService: KPI query result isEmpty: ${result.isEmpty}');
+        print(
+          'ApiDatabaseService: KPI query result isEmpty: ${result.isEmpty}',
+        );
       }
-      
+
       if (result.isEmpty) return null;
 
       final row = result.first;
@@ -2067,7 +2498,9 @@ class ApiDatabaseService {
       );
     } catch (e) {
       if (kDebugMode) {
-        print('ApiDatabaseService: Error getting KPI data for user $userCode: $e');
+        print(
+          'ApiDatabaseService: Error getting KPI data for user $userCode: $e',
+        );
       }
       return null;
     }
@@ -2128,12 +2561,14 @@ class ApiDatabaseService {
   }
 
   /// Save clients with delta sync - only insert/update/delete changed records.
-  /// 
+  ///
   /// Performance: O(n) where n = changed records, not total records.
   /// Memory: O(m) where m = existing codes set size.
-  /// 
+  ///
   /// Returns statistics about the sync operation.
-  Future<Map<String, int>> saveClientsIncremental(List<TradingPoint> clients) async {
+  Future<Map<String, int>> saveClientsIncremental(
+    List<TradingPoint> clients,
+  ) async {
     final stopwatch = Stopwatch()..start();
     final db = await database;
     final now = DateTime.now().toIso8601String();
@@ -2207,33 +2642,38 @@ class ApiDatabaseService {
     // Update existing clients (only update if needed)
     for (final code in toUpdate) {
       final client = uniqueClients[code]!;
-      batch.update('clients', {
-        'name': client.name,
-        'address': client.address,
-        'phone': client.phone,
-        'inn': client.inn,
-        'contact_person': client.contactPerson,
-        'latitude': client.latitude,
-        'longitude': client.longitude,
-        'region': client.region,
-        'district': client.district,
-        'status': client.status,
-        'last_visit_date': client.lastVisitDate,
-        'has_orders': client.hasOrders ? 1 : 0,
-        'has_contracts': client.hasContracts ? 1 : 0,
-        'is_visited': client.isVisited ? 1 : 0,
-        'has_contract': client.hasContract ? 1 : 0,
-        'owner_name': client.ownerName,
-        'signboard': client.signboard,
-        'reference_point': client.referencePoint,
-        'responsible_person': client.responsiblePerson,
-        'responsible_person_phone': client.responsiblePersonPhone,
-        'trade_point_type': client.tradePointType,
-        'credit_limit': client.creditLimit,
-        'accumulated_credit': client.accumulatedCredit,
-        'code_region': client.codeRegion,
-        'updated_at': now,
-      }, where: 'code = ?', whereArgs: [code]);
+      batch.update(
+        'clients',
+        {
+          'name': client.name,
+          'address': client.address,
+          'phone': client.phone,
+          'inn': client.inn,
+          'contact_person': client.contactPerson,
+          'latitude': client.latitude,
+          'longitude': client.longitude,
+          'region': client.region,
+          'district': client.district,
+          'status': client.status,
+          'last_visit_date': client.lastVisitDate,
+          'has_orders': client.hasOrders ? 1 : 0,
+          'has_contracts': client.hasContracts ? 1 : 0,
+          'is_visited': client.isVisited ? 1 : 0,
+          'has_contract': client.hasContract ? 1 : 0,
+          'owner_name': client.ownerName,
+          'signboard': client.signboard,
+          'reference_point': client.referencePoint,
+          'responsible_person': client.responsiblePerson,
+          'responsible_person_phone': client.responsiblePersonPhone,
+          'trade_point_type': client.tradePointType,
+          'credit_limit': client.creditLimit,
+          'accumulated_credit': client.accumulatedCredit,
+          'code_region': client.codeRegion,
+          'updated_at': now,
+        },
+        where: 'code = ?',
+        whereArgs: [code],
+      );
       updatedCount++;
     }
 
@@ -2241,7 +2681,9 @@ class ApiDatabaseService {
     stopwatch.stop();
 
     if (kDebugMode) {
-      print('[DeltaSync] Clients: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)');
+      print(
+        '[DeltaSync] Clients: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)',
+      );
     }
 
     return {
@@ -2257,7 +2699,11 @@ class ApiDatabaseService {
     final result = await db.query('clients', orderBy: 'name ASC');
 
     // Helper function for safe double parsing from database
-    double _safeParseDoubleFromDb(dynamic value, String fieldName, String clientCode) {
+    double _safeParseDoubleFromDb(
+      dynamic value,
+      String fieldName,
+      String clientCode,
+    ) {
       if (value == null) return 0.0;
 
       // Handle different types safely
@@ -2270,7 +2716,10 @@ class ApiDatabaseService {
       if (value is num) return value.toDouble();
 
       // Log warning for unexpected types
-      if (kDebugMode) print('Warning: Unexpected type for $fieldName in client $clientCode: ${value.runtimeType} = $value');
+      if (kDebugMode)
+        print(
+          'Warning: Unexpected type for $fieldName in client $clientCode: ${value.runtimeType} = $value',
+        );
       return 0.0;
     }
 
@@ -2290,8 +2739,16 @@ class ApiDatabaseService {
             hasContracts: (row['has_contracts'] as int?) == 1,
             isVisited: (row['is_visited'] as int?) == 1,
             hasContract: (row['has_contract'] as int?) == 1,
-            latitude: _safeParseDoubleFromDb(row['latitude'], 'latitude', row['code'] as String),
-            longitude: _safeParseDoubleFromDb(row['longitude'], 'longitude', row['code'] as String),
+            latitude: _safeParseDoubleFromDb(
+              row['latitude'],
+              'latitude',
+              row['code'] as String,
+            ),
+            longitude: _safeParseDoubleFromDb(
+              row['longitude'],
+              'longitude',
+              row['code'] as String,
+            ),
             region: row['region'] as String? ?? '',
             district: row['district'] as String? ?? '',
             signboard: row['signboard'] as String? ?? '',
@@ -2300,9 +2757,16 @@ class ApiDatabaseService {
             responsiblePersonPhone:
                 row['responsible_person_phone'] as String? ?? '',
             tradePointType: row['trade_point_type'] as String? ?? '',
-            creditLimit: _safeParseDoubleFromDb(row['credit_limit'], 'creditLimit', row['code'] as String),
-            accumulatedCredit:
-                _safeParseDoubleFromDb(row['accumulated_credit'], 'accumulatedCredit', row['code'] as String),
+            creditLimit: _safeParseDoubleFromDb(
+              row['credit_limit'],
+              'creditLimit',
+              row['code'] as String,
+            ),
+            accumulatedCredit: _safeParseDoubleFromDb(
+              row['accumulated_credit'],
+              'accumulatedCredit',
+              row['code'] as String,
+            ),
             codeRegion: row['code_region'] as String? ?? '',
           ),
         )
@@ -2314,7 +2778,7 @@ class ApiDatabaseService {
   Future<List<String>> getUniqueTradePointTypes() async {
     final db = await database;
     final result = await db.rawQuery(
-      "SELECT DISTINCT trade_point_type FROM clients WHERE trade_point_type IS NOT NULL AND trade_point_type != '' ORDER BY trade_point_type ASC"
+      "SELECT DISTINCT trade_point_type FROM clients WHERE trade_point_type IS NOT NULL AND trade_point_type != '' ORDER BY trade_point_type ASC",
     );
     return result.map((row) => row['trade_point_type'] as String).toList();
   }
@@ -2365,12 +2829,14 @@ class ApiDatabaseService {
   }
 
   /// Save products with delta sync - only insert/update/delete changed records.
-  /// 
+  ///
   /// Performance: O(n) where n = changed records, not total records.
   /// Memory: O(m) where m = existing codes set size.
-  /// 
+  ///
   /// Returns statistics about the sync operation.
-  Future<Map<String, int>> saveProductsIncremental(List<ProductData> products) async {
+  Future<Map<String, int>> saveProductsIncremental(
+    List<ProductData> products,
+  ) async {
     final stopwatch = Stopwatch()..start();
     final db = await database;
     final now = DateTime.now().toIso8601String();
@@ -2435,24 +2901,29 @@ class ApiDatabaseService {
     // Update existing products
     for (final code in toUpdate) {
       final product = uniqueProducts[code]!;
-      batch.update('products', {
-        'name': product.name,
-        'unit': product.unit,
-        'quantity': product.quantity,
-        'reserved': product.reserved,
-        'available': product.available,
-        'category': product.category,
-        'barcode': product.barcode,
-        'have': product.have,
-        'warehouse_code': product.warehouseCode,
-        'weight': product.weight,
-        'capacity': product.capacity,
-        'vendor_code': product.vendorCode,
-        'product_brand': product.productBrand,
-        'product_series': product.productSeries,
-        'code_project': product.codeProject,
-        'updated_at': now,
-      }, where: 'code = ?', whereArgs: [code]);
+      batch.update(
+        'products',
+        {
+          'name': product.name,
+          'unit': product.unit,
+          'quantity': product.quantity,
+          'reserved': product.reserved,
+          'available': product.available,
+          'category': product.category,
+          'barcode': product.barcode,
+          'have': product.have,
+          'warehouse_code': product.warehouseCode,
+          'weight': product.weight,
+          'capacity': product.capacity,
+          'vendor_code': product.vendorCode,
+          'product_brand': product.productBrand,
+          'product_series': product.productSeries,
+          'code_project': product.codeProject,
+          'updated_at': now,
+        },
+        where: 'code = ?',
+        whereArgs: [code],
+      );
       updatedCount++;
     }
 
@@ -2460,7 +2931,9 @@ class ApiDatabaseService {
     stopwatch.stop();
 
     if (kDebugMode) {
-      print('[DeltaSync] Products: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)');
+      print(
+        '[DeltaSync] Products: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)',
+      );
     }
 
     return {
@@ -2500,12 +2973,12 @@ class ApiDatabaseService {
   }
 
   /// Get a single product by its code
-  /// 
+  ///
   /// Returns ProductData if found, null otherwise.
   /// Used for displaying product details in promotion product/bonus cards.
   Future<ProductData?> getProductByCode(String productCode) async {
     if (productCode.isEmpty) return null;
-    
+
     try {
       final db = await database;
       final result = await db.query(
@@ -2538,7 +3011,9 @@ class ApiDatabaseService {
       );
     } catch (e) {
       if (kDebugMode) {
-        print('ApiDatabaseService: Error getting product by code $productCode: $e');
+        print(
+          'ApiDatabaseService: Error getting product by code $productCode: $e',
+        );
       }
       return null;
     }
@@ -2612,7 +3087,7 @@ class ApiDatabaseService {
   /// Returns null if not found
   Future<PriceType?> getPriceTypeByCode(String code) async {
     if (code.isEmpty) return null;
-    
+
     final db = await database;
     final result = await db.query(
       'price_types',
@@ -2634,16 +3109,19 @@ class ApiDatabaseService {
 
   /// Get price type name by code with fallback logic
   /// Returns: price type name if found, 'Bonus' if price is 0, or code as fallback
-  Future<String> getPriceTypeDisplayName(String code, {double price = 0}) async {
+  Future<String> getPriceTypeDisplayName(
+    String code, {
+    double price = 0,
+  }) async {
     if (code.isEmpty) {
       return price == 0 ? 'Bonus' : '';
     }
-    
+
     final priceType = await getPriceTypeByCode(code);
     if (priceType != null && priceType.name.isNotEmpty) {
       return priceType.name;
     }
-    
+
     // Fallback: if price is 0, show "Bonus", otherwise show code
     return price == 0 ? 'Bonus' : code;
   }
@@ -2703,19 +3181,25 @@ class ApiDatabaseService {
   }
 
   /// Save product prices with delta sync - only insert/update/delete changed records.
-  /// 
+  ///
   /// Performance: O(n) where n = changed records, not total records.
   /// Memory: O(m) where m = existing keys set size.
-  /// 
+  ///
   /// Returns statistics about the sync operation.
-  Future<Map<String, int>> saveProductPricesIncremental(List<ProductPrice> productPrices) async {
+  Future<Map<String, int>> saveProductPricesIncremental(
+    List<ProductPrice> productPrices,
+  ) async {
     final stopwatch = Stopwatch()..start();
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
     // Get existing product price keys - O(n) query, minimal memory
-    final existingRows = await db.rawQuery('SELECT product_code, price_type_code FROM product_prices');
-    final existingKeys = existingRows.map((r) => '${r['product_code']}_${r['price_type_code']}').toSet();
+    final existingRows = await db.rawQuery(
+      'SELECT product_code, price_type_code FROM product_prices',
+    );
+    final existingKeys = existingRows
+        .map((r) => '${r['product_code']}_${r['price_type_code']}')
+        .toSet();
 
     // Deduplicate incoming product prices
     final uniquePrices = <String, ProductPrice>{};
@@ -2743,9 +3227,11 @@ class ApiDatabaseService {
       if (parts.length >= 2) {
         final productCode = parts[0];
         final priceTypeCode = parts.sublist(1).join('_');
-        batch.delete('product_prices', 
-          where: 'product_code = ? AND price_type_code = ?', 
-          whereArgs: [productCode, priceTypeCode]);
+        batch.delete(
+          'product_prices',
+          where: 'product_code = ? AND price_type_code = ?',
+          whereArgs: [productCode, priceTypeCode],
+        );
         deletedCount++;
       }
     }
@@ -2769,14 +3255,18 @@ class ApiDatabaseService {
     // Update existing prices
     for (final key in toUpdate) {
       final price = uniquePrices[key]!;
-      batch.update('product_prices', {
-        'price': price.price,
-        'currency': price.currency,
-        'valid_from': price.validFrom,
-        'valid_to': price.validTo,
-        'updated_at': now,
-      }, where: 'product_code = ? AND price_type_code = ?', 
-         whereArgs: [price.productCode, price.priceTypeCode]);
+      batch.update(
+        'product_prices',
+        {
+          'price': price.price,
+          'currency': price.currency,
+          'valid_from': price.validFrom,
+          'valid_to': price.validTo,
+          'updated_at': now,
+        },
+        where: 'product_code = ? AND price_type_code = ?',
+        whereArgs: [price.productCode, price.priceTypeCode],
+      );
       updatedCount++;
     }
 
@@ -2784,7 +3274,9 @@ class ApiDatabaseService {
     stopwatch.stop();
 
     if (kDebugMode) {
-      print('[DeltaSync] ProductPrices: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)');
+      print(
+        '[DeltaSync] ProductPrices: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)',
+      );
     }
 
     return {
@@ -2828,7 +3320,10 @@ class ApiDatabaseService {
   // Promotions methods
   Future<void> savePromotions(List<PromotionModel> promotions) async {
     final timestamp = DateTime.now().toIso8601String();
-    if (kDebugMode) print('[$timestamp] DEBUG DB: savePromotions called with ${promotions.length} promotions');
+    if (kDebugMode)
+      print(
+        '[$timestamp] DEBUG DB: savePromotions called with ${promotions.length} promotions',
+      );
 
     final db = await database;
     final now = DateTime.now().toIso8601String();
@@ -2837,7 +3332,8 @@ class ApiDatabaseService {
     final batch = db.batch();
 
     // Delete all existing promotions and their products
-    if (kDebugMode) print('[$timestamp] DEBUG DB: Deleting existing promotions and products');
+    if (kDebugMode)
+      print('[$timestamp] DEBUG DB: Deleting existing promotions and products');
     batch.delete('promotion_product_list');
     batch.delete('promotion_bonus_list');
     batch.delete('promotion_class_list');
@@ -2849,11 +3345,17 @@ class ApiDatabaseService {
       uniquePromotions[promotion.code] = promotion;
     }
 
-    if (kDebugMode) print('[$timestamp] DEBUG DB: After deduplication: ${uniquePromotions.length} unique promotions');
+    if (kDebugMode)
+      print(
+        '[$timestamp] DEBUG DB: After deduplication: ${uniquePromotions.length} unique promotions',
+      );
 
     // Add all inserts to batch
     for (final promotion in uniquePromotions.values) {
-      if (kDebugMode) print('[$timestamp] DEBUG DB: Inserting promotion ${promotion.code}: ${promotion.name}');
+      if (kDebugMode)
+        print(
+          '[$timestamp] DEBUG DB: Inserting promotion ${promotion.code}: ${promotion.name}',
+        );
       batch.insert('promotions', {
         'code': promotion.code,
         'name': promotion.name,
@@ -2916,13 +3418,17 @@ class ApiDatabaseService {
         });
       }
 
-      if (kDebugMode) print('[$timestamp] DEBUG DB: Promotion ${promotion.code} has ${uniqueProductList.length} unique products, ${uniqueBonusList.length} unique bonuses, and ${uniqueClassList.length} unique classes');
+      if (kDebugMode)
+        print(
+          '[$timestamp] DEBUG DB: Promotion ${promotion.code} has ${uniqueProductList.length} unique products, ${uniqueBonusList.length} unique bonuses, and ${uniqueClassList.length} unique classes',
+        );
     }
 
     // Execute batch operation
     if (kDebugMode) print('[$timestamp] DEBUG DB: Committing batch');
     await batch.commit(noResult: true);
-    if (kDebugMode) print('[$timestamp] DEBUG DB: Batch committed successfully');
+    if (kDebugMode)
+      print('[$timestamp] DEBUG DB: Batch committed successfully');
   }
 
   Future<List<PromotionModel>> getPromotions({
@@ -2931,7 +3437,10 @@ class ApiDatabaseService {
     DateTime? dateFilter,
   }) async {
     final timestamp = DateTime.now().toIso8601String();
-    if (kDebugMode) print('[$timestamp] DEBUG DB: getPromotions called, onlyActive: $onlyActive, searchQuery: $searchQuery, dateFilter: $dateFilter');
+    if (kDebugMode)
+      print(
+        '[$timestamp] DEBUG DB: getPromotions called, onlyActive: $onlyActive, searchQuery: $searchQuery, dateFilter: $dateFilter',
+      );
 
     final db = await database;
 
@@ -2963,7 +3472,10 @@ class ApiDatabaseService {
       whereArgs.addAll(['%$searchQuery%', '%$searchQuery%']);
     }
 
-    if (kDebugMode) print('[$timestamp] DEBUG DB: Query: SELECT * FROM promotions $whereClause with args: $whereArgs');
+    if (kDebugMode)
+      print(
+        '[$timestamp] DEBUG DB: Query: SELECT * FROM promotions $whereClause with args: $whereArgs',
+      );
 
     final promotionResults = await db.rawQuery('''
       SELECT * FROM promotions
@@ -2971,7 +3483,10 @@ class ApiDatabaseService {
       ORDER BY date_start DESC, name ASC
     ''', whereArgs);
 
-    if (kDebugMode) print('[$timestamp] DEBUG DB: Found ${promotionResults.length} promotion records');
+    if (kDebugMode)
+      print(
+        '[$timestamp] DEBUG DB: Found ${promotionResults.length} promotion records',
+      );
 
     final promotions = <PromotionModel>[];
 
@@ -3002,42 +3517,60 @@ class ApiDatabaseService {
         orderBy: 'class_name ASC',
       );
 
-      if (kDebugMode) print('[$timestamp] DEBUG DB: Promotion $promotionCode has ${productResults.length} products, ${bonusResults.length} bonuses, ${classResults.length} classes');
+      if (kDebugMode)
+        print(
+          '[$timestamp] DEBUG DB: Promotion $promotionCode has ${productResults.length} products, ${bonusResults.length} bonuses, ${classResults.length} classes',
+        );
 
-      final productList = productResults.map((row) => PromotionProduct(
-        code: row['product_code'] as String,
-        productName: row['product_name'] as String,
-      )).toList();
+      final productList = productResults
+          .map(
+            (row) => PromotionProduct(
+              code: row['product_code'] as String,
+              productName: row['product_name'] as String,
+            ),
+          )
+          .toList();
 
-      final bonusList = bonusResults.map((row) => PromotionProduct(
-        code: row['product_code'] as String,
-        productName: row['product_name'] as String,
-      )).toList();
+      final bonusList = bonusResults
+          .map(
+            (row) => PromotionProduct(
+              code: row['product_code'] as String,
+              productName: row['product_name'] as String,
+            ),
+          )
+          .toList();
 
-      final classList = classResults.map((row) => PromotionProduct(
-        code: row['class_code'] as String,
-        productName: row['class_name'] as String,
-      )).toList();
+      final classList = classResults
+          .map(
+            (row) => PromotionProduct(
+              code: row['class_code'] as String,
+              productName: row['class_name'] as String,
+            ),
+          )
+          .toList();
 
-      promotions.add(PromotionModel(
-        code: promoRow['code'] as String,
-        name: promoRow['name'] as String,
-        type: promoRow['type'] as String,
-        minPromoProductCount: promoRow['min_promo_product_count'] as int,
-        bonusCount: promoRow['bonus_count'] as int,
-        dateStart: DateTime.parse(promoRow['date_start'] as String),
-        dateEnd: DateTime.parse(promoRow['date_end'] as String),
-        productList: productList,
-        bonusList: bonusList,
-        classList: classList,
-        lastSynced: promoRow['last_synced'] != null
-            ? DateTime.parse(promoRow['last_synced'] as String)
-            : null,
-        isActive: (promoRow['is_active'] as int) == 1,
-      ));
+      promotions.add(
+        PromotionModel(
+          code: promoRow['code'] as String,
+          name: promoRow['name'] as String,
+          type: promoRow['type'] as String,
+          minPromoProductCount: promoRow['min_promo_product_count'] as int,
+          bonusCount: promoRow['bonus_count'] as int,
+          dateStart: DateTime.parse(promoRow['date_start'] as String),
+          dateEnd: DateTime.parse(promoRow['date_end'] as String),
+          productList: productList,
+          bonusList: bonusList,
+          classList: classList,
+          lastSynced: promoRow['last_synced'] != null
+              ? DateTime.parse(promoRow['last_synced'] as String)
+              : null,
+          isActive: (promoRow['is_active'] as int) == 1,
+        ),
+      );
     }
 
-    if (kDebugMode) print('[$timestamp] DEBUG DB: Returning ${promotions.length} promotions');
+    if (kDebugMode)
+      print('[$timestamp] DEBUG DB: Returning ${promotions.length} promotions');
     return promotions;
   }
 
@@ -3078,20 +3611,32 @@ class ApiDatabaseService {
       orderBy: 'class_name ASC',
     );
 
-    final productList = productResults.map((row) => PromotionProduct(
-      code: row['product_code'] as String,
-      productName: row['product_name'] as String,
-    )).toList();
+    final productList = productResults
+        .map(
+          (row) => PromotionProduct(
+            code: row['product_code'] as String,
+            productName: row['product_name'] as String,
+          ),
+        )
+        .toList();
 
-    final bonusList = bonusResults.map((row) => PromotionProduct(
-      code: row['product_code'] as String,
-      productName: row['product_name'] as String,
-    )).toList();
+    final bonusList = bonusResults
+        .map(
+          (row) => PromotionProduct(
+            code: row['product_code'] as String,
+            productName: row['product_name'] as String,
+          ),
+        )
+        .toList();
 
-    final classList = classResults.map((row) => PromotionProduct(
-      code: row['class_code'] as String,
-      productName: row['class_name'] as String,
-    )).toList();
+    final classList = classResults
+        .map(
+          (row) => PromotionProduct(
+            code: row['class_code'] as String,
+            productName: row['class_name'] as String,
+          ),
+        )
+        .toList();
 
     return PromotionModel(
       code: promoRow['code'] as String,
@@ -3179,8 +3724,12 @@ class ApiDatabaseService {
           (row) => BusinessRegion(
             code: row['code'] as String,
             name: row['name'] as String,
-            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+            createdAt: row['created_at'] != null
+                ? DateTime.parse(row['created_at'] as String)
+                : null,
+            updatedAt: row['updated_at'] != null
+                ? DateTime.parse(row['updated_at'] as String)
+                : null,
           ),
         )
         .toList();
@@ -3201,8 +3750,12 @@ class ApiDatabaseService {
     return BusinessRegion(
       code: row['code'] as String,
       name: row['name'] as String,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+      createdAt: row['created_at'] != null
+          ? DateTime.parse(row['created_at'] as String)
+          : null,
+      updatedAt: row['updated_at'] != null
+          ? DateTime.parse(row['updated_at'] as String)
+          : null,
     );
   }
 
@@ -3210,16 +3763,12 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.insert(
-      'business_regions',
-      {
-        'code': region.code,
-        'name': region.name,
-        'created_at': now,
-        'updated_at': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('business_regions', {
+      'code': region.code,
+      'name': region.name,
+      'created_at': now,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> updateBusinessRegion(String code, BusinessRegion region) async {
@@ -3228,10 +3777,7 @@ class ApiDatabaseService {
 
     await db.update(
       'business_regions',
-      {
-        'name': region.name,
-        'updated_at': now,
-      },
+      {'name': region.name, 'updated_at': now},
       where: 'code = ?',
       whereArgs: [code],
     );
@@ -3284,8 +3830,12 @@ class ApiDatabaseService {
             code: row['code'] as String,
             name: row['name'] as String,
             organization: row['organization'] as String,
-            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+            createdAt: row['created_at'] != null
+                ? DateTime.parse(row['created_at'] as String)
+                : null,
+            updatedAt: row['updated_at'] != null
+                ? DateTime.parse(row['updated_at'] as String)
+                : null,
           ),
         )
         .toList();
@@ -3307,8 +3857,12 @@ class ApiDatabaseService {
       code: row['code'] as String,
       name: row['name'] as String,
       organization: row['organization'] as String,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+      createdAt: row['created_at'] != null
+          ? DateTime.parse(row['created_at'] as String)
+          : null,
+      updatedAt: row['updated_at'] != null
+          ? DateTime.parse(row['updated_at'] as String)
+          : null,
     );
   }
 
@@ -3316,17 +3870,13 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.insert(
-      'user_warehouses',
-      {
-        'code': warehouse.code,
-        'name': warehouse.name,
-        'organization': warehouse.organization,
-        'created_at': now,
-        'updated_at': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('user_warehouses', {
+      'code': warehouse.code,
+      'name': warehouse.name,
+      'organization': warehouse.organization,
+      'created_at': now,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> updateUserWarehouse(String code, UserWarehouse warehouse) async {
@@ -3388,8 +3938,12 @@ class ApiDatabaseService {
         .map(
           (row) => ProductBrand(
             name: row['name'] as String,
-            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+            createdAt: row['created_at'] != null
+                ? DateTime.parse(row['created_at'] as String)
+                : null,
+            updatedAt: row['updated_at'] != null
+                ? DateTime.parse(row['updated_at'] as String)
+                : null,
           ),
         )
         .toList();
@@ -3409,8 +3963,12 @@ class ApiDatabaseService {
     final row = result.first;
     return ProductBrand(
       name: row['name'] as String,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+      createdAt: row['created_at'] != null
+          ? DateTime.parse(row['created_at'] as String)
+          : null,
+      updatedAt: row['updated_at'] != null
+          ? DateTime.parse(row['updated_at'] as String)
+          : null,
     );
   }
 
@@ -3418,15 +3976,11 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.insert(
-      'product_brands',
-      {
-        'name': brand.name,
-        'created_at': now,
-        'updated_at': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('product_brands', {
+      'name': brand.name,
+      'created_at': now,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> updateProductBrand(String name, ProductBrand brand) async {
@@ -3435,10 +3989,7 @@ class ApiDatabaseService {
 
     await db.update(
       'product_brands',
-      {
-        'name': brand.name,
-        'updated_at': now,
-      },
+      {'name': brand.name, 'updated_at': now},
       where: 'name = ?',
       whereArgs: [name],
     );
@@ -3502,14 +4053,21 @@ class ApiDatabaseService {
           (row) => ProductSeries(
             name: row['name'] as String,
             brandName: row['brand_name'] as String,
-            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+            createdAt: row['created_at'] != null
+                ? DateTime.parse(row['created_at'] as String)
+                : null,
+            updatedAt: row['updated_at'] != null
+                ? DateTime.parse(row['updated_at'] as String)
+                : null,
           ),
         )
         .toList();
   }
 
-  Future<ProductSeries?> getProductSeriesByNameAndBrand(String name, String brandName) async {
+  Future<ProductSeries?> getProductSeriesByNameAndBrand(
+    String name,
+    String brandName,
+  ) async {
     final db = await database;
     final result = await db.query(
       'product_series',
@@ -3524,8 +4082,12 @@ class ApiDatabaseService {
     return ProductSeries(
       name: row['name'] as String,
       brandName: row['brand_name'] as String,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+      createdAt: row['created_at'] != null
+          ? DateTime.parse(row['created_at'] as String)
+          : null,
+      updatedAt: row['updated_at'] != null
+          ? DateTime.parse(row['updated_at'] as String)
+          : null,
     );
   }
 
@@ -3533,29 +4095,25 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.insert(
-      'product_series',
-      {
-        'name': series.name,
-        'brand_name': series.brandName,
-        'created_at': now,
-        'updated_at': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('product_series', {
+      'name': series.name,
+      'brand_name': series.brandName,
+      'created_at': now,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<void> updateProductSeries(String name, String brandName, ProductSeries series) async {
+  Future<void> updateProductSeries(
+    String name,
+    String brandName,
+    ProductSeries series,
+  ) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
     await db.update(
       'product_series',
-      {
-        'name': series.name,
-        'brand_name': series.brandName,
-        'updated_at': now,
-      },
+      {'name': series.name, 'brand_name': series.brandName, 'updated_at': now},
       where: 'name = ? AND brand_name = ?',
       whereArgs: [name, brandName],
     );
@@ -3563,7 +4121,11 @@ class ApiDatabaseService {
 
   Future<void> deleteProductSeries(String name, String brandName) async {
     final db = await database;
-    await db.delete('product_series', where: 'name = ? AND brand_name = ?', whereArgs: [name, brandName]);
+    await db.delete(
+      'product_series',
+      where: 'name = ? AND brand_name = ?',
+      whereArgs: [name, brandName],
+    );
   }
 
   // Product balances methods
@@ -3609,19 +4171,25 @@ class ApiDatabaseService {
   }
 
   /// Save product balances with delta sync - only insert/update/delete changed records.
-  /// 
+  ///
   /// Performance: O(n) where n = changed records, not total records.
   /// Memory: O(m) where m = existing keys set size.
-  /// 
+  ///
   /// Returns statistics about the sync operation.
-  Future<Map<String, int>> saveProductBalancesIncremental(List<ProductBalance> balances) async {
+  Future<Map<String, int>> saveProductBalancesIncremental(
+    List<ProductBalance> balances,
+  ) async {
     final stopwatch = Stopwatch()..start();
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
     // Get existing balance keys - O(n) query, minimal memory
-    final existingRows = await db.rawQuery('SELECT code_sklad, code_product FROM product_balances');
-    final existingKeys = existingRows.map((r) => '${r['code_sklad']}_${r['code_product']}').toSet();
+    final existingRows = await db.rawQuery(
+      'SELECT code_sklad, code_product FROM product_balances',
+    );
+    final existingKeys = existingRows
+        .map((r) => '${r['code_sklad']}_${r['code_product']}')
+        .toSet();
 
     // Deduplicate incoming balances
     final uniqueBalances = <String, ProductBalance>{};
@@ -3649,9 +4217,11 @@ class ApiDatabaseService {
       if (parts.length >= 2) {
         final codeSklad = parts[0];
         final codeProduct = parts.sublist(1).join('_');
-        batch.delete('product_balances', 
-          where: 'code_sklad = ? AND code_product = ?', 
-          whereArgs: [codeSklad, codeProduct]);
+        batch.delete(
+          'product_balances',
+          where: 'code_sklad = ? AND code_product = ?',
+          whereArgs: [codeSklad, codeProduct],
+        );
         deletedCount++;
       }
     }
@@ -3681,20 +4251,24 @@ class ApiDatabaseService {
     // Update existing balances
     for (final key in toUpdate) {
       final balance = uniqueBalances[key]!;
-      batch.update('product_balances', {
-        'name_product': balance.nameProduct,
-        'have': balance.have,
-        'reserved': balance.reserved,
-        'available': balance.available,
-        'weight': balance.weight,
-        'capacity': balance.capacity,
-        'code_project': balance.codeProject,
-        'vendor_code': balance.vendorCode,
-        'product_brand': balance.productBrand,
-        'product_series': balance.productSeries,
-        'updated_at': now,
-      }, where: 'code_sklad = ? AND code_product = ?', 
-         whereArgs: [balance.codeSklad, balance.codeProduct]);
+      batch.update(
+        'product_balances',
+        {
+          'name_product': balance.nameProduct,
+          'have': balance.have,
+          'reserved': balance.reserved,
+          'available': balance.available,
+          'weight': balance.weight,
+          'capacity': balance.capacity,
+          'code_project': balance.codeProject,
+          'vendor_code': balance.vendorCode,
+          'product_brand': balance.productBrand,
+          'product_series': balance.productSeries,
+          'updated_at': now,
+        },
+        where: 'code_sklad = ? AND code_product = ?',
+        whereArgs: [balance.codeSklad, balance.codeProduct],
+      );
       updatedCount++;
     }
 
@@ -3702,7 +4276,9 @@ class ApiDatabaseService {
     stopwatch.stop();
 
     if (kDebugMode) {
-      print('[DeltaSync] ProductBalances: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)');
+      print(
+        '[DeltaSync] ProductBalances: +$insertedCount, ~$updatedCount, -$deletedCount (${stopwatch.elapsedMilliseconds}ms)',
+      );
     }
 
     return {
@@ -3761,14 +4337,21 @@ class ApiDatabaseService {
             vendorCode: row['vendor_code'] as String,
             productBrand: row['product_brand'] as String,
             productSeries: row['product_series'] as String,
-            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+            createdAt: row['created_at'] != null
+                ? DateTime.parse(row['created_at'] as String)
+                : null,
+            updatedAt: row['updated_at'] != null
+                ? DateTime.parse(row['updated_at'] as String)
+                : null,
           ),
         )
         .toList();
   }
 
-  Future<ProductBalance?> getProductBalanceByCodes(String warehouseCode, String productCode) async {
+  Future<ProductBalance?> getProductBalanceByCodes(
+    String warehouseCode,
+    String productCode,
+  ) async {
     final db = await database;
     final result = await db.query(
       'product_balances',
@@ -3793,8 +4376,12 @@ class ApiDatabaseService {
       vendorCode: row['vendor_code'] as String,
       productBrand: row['product_brand'] as String,
       productSeries: row['product_series'] as String,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+      createdAt: row['created_at'] != null
+          ? DateTime.parse(row['created_at'] as String)
+          : null,
+      updatedAt: row['updated_at'] != null
+          ? DateTime.parse(row['updated_at'] as String)
+          : null,
     );
   }
 
@@ -3802,29 +4389,29 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.insert(
-      'product_balances',
-      {
-        'code_sklad': balance.codeSklad,
-        'code_product': balance.codeProduct,
-        'name_product': balance.nameProduct,
-        'have': balance.have,
-        'reserved': balance.reserved,
-        'available': balance.available,
-        'weight': balance.weight,
-        'capacity': balance.capacity,
-        'code_project': balance.codeProject,
-        'vendor_code': balance.vendorCode,
-        'product_brand': balance.productBrand,
-        'product_series': balance.productSeries,
-        'created_at': now,
-        'updated_at': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('product_balances', {
+      'code_sklad': balance.codeSklad,
+      'code_product': balance.codeProduct,
+      'name_product': balance.nameProduct,
+      'have': balance.have,
+      'reserved': balance.reserved,
+      'available': balance.available,
+      'weight': balance.weight,
+      'capacity': balance.capacity,
+      'code_project': balance.codeProject,
+      'vendor_code': balance.vendorCode,
+      'product_brand': balance.productBrand,
+      'product_series': balance.productSeries,
+      'created_at': now,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<void> updateProductBalance(String warehouseCode, String productCode, ProductBalance balance) async {
+  Future<void> updateProductBalance(
+    String warehouseCode,
+    String productCode,
+    ProductBalance balance,
+  ) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -3850,13 +4437,22 @@ class ApiDatabaseService {
     );
   }
 
-  Future<void> deleteProductBalance(String warehouseCode, String productCode) async {
+  Future<void> deleteProductBalance(
+    String warehouseCode,
+    String productCode,
+  ) async {
     final db = await database;
-    await db.delete('product_balances', where: 'code_sklad = ? AND code_product = ?', whereArgs: [warehouseCode, productCode]);
+    await db.delete(
+      'product_balances',
+      where: 'code_sklad = ? AND code_product = ?',
+      whereArgs: [warehouseCode, productCode],
+    );
   }
 
   /// Get cached trading points with permissions and visit data using optimized JOIN query
-  Future<List<TradingPointWithPermissions>> getTradingPointsWithPermissions(String userCode) async {
+  Future<List<TradingPointWithPermissions>> getTradingPointsWithPermissions(
+    String userCode,
+  ) async {
     try {
       // Ensure tables exist before query to prevent "no such table" errors
       await ensureSalesReqPermissionsTableExists();
@@ -3868,10 +4464,13 @@ class ApiDatabaseService {
       final currentWeekdayCode = now.weekday; // 1 = Monday, 7 = Sunday
 
       if (kDebugMode) {
-        print('DEBUG: Getting trading points for user: $userCode, weekday: $currentWeekdayCode');
+        print(
+          'DEBUG: Getting trading points for user: $userCode, weekday: $currentWeekdayCode',
+        );
       }
 
-      final result = await db.rawQuery('''
+      final result = await db.rawQuery(
+        '''
         SELECT
           c.*,
           COALESCE(ci.image_thumbnail_url, ci.image_sm_url, ci.image_md_url, ci.image_url, ci.image) as photo_url,
@@ -3914,12 +4513,16 @@ class ApiDatabaseService {
           FROM planned_routes
           WHERE user_code = ? AND code_weekday = ?
         ) pr ON c.code = pr.code_client
-        ORDER BY c.name ASC''',[userCode, userCode, currentWeekdayCode]);
+        ORDER BY c.name ASC''',
+        [userCode, userCode, currentWeekdayCode],
+      );
       if (kDebugMode) {
         print('DEBUG: Query returned ${result.length} trading points');
         if (result.isNotEmpty) {
           final sample = result.first;
-          print('DEBUG: Sample result - visit_today: ${sample['visit_today']}, visit_step_number: ${sample['visit_step_number']}');
+          print(
+            'DEBUG: Sample result - visit_today: ${sample['visit_today']}, visit_step_number: ${sample['visit_step_number']}',
+          );
         }
       }
 
@@ -3928,14 +4531,18 @@ class ApiDatabaseService {
           return TradingPointWithPermissions.fromMap(row);
         } catch (e) {
           if (kDebugMode) {
-            print('ERROR: Failed to parse TradingPointWithPermissions from row: $row, error: $e');
+            print(
+              'ERROR: Failed to parse TradingPointWithPermissions from row: $row, error: $e',
+            );
           }
           rethrow;
         }
       }).toList();
 
       if (kDebugMode) {
-        print('DEBUG: Successfully parsed ${tradingPoints.length} TradingPointWithPermissions objects');
+        print(
+          'DEBUG: Successfully parsed ${tradingPoints.length} TradingPointWithPermissions objects',
+        );
       }
 
       return tradingPoints;
@@ -3980,8 +4587,12 @@ class ApiDatabaseService {
     }
 
     // Filter by warehouse codes if provided and not empty
-    if (warehouseCodes != null && warehouseCodes.isNotEmpty && warehouseCodes.any((w) => w.trim().isNotEmpty)) {
-      final validCodes = warehouseCodes.where((w) => w.trim().isNotEmpty).toList();
+    if (warehouseCodes != null &&
+        warehouseCodes.isNotEmpty &&
+        warehouseCodes.any((w) => w.trim().isNotEmpty)) {
+      final validCodes = warehouseCodes
+          .where((w) => w.trim().isNotEmpty)
+          .toList();
       if (validCodes.isNotEmpty) {
         final placeholders = List.filled(validCodes.length, '?').join(', ');
         whereConditions.add('p.warehouse_code IN ($placeholders)');
@@ -4002,13 +4613,21 @@ class ApiDatabaseService {
         )
       ''';
       final searchPattern = '%$trimmedQuery%';
-      whereArgs.addAll([searchPattern, searchPattern, searchPattern, searchPattern]);
+      whereArgs.addAll([
+        searchPattern,
+        searchPattern,
+        searchPattern,
+        searchPattern,
+      ]);
     }
 
-    final whereClause = whereConditions.isNotEmpty ? 'WHERE ${whereConditions.join(' AND ')}' : '';
+    final whereClause = whereConditions.isNotEmpty
+        ? 'WHERE ${whereConditions.join(' AND ')}'
+        : '';
 
     // Optimized JOIN query
-    final query = '''
+    final query =
+        '''
       SELECT
         p.code as product_code,
         p.name as product_name,
@@ -4058,12 +4677,18 @@ class ApiDatabaseService {
       }
     }
 
-    final productsWithPrices = result.map((row) => ProductWithPrice.fromMap(row)).toList();
+    final productsWithPrices = result
+        .map((row) => ProductWithPrice.fromMap(row))
+        .toList();
 
     if (kDebugMode) {
-      print('DEBUG: Parsed ${productsWithPrices.length} ProductWithPrice objects');
+      print(
+        'DEBUG: Parsed ${productsWithPrices.length} ProductWithPrice objects',
+      );
       if (productsWithPrices.isNotEmpty) {
-        print('DEBUG: First product: ${productsWithPrices.first.productName} - ${productsWithPrices.first.price}');
+        print(
+          'DEBUG: First product: ${productsWithPrices.first.productName} - ${productsWithPrices.first.price}',
+        );
       }
     }
 
@@ -4117,7 +4742,10 @@ class ApiDatabaseService {
     await batch.commit(noResult: true);
   }
 
-  Future<List<ClientContract>> getClientContracts({String? clientCode, bool? active}) async {
+  Future<List<ClientContract>> getClientContracts({
+    String? clientCode,
+    bool? active,
+  }) async {
     final db = await database;
     String whereClause = '';
     List<dynamic> whereArgs = [];
@@ -4146,25 +4774,40 @@ class ApiDatabaseService {
         .map(
           (row) => ClientContract(
             codeContract: row['code_contract'] as String,
-            dateOfContract: row['date_of_contract'] != null ? DateTime.parse(row['date_of_contract'] as String) : null,
+            dateOfContract: row['date_of_contract'] != null
+                ? DateTime.parse(row['date_of_contract'] as String)
+                : null,
             sumOfContract: (row['sum_of_contract'] as num?)?.toDouble() ?? 0.0,
-            termOfContract: row['term_of_contract'] != null ? DateTime.parse(row['term_of_contract'] as String) : null,
+            termOfContract: row['term_of_contract'] != null
+                ? DateTime.parse(row['term_of_contract'] as String)
+                : null,
             typeContract: row['type_contract'] as String?,
             numbReference: row['numb_reference'] as String?,
             numbCertificate: row['numb_certificate'] as String?,
-            termReference: row['term_reference'] != null ? DateTime.parse(row['term_reference'] as String) : null,
-            termCertificate: row['term_certificate'] != null ? DateTime.parse(row['term_certificate'] as String) : null,
+            termReference: row['term_reference'] != null
+                ? DateTime.parse(row['term_reference'] as String)
+                : null,
+            termCertificate: row['term_certificate'] != null
+                ? DateTime.parse(row['term_certificate'] as String)
+                : null,
             numbPassport: row['numb_passport'] as String?,
-            termPassport: row['term_passport'] != null ? DateTime.parse(row['term_passport'] as String) : null,
-            certificateUnlimited: (row['certificate_unlimited'] as num?)?.toInt() ?? 0,
+            termPassport: row['term_passport'] != null
+                ? DateTime.parse(row['term_passport'] as String)
+                : null,
+            certificateUnlimited:
+                (row['certificate_unlimited'] as num?)?.toInt() ?? 0,
             codeDistrict: row['code_district'] as String?,
             nameDistrict: row['name_district'] as String?,
             codeProject: row['code_project'] as String?,
             codeClient: row['code_client'] as String,
             active: (row['active'] as num?) == 1,
             status: row['status'] as String,
-            createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-            updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+            createdAt: row['created_at'] != null
+                ? DateTime.parse(row['created_at'] as String)
+                : null,
+            updatedAt: row['updated_at'] != null
+                ? DateTime.parse(row['updated_at'] as String)
+                : null,
           ),
         )
         .toList();
@@ -4172,7 +4815,10 @@ class ApiDatabaseService {
 
   /// Get client contracts with client names using efficient JOIN query
   /// This method returns ClientContractWithName objects to avoid N+1 queries
-  Future<List<ClientContractWithName>> getClientContractsWithNames({String? clientCode, bool? active}) async {
+  Future<List<ClientContractWithName>> getClientContractsWithNames({
+    String? clientCode,
+    bool? active,
+  }) async {
     final db = await database;
     String whereClause = '';
     List<dynamic> whereArgs = [];
@@ -4201,11 +4847,7 @@ class ApiDatabaseService {
       ORDER BY cc.date_of_contract DESC, cc.code_contract ASC
     ''', whereArgs);
 
-    return result
-        .map(
-          (row) => ClientContractWithName.fromMap(row),
-        )
-        .toList();
+    return result.map((row) => ClientContractWithName.fromMap(row)).toList();
   }
 
   Future<ClientContract?> getClientContractByCode(String codeContract) async {
@@ -4222,25 +4864,40 @@ class ApiDatabaseService {
     final row = result.first;
     return ClientContract(
       codeContract: row['code_contract'] as String,
-      dateOfContract: row['date_of_contract'] != null ? DateTime.parse(row['date_of_contract'] as String) : null,
+      dateOfContract: row['date_of_contract'] != null
+          ? DateTime.parse(row['date_of_contract'] as String)
+          : null,
       sumOfContract: (row['sum_of_contract'] as num?)?.toDouble() ?? 0.0,
-      termOfContract: row['term_of_contract'] != null ? DateTime.parse(row['term_of_contract'] as String) : null,
+      termOfContract: row['term_of_contract'] != null
+          ? DateTime.parse(row['term_of_contract'] as String)
+          : null,
       typeContract: row['type_contract'] as String?,
       numbReference: row['numb_reference'] as String?,
       numbCertificate: row['numb_certificate'] as String?,
-      termReference: row['term_reference'] != null ? DateTime.parse(row['term_reference'] as String) : null,
-      termCertificate: row['term_certificate'] != null ? DateTime.parse(row['term_certificate'] as String) : null,
+      termReference: row['term_reference'] != null
+          ? DateTime.parse(row['term_reference'] as String)
+          : null,
+      termCertificate: row['term_certificate'] != null
+          ? DateTime.parse(row['term_certificate'] as String)
+          : null,
       numbPassport: row['numb_passport'] as String?,
-      termPassport: row['term_passport'] != null ? DateTime.parse(row['term_passport'] as String) : null,
-      certificateUnlimited: (row['certificate_unlimited'] as num?)?.toInt() ?? 0,
+      termPassport: row['term_passport'] != null
+          ? DateTime.parse(row['term_passport'] as String)
+          : null,
+      certificateUnlimited:
+          (row['certificate_unlimited'] as num?)?.toInt() ?? 0,
       codeDistrict: row['code_district'] as String?,
       nameDistrict: row['name_district'] as String?,
       codeProject: row['code_project'] as String?,
       codeClient: row['code_client'] as String,
       active: (row['active'] as num?) == 1,
       status: row['status'] as String,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+      createdAt: row['created_at'] != null
+          ? DateTime.parse(row['created_at'] as String)
+          : null,
+      updatedAt: row['updated_at'] != null
+          ? DateTime.parse(row['updated_at'] as String)
+          : null,
     );
   }
 
@@ -4248,35 +4905,34 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.insert(
-      'client_contracts',
-      {
-        'code_contract': contract.codeContract,
-        'date_of_contract': contract.dateOfContract?.toIso8601String(),
-        'sum_of_contract': contract.sumOfContract,
-        'term_of_contract': contract.termOfContract?.toIso8601String(),
-        'type_contract': contract.typeContract,
-        'numb_reference': contract.numbReference,
-        'numb_certificate': contract.numbCertificate,
-        'term_reference': contract.termReference?.toIso8601String(),
-        'term_certificate': contract.termCertificate?.toIso8601String(),
-        'numb_passport': contract.numbPassport,
-        'term_passport': contract.termPassport?.toIso8601String(),
-        'certificate_unlimited': contract.certificateUnlimited,
-        'code_district': contract.codeDistrict,
-        'name_district': contract.nameDistrict,
-        'code_project': contract.codeProject,
-        'code_client': contract.codeClient,
-        'active': contract.active ? 1 : 0,
-        'status': contract.status,
-        'created_at': now,
-        'updated_at': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('client_contracts', {
+      'code_contract': contract.codeContract,
+      'date_of_contract': contract.dateOfContract?.toIso8601String(),
+      'sum_of_contract': contract.sumOfContract,
+      'term_of_contract': contract.termOfContract?.toIso8601String(),
+      'type_contract': contract.typeContract,
+      'numb_reference': contract.numbReference,
+      'numb_certificate': contract.numbCertificate,
+      'term_reference': contract.termReference?.toIso8601String(),
+      'term_certificate': contract.termCertificate?.toIso8601String(),
+      'numb_passport': contract.numbPassport,
+      'term_passport': contract.termPassport?.toIso8601String(),
+      'certificate_unlimited': contract.certificateUnlimited,
+      'code_district': contract.codeDistrict,
+      'name_district': contract.nameDistrict,
+      'code_project': contract.codeProject,
+      'code_client': contract.codeClient,
+      'active': contract.active ? 1 : 0,
+      'status': contract.status,
+      'created_at': now,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<void> updateClientContract(String codeContract, ClientContract contract) async {
+  Future<void> updateClientContract(
+    String codeContract,
+    ClientContract contract,
+  ) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -4309,7 +4965,11 @@ class ApiDatabaseService {
 
   Future<void> deleteClientContract(String codeContract) async {
     final db = await database;
-    await db.delete('client_contracts', where: 'code_contract = ?', whereArgs: [codeContract]);
+    await db.delete(
+      'client_contracts',
+      where: 'code_contract = ?',
+      whereArgs: [codeContract],
+    );
   }
 
   // Main Reports methods
@@ -4369,11 +5029,7 @@ class ApiDatabaseService {
       ORDER BY date_start DESC
     ''', whereArgs);
 
-    return result
-        .map(
-          (row) => MainReport.fromMap(row),
-        )
-        .toList();
+    return result.map((row) => MainReport.fromMap(row)).toList();
   }
 
   Future<MainReport?> getMainReportById(int id) async {
@@ -4390,7 +5046,9 @@ class ApiDatabaseService {
   }
 
   // Business Region Reports methods
-  Future<void> saveBusinessRegionReports(List<BusinessRegionReport> reports) async {
+  Future<void> saveBusinessRegionReports(
+    List<BusinessRegionReport> reports,
+  ) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -4416,7 +5074,9 @@ class ApiDatabaseService {
     await batch.commit(noResult: true);
   }
 
-  Future<List<BusinessRegionReport>> getBusinessRegionReports({int? mainReportId}) async {
+  Future<List<BusinessRegionReport>> getBusinessRegionReports({
+    int? mainReportId,
+  }) async {
     final db = await database;
     String whereClause = '';
     List<dynamic> whereArgs = [];
@@ -4432,11 +5092,7 @@ class ApiDatabaseService {
       ORDER BY name ASC
     ''', whereArgs);
 
-    return result
-        .map(
-          (row) => BusinessRegionReport.fromMap(row),
-        )
-        .toList();
+    return result.map((row) => BusinessRegionReport.fromMap(row)).toList();
   }
 
   // AKB By Categories methods
@@ -4482,11 +5138,7 @@ class ApiDatabaseService {
       ORDER BY name ASC
     ''', whereArgs);
 
-    return result
-        .map(
-          (row) => AKBByCategory.fromMap(row),
-        )
-        .toList();
+    return result.map((row) => AKBByCategory.fromMap(row)).toList();
   }
 
   // Visit Plans methods
@@ -4519,7 +5171,10 @@ class ApiDatabaseService {
     await batch.commit(noResult: true);
   }
 
-  Future<List<VisitPlan>> getVisitPlans({int? mainReportId, String? clientCode}) async {
+  Future<List<VisitPlan>> getVisitPlans({
+    int? mainReportId,
+    String? clientCode,
+  }) async {
     final db = await database;
     String whereClause = '';
     List<dynamic> whereArgs = [];
@@ -4544,11 +5199,7 @@ class ApiDatabaseService {
       ORDER BY planned_date ASC
     ''', whereArgs);
 
-    return result
-        .map(
-          (row) => VisitPlan.fromMap(row),
-        )
-        .toList();
+    return result.map((row) => VisitPlan.fromMap(row)).toList();
   }
 
   // Visit Plan Lists methods
@@ -4596,11 +5247,7 @@ class ApiDatabaseService {
       ORDER BY product_name ASC
     ''', whereArgs);
 
-    return result
-        .map(
-          (row) => VisitPlanList.fromMap(row),
-        )
-        .toList();
+    return result.map((row) => VisitPlanList.fromMap(row)).toList();
   }
 
   // Save main reports by clearing all related tables first
@@ -4683,7 +5330,6 @@ class ApiDatabaseService {
     await db.delete('couriers');
     await db.delete('courier_cars');
     await db.delete('order_couriers');
-
   }
 
   Future<void> clearMainReport() async {
@@ -4752,10 +5398,7 @@ class ApiDatabaseService {
     if (result.isEmpty) return null;
 
     final row = result.first;
-    return OrderStatus(
-      id: row['id'] as int,
-      message: row['message'] as String,
-    );
+    return OrderStatus(id: row['id'] as int, message: row['message'] as String);
   }
 
   // Courier methods
@@ -4765,12 +5408,7 @@ class ApiDatabaseService {
 
     await db.insert(
       'couriers',
-      {
-        'name': name,
-        'car': car,
-        'created_at': now,
-        'updated_at': now,
-      },
+      {'name': name, 'car': car, 'created_at': now, 'updated_at': now},
       conflictAlgorithm: ConflictAlgorithm.ignore, // Ignore if already exists
     );
   }
@@ -4781,24 +5419,28 @@ class ApiDatabaseService {
 
     await db.insert(
       'courier_cars',
-      {
-        'car': car,
-        'created_at': now,
-        'updated_at': now,
-      },
+      {'car': car, 'created_at': now, 'updated_at': now},
       conflictAlgorithm: ConflictAlgorithm.ignore, // Ignore if already exists
     );
   }
 
   Future<List<String>> getUniqueCourierNames() async {
     final db = await database;
-    final result = await db.query('couriers', columns: ['name'], distinct: true);
+    final result = await db.query(
+      'couriers',
+      columns: ['name'],
+      distinct: true,
+    );
     return result.map((row) => row['name'] as String).toList();
   }
 
   Future<List<String>> getUniqueCourierCars() async {
     final db = await database;
-    final result = await db.query('courier_cars', columns: ['car'], distinct: true);
+    final result = await db.query(
+      'courier_cars',
+      columns: ['car'],
+      distinct: true,
+    );
     return result.map((row) => row['car'] as String).toList();
   }
 
@@ -4872,6 +5514,7 @@ class ApiDatabaseService {
         'courier_name': order.courierName,
         'courier_car': order.courierCar,
         'server': order.server ? 1 : 0,
+        'promo': order.promo ? 1 : 0,
         'created_at': now,
         'updated_at': now,
       });
@@ -4947,6 +5590,7 @@ class ApiDatabaseService {
             courierName: row['courier_name'] as String?,
             courierCar: row['courier_car'] as String?,
             server: (row['server'] as int?) == 1,
+            promo: (row['promo'] as int?) == 1,
           ),
         )
         .toList();
@@ -4954,13 +5598,16 @@ class ApiDatabaseService {
 
   Future<Order?> getOrderByNumOrder(String numOrder) async {
     final db = await database;
-    final result = await db.rawQuery('''
+    final result = await db.rawQuery(
+      '''
       SELECT o.*, oc.courier_name, oc.courier_car
       FROM orders o
       LEFT JOIN order_couriers oc ON o.num_order = oc.order_num
       WHERE o.num_order = ?
       LIMIT 1
-    ''', [numOrder]);
+    ''',
+      [numOrder],
+    );
 
     if (result.isEmpty) return null;
 
@@ -4983,6 +5630,7 @@ class ApiDatabaseService {
       courierName: row['courier_name'] as String?,
       courierCar: row['courier_car'] as String?,
       server: (row['server'] as int?) == 1,
+      promo: (row['promo'] as int?) == 1,
     );
   }
 
@@ -4992,10 +5640,7 @@ class ApiDatabaseService {
 
     await db.update(
       'orders',
-      {
-        'main_status': mainStatus,
-        'updated_at': now,
-      },
+      {'main_status': mainStatus, 'updated_at': now},
       where: 'num_order = ?',
       whereArgs: [numOrder],
     );
@@ -5010,7 +5655,7 @@ class ApiDatabaseService {
   Future<void> saveOrderDetails(List<OrderDetail> orderDetails) async {
     // Ensure order_details tables exist before performing operations
     await ensureOrderDetailsTablesExist();
-    
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -5023,7 +5668,9 @@ class ApiDatabaseService {
     final filteredOrderDetails = orderDetails.where((od) {
       if (od.codePrice == '00000000321') {
         if (kDebugMode) {
-          print('ApiDatabaseService: Skipping order ${od.numOrder} with price code 00000000321');
+          print(
+            'ApiDatabaseService: Skipping order ${od.numOrder} with price code 00000000321',
+          );
         }
         return false;
       }
@@ -5033,7 +5680,9 @@ class ApiDatabaseService {
     // Return early if all orders were filtered out
     if (filteredOrderDetails.isEmpty) {
       if (kDebugMode) {
-        print('ApiDatabaseService: All orders filtered out (price code 00000000321)');
+        print(
+          'ApiDatabaseService: All orders filtered out (price code 00000000321)',
+        );
       }
       return;
     }
@@ -5056,26 +5705,38 @@ class ApiDatabaseService {
       // Validate products
       for (final product in orderDetail.productRows) {
         if (product.codeProduct.isEmpty) {
-          throw ArgumentError('Product codeProduct cannot be empty for order ${orderDetail.numOrder}');
+          throw ArgumentError(
+            'Product codeProduct cannot be empty for order ${orderDetail.numOrder}',
+          );
         }
         if (product.nameProduct.isEmpty) {
-          throw ArgumentError('Product nameProduct cannot be empty for order ${orderDetail.numOrder}');
+          throw ArgumentError(
+            'Product nameProduct cannot be empty for order ${orderDetail.numOrder}',
+          );
         }
         if (product.amount <= 0) {
-          throw ArgumentError('Product amount must be positive for order ${orderDetail.numOrder}');
+          throw ArgumentError(
+            'Product amount must be positive for order ${orderDetail.numOrder}',
+          );
         }
         if (product.price < 0) {
-          throw ArgumentError('Product price cannot be negative for order ${orderDetail.numOrder}');
+          throw ArgumentError(
+            'Product price cannot be negative for order ${orderDetail.numOrder}',
+          );
         }
       }
 
       // Validate payments
       for (final payment in orderDetail.creditDetailsList) {
         if (payment.dateOfPayment.isEmpty) {
-          throw ArgumentError('Payment dateOfPayment cannot be empty for order ${orderDetail.numOrder}');
+          throw ArgumentError(
+            'Payment dateOfPayment cannot be empty for order ${orderDetail.numOrder}',
+          );
         }
         if (payment.total < 0) {
-          throw ArgumentError('Payment total cannot be negative for order ${orderDetail.numOrder}');
+          throw ArgumentError(
+            'Payment total cannot be negative for order ${orderDetail.numOrder}',
+          );
         }
       }
     }
@@ -5083,7 +5744,11 @@ class ApiDatabaseService {
     // Validate foreign key references for all orders
     final orderNumbers = filteredOrderDetails.map((od) => od.numOrder).toSet();
     for (final numOrder in orderNumbers) {
-      final orderExists = await db.query('orders', where: 'num_order = ?', whereArgs: [numOrder]);
+      final orderExists = await db.query(
+        'orders',
+        where: 'num_order = ?',
+        whereArgs: [numOrder],
+      );
       if (orderExists.isEmpty) {
         throw Exception('Referenced order $numOrder does not exist');
       }
@@ -5168,7 +5833,7 @@ class ApiDatabaseService {
   Future<List<OrderDetail>> getOrderDetails({String? numOrder}) async {
     // Ensure order_details tables exist before performing operations
     await ensureOrderDetailsTablesExist();
-    
+
     final db = await database;
     String whereClause = '';
     List<dynamic> whereArgs = [];
@@ -5229,7 +5894,9 @@ class ApiDatabaseService {
           priceTypeName: row['price_type_name'] as String?,
         );
 
-        if (!orderDetail.productRows.any((p) => p.codeProduct == product.codeProduct)) {
+        if (!orderDetail.productRows.any(
+          (p) => p.codeProduct == product.codeProduct,
+        )) {
           orderDetail.productRows.add(product);
         }
       }
@@ -5242,7 +5909,9 @@ class ApiDatabaseService {
           total: (row['op.total'] as num?)?.toDouble() ?? 0.0,
         );
 
-        if (!orderDetail.creditDetailsList.any((p) => p.dateOfPayment == payment.dateOfPayment)) {
+        if (!orderDetail.creditDetailsList.any(
+          (p) => p.dateOfPayment == payment.dateOfPayment,
+        )) {
           orderDetail.creditDetailsList.add(payment);
         }
       }
@@ -5254,15 +5923,18 @@ class ApiDatabaseService {
   Future<OrderDetail?> getOrderDetailByNumOrder(String numOrder) async {
     // Ensure order_details tables exist before performing operations
     await ensureOrderDetailsTablesExist();
-    
+
     final orderDetails = await getOrderDetails(numOrder: numOrder);
     return orderDetails.isNotEmpty ? orderDetails.first : null;
   }
 
-  Future<void> saveOrderDetail(OrderDetail orderDetail, {bool validateOrderExists = false}) async {
+  Future<void> saveOrderDetail(
+    OrderDetail orderDetail, {
+    bool validateOrderExists = false,
+  }) async {
     // Ensure order_details tables exist before performing operations
     await ensureOrderDetailsTablesExist();
-    
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -5282,9 +5954,15 @@ class ApiDatabaseService {
 
     // Validate foreign key references (optional - skip when caching server data)
     if (validateOrderExists) {
-      final orderExists = await db.query('orders', where: 'num_order = ?', whereArgs: [orderDetail.numOrder]);
+      final orderExists = await db.query(
+        'orders',
+        where: 'num_order = ?',
+        whereArgs: [orderDetail.numOrder],
+      );
       if (orderExists.isEmpty) {
-        throw Exception('Referenced order ${orderDetail.numOrder} does not exist');
+        throw Exception(
+          'Referenced order ${orderDetail.numOrder} does not exist',
+        );
       }
     }
 
@@ -5358,16 +6036,20 @@ class ApiDatabaseService {
         }
       } catch (e) {
         // Log error and rethrow
-        if (kDebugMode) print('Error saving order detail ${orderDetail.numOrder}: $e');
+        if (kDebugMode)
+          print('Error saving order detail ${orderDetail.numOrder}: $e');
         rethrow;
       }
     });
   }
 
-  Future<void> updateOrderDetail(String numOrder, OrderDetail orderDetail) async {
+  Future<void> updateOrderDetail(
+    String numOrder,
+    OrderDetail orderDetail,
+  ) async {
     // Ensure order_details tables exist before performing operations
     await ensureOrderDetailsTablesExist();
-    
+
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -5389,15 +6071,25 @@ class ApiDatabaseService {
     }
 
     // Validate that the order detail exists
-    final existingOrderDetail = await db.query('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
+    final existingOrderDetail = await db.query(
+      'order_details',
+      where: 'num_order = ?',
+      whereArgs: [numOrder],
+    );
     if (existingOrderDetail.isEmpty) {
       throw Exception('Order detail with num_order $numOrder does not exist');
     }
 
     // Validate foreign key references
-    final orderExists = await db.query('orders', where: 'num_order = ?', whereArgs: [orderDetail.numOrder]);
+    final orderExists = await db.query(
+      'orders',
+      where: 'num_order = ?',
+      whereArgs: [orderDetail.numOrder],
+    );
     if (orderExists.isEmpty) {
-      throw Exception('Referenced order ${orderDetail.numOrder} does not exist');
+      throw Exception(
+        'Referenced order ${orderDetail.numOrder} does not exist',
+      );
     }
 
     // Use transaction for atomicity
@@ -5406,7 +6098,8 @@ class ApiDatabaseService {
         await txn.update(
           'order_details',
           {
-            'num_order': orderDetail.numOrder, // Allow updating the order number
+            'num_order':
+                orderDetail.numOrder, // Allow updating the order number
             'credit': orderDetail.credit ? 1 : 0,
             'code_price': orderDetail.codePrice,
             'date_order': orderDetail.dateOrder.toIso8601String(),
@@ -5424,13 +6117,25 @@ class ApiDatabaseService {
         );
 
         // Get the order detail ID
-        final orderDetailResult = await txn.query('order_details', where: 'num_order = ?', whereArgs: [orderDetail.numOrder]);
+        final orderDetailResult = await txn.query(
+          'order_details',
+          where: 'num_order = ?',
+          whereArgs: [orderDetail.numOrder],
+        );
         if (orderDetailResult.isNotEmpty) {
           final orderDetailId = orderDetailResult.first['id'] as int;
 
           // Delete existing products and payments
-          await txn.delete('order_detail_products', where: 'order_detail_id = ?', whereArgs: [orderDetailId]);
-          await txn.delete('order_payments', where: 'order_detail_id = ?', whereArgs: [orderDetailId]);
+          await txn.delete(
+            'order_detail_products',
+            where: 'order_detail_id = ?',
+            whereArgs: [orderDetailId],
+          );
+          await txn.delete(
+            'order_payments',
+            where: 'order_detail_id = ?',
+            whereArgs: [orderDetailId],
+          );
 
           // Re-insert products with validation
           for (final product in orderDetail.productRows) {
@@ -5493,7 +6198,7 @@ class ApiDatabaseService {
   Future<void> deleteOrderDetail(String numOrder) async {
     // Ensure order_details tables exist before performing operations
     await ensureOrderDetailsTablesExist();
-    
+
     final db = await database;
 
     // Validate input
@@ -5502,7 +6207,11 @@ class ApiDatabaseService {
     }
 
     // Check if order detail exists
-    final existingOrderDetail = await db.query('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
+    final existingOrderDetail = await db.query(
+      'order_details',
+      where: 'num_order = ?',
+      whereArgs: [numOrder],
+    );
     if (existingOrderDetail.isEmpty) {
       throw Exception('Order detail with num_order $numOrder does not exist');
     }
@@ -5511,7 +6220,11 @@ class ApiDatabaseService {
     await db.transaction((txn) async {
       try {
         // Foreign key constraints will handle cascading deletes for related records
-        await txn.delete('order_details', where: 'num_order = ?', whereArgs: [numOrder]);
+        await txn.delete(
+          'order_details',
+          where: 'num_order = ?',
+          whereArgs: [numOrder],
+        );
       } catch (e) {
         // Log error and rethrow
         if (kDebugMode) print('Error deleting order detail $numOrder: $e');
@@ -5521,7 +6234,9 @@ class ApiDatabaseService {
   }
 
   /// Save sales req permissions
-  Future<void> saveSalesReqPermissions(List<SalesReqPermissions> permissions) async {
+  Future<void> saveSalesReqPermissions(
+    List<SalesReqPermissions> permissions,
+  ) async {
     // Ensure tables exist before saving
     await ensureSalesReqPermissionsTableExists();
 
@@ -5553,7 +6268,10 @@ class ApiDatabaseService {
     if (maps.isEmpty) return null;
 
     final permission = SalesReqPermissions.fromMap(maps.first);
-    if (kDebugMode) print('_______ getting salse req premissions: Fetched SalesReqPermissions: ${permission.userCode}');
+    if (kDebugMode)
+      print(
+        '_______ getting salse req premissions: Fetched SalesReqPermissions: ${permission.userCode}',
+      );
     // Get associated visit steps
     final visitStepsMaps = await db.query(
       'visit_steps',
@@ -5561,7 +6279,9 @@ class ApiDatabaseService {
       whereArgs: [permission.id],
     );
 
-    final visitSteps = visitStepsMaps.map((map) => VisitStep.fromMap(map)).toList();
+    final visitSteps = visitStepsMaps
+        .map((map) => VisitStep.fromMap(map))
+        .toList();
     return permission.copyWith(visitSteps: visitSteps);
   }
 
@@ -5581,7 +6301,9 @@ class ApiDatabaseService {
         whereArgs: [permission.id],
       );
 
-      final visitSteps = visitStepsMaps.map((map) => VisitStep.fromMap(map)).toList();
+      final visitSteps = visitStepsMaps
+          .map((map) => VisitStep.fromMap(map))
+          .toList();
       permissions.add(permission.copyWith(visitSteps: visitSteps));
     }
 
@@ -5626,7 +6348,10 @@ class ApiDatabaseService {
   /// Visit Steps CRUD methods
 
   /// Save visit steps for a specific sales req permissions
-  Future<void> saveVisitSteps(List<VisitStep> visitSteps, int salesReqPermissionsId) async {
+  Future<void> saveVisitSteps(
+    List<VisitStep> visitSteps,
+    int salesReqPermissionsId,
+  ) async {
     // Ensure tables exist before saving
     await ensureSalesReqPermissionsTableExists();
 
@@ -5637,7 +6362,11 @@ class ApiDatabaseService {
     final batch = db.batch();
 
     // Delete existing visit steps for this permissions
-    batch.delete('visit_steps', where: 'sales_req_permissions_id = ?', whereArgs: [salesReqPermissionsId]);
+    batch.delete(
+      'visit_steps',
+      where: 'sales_req_permissions_id = ?',
+      whereArgs: [salesReqPermissionsId],
+    );
 
     // Deduplicate visit steps by step_code to avoid UNIQUE constraint violations
     final uniqueVisitSteps = <int, VisitStep>{};
@@ -5671,15 +6400,23 @@ class ApiDatabaseService {
       orderBy: 'step_code ASC',
     );
 
-    return result.map((row) => VisitStep(
-      id: row['id'] as int?,
-      salesReqPermissionsId: row['sales_req_permissions_id'] as int?,
-      stepCode: row['step_code'] as int,
-      stepName: row['step_name'] as String,
-      stepRequired: (row['step_required'] as int?) == 1,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
-    )).toList();
+    return result
+        .map(
+          (row) => VisitStep(
+            id: row['id'] as int?,
+            salesReqPermissionsId: row['sales_req_permissions_id'] as int?,
+            stepCode: row['step_code'] as int,
+            stepName: row['step_name'] as String,
+            stepRequired: (row['step_required'] as int?) == 1,
+            createdAt: row['created_at'] != null
+                ? DateTime.parse(row['created_at'] as String)
+                : null,
+            updatedAt: row['updated_at'] != null
+                ? DateTime.parse(row['updated_at'] as String)
+                : null,
+          ),
+        )
+        .toList();
   }
 
   /// Get visit step by id
@@ -5701,8 +6438,12 @@ class ApiDatabaseService {
       stepCode: row['step_code'] as int,
       stepName: row['step_name'] as String,
       stepRequired: (row['step_required'] as int?) == 1,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+      createdAt: row['created_at'] != null
+          ? DateTime.parse(row['created_at'] as String)
+          : null,
+      updatedAt: row['updated_at'] != null
+          ? DateTime.parse(row['updated_at'] as String)
+          : null,
     );
   }
 
@@ -5731,25 +6472,42 @@ class ApiDatabaseService {
   }
 
   /// Delete all visit steps for a specific sales req permissions
-  Future<void> deleteVisitStepsByPermissionsId(int salesReqPermissionsId) async {
+  Future<void> deleteVisitStepsByPermissionsId(
+    int salesReqPermissionsId,
+  ) async {
     final db = await database;
-    await db.delete('visit_steps', where: 'sales_req_permissions_id = ?', whereArgs: [salesReqPermissionsId]);
+    await db.delete(
+      'visit_steps',
+      where: 'sales_req_permissions_id = ?',
+      whereArgs: [salesReqPermissionsId],
+    );
   }
 
   /// Get all visit steps (for admin/debug purposes)
   Future<List<VisitStep>> getAllVisitSteps() async {
     final db = await database;
-    final result = await db.query('visit_steps', orderBy: 'sales_req_permissions_id ASC, step_code ASC');
+    final result = await db.query(
+      'visit_steps',
+      orderBy: 'sales_req_permissions_id ASC, step_code ASC',
+    );
 
-    return result.map((row) => VisitStep(
-      id: row['id'] as int?,
-      salesReqPermissionsId: row['sales_req_permissions_id'] as int?,
-      stepCode: row['step_code'] as int,
-      stepName: row['step_name'] as String,
-      stepRequired: (row['step_required'] as int?) == 1,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
-    )).toList();
+    return result
+        .map(
+          (row) => VisitStep(
+            id: row['id'] as int?,
+            salesReqPermissionsId: row['sales_req_permissions_id'] as int?,
+            stepCode: row['step_code'] as int,
+            stepName: row['step_name'] as String,
+            stepRequired: (row['step_required'] as int?) == 1,
+            createdAt: row['created_at'] != null
+                ? DateTime.parse(row['created_at'] as String)
+                : null,
+            updatedAt: row['updated_at'] != null
+                ? DateTime.parse(row['updated_at'] as String)
+                : null,
+          ),
+        )
+        .toList();
   }
 
   /// Get visit steps count for a specific permissions
@@ -5772,24 +6530,20 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.insert(
-      'visit_steps_data',
-      {
-        'visit_id': visitData.visitId,
-        'client_code': visitData.clientCode,
-        'step_code': visitData.stepCode,
-        'step_name': visitData.stepName,
-        'data_type': visitData.dataType,
-        'data_content': visitData.dataContent,
-        'timestamp': visitData.timestamp.toIso8601String(),
-        'is_synced': visitData.isSynced ? 1 : 0,
-        'synced_at': visitData.syncedAt?.toIso8601String(),
-        'sync_error': visitData.syncError,
-        'created_at': now,
-        'updated_at': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('visit_steps_data', {
+      'visit_id': visitData.visitId,
+      'client_code': visitData.clientCode,
+      'step_code': visitData.stepCode,
+      'step_name': visitData.stepName,
+      'data_type': visitData.dataType,
+      'data_content': visitData.dataContent,
+      'timestamp': visitData.timestamp.toIso8601String(),
+      'is_synced': visitData.isSynced ? 1 : 0,
+      'synced_at': visitData.syncedAt?.toIso8601String(),
+      'sync_error': visitData.syncError,
+      'created_at': now,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// Save multiple visit step data entries
@@ -5802,24 +6556,20 @@ class ApiDatabaseService {
 
     final batch = db.batch();
     for (final visitData in visitDataList) {
-      batch.insert(
-        'visit_steps_data',
-        {
-          'visit_id': visitData.visitId,
-          'client_code': visitData.clientCode,
-          'step_code': visitData.stepCode,
-          'step_name': visitData.stepName,
-          'data_type': visitData.dataType,
-          'data_content': visitData.dataContent,
-          'timestamp': visitData.timestamp.toIso8601String(),
-          'is_synced': visitData.isSynced ? 1 : 0,
-          'synced_at': visitData.syncedAt?.toIso8601String(),
-          'sync_error': visitData.syncError,
-          'created_at': now,
-          'updated_at': now,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      batch.insert('visit_steps_data', {
+        'visit_id': visitData.visitId,
+        'client_code': visitData.clientCode,
+        'step_code': visitData.stepCode,
+        'step_name': visitData.stepName,
+        'data_type': visitData.dataType,
+        'data_content': visitData.dataContent,
+        'timestamp': visitData.timestamp.toIso8601String(),
+        'is_synced': visitData.isSynced ? 1 : 0,
+        'synced_at': visitData.syncedAt?.toIso8601String(),
+        'sync_error': visitData.syncError,
+        'created_at': now,
+        'updated_at': now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
 
     await batch.commit(noResult: true);
@@ -5841,12 +6591,15 @@ class ApiDatabaseService {
   /// Get visit step data by user (across all visits)
   Future<List<VisitData>> getVisitStepDataByUser(String userCode) async {
     final db = await database;
-    final result = await db.rawQuery('''
+    final result = await db.rawQuery(
+      '''
       SELECT vsd.* FROM visit_steps_data vsd
       INNER JOIN clients c ON vsd.client_code = c.code
       WHERE c.owner_name = ? OR c.responsible_person = ?
       ORDER BY vsd.timestamp DESC
-    ''', [userCode, userCode]);
+    ''',
+      [userCode, userCode],
+    );
 
     return result.map((row) => VisitData.fromMap(row)).toList();
   }
@@ -5877,7 +6630,11 @@ class ApiDatabaseService {
   }
 
   /// Update visit step data sync status
-  Future<void> updateVisitStepDataSyncStatus(int id, bool isSynced, {String? syncError}) async {
+  Future<void> updateVisitStepDataSyncStatus(
+    int id,
+    bool isSynced, {
+    String? syncError,
+  }) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -5898,10 +6655,18 @@ class ApiDatabaseService {
   Future<Map<String, dynamic>> getVisitStepDataStats() async {
     final db = await database;
 
-    final totalResult = await db.rawQuery('SELECT COUNT(*) as total FROM visit_steps_data');
-    final syncedResult = await db.rawQuery('SELECT COUNT(*) as synced FROM visit_steps_data WHERE is_synced = 1');
-    final pendingResult = await db.rawQuery('SELECT COUNT(*) as pending FROM visit_steps_data WHERE is_synced = 0');
-    final errorResult = await db.rawQuery('SELECT COUNT(*) as errors FROM visit_steps_data WHERE sync_error IS NOT NULL');
+    final totalResult = await db.rawQuery(
+      'SELECT COUNT(*) as total FROM visit_steps_data',
+    );
+    final syncedResult = await db.rawQuery(
+      'SELECT COUNT(*) as synced FROM visit_steps_data WHERE is_synced = 1',
+    );
+    final pendingResult = await db.rawQuery(
+      'SELECT COUNT(*) as pending FROM visit_steps_data WHERE is_synced = 0',
+    );
+    final errorResult = await db.rawQuery(
+      'SELECT COUNT(*) as errors FROM visit_steps_data WHERE sync_error IS NOT NULL',
+    );
 
     return {
       'total': Sqflite.firstIntValue(totalResult) ?? 0,
@@ -5912,7 +6677,9 @@ class ApiDatabaseService {
   }
 
   /// Delete old visit step data (cleanup)
-  Future<void> deleteOldVisitStepData({Duration olderThan = const Duration(days: 30)}) async {
+  Future<void> deleteOldVisitStepData({
+    Duration olderThan = const Duration(days: 30),
+  }) async {
     final db = await database;
     final cutoffDate = DateTime.now().subtract(olderThan).toIso8601String();
 
@@ -5944,7 +6711,10 @@ class ApiDatabaseService {
   }
 
   /// Delete visit step data by visit ID and step code
-  Future<void> deleteVisitStepDataByStepCode(String visitId, int stepCode) async {
+  Future<void> deleteVisitStepDataByStepCode(
+    String visitId,
+    int stepCode,
+  ) async {
     final db = await database;
     await db.delete(
       'visit_steps_data',
@@ -5956,11 +6726,7 @@ class ApiDatabaseService {
   /// Delete a specific visit step data record by ID
   Future<void> deleteVisitStepData(int id) async {
     final db = await database;
-    await db.delete(
-      'visit_steps_data',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('visit_steps_data', where: 'id = ?', whereArgs: [id]);
   }
 
   /// Save planned routes data
@@ -5977,7 +6743,11 @@ class ApiDatabaseService {
     // Delete all existing routes for the user(s) being saved
     final userCodes = routes.map((r) => r.userCode).toSet();
     for (final userCode in userCodes) {
-      batch.delete('planned_routes', where: 'user_code = ?', whereArgs: [userCode]);
+      batch.delete(
+        'planned_routes',
+        where: 'user_code = ?',
+        whereArgs: [userCode],
+      );
     }
 
     // Deduplicate routes by (user_code, code_weekday, code_client) to avoid UNIQUE constraint violations
@@ -6016,6 +6786,7 @@ class ApiDatabaseService {
 
     return result.map((row) => PlannedRoute.fromMap(row)).toList();
   }
+
   /// Get all planned routes
   Future<List<PlannedRoute>> getAllPlannedRoutes() async {
     final db = await database;
@@ -6029,7 +6800,10 @@ class ApiDatabaseService {
   }
 
   /// Get planned routes for a specific user and weekday
-  Future<List<PlannedRoute>> getPlannedRoutesByWeekday(String userCode, int codeWeekday) async {
+  Future<List<PlannedRoute>> getPlannedRoutesByWeekday(
+    String userCode,
+    int codeWeekday,
+  ) async {
     final db = await database;
     final result = await db.query(
       'planned_routes',
@@ -6042,7 +6816,10 @@ class ApiDatabaseService {
   }
 
   /// Get planned routes for a specific client
-  Future<List<PlannedRoute>> getPlannedRoutesByClient(String userCode, String codeClient) async {
+  Future<List<PlannedRoute>> getPlannedRoutesByClient(
+    String userCode,
+    String codeClient,
+  ) async {
     final db = await database;
     final result = await db.query(
       'planned_routes',
@@ -6068,7 +6845,11 @@ class ApiDatabaseService {
   /// Delete planned routes for a specific user
   Future<void> deletePlannedRoutes(String userCode) async {
     final db = await database;
-    await db.delete('planned_routes', where: 'user_code = ?', whereArgs: [userCode]);
+    await db.delete(
+      'planned_routes',
+      where: 'user_code = ?',
+      whereArgs: [userCode],
+    );
   }
 
   /// Delete all planned routes data
@@ -6167,7 +6948,10 @@ class ApiDatabaseService {
   }
 
   /// Get create orders by agent code
-  Future<List<CreateOrder>> getCreateOrders(String codeAgent, {bool? isSynced}) async {
+  Future<List<CreateOrder>> getCreateOrders(
+    String codeAgent, {
+    bool? isSynced,
+  }) async {
     final db = await database;
     String whereClause = 'WHERE code_agent = ?';
     List<dynamic> whereArgs = [codeAgent];
@@ -6209,68 +6993,84 @@ class ApiDatabaseService {
         whereArgs: [orderId],
       );
 
-      final products = productResults.map((row) => CreateOrderProduct(
-        id: row['id'] as int?,
-        createOrderId: row['create_order_id'] as int?,
-        codeSklad: row['code_sklad'] as String,
-        codeProduct: row['code_product'] as String,
-        vendorCode: row['vendor_code'] as String,
-        amount: row['amount'] as int,
-        price: (row['price'] as num?)?.toDouble() ?? 0.0,
-        total: (row['total'] as num?)?.toDouble() ?? 0.0,
-        weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
-        capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
-        paymentType: row['payment_type'] as int,
-        discountSum: (row['discount_sum'] as num?)?.toDouble() ?? 0.0,
-        discountRate: (row['discount_rate'] as num?)?.toDouble() ?? 0.0,
-        giftAmount: row['gift_amount'] as int,
-        promo: (row['promo'] as int?) == 1,
-      )).toList();
+      final products = productResults
+          .map(
+            (row) => CreateOrderProduct(
+              id: row['id'] as int?,
+              createOrderId: row['create_order_id'] as int?,
+              codeSklad: row['code_sklad'] as String,
+              codeProduct: row['code_product'] as String,
+              vendorCode: row['vendor_code'] as String,
+              amount: row['amount'] as int,
+              price: (row['price'] as num?)?.toDouble() ?? 0.0,
+              total: (row['total'] as num?)?.toDouble() ?? 0.0,
+              weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
+              capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
+              paymentType: row['payment_type'] as int,
+              discountSum: (row['discount_sum'] as num?)?.toDouble() ?? 0.0,
+              discountRate: (row['discount_rate'] as num?)?.toDouble() ?? 0.0,
+              giftAmount: row['gift_amount'] as int,
+              promo: (row['promo'] as int?) == 1,
+            ),
+          )
+          .toList();
 
-      final competitiveIntelligence = ciResults.map((row) => CompetitiveIntelligence(
-        id: row['id'] as int?,
-        createOrderId: row['create_order_id'] as int?,
-        competitor: row['competitor'] as String,
-        product: row['product'] as String,
-        price: (row['price'] as num?)?.toDouble() ?? 0.0,
-      )).toList();
+      final competitiveIntelligence = ciResults
+          .map(
+            (row) => CompetitiveIntelligence(
+              id: row['id'] as int?,
+              createOrderId: row['create_order_id'] as int?,
+              competitor: row['competitor'] as String,
+              product: row['product'] as String,
+              price: (row['price'] as num?)?.toDouble() ?? 0.0,
+            ),
+          )
+          .toList();
 
-      final creditDetails = cdResults.map((row) => CreditDetail(
-        id: row['id'] as int?,
-        createOrderId: row['create_order_id'] as int?,
-        dateOfPayment: DateTime.parse(row['date_of_payment'] as String),
-        total: (row['total'] as num?)?.toDouble() ?? 0.0,
-      )).toList();
+      final creditDetails = cdResults
+          .map(
+            (row) => CreditDetail(
+              id: row['id'] as int?,
+              createOrderId: row['create_order_id'] as int?,
+              dateOfPayment: DateTime.parse(row['date_of_payment'] as String),
+              total: (row['total'] as num?)?.toDouble() ?? 0.0,
+            ),
+          )
+          .toList();
 
-      orders.add(CreateOrder(
-        id: orderRow['id'] as int?,
-        codeAgent: orderRow['code_agent'] as String,
-        codeClient: orderRow['code_client'] as String,
-        codePrice: orderRow['code_price'] as String,
-        payment: orderRow['payment'] as String,
-        shippingDate: DateTime.parse(orderRow['shipping_date'] as String),
-        commentSupervisor: orderRow['comment_supervisor'] as String?,
-        commentForwarder: orderRow['comment_forwarder'] as String?,
-        comment: orderRow['comment'] as String?,
-        createDate: DateTime.parse(orderRow['create_date'] as String),
-        longitude: (orderRow['longitude'] as num?)?.toDouble() ?? 0.0,
-        latitude: (orderRow['latitude'] as num?)?.toDouble() ?? 0.0,
-        weight: (orderRow['weight'] as num?)?.toDouble() ?? 0.0,
-        capacity: (orderRow['capacity'] as num?)?.toDouble() ?? 0.0,
-        credit: (orderRow['credit'] as int?) == 1,
-        codeProject: orderRow['code_project'] as String,
-        orderType: orderRow['order_type'] as int,
-        codeOrg: orderRow['code_org'] as String,
-        codeSklad: orderRow['code_sklad'] as String,
-        codeContract: orderRow['code_contract'] as String?,
-        hasPromo: (orderRow['has_promo'] as int?) == 1,
-        isSynced: (orderRow['is_synced'] as int?) == 1,
-        syncedAt: orderRow['synced_at'] != null ? DateTime.parse(orderRow['synced_at'] as String) : null,
-        syncError: orderRow['sync_error'] as String?,
-        products: products,
-        competitiveIntelligence: competitiveIntelligence,
-        creditDetails: creditDetails,
-      ));
+      orders.add(
+        CreateOrder(
+          id: orderRow['id'] as int?,
+          codeAgent: orderRow['code_agent'] as String,
+          codeClient: orderRow['code_client'] as String,
+          codePrice: orderRow['code_price'] as String,
+          payment: orderRow['payment'] as String,
+          shippingDate: DateTime.parse(orderRow['shipping_date'] as String),
+          commentSupervisor: orderRow['comment_supervisor'] as String?,
+          commentForwarder: orderRow['comment_forwarder'] as String?,
+          comment: orderRow['comment'] as String?,
+          createDate: DateTime.parse(orderRow['create_date'] as String),
+          longitude: (orderRow['longitude'] as num?)?.toDouble() ?? 0.0,
+          latitude: (orderRow['latitude'] as num?)?.toDouble() ?? 0.0,
+          weight: (orderRow['weight'] as num?)?.toDouble() ?? 0.0,
+          capacity: (orderRow['capacity'] as num?)?.toDouble() ?? 0.0,
+          credit: (orderRow['credit'] as int?) == 1,
+          codeProject: orderRow['code_project'] as String,
+          orderType: orderRow['order_type'] as int,
+          codeOrg: orderRow['code_org'] as String,
+          codeSklad: orderRow['code_sklad'] as String,
+          codeContract: orderRow['code_contract'] as String?,
+          hasPromo: (orderRow['has_promo'] as int?) == 1,
+          isSynced: (orderRow['is_synced'] as int?) == 1,
+          syncedAt: orderRow['synced_at'] != null
+              ? DateTime.parse(orderRow['synced_at'] as String)
+              : null,
+          syncError: orderRow['sync_error'] as String?,
+          products: products,
+          competitiveIntelligence: competitiveIntelligence,
+          creditDetails: creditDetails,
+        ),
+      );
     }
 
     return orders;
@@ -6288,12 +7088,19 @@ class ApiDatabaseService {
 
     if (orderResults.isEmpty) return null;
 
-    final orders = await getCreateOrders('', isSynced: null); // Get all and filter
+    final orders = await getCreateOrders(
+      '',
+      isSynced: null,
+    ); // Get all and filter
     return orders.firstWhere((order) => order.id == id);
   }
 
   /// Update create order sync status
-  Future<void> updateCreateOrderSyncStatus(int id, bool isSynced, {String? syncError}) async {
+  Future<void> updateCreateOrderSyncStatus(
+    int id,
+    bool isSynced, {
+    String? syncError,
+  }) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
@@ -6351,68 +7158,84 @@ class ApiDatabaseService {
         whereArgs: [orderId],
       );
 
-      final products = productResults.map((row) => CreateOrderProduct(
-        id: row['id'] as int?,
-        createOrderId: row['create_order_id'] as int?,
-        codeSklad: row['code_sklad'] as String,
-        codeProduct: row['code_product'] as String,
-        vendorCode: row['vendor_code'] as String,
-        amount: row['amount'] as int,
-        price: (row['price'] as num?)?.toDouble() ?? 0.0,
-        total: (row['total'] as num?)?.toDouble() ?? 0.0,
-        weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
-        capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
-        paymentType: row['payment_type'] as int,
-        discountSum: (row['discount_sum'] as num?)?.toDouble() ?? 0.0,
-        discountRate: (row['discount_rate'] as num?)?.toDouble() ?? 0.0,
-        giftAmount: row['gift_amount'] as int,
-        promo: (row['promo'] as int?) == 1,
-      )).toList();
+      final products = productResults
+          .map(
+            (row) => CreateOrderProduct(
+              id: row['id'] as int?,
+              createOrderId: row['create_order_id'] as int?,
+              codeSklad: row['code_sklad'] as String,
+              codeProduct: row['code_product'] as String,
+              vendorCode: row['vendor_code'] as String,
+              amount: row['amount'] as int,
+              price: (row['price'] as num?)?.toDouble() ?? 0.0,
+              total: (row['total'] as num?)?.toDouble() ?? 0.0,
+              weight: (row['weight'] as num?)?.toDouble() ?? 0.0,
+              capacity: (row['capacity'] as num?)?.toDouble() ?? 0.0,
+              paymentType: row['payment_type'] as int,
+              discountSum: (row['discount_sum'] as num?)?.toDouble() ?? 0.0,
+              discountRate: (row['discount_rate'] as num?)?.toDouble() ?? 0.0,
+              giftAmount: row['gift_amount'] as int,
+              promo: (row['promo'] as int?) == 1,
+            ),
+          )
+          .toList();
 
-      final competitiveIntelligence = ciResults.map((row) => CompetitiveIntelligence(
-        id: row['id'] as int?,
-        createOrderId: row['create_order_id'] as int?,
-        competitor: row['competitor'] as String,
-        product: row['product'] as String,
-        price: (row['price'] as num?)?.toDouble() ?? 0.0,
-      )).toList();
+      final competitiveIntelligence = ciResults
+          .map(
+            (row) => CompetitiveIntelligence(
+              id: row['id'] as int?,
+              createOrderId: row['create_order_id'] as int?,
+              competitor: row['competitor'] as String,
+              product: row['product'] as String,
+              price: (row['price'] as num?)?.toDouble() ?? 0.0,
+            ),
+          )
+          .toList();
 
-      final creditDetails = cdResults.map((row) => CreditDetail(
-        id: row['id'] as int?,
-        createOrderId: row['create_order_id'] as int?,
-        dateOfPayment: DateTime.parse(row['date_of_payment'] as String),
-        total: (row['total'] as num?)?.toDouble() ?? 0.0,
-      )).toList();
+      final creditDetails = cdResults
+          .map(
+            (row) => CreditDetail(
+              id: row['id'] as int?,
+              createOrderId: row['create_order_id'] as int?,
+              dateOfPayment: DateTime.parse(row['date_of_payment'] as String),
+              total: (row['total'] as num?)?.toDouble() ?? 0.0,
+            ),
+          )
+          .toList();
 
-      orders.add(CreateOrder(
-        id: orderRow['id'] as int?,
-        codeAgent: orderRow['code_agent'] as String,
-        codeClient: orderRow['code_client'] as String,
-        codePrice: orderRow['code_price'] as String,
-        payment: orderRow['payment'] as String,
-        shippingDate: DateTime.parse(orderRow['shipping_date'] as String),
-        commentSupervisor: orderRow['comment_supervisor'] as String?,
-        commentForwarder: orderRow['comment_forwarder'] as String?,
-        comment: orderRow['comment'] as String?,
-        createDate: DateTime.parse(orderRow['create_date'] as String),
-        longitude: (orderRow['longitude'] as num?)?.toDouble() ?? 0.0,
-        latitude: (orderRow['latitude'] as num?)?.toDouble() ?? 0.0,
-        weight: (orderRow['weight'] as num?)?.toDouble() ?? 0.0,
-        capacity: (orderRow['capacity'] as num?)?.toDouble() ?? 0.0,
-        credit: (orderRow['credit'] as int?) == 1,
-        codeProject: orderRow['code_project'] as String,
-        orderType: orderRow['order_type'] as int,
-        codeOrg: orderRow['code_org'] as String,
-        codeSklad: orderRow['code_sklad'] as String,
-        codeContract: orderRow['code_contract'] as String?,
-        hasPromo: (orderRow['has_promo'] as int?) == 1,
-        isSynced: (orderRow['is_synced'] as int?) == 1,
-        syncedAt: orderRow['synced_at'] != null ? DateTime.parse(orderRow['synced_at'] as String) : null,
-        syncError: orderRow['sync_error'] as String?,
-        products: products,
-        competitiveIntelligence: competitiveIntelligence,
-        creditDetails: creditDetails,
-      ));
+      orders.add(
+        CreateOrder(
+          id: orderRow['id'] as int?,
+          codeAgent: orderRow['code_agent'] as String,
+          codeClient: orderRow['code_client'] as String,
+          codePrice: orderRow['code_price'] as String,
+          payment: orderRow['payment'] as String,
+          shippingDate: DateTime.parse(orderRow['shipping_date'] as String),
+          commentSupervisor: orderRow['comment_supervisor'] as String?,
+          commentForwarder: orderRow['comment_forwarder'] as String?,
+          comment: orderRow['comment'] as String?,
+          createDate: DateTime.parse(orderRow['create_date'] as String),
+          longitude: (orderRow['longitude'] as num?)?.toDouble() ?? 0.0,
+          latitude: (orderRow['latitude'] as num?)?.toDouble() ?? 0.0,
+          weight: (orderRow['weight'] as num?)?.toDouble() ?? 0.0,
+          capacity: (orderRow['capacity'] as num?)?.toDouble() ?? 0.0,
+          credit: (orderRow['credit'] as int?) == 1,
+          codeProject: orderRow['code_project'] as String,
+          orderType: orderRow['order_type'] as int,
+          codeOrg: orderRow['code_org'] as String,
+          codeSklad: orderRow['code_sklad'] as String,
+          codeContract: orderRow['code_contract'] as String?,
+          hasPromo: (orderRow['has_promo'] as int?) == 1,
+          isSynced: (orderRow['is_synced'] as int?) == 1,
+          syncedAt: orderRow['synced_at'] != null
+              ? DateTime.parse(orderRow['synced_at'] as String)
+              : null,
+          syncError: orderRow['sync_error'] as String?,
+          products: products,
+          competitiveIntelligence: competitiveIntelligence,
+          creditDetails: creditDetails,
+        ),
+      );
     }
 
     return orders;
@@ -6429,23 +7252,25 @@ class ApiDatabaseService {
 
   /// Update client coordinates in the database
   /// This method updates the latitude and longitude of a specific client
-  Future<void> updateClientCoordinates(String clientCode, double latitude, double longitude) async {
+  Future<void> updateClientCoordinates(
+    String clientCode,
+    double latitude,
+    double longitude,
+  ) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
     await db.update(
       'clients',
-      {
-        'latitude': latitude,
-        'longitude': longitude,
-        'updated_at': now,
-      },
+      {'latitude': latitude, 'longitude': longitude, 'updated_at': now},
       where: 'code = ?',
       whereArgs: [clientCode],
     );
 
     if (kDebugMode) {
-      print('Updated coordinates for client $clientCode: lat=$latitude, lng=$longitude');
+      print(
+        'Updated coordinates for client $clientCode: lat=$latitude, lng=$longitude',
+      );
     }
   }
 
@@ -6455,7 +7280,7 @@ class ApiDatabaseService {
 
     // Check if sales_req_permissions table exists
     final salesReqPermissionsTable = await db.rawQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='sales_req_permissions'"
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='sales_req_permissions'",
     );
 
     if (salesReqPermissionsTable.isEmpty) {
@@ -6480,29 +7305,43 @@ class ApiDatabaseService {
       ''');
     } else {
       // Check if edit_client_coordinates column exists, add it if not
-      final columns = await db.rawQuery("PRAGMA table_info(sales_req_permissions)");
-      final hasEditClientCoordinates = columns.any((col) => col['name'] == 'edit_client_coordinates');
+      final columns = await db.rawQuery(
+        "PRAGMA table_info(sales_req_permissions)",
+      );
+      final hasEditClientCoordinates = columns.any(
+        (col) => col['name'] == 'edit_client_coordinates',
+      );
 
       if (!hasEditClientCoordinates) {
-        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN edit_client_coordinates INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE sales_req_permissions ADD COLUMN edit_client_coordinates INTEGER NOT NULL DEFAULT 0',
+        );
       }
 
       // Check if client_zone_access column exists, add it if not
-      final hasClientZoneAccess = columns.any((col) => col['name'] == 'client_zone_access');
+      final hasClientZoneAccess = columns.any(
+        (col) => col['name'] == 'client_zone_access',
+      );
       if (!hasClientZoneAccess) {
-        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE sales_req_permissions ADD COLUMN client_zone_access INTEGER NOT NULL DEFAULT 0',
+        );
       }
 
       // Check if location_update_interval column exists, add it if not
-      final hasLocationUpdateInterval = columns.any((col) => col['name'] == 'location_update_interval');
+      final hasLocationUpdateInterval = columns.any(
+        (col) => col['name'] == 'location_update_interval',
+      );
       if (!hasLocationUpdateInterval) {
-        await db.execute('ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE sales_req_permissions ADD COLUMN location_update_interval INTEGER NOT NULL DEFAULT 0',
+        );
       }
     }
 
     // Check if visit_steps table exists
     final visitStepsTable = await db.rawQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='visit_steps'"
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='visit_steps'",
     );
 
     if (visitStepsTable.isEmpty) {
@@ -6523,7 +7362,7 @@ class ApiDatabaseService {
 
     // Check if visit_steps_data table exists
     final visitStepsDataTable = await db.rawQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='visit_steps_data'"
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='visit_steps_data'",
     );
 
     if (visitStepsDataTable.isEmpty) {
@@ -6549,7 +7388,7 @@ class ApiDatabaseService {
 
     // Check if planned_routes table exists
     final plannedRoutesTable = await db.rawQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='planned_routes'"
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='planned_routes'",
     );
 
     if (plannedRoutesTable.isEmpty) {
@@ -6571,21 +7410,48 @@ class ApiDatabaseService {
 
     // Create indexes if they don't exist
     try {
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_user_code ON planned_routes(user_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_weekday ON planned_routes(code_weekday)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_sales_req_permissions_id ON visit_steps(sales_req_permissions_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_step_code ON visit_steps(step_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_visit_id ON visit_steps_data(visit_id)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_client_code ON visit_steps_data(client_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_step_code ON visit_steps_data(step_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_data_type ON visit_steps_data(data_type)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_is_synced ON visit_steps_data(is_synced)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_planned_routes_user_code ON planned_routes(user_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_planned_routes_code_weekday ON planned_routes(code_weekday)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_planned_routes_code_client ON planned_routes(code_client)',
+      );
     } catch (e) {
       // Indexes might already exist, ignore error
-      if (kDebugMode) print('Warning: Could not create indexes, they might already exist: $e');
+      if (kDebugMode)
+        print(
+          'Warning: Could not create indexes, they might already exist: $e',
+        );
     }
   }
 
@@ -6594,10 +7460,15 @@ class ApiDatabaseService {
   /// Save user organizations data
   /// This method saves organizations associated with a specific user
   /// Ensures table exists before operations and handles errors gracefully
-  Future<void> saveUserOrganizations(String userCode, List<UserOrganization> organizations) async {
+  Future<void> saveUserOrganizations(
+    String userCode,
+    List<UserOrganization> organizations,
+  ) async {
     try {
       if (kDebugMode) {
-        print('ApiDatabaseService: Saving ${organizations.length} user organizations for user: $userCode');
+        print(
+          'ApiDatabaseService: Saving ${organizations.length} user organizations for user: $userCode',
+        );
       }
 
       // Ensure table exists before performing operations
@@ -6610,7 +7481,11 @@ class ApiDatabaseService {
       final batch = db.batch();
 
       // Delete all existing organizations for this user
-      batch.delete('user_organizations', where: 'user_code = ?', whereArgs: [userCode]);
+      batch.delete(
+        'user_organizations',
+        where: 'user_code = ?',
+        whereArgs: [userCode],
+      );
 
       // Deduplicate organizations by code to avoid UNIQUE constraint violations
       final uniqueOrganizations = <String, UserOrganization>{};
@@ -6634,7 +7509,9 @@ class ApiDatabaseService {
       await batch.commit(noResult: true);
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Successfully saved ${uniqueOrganizations.length} user organizations');
+        print(
+          'ApiDatabaseService: Successfully saved ${uniqueOrganizations.length} user organizations',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -6658,14 +7535,22 @@ class ApiDatabaseService {
       orderBy: 'name ASC',
     );
 
-    return result.map((row) => UserOrganization(
-      id: row['id'] as int?,
-      code: row['code'] as String,
-      name: row['name'] as String,
-      userCode: row['user_code'] as String,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
-    )).toList();
+    return result
+        .map(
+          (row) => UserOrganization(
+            id: row['id'] as int?,
+            code: row['code'] as String,
+            name: row['name'] as String,
+            userCode: row['user_code'] as String,
+            createdAt: row['created_at'] != null
+                ? DateTime.parse(row['created_at'] as String)
+                : null,
+            updatedAt: row['updated_at'] != null
+                ? DateTime.parse(row['updated_at'] as String)
+                : null,
+          ),
+        )
+        .toList();
   }
 
   /// Get user organization by code
@@ -6689,8 +7574,12 @@ class ApiDatabaseService {
       code: row['code'] as String,
       name: row['name'] as String,
       userCode: row['user_code'] as String,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
+      createdAt: row['created_at'] != null
+          ? DateTime.parse(row['created_at'] as String)
+          : null,
+      updatedAt: row['updated_at'] != null
+          ? DateTime.parse(row['updated_at'] as String)
+          : null,
     );
   }
 
@@ -6702,21 +7591,20 @@ class ApiDatabaseService {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.insert(
-      'user_organizations',
-      {
-        'code': organization.code,
-        'name': organization.name,
-        'user_code': organization.userCode,
-        'created_at': now,
-        'updated_at': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('user_organizations', {
+      'code': organization.code,
+      'name': organization.name,
+      'user_code': organization.userCode,
+      'created_at': now,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// Update user organization
-  Future<void> updateUserOrganization(String code, UserOrganization organization) async {
+  Future<void> updateUserOrganization(
+    String code,
+    UserOrganization organization,
+  ) async {
     // Ensure table exists before performing operations
     await ensureUserOrganizationsTableExists();
 
@@ -6725,10 +7613,7 @@ class ApiDatabaseService {
 
     await db.update(
       'user_organizations',
-      {
-        'name': organization.name,
-        'updated_at': now,
-      },
+      {'name': organization.name, 'updated_at': now},
       where: 'code = ?',
       whereArgs: [code],
     );
@@ -6749,7 +7634,11 @@ class ApiDatabaseService {
     await ensureUserOrganizationsTableExists();
 
     final db = await database;
-    await db.delete('user_organizations', where: 'user_code = ?', whereArgs: [userCode]);
+    await db.delete(
+      'user_organizations',
+      where: 'user_code = ?',
+      whereArgs: [userCode],
+    );
   }
 
   /// Get all user organizations (for admin/debug purposes)
@@ -6758,16 +7647,27 @@ class ApiDatabaseService {
     await ensureUserOrganizationsTableExists();
 
     final db = await database;
-    final result = await db.query('user_organizations', orderBy: 'user_code ASC, name ASC');
+    final result = await db.query(
+      'user_organizations',
+      orderBy: 'user_code ASC, name ASC',
+    );
 
-    return result.map((row) => UserOrganization(
-      id: row['id'] as int?,
-      code: row['code'] as String,
-      name: row['name'] as String,
-      userCode: row['user_code'] as String,
-      createdAt: row['created_at'] != null ? DateTime.parse(row['created_at'] as String) : null,
-      updatedAt: row['updated_at'] != null ? DateTime.parse(row['updated_at'] as String) : null,
-    )).toList();
+    return result
+        .map(
+          (row) => UserOrganization(
+            id: row['id'] as int?,
+            code: row['code'] as String,
+            name: row['name'] as String,
+            userCode: row['user_code'] as String,
+            createdAt: row['created_at'] != null
+                ? DateTime.parse(row['created_at'] as String)
+                : null,
+            updatedAt: row['updated_at'] != null
+                ? DateTime.parse(row['updated_at'] as String)
+                : null,
+          ),
+        )
+        .toList();
   }
 
   /// Get user organizations count for a specific user
@@ -6785,12 +7685,16 @@ class ApiDatabaseService {
 
   /// Generic method to ensure a table exists
   /// This method checks if the table exists and creates it if not
-  Future<void> ensureTableExists(String tableName, String createTableSql, [List<String>? indexSqls]) async {
+  Future<void> ensureTableExists(
+    String tableName,
+    String createTableSql, [
+    List<String>? indexSqls,
+  ]) async {
     final db = await database;
 
     // Check if table exists
     final tableExists = await db.rawQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='$tableName'"
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='$tableName'",
     );
 
     if (tableExists.isEmpty) {
@@ -6882,7 +7786,9 @@ class ApiDatabaseService {
             UNIQUE(name, brand_name)
           )
         ''',
-        'indexes': ['CREATE INDEX idx_product_series_brand_name ON product_series(brand_name)'],
+        'indexes': [
+          'CREATE INDEX idx_product_series_brand_name ON product_series(brand_name)',
+        ],
       },
       'product_balances': {
         'sql': '''
@@ -6948,7 +7854,9 @@ class ApiDatabaseService {
             updated_at TEXT NOT NULL
           )
         ''',
-        'indexes': ['CREATE INDEX idx_clients_code_region ON clients(code_region)'],
+        'indexes': [
+          'CREATE INDEX idx_clients_code_region ON clients(code_region)',
+        ],
       },
       'client_contracts': {
         'sql': '''
@@ -7084,7 +7992,9 @@ class ApiDatabaseService {
             UNIQUE(promotion_code, product_code)
           )
         ''',
-        'indexes': ['CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)'],
+        'indexes': [
+          'CREATE INDEX idx_promotion_product_list_promotion_code ON promotion_product_list(promotion_code)',
+        ],
       },
       'promotion_bonus_list': {
         'sql': '''
@@ -7098,7 +8008,9 @@ class ApiDatabaseService {
             UNIQUE(promotion_code, product_code)
           )
         ''',
-        'indexes': ['CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)'],
+        'indexes': [
+          'CREATE INDEX idx_promotion_bonus_list_promotion_code ON promotion_bonus_list(promotion_code)',
+        ],
       },
       'promotion_class_list': {
         'sql': '''
@@ -7112,7 +8024,9 @@ class ApiDatabaseService {
             UNIQUE(promotion_code, class_code)
           )
         ''',
-        'indexes': ['CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)'],
+        'indexes': [
+          'CREATE INDEX idx_promotion_class_list_promotion_code ON promotion_class_list(promotion_code)',
+        ],
       },
       'main_reports': {
         'sql': '''
@@ -7149,7 +8063,9 @@ class ApiDatabaseService {
             FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
           )
         ''',
-        'indexes': ['CREATE INDEX idx_business_region_reports_main_report_id ON business_region_reports(main_report_id)'],
+        'indexes': [
+          'CREATE INDEX idx_business_region_reports_main_report_id ON business_region_reports(main_report_id)',
+        ],
       },
       'akb_by_categories': {
         'sql': '''
@@ -7164,7 +8080,9 @@ class ApiDatabaseService {
             FOREIGN KEY (main_report_id) REFERENCES main_reports (id) ON DELETE CASCADE
           )
         ''',
-        'indexes': ['CREATE INDEX idx_akb_by_categories_main_report_id ON akb_by_categories(main_report_id)'],
+        'indexes': [
+          'CREATE INDEX idx_akb_by_categories_main_report_id ON akb_by_categories(main_report_id)',
+        ],
       },
       'visit_plans': {
         'sql': '''
@@ -7202,7 +8120,9 @@ class ApiDatabaseService {
             FOREIGN KEY (visit_plan_id) REFERENCES visit_plans (id) ON DELETE CASCADE
           )
         ''',
-        'indexes': ['CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)'],
+        'indexes': [
+          'CREATE INDEX idx_visit_plan_lists_visit_plan_id ON visit_plan_lists(visit_plan_id)',
+        ],
       },
       'order_statuses': {
         'sql': '''
@@ -7213,7 +8133,9 @@ class ApiDatabaseService {
             updated_at TEXT NOT NULL
           )
         ''',
-        'indexes': ['CREATE INDEX idx_order_statuses_message ON order_statuses(message)'],
+        'indexes': [
+          'CREATE INDEX idx_order_statuses_message ON order_statuses(message)',
+        ],
       },
       'couriers': {
         'sql': '''
@@ -7253,7 +8175,9 @@ class ApiDatabaseService {
             UNIQUE(order_num)
           )
         ''',
-        'indexes': ['CREATE INDEX idx_order_couriers_order_num ON order_couriers(order_num)'],
+        'indexes': [
+          'CREATE INDEX idx_order_couriers_order_num ON order_couriers(order_num)',
+        ],
       },
       'orders': {
         'sql': '''
@@ -7275,6 +8199,7 @@ class ApiDatabaseService {
             courier_name TEXT,
             courier_car TEXT,
             server INTEGER NOT NULL DEFAULT 0,
+            promo INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             FOREIGN KEY (type_price_code) REFERENCES price_types (code) ON DELETE CASCADE,
@@ -7311,7 +8236,9 @@ class ApiDatabaseService {
             FOREIGN KEY (num_order) REFERENCES orders (num_order) ON DELETE CASCADE
           )
         ''',
-        'indexes': ['CREATE INDEX idx_order_details_num_order ON order_details(num_order)'],
+        'indexes': [
+          'CREATE INDEX idx_order_details_num_order ON order_details(num_order)',
+        ],
       },
       'order_detail_products': {
         'sql': '''
@@ -7333,7 +8260,9 @@ class ApiDatabaseService {
             FOREIGN KEY (order_detail_id) REFERENCES order_details (id) ON DELETE CASCADE
           )
         ''',
-        'indexes': ['CREATE INDEX idx_order_detail_products_order_detail_id ON order_detail_products(order_detail_id)'],
+        'indexes': [
+          'CREATE INDEX idx_order_detail_products_order_detail_id ON order_detail_products(order_detail_id)',
+        ],
       },
       'order_payments': {
         'sql': '''
@@ -7347,7 +8276,9 @@ class ApiDatabaseService {
             FOREIGN KEY (order_detail_id) REFERENCES order_details (id) ON DELETE CASCADE
           )
         ''',
-        'indexes': ['CREATE INDEX idx_order_payments_order_detail_id ON order_payments(order_detail_id)'],
+        'indexes': [
+          'CREATE INDEX idx_order_payments_order_detail_id ON order_payments(order_detail_id)',
+        ],
       },
       'sales_req_permissions': {
         'sql': '''
@@ -7368,7 +8299,9 @@ class ApiDatabaseService {
             updated_at TEXT NOT NULL
           )
         ''',
-        'indexes': ['CREATE INDEX idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)'],
+        'indexes': [
+          'CREATE INDEX idx_sales_req_permissions_user_code ON sales_req_permissions(user_code)',
+        ],
       },
       'visit_steps': {
         'sql': '''
@@ -7513,7 +8446,9 @@ class ApiDatabaseService {
             FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
           )
         ''',
-        'indexes': ['CREATE INDEX idx_competitive_intelligence_create_order_id ON competitive_intelligence(create_order_id)'],
+        'indexes': [
+          'CREATE INDEX idx_competitive_intelligence_create_order_id ON competitive_intelligence(create_order_id)',
+        ],
       },
       'credit_details': {
         'sql': '''
@@ -7527,7 +8462,9 @@ class ApiDatabaseService {
             FOREIGN KEY (create_order_id) REFERENCES create_order (id) ON DELETE CASCADE
           )
         ''',
-        'indexes': ['CREATE INDEX idx_credit_details_create_order_id ON credit_details(create_order_id)'],
+        'indexes': [
+          'CREATE INDEX idx_credit_details_create_order_id ON credit_details(create_order_id)',
+        ],
       },
       'user_organizations': {
         'sql': '''
@@ -7611,7 +8548,7 @@ class ApiDatabaseService {
   // ===========================================================================
 
   /// Gets the last sync timestamp for a specific table.
-  /// 
+  ///
   /// Returns null if the table has never been synced.
   Future<DateTime?> getLastSyncTime(String tableName) async {
     try {
@@ -7622,57 +8559,63 @@ class ApiDatabaseService {
         whereArgs: [tableName],
         limit: 1,
       );
-      
+
       if (result.isEmpty) return null;
-      
+
       final lastSyncAt = result.first['last_sync_at'] as String?;
       return lastSyncAt != null ? DateTime.parse(lastSyncAt) : null;
     } catch (e) {
       if (kDebugMode) {
-        print('ApiDatabaseService: Error getting last sync time for $tableName: $e');
+        print(
+          'ApiDatabaseService: Error getting last sync time for $tableName: $e',
+        );
       }
       return null;
     }
   }
 
   /// Updates the sync metadata for a table after successful sync.
-  /// 
+  ///
   /// Parameters:
   /// - [tableName] - Name of the synced table
   /// - [recordsCount] - Number of records synced
   /// - [durationMs] - Duration of sync operation in milliseconds
-  Future<void> updateSyncMetadata(String tableName, {int recordsCount = 0, int durationMs = 0}) async {
+  Future<void> updateSyncMetadata(
+    String tableName, {
+    int recordsCount = 0,
+    int durationMs = 0,
+  }) async {
     try {
       final db = await database;
       final now = DateTime.now().toIso8601String();
-      
-      await db.insert(
-        'sync_metadata',
-        {
-          'table_name': tableName,
-          'last_sync_at': now,
-          'records_count': recordsCount,
-          'sync_duration_ms': durationMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-      
+
+      await db.insert('sync_metadata', {
+        'table_name': tableName,
+        'last_sync_at': now,
+        'records_count': recordsCount,
+        'sync_duration_ms': durationMs,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+
       if (kDebugMode) {
-        print('ApiDatabaseService: Updated sync metadata for $tableName (records: $recordsCount, duration: ${durationMs}ms)');
+        print(
+          'ApiDatabaseService: Updated sync metadata for $tableName (records: $recordsCount, duration: ${durationMs}ms)',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
-        print('ApiDatabaseService: Error updating sync metadata for $tableName: $e');
+        print(
+          'ApiDatabaseService: Error updating sync metadata for $tableName: $e',
+        );
       }
     }
   }
 
   /// Checks if a table needs synchronization based on max age.
-  /// 
+  ///
   /// Parameters:
   /// - [tableName] - Name of the table to check
   /// - [maxAge] - Maximum age before re-sync is required
-  /// 
+  ///
   /// Returns: true if sync is needed, false if recent sync exists
   Future<bool> shouldSync(String tableName, Duration maxAge) async {
     final lastSync = await getLastSyncTime(tableName);
@@ -7697,10 +8640,16 @@ class ApiDatabaseService {
   Future<void> clearSyncMetadata(String tableName) async {
     try {
       final db = await database;
-      await db.delete('sync_metadata', where: 'table_name = ?', whereArgs: [tableName]);
+      await db.delete(
+        'sync_metadata',
+        where: 'table_name = ?',
+        whereArgs: [tableName],
+      );
     } catch (e) {
       if (kDebugMode) {
-        print('ApiDatabaseService: Error clearing sync metadata for $tableName: $e');
+        print(
+          'ApiDatabaseService: Error clearing sync metadata for $tableName: $e',
+        );
       }
     }
   }
@@ -7722,7 +8671,11 @@ class ApiDatabaseService {
   Future<void> ensureUserOrganizationsTableExists() async {
     final tableInfo = getTableCreationSql()['user_organizations'];
     if (tableInfo != null) {
-      await ensureTableExists('user_organizations', tableInfo['sql'] as String, tableInfo['indexes'] as List<String>);
+      await ensureTableExists(
+        'user_organizations',
+        tableInfo['sql'] as String,
+        tableInfo['indexes'] as List<String>,
+      );
     }
   }
 
@@ -7737,19 +8690,32 @@ class ApiDatabaseService {
       // Ensure order_details table
       final orderDetailsInfo = getTableCreationSql()['order_details'];
       if (orderDetailsInfo != null) {
-        await ensureTableExists('order_details', orderDetailsInfo['sql'] as String, orderDetailsInfo['indexes'] as List<String>);
+        await ensureTableExists(
+          'order_details',
+          orderDetailsInfo['sql'] as String,
+          orderDetailsInfo['indexes'] as List<String>,
+        );
       }
 
       // Ensure order_detail_products table
-      final orderDetailProductsInfo = getTableCreationSql()['order_detail_products'];
+      final orderDetailProductsInfo =
+          getTableCreationSql()['order_detail_products'];
       if (orderDetailProductsInfo != null) {
-        await ensureTableExists('order_detail_products', orderDetailProductsInfo['sql'] as String, orderDetailProductsInfo['indexes'] as List<String>);
+        await ensureTableExists(
+          'order_detail_products',
+          orderDetailProductsInfo['sql'] as String,
+          orderDetailProductsInfo['indexes'] as List<String>,
+        );
       }
 
       // Ensure order_payments table
       final orderPaymentsInfo = getTableCreationSql()['order_payments'];
       if (orderPaymentsInfo != null) {
-        await ensureTableExists('order_payments', orderPaymentsInfo['sql'] as String, orderPaymentsInfo['indexes'] as List<String>);
+        await ensureTableExists(
+          'order_payments',
+          orderPaymentsInfo['sql'] as String,
+          orderPaymentsInfo['indexes'] as List<String>,
+        );
       }
 
       if (kDebugMode) {
@@ -7757,7 +8723,9 @@ class ApiDatabaseService {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('ApiDatabaseService: Error ensuring order_details tables exist: $e');
+        print(
+          'ApiDatabaseService: Error ensuring order_details tables exist: $e',
+        );
       }
       rethrow;
     }
@@ -7785,16 +8753,18 @@ class ApiDatabaseService {
   // ===========================================================================
 
   /// Save contract types to local cache
-  /// 
+  ///
   /// This method clears existing contract types and saves the new list.
   /// Contract types are retrieved from GetTypeOfContract SOAP API.
-  /// 
+  ///
   /// Parameters:
   /// - [contractTypes] - List of ContractType objects
   Future<void> saveContractTypes(List<ContractType> contractTypes) async {
     try {
       if (kDebugMode) {
-        print('ApiDatabaseService: Saving ${contractTypes.length} contract types');
+        print(
+          'ApiDatabaseService: Saving ${contractTypes.length} contract types',
+        );
       }
 
       final db = await database;
@@ -7807,21 +8777,19 @@ class ApiDatabaseService {
 
         // Insert new contract types
         for (final contractType in contractTypes) {
-          await txn.insert(
-            'contract_types',
-            {
-              'code': contractType.code,
-              'name': contractType.name,
-              'created_at': now,
-              'updated_at': now,
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
+          await txn.insert('contract_types', {
+            'code': contractType.code,
+            'name': contractType.name,
+            'created_at': now,
+            'updated_at': now,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       });
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Successfully saved ${contractTypes.length} contract types');
+        print(
+          'ApiDatabaseService: Successfully saved ${contractTypes.length} contract types',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -7832,7 +8800,7 @@ class ApiDatabaseService {
   }
 
   /// Get all cached contract types
-  /// 
+  ///
   /// Returns a list of ContractType objects.
   /// Returns empty list if no contract types are cached.
   Future<List<ContractType>> getContractTypes() async {
@@ -7848,15 +8816,25 @@ class ApiDatabaseService {
         orderBy: 'name ASC',
       );
 
-      final contractTypes = results.map((row) => ContractType(
-        code: row['code'] as String,
-        name: row['name'] as String,
-        createdAt: row['created_at'] != null ? DateTime.tryParse(row['created_at'] as String) : null,
-        updatedAt: row['updated_at'] != null ? DateTime.tryParse(row['updated_at'] as String) : null,
-      )).toList();
+      final contractTypes = results
+          .map(
+            (row) => ContractType(
+              code: row['code'] as String,
+              name: row['name'] as String,
+              createdAt: row['created_at'] != null
+                  ? DateTime.tryParse(row['created_at'] as String)
+                  : null,
+              updatedAt: row['updated_at'] != null
+                  ? DateTime.tryParse(row['updated_at'] as String)
+                  : null,
+            ),
+          )
+          .toList();
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Retrieved ${contractTypes.length} cached contract types');
+        print(
+          'ApiDatabaseService: Retrieved ${contractTypes.length} cached contract types',
+        );
       }
 
       return contractTypes;
@@ -7869,7 +8847,7 @@ class ApiDatabaseService {
   }
 
   /// Check if contract types are cached
-  /// 
+  ///
   /// Returns true if there are cached contract types, false otherwise.
   Future<bool> hasContractTypes() async {
     try {
@@ -7902,13 +8880,17 @@ class ApiDatabaseService {
   }
 
   /// Save district contracting data to cache
-  /// 
+  ///
   /// Parameters:
   /// - [districts] - List of DistrictContracting objects
-  Future<void> saveDistrictContracting(List<DistrictContracting> districts) async {
+  Future<void> saveDistrictContracting(
+    List<DistrictContracting> districts,
+  ) async {
     try {
       if (kDebugMode) {
-        print('ApiDatabaseService: Saving ${districts.length} district contracting records');
+        print(
+          'ApiDatabaseService: Saving ${districts.length} district contracting records',
+        );
       }
 
       final db = await database;
@@ -7924,27 +8906,27 @@ class ApiDatabaseService {
           updated_at TEXT NOT NULL
         )
       ''');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_district_contracting_code ON district_contracting(code_district)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_district_contracting_code ON district_contracting(code_district)',
+      );
 
       await db.transaction((txn) async {
         await txn.delete('district_contracting');
 
         for (final district in districts) {
-          await txn.insert(
-            'district_contracting',
-            {
-              'code_district': district.codeDistrict,
-              'name_district': district.nameDistrict,
-              'created_at': now,
-              'updated_at': now,
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
+          await txn.insert('district_contracting', {
+            'code_district': district.codeDistrict,
+            'name_district': district.nameDistrict,
+            'created_at': now,
+            'updated_at': now,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       });
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Successfully saved ${districts.length} district contracting records');
+        print(
+          'ApiDatabaseService: Successfully saved ${districts.length} district contracting records',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -7955,7 +8937,7 @@ class ApiDatabaseService {
   }
 
   /// Get all cached district contracting data
-  /// 
+  ///
   /// Returns a list of DistrictContracting objects.
   /// Returns empty list if no districts are cached.
   Future<List<DistrictContracting>> getDistrictContracting() async {
@@ -7971,15 +8953,25 @@ class ApiDatabaseService {
         orderBy: 'name_district ASC',
       );
 
-      final districts = results.map((row) => DistrictContracting(
-        codeDistrict: row['code_district'] as String,
-        nameDistrict: row['name_district'] as String,
-        createdAt: row['created_at'] != null ? DateTime.tryParse(row['created_at'] as String) : null,
-        updatedAt: row['updated_at'] != null ? DateTime.tryParse(row['updated_at'] as String) : null,
-      )).toList();
+      final districts = results
+          .map(
+            (row) => DistrictContracting(
+              codeDistrict: row['code_district'] as String,
+              nameDistrict: row['name_district'] as String,
+              createdAt: row['created_at'] != null
+                  ? DateTime.tryParse(row['created_at'] as String)
+                  : null,
+              updatedAt: row['updated_at'] != null
+                  ? DateTime.tryParse(row['updated_at'] as String)
+                  : null,
+            ),
+          )
+          .toList();
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Retrieved ${districts.length} cached district contracting records');
+        print(
+          'ApiDatabaseService: Retrieved ${districts.length} cached district contracting records',
+        );
       }
 
       return districts;
@@ -7992,12 +8984,14 @@ class ApiDatabaseService {
   }
 
   /// Check if district contracting data is cached
-  /// 
+  ///
   /// Returns true if there are cached districts, false otherwise.
   Future<bool> hasDistrictContracting() async {
     try {
       final db = await database;
-      final result = await db.rawQuery('SELECT COUNT(*) FROM district_contracting');
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) FROM district_contracting',
+      );
       final count = Sqflite.firstIntValue(result) ?? 0;
       return count > 0;
     } catch (e) {
@@ -8029,14 +9023,19 @@ class ApiDatabaseService {
   // =========================================================================
 
   /// Save product images to cache
-  /// 
+  ///
   /// Parameters:
   /// - [images] - List of ProductImage objects to save
   /// - [productCode] - Optional product code to delete existing images for before saving
-  Future<void> saveProductImages(List<ProductImage> images, {String? productCode}) async {
+  Future<void> saveProductImages(
+    List<ProductImage> images, {
+    String? productCode,
+  }) async {
     try {
       if (kDebugMode) {
-        print('ApiDatabaseService: Saving ${images.length} product images${productCode != null ? " for product $productCode" : ""}');
+        print(
+          'ApiDatabaseService: Saving ${images.length} product images${productCode != null ? " for product $productCode" : ""}',
+        );
       }
 
       final db = await database;
@@ -8070,8 +9069,12 @@ class ApiDatabaseService {
           FOREIGN KEY (product_code) REFERENCES products (code) ON DELETE CASCADE
         )
       ''');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_product_code ON product_images(product_code)');
-      await db.execute('CREATE INDEX IF NOT EXISTS idx_product_images_server_id ON product_images(server_id)');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_product_images_product_code ON product_images(product_code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_product_images_server_id ON product_images(server_id)',
+      );
 
       await db.transaction((txn) async {
         // Delete existing images for product if specified
@@ -8095,7 +9098,9 @@ class ApiDatabaseService {
       });
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Successfully saved ${images.length} product images');
+        print(
+          'ApiDatabaseService: Successfully saved ${images.length} product images',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -8106,7 +9111,7 @@ class ApiDatabaseService {
   }
 
   /// Get all product images for a specific product
-  /// 
+  ///
   /// Returns a list of ProductImage objects ordered by is_main DESC, created_at DESC.
   Future<List<ProductImage>> getProductImages(String productCode) async {
     try {
@@ -8132,21 +9137,29 @@ class ApiDatabaseService {
   }
 
   /// Get main product image for a specific product
-  /// 
+  ///
   /// Returns the main ProductImage if found, null otherwise.
   Future<ProductImage?> getMainProductImage(String productCode) async {
     try {
       final db = await database;
-      
+
       if (kDebugMode) {
         // Debug: Check total images and sample product codes
-        final countResult = await db.rawQuery('SELECT COUNT(*) as cnt FROM product_images');
-        final sampleCodes = await db.rawQuery('SELECT DISTINCT product_code FROM product_images LIMIT 5');
-        print('ApiDatabaseService: Total images in DB: ${countResult.first['cnt']}');
-        print('ApiDatabaseService: Sample product_codes in product_images: ${sampleCodes.map((e) => e['product_code']).toList()}');
+        final countResult = await db.rawQuery(
+          'SELECT COUNT(*) as cnt FROM product_images',
+        );
+        final sampleCodes = await db.rawQuery(
+          'SELECT DISTINCT product_code FROM product_images LIMIT 5',
+        );
+        print(
+          'ApiDatabaseService: Total images in DB: ${countResult.first['cnt']}',
+        );
+        print(
+          'ApiDatabaseService: Sample product_codes in product_images: ${sampleCodes.map((e) => e['product_code']).toList()}',
+        );
         print('ApiDatabaseService: Looking for productCode: $productCode');
       }
-      
+
       final results = await db.query(
         'product_images',
         where: 'product_code = ? AND is_main = 1',
@@ -8164,7 +9177,9 @@ class ApiDatabaseService {
           limit: 1,
         );
         if (kDebugMode) {
-          print('ApiDatabaseService: No main image, fallback query returned ${anyResults.length} results');
+          print(
+            'ApiDatabaseService: No main image, fallback query returned ${anyResults.length} results',
+          );
         }
         if (anyResults.isEmpty) return null;
         return ProductImage.fromMap(anyResults.first);
@@ -8180,7 +9195,7 @@ class ApiDatabaseService {
   }
 
   /// Get all cached product images
-  /// 
+  ///
   /// Returns a list of all ProductImage objects in the database.
   Future<List<ProductImage>> getAllProductImages() async {
     try {
@@ -8269,17 +9284,14 @@ class ApiDatabaseService {
   // =========================================================================
 
   /// Get all product codes from the products table
-  /// 
-  /// Returns a list of all product codes for efficient O(1) lookup when 
+  ///
+  /// Returns a list of all product codes for efficient O(1) lookup when
   /// matching API images with local products. This is used during sync
   /// to verify that a product exists before saving its image.
   Future<List<String>> getAllProductCodes() async {
     try {
       final db = await database;
-      final results = await db.query(
-        'products',
-        columns: ['code'],
-      );
+      final results = await db.query('products', columns: ['code']);
 
       final codes = results
           .map((row) => row['code'] as String)
@@ -8300,7 +9312,7 @@ class ApiDatabaseService {
   }
 
   /// Check if a product exists by its code
-  /// 
+  ///
   /// Returns true if a product with the given code exists in the database.
   Future<bool> productExists(String productCode) async {
     if (productCode.isEmpty) return false;
@@ -8324,15 +9336,15 @@ class ApiDatabaseService {
   }
 
   /// Upsert product images with smart matching
-  /// 
+  ///
   /// Updates existing images (by server_id) or inserts new ones.
   /// Only saves images for products that exist in the local database.
   /// Uses batch operations for optimal performance.
-  /// 
+  ///
   /// Parameters:
   /// - [images] - List of ProductImage objects to upsert
   /// - [validProductCodes] - Optional set of valid product codes for filtering
-  /// 
+  ///
   /// Returns the number of images successfully upserted.
   Future<int> upsertProductImages(
     List<ProductImage> images, {
@@ -8347,18 +9359,24 @@ class ApiDatabaseService {
 
       // Filter images to only those with valid product codes if provided
       final imagesToSave = validProductCodes != null
-          ? images.where((img) => validProductCodes.contains(img.productCode)).toList()
+          ? images
+                .where((img) => validProductCodes.contains(img.productCode))
+                .toList()
           : images;
 
       if (imagesToSave.isEmpty) {
         if (kDebugMode) {
-          print('ApiDatabaseService: No valid images to upsert after filtering');
+          print(
+            'ApiDatabaseService: No valid images to upsert after filtering',
+          );
         }
         return 0;
       }
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Upserting ${imagesToSave.length} product images');
+        print(
+          'ApiDatabaseService: Upserting ${imagesToSave.length} product images',
+        );
       }
 
       await db.transaction((txn) async {
@@ -8423,7 +9441,9 @@ class ApiDatabaseService {
       });
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Successfully upserted $upsertedCount product images');
+        print(
+          'ApiDatabaseService: Successfully upserted $upsertedCount product images',
+        );
       }
 
       return upsertedCount;
@@ -8436,7 +9456,7 @@ class ApiDatabaseService {
   }
 
   /// Get product images by multiple product codes efficiently
-  /// 
+  ///
   /// Returns a map of product code to list of ProductImage objects.
   /// Optimized for batch loading when displaying product lists.
   Future<Map<String, List<ProductImage>>> getProductImagesBatch(
@@ -8446,7 +9466,7 @@ class ApiDatabaseService {
 
     try {
       final db = await database;
-      
+
       // Build IN clause for efficiency
       final placeholders = List.filled(productCodes.length, '?').join(',');
       final results = await db.rawQuery(
@@ -8462,7 +9482,9 @@ class ApiDatabaseService {
       }
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Retrieved images for ${grouped.length} products');
+        print(
+          'ApiDatabaseService: Retrieved images for ${grouped.length} products',
+        );
       }
 
       return grouped;
@@ -8475,7 +9497,7 @@ class ApiDatabaseService {
   }
 
   /// Get main product images for multiple product codes efficiently
-  /// 
+  ///
   /// Returns a map of product code to main ProductImage.
   /// Optimized for displaying product thumbnails in lists.
   Future<Map<String, ProductImage>> getMainProductImagesBatch(
@@ -8485,19 +9507,16 @@ class ApiDatabaseService {
 
     try {
       final db = await database;
-      
+
       // Build IN clause
       final placeholders = List.filled(productCodes.length, '?').join(',');
-      
+
       // Get all images for these products, ordered by is_main and created_at
-      final results = await db.rawQuery(
-        '''
+      final results = await db.rawQuery('''
         SELECT * FROM product_images 
         WHERE product_code IN ($placeholders) 
         ORDER BY product_code, is_main DESC, created_at DESC
-        ''',
-        productCodes,
-      );
+        ''', productCodes);
 
       // Group by product_code and take first (main or most recent) for each
       final Map<String, ProductImage> mainImages = {};
@@ -8510,13 +9529,17 @@ class ApiDatabaseService {
       }
 
       if (kDebugMode) {
-        print('ApiDatabaseService: Retrieved main images for ${mainImages.length} products');
+        print(
+          'ApiDatabaseService: Retrieved main images for ${mainImages.length} products',
+        );
       }
 
       return mainImages;
     } catch (e) {
       if (kDebugMode) {
-        print('ApiDatabaseService: Error getting main product images batch: $e');
+        print(
+          'ApiDatabaseService: Error getting main product images batch: $e',
+        );
       }
       return {};
     }

@@ -1,4 +1,3 @@
-
 // =============================
 // presentation/widgets/order_card.dart
 // =============================
@@ -13,13 +12,20 @@ class OrderCard extends StatelessWidget {
   final EdgeInsetsGeometry margin;
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
-  const OrderCard({super.key, required this.order, this.margin = const EdgeInsets.symmetric(horizontal: 16, vertical: 6), this.onTap, this.onDoubleTap});
+  const OrderCard({
+    super.key,
+    required this.order,
+    this.margin = const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    this.onTap,
+    this.onDoubleTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
-    
+    final promoColor = order.promo ? Colors.amber.withOpacity(0.15) : null;
+
     return Hero(
       tag: 'order_${order.numOrder}',
       child: _InkReveal(
@@ -28,11 +34,13 @@ class OrderCard extends StatelessWidget {
         child: Container(
           margin: margin,
           decoration: BoxDecoration(
-            color: cs.surface,
+            color: promoColor ?? cs.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.3),
-              width: 1,
+              color: order.promo
+                  ? Colors.amber.withOpacity(0.4)
+                  : cs.outlineVariant.withOpacity(0.3),
+              width: order.promo ? 1.5 : 1,
             ),
             boxShadow: [
               BoxShadow(
@@ -61,7 +69,10 @@ class OrderCard extends StatelessWidget {
                         children: [
                           Flexible(
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: cs.primaryContainer,
                                 borderRadius: BorderRadius.circular(12),
@@ -69,16 +80,21 @@ class OrderCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.receipt_long_rounded, color: cs.onPrimaryContainer, size: 16),
+                                  Icon(
+                                    Icons.receipt_long_rounded,
+                                    color: cs.onPrimaryContainer,
+                                    size: 16,
+                                  ),
                                   const SizedBox(width: 6),
                                   Flexible(
                                     child: Text(
                                       order.numOrder,
-                                      style: theme.textTheme.labelLarge?.copyWith(
-                                        color: cs.onPrimaryContainer,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.5,
-                                      ),
+                                      style: theme.textTheme.labelLarge
+                                          ?.copyWith(
+                                            color: cs.onPrimaryContainer,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.5,
+                                          ),
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
                                     ),
@@ -173,14 +189,14 @@ class _InfoChip extends StatelessWidget {
   final String label;
   final Color color;
   final bool isBold;
-  
+
   const _InfoChip({
     required this.icon,
     required this.label,
     required this.color,
     this.isBold = false,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -206,43 +222,44 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _InkReveal extends StatefulWidget {
-  final Widget child; final VoidCallback? onTap; final VoidCallback? onDoubleTap;
+  final Widget child;
+  final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
   const _InkReveal({required this.child, this.onTap, this.onDoubleTap});
-  @override State<_InkReveal> createState() => _InkRevealState();
+  @override
+  State<_InkReveal> createState() => _InkRevealState();
 }
-class _InkRevealState extends State<_InkReveal> with SingleTickerProviderStateMixin {
+
+class _InkRevealState extends State<_InkReveal>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ac = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 150),
   );
-  late final Animation<double> _scale = Tween(begin: 1.0, end: 0.97).animate(
-    CurvedAnimation(parent: _ac, curve: Curves.easeInOut),
-  );
-  
+  late final Animation<double> _scale = Tween(
+    begin: 1.0,
+    end: 0.97,
+  ).animate(CurvedAnimation(parent: _ac, curve: Curves.easeInOut));
+
   @override
   void dispose() {
     _ac.dispose();
     super.dispose();
   }
-  
+
   void _tap() async {
     await _ac.forward();
     await _ac.reverse();
     widget.onTap?.call();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _tap,
       onDoubleTap: widget.onDoubleTap,
-      child: ScaleTransition(
-        scale: _scale,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scale, child: widget.child),
     );
   }
 }
-
-

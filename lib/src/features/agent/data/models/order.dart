@@ -15,7 +15,9 @@ class Order {
   final String mainStatus;
   final String? courierName;
   final String? courierCar;
-  final bool server; // true for server-sourced data, false for local unsent orders
+  final bool
+  server; // true for server-sourced data, false for local unsent orders
+  final bool promo; // true if order is promotional
 
   const Order({
     this.id,
@@ -35,13 +37,16 @@ class Order {
     this.courierName,
     this.courierCar,
     this.server = false, // Default to false for local orders
+    this.promo = false, // Default to false for non-promotional orders
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
       id: json['id'] as int?,
       numOrder: json['numOrder']?.toString() ?? '',
-      dateOrder: DateTime.parse(json['dateOrder']?.toString() ?? DateTime.now().toIso8601String()),
+      dateOrder: DateTime.parse(
+        json['dateOrder']?.toString() ?? DateTime.now().toIso8601String(),
+      ),
       captionOrder: json['captionOrder']?.toString() ?? '',
       typePriceCode: json['typePriceCode']?.toString() ?? '',
       status: (json['status'] as num?)?.toInt() ?? 0,
@@ -56,6 +61,7 @@ class Order {
       courierName: json['courierName']?.toString(),
       courierCar: json['courierCar']?.toString(),
       server: json['server'] as bool? ?? false,
+      promo: json['promo'] as bool? ?? false,
     );
   }
 
@@ -78,6 +84,7 @@ class Order {
       'courierName': courierName,
       'courierCar': courierCar,
       'server': server,
+      'promo': promo,
     };
   }
 
@@ -99,6 +106,7 @@ class Order {
     String? courierName,
     String? courierCar,
     bool? server,
+    bool? promo,
   }) {
     return Order(
       id: id ?? this.id,
@@ -118,6 +126,7 @@ class Order {
       courierName: courierName ?? this.courierName,
       courierCar: courierCar ?? this.courierCar,
       server: server ?? this.server,
+      promo: promo ?? this.promo,
     );
   }
 
@@ -141,7 +150,8 @@ class Order {
         other.mainStatus == mainStatus &&
         other.courierName == courierName &&
         other.courierCar == courierCar &&
-        other.server == server;
+        other.server == server &&
+        other.promo == promo;
   }
 
   @override
@@ -164,11 +174,12 @@ class Order {
       courierName,
       courierCar,
       server,
+      promo,
     );
   }
 
   @override
   String toString() {
-    return 'Order(id: $id, numOrder: $numOrder, dateOrder: $dateOrder, captionOrder: $captionOrder, typePriceCode: $typePriceCode, status: $status, commentSupervisor: $commentSupervisor, commentForwarder: $commentForwarder, commentAgent: $commentAgent, total: $total, clientCode: $clientCode, clientName: $clientName, codeOrg: $codeOrg, mainStatus: $mainStatus, courierName: $courierName, courierCar: $courierCar, server: $server)';
+    return 'Order(id: $id, numOrder: $numOrder, dateOrder: $dateOrder, captionOrder: $captionOrder, typePriceCode: $typePriceCode, status: $status, commentSupervisor: $commentSupervisor, commentForwarder: $commentForwarder, commentAgent: $commentAgent, total: $total, clientCode: $clientCode, clientName: $clientName, codeOrg: $codeOrg, mainStatus: $mainStatus, courierName: $courierName, courierCar: $courierCar, server: $server, promo: $promo)';
   }
 }

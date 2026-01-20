@@ -5093,4 +5093,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timeLimitUpdated => 'Access period updated';
+
+  @override
+  String get promoOrder => 'Promo Order';
 }

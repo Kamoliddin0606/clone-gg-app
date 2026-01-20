@@ -3056,5 +3056,6 @@
   "verifyingAccess": "Verifying access...",
   "accessVerified": "Access verified successfully",
   "verificationFailed": "Verification failed",
-  "timeLimitUpdated": "Access period updated"
+  "timeLimitUpdated": "Access period updated",
+  "promoOrder": "Promo Order"
 }

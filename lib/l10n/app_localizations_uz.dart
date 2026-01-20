@@ -5093,4 +5093,7 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get timeLimitUpdated => 'Kirish muddati yangilandi';
+
+  @override
+  String get promoOrder => 'Promo buyurtma';
 }

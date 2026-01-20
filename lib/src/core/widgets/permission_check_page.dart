@@ -427,8 +427,9 @@ class _ComprehensivePermissionDialogState
         print('Permission request for ${permission.type}: $status');
       }
 
-      if (status == AppPermissionStatus.granted) {
-        // Permission granted, move to next
+      if (status == AppPermissionStatus.granted ||
+          status == AppPermissionStatus.unknown) {
+        // Permission granted or not supported on this device, move to next
         _moveToNextPermission();
       } else if (status == AppPermissionStatus.permanentlyDenied) {
         // Show settings dialog

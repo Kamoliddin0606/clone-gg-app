@@ -3001,5 +3001,6 @@
   "verifyingAccess": "Проверка доступа...",
   "accessVerified": "Доступ подтвержден",
   "verificationFailed": "Проверка не удалась",
-  "timeLimitUpdated": "Срок доступа обновлен"
+  "timeLimitUpdated": "Срок доступа обновлен",
+  "promoOrder": "Промо заказ"
 }

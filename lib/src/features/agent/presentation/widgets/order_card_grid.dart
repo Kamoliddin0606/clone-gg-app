@@ -18,12 +18,13 @@ class OrderCardGrid extends StatelessWidget {
     required this.order,
     this.margin = const EdgeInsets.all(8),
     this.onTap,
-    this.onDoubleTap
+    this.onDoubleTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final promoColor = order.promo ? Colors.amber.withOpacity(0.15) : null;
 
     return _InkReveal(
       onTap: onTap,
@@ -31,7 +32,12 @@ class OrderCardGrid extends StatelessWidget {
       child: Card(
         margin: margin,
         elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: order.promo
+              ? BorderSide(color: Colors.amber.withOpacity(0.4), width: 1.5)
+              : BorderSide.none,
+        ),
         clipBehavior: Clip.antiAlias,
         child: Ink(
           decoration: BoxDecoration(
@@ -39,8 +45,8 @@ class OrderCardGrid extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                cs.surface,
-                cs.surfaceContainerHigh.withOpacity(0.8),
+                promoColor ?? cs.surface,
+                promoColor ?? cs.surfaceContainerHigh.withOpacity(0.8),
               ],
             ),
           ),
@@ -73,10 +79,11 @@ class OrderCardGrid extends StatelessWidget {
                           '№ ${order.numOrder}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: cs.primary,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: cs.primary,
+                              ),
                         ),
                       ),
                     ],
@@ -89,10 +96,11 @@ class OrderCardGrid extends StatelessWidget {
                       final textPainter = TextPainter(
                         text: TextSpan(
                           text: order.clientName,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: cs.onSurface,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: cs.onSurface,
+                              ),
                         ),
                         maxLines: 2,
                         textDirection: TextDirection.ltr,
@@ -105,10 +113,11 @@ class OrderCardGrid extends StatelessWidget {
                           order.clientName,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: cs.onSurface,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: cs.onSurface,
+                              ),
                         ),
                       );
                     },
@@ -188,14 +197,16 @@ class _InkReveal extends StatefulWidget {
   State<_InkReveal> createState() => _InkRevealState();
 }
 
-class _InkRevealState extends State<_InkReveal> with SingleTickerProviderStateMixin {
+class _InkRevealState extends State<_InkReveal>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ac = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 120)
+    duration: const Duration(milliseconds: 120),
   );
-  late final Animation<double> _scale = Tween(begin: 1.0, end: 0.96).animate(
-    CurvedAnimation(parent: _ac, curve: Curves.easeOut)
-  );
+  late final Animation<double> _scale = Tween(
+    begin: 1.0,
+    end: 0.96,
+  ).animate(CurvedAnimation(parent: _ac, curve: Curves.easeOut));
 
   @override
   void dispose() {
@@ -215,10 +226,7 @@ class _InkRevealState extends State<_InkReveal> with SingleTickerProviderStateMi
       behavior: HitTestBehavior.opaque,
       onTap: _tap,
       onDoubleTap: widget.onDoubleTap,
-      child: ScaleTransition(
-        scale: _scale,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scale, child: widget.child),
     );
   }
 }

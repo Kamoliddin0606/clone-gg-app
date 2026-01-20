@@ -9684,6 +9684,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Access period updated'**
   String get timeLimitUpdated;
+
+  /// No description provided for @promoOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Promo Order'**
+  String get promoOrder;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

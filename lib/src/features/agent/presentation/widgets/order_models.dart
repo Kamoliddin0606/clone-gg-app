@@ -1,5 +1,3 @@
-
-
 class OrderItem {
   final String productName;
   final String article;
@@ -8,7 +6,7 @@ class OrderItem {
   final String priceTypeCode;
   final String? priceTypeName;
   final double? lineTotal;
-  
+
   const OrderItem({
     required this.productName,
     required this.article,
@@ -18,17 +16,17 @@ class OrderItem {
     this.priceTypeName,
     this.lineTotal,
   });
-  
+
   /// Calculated total: price × quantity
   double get calculatedTotal => quantity * price;
-  
+
   /// Actual sum from server or calculated
   double get sum => lineTotal ?? calculatedTotal;
-  
+
   /// Check if calculated total matches the line total from server
-  bool get hasTotalMismatch => 
+  bool get hasTotalMismatch =>
       lineTotal != null && (lineTotal! - calculatedTotal).abs() > 0.01;
-  
+
   /// Display name for price type with fallback logic:
   /// 1. priceTypeName if available
   /// 2. "Bonus" if price is 0
@@ -42,11 +40,10 @@ class OrderItem {
     }
     return priceTypeCode.isNotEmpty ? priceTypeCode : '-';
   }
-  
+
   /// Legacy getter for backward compatibility
   String get priceType => priceTypeCode;
 }
-
 
 class OrderModel {
   final int? id;
@@ -69,6 +66,7 @@ class OrderModel {
   final String? courierCar;
   final String? courierPlate;
   final List<OrderItem> items;
+  final bool promo;
   const OrderModel({
     required this.id,
     required this.numOrder,
@@ -90,6 +88,7 @@ class OrderModel {
     this.courierCar,
     this.courierPlate,
     this.items = const [],
+    this.promo = false,
   });
 
   OrderModel copyWith({
@@ -113,6 +112,7 @@ class OrderModel {
     String? courierCar,
     String? courierPlate,
     List<OrderItem>? items,
+    bool? promo,
   }) {
     return OrderModel(
       id: id ?? this.id,
@@ -135,7 +135,7 @@ class OrderModel {
       courierCar: courierCar ?? this.courierCar,
       courierPlate: courierPlate ?? this.courierPlate,
       items: items ?? this.items,
+      promo: promo ?? this.promo,
     );
   }
 }
-

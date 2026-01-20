@@ -2922,5 +2922,6 @@
   "verifyingAccess": "Kirish tekshirilmoqda...",
   "accessVerified": "Kirish tasdiqlandi",
   "verificationFailed": "Tekshirish muvaffaqiyatsiz",
-  "timeLimitUpdated": "Kirish muddati yangilandi"
+  "timeLimitUpdated": "Kirish muddati yangilandi",
+  "promoOrder": "Promo buyurtma"
 }

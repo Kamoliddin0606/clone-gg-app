@@ -628,10 +628,18 @@ class RestApiService {
           if (data is List) {
             pageResults = List<Map<String, dynamic>>.from(data);
           }
-          hasMore = raw['next'] != null;
+          final nextValue = raw['next'];
+          hasMore = nextValue != null &&
+                    nextValue.toString().trim().isNotEmpty &&
+                    nextValue.toString() != 'null';
         } else if (raw is List) {
           pageResults = List<Map<String, dynamic>>.from(raw);
           hasMore = false;
+        }
+
+        if (pageResults.isEmpty) {
+          hasMore = false;
+          break;
         }
 
         for (final item in pageResults) {
@@ -642,7 +650,6 @@ class RestApiService {
           }
         }
 
-        if (pageResults.isEmpty) hasMore = false;
         page++;
       }
 
@@ -669,6 +676,7 @@ class RestApiService {
   /// @return Future<List<Map<String, dynamic>>> All product images
   Future<List<Map<String, dynamic>>> getAllProductImages({
     required String authToken,
+    String? projectCode,
     void Function(int fetched, int? total)? onProgress,
   }) async {
     const String baseUrl = 'http://178.218.200.120:1596';
@@ -691,7 +699,10 @@ class RestApiService {
               'Authorization': 'Bearer $authToken',
             },
           ),
-          queryParameters: {'page': page},
+          queryParameters: {
+            'page': page,
+            if (projectCode != null && projectCode.isNotEmpty) 'project': projectCode,
+          },
         );
 
         final raw = response.data;
@@ -703,18 +714,22 @@ class RestApiService {
           if (data is List) {
             pageResults = List<Map<String, dynamic>>.from(data);
           }
-          hasMore = raw['next'] != null;
+          final nextValue = raw['next'];
+          hasMore = nextValue != null && 
+                    nextValue.toString().trim().isNotEmpty &&
+                    nextValue.toString() != 'null';
         } else if (raw is List) {
           pageResults = List<Map<String, dynamic>>.from(raw);
           hasMore = false;
         }
 
-        allResults.addAll(pageResults);
-        onProgress?.call(allResults.length, totalCount);
-
         if (pageResults.isEmpty) {
           hasMore = false;
+          break;
         }
+
+        allResults.addAll(pageResults);
+        onProgress?.call(allResults.length, totalCount);
 
         page++;
       }

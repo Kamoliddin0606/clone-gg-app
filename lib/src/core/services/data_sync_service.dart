@@ -2385,19 +2385,17 @@ class DataSyncService {
         print('DataSyncService: Found ${productCodeSet.length} local product codes for matching');
       }
 
-      // Step 1.5: Fetch nomenklatura ID to code_1c mapping
-      // This is needed because API returns nomenklatura as integer ID, not code_1c
-      final nomenklaturaIdToCode = await restApiService.getNomenklaturaIdToCodeMapping(
-        authToken: token,
-      );
+      // Step 2: Fetch all product images from server (filtered by project)
+      // Note: API now returns code_1c directly, no need for ID mapping
+      final codeProject = _prefs.getCodeProject();
       
       if (kDebugMode) {
-        print('DataSyncService: Got ${nomenklaturaIdToCode.length} nomenklatura ID->code mappings');
+        print('DataSyncService: Fetching images for project: ${codeProject ?? "all"}');
       }
-
-      // Step 2: Fetch all product images from server
+      
       final rawImages = await restApiService.getAllProductImages(
         authToken: token,
+        projectCode: codeProject,
         onProgress: (fetched, total) {
           if (kDebugMode) {
             print('DataSyncService: Product images progress: $fetched / ${total ?? "?"}');
@@ -2430,37 +2428,13 @@ class DataSyncService {
 
       for (final raw in rawImages) {
         // Extract product code from API response
-        // Priority: 
-        // 1. nomenklatura_code (direct code_1c field)
-        // 2. code_1c (alternative field name)
-        // 3. nomenklatura as integer ID -> lookup in mapping
-        // 4. nomenklatura as string (fallback)
+        // API returns code_1c directly in the response
         String? code1c;
         
-        if (raw['nomenklatura_code'] != null) {
-          // Direct code_1c field from API
-          code1c = raw['nomenklatura_code'].toString().trim();
-        } else if (raw['code_1c'] != null) {
-          // Alternative field name
+        if (raw['code_1c'] != null) {
           code1c = raw['code_1c'].toString().trim();
-        } else if (raw['nomenklatura'] != null) {
-          final nomenklatura = raw['nomenklatura'];
-          if (nomenklatura is int) {
-            // Numeric ID - lookup code_1c from mapping
-            code1c = nomenklaturaIdToCode[nomenklatura];
-            if (kDebugMode && code1c != null) {
-              print('DataSyncService: Mapped nomenklatura ID $nomenklatura -> code_1c: $code1c');
-            }
-          } else if (nomenklatura is String) {
-            // Try to parse as int first for ID lookup
-            final parsedId = int.tryParse(nomenklatura);
-            if (parsedId != null && nomenklaturaIdToCode.containsKey(parsedId)) {
-              code1c = nomenklaturaIdToCode[parsedId];
-            } else {
-              // Use as-is if it's already a code
-              code1c = nomenklatura.trim();
-            }
-          }
+        } else if (raw['nomenklatura_code'] != null) {
+          code1c = raw['nomenklatura_code'].toString().trim();
         }
 
         // Skip if no valid code found

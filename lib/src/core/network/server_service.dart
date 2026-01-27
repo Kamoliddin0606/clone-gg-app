@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../services/shared_preferences_service.dart';
 
 /// Server environment enumeration for different business units.
-enum ServerEnv { Evyap, Garnier, PPD, Avon, AvonTest }
+enum ServerEnv { Evyap, Garnier, PPD, Avon, AvonTest, ProWash }
 
 /// Configuration class holding URL endpoints for a server environment.
 /// Contains primary (domain) URL and fallback IP-based URLs.
@@ -69,6 +69,7 @@ extension ServerEnvX on ServerEnv {
     ServerEnv.PPD      => 'PPD',
     ServerEnv.Avon     => 'Avon',
     ServerEnv.AvonTest => 'Avon Test',
+    ServerEnv.ProWash  => 'ProWash',
   };
 
   /// Service path for each server environment
@@ -78,6 +79,7 @@ extension ServerEnvX on ServerEnv {
     ServerEnv.PPD      => '/UT_Professionnel/UT_Professionnel.1cws',
     ServerEnv.Avon     => '/AVON_UT/AVON_UT.1cws',
     ServerEnv.AvonTest => '/TEST_UT/TEST_UT.1cws',
+    ServerEnv.ProWash  => '/PROWASH_UT/PROWASH_UT.1cws',
   };
 
   /// Returns URL configuration with primary and fallback URLs

@@ -516,6 +516,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           ServerEnv.PPD    => Color.fromRGBO(0, 0, 0, 1.0),
           ServerEnv.Avon     => Color.fromRGBO(218, 0, 73, 1.0),
           ServerEnv.AvonTest     => Color.fromRGBO(80, 209, 248, 1.0),
+          ServerEnv.ProWash  => Color.fromRGBO(0, 150, 136, 1.0),
         };
         return ActionChip(
           label: Text(env.label),

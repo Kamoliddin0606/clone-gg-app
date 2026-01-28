@@ -468,12 +468,36 @@ class RestApiService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = response.data as Map<String, dynamic>? ?? <String, dynamic>{};
+        final responseData = response.data;
+        final List<String> urls = [];
 
-        final urls = List<String>.from(data['urls'] ?? []);
+        // Handle List response format (server returns list of uploaded images)
+        if (responseData is List) {
+          for (final item in responseData) {
+            if (item is Map<String, dynamic>) {
+              // Extract image URL from each uploaded image object
+              final imageUrl = item['image_url'] ?? item['image'] ?? item['url'];
+              if (imageUrl != null && imageUrl.toString().isNotEmpty) {
+                urls.add(imageUrl.toString());
+              }
+            }
+          }
+        }
+        // Handle Map response format (legacy format with 'urls' key)
+        else if (responseData is Map<String, dynamic>) {
+          final urlsList = responseData['urls'] ?? responseData['images'] ?? [];
+          if (urlsList is List) {
+            for (final url in urlsList) {
+              if (url != null && url.toString().isNotEmpty) {
+                urls.add(url.toString());
+              }
+            }
+          }
+        }
 
         if (kDebugMode) {
           print('RestApiService: Successfully uploaded ${images.length} images for client $clientCode. Received ${urls.length} URLs');
+          print('RestApiService: Response type: ${responseData.runtimeType}');
         }
 
         return urls;

@@ -1697,6 +1697,7 @@ class DataSyncService {
           {
             'name': entry.key,
             'car': entry.value,
+            'created_at': now,
             'updated_at': now,
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
@@ -1709,6 +1710,7 @@ class DataSyncService {
           'courier_cars',
           {
             'car': car,
+            'created_at': now,
             'updated_at': now,
           },
           conflictAlgorithm: ConflictAlgorithm.replace,

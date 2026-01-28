@@ -39,7 +39,7 @@ class MapSettings extends Equatable {
   final String? apiKey;
 
   const MapSettings({
-    this.provider = MapProvider.google,
+    this.provider = MapProvider.openStreetMap,
     this.mapType = MapType.normal,
     this.showTraffic = true,
     this.showUserLocation = true,
@@ -63,7 +63,7 @@ class MapSettings extends Equatable {
   /// Default settings for trading points view
   factory MapSettings.defaultTradingPoints() {
     return const MapSettings(
-      provider: MapProvider.google,
+      provider: MapProvider.openStreetMap,
       mapType: MapType.normal,
       showTraffic: true,
       showUserLocation: true,
@@ -76,7 +76,7 @@ class MapSettings extends Equatable {
   /// Default settings for route planning view
   factory MapSettings.defaultRoutePlanning() {
     return const MapSettings(
-      provider: MapProvider.google,
+      provider: MapProvider.openStreetMap,
       mapType: MapType.normal,
       showTraffic: true,
       showUserLocation: true,
@@ -89,7 +89,7 @@ class MapSettings extends Equatable {
   /// Default settings for single point view
   factory MapSettings.defaultSinglePoint() {
     return const MapSettings(
-      provider: MapProvider.google,
+      provider: MapProvider.openStreetMap,
       mapType: MapType.normal,
       showTraffic: false,
       showUserLocation: true,
@@ -102,7 +102,7 @@ class MapSettings extends Equatable {
   /// Settings optimized for performance with many markers
   factory MapSettings.performanceOptimized() {
     return const MapSettings(
-      provider: MapProvider.google,
+      provider: MapProvider.openStreetMap,
       mapType: MapType.normal,
       showTraffic: false,
       showUserLocation: false,
@@ -195,7 +195,7 @@ class MapSettings extends Equatable {
     return MapSettings(
       provider: MapProvider.values.firstWhere(
         (e) => e.toString() == map['provider'],
-        orElse: () => MapProvider.google,
+        orElse: () => MapProvider.openStreetMap,
       ),
       mapType: MapType.values.firstWhere(
         (e) => e.toString() == map['mapType'],

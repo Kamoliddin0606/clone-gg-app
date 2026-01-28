@@ -262,7 +262,7 @@ class _TradingPointsPageState extends State<TradingPointsPage>
   bool _showVisitTodayOnly = false; // Visit today filter state
 
   // Map provider settings
-  MapProvider _defaultMapProvider = MapProvider.google; // Default map provider
+  MapProvider _defaultMapProvider = MapProvider.openStreetMap; // Default map provider (OSM when no user selection)
 
   // Map rotation tracking removed - markers are naturally upright in all map providers
 
@@ -602,9 +602,14 @@ class _TradingPointsPageState extends State<TradingPointsPage>
   }
 
   @override
+  void deactivate() {
+    _saveState(); // Save state here where context is still valid
+    super.deactivate();
+  }
+
+  @override
   void dispose() {
     _pulseController.dispose();
-    _saveState();
     _searchController.dispose();
     _locationCheckTimer?.cancel();
     _locationService?.dispose();

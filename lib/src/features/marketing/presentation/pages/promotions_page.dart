@@ -285,7 +285,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
           const Icon(Icons.error_outline, size: 64, color: Colors.red),
           const SizedBox(height: 16),
           Text(
-            _errorMessage ?? l10n.errorOccurred,
+            _errorMessage ?? l10n.unknownError,
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16),
           ),

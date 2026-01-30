@@ -587,6 +587,15 @@
       }
     }
   },
+  "balanceServerDataUpdatedAt": "Balance status as of: {date}",
+  "@balanceServerDataUpdatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceDataMayBeOutdated": "Balance data may be outdated",
   "noBalanceData": "No balance data found",
   "balanceLoadError": "Error loading balance",
   "balanceServiceNotAvailable": "Balance service not available",

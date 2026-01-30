@@ -1572,6 +1572,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String balanceServerDataUpdatedAt(String date) {
+    return 'Balance status as of: $date';
+  }
+
+  @override
+  String get balanceDataMayBeOutdated => 'Balance data may be outdated';
+
+  @override
   String get noBalanceData => 'Balance data not found';
 
   @override

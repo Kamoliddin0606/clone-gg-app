@@ -587,6 +587,15 @@
       }
     }
   },
+  "balanceServerDataUpdatedAt": "Состояние баланса на: {date}",
+  "@balanceServerDataUpdatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceDataMayBeOutdated": "Данные баланса могут быть устаревшими",
   "noBalanceData": "Данные баланса не найдены",
   "balanceLoadError": "Ошибка загрузки баланса",
   "balanceServiceNotAvailable": "Сервис баланса недоступен",

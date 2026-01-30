@@ -587,6 +587,15 @@
       }
     }
   },
+  "balanceServerDataUpdatedAt": "Balans holati sana: {date}",
+  "@balanceServerDataUpdatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceDataMayBeOutdated": "Balans ma'lumotlari eskirgan bo'lishi mumkin",
   "noBalanceData": "Balans ma'lumotlari topilmadi",
   "balanceLoadError": "Balansni yuklashda xatolik",
   "balanceServiceNotAvailable": "Balans xizmati mavjud emas",

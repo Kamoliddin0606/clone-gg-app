@@ -332,9 +332,9 @@ class _ClientBalanceContent extends StatelessWidget {
 
     String statusText;
     if (isDebtor) {
-      statusText = l10n?.clientIsDebtor(uzsFormat.format(balance.absoluteBalance)) ?? 'Mijoz qarzdor';
+      statusText = '${l10n?.debtLabelChart ?? "Qarzdorlik"}:';
     } else if (hasOverpayment) {
-      statusText = l10n?.clientHasOverpayment(uzsFormat.format(balance.absoluteBalance)) ?? 'Ortiqcha to\'lov';
+      statusText = '${l10n?.overpayment ?? "Ortiqcha to\'lov"}:';
     } else {
       statusText = l10n?.balanceIsZero ?? 'Balans nolda';
     }
@@ -345,21 +345,27 @@ class _ClientBalanceContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Yangilash vaqti
+          // Local update timestamp (when app fetched data)
           Row(
             children: [
               Icon(Icons.update, size: 14, color: cs.outline),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  '${l10n?.balanceUpdated ?? "Yangilangan"}: ${_formatDateTime(balance.lastUpdated)}',
+                  l10n?.updatedLabel(_formatDateTime(balance.lastUpdated)) ?? 'Yangilangan: ${_formatDateTime(balance.lastUpdated)}',
                   style: TextStyle(fontSize: 11, color: cs.outline),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
+          // Server-side data update timestamp (when accounting system updated)
+          if (balance.serverDataUpdatedAt != null) ...[
+            const SizedBox(height: 4),
+            _buildServerDataTimestamp(balance, cs, l10n),
+          ],
           const SizedBox(height: 8),
+
           // Balans holati va summa
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -378,7 +384,7 @@ class _ClientBalanceContent extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${isDebtor ? '-' : hasOverpayment ? '+' : ''}${_formatCurrency(balance.absoluteBalance)} so\'m',
+                      '${isDebtor ? '-' : hasOverpayment ? '+' : ''}${uzsFormat.format(balance.absoluteBalance)}',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -403,13 +409,13 @@ class _ClientBalanceContent extends StatelessWidget {
                 if (balance.unpaidOrdersCount > 0)
                   _buildInfoChip(
                     icon: Icons.pending_outlined,
-                    label: '${balance.unpaidOrdersCount} ${l10n?.unpaidOrders ?? "to\'lanmagan"}',
+                    label: l10n?.unpaidOrders(balance.unpaidOrdersCount) ?? '${balance.unpaidOrdersCount} to\'lanmagan',
                     color: Colors.orange,
                   ),
                 if (balance.overdueOrdersCount > 0)
                   _buildInfoChip(
                     icon: Icons.warning_amber_rounded,
-                    label: '${balance.overdueOrdersCount} ${l10n?.overdueOrders ?? "muddati o\'tgan"}',
+                    label: l10n?.overdueOrders(balance.overdueOrdersCount) ?? '${balance.overdueOrdersCount} muddati o\'tgan',
                     color: Colors.red,
                   ),
               ],
@@ -419,6 +425,53 @@ class _ClientBalanceContent extends StatelessWidget {
       ),
     );
   }
+
+  /// Server-side data update timestamp with warning indicator
+  /// Shows when accounting system last updated the balance data
+  Widget _buildServerDataTimestamp(
+    balance,
+    ColorScheme cs,
+    AppLocalizations? l10n,
+  ) {
+    final serverUpdatedAt = balance.serverDataUpdatedAt!;
+    final daysSinceUpdate = DateTime.now().difference(serverUpdatedAt).inDays;
+    // Warning if data is older than 7 days
+    final isOutdated = daysSinceUpdate > 7;
+    
+    return Row(
+      children: [
+        Icon(
+          isOutdated ? Icons.warning_amber_rounded : Icons.check_circle_outline,
+          size: 14,
+          color: isOutdated ? Colors.orange : Colors.green,
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            'Serverda: ${_formatDateTime(serverUpdatedAt)}',
+            style: TextStyle(
+              fontSize: 11,
+              color: isOutdated ? Colors.orange : Colors.green,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (isOutdated)
+          Tooltip(
+            message: l10n?.balanceDataMayBeOutdated ?? 
+                "Balans ma'lumotlari eskirgan bo'lishi mumkin",
+            child: Icon(
+              Icons.info_outline,
+              size: 14,
+              color: Colors.orange,
+            ),
+          ),
+      ],
+    );
+  }
+
+
 
   /// Info chip
   Widget _buildInfoChip({
@@ -541,9 +594,9 @@ class _ClientBalanceContent extends StatelessWidget {
         ),
         content: Text(
           isDebtor
-              ? '${l10n?.clientIsDebtor ?? "Mijoz qarzdor"}. ${l10n?.totalDebt ?? "Jami qarzdorlik"}: ${_formatCurrency(balance.absoluteBalance)} so\'m'
+              ? l10n?.clientIsDebtor(_formatCurrency(balance.absoluteBalance)) ?? 'Mijoz qarzdor. Jami qarzdorlik: ${_formatCurrency(balance.absoluteBalance)} so\'m'
               : balance.hasOverpayment
-                  ? '${l10n?.clientHasOverpayment ?? "Ortiqcha to\'lov"}. ${_formatCurrency(balance.absoluteBalance)} so\'m'
+                  ? l10n?.clientHasOverpayment(_formatCurrency(balance.absoluteBalance)) ?? 'Ortiqcha to\'lov. ${_formatCurrency(balance.absoluteBalance)} so\'m'
                   : l10n?.balanceIsZero ?? 'Mijoz balansi nolda.',
         ),
         actions: [

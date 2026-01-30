@@ -155,9 +155,9 @@ class _ClientBalanceDetailsPageState extends State<ClientBalanceDetailsPage>
     
     String statusText;
     if (isDebtor) {
-      statusText = l10n?.clientIsDebtor(formattedAmount) ?? 'Client is debtor';
+      statusText = '${l10n?.debtLabelChart ?? "Qarzdorlik"}:';
     } else if (hasOverpayment) {
-      statusText = l10n?.clientHasOverpayment(formattedAmount) ?? 'Overpayment available';
+      statusText = '${l10n?.overpayment ?? "Ortiqcha to\'lov"}:';
     } else {
       statusText = l10n?.balanceIsZero ?? 'Balance is zero';
     }
@@ -202,7 +202,7 @@ class _ClientBalanceDetailsPageState extends State<ClientBalanceDetailsPage>
 
             // Summa
             Text(
-              '${isDebtor ? '-' : hasOverpayment ? '+' : ''}${_formatCurrency(balance.absoluteBalance)} so\'m',
+              '${isDebtor ? '-' : hasOverpayment ? '+' : ''}${uzsFormat.format(balance.absoluteBalance)}',
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: balanceColor,
                 fontWeight: FontWeight.bold,
@@ -211,18 +211,46 @@ class _ClientBalanceDetailsPageState extends State<ClientBalanceDetailsPage>
 
             const SizedBox(height: 16),
 
-            // Yangilash vaqti
+            // Yangilash vaqti - local update first, then server update
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.update, size: 16, color: cs.outline),
                 const SizedBox(width: 4),
                 Text(
-                  l10n?.updatedAt(_formatDate(balance.lastUpdated), DateFormat.Hm().format(balance.lastUpdated)) ?? 'Updated: ${_formatDate(balance.lastUpdated)} ${DateFormat.Hm().format(balance.lastUpdated)}',
+                  l10n?.updatedLabel('${_formatDate(balance.lastUpdated)} ${DateFormat.Hm().format(balance.lastUpdated)}') ?? 'Yangilangan: ${_formatDate(balance.lastUpdated)} ${DateFormat.Hm().format(balance.lastUpdated)}',
                   style: TextStyle(fontSize: 12, color: cs.outline),
                 ),
               ],
             ),
+            if (balance.serverDataUpdatedAt != null) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    DateTime.now().difference(balance.serverDataUpdatedAt!).inDays > 7 
+                        ? Icons.warning_amber_rounded 
+                        : Icons.check_circle_outline,
+                    size: 14,
+                    color: DateTime.now().difference(balance.serverDataUpdatedAt!).inDays > 7 
+                        ? Colors.orange 
+                        : Colors.green,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Serverda: ${_formatDate(balance.serverDataUpdatedAt)} ${DateFormat.Hm().format(balance.serverDataUpdatedAt!)}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: DateTime.now().difference(balance.serverDataUpdatedAt!).inDays > 7 
+                          ? Colors.orange 
+                          : Colors.green,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

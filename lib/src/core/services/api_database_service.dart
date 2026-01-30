@@ -54,7 +54,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 33, // Incremented to version 33 for promo column in orders table
+      version: 34, // Incremented to version 34 for server_data_updated_at column in client_balances table
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -1417,6 +1417,29 @@ class ApiDatabaseService {
         );
       }
     }
+
+    // =========================================================================
+    // Version 34: Add server_data_updated_at to client_balances table
+    // Stores when accounting system last updated balance data (separate from local lastUpdated)
+    // =========================================================================
+    if (oldVersion < 34) {
+      final columns = await db.rawQuery(
+        "PRAGMA table_info(client_balances)",
+      );
+      final hasServerDataUpdatedAt = columns.any(
+        (col) => col['name'] == 'server_data_updated_at',
+      );
+      if (!hasServerDataUpdatedAt) {
+        await db.execute(
+          'ALTER TABLE client_balances ADD COLUMN server_data_updated_at TEXT',
+        );
+        if (kDebugMode) {
+          print(
+            'ApiDatabaseService: Added server_data_updated_at column to client_balances table (version 34)',
+          );
+        }
+      }
+    }
   }
 
   Future<void> _createTables(Database db) async {
@@ -2212,11 +2235,13 @@ class ApiDatabaseService {
         balance REAL NOT NULL DEFAULT 0.0,
         project_name TEXT,
         last_updated TEXT NOT NULL,
+        server_data_updated_at TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE
       )
     ''');
+
 
     // Shartnomalar bo'yicha balans jadvali - clients table bilan bog'langan
     await db.execute('''

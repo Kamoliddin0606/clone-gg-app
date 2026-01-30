@@ -257,6 +257,23 @@ class ClientBalanceService {
       final balanceStr = returnElement.findAllElements('m:balance').firstOrNull?.innerText ?? '0';
       final balance = double.tryParse(balanceStr) ?? 0.0;
 
+      // Parse server-side data update timestamp (when accounting system updated)
+      // This is SEPARATE from lastUpdated which is local fetch time
+      DateTime? serverDataUpdatedAt;
+      final updatedDateTimeStr = returnElement.findAllElements('m:updatedDateTime').firstOrNull?.innerText;
+      if (updatedDateTimeStr != null && updatedDateTimeStr.isNotEmpty) {
+        try {
+          serverDataUpdatedAt = DateTime.parse(updatedDateTimeStr);
+          if (kDebugMode) {
+            print('ClientBalanceService: Parsed serverDataUpdatedAt: $serverDataUpdatedAt');
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('ClientBalanceService: Error parsing updatedDateTime: $e');
+          }
+        }
+      }
+
       // Shartnomalar bo'yicha balans
       final contractBalances = <ClientBalanceByContract>[];
       final contractElements = returnElement.findAllElements('m:ClientBalanceByContract');
@@ -288,6 +305,7 @@ class ClientBalanceService {
         contractBalances: contractBalances,
         orderBalances: orderBalances,
         lastUpdated: DateTime.now(),
+        serverDataUpdatedAt: serverDataUpdatedAt,
         projectName: projectName,
       );
     } catch (e) {
@@ -297,6 +315,7 @@ class ClientBalanceService {
       return null;
     }
   }
+
 
   /// Parse contract balance from XML element
   /// Парсить баланс по договору из XML элемента
@@ -403,6 +422,9 @@ class ClientBalanceService {
         contractBalances: contractBalances,
         orderBalances: orderBalances,
         lastUpdated: DateTime.parse(balanceRow['last_updated'] as String),
+        serverDataUpdatedAt: balanceRow['server_data_updated_at'] != null
+            ? DateTime.parse(balanceRow['server_data_updated_at'] as String)
+            : null,
         projectName: balanceRow['project_name'] as String? ?? '',
       );
 
@@ -442,6 +464,7 @@ class ClientBalanceService {
           'balance': balance.balance,
           'project_name': balance.projectName,
           'last_updated': balance.lastUpdated.toIso8601String(),
+          'server_data_updated_at': balance.serverDataUpdatedAt?.toIso8601String(),
           'created_at': now,
           'updated_at': now,
         });

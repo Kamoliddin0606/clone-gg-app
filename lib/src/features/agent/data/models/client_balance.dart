@@ -316,8 +316,12 @@ class ClientBalance {
   /// Balance list by orders
   final List<ClientBalanceByOrder> orderBalances;
   
-  /// Last update time
+  /// Last update time (local: when app fetched data)
   final DateTime lastUpdated;
+  
+  /// Server-side update time (when accounting system updated balance data)
+  /// Parsed from SOAP response updatedDateTime field
+  final DateTime? serverDataUpdatedAt;
   
   /// Project name (used in API request)
   final String projectName;
@@ -329,6 +333,7 @@ class ClientBalance {
     required this.contractBalances,
     required this.orderBalances,
     required this.lastUpdated,
+    this.serverDataUpdatedAt,
     required this.projectName,
   });
 
@@ -340,12 +345,28 @@ class ClientBalance {
       contractBalances: const [],
       orderBalances: const [],
       lastUpdated: DateTime.now(),
+      serverDataUpdatedAt: null,
       projectName: '',
     );
   }
 
   /// Factory constructor from JSON (for reading from database)
   factory ClientBalance.fromJson(Map<String, dynamic> json) {
+    // Parse server_data_updated_at with null safety
+    DateTime? parseServerDataUpdatedAt() {
+      final value = json['server_data_updated_at'];
+      if (value == null) return null;
+      if (value is DateTime) return value;
+      if (value is String && value.isNotEmpty) {
+        try {
+          return DateTime.parse(value);
+        } catch (_) {
+          return null;
+        }
+      }
+      return null;
+    }
+
     return ClientBalance(
       inn: json['inn']?.toString() ?? '',
       clientCode: json['client_code']?.toString(),
@@ -361,6 +382,7 @@ class ClientBalance {
       lastUpdated: json['last_updated'] != null
           ? DateTime.parse(json['last_updated'] as String)
           : DateTime.now(),
+      serverDataUpdatedAt: parseServerDataUpdatedAt(),
       projectName: json['project_name']?.toString() ?? '',
     );
   }
@@ -374,6 +396,7 @@ class ClientBalance {
       'contract_balances': contractBalances.map((e) => e.toJson()).toList(),
       'order_balances': orderBalances.map((e) => e.toJson()).toList(),
       'last_updated': lastUpdated.toIso8601String(),
+      'server_data_updated_at': serverDataUpdatedAt?.toIso8601String(),
       'project_name': projectName,
     };
   }
@@ -453,6 +476,7 @@ class ClientBalance {
     List<ClientBalanceByContract>? contractBalances,
     List<ClientBalanceByOrder>? orderBalances,
     DateTime? lastUpdated,
+    DateTime? serverDataUpdatedAt,
     String? projectName,
   }) {
     return ClientBalance(
@@ -462,6 +486,7 @@ class ClientBalance {
       contractBalances: contractBalances ?? this.contractBalances,
       orderBalances: orderBalances ?? this.orderBalances,
       lastUpdated: lastUpdated ?? this.lastUpdated,
+      serverDataUpdatedAt: serverDataUpdatedAt ?? this.serverDataUpdatedAt,
       projectName: projectName ?? this.projectName,
     );
   }

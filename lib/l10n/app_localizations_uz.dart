@@ -1572,6 +1572,14 @@ class AppLocalizationsUz extends AppLocalizations {
   }
 
   @override
+  String balanceServerDataUpdatedAt(String date) {
+    return 'Balans holati sana: $date';
+  }
+
+  @override
+  String get balanceDataMayBeOutdated => 'Balans ma\'lumotlari eskirgan bo\'lishi mumkin';
+
+  @override
   String get noBalanceData => 'Balans ma\'lumotlari topilmadi';
 
   @override

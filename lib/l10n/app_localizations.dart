@@ -3175,6 +3175,18 @@ abstract class AppLocalizations {
   /// **'Updated'**
   String balanceUpdated(String date);
 
+  /// No description provided for @balanceServerDataUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance status as of: {date}'**
+  String balanceServerDataUpdatedAt(String date);
+
+  /// No description provided for @balanceDataMayBeOutdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance data may be outdated'**
+  String get balanceDataMayBeOutdated;
+
   /// No description provided for @noBalanceData.
   ///
   /// In en, this message translates to:

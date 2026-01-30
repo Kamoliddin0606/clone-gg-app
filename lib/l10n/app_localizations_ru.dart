@@ -1572,6 +1572,14 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String balanceServerDataUpdatedAt(String date) {
+    return 'Состояние баланса на: $date';
+  }
+
+  @override
+  String get balanceDataMayBeOutdated => 'Данные баланса могут быть устаревшими';
+
+  @override
   String get noBalanceData => 'Данные баланса не найдены';
 
   @override

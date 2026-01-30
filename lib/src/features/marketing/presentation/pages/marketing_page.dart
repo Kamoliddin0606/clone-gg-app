@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/presentation/pages/promotions_page.dart';
 
 class MarketingPage extends StatefulWidget {
@@ -27,28 +28,29 @@ class _MarketingPageState extends State<MarketingPage>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Marketing'),
+        title: Text(l10n.marketing),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Yangilash',
+            tooltip: l10n.refresh,
             onPressed: () {
-              // TODO: Implement refresh functionality for marketing data
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Marketing ma\'lumotlari yangilanmoqda...')),
+                SnackBar(content: Text(l10n.marketingDataRefreshing)),
               );
             },
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Aksiyalar'),
-            Tab(text: 'E\'lonlar'),
-            Tab(text: 'Yangiliklar'),
-            Tab(text: 'Narxlar'),
+          tabs: [
+            Tab(text: l10n.promotions),
+            Tab(text: l10n.announcements),
+            Tab(text: l10n.news),
+            Tab(text: l10n.prices),
           ],
         ),
       ),
@@ -65,11 +67,11 @@ class _MarketingPageState extends State<MarketingPage>
         ),
         child: TabBarView(
           controller: _tabController,
-          children: const [
-            PromotionsPage(),
-            Center(child: Text('E\'lonlar sahifasi')),
-            Center(child: Text('Yangiliklar sahifasi')),
-            Center(child: Text('Narxlar sahifasi')),
+          children: [
+            const PromotionsPage(),
+            Center(child: Text(l10n.announcementsPage)),
+            Center(child: Text(l10n.newsPage)),
+            Center(child: Text(l10n.pricesPage)),
           ],
         ),
       ),

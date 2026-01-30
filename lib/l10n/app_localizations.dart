@@ -6970,14 +6970,14 @@ abstract class AppLocalizations {
   /// No description provided for @startDateLabel.
   ///
   /// In en, this message translates to:
-  /// **'Start date'**
-  String get startDateLabel;
+  /// **'Start: {date}'**
+  String startDateLabel(String date);
 
   /// No description provided for @endDateLabel.
   ///
   /// In en, this message translates to:
-  /// **'End date'**
-  String get endDateLabel;
+  /// **'End: {date}'**
+  String endDateLabel(String date);
 
   /// No description provided for @unknownDate.
   ///
@@ -9696,6 +9696,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Promo Order'**
   String get promoOrder;
+
+  /// No description provided for @marketingDataRefreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Marketing data is refreshing...'**
+  String get marketingDataRefreshing;
+
+  /// No description provided for @announcements.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements'**
+  String get announcements;
+
+  /// No description provided for @news.
+  ///
+  /// In en, this message translates to:
+  /// **'News'**
+  String get news;
+
+  /// No description provided for @announcementsPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements page'**
+  String get announcementsPage;
+
+  /// No description provided for @newsPage.
+  ///
+  /// In en, this message translates to:
+  /// **'News page'**
+  String get newsPage;
+
+  /// No description provided for @pricesPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices page'**
+  String get pricesPage;
+
+  /// No description provided for @dataLoadingErrorWithMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading data: {error}'**
+  String dataLoadingErrorWithMessage(String error);
+
+  /// No description provided for @promotionsRefreshError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error refreshing promotions: {error}'**
+  String promotionsRefreshError(String error);
+
+  /// No description provided for @refreshErrorWithMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh error: {error}'**
+  String refreshErrorWithMessage(String error);
+
+  /// No description provided for @offlineModeShowingCachedData.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline mode - showing cached data'**
+  String get offlineModeShowingCachedData;
+
+  /// No description provided for @promotionsNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No promotions found'**
+  String get promotionsNotFound;
+
+  /// No description provided for @promotionDescriptionFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} promotion. {productCount} products, {bonusCount} bonuses.'**
+  String promotionDescriptionFormat(String type, int productCount, int bonusCount);
+
+  /// No description provided for @aboutPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'About promotion'**
+  String get aboutPromotion;
+
+  /// No description provided for @promotionOfType.
+  ///
+  /// In en, this message translates to:
+  /// **'{type} type promotion'**
+  String promotionOfType(String type);
+
+  /// No description provided for @participatingProductsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Products participating in promotion: {count} SKU'**
+  String participatingProductsCount(int count);
+
+  /// No description provided for @bonusProductsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Products available as bonus: {count} SKU'**
+  String bonusProductsCount(int count);
+
+  /// No description provided for @bonuses.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonuses'**
+  String get bonuses;
+
+  /// No description provided for @productClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get productClass;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

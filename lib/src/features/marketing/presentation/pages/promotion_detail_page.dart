@@ -294,6 +294,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: CustomScrollView(
@@ -425,7 +426,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Aksiya haqida',
+                                  l10n.aboutPromotion,
                                   style: theme.textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: colorScheme.primary,
@@ -435,7 +436,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              '${widget.promotion.type} turidagi aksiya',
+                              l10n.promotionOfType(widget.promotion.type),
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 fontWeight: FontWeight.w500,
                               ),
@@ -452,7 +453,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Aksiyada qatnashuvchi mahsulotlar soni: ${widget.promotion.productList.length} ta SKU',
+                                    l10n.participatingProductsCount(widget.promotion.productList.length),
                                     style: theme.textTheme.bodyMedium,
                                   ),
                                 ),
@@ -470,7 +471,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Bonus sifatida berilishi mumkin bo\'lgan mahsulotlar: ${widget.promotion.bonusList.length} ta SKU',
+                                    l10n.bonusProductsCount(widget.promotion.bonusList.length),
                                     style: theme.textTheme.bodyMedium,
                                   ),
                                 ),
@@ -551,7 +552,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Boshlanish: ${_formatDate(widget.promotion.dateStart)}',
+                              l10n.startDateLabel(_formatDate(widget.promotion.dateStart)),
                               style: theme.textTheme.bodyMedium,
                             ),
                           ),
@@ -568,7 +569,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Tugash: ${_formatDate(widget.promotion.dateEnd)}',
+                              l10n.endDateLabel(_formatDate(widget.promotion.dateEnd)),
                               style: theme.textTheme.bodyMedium,
                             ),
                           ),
@@ -602,7 +603,7 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              widget.promotion.isActive ? 'Faol' : 'Faol emas',
+                              widget.promotion.isActive ? l10n.active : l10n.inactive,
                               style: TextStyle(
                                 color: widget.promotion.isActive
                                     ? Colors.green
@@ -628,18 +629,18 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                 children: [
                   TabBar(
                     controller: _tabController,
-                    tabs: const [
+                    tabs: [
                       Tab(
-                        icon: Icon(Icons.inventory),
-                        text: 'Mahsulotlar',
+                        icon: const Icon(Icons.inventory),
+                        text: l10n.products,
                       ),
                       Tab(
-                        icon: Icon(Icons.card_giftcard),
-                        text: 'Bonuslar',
+                        icon: const Icon(Icons.card_giftcard),
+                        text: l10n.bonuses,
                       ),
                       Tab(
-                        icon: Icon(Icons.category),
-                        text: 'Sinf',
+                        icon: const Icon(Icons.category),
+                        text: l10n.productClass,
                       ),
                     ],
                     labelColor: colorScheme.primary,

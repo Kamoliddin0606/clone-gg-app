@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/presentation/pages/promotion_detail_page.dart';
@@ -86,10 +87,13 @@ class _PromotionsPageState extends State<PromotionsPage> {
       await _syncPromotionsInBackground();
     } catch (e) {
       if (kDebugMode) print('[$timestamp] DEBUG: Error in _loadPromotions: $e');
-      setState(() {
-        _errorMessage = 'Ma\'lumotlarni yuklashda xatolik: $e';
-        _isLoading = false;
-      });
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        setState(() {
+          _errorMessage = l10n.dataLoadingErrorWithMessage(e.toString());
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -112,8 +116,9 @@ class _PromotionsPageState extends State<PromotionsPage> {
     } catch (e) {
       if (kDebugMode) print('[$timestamp] DEBUG: Error in _syncPromotionsInBackground: $e');
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Aksiyalar yangilanishida xatolik: $e')),
+          SnackBar(content: Text(l10n.promotionsRefreshError(e.toString()))),
         );
       }
     }
@@ -139,8 +144,9 @@ class _PromotionsPageState extends State<PromotionsPage> {
     } catch (e) {
       if (kDebugMode) print('[$timestamp] DEBUG: Error in _onRefresh: $e');
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Yangilanishda xatolik: $e')),
+          SnackBar(content: Text(l10n.refreshErrorWithMessage(e.toString()))),
         );
       }
     } finally {
@@ -172,39 +178,44 @@ class _PromotionsPageState extends State<PromotionsPage> {
             onRefresh: _onRefresh, // Handle pull-to-refresh gesture
             child: _buildContent(), // Build the main content (list or states)
           ),
-          if (_isOffline)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                color: Colors.orange,
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.wifi_off, color: Colors.white, size: 16),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Offline rejim - keshlangan ma\'lumotlar ko\'rsatilmoqda',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
+            if (_isOffline)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Builder(
+                  builder: (context) {
+                    final l10n = AppLocalizations.of(context)!;
+                    return Container(
+                      color: Colors.orange,
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.wifi_off, color: Colors.white, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.offlineModeShowingCachedData,
+                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _loadPromotions,
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(50, 24),
+                            ),
+                            child: Text(
+                              l10n.refresh,
+                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    TextButton(
-                      onPressed: _loadPromotions,
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(50, 24),
-                      ),
-                      child: const Text(
-                        'Yangilash',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
-            ),
         ],
       ),
     );
@@ -266,6 +277,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
   }
 
   Widget _buildErrorView() {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -273,14 +285,14 @@ class _PromotionsPageState extends State<PromotionsPage> {
           const Icon(Icons.error_outline, size: 64, color: Colors.red),
           const SizedBox(height: 16),
           Text(
-            _errorMessage ?? 'Xatolik yuz berdi',
+            _errorMessage ?? l10n.errorOccurred,
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _loadPromotions,
-            child: const Text('Qayta urinib ko\'ring'),
+            child: Text(l10n.tryAgain),
           ),
         ],
       ),
@@ -288,15 +300,16 @@ class _PromotionsPageState extends State<PromotionsPage> {
   }
 
   Widget _buildEmptyView() {
-    return const Center(
+    final l10n = AppLocalizations.of(context)!;
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.local_offer_outlined, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
+          const Icon(Icons.local_offer_outlined, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
           Text(
-            'Aksiyalar topilmadi',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
+            l10n.promotionsNotFound,
+            style: const TextStyle(fontSize: 18, color: Colors.grey),
           ),
         ],
       ),
@@ -304,9 +317,10 @@ class _PromotionsPageState extends State<PromotionsPage> {
   }
 
   String _buildPromotionDescription(PromotionModel promotion) {
+    final l10n = AppLocalizations.of(context)!;
     final productCount = promotion.productList.length;
     final bonusCount = promotion.bonusList.length;
-    return '${promotion.type} aksiyasi. $productCount ta mahsulot, $bonusCount ta bonus.';
+    return l10n.promotionDescriptionFormat(promotion.type, productCount, bonusCount);
   }
 
   String _formatDate(DateTime date) {

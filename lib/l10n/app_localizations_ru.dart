@@ -3664,10 +3664,14 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get startDateLabel => 'Дата начала';
+  String startDateLabel(String date) {
+    return 'Начало: $date';
+  }
 
   @override
-  String get endDateLabel => 'Дата окончания';
+  String endDateLabel(String date) {
+    return 'Окончание: $date';
+  }
 
   @override
   String get unknownDate => 'Неизвестно';
@@ -5099,4 +5103,72 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get promoOrder => 'Промо заказ';
+
+  @override
+  String get marketingDataRefreshing => 'Обновление данных маркетинга...';
+
+  @override
+  String get announcements => 'Объявления';
+
+  @override
+  String get news => 'Новости';
+
+  @override
+  String get announcementsPage => 'Страница объявлений';
+
+  @override
+  String get newsPage => 'Страница новостей';
+
+  @override
+  String get pricesPage => 'Страница цен';
+
+  @override
+  String dataLoadingErrorWithMessage(String error) {
+    return 'Ошибка загрузки данных: $error';
+  }
+
+  @override
+  String promotionsRefreshError(String error) {
+    return 'Ошибка обновления акций: $error';
+  }
+
+  @override
+  String refreshErrorWithMessage(String error) {
+    return 'Ошибка обновления: $error';
+  }
+
+  @override
+  String get offlineModeShowingCachedData => 'Офлайн режим - показаны кэшированные данные';
+
+  @override
+  String get promotionsNotFound => 'Акции не найдены';
+
+  @override
+  String promotionDescriptionFormat(String type, int productCount, int bonusCount) {
+    return 'Акция типа $type. $productCount товаров, $bonusCount бонусов.';
+  }
+
+  @override
+  String get aboutPromotion => 'Об акции';
+
+  @override
+  String promotionOfType(String type) {
+    return 'Акция типа $type';
+  }
+
+  @override
+  String participatingProductsCount(int count) {
+    return 'Товаров в акции: $count SKU';
+  }
+
+  @override
+  String bonusProductsCount(int count) {
+    return 'Товаров в качестве бонуса: $count SKU';
+  }
+
+  @override
+  String get bonuses => 'Бонусы';
+
+  @override
+  String get productClass => 'Класс';
 }

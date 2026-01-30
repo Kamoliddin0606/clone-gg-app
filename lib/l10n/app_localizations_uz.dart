@@ -3664,10 +3664,14 @@ class AppLocalizationsUz extends AppLocalizations {
   }
 
   @override
-  String get startDateLabel => 'Boshlanish sanasi';
+  String startDateLabel(String date) {
+    return 'Boshlanish: $date';
+  }
 
   @override
-  String get endDateLabel => 'Tugash sanasi';
+  String endDateLabel(String date) {
+    return 'Tugash: $date';
+  }
 
   @override
   String get unknownDate => 'Noma\'lum';
@@ -5099,4 +5103,72 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get promoOrder => 'Promo buyurtma';
+
+  @override
+  String get marketingDataRefreshing => 'Marketing ma\'lumotlari yangilanmoqda...';
+
+  @override
+  String get announcements => 'E\'lonlar';
+
+  @override
+  String get news => 'Yangiliklar';
+
+  @override
+  String get announcementsPage => 'E\'lonlar sahifasi';
+
+  @override
+  String get newsPage => 'Yangiliklar sahifasi';
+
+  @override
+  String get pricesPage => 'Narxlar sahifasi';
+
+  @override
+  String dataLoadingErrorWithMessage(String error) {
+    return 'Ma\'lumotlarni yuklashda xatolik: $error';
+  }
+
+  @override
+  String promotionsRefreshError(String error) {
+    return 'Aksiyalar yangilanishida xatolik: $error';
+  }
+
+  @override
+  String refreshErrorWithMessage(String error) {
+    return 'Yangilanishda xatolik: $error';
+  }
+
+  @override
+  String get offlineModeShowingCachedData => 'Offline rejim - keshlangan ma\'lumotlar ko\'rsatilmoqda';
+
+  @override
+  String get promotionsNotFound => 'Aksiyalar topilmadi';
+
+  @override
+  String promotionDescriptionFormat(String type, int productCount, int bonusCount) {
+    return '$type aksiyasi. $productCount ta mahsulot, $bonusCount ta bonus.';
+  }
+
+  @override
+  String get aboutPromotion => 'Aksiya haqida';
+
+  @override
+  String promotionOfType(String type) {
+    return '$type turidagi aksiya';
+  }
+
+  @override
+  String participatingProductsCount(int count) {
+    return 'Aksiyada qatnashuvchi mahsulotlar soni: $count ta SKU';
+  }
+
+  @override
+  String bonusProductsCount(int count) {
+    return 'Bonus sifatida berilishi mumkin bo\'lgan mahsulotlar: $count ta SKU';
+  }
+
+  @override
+  String get bonuses => 'Bonuslar';
+
+  @override
+  String get productClass => 'Sinf';
 }

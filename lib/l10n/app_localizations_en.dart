@@ -3664,10 +3664,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get startDateLabel => 'Start date';
+  String startDateLabel(String date) {
+    return 'Start: $date';
+  }
 
   @override
-  String get endDateLabel => 'End date';
+  String endDateLabel(String date) {
+    return 'End: $date';
+  }
 
   @override
   String get unknownDate => 'Unknown';
@@ -5099,4 +5103,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get promoOrder => 'Promo Order';
+
+  @override
+  String get marketingDataRefreshing => 'Marketing data is refreshing...';
+
+  @override
+  String get announcements => 'Announcements';
+
+  @override
+  String get news => 'News';
+
+  @override
+  String get announcementsPage => 'Announcements page';
+
+  @override
+  String get newsPage => 'News page';
+
+  @override
+  String get pricesPage => 'Prices page';
+
+  @override
+  String dataLoadingErrorWithMessage(String error) {
+    return 'Error loading data: $error';
+  }
+
+  @override
+  String promotionsRefreshError(String error) {
+    return 'Error refreshing promotions: $error';
+  }
+
+  @override
+  String refreshErrorWithMessage(String error) {
+    return 'Refresh error: $error';
+  }
+
+  @override
+  String get offlineModeShowingCachedData => 'Offline mode - showing cached data';
+
+  @override
+  String get promotionsNotFound => 'No promotions found';
+
+  @override
+  String promotionDescriptionFormat(String type, int productCount, int bonusCount) {
+    return '$type promotion. $productCount products, $bonusCount bonuses.';
+  }
+
+  @override
+  String get aboutPromotion => 'About promotion';
+
+  @override
+  String promotionOfType(String type) {
+    return '$type type promotion';
+  }
+
+  @override
+  String participatingProductsCount(int count) {
+    return 'Products participating in promotion: $count SKU';
+  }
+
+  @override
+  String bonusProductsCount(int count) {
+    return 'Products available as bonus: $count SKU';
+  }
+
+  @override
+  String get bonuses => 'Bonuses';
+
+  @override
+  String get productClass => 'Class';
 }

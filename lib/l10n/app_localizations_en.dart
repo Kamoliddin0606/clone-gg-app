@@ -859,6 +859,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageChangeError => 'Error changing language';
 
   @override
+  String get languageAutoDetected => 'Language auto-detected from system';
+
+  @override
   String get customers => 'Customers';
 
   @override

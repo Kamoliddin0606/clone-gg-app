@@ -1789,6 +1789,12 @@ abstract class AppLocalizations {
   /// **'Error changing language'**
   String get languageChangeError;
 
+  /// No description provided for @languageAutoDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Language auto-detected from system'**
+  String get languageAutoDetected;
+
   /// No description provided for @customers.
   ///
   /// In en, this message translates to:

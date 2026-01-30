@@ -1032,156 +1032,190 @@ class _InterfaceSettingsTabState extends State<InterfaceSettingsTab> {
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context)!;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Language Settings Card
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, _) {
+        final isAutoDetected = localeProvider.isAutoDetected;
+        
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Language Settings Card
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.language,
-                        color: colorScheme.primary,
-                        size: 28,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.language,
+                            color: colorScheme.primary,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            l10n.interfaceSettings,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(height: 16),
+
+                      // Current Language Display
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  l10n.currentLanguage,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  _getLanguageName(_selectedLanguage, l10n),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Auto-detection indicator
+                            if (isAutoDetected) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome,
+                                    size: 14,
+                                    color: colorScheme.secondary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.languageAutoDetected,
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.secondary,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Available Languages
                       Text(
-                        l10n.interfaceSettings,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                        l10n.availableLanguages,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
                           color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Language Options
+                      _LanguageOption(
+                        languageCode: 'uz',
+                        languageName: l10n.uzbek,
+                        isSelected: _selectedLanguage == 'uz',
+                        onTap: () => _changeLanguage('uz'),
+                      ),
+                      const SizedBox(height: 8),
+                      _LanguageOption(
+                        languageCode: 'ru',
+                        languageName: l10n.russian,
+                        isSelected: _selectedLanguage == 'ru',
+                        onTap: () => _changeLanguage('ru'),
+                      ),
+                      const SizedBox(height: 8),
+                      _LanguageOption(
+                        languageCode: 'en',
+                        languageName: l10n.english,
+                        isSelected: _selectedLanguage == 'en',
+                        onTap: () => _changeLanguage('en'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Additional Interface Settings
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.appearance,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Theme Toggle
+                      ListTile(
+                        leading: Icon(Icons.palette, color: colorScheme.primary),
+                        title: Text(l10n.theme),
+                        subtitle: Text(
+                          ThemeController.I.mode.value == ThemeMode.dark
+                              ? l10n.dark
+                              : l10n.light,
+                        ),
+                        trailing: SizedBox(
+                          width: 80,
+                          child: ThemeToggle(
+                            mode: ThemeController.I.mode.value,
+                            onChanged: ThemeController.I.set,
+                          ),
+                        ),
+                        onTap: () => ThemeController.I.set(
+                          ThemeController.I.mode.value == ThemeMode.dark
+                              ? ThemeMode.light
+                              : ThemeMode.dark,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-
-                  // Current Language Display
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          l10n.currentLanguage,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          _getLanguageName(_selectedLanguage, l10n),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Available Languages
-                  Text(
-                    l10n.availableLanguages,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Language Options
-                  _LanguageOption(
-                    languageCode: 'uz',
-                    languageName: l10n.uzbek,
-                    isSelected: _selectedLanguage == 'uz',
-                    onTap: () => _changeLanguage('uz'),
-                  ),
-                  const SizedBox(height: 8),
-                  _LanguageOption(
-                    languageCode: 'ru',
-                    languageName: l10n.russian,
-                    isSelected: _selectedLanguage == 'ru',
-                    onTap: () => _changeLanguage('ru'),
-                  ),
-                  const SizedBox(height: 8),
-                  _LanguageOption(
-                    languageCode: 'en',
-                    languageName: l10n.english,
-                    isSelected: _selectedLanguage == 'en',
-                    onTap: () => _changeLanguage('en'),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-
-          const SizedBox(height: 24),
-
-          // Additional Interface Settings
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.appearance,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Theme Toggle
-                  ListTile(
-                    leading: Icon(Icons.palette, color: colorScheme.primary),
-                    title: Text(l10n.theme),
-                    subtitle: Text(
-                      ThemeController.I.mode.value == ThemeMode.dark
-                          ? l10n.dark
-                          : l10n.light,
-                    ),
-                    trailing: SizedBox(
-                      width: 80,
-                      child: ThemeToggle(
-                        mode: ThemeController.I.mode.value,
-                        onChanged: ThemeController.I.set,
-                      ),
-                    ),
-                    onTap: () => ThemeController.I.set(
-                      ThemeController.I.mode.value == ThemeMode.dark
-                          ? ThemeMode.light
-                          : ThemeMode.dark,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

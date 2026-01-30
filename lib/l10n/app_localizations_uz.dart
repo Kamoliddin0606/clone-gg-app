@@ -859,6 +859,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get languageChangeError => 'Tilni o\'zgartirishda xatolik yuz berdi';
 
   @override
+  String get languageAutoDetected => 'Til tizimdan avtomatik aniqlandi';
+
+  @override
   String get customers => 'Mijozlar';
 
   @override

@@ -293,6 +293,7 @@
   "permissions": "Permissions",
   "permissionDenied": "Permission denied",
   "languageChangeError": "Error changing language",
+  "languageAutoDetected": "Language auto-detected from system",
   "customers": "Customers",
   "reports": "Reports",
   "marketing": "Marketing",
@@ -3057,5 +3058,73 @@
   "accessVerified": "Access verified successfully",
   "verificationFailed": "Verification failed",
   "timeLimitUpdated": "Access period updated",
-  "promoOrder": "Promo Order"
+  "promoOrder": "Promo Order",
+
+  "marketingDataRefreshing": "Marketing data is refreshing...",
+  "announcements": "Announcements",
+  "news": "News",
+  "announcementsPage": "Announcements page",
+  "newsPage": "News page",
+  "pricesPage": "Prices page",
+  "dataLoadingErrorWithMessage": "Error loading data: {error}",
+  "@dataLoadingErrorWithMessage": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "promotionsRefreshError": "Error refreshing promotions: {error}",
+  "@promotionsRefreshError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "refreshErrorWithMessage": "Refresh error: {error}",
+  "@refreshErrorWithMessage": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "offlineModeShowingCachedData": "Offline mode - showing cached data",
+  "promotionsNotFound": "No promotions found",
+  "promotionDescriptionFormat": "{type} promotion. {productCount} products, {bonusCount} bonuses.",
+  "@promotionDescriptionFormat": {
+    "placeholders": {
+      "type": {"type": "String"},
+      "productCount": {"type": "int"},
+      "bonusCount": {"type": "int"}
+    }
+  },
+  "aboutPromotion": "About promotion",
+  "promotionOfType": "{type} type promotion",
+  "@promotionOfType": {
+    "placeholders": {
+      "type": {"type": "String"}
+    }
+  },
+  "participatingProductsCount": "Products participating in promotion: {count} SKU",
+  "@participatingProductsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "bonusProductsCount": "Products available as bonus: {count} SKU",
+  "@bonusProductsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "startDateLabel": "Start: {date}",
+  "@startDateLabel": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "endDateLabel": "End: {date}",
+  "@endDateLabel": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "bonuses": "Bonuses",
+  "productClass": "Class"
 }

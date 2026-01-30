@@ -19,3 +19,6 @@ final serverService = ServerService(_prefs);
         dbService: ApiDatabaseService(),
         dbHelper: DatabaseHelper(),
       );
+
+
+ Algoritmlar tezkor va resurs tejashga asoslanishi kerak. Commenting(en). lokalizatsiya(ru uz en) amal qilinsin. KOd kengayishga kelajakda o'zgarishga moslab yozilsin

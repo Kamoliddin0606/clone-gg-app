@@ -859,6 +859,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get languageChangeError => 'Ошибка изменения языка';
 
   @override
+  String get languageAutoDetected => 'Язык определён автоматически из системы';
+
+  @override
   String get customers => 'Клиенты';
 
   @override

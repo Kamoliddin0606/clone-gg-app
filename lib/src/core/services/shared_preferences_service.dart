@@ -17,7 +17,9 @@ class SharedPreferencesService {
   static const String _serverNameKey = 'selected_server_env';
   static const String _baseUrlKey = 'selected_server_base_url';
   static const String _isOfflineModeKey = 'is_offline_mode';
-  static const String _languageCodeKey = 'language_code';
+  static const String _languageCodeKey = 'language_code'; // Legacy key, kept for migration
+  static const String _userSelectedLanguageCodeKey = 'user_selected_language_code';
+  static const String _cachedOsLanguageCodeKey = 'cached_os_language_code';
   static const String _bgSyncEnabledKey = 'bg_sync_enabled';
   static const String _bgSyncIntervalKey = 'bg_sync_interval_hours';
   static const String _bgSyncCustomMinutesKey = 'bg_sync_custom_minutes';
@@ -198,45 +200,142 @@ class SharedPreferencesService {
     await _preferences.remove(_isOfflineModeKey);
   }
 
-  // Language management
-  Future<void> setLanguageCode(String languageCode) async {
+  // ============================================================================
+  // Language Management
+  // ============================================================================
+  // 
+  // The language system uses two separate keys:
+  // 1. _userSelectedLanguageCodeKey - User's explicit language choice (highest priority)
+  // 2. _cachedOsLanguageCodeKey - Cached OS locale for change detection
+  //
+  // Priority: User Selection > Cached OS (if matches current) > Current OS
+  // ============================================================================
+
+  /// Sets user's explicit language selection.
+  /// This has the highest priority and overrides OS locale detection.
+  Future<void> setUserSelectedLanguageCode(String languageCode) async {
     try {
-      await _preferences.setString(_languageCodeKey, languageCode);
-      if (kDebugMode) print('Language code saved: $languageCode');
+      await _preferences.setString(_userSelectedLanguageCodeKey, languageCode);
+      if (kDebugMode) print('User selected language saved: $languageCode');
     } catch (e) {
-      if (kDebugMode) print('Error saving language code: $e');
+      if (kDebugMode) print('Error saving user selected language: $e');
       rethrow;
     }
   }
 
-  String getLanguageCode() {
+  /// Gets user's explicit language selection.
+  /// Returns null if user has not manually selected a language.
+  String? getUserSelectedLanguageCode() {
     try {
-      final languageCode = _preferences.getString(_languageCodeKey) ?? 'uz'; // Default to Uzbek
-      if (kDebugMode) print('Retrieved language code: $languageCode');
-      return languageCode;
+      final code = _preferences.getString(_userSelectedLanguageCodeKey);
+      if (kDebugMode) print('User selected language: $code');
+      return code;
     } catch (e) {
-      if (kDebugMode) print('Error retrieving language code: $e');
-      return 'uz'; // Fallback to Uzbek
-    }
-  }
-
-  String? getLanguageCodeOrNull() {
-    try {
-      final languageCode = _preferences.getString(_languageCodeKey);
-      if (kDebugMode) print('Retrieved language code or null: $languageCode');
-      return languageCode;
-    } catch (e) {
-      if (kDebugMode) print('Error retrieving language code: $e');
+      if (kDebugMode) print('Error getting user selected language: $e');
       return null;
     }
   }
 
+  /// Checks if user has explicitly selected a language.
+  bool hasUserSelectedLanguage() {
+    return _preferences.containsKey(_userSelectedLanguageCodeKey);
+  }
+
+  /// Clears user's language selection.
+  /// After this, app will fall back to OS locale detection.
+  Future<void> clearUserSelectedLanguageCode() async {
+    try {
+      await _preferences.remove(_userSelectedLanguageCodeKey);
+      if (kDebugMode) print('User selected language cleared');
+    } catch (e) {
+      if (kDebugMode) print('Error clearing user selected language: $e');
+      rethrow;
+    }
+  }
+
+  /// Sets cached OS language code for change detection.
+  /// Called when app starts and detects OS locale.
+  Future<void> setCachedOsLanguageCode(String languageCode) async {
+    try {
+      await _preferences.setString(_cachedOsLanguageCodeKey, languageCode);
+      if (kDebugMode) print('Cached OS language saved: $languageCode');
+    } catch (e) {
+      if (kDebugMode) print('Error saving cached OS language: $e');
+      rethrow;
+    }
+  }
+
+  /// Gets previously cached OS language code.
+  /// Used to detect if OS language has changed since last app launch.
+  String? getCachedOsLanguageCode() {
+    try {
+      final code = _preferences.getString(_cachedOsLanguageCodeKey);
+      if (kDebugMode) print('Cached OS language: $code');
+      return code;
+    } catch (e) {
+      if (kDebugMode) print('Error getting cached OS language: $e');
+      return null;
+    }
+  }
+
+  /// Clears cached OS language code.
+  Future<void> clearCachedOsLanguageCode() async {
+    try {
+      await _preferences.remove(_cachedOsLanguageCodeKey);
+      if (kDebugMode) print('Cached OS language cleared');
+    } catch (e) {
+      if (kDebugMode) print('Error clearing cached OS language: $e');
+      rethrow;
+    }
+  }
+
+  // Legacy language methods - kept for backward compatibility and migration
+  // TODO: Remove these after migration period
+
+  /// [LEGACY] Sets language code - use setUserSelectedLanguageCode instead.
+  @Deprecated('Use setUserSelectedLanguageCode for user selections')
+  Future<void> setLanguageCode(String languageCode) async {
+    try {
+      await _preferences.setString(_languageCodeKey, languageCode);
+      if (kDebugMode) print('Legacy language code saved: $languageCode');
+    } catch (e) {
+      if (kDebugMode) print('Error saving legacy language code: $e');
+      rethrow;
+    }
+  }
+
+  /// [LEGACY] Gets language code with default fallback.
+  @Deprecated('Use getUserSelectedLanguageCode or getCachedOsLanguageCode')
+  String getLanguageCode() {
+    try {
+      final languageCode = _preferences.getString(_languageCodeKey) ?? 'uz';
+      if (kDebugMode) print('Legacy language code: $languageCode');
+      return languageCode;
+    } catch (e) {
+      if (kDebugMode) print('Error getting legacy language code: $e');
+      return 'uz';
+    }
+  }
+
+  /// [LEGACY] Gets language code or null - used for migration detection.
+  String? getLanguageCodeOrNull() {
+    try {
+      final languageCode = _preferences.getString(_languageCodeKey);
+      if (kDebugMode) print('Legacy language code or null: $languageCode');
+      return languageCode;
+    } catch (e) {
+      if (kDebugMode) print('Error getting legacy language code: $e');
+      return null;
+    }
+  }
+
+  /// [LEGACY] Clears legacy language code after migration.
   Future<void> clearLanguageCode() async {
     try {
       await _preferences.remove(_languageCodeKey);
-      if (kDebugMode) print('Language code cleared');
+      if (kDebugMode) print('Legacy language code cleared');
     } catch (e) {
-      if (kDebugMode) print('Error clearing language code: $e');
+      if (kDebugMode) print('Error clearing legacy language code: $e');
       rethrow;
     }
   }

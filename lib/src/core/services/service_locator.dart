@@ -103,8 +103,22 @@ Future<void> setupServiceLocator() async {
   if (!sl.isRegistered<RestApiService>()) {
     sl.registerLazySingleton<RestApiService>(() => RestApiService(sl<Dio>()));
   }
+  // TokenService - REST API token management with dedicated Dio instance
+  // IMPORTANT: TokenService needs a SEPARATE Dio instance without other service interceptors
+  // The shared Dio instance has RestApiService and SoapApiService interceptors that can
+  // interfere with the 1C-Login authentication endpoint responses
   if (!sl.isRegistered<TokenService>()) {
-    sl.registerLazySingleton<TokenService>(() => TokenService(sl<Dio>(), sl<SharedPreferencesService>()));
+    // Create dedicated Dio instance for TokenService - no other interceptors
+    final tokenDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+    
+    sl.registerLazySingleton<TokenService>(() => TokenService(
+      tokenDio, 
+      sl<SharedPreferencesService>()
+    ));
   }
   if (!sl.isRegistered<ClientImagesService>()) {
     sl.registerLazySingleton<ClientImagesService>(() => ClientImagesService(

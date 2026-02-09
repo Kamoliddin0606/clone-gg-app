@@ -2116,11 +2116,11 @@ class _AppDrawer extends StatelessWidget {
                   title: AppLocalizations.of(context)!.orders,
                   onTap: () => Navigator.pushNamed(context, AppRouter.ordersRoute),
                 ),
-                _MenuItem(
-                  icon: Icons.storage,
-                  title: AppLocalizations.of(context)!.dbView,
-                  onTap: () => Navigator.pushNamed(context, AppRouter.dbViewRoute),
-                ),
+                // _MenuItem(
+                //   icon: Icons.storage,
+                //   title: AppLocalizations.of(context)!.dbView,
+                //   onTap: () => Navigator.pushNamed(context, AppRouter.dbViewRoute),
+                // ),
                 _MenuItem(
                   icon: Icons.help_outline,
                   title: AppLocalizations.of(context)!.faqPageTitle,

@@ -34,19 +34,49 @@ class TokenService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Skip adding token for token-related endpoints
-          if (!options.path.contains('/api/token')) {
-            // Add authorization header if we have a valid token
-            final token = await getValidAccessToken();
-            if (token != null) {
-              options.headers['Authorization'] = 'Bearer $token';
+          // Skip adding token for ALL authentication endpoints
+          // This includes /api/token and /api/v1/auth/ endpoints
+          if (options.path.contains('/api/token') || 
+              options.path.contains('/api/v1/auth/')) {
+            if (kDebugMode) {
+              print('TokenService: Skipping token addition for auth endpoint: ${options.path}');
+            }
+            return handler.next(options);
+          }
+          
+          // Add authorization header for other endpoints if we have a valid token
+          final token = await getValidAccessToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+            if (kDebugMode) {
+              print('TokenService: Added Bearer token to request: ${options.path}');
             }
           }
           return handler.next(options);
         },
+        onResponse: (response, handler) {
+          // Log successful responses for debugging
+          if (kDebugMode) {
+            print('TokenService: Response received from ${response.requestOptions.path}');
+            print('TokenService: Status code: ${response.statusCode}');
+            if (response.data is Map) {
+              print('TokenService: Response keys: ${(response.data as Map).keys.toList()}');
+            }
+          }
+          return handler.next(response);
+        },
         onError: (DioException error, handler) async {
           // Handle token refresh on 401 errors
           if (error.response?.statusCode == 401) {
+            // Don't retry authentication endpoints
+            if (error.requestOptions.path.contains('/api/token') || 
+                error.requestOptions.path.contains('/api/v1/auth/')) {
+              if (kDebugMode) {
+                print('TokenService: 401 on auth endpoint, not retrying: ${error.requestOptions.path}');
+              }
+              return handler.next(error);
+            }
+            
             try {
               final newToken = await _refreshAccessToken();
               if (newToken != null) {

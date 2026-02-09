@@ -459,6 +459,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 navigatorKey: AppRouter.navigatorKey,
                 scaffoldMessengerKey: AppRouter.scaffoldMessengerKey,
                 title: 'SelUp',
+                debugShowCheckedModeBanner: false,
                 theme: appLight,
                 darkTheme: appDark,
                 themeMode: themeMode,

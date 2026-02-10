@@ -3033,5 +3033,18 @@
   "startDateLabel": "Начало: {date}",
   "endDateLabel": "Окончание: {date}",
   "bonuses": "Бонусы",
-  "productClass": "Класс"
+  "productClass": "Класс",
+  "salesChannel": "Канал продаж",
+  "salesChannelRequired": "Канал продаж *",
+  "clientClass": "Класс клиента",
+  "clientClassRequired": "Класс клиента *",
+  "tradingPointTypeRequired": "Тип торговой точки *",
+  "regionRequired": "Регион *",
+  "pleaseSelectSalesChannel": "Пожалуйста, выберите канал продаж",
+  "pleaseSelectClientClass": "Пожалуйста, выберите класс клиента",
+  "salesChannelsLoading": "Загрузка каналов...",
+  "clientClassesLoading": "Загрузка классов...",
+  "tradingPointTypesLoading": "Загрузка типов торговых точек...",
+  "pleaseSelectChannelFirst": "Сначала выберите канал",
+  "tradingPointTypesLoadError": "Ошибка загрузки типов торговых точек"
 }

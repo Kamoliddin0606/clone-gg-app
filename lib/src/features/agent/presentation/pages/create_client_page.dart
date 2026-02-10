@@ -8,6 +8,9 @@ import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
 import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:gloria_marketing_flutter/src/core/services/address_resolver_service.dart';
@@ -57,10 +60,18 @@ class _CreateClientPageState extends State<CreateClientPage>
   BusinessRegion? _selectedRegion;
   bool _isLoadingRegions = true;
 
-  // Trade point type
-  String? _selectedTradePointType;
-  List<String> _tradePointTypes = [];
+  // Trade point type (now cascading based on channel)
+  TradingPointType? _selectedTradePointType;
+  List<TradingPointType> _allTradingPointTypes = [];
+  List<TradingPointType> _filteredTradingPointTypes = [];
   bool _isLoadingTypes = true;
+
+  // Sales classifiers
+  List<SalesChannel> _salesChannels = [];
+  List<ClientClass> _clientClasses = [];
+  SalesChannel? _selectedChannel;
+  ClientClass? _selectedClientClass;
+  bool _isLoadingClassifiers = true;
 
   // Submission state
   bool _isSubmitting = false;
@@ -88,6 +99,7 @@ class _CreateClientPageState extends State<CreateClientPage>
 
     _loadRegions();
     _loadTradePointTypes();
+    _loadSalesClassifiers();
     _getCurrentLocation();
   }
 
@@ -156,47 +168,78 @@ class _CreateClientPageState extends State<CreateClientPage>
     });
   }
 
-  /// Load unique trade point types from existing clients
-  /// Uses SQL DISTINCT - O(n) scan, most efficient for this task
+  /// Load trading point types from data sync service
+  /// Will be filtered by selected channel (cascading dropdown)
   Future<void> _loadTradePointTypes() async {
     try {
-      final dbService = sl<ApiDatabaseService>();
-      final types = await dbService.getUniqueTradePointTypes();
+      final dataSyncService = sl<DataSyncService>();
+      
+      // Load all trading point types
+      final types = await dataSyncService.getCachedTradingPointTypes();
 
       if (mounted) {
         setState(() {
-          _tradePointTypes = types;
+          _allTradingPointTypes = types;
+          // Initially show all types (no channel selected yet)
+          _filteredTradingPointTypes = types;
           _isLoadingTypes = false;
         });
-        
-        // Show error message if list is empty
-        if (types.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppLocalizations.of(context)?.tradePointTypesEmpty ??
-                    'Savdo nuqtasi turlari ro\'yxati bo\'sh. Iltimos, avval savdo nuqtalarini qo\'shing.',
-              ),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 5),
-            ),
-          );
-        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _tradePointTypes = [];
+          _allTradingPointTypes = [];
+          _filteredTradingPointTypes = [];
           _isLoadingTypes = false;
         });
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(context)?.tradePointTypesLoadError ??
-                  'Savdo nuqtasi turlarini yuklashda xatolik yuz berdi.',
+              AppLocalizations.of(context)?.tradingPointTypesLoadError ??
+                  'Savdo nuqtasi turlarini yuklashda xatolik: $e',
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Load sales classifiers (channels and classes) from data sync service
+  Future<void> _loadSalesClassifiers() async {
+    try {
+      final dataSyncService = sl<DataSyncService>();
+      
+      // Sync classifiers from server
+      await dataSyncService.syncSalesClassifiers();
+      
+      // Load from cache
+      final channels = await dataSyncService.getCachedSalesChannels();
+      final classes = await dataSyncService.getCachedClientClasses();
+      
+      if (mounted) {
+        setState(() {
+          _salesChannels = channels;
+          _clientClasses = classes;
+          _isLoadingClassifiers = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _salesChannels = [];
+          _clientClasses = [];
+          _isLoadingClassifiers = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Sales classifiers yuklashda xatolik: $e',
+            ),
+            backgroundColor: Colors.orange,
             duration: const Duration(seconds: 4),
           ),
         );
@@ -313,12 +356,38 @@ class _CreateClientPageState extends State<CreateClientPage>
       return;
     }
 
+    if (_selectedChannel == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.pleaseSelectSalesChannel ??
+                'Iltimos, mijoz kanalini tanlang',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     if (_selectedTradePointType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             AppLocalizations.of(context)?.pleaseSelectTradePointType ??
                 'Iltimos, savdo nuqtasi turini tanlang',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedClientClass == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.pleaseSelectClientClass ??
+                'Iltimos, mijoz klassini tanlang',
           ),
           backgroundColor: Colors.orange,
         ),
@@ -372,7 +441,7 @@ class _CreateClientPageState extends State<CreateClientPage>
         name: _nameController.text.trim(),
         signboard: _signboardController.text.trim(),
         inn: _innController.text.trim(),
-        tradePointType: _selectedTradePointType!,
+        tradePointType: _selectedTradePointType!.name,
         contactPerson: _contactPersonController.text.trim(),
         contactPersonPhone: _contactPhoneController.text.trim(),
         address: _addressController.text.trim(),
@@ -390,6 +459,8 @@ class _CreateClientPageState extends State<CreateClientPage>
         director: _directorController.text.trim(),
         mfo: _mfoController.text.trim(),
         bankAccount: _bankAccountController.text.trim(),
+        channelCode: _selectedChannel?.name, // Send channel NAME
+        clientClass: _selectedClientClass?.classCode, // Send class NAME
       );
 
       if (result['success'] == true) {
@@ -966,7 +1037,11 @@ class _CreateClientPageState extends State<CreateClientPage>
                 const SizedBox(height: 12),
                 _buildInnFieldWithFetchButton(colorScheme, l10n),
                 const SizedBox(height: 12),
+                _buildSalesChannelSelector(theme, colorScheme),
+                const SizedBox(height: 12),
                 _buildTradePointTypeSelector(theme, colorScheme),
+                const SizedBox(height: 12),
+                _buildClientClassSelector(theme, colorScheme),
                 const SizedBox(height: 12),
                 _buildRegionSelector(theme, colorScheme),
 
@@ -1444,16 +1519,71 @@ class _CreateClientPageState extends State<CreateClientPage>
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
+    if (_isLoadingTypes) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              AppLocalizations.of(context)?.tradingPointTypesLoading ??
+                  'Savdo nuqtasi turlari yuklanmoqda...',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show message if channel not selected
+    if (_selectedChannel == null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, color: colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)?.pleaseSelectChannelFirst ??
+                    'Avval mijoz kanalini tanlang',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
       ),
-      child: DropdownButtonFormField<String>(
+      child: DropdownButtonFormField<TradingPointType>(
         value: _selectedTradePointType,
         decoration: InputDecoration(
-          labelText: 'Savdo nuqtasi turi *',
+          labelText: AppLocalizations.of(context)?.tradingPointTypeRequired ??
+              'Savdo nuqtasi turi *',
           prefixIcon: Icon(Icons.category, color: colorScheme.primary),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -1461,16 +1591,162 @@ class _CreateClientPageState extends State<CreateClientPage>
             vertical: 12,
           ),
         ),
-        items: _tradePointTypes.map((type) {
-          return DropdownMenuItem(value: type, child: Text(type));
+        items: _filteredTradingPointTypes.map((type) {
+          return DropdownMenuItem(
+            value: type,
+            child: Text(type.name),
+          );
         }).toList(),
         onChanged: (value) => setState(() => _selectedTradePointType = value),
         validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Savdo nuqtasi turini tanlang';
+          if (value == null) {
+            return AppLocalizations.of(context)?.pleaseSelectTradePointType ??
+                'Savdo nuqtasi turini tanlang';
           }
           return null;
         },
+        isExpanded: true,
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSalesChannelSelector(ThemeData theme, ColorScheme colorScheme) {
+    if (_isLoadingClassifiers) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              AppLocalizations.of(context)?.salesChannelsLoading ??
+                  'Kanallar yuklanmoqda...',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+      ),
+      child: DropdownButtonFormField<SalesChannel>(
+        value: _selectedChannel,
+        decoration: InputDecoration(
+          labelText: AppLocalizations.of(context)?.salesChannelRequired ??
+              'Mijoz kanali *',
+          prefixIcon: Icon(Icons.store, color: colorScheme.primary),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
+        items: _salesChannels.map((channel) {
+          return DropdownMenuItem(
+            value: channel,
+            child: Text(channel.name),
+          );
+        }).toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedChannel = value;
+            // Reset trade point type when channel changes
+            _selectedTradePointType = null;
+            // Filter trading point types by selected channel
+            if (value != null) {
+              _filteredTradingPointTypes = _allTradingPointTypes
+                  .where((type) => type.channelGroup == value.name)
+                  .toList();
+            } else {
+              _filteredTradingPointTypes = _allTradingPointTypes;
+            }
+          });
+        },
+        isExpanded: true,
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClientClassSelector(ThemeData theme, ColorScheme colorScheme) {
+    if (_isLoadingClassifiers) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              AppLocalizations.of(context)?.clientClassesLoading ??
+                  'Klasslar yuklanmoqda...',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+      ),
+      child: DropdownButtonFormField<ClientClass>(
+        value: _selectedClientClass,
+        decoration: InputDecoration(
+          labelText: AppLocalizations.of(context)?.clientClassRequired ??
+              'Mijoz klassi *',
+          prefixIcon: Icon(Icons.class_, color: colorScheme.primary),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
+        items: _clientClasses.map((clientClass) {
+          return DropdownMenuItem(
+            value: clientClass,
+            child: Text(clientClass.classCode),
+          );
+        }).toList(),
+        onChanged: (value) => setState(() => _selectedClientClass = value),
         isExpanded: true,
         icon: Icon(
           Icons.keyboard_arrow_down,
@@ -1518,7 +1794,8 @@ class _CreateClientPageState extends State<CreateClientPage>
       child: DropdownButtonFormField<BusinessRegion>(
         value: _selectedRegion,
         decoration: InputDecoration(
-          labelText: 'Hudud *',
+          labelText: AppLocalizations.of(context)?.regionRequired ??
+              'Hudud *',
           prefixIcon: Icon(Icons.map, color: colorScheme.primary),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(

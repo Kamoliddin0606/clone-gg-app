@@ -32,6 +32,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnai
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
 
 class ApiDatabaseService {
   static final ApiDatabaseService _instance = ApiDatabaseService._internal();
@@ -7875,12 +7878,18 @@ class ApiDatabaseService {
             credit_limit REAL DEFAULT 0.0,
             accumulated_credit REAL DEFAULT 0.0,
             code_region TEXT REFERENCES business_regions(code) ON DELETE SET NULL,
+            channel_code TEXT,
+            trading_point_type_code TEXT,
+            client_class TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
           )
         ''',
         'indexes': [
           'CREATE INDEX idx_clients_code_region ON clients(code_region)',
+          'CREATE INDEX idx_clients_channel_code ON clients(channel_code)',
+          'CREATE INDEX idx_clients_trading_point_type_code ON clients(trading_point_type_code)',
+          'CREATE INDEX idx_clients_client_class ON clients(client_class)',
         ],
       },
       'client_contracts': {
@@ -8304,6 +8313,46 @@ class ApiDatabaseService {
         'indexes': [
           'CREATE INDEX idx_order_payments_order_detail_id ON order_payments(order_detail_id)',
         ],
+      },
+      'sales_channels': {
+        'sql': '''
+          CREATE TABLE sales_channels (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            upper_group TEXT,
+            is_group INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': <String>[],
+      },
+      'trading_point_types': {
+        'sql': '''
+          CREATE TABLE trading_point_types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            channel_group TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_trading_point_types_channel_group ON trading_point_types(channel_group)',
+        ],
+      },
+      'client_classes': {
+        'sql': '''
+          CREATE TABLE client_classes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            class_code TEXT UNIQUE NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''',
+        'indexes': <String>[],
       },
       'sales_req_permissions': {
         'sql': '''
@@ -9567,6 +9616,215 @@ class ApiDatabaseService {
         );
       }
       return {};
+    }
+  }
+
+  // ============================================================================
+  // Sales Classifiers Methods
+  // ============================================================================
+
+  /// Save sales channels to database
+  /// Uses batch operations for optimal performance
+  Future<void> saveSalesChannels(List<SalesChannel> channels) async {
+    final db = await database;
+    final batch = db.batch();
+
+    // Delete all existing channels
+    batch.delete('sales_channels');
+
+    // Insert new channels
+    for (final channel in channels) {
+      batch.insert('sales_channels', channel.toDatabaseMap());
+    }
+
+    await batch.commit(noResult: true);
+
+    if (kDebugMode) {
+      print('ApiDatabaseService: Saved ${channels.length} sales channels');
+    }
+  }
+
+  /// Save trading point types to database
+  /// Uses batch operations for optimal performance
+  Future<void> saveTradingPointTypes(List<TradingPointType> types) async {
+    final db = await database;
+    final batch = db.batch();
+
+    // Delete all existing types
+    batch.delete('trading_point_types');
+
+    // Insert new types
+    for (final type in types) {
+      batch.insert('trading_point_types', type.toDatabaseMap());
+    }
+
+    await batch.commit(noResult: true);
+
+    if (kDebugMode) {
+      print('ApiDatabaseService: Saved ${types.length} trading point types');
+    }
+  }
+
+  /// Save client classes to database
+  /// Uses batch operations for optimal performance
+  Future<void> saveClientClasses(List<ClientClass> classes) async {
+    final db = await database;
+    final batch = db.batch();
+
+    // Delete all existing classes
+    batch.delete('client_classes');
+
+    // Insert new classes
+    for (final classItem in classes) {
+      batch.insert('client_classes', classItem.toDatabaseMap());
+    }
+
+    await batch.commit(noResult: true);
+
+    if (kDebugMode) {
+      print('ApiDatabaseService: Saved ${classes.length} client classes');
+    }
+  }
+
+  /// Get all sales channels from database
+  Future<List<SalesChannel>> getSalesChannels() async {
+    try {
+      final db = await database;
+      final results = await db.query(
+        'sales_channels',
+        orderBy: 'name ASC',
+      );
+
+      return results.map((row) => SalesChannel.fromJson(row)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting sales channels: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Get all trading point types from database
+  /// Optionally filter by channel group for cascading dropdown
+  Future<List<TradingPointType>> getTradingPointTypes({
+    String? channelGroup,
+  }) async {
+    try {
+      final db = await database;
+      
+      List<Map<String, dynamic>> results;
+      if (channelGroup != null && channelGroup.isNotEmpty) {
+        results = await db.query(
+          'trading_point_types',
+          where: 'channel_group = ?',
+          whereArgs: [channelGroup],
+          orderBy: 'name ASC',
+        );
+      } else {
+        results = await db.query(
+          'trading_point_types',
+          orderBy: 'name ASC',
+        );
+      }
+
+      return results.map((row) => TradingPointType.fromJson(row)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting trading point types: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Get all client classes from database
+  Future<List<ClientClass>> getClientClasses() async {
+    try {
+      final db = await database;
+      final results = await db.query(
+        'client_classes',
+        orderBy: 'class_code ASC',
+      );
+
+      return results.map((row) => ClientClass.fromJson(row)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error getting client classes: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Ensure sales classifiers tables exist (for migration)
+  Future<void> ensureSalesClassifiersTablesExist() async {
+    try {
+      // Ensure sales_channels table
+      final channelsInfo = getTableCreationSql()['sales_channels'];
+      if (channelsInfo != null) {
+        await ensureTableExists(
+          'sales_channels',
+          channelsInfo['sql'] as String,
+          channelsInfo['indexes'] as List<String>,
+        );
+      }
+
+      // Ensure trading_point_types table
+      final typesInfo = getTableCreationSql()['trading_point_types'];
+      if (typesInfo != null) {
+        await ensureTableExists(
+          'trading_point_types',
+          typesInfo['sql'] as String,
+          typesInfo['indexes'] as List<String>,
+        );
+      }
+
+      // Ensure client_classes table
+      final classesInfo = getTableCreationSql()['client_classes'];
+      if (classesInfo != null) {
+        await ensureTableExists(
+          'client_classes',
+          classesInfo['sql'] as String,
+          classesInfo['indexes'] as List<String>,
+        );
+      }
+
+      // Add new columns to clients table if they don't exist
+      final db = await database;
+      await _addColumnIfNotExists(db, 'clients', 'channel_code', 'TEXT');
+      await _addColumnIfNotExists(db, 'clients', 'trading_point_type_code', 'TEXT');
+      await _addColumnIfNotExists(db, 'clients', 'client_class', 'TEXT');
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Sales classifiers tables ensured');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error ensuring sales classifiers tables: $e');
+      }
+    }
+  }
+
+  /// Helper method to add column if it doesn't exist
+  Future<void> _addColumnIfNotExists(
+    Database db,
+    String tableName,
+    String columnName,
+    String columnType,
+  ) async {
+    try {
+      // Check if column exists
+      final result = await db.rawQuery('PRAGMA table_info($tableName)');
+      final columnExists = result.any((row) => row['name'] == columnName);
+
+      if (!columnExists) {
+        await db.execute('ALTER TABLE $tableName ADD COLUMN $columnName $columnType');
+        if (kDebugMode) {
+          print('ApiDatabaseService: Added column $columnName to $tableName');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error adding column $columnName to $tableName: $e');
+      }
     }
   }
 }

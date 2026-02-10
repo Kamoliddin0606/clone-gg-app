@@ -9816,6 +9816,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Class'**
   String get productClass;
+
+  /// No description provided for @salesChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales Channel'**
+  String get salesChannel;
+
+  /// No description provided for @salesChannelRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales Channel *'**
+  String get salesChannelRequired;
+
+  /// No description provided for @clientClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Class'**
+  String get clientClass;
+
+  /// No description provided for @clientClassRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Class *'**
+  String get clientClassRequired;
+
+  /// No description provided for @tradingPointTypeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Trading Point Type *'**
+  String get tradingPointTypeRequired;
+
+  /// No description provided for @regionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Region *'**
+  String get regionRequired;
+
+  /// No description provided for @pleaseSelectSalesChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select sales channel'**
+  String get pleaseSelectSalesChannel;
+
+  /// No description provided for @pleaseSelectClientClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select client class'**
+  String get pleaseSelectClientClass;
+
+  /// No description provided for @salesChannelsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading channels...'**
+  String get salesChannelsLoading;
+
+  /// No description provided for @clientClassesLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading classes...'**
+  String get clientClassesLoading;
+
+  /// No description provided for @tradingPointTypesLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading trading point types...'**
+  String get tradingPointTypesLoading;
+
+  /// No description provided for @pleaseSelectChannelFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select channel first'**
+  String get pleaseSelectChannelFirst;
+
+  /// No description provided for @tradingPointTypesLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading trading point types'**
+  String get tradingPointTypesLoadError;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -2954,5 +2954,18 @@
   "startDateLabel": "Boshlanish: {date}",
   "endDateLabel": "Tugash: {date}",
   "bonuses": "Bonuslar",
-  "productClass": "Sinf"
+  "productClass": "Klass",
+  "salesChannel": "Mijoz kanali",
+  "salesChannelRequired": "Mijoz kanali *",
+  "clientClass": "Mijoz klassi",
+  "clientClassRequired": "Mijoz klassi *",
+  "tradingPointTypeRequired": "Savdo nuqtasi turi *",
+  "regionRequired": "Hudud *",
+  "pleaseSelectSalesChannel": "Iltimos, mijoz kanalini tanlang",
+  "pleaseSelectClientClass": "Iltimos, mijoz klassini tanlang",
+  "salesChannelsLoading": "Kanallar yuklanmoqda...",
+  "clientClassesLoading": "Klasslar yuklanmoqda...",
+  "tradingPointTypesLoading": "Savdo nuqtasi turlari yuklanmoqda...",
+  "pleaseSelectChannelFirst": "Avval mijoz kanalini tanlang",
+  "tradingPointTypesLoadError": "Savdo nuqtasi turlarini yuklashda xatolik"
 }

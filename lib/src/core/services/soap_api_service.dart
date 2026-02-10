@@ -23,6 +23,10 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_org
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_classifiers_response.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 
@@ -2706,6 +2710,10 @@ class SoapApiService {
   /// Create a new client (trading point)
   /// Based on SetClient SOAP method
   /// Returns success status, message, and client code if successful
+  /// 
+  /// NOTE: channelCode parameter accepts channel NAME (not code) for SOAP request
+  /// clientClass parameter accepts class NAME (not code) for SOAP request
+  /// tradingPointTypeCode is not sent to server (not supported yet)
   Future<Map<String, dynamic>> setClient({
     required String name,
     required String signboard,
@@ -2724,6 +2732,9 @@ class SoapApiService {
     String? director,
     String? mfo,
     String? bankAccount,
+    String? channelCode, // Actually channel NAME for server
+    String? tradingPointTypeCode, // Not sent to server
+    String? clientClass, // Actually class NAME for server
   }) async {
     if (kDebugMode) print('SOAP API: setClient - Creating new client: $name');
 
@@ -2750,6 +2761,8 @@ class SoapApiService {
          <sam:Director>${director ?? ''}</sam:Director>
          <sam:MFO>${mfo ?? ''}</sam:MFO>
          <sam:BankAccount>${bankAccount ?? ''}</sam:BankAccount>
+         <sam:SalesChannel>${channelCode ?? ''}</sam:SalesChannel>
+         <sam:Class>${clientClass ?? ''}</sam:Class>
       </sam:SetClient>
    </soap:Body>
 </soap:Envelope>
@@ -2833,10 +2846,134 @@ class SoapApiService {
         'success': true,
         'message': 'Mijoz muvaffaqiyatli yaratildi',
         'clientCode': clientCode,
+        // Return sales classifier parameters for local database storage
+        'channelCode': channelCode,
+        'tradingPointTypeCode': tradingPointTypeCode,
+        'clientClass': clientClass,
       };
     } catch (e) {
       if (kDebugMode) print('SOAP API: setClient error: $e');
       return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Get sales classifiers list (channels, trading point types, client classes)
+  /// Fetches classification data from SOAP API for client creation
+  /// 
+  /// Returns SalesClassifiersResponse containing:
+  /// - Sales channels (kanal prodaja)
+  /// - Trading point types (tip torgoviy tochka) 
+  /// - Client classes (class torgoviy tochka)
+  /// 
+  /// @throws Exception if API call fails
+  Future<SalesClassifiersResponse> getSalesClassifiersList() async {
+    if (kDebugMode) {
+      print('SOAP API: getSalesClassifiersList - Fetching sales classifiers');
+    }
+
+    const soapEnvelope = '''
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sam="http://www.sample-package.org">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <sam:getSalesClassifiersList/>
+   </soapenv:Body>
+</soapenv:Envelope>
+''';
+
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      final responseData = response.data?.toString() ?? '';
+
+      if (kDebugMode) {
+        print('═══════════════════════════════════════════════════════════════');
+        print('SOAP RESPONSE - getSalesClassifiersList');
+        print('═══════════════════════════════════════════════════════════════');
+        print(responseData);
+        print('═══════════════════════════════════════════════════════════════');
+      }
+
+      // Parse XML response
+      final document = XmlDocument.parse(responseData);
+
+      // Parse sales channels (kanalProdajaList)
+      final channels = <SalesChannel>[];
+      final channelElements = document.findAllElements('m:kanalProdajaItem');
+      for (final element in channelElements) {
+        try {
+          final channelData = {
+            'code': _getElementText(element, 'm:code'),
+            'Name': _getElementText(element, 'm:Name'),
+            'UpperGroup': _getElementText(element, 'm:UpperGroup'),
+            'isGroup': _getElementText(element, 'm:isGroup'),
+          };
+          channels.add(SalesChannel.fromXml(channelData));
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error parsing sales channel: $e');
+          }
+        }
+      }
+
+      // Parse trading point types (tipTargoviyTochkaList)
+      final tradingPointTypes = <TradingPointType>[];
+      final typeElements = document.findAllElements('m:tipTorgoviyTochkaItem');
+      for (final element in typeElements) {
+        try {
+          final typeData = {
+            'code': _getElementText(element, 'm:code'),
+            'Name': _getElementText(element, 'm:Name'),
+            'Group': _getElementText(element, 'm:Group'),
+          };
+          tradingPointTypes.add(TradingPointType.fromXml(typeData));
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error parsing trading point type: $e');
+          }
+        }
+      }
+
+      // Parse client classes (classTargoviyTochkaList)
+      final clientClasses = <ClientClass>[];
+      final classElements = document.findAllElements('m:classTargoviyTochkaItem');
+      for (final element in classElements) {
+        try {
+          final classData = {
+            'class': _getElementText(element, 'm:class'),
+          };
+          clientClasses.add(ClientClass.fromXml(classData));
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error parsing client class: $e');
+          }
+        }
+      }
+
+      if (kDebugMode) {
+        print('Parsed ${channels.length} channels, '
+            '${tradingPointTypes.length} trading point types, '
+            '${clientClasses.length} client classes');
+      }
+
+      return SalesClassifiersResponse(
+        channels: channels,
+        tradingPointTypes: tradingPointTypes,
+        clientClasses: clientClasses,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('SOAP API: getSalesClassifiersList error: $e');
+      }
+      throw Exception('Failed to fetch sales classifiers: $e');
     }
   }
 

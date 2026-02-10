@@ -4,6 +4,7 @@ abstract class AuthRepository {
   Future<UserEntity> login({
     required String username,
     required String password,
+    String? appVersion, // Optional: For GetUserEx SOAP method
   });
 
   // TODO: Add other auth methods like logout, checkStatus, etc.

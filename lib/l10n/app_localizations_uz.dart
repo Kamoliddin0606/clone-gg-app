@@ -5178,5 +5178,44 @@ class AppLocalizationsUz extends AppLocalizations {
   String get bonuses => 'Bonuslar';
 
   @override
-  String get productClass => 'Sinf';
+  String get productClass => 'Klass';
+
+  @override
+  String get salesChannel => 'Mijoz kanali';
+
+  @override
+  String get salesChannelRequired => 'Mijoz kanali *';
+
+  @override
+  String get clientClass => 'Mijoz klassi';
+
+  @override
+  String get clientClassRequired => 'Mijoz klassi *';
+
+  @override
+  String get tradingPointTypeRequired => 'Savdo nuqtasi turi *';
+
+  @override
+  String get regionRequired => 'Hudud *';
+
+  @override
+  String get pleaseSelectSalesChannel => 'Iltimos, mijoz kanalini tanlang';
+
+  @override
+  String get pleaseSelectClientClass => 'Iltimos, mijoz klassini tanlang';
+
+  @override
+  String get salesChannelsLoading => 'Kanallar yuklanmoqda...';
+
+  @override
+  String get clientClassesLoading => 'Klasslar yuklanmoqda...';
+
+  @override
+  String get tradingPointTypesLoading => 'Savdo nuqtasi turlari yuklanmoqda...';
+
+  @override
+  String get pleaseSelectChannelFirst => 'Avval mijoz kanalini tanlang';
+
+  @override
+  String get tradingPointTypesLoadError => 'Savdo nuqtasi turlarini yuklashda xatolik';
 }

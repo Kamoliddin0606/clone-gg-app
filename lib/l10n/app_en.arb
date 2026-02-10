@@ -3135,5 +3135,18 @@
     }
   },
   "bonuses": "Bonuses",
-  "productClass": "Class"
+  "productClass": "Class",
+  "salesChannel": "Sales Channel",
+  "salesChannelRequired": "Sales Channel *",
+  "clientClass": "Client Class",
+  "clientClassRequired": "Client Class *",
+  "tradingPointTypeRequired": "Trading Point Type *",
+  "regionRequired": "Region *",
+  "pleaseSelectSalesChannel": "Please select sales channel",
+  "pleaseSelectClientClass": "Please select client class",
+  "salesChannelsLoading": "Loading channels...",
+  "clientClassesLoading": "Loading classes...",
+  "tradingPointTypesLoading": "Loading trading point types...",
+  "pleaseSelectChannelFirst": "Please select channel first",
+  "tradingPointTypesLoadError": "Error loading trading point types"
 }

@@ -34,6 +34,11 @@ class TradingPoint {
   final int visitStepNumber;
   final String? plannedWeekDay;
 
+  // Sales classifiers fields
+  final String? channelCode;
+  final String? tradingPointTypeCode;
+  final String? clientClass;
+
   const TradingPoint({
     required this.id,
     required this.name,
@@ -64,6 +69,9 @@ class TradingPoint {
     this.visitToday = false,
     this.visitStepNumber = 0,
     this.plannedWeekDay,
+    this.channelCode,
+    this.tradingPointTypeCode,
+    this.clientClass,
   });
 
   factory TradingPoint.fromJson(Map<String, dynamic> json) {
@@ -117,6 +125,9 @@ class TradingPoint {
       visitToday: json['visitToday'] == true,
       visitStepNumber: json['visitStepNumber'] ?? 0,
       plannedWeekDay: json['plannedWeekDay']?.toString(),
+      channelCode: json['channelCode']?.toString(),
+      tradingPointTypeCode: json['tradingPointTypeCode']?.toString(),
+      clientClass: json['clientClass']?.toString(),
     );
   }
 
@@ -150,6 +161,9 @@ class TradingPoint {
       'visitToday': visitToday,
       'visitStepNumber': visitStepNumber,
       'plannedWeekDay': plannedWeekDay,
+      'channelCode': channelCode,
+      'tradingPointTypeCode': tradingPointTypeCode,
+      'clientClass': clientClass,
     };
   }
 
@@ -182,6 +196,9 @@ class TradingPoint {
     bool? visitToday,
     int? visitStepNumber,
     String? plannedWeekDay,
+    String? channelCode,
+    String? tradingPointTypeCode,
+    String? clientClass,
   }) {
     return TradingPoint(
       id: id ?? this.id,
@@ -212,6 +229,9 @@ class TradingPoint {
       visitToday: visitToday ?? this.visitToday,
       visitStepNumber: visitStepNumber ?? this.visitStepNumber,
       plannedWeekDay: plannedWeekDay ?? this.plannedWeekDay,
+      channelCode: channelCode ?? this.channelCode,
+      tradingPointTypeCode: tradingPointTypeCode ?? this.tradingPointTypeCode,
+      clientClass: clientClass ?? this.clientClass,
     );
   }
 

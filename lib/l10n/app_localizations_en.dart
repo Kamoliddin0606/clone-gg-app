@@ -5179,4 +5179,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get productClass => 'Class';
+
+  @override
+  String get salesChannel => 'Sales Channel';
+
+  @override
+  String get salesChannelRequired => 'Sales Channel *';
+
+  @override
+  String get clientClass => 'Client Class';
+
+  @override
+  String get clientClassRequired => 'Client Class *';
+
+  @override
+  String get tradingPointTypeRequired => 'Trading Point Type *';
+
+  @override
+  String get regionRequired => 'Region *';
+
+  @override
+  String get pleaseSelectSalesChannel => 'Please select sales channel';
+
+  @override
+  String get pleaseSelectClientClass => 'Please select client class';
+
+  @override
+  String get salesChannelsLoading => 'Loading channels...';
+
+  @override
+  String get clientClassesLoading => 'Loading classes...';
+
+  @override
+  String get tradingPointTypesLoading => 'Loading trading point types...';
+
+  @override
+  String get pleaseSelectChannelFirst => 'Please select channel first';
+
+  @override
+  String get tradingPointTypesLoadError => 'Error loading trading point types';
 }

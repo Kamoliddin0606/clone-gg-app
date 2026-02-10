@@ -38,6 +38,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_org
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
 import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 
@@ -1448,6 +1451,70 @@ class DataSyncService {
   Future<void> updateCachedClients(List<TradingPoint> clients) async {
     await _dbService.saveClients(clients);
   }
+
+  /// Sync sales classifiers data (channels, trading point types, client classes)
+  /// Fetches from SOAP API and caches in local database
+  /// Should be called during initial data sync or when classifiers need refresh
+  Future<void> syncSalesClassifiers({bool forceRefresh = false}) async {
+    try {
+      if (kDebugMode) {
+        print('DataSyncService: Syncing sales classifiers...');
+      }
+
+      // Ensure tables exist first
+      await _dbService.ensureSalesClassifiersTablesExist();
+
+      // Check if we have cached data and don't need to refresh
+      if (!forceRefresh) {
+        final cachedChannels = await _dbService.getSalesChannels();
+        final cachedTypes = await _dbService.getTradingPointTypes();
+        final cachedClasses = await _dbService.getClientClasses();
+
+        if (cachedChannels.isNotEmpty && 
+            cachedTypes.isNotEmpty && 
+            cachedClasses.isNotEmpty) {
+          if (kDebugMode) {
+            print('DataSyncService: Using cached sales classifiers');
+          }
+          return;
+        }
+      }
+
+      // Fetch from API
+      final response = await _apiService.getSalesClassifiersList();
+
+      // Save to database
+      await _dbService.saveSalesChannels(response.channels);
+      await _dbService.saveTradingPointTypes(response.tradingPointTypes);
+      await _dbService.saveClientClasses(response.clientClasses);
+
+      if (kDebugMode) {
+        print('DataSyncService: Sales classifiers synced successfully - '
+            '${response.channels.length} channels, '
+            '${response.tradingPointTypes.length} types, '
+            '${response.clientClasses.length} classes');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: Error syncing sales classifiers: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Get cached sales channels
+  Future<List<SalesChannel>> getCachedSalesChannels() => 
+      _dbService.getSalesChannels();
+
+  /// Get cached trading point types
+  /// Optionally filter by channel group for cascading dropdown
+  Future<List<TradingPointType>> getCachedTradingPointTypes({
+    String? channelGroup,
+  }) => _dbService.getTradingPointTypes(channelGroup: channelGroup);
+
+  /// Get cached client classes
+  Future<List<ClientClass>> getCachedClientClasses() => 
+      _dbService.getClientClasses();
 
   /// Conflict resolution strategies
   Future<void> resolveConflicts({

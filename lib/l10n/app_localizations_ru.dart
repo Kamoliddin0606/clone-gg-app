@@ -5179,4 +5179,43 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get productClass => 'Класс';
+
+  @override
+  String get salesChannel => 'Канал продаж';
+
+  @override
+  String get salesChannelRequired => 'Канал продаж *';
+
+  @override
+  String get clientClass => 'Класс клиента';
+
+  @override
+  String get clientClassRequired => 'Класс клиента *';
+
+  @override
+  String get tradingPointTypeRequired => 'Тип торговой точки *';
+
+  @override
+  String get regionRequired => 'Регион *';
+
+  @override
+  String get pleaseSelectSalesChannel => 'Пожалуйста, выберите канал продаж';
+
+  @override
+  String get pleaseSelectClientClass => 'Пожалуйста, выберите класс клиента';
+
+  @override
+  String get salesChannelsLoading => 'Загрузка каналов...';
+
+  @override
+  String get clientClassesLoading => 'Загрузка классов...';
+
+  @override
+  String get tradingPointTypesLoading => 'Загрузка типов торговых точек...';
+
+  @override
+  String get pleaseSelectChannelFirst => 'Сначала выберите канал';
+
+  @override
+  String get tradingPointTypesLoadError => 'Ошибка загрузки типов торговых точек';
 }

@@ -50,6 +50,16 @@ class FakturaCompanyService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
+        
+        // Validate that we have meaningful data
+        // If CompanyName and CompanyInn are both null, the company was not found
+        if (data['CompanyName'] == null && data['CompanyInn'] == null) {
+          throw FakturaCompanyException(
+            'COMPANY_NOT_FOUND',
+            statusCode: response.statusCode,
+          );
+        }
+        
         return FakturaCompanyDetails.fromJson(data);
       } else if (response.statusCode == 401) {
         throw FakturaCompanyException(

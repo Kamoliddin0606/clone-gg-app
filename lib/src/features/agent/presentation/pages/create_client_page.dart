@@ -11,7 +11,6 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
-import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:gloria_marketing_flutter/src/core/services/address_resolver_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
@@ -251,26 +250,16 @@ class _CreateClientPageState extends State<CreateClientPage>
     setState(() => _isGettingLocation = true);
 
     try {
-      // Check if location service is available
-      final locationService = sl<LocationService>();
-      final storedLocation = locationService.getStoredLocation();
+      // Always get fresh location from GPS
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+      
+      final lat = position.latitude;
+      final lng = position.longitude;
 
-      double? lat, lng;
-
-      if (storedLocation != null) {
-        lat = storedLocation['latitude'] as double?;
-        lng = storedLocation['longitude'] as double?;
-      } else {
-        // Try to get fresh location
-        final position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 10),
-        );
-        lat = position.latitude;
-        lng = position.longitude;
-      }
-
-      if (mounted && lat != null && lng != null) {
+      if (mounted) {
         setState(() {
           _latitude = lat;
           _longitude = lng;
@@ -706,8 +695,12 @@ class _CreateClientPageState extends State<CreateClientPage>
     // Fill bank details from primary account
     final primaryAccount = company.getPrimaryAccount();
     if (primaryAccount != null) {
-      _mfoController.text = primaryAccount.bankMfo;
-      _bankAccountController.text = primaryAccount.accountCode;
+      if (primaryAccount.bankMfo != null && primaryAccount.bankMfo!.isNotEmpty) {
+        _mfoController.text = primaryAccount.bankMfo!;
+      }
+      if (primaryAccount.accountCode != null && primaryAccount.accountCode!.isNotEmpty) {
+        _bankAccountController.text = primaryAccount.accountCode!;
+      }
     }
 
     // Fill phone if available
@@ -917,15 +910,19 @@ class _CreateClientPageState extends State<CreateClientPage>
       // Bank details
       final primaryAccount = companyDetails.getPrimaryAccount();
       if (primaryAccount != null) {
-        if (_mfoController.text.trim().isEmpty ||
-            _mfoController.text.trim() != primaryAccount.bankMfo) {
-          _mfoController.text = primaryAccount.bankMfo;
-          updatedCount++;
+        if (primaryAccount.bankMfo != null && primaryAccount.bankMfo!.isNotEmpty) {
+          if (_mfoController.text.trim().isEmpty ||
+              _mfoController.text.trim() != primaryAccount.bankMfo) {
+            _mfoController.text = primaryAccount.bankMfo!;
+            updatedCount++;
+          }
         }
-        if (_bankAccountController.text.trim().isEmpty ||
-            _bankAccountController.text.trim() != primaryAccount.accountCode) {
-          _bankAccountController.text = primaryAccount.accountCode;
-          updatedCount++;
+        if (primaryAccount.accountCode != null && primaryAccount.accountCode!.isNotEmpty) {
+          if (_bankAccountController.text.trim().isEmpty ||
+              _bankAccountController.text.trim() != primaryAccount.accountCode) {
+            _bankAccountController.text = primaryAccount.accountCode!;
+            updatedCount++;
+          }
         }
       }
 

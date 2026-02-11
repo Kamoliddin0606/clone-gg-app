@@ -1,6 +1,6 @@
 /// Model for Faktura.uz company details response
 class FakturaCompanyDetails {
-  final String companyInn;
+  final String? companyInn;
   final String? pinfl;
   final String companyName;
   final String companyAddress;
@@ -23,7 +23,7 @@ class FakturaCompanyDetails {
   final List<Branch> branches;
 
   FakturaCompanyDetails({
-    required this.companyInn,
+    this.companyInn,
     this.pinfl,
     required this.companyName,
     required this.companyAddress,
@@ -48,14 +48,14 @@ class FakturaCompanyDetails {
 
   factory FakturaCompanyDetails.fromJson(Map<String, dynamic> json) {
     return FakturaCompanyDetails(
-      companyInn: json['CompanyInn'] as String,
+      companyInn: json['CompanyInn'] as String?,
       pinfl: json['Pinfl'] as String?,
-      companyName: json['CompanyName'] as String,
-      companyAddress: json['CompanyAddress'] as String,
-      regionCode: json['RegionCode'] as String,
-      region: json['Region'] as String,
-      districtCode: json['DistrictCode'] as String,
-      district: json['District'] as String,
+      companyName: (json['CompanyName'] as String?) ?? '',
+      companyAddress: (json['CompanyAddress'] as String?) ?? '',
+      regionCode: (json['RegionCode'] as String?) ?? '',
+      region: (json['Region'] as String?) ?? '',
+      districtCode: (json['DistrictCode'] as String?) ?? '',
+      district: (json['District'] as String?) ?? '',
       phoneNumber: json['PhoneNumber'] as String?,
       email: json['Email'] as String?,
       vatCode: json['VatCode'] as String?,
@@ -128,22 +128,22 @@ class FakturaCompanyDetails {
 /// Bank account information
 class BankAccount {
   final String bankName;
-  final String bankMfo;
-  final String accountCode;
+  final String? bankMfo;
+  final String? accountCode;
   final bool isPrimary;
 
   BankAccount({
     required this.bankName,
-    required this.bankMfo,
-    required this.accountCode,
+    this.bankMfo,
+    this.accountCode,
     required this.isPrimary,
   });
 
   factory BankAccount.fromJson(Map<String, dynamic> json) {
     return BankAccount(
-      bankName: json['BankName'] as String,
-      bankMfo: json['BankMfo'] as String,
-      accountCode: json['AccountCode'] as String,
+      bankName: (json['BankName'] as String?) ?? '',
+      bankMfo: json['BankMfo'] as String?,
+      accountCode: json['AccountCode'] as String?,
       isPrimary: json['IsPrimary'] as bool? ?? false,
     );
   }

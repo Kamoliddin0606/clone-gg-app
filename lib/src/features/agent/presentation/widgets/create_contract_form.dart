@@ -10,11 +10,12 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/searchable_client_dialog.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
 /// Modern contract creation form widget with animations and beautiful UI
-/// 
+///
 /// This widget provides a comprehensive form for creating new contracts
 /// with support for:
 /// - Auto-filling client when filtered
@@ -26,16 +27,16 @@ import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 class CreateContractForm extends StatefulWidget {
   /// Pre-selected client code (auto-fill when navigating from filtered view)
   final String? preSelectedClientCode;
-  
+
   /// Pre-selected client name for display
   final String? preSelectedClientName;
-  
+
   /// List of available trading points/clients for selection
   final List<TradingPoint> availableClients;
-  
+
   /// Callback when contract is successfully created
   final VoidCallback? onContractCreated;
-  
+
   /// Callback to close the form
   final VoidCallback? onClose;
 
@@ -56,18 +57,18 @@ class _CreateContractFormState extends State<CreateContractForm>
     with SingleTickerProviderStateMixin {
   // Form key for validation
   final _formKey = GlobalKey<FormState>();
-  
+
   // Animation controller for form entrance
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   // Form controllers
   final _sumController = TextEditingController();
   final _numbReferenceController = TextEditingController();
   final _numbCertificateController = TextEditingController();
   final _numbPassportController = TextEditingController();
-  
+
   // Form state
   TradingPoint? _selectedClient;
   String? _selectedContractType;
@@ -77,7 +78,7 @@ class _CreateContractFormState extends State<CreateContractForm>
   DateTime? _termPassport;
   bool _certificateUnlimited = false;
   bool _isSumFieldExpanded = false;
-  
+
   // Data state
   List<ContractType> _contractTypes = [];
   List<DistrictContracting> _districtContracting = [];
@@ -101,18 +102,19 @@ class _CreateContractFormState extends State<CreateContractForm>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
-    
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
+
     _animationController.forward();
   }
 
@@ -156,7 +158,11 @@ class _CreateContractFormState extends State<CreateContractForm>
     }
   }
 
-  /// Load contract types from cache or server
+  /// Load contract types from server (if online) or cache (if offline)
+  ///
+  /// Logic:
+  /// 1. If internet is available -> fetch from server -> save to DB -> load from DB
+  /// 2. If internet is not available -> load from DB cache
   Future<void> _loadContractTypes({bool forceRefresh = false}) async {
     try {
       setState(() {
@@ -165,34 +171,50 @@ class _CreateContractFormState extends State<CreateContractForm>
       });
 
       final dbService = sl<ApiDatabaseService>();
-      
-      // First try to get from cache (unless force refresh)
-      var types = forceRefresh ? <ContractType>[] : await dbService.getContractTypes();
-      
-      // If cache is empty or force refresh, fetch from server
-      if (types.isEmpty) {
+      final connectivityService = sl<ConnectivityMonitoringService>();
+
+      // Check internet connectivity
+      final isOnline = await connectivityService.checkConnectivity();
+
+      if (isOnline) {
+        // Internet available: fetch from server, save to DB, then load from DB
         if (kDebugMode) {
-          print('CreateContractForm: ${forceRefresh ? "Force refreshing" : "No cached"} contract types, fetching from server');
+          print(
+            'CreateContractForm: Internet available, fetching contract types from server',
+          );
         }
-        
+
         try {
           final soapService = sl<SoapApiService>();
-          types = await soapService.getTypeOfContract();
-          
-          // Save to cache
-          if (types.isNotEmpty) {
-            await dbService.saveContractTypes(types);
+          final serverTypes = await soapService.getTypeOfContract();
+
+          // Save to database
+          if (serverTypes.isNotEmpty) {
+            await dbService.saveContractTypes(serverTypes);
             if (kDebugMode) {
-              print('CreateContractForm: Saved ${types.length} contract types to cache');
+              print(
+                'CreateContractForm: Saved ${serverTypes.length} contract types to database',
+              );
             }
           }
         } catch (e) {
           if (kDebugMode) {
-            print('CreateContractForm: Error fetching contract types from server: $e');
+            print(
+              'CreateContractForm: Error fetching contract types from server: $e',
+            );
           }
-          // Continue with empty types - user can still fill other fields
+          // Continue to load from DB even if server fetch fails
+        }
+      } else {
+        if (kDebugMode) {
+          print(
+            'CreateContractForm: No internet, loading contract types from database cache',
+          );
         }
       }
+
+      // Always load from database (either freshly synced or cached)
+      final types = await dbService.getContractTypes();
 
       // Filter out invalid contract types and remove duplicates
       final validTypes = <String, ContractType>{};
@@ -200,16 +222,20 @@ class _CreateContractFormState extends State<CreateContractForm>
         // Skip if name is empty or whitespace only
         if (type.name.trim().isEmpty) {
           if (kDebugMode) {
-            print('CreateContractForm: Skipping contract type with empty name: ${type.code}');
+            print(
+              'CreateContractForm: Skipping contract type with empty name: ${type.code}',
+            );
           }
           continue;
         }
-        
+
         // Keep only the first occurrence of each name (remove duplicates)
         if (!validTypes.containsKey(type.name)) {
           validTypes[type.name] = type;
         } else if (kDebugMode) {
-          print('CreateContractForm: Skipping duplicate contract type name: ${type.name}');
+          print(
+            'CreateContractForm: Skipping duplicate contract type name: ${type.name}',
+          );
         }
       }
 
@@ -223,7 +249,9 @@ class _CreateContractFormState extends State<CreateContractForm>
       }
       setState(() {
         _isLoadingTypes = false;
-        _errorMessage = AppLocalizations.of(context)?.contractTypesLoadError ?? 'Error loading contract types';
+        _errorMessage =
+            AppLocalizations.of(context)?.contractTypesLoadError ??
+            'Error loading contract types';
       });
     }
   }
@@ -233,17 +261,21 @@ class _CreateContractFormState extends State<CreateContractForm>
     try {
       final prefs = sl<SharedPreferencesService>();
       final dataSyncService = sl<DataSyncService>();
-      
+
       final userCode = prefs.getUserCode() ?? '';
       final codeProject = prefs.getCodeProject() ?? '';
-      
+
       // Try to get from cache first (unless force refresh)
-      var districts = forceRefresh ? <DistrictContracting>[] : await dataSyncService.getCachedDistrictContracting();
-      
+      var districts = forceRefresh
+          ? <DistrictContracting>[]
+          : await dataSyncService.getCachedDistrictContracting();
+
       // If cache is empty or force refresh, fetch from server
       if (districts.isEmpty && userCode.isNotEmpty && codeProject.isNotEmpty) {
         if (kDebugMode) {
-          print('CreateContractForm: ${forceRefresh ? "Force refreshing" : "No cached"} districts, fetching from server');
+          print(
+            'CreateContractForm: ${forceRefresh ? "Force refreshing" : "No cached"} districts, fetching from server',
+          );
         }
         try {
           districts = await dataSyncService.syncDistrictContracting(
@@ -253,11 +285,13 @@ class _CreateContractFormState extends State<CreateContractForm>
           );
         } catch (e) {
           if (kDebugMode) {
-            print('CreateContractForm: Error fetching districts from server: $e');
+            print(
+              'CreateContractForm: Error fetching districts from server: $e',
+            );
           }
         }
       }
-      
+
       if (mounted) {
         setState(() {
           _districtContracting = districts;
@@ -286,21 +320,34 @@ class _CreateContractFormState extends State<CreateContractForm>
     final userCode = prefs.getUserCode() ?? '';
     final codeProject = prefs.getCodeProject() ?? '';
     final dateFormat = DateFormat('yyyy-MM-dd');
-    
+
     final dateOfContract = dateFormat.format(_contractDate);
-    final sumOfContract = double.tryParse(_sumController.text.replaceAll(' ', '')) ?? 0.0;
-    final termReference = _termReference != null ? dateFormat.format(_termReference!) : '';
-    final termCertificate = _termCertificate != null ? dateFormat.format(_termCertificate!) : '';
-    final numbReference = _numbReferenceController.text.isEmpty ? '' : _numbReferenceController.text;
-    final numbCertificate = _numbCertificateController.text.isEmpty ? '' : _numbCertificateController.text;
+    final sumOfContract =
+        double.tryParse(_sumController.text.replaceAll(' ', '')) ?? 0.0;
+    final termReference = _termReference != null
+        ? dateFormat.format(_termReference!)
+        : '';
+    final termCertificate = _termCertificate != null
+        ? dateFormat.format(_termCertificate!)
+        : '';
+    final numbReference = _numbReferenceController.text.isEmpty
+        ? ''
+        : _numbReferenceController.text;
+    final numbCertificate = _numbCertificateController.text.isEmpty
+        ? ''
+        : _numbCertificateController.text;
     final typeOfContract = _selectedContractType ?? '';
-    final numbPassport = _numbPassportController.text.isEmpty ? '' : _numbPassportController.text;
-    final termPassport = _termPassport != null ? dateFormat.format(_termPassport!) : '';
+    final numbPassport = _numbPassportController.text.isEmpty
+        ? ''
+        : _numbPassportController.text;
+    final termPassport = _termPassport != null
+        ? dateFormat.format(_termPassport!)
+        : '';
     final certificateUnlimited = _certificateUnlimited ? 1 : 0;
     final codeClient = _selectedClient?.id ?? '';
     final psCodeDistrict = _selectedDistrict?.codeDistrict ?? '';
     final psNameDistrict = _selectedDistrict?.nameDistrict ?? '';
-    
+
     return '''
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
    <soap:Header/>
@@ -329,7 +376,7 @@ class _CreateContractFormState extends State<CreateContractForm>
   /// Show XML request dialog
   void _showXmlRequestDialog() {
     final xmlRequest = _buildXmlRequest();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -337,7 +384,9 @@ class _CreateContractFormState extends State<CreateContractForm>
           children: [
             Icon(Icons.code, color: Theme.of(context).colorScheme.primary),
             SizedBox(width: 8),
-            Text(AppLocalizations.of(context)?.xmlRequestLabel ?? 'XML Request'),
+            Text(
+              AppLocalizations.of(context)?.xmlRequestLabel ?? 'XML Request',
+            ),
           ],
         ),
         content: Container(
@@ -346,10 +395,7 @@ class _CreateContractFormState extends State<CreateContractForm>
           child: SingleChildScrollView(
             child: SelectableText(
               xmlRequest,
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12,
-              ),
+              style: TextStyle(fontFamily: 'monospace', fontSize: 12),
             ),
           ),
         ),
@@ -385,12 +431,18 @@ class _CreateContractFormState extends State<CreateContractForm>
     }
 
     if (_selectedClient == null) {
-      _showError(AppLocalizations.of(context)?.pleaseSelectClient ?? 'Please select a client');
+      _showError(
+        AppLocalizations.of(context)?.pleaseSelectClient ??
+            'Please select a client',
+      );
       return;
     }
 
     if (_selectedContractType == null) {
-      _showError(AppLocalizations.of(context)?.pleaseSelectContractType ?? 'Please select a contract type');
+      _showError(
+        AppLocalizations.of(context)?.pleaseSelectContractType ??
+            'Please select a contract type',
+      );
       return;
     }
 
@@ -402,27 +454,40 @@ class _CreateContractFormState extends State<CreateContractForm>
     try {
       final prefs = sl<SharedPreferencesService>();
       final soapService = sl<SoapApiService>();
-      
+
       final userCode = prefs.getUserCode() ?? '';
       final codeProject = prefs.getCodeProject() ?? '';
-      
+
       // Format dates for API
       final dateFormat = DateFormat('yyyy-MM-dd');
       // Default minimal date for 1C (SQL Server minimum date)
       const defaultMinimalDate = '1753-01-01';
-      
+
       final result = await soapService.setContract(
         dateOfContract: dateFormat.format(_contractDate),
         codeUser: userCode,
         codeClient: _selectedClient!.id,
-        sumOfContract: double.tryParse(_sumController.text.replaceAll(' ', '')) ?? 0.0,
-        termReference: _termReference != null ? dateFormat.format(_termReference!) : defaultMinimalDate,
-        termCertificate: _termCertificate != null ? dateFormat.format(_termCertificate!) : defaultMinimalDate,
-        numbReference: _numbReferenceController.text.isEmpty ? null : _numbReferenceController.text,
-        numbCertificate: _numbCertificateController.text.isEmpty ? null : _numbCertificateController.text,
+        sumOfContract:
+            double.tryParse(_sumController.text.replaceAll(' ', '')) ?? 0.0,
+        termReference: _termReference != null
+            ? dateFormat.format(_termReference!)
+            : defaultMinimalDate,
+        termCertificate: _termCertificate != null
+            ? dateFormat.format(_termCertificate!)
+            : defaultMinimalDate,
+        numbReference: _numbReferenceController.text.isEmpty
+            ? null
+            : _numbReferenceController.text,
+        numbCertificate: _numbCertificateController.text.isEmpty
+            ? null
+            : _numbCertificateController.text,
         typeOfContract: _selectedContractType!,
-        numbPassport: _numbPassportController.text.isEmpty ? null : _numbPassportController.text,
-        termPassport: _termPassport != null ? dateFormat.format(_termPassport!) : defaultMinimalDate,
+        numbPassport: _numbPassportController.text.isEmpty
+            ? null
+            : _numbPassportController.text,
+        termPassport: _termPassport != null
+            ? dateFormat.format(_termPassport!)
+            : defaultMinimalDate,
         certificateUnlimited: _certificateUnlimited,
         psCodeProject: codeProject,
         psCodeDistrict: _selectedDistrict?.codeDistrict,
@@ -431,17 +496,27 @@ class _CreateContractFormState extends State<CreateContractForm>
 
       if (result['success'] == true) {
         if (mounted) {
-          _showSuccess(result['message'] ?? AppLocalizations.of(context)?.contractCreatedSuccessfully ?? 'Contract created successfully');
+          _showSuccess(
+            result['message'] ??
+                AppLocalizations.of(context)?.contractCreatedSuccessfully ??
+                'Contract created successfully',
+          );
           widget.onContractCreated?.call();
         }
       } else {
-        _showError(result['message'] ?? AppLocalizations.of(context)?.contractCreationError ?? 'Error creating contract');
+        _showError(
+          result['message'] ??
+              AppLocalizations.of(context)?.contractCreationError ??
+              'Error creating contract',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
         print('CreateContractForm: Error creating contract: $e');
       }
-      _showError('${AppLocalizations.of(context)?.contractCreationError ?? "Error creating contract"}: $e');
+      _showError(
+        '${AppLocalizations.of(context)?.contractCreationError ?? "Error creating contract"}: $e',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -456,7 +531,7 @@ class _CreateContractFormState extends State<CreateContractForm>
     setState(() {
       _errorMessage = message;
     });
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -508,9 +583,9 @@ class _CreateContractFormState extends State<CreateContractForm>
       helpText: helpText,
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme,
-          ),
+          data: Theme.of(
+            context,
+          ).copyWith(colorScheme: Theme.of(context).colorScheme),
           child: child!,
         );
       },
@@ -555,10 +630,10 @@ class _CreateContractFormState extends State<CreateContractForm>
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               // Header
               _buildHeader(theme, colorScheme, l10n),
-              
+
               // Form content
               Flexible(
                 child: SingleChildScrollView(
@@ -571,49 +646,59 @@ class _CreateContractFormState extends State<CreateContractForm>
                         // Error message if any
                         if (_errorMessage != null)
                           _buildErrorBanner(colorScheme),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Client selection
                         _buildClientSelector(theme, colorScheme, l10n),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         // Contract type selection
                         _buildContractTypeSelector(theme, colorScheme, l10n),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         // Contract date
                         _buildDateField(
                           label: l10n?.dateOfContract ?? 'Shartnoma sanasi',
                           value: _contractDate,
-                          onChanged: (date) => setState(() => _contractDate = date),
+                          onChanged: (date) =>
+                              setState(() => _contractDate = date),
                           icon: Icons.calendar_today,
                           theme: theme,
                           colorScheme: colorScheme,
                         ),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         // Contract sum - collapsible
                         _buildCollapsibleSumField(theme, colorScheme, l10n),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Divider with label
-                        _buildSectionDivider(l10n?.documentInfoSection ?? 'Document information', colorScheme),
-                        
+                        _buildSectionDivider(
+                          l10n?.documentInfoSection ?? 'Document information',
+                          colorScheme,
+                        ),
+
                         const SizedBox(height: 16),
-                        
+
                         // Reference document fields
                         Row(
                           children: [
                             Expanded(
                               child: _buildTextField(
                                 controller: _numbReferenceController,
-                                label: l10n?.referenceNumberField ?? 'Reference number',
-                                hint: AppLocalizations.of(context)?.enterNumberHint ?? 'Raqamni kiriting',
+                                label:
+                                    l10n?.referenceNumberField ??
+                                    'Reference number',
+                                hint:
+                                    AppLocalizations.of(
+                                      context,
+                                    )?.enterNumberHint ??
+                                    'Raqamni kiriting',
                                 icon: Icons.description_outlined,
                                 theme: theme,
                                 colorScheme: colorScheme,
@@ -624,7 +709,8 @@ class _CreateContractFormState extends State<CreateContractForm>
                               child: _buildDateField(
                                 label: l10n?.termLabel ?? 'Term',
                                 value: _termReference,
-                                onChanged: (date) => setState(() => _termReference = date),
+                                onChanged: (date) =>
+                                    setState(() => _termReference = date),
                                 icon: Icons.event,
                                 isOptional: true,
                                 theme: theme,
@@ -633,17 +719,23 @@ class _CreateContractFormState extends State<CreateContractForm>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Certificate fields
                         Row(
                           children: [
                             Expanded(
                               child: _buildTextField(
                                 controller: _numbCertificateController,
-                                label: l10n?.certificateNumberField ?? 'Certificate number',
-                                hint: AppLocalizations.of(context)?.enterNumberHint ?? 'Raqamni kiriting',
+                                label:
+                                    l10n?.certificateNumberField ??
+                                    'Certificate number',
+                                hint:
+                                    AppLocalizations.of(
+                                      context,
+                                    )?.enterNumberHint ??
+                                    'Raqamni kiriting',
                                 icon: Icons.verified_outlined,
                                 theme: theme,
                                 colorScheme: colorScheme,
@@ -654,7 +746,8 @@ class _CreateContractFormState extends State<CreateContractForm>
                               child: _buildDateField(
                                 label: l10n?.termLabel ?? 'Term',
                                 value: _termCertificate,
-                                onChanged: (date) => setState(() => _termCertificate = date),
+                                onChanged: (date) =>
+                                    setState(() => _termCertificate = date),
                                 icon: Icons.event,
                                 isOptional: true,
                                 enabled: !_certificateUnlimited,
@@ -664,26 +757,32 @@ class _CreateContractFormState extends State<CreateContractForm>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 12),
-                        
+
                         // Certificate unlimited checkbox
                         _buildCheckbox(
                           value: _certificateUnlimited,
-                          label: l10n?.certificateUnlimitedField ?? 'Certificate unlimited',
-                          onChanged: (value) => setState(() => _certificateUnlimited = value ?? false),
+                          label:
+                              l10n?.certificateUnlimitedField ??
+                              'Certificate unlimited',
+                          onChanged: (value) => setState(
+                            () => _certificateUnlimited = value ?? false,
+                          ),
                           colorScheme: colorScheme,
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Passport fields
                         Row(
                           children: [
                             Expanded(
                               child: _buildTextField(
                                 controller: _numbPassportController,
-                                label: l10n?.passportNumberField ?? 'Passport number',
+                                label:
+                                    l10n?.passportNumberField ??
+                                    'Passport number',
                                 hint: 'AA1234567',
                                 icon: Icons.badge_outlined,
                                 theme: theme,
@@ -695,7 +794,8 @@ class _CreateContractFormState extends State<CreateContractForm>
                               child: _buildDateField(
                                 label: l10n?.termLabel ?? 'Term',
                                 value: _termPassport,
-                                onChanged: (date) => setState(() => _termPassport = date),
+                                onChanged: (date) =>
+                                    setState(() => _termPassport = date),
                                 icon: Icons.event,
                                 isOptional: true,
                                 theme: theme,
@@ -704,22 +804,25 @@ class _CreateContractFormState extends State<CreateContractForm>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Divider with label
-                        _buildSectionDivider(l10n?.regionInfoSection ?? 'Region information', colorScheme),
-                        
+                        _buildSectionDivider(
+                          l10n?.regionInfoSection ?? 'Region information',
+                          colorScheme,
+                        ),
+
                         const SizedBox(height: 16),
-                        
+
                         // District contracting dropdown (NameDistrict va CodeDistrict)
                         _buildDistrictContractingSelector(theme, colorScheme),
-                        
+
                         const SizedBox(height: 32),
-                        
+
                         // Submit button
                         _buildSubmitButton(colorScheme),
-                        
+
                         const SizedBox(height: 16),
                       ],
                     ),
@@ -734,7 +837,11 @@ class _CreateContractFormState extends State<CreateContractForm>
   }
 
   /// Build form header with title and close button
-  Widget _buildHeader(ThemeData theme, ColorScheme colorScheme, AppLocalizations? l10n) {
+  Widget _buildHeader(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    AppLocalizations? l10n,
+  ) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
       child: Row(
@@ -775,10 +882,7 @@ class _CreateContractFormState extends State<CreateContractForm>
           ),
           IconButton(
             onPressed: widget.onClose,
-            icon: Icon(
-              Icons.close,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            icon: Icon(Icons.close, color: colorScheme.onSurfaceVariant),
             style: IconButton.styleFrom(
               backgroundColor: colorScheme.surfaceContainerHighest,
             ),
@@ -808,7 +912,11 @@ class _CreateContractFormState extends State<CreateContractForm>
           ),
           IconButton(
             onPressed: () => setState(() => _errorMessage = null),
-            icon: Icon(Icons.close, color: colorScheme.onErrorContainer, size: 20),
+            icon: Icon(
+              Icons.close,
+              color: colorScheme.onErrorContainer,
+              size: 20,
+            ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -837,7 +945,11 @@ class _CreateContractFormState extends State<CreateContractForm>
   }
 
   /// Build client selector with search capability
-  Widget _buildClientSelector(ThemeData theme, ColorScheme colorScheme, AppLocalizations? l10n) {
+  Widget _buildClientSelector(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    AppLocalizations? l10n,
+  ) {
     final isDisabled = widget.preSelectedClientCode != null;
 
     return Column(
@@ -863,13 +975,17 @@ class _CreateContractFormState extends State<CreateContractForm>
                     ? colorScheme.error.withValues(alpha: 0.5)
                     : colorScheme.outline.withValues(alpha: 0.5),
               ),
-              color: isDisabled ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.5) : null,
+              color: isDisabled
+                  ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+                  : null,
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.business,
-                  color: isDisabled ? colorScheme.onSurfaceVariant : colorScheme.primary,
+                  color: isDisabled
+                      ? colorScheme.onSurfaceVariant
+                      : colorScheme.primary,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -903,9 +1019,10 @@ class _CreateContractFormState extends State<CreateContractForm>
                                   Flexible(
                                     child: Text(
                                       ' • INN: ${_selectedClient!.inn}',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: colorScheme.onSurfaceVariant,
+                                          ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
@@ -923,11 +1040,7 @@ class _CreateContractFormState extends State<CreateContractForm>
                 ),
                 if (!isDisabled) ...[
                   const SizedBox(width: 8),
-                  Icon(
-                    Icons.search,
-                    color: colorScheme.primary,
-                    size: 20,
-                  ),
+                  Icon(Icons.search, color: colorScheme.primary, size: 20),
                   const SizedBox(width: 4),
                   Icon(
                     Icons.keyboard_arrow_down,
@@ -954,7 +1067,11 @@ class _CreateContractFormState extends State<CreateContractForm>
             padding: const EdgeInsets.only(top: 4),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 14, color: colorScheme.onSurfaceVariant),
+                Icon(
+                  Icons.info_outline,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   'Qidirish: nom, kod, INN, telefon, tur, region...',
@@ -971,7 +1088,10 @@ class _CreateContractFormState extends State<CreateContractForm>
   }
 
   /// Build district contracting selector dropdown
-  Widget _buildDistrictContractingSelector(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildDistrictContractingSelector(
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -991,19 +1111,27 @@ class _CreateContractFormState extends State<CreateContractForm>
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colorScheme.outline.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.5),
+                  ),
                 ),
                 child: _districtContracting.isEmpty
                     ? Container(
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
-                            Icon(Icons.location_city, size: 20, color: colorScheme.onSurfaceVariant),
+                            Icon(
+                              Icons.location_city,
+                              size: 20,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 'Shahar/Tuman yuklanmoqda...',
-                                style: TextStyle(color: colorScheme.onSurfaceVariant),
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ),
                           ],
@@ -1012,9 +1140,15 @@ class _CreateContractFormState extends State<CreateContractForm>
                     : DropdownButtonFormField<DistrictContracting>(
                         value: _selectedDistrict,
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.location_city, color: colorScheme.primary),
+                          prefixIcon: Icon(
+                            Icons.location_city,
+                            color: colorScheme.primary,
+                          ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           hintText: 'Shahar/Tumanni tanlang',
                         ),
                         items: _districtContracting.map((district) {
@@ -1032,7 +1166,10 @@ class _CreateContractFormState extends State<CreateContractForm>
                           });
                         },
                         isExpanded: true,
-                        icon: Icon(Icons.keyboard_arrow_down, color: colorScheme.onSurfaceVariant),
+                        icon: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
               ),
             ),
@@ -1040,25 +1177,34 @@ class _CreateContractFormState extends State<CreateContractForm>
             // District code (auto-filled, read-only display)
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   color: colorScheme.surfaceContainerHighest,
-                  border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.tag, size: 18, color: colorScheme.onSurfaceVariant),
+                    Icon(
+                      Icons.tag,
+                      size: 18,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _selectedDistrict?.codeDistrict ?? 'Kod',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: _selectedDistrict != null 
-                              ? colorScheme.onSurface 
+                          color: _selectedDistrict != null
+                              ? colorScheme.onSurface
                               : colorScheme.onSurfaceVariant,
-                          fontWeight: _selectedDistrict != null 
-                              ? FontWeight.w600 
+                          fontWeight: _selectedDistrict != null
+                              ? FontWeight.w600
                               : FontWeight.normal,
                         ),
                       ),
@@ -1085,19 +1231,28 @@ class _CreateContractFormState extends State<CreateContractForm>
   }
 
   /// Build collapsible sum field
-  Widget _buildCollapsibleSumField(ThemeData theme, ColorScheme colorScheme, AppLocalizations? l10n) {
+  Widget _buildCollapsibleSumField(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    AppLocalizations? l10n,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
-          onTap: () => setState(() => _isSumFieldExpanded = !_isSumFieldExpanded),
+          onTap: () =>
+              setState(() => _isSumFieldExpanded = !_isSumFieldExpanded),
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.5)),
-              color: _isSumFieldExpanded ? colorScheme.surfaceContainerHighest : null,
+              border: Border.all(
+                color: colorScheme.outline.withValues(alpha: 0.5),
+              ),
+              color: _isSumFieldExpanded
+                  ? colorScheme.surfaceContainerHighest
+                  : null,
             ),
             child: Row(
               children: [
@@ -1112,16 +1267,22 @@ class _CreateContractFormState extends State<CreateContractForm>
                     _isSumFieldExpanded
                         ? (l10n?.contractSum ?? 'Shartnoma summasi')
                         : (_sumController.text.isEmpty
-                            ? (l10n?.contractSum ?? 'Shartnoma summasi')
-                            : '${l10n?.contractSum ?? 'Shartnoma summasi'}: ${_sumController.text}'),
+                              ? (l10n?.contractSum ?? 'Shartnoma summasi')
+                              : '${l10n?.contractSum ?? 'Shartnoma summasi'}: ${_sumController.text}'),
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: _isSumFieldExpanded ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
-                      fontWeight: _isSumFieldExpanded ? FontWeight.w600 : FontWeight.w500,
+                      color: _isSumFieldExpanded
+                          ? colorScheme.onSurface
+                          : colorScheme.onSurfaceVariant,
+                      fontWeight: _isSumFieldExpanded
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
                 Icon(
-                  _isSumFieldExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _isSumFieldExpanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ],
@@ -1144,24 +1305,36 @@ class _CreateContractFormState extends State<CreateContractForm>
                     autofocus: true,
                     decoration: InputDecoration(
                       hintText: '0',
-                      prefixIcon: Icon(Icons.attach_money, color: colorScheme.primary, size: 20),
+                      prefixIcon: Icon(
+                        Icons.attach_money,
+                        color: colorScheme.primary,
+                        size: 20,
+                      ),
                       suffixIcon: _sumController.text.isNotEmpty
                           ? IconButton(
                               icon: Icon(Icons.clear, size: 20),
-                              onPressed: () => setState(() => _sumController.clear()),
+                              onPressed: () =>
+                                  setState(() => _sumController.clear()),
                             )
                           : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
+                        borderSide: BorderSide(
+                          color: colorScheme.outline.withValues(alpha: 0.5),
+                        ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
+                        borderSide: BorderSide(
+                          color: colorScheme.outline.withValues(alpha: 0.5),
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                        borderSide: BorderSide(
+                          color: colorScheme.primary,
+                          width: 2,
+                        ),
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1169,11 +1342,17 @@ class _CreateContractFormState extends State<CreateContractForm>
                       ),
                       focusedErrorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colorScheme.error, width: 2),
+                        borderSide: BorderSide(
+                          color: colorScheme.error,
+                          width: 2,
+                        ),
                       ),
                       filled: true,
                       fillColor: colorScheme.surface,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                     onChanged: (value) => setState(() {}),
                   ),
@@ -1185,7 +1364,11 @@ class _CreateContractFormState extends State<CreateContractForm>
   }
 
   /// Build contract type selector dropdown
-  Widget _buildContractTypeSelector(ThemeData theme, ColorScheme colorScheme, AppLocalizations? l10n) {
+  Widget _buildContractTypeSelector(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    AppLocalizations? l10n,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1201,17 +1384,27 @@ class _CreateContractFormState extends State<CreateContractForm>
               ),
             ),
             IconButton(
-              onPressed: _isLoadingTypes ? null : () async {
-                await _loadContractTypes(forceRefresh: true);
-                await _loadDistrictContracting(forceRefresh: true);
-              },
+              onPressed: _isLoadingTypes
+                  ? null
+                  : () async {
+                      await _loadContractTypes(forceRefresh: true);
+                      await _loadDistrictContracting(forceRefresh: true);
+                    },
               icon: Icon(
                 Icons.refresh,
-                color: _isLoadingTypes ? colorScheme.onSurfaceVariant : colorScheme.primary,
+                color: _isLoadingTypes
+                    ? colorScheme.onSurfaceVariant
+                    : colorScheme.primary,
               ),
-              tooltip: AppLocalizations.of(context)?.refreshContractTypesAndRegions ?? 'Refresh contract types and regions',
+              tooltip:
+                  AppLocalizations.of(
+                    context,
+                  )?.refreshContractTypesAndRegions ??
+                  'Refresh contract types and regions',
               style: IconButton.styleFrom(
-                backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                backgroundColor: colorScheme.primaryContainer.withValues(
+                  alpha: 0.3,
+                ),
               ),
             ),
           ],
@@ -1220,7 +1413,9 @@ class _CreateContractFormState extends State<CreateContractForm>
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.5)),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.5),
+            ),
           ),
           child: _isLoadingTypes
               ? Container(
@@ -1244,33 +1439,46 @@ class _CreateContractFormState extends State<CreateContractForm>
                   ),
                 )
               : DropdownButtonFormField<String>(
-                  value: _contractTypes.any((type) => type.name == _selectedContractType) 
-                      ? _selectedContractType 
+                  value:
+                      _contractTypes.any(
+                        (type) => type.name == _selectedContractType,
+                      )
+                      ? _selectedContractType
                       : null,
                   decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.category_outlined, color: colorScheme.primary),
+                    prefixIcon: Icon(
+                      Icons.category_outlined,
+                      color: colorScheme.primary,
+                    ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    hintText: AppLocalizations.of(context)?.selectContractType ?? 'Select contract type',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    hintText:
+                        AppLocalizations.of(context)?.selectContractType ??
+                        'Select contract type',
                   ),
                   items: _contractTypes.map((type) {
                     return DropdownMenuItem<String>(
                       value: type.name,
-                      child: Text(
-                        type.name,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      child: Text(type.name, overflow: TextOverflow.ellipsis),
                     );
                   }).toList(),
-                  onChanged: (value) => setState(() => _selectedContractType = value),
+                  onChanged: (value) =>
+                      setState(() => _selectedContractType = value),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return AppLocalizations.of(context)?.selectContractType ?? 'Select contract type';
+                      return AppLocalizations.of(context)?.selectContractType ??
+                          'Select contract type';
                     }
                     return null;
                   },
                   isExpanded: true,
-                  icon: Icon(Icons.keyboard_arrow_down, color: colorScheme.onSurfaceVariant),
+                  icon: Icon(
+                    Icons.keyboard_arrow_down,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
         ),
         if (_contractTypes.isEmpty && !_isLoadingTypes)
@@ -1281,7 +1489,8 @@ class _CreateContractFormState extends State<CreateContractForm>
                 Icon(Icons.warning_amber, size: 14, color: colorScheme.error),
                 const SizedBox(width: 4),
                 Text(
-                  AppLocalizations.of(context)?.contractTypesNotFound ?? 'Contract types not found',
+                  AppLocalizations.of(context)?.contractTypesNotFound ??
+                      'Contract types not found',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.error,
                   ),
@@ -1289,7 +1498,9 @@ class _CreateContractFormState extends State<CreateContractForm>
                 const Spacer(),
                 TextButton(
                   onPressed: _loadContractTypes,
-                  child: Text(AppLocalizations.of(context)?.reloadLabel ?? 'Reload'),
+                  child: Text(
+                    AppLocalizations.of(context)?.reloadLabel ?? 'Reload',
+                  ),
                 ),
               ],
             ),
@@ -1331,11 +1542,15 @@ class _CreateContractFormState extends State<CreateContractForm>
             prefixIcon: Icon(icon, color: colorScheme.primary, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
+              borderSide: BorderSide(
+                color: colorScheme.outline.withValues(alpha: 0.5),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
+              borderSide: BorderSide(
+                color: colorScheme.outline.withValues(alpha: 0.5),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -1345,7 +1560,10 @@ class _CreateContractFormState extends State<CreateContractForm>
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: colorScheme.error),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],
@@ -1364,14 +1582,16 @@ class _CreateContractFormState extends State<CreateContractForm>
     bool enabled = true,
   }) {
     final dateFormat = DateFormat('dd.MM.yyyy');
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: theme.textTheme.labelMedium?.copyWith(
-            color: enabled ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.5),
+            color: enabled
+                ? colorScheme.onSurface
+                : colorScheme.onSurface.withValues(alpha: 0.5),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -1398,22 +1618,30 @@ class _CreateContractFormState extends State<CreateContractForm>
                     ? colorScheme.outline.withValues(alpha: 0.5)
                     : colorScheme.outline.withValues(alpha: 0.2),
               ),
-              color: enabled ? null : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              color: enabled
+                  ? null
+                  : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
             child: Row(
               children: [
                 Icon(
                   icon,
                   size: 20,
-                  color: enabled ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.3),
+                  color: enabled
+                      ? colorScheme.primary
+                      : colorScheme.onSurface.withValues(alpha: 0.3),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    value != null ? dateFormat.format(value) : (isOptional ? 'Tanlanmagan' : 'Tanlang'),
+                    value != null
+                        ? dateFormat.format(value)
+                        : (isOptional ? 'Tanlanmagan' : 'Tanlang'),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: value != null
-                          ? (enabled ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.5))
+                          ? (enabled
+                                ? colorScheme.onSurface
+                                : colorScheme.onSurface.withValues(alpha: 0.5))
                           : colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -1421,7 +1649,9 @@ class _CreateContractFormState extends State<CreateContractForm>
                 Icon(
                   Icons.calendar_today,
                   size: 18,
-                  color: enabled ? colorScheme.onSurfaceVariant : colorScheme.onSurface.withValues(alpha: 0.3),
+                  color: enabled
+                      ? colorScheme.onSurfaceVariant
+                      : colorScheme.onSurface.withValues(alpha: 0.3),
                 ),
               ],
             ),
@@ -1478,9 +1708,7 @@ class _CreateContractFormState extends State<CreateContractForm>
   Widget _buildSectionDivider(String label, ColorScheme colorScheme) {
     return Row(
       children: [
-        Expanded(
-          child: Divider(color: colorScheme.outlineVariant),
-        ),
+        Expanded(child: Divider(color: colorScheme.outlineVariant)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
@@ -1493,9 +1721,7 @@ class _CreateContractFormState extends State<CreateContractForm>
             ),
           ),
         ),
-        Expanded(
-          child: Divider(color: colorScheme.outlineVariant),
-        ),
+        Expanded(child: Divider(color: colorScheme.outlineVariant)),
       ],
     );
   }
@@ -1512,7 +1738,9 @@ class _CreateContractFormState extends State<CreateContractForm>
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
-              disabledBackgroundColor: colorScheme.primary.withValues(alpha: 0.5),
+              disabledBackgroundColor: colorScheme.primary.withValues(
+                alpha: 0.5,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -1547,7 +1775,8 @@ class _CreateContractFormState extends State<CreateContractForm>
                       const Icon(Icons.add_circle_outline, size: 24),
                       const SizedBox(width: 12),
                       Text(
-                        AppLocalizations.of(context)?.createContract ?? 'Create contract',
+                        AppLocalizations.of(context)?.createContract ??
+                            'Create contract',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -1564,7 +1793,9 @@ class _CreateContractFormState extends State<CreateContractForm>
             child: OutlinedButton.icon(
               onPressed: _showXmlRequestDialog,
               icon: const Icon(Icons.code, size: 20),
-              label: Text(AppLocalizations.of(context)?.xmlRequestLabel ?? 'XML Request'),
+              label: Text(
+                AppLocalizations.of(context)?.xmlRequestLabel ?? 'XML Request',
+              ),
               style: OutlinedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

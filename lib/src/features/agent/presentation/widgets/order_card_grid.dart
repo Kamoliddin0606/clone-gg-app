@@ -57,16 +57,48 @@ class OrderCardGrid extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Order date - top right
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        dateFormatShort.format(order.dateOrder),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant.withOpacity(0.8),
-                          fontWeight: FontWeight.w500,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 12,
+                            color: cs.tertiary.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            dateFormatShort.format(order.dateOrder),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant.withOpacity(0.8),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
+                      if (order.shippingDate != null) ...[
+                        const SizedBox(height: 2),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Icon(
+                              Icons.local_shipping_rounded,
+                              size: 12,
+                              color: cs.secondary.withOpacity(0.7),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              dateFormatShort.format(order.shippingDate!),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: cs.secondary.withOpacity(0.9),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 4),

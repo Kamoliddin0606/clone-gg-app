@@ -151,24 +151,36 @@ class OrderCard extends StatelessWidget {
                           color: cs.surfaceContainerHighest.withOpacity(0.4),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Row(
+                        child: Column(
                           children: [
-                            Expanded(
-                              child: _InfoChip(
-                                icon: Icons.calendar_today_rounded,
-                                label: dateFormatShort.format(order.dateOrder),
-                                color: cs.tertiary,
-                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _InfoChip(
+                                    icon: Icons.calendar_today_rounded,
+                                    label: dateFormatShort.format(order.dateOrder),
+                                    color: cs.tertiary,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _InfoChip(
+                                    icon: Icons.payments_rounded,
+                                    label: uzsFormat.format(order.total),
+                                    color: cs.primary,
+                                    isBold: true,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _InfoChip(
-                                icon: Icons.payments_rounded,
-                                label: uzsFormat.format(order.total),
-                                color: cs.primary,
-                                isBold: true,
+                            if (order.shippingDate != null) ...[
+                              const SizedBox(height: 8),
+                              _InfoChip(
+                                icon: Icons.local_shipping_rounded,
+                                label: dateFormatShort.format(order.shippingDate!),
+                                color: cs.secondary,
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),

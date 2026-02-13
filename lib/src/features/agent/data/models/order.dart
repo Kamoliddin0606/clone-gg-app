@@ -15,6 +15,7 @@ class Order {
   final String mainStatus;
   final String? courierName;
   final String? courierCar;
+  final DateTime? shippingDate;
   final bool
   server; // true for server-sourced data, false for local unsent orders
   final bool promo; // true if order is promotional
@@ -36,6 +37,7 @@ class Order {
     required this.mainStatus,
     this.courierName,
     this.courierCar,
+    this.shippingDate,
     this.server = false, // Default to false for local orders
     this.promo = false, // Default to false for non-promotional orders
   });
@@ -60,6 +62,9 @@ class Order {
       mainStatus: json['mainStatus']?.toString() ?? '',
       courierName: json['courierName']?.toString(),
       courierCar: json['courierCar']?.toString(),
+      shippingDate: json['shippingDate'] != null
+          ? DateTime.tryParse(json['shippingDate'].toString())
+          : null,
       server: json['server'] as bool? ?? false,
       promo: json['promo'] as bool? ?? false,
     );
@@ -83,6 +88,7 @@ class Order {
       'mainStatus': mainStatus,
       'courierName': courierName,
       'courierCar': courierCar,
+      'shippingDate': shippingDate?.toIso8601String(),
       'server': server,
       'promo': promo,
     };
@@ -105,6 +111,7 @@ class Order {
     String? mainStatus,
     String? courierName,
     String? courierCar,
+    DateTime? shippingDate,
     bool? server,
     bool? promo,
   }) {
@@ -125,6 +132,7 @@ class Order {
       mainStatus: mainStatus ?? this.mainStatus,
       courierName: courierName ?? this.courierName,
       courierCar: courierCar ?? this.courierCar,
+      shippingDate: shippingDate ?? this.shippingDate,
       server: server ?? this.server,
       promo: promo ?? this.promo,
     );
@@ -150,6 +158,7 @@ class Order {
         other.mainStatus == mainStatus &&
         other.courierName == courierName &&
         other.courierCar == courierCar &&
+        other.shippingDate == shippingDate &&
         other.server == server &&
         other.promo == promo;
   }
@@ -173,6 +182,7 @@ class Order {
       mainStatus,
       courierName,
       courierCar,
+      shippingDate,
       server,
       promo,
     );
@@ -180,6 +190,6 @@ class Order {
 
   @override
   String toString() {
-    return 'Order(id: $id, numOrder: $numOrder, dateOrder: $dateOrder, captionOrder: $captionOrder, typePriceCode: $typePriceCode, status: $status, commentSupervisor: $commentSupervisor, commentForwarder: $commentForwarder, commentAgent: $commentAgent, total: $total, clientCode: $clientCode, clientName: $clientName, codeOrg: $codeOrg, mainStatus: $mainStatus, courierName: $courierName, courierCar: $courierCar, server: $server, promo: $promo)';
+    return 'Order(id: $id, numOrder: $numOrder, dateOrder: $dateOrder, captionOrder: $captionOrder, typePriceCode: $typePriceCode, status: $status, commentSupervisor: $commentSupervisor, commentForwarder: $commentForwarder, commentAgent: $commentAgent, total: $total, clientCode: $clientCode, clientName: $clientName, codeOrg: $codeOrg, mainStatus: $mainStatus, courierName: $courierName, courierCar: $courierCar, shippingDate: $shippingDate, server: $server, promo: $promo)';
   }
 }

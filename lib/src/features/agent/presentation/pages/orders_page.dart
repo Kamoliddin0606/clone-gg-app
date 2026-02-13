@@ -570,30 +570,43 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
 
   /// Convert Order list to OrderModel list for presentation
   List<OrderModel> _convertOrdersToOrderModels(List<Order> orders) {
+    if (kDebugMode) {
+      print('Converting ${orders.length} orders to OrderModels');
+      final withShipping = orders.where((o) => o.shippingDate != null).length;
+      print('Orders with shippingDate: $withShipping');
+    }
+    
     return orders
         .map(
-          (order) => OrderModel(
-            id: order.id,
-            numOrder: order.numOrder,
-            dateOrder: order.dateOrder,
-            captionOrder: order.captionOrder,
-            typePriceCode: order.typePriceCode,
-            status: order.status,
-            commentSupervisor: order.commentSupervisor,
-            commentForwarder: order.commentForwarder,
-            commentAgent: order.commentAgent,
-            total: order.total,
-            clientCode: order.clientCode,
-            clientName: order.clientName,
-            codeOrg: order.codeOrg,
-            mainStatus: order.mainStatus,
-            courierName: order.courierName,
-            courierCar: order.courierCar,
-            courierPlate:
-                order.courierCar, // Assuming courierCar contains plate info
-            items: const [], // Items will be loaded separately if needed
-            promo: order.promo,
-          ),
+          (order) {
+            if (kDebugMode && order.shippingDate != null) {
+              print('Order ${order.numOrder}: shippingDate = ${order.shippingDate}');
+            }
+            
+            return OrderModel(
+              id: order.id,
+              numOrder: order.numOrder,
+              dateOrder: order.dateOrder,
+              captionOrder: order.captionOrder,
+              typePriceCode: order.typePriceCode,
+              status: order.status,
+              commentSupervisor: order.commentSupervisor,
+              commentForwarder: order.commentForwarder,
+              commentAgent: order.commentAgent,
+              shippingDate: order.shippingDate,
+              total: order.total,
+              clientCode: order.clientCode,
+              clientName: order.clientName,
+              codeOrg: order.codeOrg,
+              mainStatus: getCorrectedOrderStatus(order.mainStatus, order.shippingDate),
+              courierName: order.courierName,
+              courierCar: order.courierCar,
+              courierPlate:
+                  order.courierCar, // Assuming courierCar contains plate info
+              items: const [], // Items will be loaded separately if needed
+              promo: order.promo,
+            );
+          },
         )
         .toList();
   }

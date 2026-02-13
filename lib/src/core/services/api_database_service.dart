@@ -57,7 +57,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 34, // Incremented to version 34 for server_data_updated_at column in client_balances table
+      version: 35, // Incremented to version 35 for shipping_date column in orders table
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -1443,6 +1443,29 @@ class ApiDatabaseService {
         }
       }
     }
+
+    // =========================================================================
+    // Version 35: Add shipping_date to orders table
+    // Stores the expected delivery date for the order
+    // =========================================================================
+    if (oldVersion < 35) {
+      final columns = await db.rawQuery(
+        "PRAGMA table_info(orders)",
+      );
+      final hasShippingDate = columns.any(
+        (col) => col['name'] == 'shipping_date',
+      );
+      if (!hasShippingDate) {
+        await db.execute(
+          'ALTER TABLE orders ADD COLUMN shipping_date TEXT',
+        );
+        if (kDebugMode) {
+          print(
+            'ApiDatabaseService: Added shipping_date column to orders table (version 35)',
+          );
+        }
+      }
+    }
   }
 
   Future<void> _createTables(Database db) async {
@@ -1930,6 +1953,7 @@ class ApiDatabaseService {
       main_status TEXT NOT NULL,
       courier_name TEXT,
       courier_car TEXT,
+      shipping_date TEXT,
       server INTEGER NOT NULL DEFAULT 0,
       promo INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL,
@@ -5541,6 +5565,7 @@ class ApiDatabaseService {
         'main_status': order.mainStatus,
         'courier_name': order.courierName,
         'courier_car': order.courierCar,
+        'shipping_date': order.shippingDate?.toIso8601String(),
         'server': order.server ? 1 : 0,
         'promo': order.promo ? 1 : 0,
         'created_at': now,
@@ -5617,6 +5642,9 @@ class ApiDatabaseService {
             mainStatus: row['main_status'] as String,
             courierName: row['courier_name'] as String?,
             courierCar: row['courier_car'] as String?,
+            shippingDate: row['shipping_date'] != null 
+                ? DateTime.tryParse(row['shipping_date'] as String)
+                : null,
             server: (row['server'] as int?) == 1,
             promo: (row['promo'] as int?) == 1,
           ),
@@ -5657,6 +5685,9 @@ class ApiDatabaseService {
       mainStatus: row['main_status'] as String,
       courierName: row['courier_name'] as String?,
       courierCar: row['courier_car'] as String?,
+      shippingDate: row['shipping_date'] != null 
+          ? DateTime.tryParse(row['shipping_date'] as String)
+          : null,
       server: (row['server'] as int?) == 1,
       promo: (row['promo'] as int?) == 1,
     );

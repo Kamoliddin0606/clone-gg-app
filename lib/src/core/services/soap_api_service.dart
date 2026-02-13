@@ -1450,35 +1450,52 @@ class SoapApiService {
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 
-      return rowsElements
+      final orders = rowsElements
           .map(
-            (row) => Order(
-              numOrder: _getElementText(row, 'm:NumOrder') ?? '',
-              dateOrder: DateTime.parse(
-                _getElementText(row, 'm:DateOrder') ??
-                    DateTime.now().toIso8601String(),
-              ),
-              captionOrder: _getElementText(row, 'm:CaptionOrder') ?? '',
-              typePriceCode: _getElementText(row, 'm:TypePrice') ?? '',
-              status:
-                  int.tryParse(_getElementText(row, 'm:Status') ?? '0') ?? 0,
-              commentSupervisor: _getElementText(row, 'm:CommentSupervisor'),
-              commentForwarder: _getElementText(row, 'm:CommentForwarder'),
-              commentAgent: _getElementText(row, 'm:CommentAgent'),
-              total:
-                  double.tryParse(_getElementText(row, 'm:Total') ?? '0') ??
-                  0.0,
-              clientCode: _getElementText(row, 'm:ClientCode') ?? '',
-              clientName: _getElementText(row, 'm:ClientName') ?? '',
-              codeOrg: _getElementText(row, 'm:CodeOrg') ?? '',
-              mainStatus: _getElementText(row, 'm:mainStatus') ?? '',
-              courierName: _getElementText(row, 'm:courierName'),
-              courierCar: _getElementText(row, 'm:courierCar'),
-              server: true, // Server-sourced data
-              promo: _getElementText(row, 'm:Promo')?.toLowerCase() == 'true',
-            ),
+            (row) {
+              final shippingDateStr = _getElementText(row, 'm:shippingDate');
+              final shippingDate = _parseDate(shippingDateStr);
+              
+              if (kDebugMode) {
+                print('Order ${_getElementText(row, 'm:NumOrder')}: shippingDate raw = "$shippingDateStr", parsed = $shippingDate');
+              }
+              
+              return Order(
+                numOrder: _getElementText(row, 'm:NumOrder') ?? '',
+                dateOrder: DateTime.parse(
+                  _getElementText(row, 'm:DateOrder') ??
+                      DateTime.now().toIso8601String(),
+                ),
+                captionOrder: _getElementText(row, 'm:CaptionOrder') ?? '',
+                typePriceCode: _getElementText(row, 'm:TypePrice') ?? '',
+                status:
+                    int.tryParse(_getElementText(row, 'm:Status') ?? '0') ?? 0,
+                commentSupervisor: _getElementText(row, 'm:CommentSupervisor'),
+                commentForwarder: _getElementText(row, 'm:CommentForwarder'),
+                commentAgent: _getElementText(row, 'm:CommentAgent'),
+                total:
+                    double.tryParse(_getElementText(row, 'm:Total') ?? '0') ??
+                    0.0,
+                clientCode: _getElementText(row, 'm:ClientCode') ?? '',
+                clientName: _getElementText(row, 'm:ClientName') ?? '',
+                codeOrg: _getElementText(row, 'm:CodeOrg') ?? '',
+                mainStatus: _getElementText(row, 'm:mainStatus') ?? '',
+                courierName: _getElementText(row, 'm:courierName'),
+                courierCar: _getElementText(row, 'm:courierCar'),
+                shippingDate: shippingDate,
+                server: true, // Server-sourced data
+                promo: _getElementText(row, 'm:Promo')?.toLowerCase() == 'true',
+              );
+            },
           )
           .toList();
+      
+      if (kDebugMode) {
+        print('Total orders fetched: ${orders.length}');
+        print('Orders with shippingDate: ${orders.where((o) => o.shippingDate != null).length}');
+      }
+      
+      return orders;
     } catch (e) {
       throw Exception('Buyurtmalar ro\'yxatini olishda xatolik: $e');
     }

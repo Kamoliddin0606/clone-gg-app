@@ -2904,7 +2904,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get selectPriceType => 'Select price type';
+  String get selectPriceType => 'Select Price Type';
 
   @override
   String get selectPriceTypeHint => 'Click the filter button above to select a price type from the filter panel';
@@ -5218,4 +5218,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tradingPointTypesLoadError => 'Error loading trading point types';
+
+  @override
+  String get initialOrderSettings => 'Initial Order Settings';
+
+  @override
+  String get initialOrderSettingsDescription => 'Please configure the following settings before creating your first order. These settings will be used as defaults for this order.';
+
+  @override
+  String get selectOrganization => 'Select Organization';
+
+  @override
+  String get selectWarehouse => 'Select Warehouse';
+
+  @override
+  String get organizationRequired => 'Organization is required';
+
+  @override
+  String get warehouseRequired => 'Warehouse is required';
+
+  @override
+  String get priceTypeRequired => 'Price type is required';
+
+  @override
+  String get continueToOrder => 'Continue to Order';
+
+  @override
+  String get settingsNotComplete => 'Please complete all required settings';
+
+  @override
+  String get noOrganizationsAvailable => 'No organizations available';
+
+  @override
+  String get noWarehousesAvailable => 'No warehouses available';
+
+  @override
+  String get noPriceTypesAvailable => 'No price types available';
 }

@@ -5218,4 +5218,40 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tradingPointTypesLoadError => 'Ошибка загрузки типов торговых точек';
+
+  @override
+  String get initialOrderSettings => 'Начальные настройки заказа';
+
+  @override
+  String get initialOrderSettingsDescription => 'Пожалуйста, настройте следующие параметры перед созданием первого заказа. Эти настройки будут использоваться по умолчанию для этого заказа.';
+
+  @override
+  String get selectOrganization => 'Выберите организацию';
+
+  @override
+  String get selectWarehouse => 'Выберите склад';
+
+  @override
+  String get organizationRequired => 'Организация обязательна';
+
+  @override
+  String get warehouseRequired => 'Склад обязателен';
+
+  @override
+  String get priceTypeRequired => 'Тип цены обязателен';
+
+  @override
+  String get continueToOrder => 'Продолжить к заказу';
+
+  @override
+  String get settingsNotComplete => 'Пожалуйста, заполните все обязательные настройки';
+
+  @override
+  String get noOrganizationsAvailable => 'Нет доступных организаций';
+
+  @override
+  String get noWarehousesAvailable => 'Нет доступных складов';
+
+  @override
+  String get noPriceTypesAvailable => 'Нет доступных типов цен';
 }

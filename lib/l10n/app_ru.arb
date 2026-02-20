@@ -3046,5 +3046,18 @@
   "clientClassesLoading": "Загрузка классов...",
   "tradingPointTypesLoading": "Загрузка типов торговых точек...",
   "pleaseSelectChannelFirst": "Сначала выберите канал",
-  "tradingPointTypesLoadError": "Ошибка загрузки типов торговых точек"
+  "tradingPointTypesLoadError": "Ошибка загрузки типов торговых точек",
+  "initialOrderSettings": "Начальные настройки заказа",
+  "initialOrderSettingsDescription": "Пожалуйста, настройте следующие параметры перед созданием первого заказа. Эти настройки будут использоваться по умолчанию для этого заказа.",
+  "selectOrganization": "Выберите организацию",
+  "selectWarehouse": "Выберите склад",
+  "selectPriceType": "Выберите тип цены",
+  "organizationRequired": "Организация обязательна",
+  "warehouseRequired": "Склад обязателен",
+  "priceTypeRequired": "Тип цены обязателен",
+  "continueToOrder": "Продолжить к заказу",
+  "settingsNotComplete": "Пожалуйста, заполните все обязательные настройки",
+  "noOrganizationsAvailable": "Нет доступных организаций",
+  "noWarehousesAvailable": "Нет доступных складов",
+  "noPriceTypesAvailable": "Нет доступных типов цен"
 }

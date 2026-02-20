@@ -2967,5 +2967,18 @@
   "clientClassesLoading": "Klasslar yuklanmoqda...",
   "tradingPointTypesLoading": "Savdo nuqtasi turlari yuklanmoqda...",
   "pleaseSelectChannelFirst": "Avval mijoz kanalini tanlang",
-  "tradingPointTypesLoadError": "Savdo nuqtasi turlarini yuklashda xatolik"
+  "tradingPointTypesLoadError": "Savdo nuqtalari turlarini yuklashda xatolik",
+  "initialOrderSettings": "Dastlabki buyurtma sozlamalari",
+  "initialOrderSettingsDescription": "Iltimos, birinchi buyurtmani yaratishdan oldin quyidagi sozlamalarni sozlang. Bu sozlamalar ushbu buyurtma uchun standart sifatida ishlatiladi.",
+  "selectOrganization": "Tashkilotni tanlang",
+  "selectWarehouse": "Omborni tanlang",
+  "selectPriceType": "Narx turini tanlang",
+  "organizationRequired": "Tashkilot majburiy",
+  "warehouseRequired": "Ombor majburiy",
+  "priceTypeRequired": "Narx turi majburiy",
+  "continueToOrder": "Buyurtmaga o'tish",
+  "settingsNotComplete": "Iltimos, barcha majburiy sozlamalarni to'ldiring",
+  "noOrganizationsAvailable": "Mavjud tashkilotlar yo'q",
+  "noWarehousesAvailable": "Mavjud omborlar yo'q",
+  "noPriceTypesAvailable": "Mavjud narx turlari yo'q"
 }

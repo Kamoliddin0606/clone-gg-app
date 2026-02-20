@@ -26,6 +26,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/visit_steps_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/visit_timer_widget.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/floating_timer_overlay.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/initial_order_settings_dialog.dart';
 
 /// View modes for product display in the order creation interface
 enum ViewMode {
@@ -512,6 +513,11 @@ class _CreateOrderPageState extends State<CreateOrderPage>
 
   /// Initial data loading - loads organizations, warehouses, price types, products and saved order data
   /// This method is called when the widget is first created
+  /// 
+  /// Shows initial settings dialog when:
+  /// - Cart is empty (no selected products)
+  /// - No saved settings exist in database
+  /// - Not in read-only mode
   Future<void> _loadInitialData() async {
     try {
       debugPrint('CreateOrderPage: Loading initial data...');
@@ -526,30 +532,95 @@ class _CreateOrderPageState extends State<CreateOrderPage>
       // Load saved order data first to restore previous selections
       await _loadSavedOrderData();
 
-      // Set default selections based on loaded data (only if no saved data)
-      if (_selectedOrganization == null && _organizations.isNotEmpty) {
-        _selectedOrganization = _organizations.first.code;
-        _selectedOrganizationcode =
-            _organizations.first.code; // Set default organization code
+      // Check if we need to show initial settings dialog
+      // Conditions: cart is empty, no saved settings, and not read-only mode
+      final bool shouldShowInitialDialog = !widget.readOnly &&
+          _selectedProducts.isEmpty &&
+          _selectedOrganization == null &&
+          _selectedWarehouse == null &&
+          _selectedPriceType == null &&
+          (_organizations.isNotEmpty ||
+              _warehouses.isNotEmpty ||
+              _priceTypes.isNotEmpty);
+
+      if (shouldShowInitialDialog && mounted) {
         debugPrint(
-          'CreateOrderPage: Default organization set to: $_selectedOrganization',
+          'CreateOrderPage: Showing initial settings dialog (cart empty, no saved settings)',
         );
-      }
-      if (_selectedWarehouse == null && _warehouses.isNotEmpty) {
-        _selectedWarehouse = _warehouses.first.code;
-        _selectedWarehousecode =
-            _warehouses.first.code; // Set default warehouse code
-        debugPrint(
-          'CreateOrderPage: Default warehouse set to: $_selectedWarehouse',
+        
+        // Show initial settings dialog
+        final result = await showDialog<Map<String, String>>(
+          context: context,
+          barrierDismissible: false, // User must complete settings
+          builder: (context) => InitialOrderSettingsDialog(
+            organizations: _organizations,
+            warehouses: _warehouses,
+            priceTypes: _priceTypes,
+          ),
         );
-      }
-      if (_selectedPriceType == null && _priceTypes.isNotEmpty) {
-        _selectedPriceType = _priceTypes.first.code;
-        _selectedPriceTypecode =
-            _priceTypes.first.code; // Set default price type code
-        debugPrint(
-          'CreateOrderPage: Default price type set to: $_selectedPriceType',
-        );
+
+        // Apply selected settings from dialog
+        if (result != null && mounted) {
+          setState(() {
+            _selectedOrganizationcode = result['organizationCode'];
+            _selectedWarehousecode = result['warehouseCode'];
+            _selectedPriceTypecode = result['priceTypeCode'];
+
+            // Set display names from codes
+            _selectedOrganization = _organizations
+                .firstWhere(
+                  (org) => org.code == result['organizationCode'],
+                  orElse: () => _organizations.first,
+                )
+                .code;
+            _selectedWarehouse = _warehouses
+                .firstWhere(
+                  (wh) => wh.code == result['warehouseCode'],
+                  orElse: () => _warehouses.first,
+                )
+                .code;
+            _selectedPriceType = _priceTypes
+                .firstWhere(
+                  (pt) => pt.code == result['priceTypeCode'],
+                  orElse: () => _priceTypes.first,
+                )
+                .code;
+          });
+
+          debugPrint(
+            'CreateOrderPage: Initial settings applied from dialog - '
+            'Org: $_selectedOrganization, Warehouse: $_selectedWarehouse, PriceType: $_selectedPriceType',
+          );
+
+          // Save initial settings immediately
+          await _saveOrderDraft();
+        }
+      } else {
+        // Set default selections based on loaded data (only if no saved data)
+        if (_selectedOrganization == null && _organizations.isNotEmpty) {
+          _selectedOrganization = _organizations.first.code;
+          _selectedOrganizationcode =
+              _organizations.first.code; // Set default organization code
+          debugPrint(
+            'CreateOrderPage: Default organization set to: $_selectedOrganization',
+          );
+        }
+        if (_selectedWarehouse == null && _warehouses.isNotEmpty) {
+          _selectedWarehouse = _warehouses.first.code;
+          _selectedWarehousecode =
+              _warehouses.first.code; // Set default warehouse code
+          debugPrint(
+            'CreateOrderPage: Default warehouse set to: $_selectedWarehouse',
+          );
+        }
+        if (_selectedPriceType == null && _priceTypes.isNotEmpty) {
+          _selectedPriceType = _priceTypes.first.code;
+          _selectedPriceTypecode =
+              _priceTypes.first.code; // Set default price type code
+          debugPrint(
+            'CreateOrderPage: Default price type set to: $_selectedPriceType',
+          );
+        }
       }
 
       // Load products if we have required data

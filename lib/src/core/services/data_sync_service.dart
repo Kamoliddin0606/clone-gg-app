@@ -343,7 +343,7 @@ class DataSyncService {
       await _syncUserOrganizations(userCode);
 
       // Sync promotions
-      if ( isAvonServerSelected() || isEvyapServerSelected() ) {
+      if ( isAvonServerSelected() || isEvyapServerSelected() || isProwashServerSelected() ) {
         await _syncPromotions(null); // No auth token needed for now
       }
 
@@ -544,8 +544,8 @@ class DataSyncService {
 
       final backgroundTasks = <Future<void>>[];
 
-      // Sync promotions for Avon/Evyap servers
-      if (isAvonServerSelected() || isEvyapServerSelected()) {
+      // Sync promotions for Avon/Evyap/ProWash servers
+      if (isAvonServerSelected() || isEvyapServerSelected() || isProwashServerSelected()) {
         backgroundTasks.add(_syncPromotions(null).then((_) {}).catchError((e) {
           if (kDebugMode) print('[SYNC] Background promotions sync error: $e');
         }));
@@ -1099,7 +1099,7 @@ class DataSyncService {
       }
     }
 
-    if( isAvonServerSelected() || isEvyapServerSelected() ) {
+    if( isAvonServerSelected() || isEvyapServerSelected() || isProwashServerSelected() ) {
       if (kDebugMode) print('[$timestamp] DEBUG SYNC: Proceeding with fresh sync');
       return await _syncPromotions(authToken);
     }
@@ -1232,7 +1232,7 @@ class DataSyncService {
   }
 
   Future<List<PromotionModel>> _syncPromotions(String? authToken) async {
-    if(isEvyapServerSelected()|| isAvonServerSelected()){
+    if(isEvyapServerSelected()|| isAvonServerSelected() || isProwashServerSelected()){
       final timestamp = DateTime.now().toIso8601String();
       if (kDebugMode) print('[$timestamp] DEBUG SYNC: _syncPromotions called');
 
@@ -1668,6 +1668,20 @@ class DataSyncService {
     } catch (e) {
       if (kDebugMode) {
         print('Error checking Avon server: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Check if user has ProWash server
+  /// Returns true if current server is ProWash, false otherwise
+  bool isProwashServerSelected() {
+    try {
+      final serverName = _prefs.getServerName();
+      return serverName == 'ProWash';
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking ProWash server: $e');
       }
       return false;
     }

@@ -5554,7 +5554,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectPriceType.
   ///
   /// In en, this message translates to:
-  /// **'Select price type'**
+  /// **'Select Price Type'**
   String get selectPriceType;
 
   /// No description provided for @selectPriceTypeHint.
@@ -9894,6 +9894,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error loading trading point types'**
   String get tradingPointTypesLoadError;
+
+  /// No description provided for @initialOrderSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial Order Settings'**
+  String get initialOrderSettings;
+
+  /// No description provided for @initialOrderSettingsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Please configure the following settings before creating your first order. These settings will be used as defaults for this order.'**
+  String get initialOrderSettingsDescription;
+
+  /// No description provided for @selectOrganization.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Organization'**
+  String get selectOrganization;
+
+  /// No description provided for @selectWarehouse.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Warehouse'**
+  String get selectWarehouse;
+
+  /// No description provided for @organizationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization is required'**
+  String get organizationRequired;
+
+  /// No description provided for @warehouseRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse is required'**
+  String get warehouseRequired;
+
+  /// No description provided for @priceTypeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Price type is required'**
+  String get priceTypeRequired;
+
+  /// No description provided for @continueToOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to Order'**
+  String get continueToOrder;
+
+  /// No description provided for @settingsNotComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Please complete all required settings'**
+  String get settingsNotComplete;
+
+  /// No description provided for @noOrganizationsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No organizations available'**
+  String get noOrganizationsAvailable;
+
+  /// No description provided for @noWarehousesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No warehouses available'**
+  String get noWarehousesAvailable;
+
+  /// No description provided for @noPriceTypesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No price types available'**
+  String get noPriceTypesAvailable;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

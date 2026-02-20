@@ -19,6 +19,7 @@ import 'package:gloria_marketing_flutter/src/core/models/faktura_company_details
 import 'package:gloria_marketing_flutter/src/core/models/scanned_document_data.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/document_scanner_widget.dart';
 import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/uzbek_phone_formatter.dart';
 
 /// Page for creating a new client (trading point)
 /// Beautiful, user-friendly form with all required fields
@@ -455,7 +456,10 @@ class _CreateClientPageState extends State<CreateClientPage>
       if (result['success'] == true) {
         // Show success message
         if (mounted) {
-          _showSuccessDialog(result['clientCode']);
+          _showSuccessDialog(
+            result['clientCode'],
+            result['message'],
+          );
         }
       } else {
         throw Exception(result['message'] ?? 'Noma\'lum xatolik');
@@ -477,7 +481,7 @@ class _CreateClientPageState extends State<CreateClientPage>
     }
   }
 
-  void _showSuccessDialog(String? clientCode) {
+  void _showSuccessDialog(String? clientCode, String? serverMessage) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -520,6 +524,16 @@ class _CreateClientPageState extends State<CreateClientPage>
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
+              ),
+            ],
+            if (serverMessage != null && serverMessage.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                serverMessage,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
               ),
             ],
             const SizedBox(height: 24),
@@ -1060,21 +1074,20 @@ class _CreateClientPageState extends State<CreateClientPage>
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 12),
-                _buildTextField(
+                _buildPhoneField(
                   controller: _contactPhoneController,
                   label: l10n.createClientPhone,
                   hint: l10n.createClientPhoneHint,
                   icon: Icons.phone,
                   isRequired: true,
-                  keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 12),
-                _buildTextField(
+                _buildPhoneField(
                   controller: _responsiblePhoneController,
                   label: l10n.createClientResponsiblePhone,
                   hint: l10n.createClientResponsiblePhoneHint,
                   icon: Icons.phone_android,
-                  keyboardType: TextInputType.phone,
+                  isRequired: false,
                 ),
 
                 const SizedBox(height: 24),
@@ -1509,6 +1522,56 @@ class _CreateClientPageState extends State<CreateClientPage>
               return null;
             }
           : null,
+    );
+  }
+
+  Widget _buildPhoneField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool isRequired = false,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return TextFormField(
+      controller: controller,
+      keyboardType: TextInputType.phone,
+      inputFormatters: [
+        UzbekPhoneNumberFormatter(),
+      ],
+      maxLength: 13,
+      style: TextStyle(color: colorScheme.onSurface),
+      decoration: InputDecoration(
+        labelText: isRequired ? '$label *' : label,
+        hintText: hint,
+        prefixIcon: Icon(icon, color: colorScheme.primary),
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.error),
+        ),
+        counterText: '',
+        helperText: '+998XXXXXXXXX',
+        helperStyle: TextStyle(
+          color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+          fontSize: 12,
+        ),
+      ),
+      validator: (value) => validateUzbekPhoneNumber(value, isRequired: isRequired),
     );
   }
 

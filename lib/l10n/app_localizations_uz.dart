@@ -5217,5 +5217,41 @@ class AppLocalizationsUz extends AppLocalizations {
   String get pleaseSelectChannelFirst => 'Avval mijoz kanalini tanlang';
 
   @override
-  String get tradingPointTypesLoadError => 'Savdo nuqtasi turlarini yuklashda xatolik';
+  String get tradingPointTypesLoadError => 'Savdo nuqtalari turlarini yuklashda xatolik';
+
+  @override
+  String get initialOrderSettings => 'Dastlabki buyurtma sozlamalari';
+
+  @override
+  String get initialOrderSettingsDescription => 'Iltimos, birinchi buyurtmani yaratishdan oldin quyidagi sozlamalarni sozlang. Bu sozlamalar ushbu buyurtma uchun standart sifatida ishlatiladi.';
+
+  @override
+  String get selectOrganization => 'Tashkilotni tanlang';
+
+  @override
+  String get selectWarehouse => 'Omborni tanlang';
+
+  @override
+  String get organizationRequired => 'Tashkilot majburiy';
+
+  @override
+  String get warehouseRequired => 'Ombor majburiy';
+
+  @override
+  String get priceTypeRequired => 'Narx turi majburiy';
+
+  @override
+  String get continueToOrder => 'Buyurtmaga o\'tish';
+
+  @override
+  String get settingsNotComplete => 'Iltimos, barcha majburiy sozlamalarni to\'ldiring';
+
+  @override
+  String get noOrganizationsAvailable => 'Mavjud tashkilotlar yo\'q';
+
+  @override
+  String get noWarehousesAvailable => 'Mavjud omborlar yo\'q';
+
+  @override
+  String get noPriceTypesAvailable => 'Mavjud narx turlari yo\'q';
 }

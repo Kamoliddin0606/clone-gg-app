@@ -3148,5 +3148,18 @@
   "clientClassesLoading": "Loading classes...",
   "tradingPointTypesLoading": "Loading trading point types...",
   "pleaseSelectChannelFirst": "Please select channel first",
-  "tradingPointTypesLoadError": "Error loading trading point types"
+  "tradingPointTypesLoadError": "Error loading trading point types",
+  "initialOrderSettings": "Initial Order Settings",
+  "initialOrderSettingsDescription": "Please configure the following settings before creating your first order. These settings will be used as defaults for this order.",
+  "selectOrganization": "Select Organization",
+  "selectWarehouse": "Select Warehouse",
+  "selectPriceType": "Select Price Type",
+  "organizationRequired": "Organization is required",
+  "warehouseRequired": "Warehouse is required",
+  "priceTypeRequired": "Price type is required",
+  "continueToOrder": "Continue to Order",
+  "settingsNotComplete": "Please complete all required settings",
+  "noOrganizationsAvailable": "No organizations available",
+  "noWarehousesAvailable": "No warehouses available",
+  "noPriceTypesAvailable": "No price types available"
 }

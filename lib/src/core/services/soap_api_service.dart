@@ -1308,15 +1308,18 @@ class SoapApiService {
     }
   }
 
-  /// Helper method to format DateTime to YYYYMMDD string format
+  /// Helper method to format DateTime to YYYYMMDDHHmmss string format
   /// This method converts a DateTime object to a string in the format required by the server API
-  /// Format: YYYYMMDD (e.g., "20251203" for December 3, 2025)
+  /// Format: YYYYMMDDHHmmss (e.g., "20251203142530" for December 3, 2025 14:25:30)
   /// Used for CreateDate and ShippingDate fields in setOrder XML requests
   String _formatDateForApi(DateTime dateTime) {
     final year = dateTime.year.toString();
     final month = dateTime.month.toString().padLeft(2, '0');
     final day = dateTime.day.toString().padLeft(2, '0');
-    return '$year$month$day';
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final second = dateTime.second.toString().padLeft(2, '0');
+    return '$year$month$day$hour$minute$second';
   }
 
   /// Get order status list
@@ -1392,12 +1395,12 @@ class SoapApiService {
       <sam:CodeClient>${order.codeClient}</sam:CodeClient>
       <sam:CodePrice>${order.codePrice}</sam:CodePrice>
       <sam:Payment>${order.payment}</sam:Payment>
-      <!-- ShippingDate formatted as YYYYMMDD string (e.g., "20251203") as required by server API -->
+      <!-- ShippingDate formatted as YYYYMMDDHHmmss string (e.g., "20251203142530") as required by server API -->
       <sam:ShippingDate>${_formatDateForApi(order.shippingDate)}</sam:ShippingDate>
       <sam:CommentSupervisor>${order.commentSupervisor ?? ''}</sam:CommentSupervisor>
       <sam:CommentForwarder>${order.commentForwarder ?? ''}</sam:CommentForwarder>
       <sam:Comment>${order.comment ?? ''}</sam:Comment>
-      <!-- CreateDate formatted as YYYYMMDD string (e.g., "20251203") as required by server API -->
+      <!-- CreateDate formatted as YYYYMMDDHHmmss string (e.g., "20251203142530") as required by server API -->
       <sam:CreateDate>${_formatDateForApi(order.createDate)}</sam:CreateDate>
       <sam:Longitude>${order.longitude}</sam:Longitude>
       <sam:Latitude>${order.latitude}</sam:Latitude>
@@ -2047,14 +2050,14 @@ class SoapApiService {
         )
         .join();
 
-    // Generate XML for credit details with dates formatted as YYYYMMDD strings
+    // Generate XML for credit details with dates formatted as YYYYMMDDHHmmss strings
     // DateOfPayment is formatted using _formatDateForApi to match server API requirements
     final creditDetailsXml = order.creditDetails
         .map(
           (cd) =>
               '''
       <sam:Rows>
-         <!-- DateOfPayment formatted as YYYYMMDD string (e.g., "20251203") as required by server API -->
+         <!-- DateOfPayment formatted as YYYYMMDDHHmmss string (e.g., "20251203142530") as required by server API -->
          <sam:DateOfPayment>${_formatDateForApi(cd.dateOfPayment)}</sam:DateOfPayment>
          <sam:Total>${cd.total}</sam:Total>
       </sam:Rows>
@@ -2813,6 +2816,7 @@ class SoapApiService {
           '═══════════════════════════════════════════════════════════════',
         );
         print('SOAP RESPONSE - SetClient');
+        print('Status Code: ${response.statusCode}');
         print(
           '═══════════════════════════════════════════════════════════════',
         );
@@ -2850,23 +2854,86 @@ class SoapApiService {
       final document = XmlDocument.parse(responseData);
       final returnElement = document.findAllElements('m:return').firstOrNull;
 
-      // Try to extract client code from response
-      String? clientCode;
-      if (returnElement != null) {
-        clientCode =
-            _getElementText(returnElement, 'm:CodeClient') ??
-            _getElementText(returnElement, 'm:Code') ??
-            returnElement.innerText.trim();
+      if (kDebugMode) {
+        print('Parsed return element: ${returnElement?.toXmlString()}');
       }
 
+      // Check for error code or message in response
+      String? code;
+      String? message;
+      String? clientCode;
+      
+      if (returnElement != null) {
+        // Extract Code field (0 means error, non-zero means success)
+        code = _getElementText(returnElement, 'm:Code');
+        
+        // Extract Message field (always display if present)
+        message = _getElementText(returnElement, 'm:Message') ??
+            _getElementText(returnElement, 'm:Text') ??
+            _getElementText(returnElement, 'm:ErrorMessage');
+        
+        // Try to extract client code
+        clientCode = _getElementText(returnElement, 'm:CodeClient') ??
+            _getElementText(returnElement, 'm:ClientCode');
+        
+        // If no specific fields found, check inner text
+        if (code == null && message == null && clientCode == null) {
+          final innerText = returnElement.innerText.trim();
+          if (innerText.isNotEmpty) {
+            clientCode = innerText;
+          }
+        }
+
+        if (kDebugMode) {
+          print('Parsed values:');
+          print('  Code: $code');
+          print('  Message: $message');
+          print('  clientCode: $clientCode');
+        }
+      }
+
+      // Code = 0 means error
+      if (code == '0') {
+        final errorMsg = message != null && message.isNotEmpty
+            ? 'Server javobi: $message'
+            : 'Server xatosi';
+        return {
+          'success': false,
+          'message': errorMsg,
+          'code': code,
+        };
+      }
+
+      // If we have a client code or non-zero code, consider it successful
+      if (clientCode != null && clientCode.isNotEmpty) {
+        final successMsg = message != null && message.isNotEmpty
+            ? 'Server javobi: $message'
+            : 'Mijoz muvaffaqiyatli yaratildi';
+        return {
+          'success': true,
+          'message': successMsg,
+          'clientCode': clientCode,
+          'code': code,
+          // Return sales classifier parameters for local database storage
+          'channelCode': channelCode,
+          'tradingPointTypeCode': tradingPointTypeCode,
+          'clientClass': clientClass,
+        };
+      }
+
+      // If no client code and no clear error, it's ambiguous
+      if (kDebugMode) {
+        print('WARNING: SetClient response is ambiguous - no client code or error found');
+      }
+      
+      final ambiguousMsg = message != null && message.isNotEmpty
+          ? 'Server javobi: $message'
+          : 'Server javobida mijoz kodi topilmadi';
+      
       return {
-        'success': true,
-        'message': 'Mijoz muvaffaqiyatli yaratildi',
-        'clientCode': clientCode,
-        // Return sales classifier parameters for local database storage
-        'channelCode': channelCode,
-        'tradingPointTypeCode': tradingPointTypeCode,
-        'clientClass': clientClass,
+        'success': false,
+        'message': ambiguousMsg,
+        'code': code,
       };
     } catch (e) {
       if (kDebugMode) print('SOAP API: setClient error: $e');

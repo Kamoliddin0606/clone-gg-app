@@ -30,6 +30,16 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
+    // On web platform, use in-memory database
+    if (kIsWeb) {
+      return await openDatabase(
+        inMemoryDatabasePath,
+        version: _dbVersion,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      );
+    }
+
     try {
       final dbPath = await getDatabasesPath();
       final path = join(dbPath, _dbName);

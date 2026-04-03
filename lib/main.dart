@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -27,15 +26,14 @@ void main() async {
   // TODO: Initialize Firebase
   // await Firebase.initializeApp();
 
-  // Initialize Database (skip on web - sqflite not supported)
-  if (!kIsWeb) {
-    await sl<DatabaseHelper>().database;
-  }
+  // Initialize Database
+  await sl<DatabaseHelper>().database;
 
   // TODO: Initialize other services
 
   runApp(const App());
 }
+
 
 
 class App extends StatelessWidget {

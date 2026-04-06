@@ -4599,25 +4599,32 @@ class ApiDatabaseService {
         LEFT JOIN sales_req_permissions srp ON srp.user_code = ?
         LEFT JOIN (
           SELECT
-            client_code,
-            image,
-            image_url,
-            image_sm_url,
-            image_md_url,
-            image_thumbnail_url,
-            ROW_NUMBER() OVER (
-              PARTITION BY client_code
-              ORDER BY is_main DESC, updated_at DESC, id DESC
-            ) as rn
-          FROM client_images
-        ) ci ON ci.client_code = c.code AND ci.rn = 1
+            ci1.client_code,
+            ci1.image,
+            ci1.image_url,
+            ci1.image_sm_url,
+            ci1.image_md_url,
+            ci1.image_thumbnail_url
+          FROM client_images ci1
+          WHERE ci1.id = (
+            SELECT ci2.id
+            FROM client_images ci2
+            WHERE ci2.client_code = ci1.client_code
+            ORDER BY ci2.is_main DESC, ci2.updated_at DESC, ci2.id DESC
+            LIMIT 1
+          )
+          GROUP BY ci1.client_code
+        ) ci ON ci.client_code = c.code
         LEFT JOIN (
           SELECT
-            code_client,
-            ROW_NUMBER() OVER (ORDER BY id) as visit_order,
-            week_day
-          FROM planned_routes
-          WHERE user_code = ? AND code_weekday = ?
+            pr1.code_client,
+            (SELECT COUNT(*) FROM planned_routes pr2 
+             WHERE pr2.user_code = pr1.user_code 
+             AND pr2.code_weekday = pr1.code_weekday 
+             AND pr2.id <= pr1.id) as visit_order,
+            pr1.week_day
+          FROM planned_routes pr1
+          WHERE pr1.user_code = ? AND pr1.code_weekday = ?
         ) pr ON c.code = pr.code_client
         ORDER BY c.name ASC''',
         [userCode, userCode, currentWeekdayCode],

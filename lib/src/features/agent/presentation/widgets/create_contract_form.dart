@@ -9,6 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/searchable_client_dialog.dart';
@@ -82,8 +83,11 @@ class _CreateContractFormState extends State<CreateContractForm>
   // Data state
   List<ContractType> _contractTypes = [];
   List<DistrictContracting> _districtContracting = [];
+  List<UserProject> _userProjects = [];
   DistrictContracting? _selectedDistrict;
+  UserProject? _selectedProject;
   bool _isLoadingTypes = true;
+  bool _isLoadingProjects = true;
   bool _isSubmitting = false;
   String? _errorMessage;
 
@@ -93,6 +97,7 @@ class _CreateContractFormState extends State<CreateContractForm>
     _initAnimations();
     _loadContractTypes();
     _loadDistrictContracting();
+    _loadUserProjects();
     _initPreSelectedClient();
   }
 
@@ -304,6 +309,66 @@ class _CreateContractFormState extends State<CreateContractForm>
     }
   }
 
+  /// Загрузить проекты пользователя из кеша или сервера
+  /// Foydalanuvchi loyihalarini keshdan yoki serverdan yuklash
+  /// Load user projects from cache or server
+  Future<void> _loadUserProjects({bool forceRefresh = false}) async {
+    try {
+      setState(() {
+        _isLoadingProjects = true;
+      });
+
+      final prefs = sl<SharedPreferencesService>();
+      final dataSyncService = sl<DataSyncService>();
+
+      final userCode = prefs.getUserCode() ?? '';
+
+      // Кешдан олишга харакат қиламиз (force refresh бўлмаса)
+      // Try to get from cache first (unless force refresh)
+      var projects = forceRefresh
+          ? <UserProject>[]
+          : await dataSyncService.getCachedUserProjects(userCode);
+
+      // Агар кеш бўш бўлса ёки force refresh бўлса, серверга сўров юбориш
+      // If cache is empty or force refresh, fetch from server
+      if (projects.isEmpty && userCode.isNotEmpty) {
+        if (kDebugMode) {
+          print(
+            'CreateContractForm: ${forceRefresh ? "Force refreshing" : "No cached"} user projects, fetching from server',
+          );
+        }
+        try {
+          projects = await dataSyncService.syncUserProjects(
+            userCode: userCode,
+            forceRefresh: true,
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            print(
+              'CreateContractForm: Error fetching user projects from server: $e',
+            );
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _userProjects = projects;
+          _isLoadingProjects = false;
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('CreateContractForm: Error loading user projects: $e');
+      }
+      if (mounted) {
+        setState(() {
+          _isLoadingProjects = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -337,9 +402,7 @@ class _CreateContractFormState extends State<CreateContractForm>
         ? ''
         : _numbCertificateController.text;
     final typeOfContract = _selectedContractType ?? '';
-    final numbPassport = _numbPassportController.text.isEmpty
-        ? ''
-        : _numbPassportController.text;
+    final numbPassport = _selectedProject?.code ?? '';
     final termPassport = _termPassport != null
         ? dateFormat.format(_termPassport!)
         : '';
@@ -446,6 +509,17 @@ class _CreateContractFormState extends State<CreateContractForm>
       return;
     }
 
+    // Проверка выбора проекта (обязательное поле)
+    // Loyiha tanlanganligini tekshirish (majburiy maydon)
+    // Check project selection (required field)
+    if (_selectedProject == null) {
+      _showError(
+        AppLocalizations.of(context)?.projectRequired ??
+            'Project selection is required',
+      );
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
@@ -482,9 +556,10 @@ class _CreateContractFormState extends State<CreateContractForm>
             ? null
             : _numbCertificateController.text,
         typeOfContract: _selectedContractType!,
-        numbPassport: _numbPassportController.text.isEmpty
-            ? null
-            : _numbPassportController.text,
+        // Отправляем код проекта в поле NumbPassport для генерации номера договора
+        // Loyiha kodini NumbPassport maydoniga yuboramiz shartnoma raqamini generatsiya qilish uchun
+        // Send project code in NumbPassport field for contract number generation
+        numbPassport: _selectedProject?.code ?? _numbPassportController.text,
         termPassport: _termPassport != null
             ? dateFormat.format(_termPassport!)
             : defaultMinimalDate,
@@ -817,6 +892,19 @@ class _CreateContractFormState extends State<CreateContractForm>
 
                         // District contracting dropdown (NameDistrict va CodeDistrict)
                         _buildDistrictContractingSelector(theme, colorScheme),
+
+                        const SizedBox(height: 24),
+
+                        // Divider with label
+                        _buildSectionDivider(
+                          l10n?.projectInfoSection ?? 'Project information',
+                          colorScheme,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Project selection dropdown (required)
+                        _buildProjectSelector(theme, colorScheme, l10n),
 
                         const SizedBox(height: 32),
 
@@ -1223,6 +1311,231 @@ class _CreateContractFormState extends State<CreateContractForm>
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.primary,
                 fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Построить селектор проектов пользователя
+  /// Foydalanuvchi loyihalarini tanlash selektorini yaratish
+  /// Build user projects selector dropdown
+  Widget _buildProjectSelector(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    AppLocalizations? l10n,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              l10n?.projectFieldLabel ?? 'Loyiha',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 4),
+            // Обязательное поле / Majburiy maydon / Required field
+            Text(
+              '*',
+              style: TextStyle(
+                color: colorScheme.error,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Info icon with tooltip
+            Tooltip(
+              message: l10n?.projectInfoTooltip ??
+                  'Shartnoma raqami tanlangan loyihaning raqamlash tizimi asosida generatsiya qilinadi',
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: colorScheme.inverseSurface,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: TextStyle(
+                color: colorScheme.onInverseSurface,
+                fontSize: 13,
+              ),
+              child: Icon(
+                Icons.info_outline,
+                size: 20,
+                color: colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            // Project dropdown
+            Expanded(
+              flex: 2,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _selectedProject == null
+                        ? colorScheme.error.withValues(alpha: 0.5)
+                        : colorScheme.outline.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: _isLoadingProjects
+                    ? Container(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Loyihalar yuklanmoqda...',
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _userProjects.isEmpty
+                        ? Container(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.folder_special,
+                                  size: 20,
+                                  color: colorScheme.error,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Loyihalar topilmadi',
+                                    style: TextStyle(
+                                      color: colorScheme.error,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : DropdownButtonFormField<UserProject>(
+                            value: _selectedProject,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.folder_special,
+                                color: colorScheme.primary,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              hintText: l10n?.selectProject ?? 'Loyihani tanlang',
+                            ),
+                            items: _userProjects.map((project) {
+                              return DropdownMenuItem<UserProject>(
+                                value: project,
+                                child: Text(
+                                  project.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedProject = value;
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null) {
+                                return l10n?.projectRequired ??
+                                    'Loyiha tanlash majburiy';
+                              }
+                              return null;
+                            },
+                            isExpanded: true,
+                            icon: Icon(
+                              Icons.keyboard_arrow_down,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Project code (auto-filled, read-only display)
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: colorScheme.surfaceContainerHighest,
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.tag,
+                      size: 18,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _selectedProject?.code ?? 'Kod',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: _selectedProject != null
+                              ? colorScheme.onSurface
+                              : colorScheme.onSurfaceVariant,
+                          fontWeight: _selectedProject != null
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (_selectedProject != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Shartnoma raqami ushbu loyiha uchun generatsiya qilinadi',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.primary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        if (_selectedProject == null && !_isLoadingProjects)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              l10n?.projectRequired ?? 'Loyiha tanlash majburiy',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.error,
               ),
             ),
           ),

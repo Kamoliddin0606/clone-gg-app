@@ -3522,6 +3522,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncStepSyncingUserOrganizations => 'Загрузка организаций пользователя...';
 
   @override
+  String get syncStepSyncingUserProjects => 'Загрузка проектов пользователя...';
+
+  @override
   String get syncStepSyncingPromotions => 'Загрузка акций...';
 
   @override
@@ -3719,6 +3722,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get projectCodeLabel => 'Код проекта';
+
+  @override
+  String get projectFieldLabel => 'Проект';
+
+  @override
+  String get selectProject => 'Выберите проект';
+
+  @override
+  String get projectRequired => 'Выбор проекта обязателен';
+
+  @override
+  String get projectInfoTooltip => 'Номер договора будет сгенерирован на основе системы нумерации выбранного проекта';
+
+  @override
+  String get projectInfoSection => 'Информация о проекте';
 
   @override
   String get creditLabel => 'Кредит';

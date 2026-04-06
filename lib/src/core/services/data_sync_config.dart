@@ -68,6 +68,19 @@ class DataSyncConfig {
       syncFunction: () => ds.syncUserOrganizations(userCode: userCode, forceRefresh: true),
     );
 
+    _tables['user_projects'] = DataSyncTable(
+      id: 'user_projects',
+      tableName: 'user_projects',
+      nameEn: 'Projects',
+      nameRu: 'Проекты',
+      nameUz: 'Loyihalar',
+      icon: Icons.folder_special,
+      dependsOn: [],
+      cascadeTo: [],
+      groupId: 'user_data',
+      syncFunction: () => ds.syncUserProjects(userCode: userCode, forceRefresh: true),
+    );
+
     _tables['sales_req_permissions'] = DataSyncTable(
       id: 'sales_req_permissions',
       tableName: 'sales_req_permissions',
@@ -628,7 +641,7 @@ class DataSyncConfig {
       nameRu: 'Аккаунт и доступ',
       nameUz: 'Akkount va kirish',
       icon: Icons.account_circle,
-      tableIds: ['user_warehouses', 'user_organizations', 'sales_req_permissions', 'visit_steps', 'visit_steps_data'],
+      tableIds: ['user_warehouses', 'user_organizations', 'user_projects', 'sales_req_permissions', 'visit_steps', 'visit_steps_data'],
       color: Colors.blue,
     );
 

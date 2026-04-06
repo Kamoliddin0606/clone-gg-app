@@ -3522,6 +3522,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get syncStepSyncingUserOrganizations => 'Foydalanuvchi tashkilotlari yuklanmoqda...';
 
   @override
+  String get syncStepSyncingUserProjects => 'Foydalanuvchi loyihalari yuklanmoqda...';
+
+  @override
   String get syncStepSyncingPromotions => 'Aksiyalar yuklanmoqda...';
 
   @override
@@ -3719,6 +3722,21 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get projectCodeLabel => 'Loyiha kodi';
+
+  @override
+  String get projectFieldLabel => 'Loyiha';
+
+  @override
+  String get selectProject => 'Loyihani tanlang';
+
+  @override
+  String get projectRequired => 'Loyiha tanlash majburiy';
+
+  @override
+  String get projectInfoTooltip => 'Shartnoma raqami tanlangan loyihaning raqamlash tizimi asosida generatsiya qilinadi';
+
+  @override
+  String get projectInfoSection => 'Loyiha ma\'lumotlari';
 
   @override
   String get creditLabel => 'Kredit';

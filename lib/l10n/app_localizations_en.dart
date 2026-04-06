@@ -3522,6 +3522,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncStepSyncingUserOrganizations => 'Loading user organizations...';
 
   @override
+  String get syncStepSyncingUserProjects => 'Loading user projects...';
+
+  @override
   String get syncStepSyncingPromotions => 'Loading promotions...';
 
   @override
@@ -3719,6 +3722,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get projectCodeLabel => 'Project code';
+
+  @override
+  String get projectFieldLabel => 'Project';
+
+  @override
+  String get selectProject => 'Select project';
+
+  @override
+  String get projectRequired => 'Project selection is required';
+
+  @override
+  String get projectInfoTooltip => 'Contract number will be generated based on the selected project\'s numbering system';
+
+  @override
+  String get projectInfoSection => 'Project information';
 
   @override
   String get creditLabel => 'Credit';

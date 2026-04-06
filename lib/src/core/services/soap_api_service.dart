@@ -27,6 +27,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_ch
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_classifiers_response.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 
@@ -2266,6 +2267,92 @@ class SoapApiService {
         );
       }
       throw Exception('Foydalanuvchi tashkilotlarini olishda xatolik: $e');
+    }
+  }
+
+  /// Получить проекты пользователя по коду пользователя
+  /// Foydalanuvchi kodiga ko'ra loyihalar ro'yxatini olish
+  /// Get user projects list by user code via GetUserProjects SOAP method
+  ///
+  /// Отправляет CodeUser, получает список проектов (Code, Name)
+  /// CodeUser yuboriladi, loyihalar ro'yxati (Code, Name) olinadi
+  Future<List<UserProject>> getProjectsUser({
+    required String userCode,
+  }) async {
+    final soapEnvelope =
+        '''
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:sam="http://www.sample-package.org">
+   <soap:Header/> 
+   <soap:Body>
+      <sam:GetUserProjects>
+         <sam:CodeUser>$userCode</sam:CodeUser>
+      </sam:GetUserProjects>
+   </soap:Body>
+</soap:Envelope>
+''';
+
+    try {
+      if (kDebugMode) {
+        print('SOAP API: Requesting projects for user: $userCode');
+      }
+
+      final response = await _dio.post(
+        _baseUrl,
+        data: soapEnvelope,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/soap+xml; charset=utf-8',
+            'SOAPAction': '',
+          },
+        ),
+      );
+
+      if (kDebugMode) {
+        print('SOAP API: Projects response received');
+      }
+
+      final document = XmlDocument.parse(response.data);
+      final returnElement = document.findAllElements('m:return').first;
+
+      // Парсинг проектов из ответа / Javobdan loyihalarni parse qilish
+      // Response format: <m:Project><m:Code>7</m:Code><m:Name>PRO WASH</m:Name></m:Project>
+      final projectElements = returnElement.findAllElements('m:Project');
+      final projects = <UserProject>[];
+
+      for (final projectElement in projectElements) {
+        final code = _getElementText(projectElement, 'm:Code');
+        final name = _getElementText(projectElement, 'm:Name');
+
+        if (code != null &&
+            code.isNotEmpty &&
+            name != null &&
+            name.isNotEmpty) {
+          projects.add(
+            UserProject(
+              code: code,
+              name: name,
+              userCode: userCode,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
+        }
+      }
+
+      if (kDebugMode) {
+        print(
+          'SOAP API: Successfully parsed ${projects.length} projects for user $userCode',
+        );
+      }
+
+      return projects;
+    } catch (e) {
+      if (kDebugMode) {
+        print(
+          'SOAP API: Error retrieving projects for user $userCode: $e',
+        );
+      }
+      throw Exception('Foydalanuvchi loyihalarini olishda xatolik: $e');
     }
   }
 

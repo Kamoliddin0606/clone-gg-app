@@ -35,6 +35,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
 
 class ApiDatabaseService {
   static final ApiDatabaseService _instance = ApiDatabaseService._internal();
@@ -57,7 +58,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 35, // Incremented to version 35 for shipping_date column in orders table
+      version: 36, // Incremented to version 36 for user_projects table
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -103,6 +104,28 @@ class ApiDatabaseService {
     );
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_visit_steps_data_timestamp ON visit_steps_data(timestamp)',
+    );
+
+    // Ensure user_projects table exists for fresh installations
+    // Таблица проектов пользователя / Foydalanuvchi loyihalari jadvali
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS user_projects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT NOT NULL,
+        name TEXT NOT NULL,
+        user_code TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE(code, user_code)
+      )
+    ''');
+
+    // Create indexes for user_projects table
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_user_projects_code ON user_projects(code)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_user_projects_user_code ON user_projects(user_code)',
     );
 
     // Ensure user_organizations table exists for fresh installations
@@ -1464,6 +1487,37 @@ class ApiDatabaseService {
             'ApiDatabaseService: Added shipping_date column to orders table (version 35)',
           );
         }
+      }
+    }
+
+    // =========================================================================
+    // Version 36: User Projects table
+    // Таблица проектов пользователя / Foydalanuvchi loyihalari jadvali
+    // Stores user-specific project assignments from GetProjectsUser SOAP API
+    // =========================================================================
+    if (oldVersion < 36) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS user_projects (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code TEXT NOT NULL,
+          name TEXT NOT NULL,
+          user_code TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          UNIQUE(code, user_code)
+        )
+      ''');
+
+      // Индексы для быстрого поиска / Tez qidiruv uchun indekslar
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_user_projects_code ON user_projects(code)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_user_projects_user_code ON user_projects(user_code)',
+      );
+
+      if (kDebugMode) {
+        print('ApiDatabaseService: Created user_projects table (version 36)');
       }
     }
   }
@@ -5382,6 +5436,8 @@ class ApiDatabaseService {
     await db.delete('couriers');
     await db.delete('courier_cars');
     await db.delete('order_couriers');
+    // Очистка проектов пользователя / Foydalanuvchi loyihalarini tozalash
+    await db.delete('user_projects');
   }
 
   Future<void> clearMainReport() async {
@@ -8587,6 +8643,23 @@ class ApiDatabaseService {
           'CREATE INDEX idx_user_organizations_user_code ON user_organizations(user_code)',
         ],
       },
+      'user_projects': {
+        'sql': '''
+          CREATE TABLE user_projects (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT NOT NULL,
+            name TEXT NOT NULL,
+            user_code TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(code, user_code)
+          )
+        ''',
+        'indexes': [
+          'CREATE INDEX idx_user_projects_code ON user_projects(code)',
+          'CREATE INDEX idx_user_projects_user_code ON user_projects(user_code)',
+        ],
+      },
       'client_images': {
         'sql': '''
           CREATE TABLE client_images (
@@ -8782,6 +8855,204 @@ class ApiDatabaseService {
         tableInfo['indexes'] as List<String>,
       );
     }
+  }
+
+  /// Проверка и создание таблицы user_projects (для миграции)
+  /// user_projects jadvali mavjudligini tekshirish va yaratish (migratsiya uchun)
+  /// Ensure user_projects table exists (for migration issues)
+  Future<void> ensureUserProjectsTableExists() async {
+    final tableInfo = getTableCreationSql()['user_projects'];
+    if (tableInfo != null) {
+      await ensureTableExists(
+        'user_projects',
+        tableInfo['sql'] as String,
+        tableInfo['indexes'] as List<String>,
+      );
+    }
+  }
+
+  // ===== USER PROJECTS CRUD METHODS =====
+  // Методы CRUD для проектов пользователя
+  // Foydalanuvchi loyihalari uchun CRUD metodlari
+
+  /// Сохранить проекты пользователя (пакетная операция)
+  /// Foydalanuvchi loyihalarini saqlash (batch operatsiya)
+  /// Save user projects (batch operation with delete+insert for atomicity)
+  Future<void> saveUserProjects(
+    String userCode,
+    List<UserProject> projects,
+  ) async {
+    try {
+      if (kDebugMode) {
+        print(
+          'ApiDatabaseService: Saving ${projects.length} user projects for user: $userCode',
+        );
+      }
+
+      // Убедиться, что таблица существует / Jadval mavjudligini tekshirish
+      await ensureUserProjectsTableExists();
+
+      final db = await database;
+      final now = DateTime.now().toIso8601String();
+
+      // Пакетная операция для производительности / Tezlik uchun batch operatsiya
+      final batch = db.batch();
+
+      // Удалить все существующие проекты для этого пользователя
+      // Bu foydalanuvchining barcha mavjud loyihalarini o'chirish
+      batch.delete(
+        'user_projects',
+        where: 'user_code = ?',
+        whereArgs: [userCode],
+      );
+
+      // Дедупликация по code для избежания нарушений UNIQUE
+      // UNIQUE constraint buzilishini oldini olish uchun code bo'yicha deduplikatsiya
+      final uniqueProjects = <String, UserProject>{};
+      for (final project in projects) {
+        uniqueProjects[project.code] = project;
+      }
+
+      // Добавить все вставки в батч / Barcha insertlarni batchga qo'shish
+      for (final project in uniqueProjects.values) {
+        batch.insert('user_projects', {
+          'code': project.code,
+          'name': project.name,
+          'user_code': userCode,
+          'created_at': now,
+          'updated_at': now,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+
+      // Выполнить батч / Batchni bajarish
+      await batch.commit(noResult: true);
+
+      if (kDebugMode) {
+        print(
+          'ApiDatabaseService: Successfully saved ${uniqueProjects.length} user projects',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ApiDatabaseService: Error saving user projects: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Получить проекты пользователя по user_code
+  /// user_code bo'yicha foydalanuvchi loyihalarini olish
+  /// Get user projects for a specific user
+  Future<List<UserProject>> getUserProjects(String userCode) async {
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    final result = await db.query(
+      'user_projects',
+      where: 'user_code = ?',
+      whereArgs: [userCode],
+      orderBy: 'name ASC',
+    );
+
+    return result.map((row) => UserProject.fromMap(row)).toList();
+  }
+
+  /// Получить проект по коду / Kod bo'yicha loyihani olish
+  /// Get user project by code
+  Future<UserProject?> getUserProjectByCode(String code) async {
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    final result = await db.query(
+      'user_projects',
+      where: 'code = ?',
+      whereArgs: [code],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+    return UserProject.fromMap(result.first);
+  }
+
+  /// Сохранить один проект (upsert) / Bitta loyihani saqlash (upsert)
+  /// Save single user project (upsert)
+  Future<void> saveUserProject(UserProject project) async {
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.insert('user_projects', {
+      'code': project.code,
+      'name': project.name,
+      'user_code': project.userCode,
+      'created_at': now,
+      'updated_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Обновить проект / Loyihani yangilash / Update user project
+  Future<void> updateUserProject(String code, UserProject project) async {
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'user_projects',
+      {'name': project.name, 'updated_at': now},
+      where: 'code = ? AND user_code = ?',
+      whereArgs: [code, project.userCode],
+    );
+  }
+
+  /// Удалить проект по коду / Kod bo'yicha loyihani o'chirish
+  /// Delete user project by code
+  Future<void> deleteUserProject(String code) async {
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    await db.delete('user_projects', where: 'code = ?', whereArgs: [code]);
+  }
+
+  /// Удалить все проекты пользователя / Foydalanuvchining barcha loyihalarini o'chirish
+  /// Delete all user projects for a specific user
+  Future<void> deleteAllUserProjects(String userCode) async {
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    await db.delete(
+      'user_projects',
+      where: 'user_code = ?',
+      whereArgs: [userCode],
+    );
+  }
+
+  /// Получить все проекты (для отладки) / Barcha loyihalarni olish (debug uchun)
+  /// Get all user projects (for admin/debug purposes)
+  Future<List<UserProject>> getAllUserProjects() async {
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    final result = await db.query(
+      'user_projects',
+      orderBy: 'user_code ASC, name ASC',
+    );
+
+    return result.map((row) => UserProject.fromMap(row)).toList();
+  }
+
+  /// Количество проектов пользователя / Foydalanuvchi loyihalari soni
+  /// Get user projects count for a specific user
+  Future<int> getUserProjectsCount(String userCode) async {
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM user_projects WHERE user_code = ?',
+      [userCode],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 
   /// Ensure order_details related tables exist (for migration issues)

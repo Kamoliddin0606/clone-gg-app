@@ -22,6 +22,7 @@ enum SyncStep {
   syncingSalesReqPermissions(Icons.security),
   syncingPlannedRoutes(Icons.route),
   syncingUserOrganizations(Icons.business),
+  syncingUserProjects(Icons.folder_special),
   syncingPromotions(Icons.local_offer),
   syncingMapTokens(Icons.map),
   syncingReports(Icons.analytics),
@@ -73,6 +74,8 @@ enum SyncStep {
         return l10n?.syncStepSyncingPlannedRoutes ?? 'Loading planned routes...';
       case SyncStep.syncingUserOrganizations:
         return l10n?.syncStepSyncingUserOrganizations ?? 'Loading user organizations...';
+      case SyncStep.syncingUserProjects:
+        return l10n?.syncStepSyncingUserProjects ?? 'Loading user projects...';
       case SyncStep.syncingPromotions:
         return l10n?.syncStepSyncingPromotions ?? 'Loading promotions...';
       case SyncStep.syncingMapTokens:

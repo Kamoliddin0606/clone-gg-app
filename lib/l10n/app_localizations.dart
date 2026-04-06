@@ -6703,6 +6703,12 @@ abstract class AppLocalizations {
   /// **'Loading user organizations...'**
   String get syncStepSyncingUserOrganizations;
 
+  /// No description provided for @syncStepSyncingUserProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading user projects...'**
+  String get syncStepSyncingUserProjects;
+
   /// No description provided for @syncStepSyncingPromotions.
   ///
   /// In en, this message translates to:
@@ -7068,6 +7074,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Project code'**
   String get projectCodeLabel;
+
+  /// No description provided for @projectFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get projectFieldLabel;
+
+  /// No description provided for @selectProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Select project'**
+  String get selectProject;
+
+  /// No description provided for @projectRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Project selection is required'**
+  String get projectRequired;
+
+  /// No description provided for @projectInfoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract number will be generated based on the selected project's numbering system'**
+  String get projectInfoTooltip;
+
+  /// No description provided for @projectInfoSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Project information'**
+  String get projectInfoSection;
 
   /// No description provided for @creditLabel.
   ///

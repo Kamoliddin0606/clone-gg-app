@@ -352,6 +352,22 @@ WHERE pp.price_type_code = ?
 ORDER BY p.name ASC, p.code ASC
 ```
 
+### 19. user_projects
+**Purpose**: Stores user project assignments retrieved from GetProjectsUser SOAP API
+```sql
+CREATE TABLE user_projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT NOT NULL,
+  name TEXT NOT NULL,
+  user_code TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(code, user_code)
+)
+```
+**Indexes**: `idx_user_projects_code`, `idx_user_projects_user_code`
+**Relationships**: `user_code` → `users.code`
+
 ## Data Flow
 
 1. **Initial Load**: Database is copied from assets and initialized

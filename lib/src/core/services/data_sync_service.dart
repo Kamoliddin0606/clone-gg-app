@@ -35,6 +35,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_de
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
@@ -342,6 +343,9 @@ class DataSyncService {
       // Sync user organizations
       await _syncUserOrganizations(userCode);
 
+      // Синхронизация проектов пользователя / Foydalanuvchi loyihalarini sinxronlash
+      await _syncUserProjects(userCode);
+
       // Sync promotions
       if ( isAvonServerSelected() || isEvyapServerSelected() || isProwashServerSelected() ) {
         await _syncPromotions(null); // No auth token needed for now
@@ -495,12 +499,14 @@ class DataSyncService {
       
       auxiliaryTasks.add(_syncSalesReqPermissions(userCode));
       auxiliaryTasks.add(_syncUserOrganizations(userCode));
+      auxiliaryTasks.add(_syncUserProjects(userCode));
       
       await Future.wait(auxiliaryTasks);
       
       yield SyncStep.syncingDistrictContracting;
       yield SyncStep.syncingSalesReqPermissions;
       yield SyncStep.syncingUserOrganizations;
+      yield SyncStep.syncingUserProjects;
 
       // Update clients has_contract field using optimized SQL
       yield SyncStep.updatingClientContractStatus;
@@ -2249,6 +2255,41 @@ class DataSyncService {
     }
     await _dbService.saveUserOrganizations(userCode, organizations);
     return organizations;
+  }
+
+  /// Синхронизация проектов пользователя (с кешем)
+  /// Foydalanuvchi loyihalarini sinxronlash (kesh bilan)
+  /// Sync user projects data with optional cache
+  Future<List<UserProject>> syncUserProjects({
+    required String userCode,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh) {
+      final cached = await _dbService.getUserProjects(userCode);
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+    }
+
+    return await _syncUserProjects(userCode);
+  }
+
+  /// Внутренний метод синхронизации проектов
+  /// Loyihalarni sinxronlashning ichki metodi
+  /// Internal method to sync user projects from server to DB
+  Future<List<UserProject>> _syncUserProjects(String userCode) async {
+    final projects = await _apiService.getProjectsUser(userCode: userCode);
+    if (kDebugMode) {
+      print('Foydalanuvchi loyihalari yuklandi: ${projects.length} ta loyiha');
+    }
+    await _dbService.saveUserProjects(userCode, projects);
+    return projects;
+  }
+
+  /// Получить кешированные проекты / Keshlangan loyihalarni olish
+  /// Get cached user projects from local DB
+  Future<List<UserProject>> getCachedUserProjects(String userCode) async {
+    return await _dbService.getUserProjects(userCode);
   }
 
   /// Sync visit steps data

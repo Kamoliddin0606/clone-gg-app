@@ -18,12 +18,40 @@ class TokenService {
   // =========================================================================
   // 1C LOGIN AUTHENTICATION CONSTANTS
   // =========================================================================
-  
+
   /// Yangi 1C-login avtorizatsiya endpointi.
   /// Bu endpoint foydalanuvchi login, password va project_name (baseURL) ma'lumotlarini
   /// qabul qilib, access va refresh tokenlarni qaytaradi.
   static const String _1cLoginBaseUrl = 'http://178.218.200.120:1596';
   static const String _1cLoginEndpoint = '/api/v1/auth/1c-login/';
+
+  // =========================================================================
+  // V2 (NEW SERVER) AUTHENTICATION CONSTANTS
+  // =========================================================================
+  // Yangi server JWT auth endpointlari — faqat lokatsiya/telemetry servislari
+  // tomonidan ishlatiladi. Eski server REST endpointlari va ularga bog'liq
+  // servislarga tegmasdan, parallel ishlaydi.
+
+  /// Yangi server base URL (production'da o'zgartiriladi).
+  // static const String v2BaseUrl = 'http://178.218.200.120:8080';
+  static const String v2BaseUrl = 'http://localhost:8080';
+
+  /// JWT access + refresh juftligini olish endpointi.
+  static const String _v2TokenEndpoint = '/api/auth/token/';
+
+  /// Refresh token orqali yangi access (va yangi refresh — rotation) olish.
+  static const String _v2RefreshEndpoint = '/api/auth/token/refresh/';
+
+  /// Token validligini tekshirish endpointi.
+  static const String _v2VerifyEndpoint = '/api/auth/token/verify/';
+
+  /// V2 token storage keylari (eski REST tokenlardan ajratilgan).
+  static const String _v2AccessTokenKey = 'rest_v2_access_token';
+  static const String _v2RefreshTokenKey = 'rest_v2_refresh_token';
+  static const String _v2TokenExpiryKey = 'rest_v2_token_expiry';
+
+  /// V2 access token muddati (yangi server: 60 minut).
+  static const Duration _v2AccessTokenTtl = Duration(minutes: 60);
 
   TokenService(this._dio, this._prefsService) {
     _configureDio();
@@ -927,5 +955,316 @@ class TokenService {
   /// Get stored refresh token
   String? getStoredRefreshToken() {
     return _prefsService.preferences.getString(_refreshTokenKey);
+  }
+
+  // ===========================================================================
+  // ===========================================================================
+  //                     V2 (NEW SERVER) AUTHENTICATION
+  // ===========================================================================
+  // ===========================================================================
+  // Bu bo'lim yangi server (http://localhost:8000) bilan ishlash uchun.
+  // Eski server REST tokenlari va metodlari TEGMAYDI — ular boshqa REST
+  // servislari (RestApiService, ClientImagesService, FakturaService, ...)
+  // tomonidan eski serverga so'rov yuborish uchun ishlatilishda davom etadi.
+  //
+  // Yangi V2 tokenlari faqat yangi server endpointlariga (telemetry, device
+  // register, tracking policy) yuborilgan so'rovlarda ishlatiladi.
+  // ===========================================================================
+
+  /// Yangi serverdan JWT access + refresh juftligini olish.
+  ///
+  /// Endpoint: POST {v2BaseUrl}/api/auth/token/
+  /// Request body: `{login, password}` (eski 1c-login dan farqli, project_name YO'Q).
+  /// Response: `{access, refresh}` — flat struktura.
+  ///
+  /// Tokenlar [_v2AccessTokenKey] / [_v2RefreshTokenKey] kalitlari ostida
+  /// saqlanadi. Eski [_accessTokenKey] / [_refreshTokenKey] tegmaydi.
+  ///
+  /// Qaytaradi: tokenlar saqlangan bo'lsa true, aks holda false.
+  Future<bool> obtainV2Tokens({
+    required String login,
+    required String password,
+  }) async {
+    final url = '$v2BaseUrl$_v2TokenEndpoint';
+    try {
+      if (login.isEmpty || password.isEmpty) {
+        return false;
+      }
+
+      if (kDebugMode) {
+        print('TokenService[V2]: Obtaining tokens from $url');
+      }
+
+      final response = await _dio.post(
+        url,
+        data: {
+          'login': login,
+          'password': password,
+        },
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data is Map) {
+        final data = response.data as Map<String, dynamic>;
+        final access = data['access'] as String?;
+        final refresh = data['refresh'] as String?;
+
+        if (access != null && access.isNotEmpty) {
+          await _storeV2Tokens(access, refresh);
+          if (kDebugMode) {
+            print('═══════════════════════════════════════════════════════════════');
+            print('TokenService[V2]: ✅ TOKENS RECEIVED FROM SERVER');
+            print('  endpoint   : $url');
+            print('  status     : ${response.statusCode}');
+            print('  access     : ${access.substring(0, access.length > 40 ? 40 : access.length)}...');
+            print('  refresh    : ${refresh != null ? "${refresh.substring(0, refresh.length > 40 ? 40 : refresh.length)}..." : "null"}');
+            print('  expires_at : ${DateTime.now().add(_v2AccessTokenTtl)}');
+            print('  stored_keys: $_v2AccessTokenKey, $_v2RefreshTokenKey, $_v2TokenExpiryKey');
+            print('═══════════════════════════════════════════════════════════════');
+          }
+          return true;
+        }
+      }
+
+      if (kDebugMode) {
+        print('TokenService[V2]: Unexpected response status=${response.statusCode}, data=${response.data}');
+      }
+      return false;
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        print('TokenService[V2]: DioException ${e.type} status=${e.response?.statusCode} message=${e.message}');
+      }
+      return false;
+    } catch (e) {
+      if (kDebugMode) {
+        print('TokenService[V2]: Unexpected error: $e');
+      }
+      return false;
+    }
+  }
+
+  /// V2 access tokenni refresh qilish (rotation: yangi refresh ham keladi).
+  ///
+  /// Endpoint: POST {v2BaseUrl}/api/auth/token/refresh/
+  /// Request body: `{refresh}`. Response: `{access, refresh}`.
+  ///
+  /// Eski refresh blacklist qilinadi (server tomondan), shuning uchun yangi
+  /// refresh ham albatta saqlanadi.
+  Future<String?> _refreshV2AccessToken() async {
+    try {
+      final refreshToken = _prefsService.preferences.getString(_v2RefreshTokenKey);
+      if (refreshToken == null || refreshToken.isEmpty) {
+        if (kDebugMode) {
+          print('TokenService[V2]: No refresh token available');
+        }
+        return null;
+      }
+
+      final url = '$v2BaseUrl$_v2RefreshEndpoint';
+      final response = await _dio.post(
+        url,
+        data: {'refresh': refreshToken},
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data is Map) {
+        final data = response.data as Map<String, dynamic>;
+        final newAccess = data['access'] as String?;
+        final newRefresh = data['refresh'] as String? ?? refreshToken;
+
+        if (newAccess != null && newAccess.isNotEmpty) {
+          await _storeV2Tokens(newAccess, newRefresh);
+          if (kDebugMode) {
+            final rotated = data['refresh'] != null;
+            print('═══════════════════════════════════════════════════════════════');
+            print('TokenService[V2]: ✅ TOKEN REFRESHED');
+            print('  endpoint    : $url');
+            print('  status      : ${response.statusCode}');
+            print('  new access  : ${newAccess.substring(0, newAccess.length > 40 ? 40 : newAccess.length)}...');
+            print('  new refresh : ${rotated ? "${newRefresh.substring(0, newRefresh.length > 40 ? 40 : newRefresh.length)}... (rotated)" : "(server did not rotate)"}');
+            print('  expires_at  : ${DateTime.now().add(_v2AccessTokenTtl)}');
+            print('═══════════════════════════════════════════════════════════════');
+          }
+          return newAccess;
+        }
+      }
+
+      if (response.statusCode == 401) {
+        if (kDebugMode) {
+          print('TokenService[V2]: Refresh token invalid (401), clearing V2 tokens');
+        }
+        await clearV2Tokens();
+        return null;
+      }
+
+      if (kDebugMode) {
+        print('TokenService[V2]: Refresh failed status=${response.statusCode}');
+      }
+      return null;
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        print('TokenService[V2]: Refresh DioException ${e.type} status=${e.response?.statusCode}');
+      }
+      if (e.response?.statusCode == 401) {
+        await clearV2Tokens();
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        print('TokenService[V2]: Refresh unexpected error: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Yaroqli V2 access tokenni qaytaradi (kerak bo'lsa refresh qiladi, kerak
+  /// bo'lsa saqlangan credentials bilan qayta login qiladi).
+  ///
+  /// 3 bosqich:
+  ///   1) Cached access mavjud va eskirmagan → qaytariladi
+  ///   2) Refresh urinish — yangi access + yangi refresh
+  ///   3) SharedPreferences'dagi saqlangan login/password bilan qayta login
+  Future<String?> ensureValidV2Token({
+    String? login,
+    String? password,
+  }) async {
+    try {
+      // 1-bosqich: cached access
+      final cached = _prefsService.preferences.getString(_v2AccessTokenKey);
+      final expiryStr = _prefsService.preferences.getString(_v2TokenExpiryKey);
+      if (cached != null && cached.isNotEmpty && expiryStr != null) {
+        try {
+          final expiry = DateTime.parse(expiryStr);
+          // 1 daqiqalik bufer
+          if (expiry.isAfter(DateTime.now().add(const Duration(minutes: 1)))) {
+            if (kDebugMode) {
+              print('TokenService[V2]: stage1 cached access still valid (expires=$expiry)');
+            }
+            return cached;
+          }
+          if (kDebugMode) {
+            print('TokenService[V2]: stage1 cached access expired (expiry=$expiry), trying refresh');
+          }
+        } catch (_) {
+          // expiry parse xatosi — refresh'ga o'tamiz
+        }
+      } else {
+        if (kDebugMode) {
+          print('TokenService[V2]: stage1 no cached access, trying refresh');
+        }
+      }
+
+      // 2-bosqich: refresh
+      final refreshed = await _refreshV2AccessToken();
+      if (refreshed != null && refreshed.isNotEmpty) {
+        if (kDebugMode) {
+          print('TokenService[V2]: stage2 refresh OK');
+        }
+        return refreshed;
+      }
+      if (kDebugMode) {
+        print('TokenService[V2]: stage2 refresh failed, trying re-login');
+      }
+
+      // 3-bosqich: re-login
+      final authLogin = login ?? _prefsService.getSavedUsername();
+      final authPassword = password ?? _prefsService.getPassword();
+      if (authLogin == null || authLogin.isEmpty ||
+          authPassword == null || authPassword.isEmpty) {
+        if (kDebugMode) {
+          print('TokenService[V2]: stage3 no saved credentials, giving up');
+        }
+        await clearV2Tokens();
+        return null;
+      }
+
+      final ok = await obtainV2Tokens(login: authLogin, password: authPassword);
+      if (ok) {
+        if (kDebugMode) {
+          print('TokenService[V2]: stage3 re-login OK');
+        }
+        return _prefsService.preferences.getString(_v2AccessTokenKey);
+      }
+
+      if (kDebugMode) {
+        print('TokenService[V2]: stage3 re-login failed, clearing tokens');
+      }
+      await clearV2Tokens();
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        print('TokenService[V2]: ensureValidV2Token error: $e');
+      }
+      return null;
+    }
+  }
+
+  /// V2 tokenlarni saqlash (access + refresh + expiry).
+  Future<void> _storeV2Tokens(String access, String? refresh) async {
+    final expiry = DateTime.now().add(_v2AccessTokenTtl);
+    await _prefsService.preferences.setString(_v2AccessTokenKey, access);
+    if (refresh != null && refresh.isNotEmpty) {
+      await _prefsService.preferences.setString(_v2RefreshTokenKey, refresh);
+    }
+    await _prefsService.preferences.setString(_v2TokenExpiryKey, expiry.toIso8601String());
+  }
+
+  /// V2 tokenlarni tozalash.
+  Future<void> clearV2Tokens() async {
+    await _prefsService.preferences.remove(_v2AccessTokenKey);
+    await _prefsService.preferences.remove(_v2RefreshTokenKey);
+    await _prefsService.preferences.remove(_v2TokenExpiryKey);
+    if (kDebugMode) {
+      print('TokenService[V2]: V2 tokens cleared');
+    }
+  }
+
+  /// V2 access token mavjudligini va eskirmaganligini tekshiradi (refresh qilmasdan).
+  bool hasValidV2Token() {
+    final access = _prefsService.preferences.getString(_v2AccessTokenKey);
+    final expiryStr = _prefsService.preferences.getString(_v2TokenExpiryKey);
+    if (access == null || access.isEmpty || expiryStr == null) return false;
+    try {
+      return DateTime.parse(expiryStr).isAfter(DateTime.now());
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// V2 access tokenni serverda tekshirish (verify endpoint).
+  /// Asosan diagnostika uchun.
+  Future<bool> verifyV2Token(String token) async {
+    try {
+      final url = '$v2BaseUrl$_v2VerifyEndpoint';
+      final response = await _dio.post(
+        url,
+        data: {'token': token},
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
+        ),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
   }
 }

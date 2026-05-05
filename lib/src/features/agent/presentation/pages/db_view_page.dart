@@ -145,7 +145,7 @@ class _DbViewPageState extends State<DbViewPage> {
           displayName: 'Preferences',
           dbType: DbSource.preferences,
           columns: ['Key', 'Value'],
-          rowCount: 8,
+          rowCount: _prefsService.preferences.getKeys().length,
         ),
       );
 
@@ -190,18 +190,10 @@ class _DbViewPageState extends State<DbViewPage> {
           data = await db.query(table.name);
           break;
         case DbSource.preferences:
-          final prefs = {
-            'userCode': _prefsService.getUserCode(),
-            'userName': _prefsService.getUserName(),
-            'warehouseCode': _prefsService.getWarehouseCode(),
-            'codeProject': _prefsService.getCodeProject(),
-            'serverName': _prefsService.getServerName(),
-            'baseUrl': _prefsService.getBaseUrl(),
-            'languageCode': _prefsService.getLanguageCode(),
-            'isOfflineMode': _prefsService.isOfflineMode(),
-          };
-          data = prefs.entries
-              .map((e) => {'Key': e.key, 'Value': e.value.toString()})
+          final prefs = _prefsService.preferences;
+          final keys = prefs.getKeys().toList()..sort();
+          data = keys
+              .map((k) => {'Key': k, 'Value': prefs.get(k)?.toString() ?? 'null'})
               .toList();
           break;
       }

@@ -1,246 +1,186 @@
-/// =============================================================================
-/// Background Location Tracking Service
-/// =============================================================================
-/// 
-/// Bu service fonda (background) joylashuv ma'lumotlarini kuzatib,
-/// serverga yuborish uchun javobgardir.
-/// 
-/// Asosiy xususiyatlar:
-/// - Ilova aktiv bo'lmasa ham ishlaydi (background mode)
-/// - Serverdan olingan LocationUpdateInterval vaqti bo'yicha ishlaydi
-/// - Offline rejimda ma'lumotlarni saqlaydi va keyinroq yuboradi
-/// - Qurilma, tarmoq, batareya ma'lumotlarini ham to'playdi
-/// 
-/// API Endpoint: http://178.218.200.120:1596/api/v1/agent-location/
-/// =============================================================================
+// =============================================================================
+// Background Location Tracking Service (V2 — yangi server)
+// =============================================================================
+//
+// Bu service fonda joylashuv ma'lumotlarini yig'ib, yangi serverga
+// (telemetry endpointlariga) yuboradi.
+//
+// Asosiy xususiyatlar:
+// - Tracking policy server tomondan boshqariladi (TrackingPolicyService)
+// - Mobile lokal pre-filtering qiladi (active hours/days, distance, accuracy)
+// - Offline rejimda yozuvlar SharedPreferences'ga saqlanadi va internet
+//   qaytarilganda batch sifatida yuboriladi
+// - V2 JWT tokenlar ishlatiladi (TokenService.ensureValidV2Token)
+//
+// Endpoint: POST {V2}/api/mobile/v1/telemetry/pings/
+// =============================================================================
 
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:dio/dio.dart';
-import 'package:geolocator/geolocator.dart';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
-import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/background_location/models/agent_location_record.dart';
 import 'package:gloria_marketing_flutter/src/core/services/background_location/helpers/device_data_collector.dart';
+import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/device_registration_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/rest_logging.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/models/telemetry_accepted_response.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/models/telemetry_ping_request.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/models/tracking_policy.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/models/tracking_policy_envelope.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/tracking_policy_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 
-/// Background Location Tracking Service
-/// 
-/// Bu service quyidagi vazifalarni bajaradi:
-/// 1. Joylashuv ma'lumotlarini belgilangan vaqt oralig'ida olish
-/// 2. Qurilma, tarmoq, batareya ma'lumotlarini to'plash
-/// 3. Ma'lumotlarni serverga yuborish (REST API)
-/// 4. Offline rejimda ma'lumotlarni saqlash (queue)
-/// 5. Internet qayta ulanganda saqlangan ma'lumotlarni yuborish
-/// 
-/// Foydalanish:
-/// ```dart
-/// final service = BackgroundLocationTrackingService(
-///   prefs: prefsService,
-///   tokenService: tokenService,
-///   dbService: dbService,
-///   dio: dio,
-/// );
-/// await service.initialize();
-/// await service.startTracking();
-/// ```
 class BackgroundLocationTrackingService {
   // ===========================================================================
   // CONSTANTS
   // ===========================================================================
-  
-  /// API base URL - location ma'lumotlarini yuborish uchun
-  static const String _apiBaseUrl = 'http://178.218.200.120:1596';
-  
-  /// API endpoint - agent joylashuvini yuborish
-  static const String _locationEndpoint = '/api/v1/agent-location/';
-  
-  /// Default interval (sekundlarda) - agar serverdan kelgan qiymat 0 bo'lsa
+
+  /// Telemetry pings endpoint (yangi server).
+  static const String _telemetryEndpoint = '/api/mobile/v1/telemetry/pings/';
+
+  /// Default interval — server policy yo'q bo'lganda yoki keluvchi qiymat 0 bo'lsa.
   static const int _defaultIntervalSeconds = 60;
-  
-  /// Minimum interval (sekundlarda) - juda tez-tez so'rov yuborilmasligi uchun
+
+  /// Minimum interval — juda tez-tez so'rov yuborilmasligi uchun.
   static const int _minIntervalSeconds = 10;
-  
-  /// Offline queue key - SharedPreferences uchun
-  static const String _offlineQueueKey = 'background_location_offline_queue';
-  
-  /// Last location update key
-  static const String _lastLocationUpdateKey = 'background_location_last_update';
-  
-  /// Tracking enabled key
+
+  /// Policyni qayta yuklash chastotasi (foreground yoki resume da).
+  static const Duration _policyRefreshInterval = Duration(minutes: 15);
+
+  /// V2 offline queue keyi (yangi format — TelemetryPingRequest JSON).
+  static const String _offlineQueueKey = 'background_location_v2_offline_queue';
+
+  /// Maksimal queue hajmi — undan oshsa eng eski yozuvlar tushib qoladi.
+  static const int _offlineQueueMaxSize = 1000;
+
+  /// Bir batch'da yuboriladigan maksimum yozuv.
+  static const int _batchUploadMaxSize = 100;
+
+  static const String _lastLocationUpdateKey = 'background_location_v2_last_update';
   static const String _trackingEnabledKey = 'background_location_tracking_enabled';
 
   // ===========================================================================
   // DEPENDENCIES
   // ===========================================================================
-  
-  /// SharedPreferences service - ma'lumotlarni saqlash uchun
+
   final SharedPreferencesService _prefs;
-  
-  /// Token service - API autentifikatsiya uchun
   final TokenService _tokenService;
-  
-  /// Database service - sales_req_permissions dan interval olish uchun
+  // dbService eski sales_req_permissions fallback uchun saqlanadi.
+  // Yangi serverdan policy kelmasa, eski jadvaldan interval o'qiladi.
+  // ignore: unused_field
   final ApiDatabaseService _dbService;
-  
-  /// Dio instance - HTTP so'rovlar uchun
-  final Dio _dio;
-  
-  /// Device data collector - qurilma ma'lumotlarini to'plash uchun
+  final TrackingPolicyService _policyService;
+  final DeviceRegistrationService _deviceRegistrationService;
   final DeviceDataCollector _deviceDataCollector = DeviceDataCollector();
-  
-  /// Connectivity - tarmoq holatini kuzatish uchun
   final Connectivity _connectivity = Connectivity();
+  final Dio _dio;
 
   // ===========================================================================
-  // STATE VARIABLES
+  // STATE
   // ===========================================================================
-  
-  /// Location tracking timer - belgilangan vaqt oralig'ida ishlaydi
+
   Timer? _locationTimer;
-  
-  /// Position stream subscription - joylashuv o'zgarishlarini kuzatish
+  Timer? _policyTimer;
   StreamSubscription<Position>? _positionStream;
-  
-  /// Connectivity subscription - tarmoq holatini kuzatish
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
-  
-  /// Service initialized flag
+
   bool _isInitialized = false;
-  
-  /// Tracking active flag
   bool _isTrackingActive = false;
-  
-  /// Current interval (sekundlarda)
+
   int _currentIntervalSeconds = _defaultIntervalSeconds;
-  
-  /// Last known position - oxirgi joylashuv
   Position? _lastPosition;
-  
-  /// Offline queue - internet yo'q paytida saqlanadigan ma'lumotlar
-  List<AgentLocationRecord> _offlineQueue = [];
-  
-  /// Is currently sending - parallel so'rovlar oldini olish
+  Position? _lastSentPosition;
+
+  /// Cached app info — payload yasashda ishlatiladi.
+  PackageInfo? _packageInfo;
+
+  /// Offline queue (RAM) — SharedPreferences bilan sinxronlanadi.
+  List<TelemetryPingRequest> _offlineQueue = [];
+
+  /// Parallel uploadlarni oldini olish uchun mutex bayrog'i.
   bool _isSending = false;
 
   // ===========================================================================
   // CONSTRUCTOR
   // ===========================================================================
-  
-  /// BackgroundLocationTrackingService konstruktori
-  /// 
-  /// Parametrlar:
-  /// - [prefs] - SharedPreferencesService instance
-  /// - [tokenService] - TokenService instance (API autentifikatsiya)
-  /// - [dbService] - ApiDatabaseService instance (interval olish)
+
   BackgroundLocationTrackingService({
     required SharedPreferencesService prefs,
     required TokenService tokenService,
     required ApiDatabaseService dbService,
+    required TrackingPolicyService policyService,
+    required DeviceRegistrationService deviceRegistrationService,
     Dio? dio,
   })  : _prefs = prefs,
         _tokenService = tokenService,
         _dbService = dbService,
+        _policyService = policyService,
+        _deviceRegistrationService = deviceRegistrationService,
         _dio = dio ?? Dio() {
-    // Alohida Dio instance - boshqa service'lar interceptorlaridan ta'sirlanmaydi
     _dio.options.connectTimeout = const Duration(seconds: 30);
     _dio.options.sendTimeout = const Duration(seconds: 30);
     _dio.options.receiveTimeout = const Duration(seconds: 30);
+    attachRestLogger(_dio, 'TELEMETRY');
   }
+
+  // ===========================================================================
+  // PUBLIC GETTERS (backward-compatible)
+  // ===========================================================================
+
+  bool get isTrackingActive => _isTrackingActive;
+  int get currentIntervalSeconds => _currentIntervalSeconds;
+  int get offlineQueueSize => _offlineQueue.length;
 
   // ===========================================================================
   // INITIALIZATION
   // ===========================================================================
-  
-  /// Service'ni ishga tushirish
-  /// 
-  /// Bu metod quyidagi ishlarni bajaradi:
-  /// 1. Offline queue'ni yuklash
-  /// 2. Connectivity listener'ni sozlash
-  /// 3. Interval'ni database'dan olish
-  /// 
-  /// Qaytaradi: Future<bool> - muvaffaqiyatli ishga tushirilganmi
+
   Future<bool> initialize() async {
     try {
-      if (_isInitialized) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Already initialized');
-        }
-        return true;
-      }
+      if (_isInitialized) return true;
 
       if (kDebugMode) {
         print('═══════════════════════════════════════════════════════════════');
-        print('BackgroundLocationTrackingService: Initializing...');
+        print('BackgroundLocationTrackingService: Initializing (V2)...');
         print('═══════════════════════════════════════════════════════════════');
       }
 
-      // 1. Offline queue'ni yuklash
       await _loadOfflineQueue();
-
-      // 2. Connectivity listener'ni sozlash
       _setupConnectivityListener();
 
-      // 3. Interval'ni database'dan olish
-      await _loadIntervalFromDatabase();
+      // Cached policyni yuklash (offline-first). Tarmoq bor bo'lsa
+      // startTracking() ichida yangi policy fetch qilinadi.
+      final cachedEnvelope = await _policyService.loadFromCache();
+      if (cachedEnvelope != null) {
+        _applyPolicyInterval(cachedEnvelope.policy);
+      }
+
+      try {
+        _packageInfo = await PackageInfo.fromPlatform();
+      } catch (_) {
+        _packageInfo = null;
+      }
 
       _isInitialized = true;
 
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Initialized successfully');
-        print('BackgroundLocationTrackingService: Current interval: $_currentIntervalSeconds seconds');
-        print('BackgroundLocationTrackingService: Offline queue size: ${_offlineQueue.length}');
+        print('BackgroundLocationTrackingService: Initialized. interval=$_currentIntervalSeconds s, queue=${_offlineQueue.length}');
       }
-
       return true;
-    } catch (e, stackTrace) {
+    } catch (e, st) {
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Initialization error: $e');
-        print('BackgroundLocationTrackingService: Stack trace: $stackTrace');
+        print('BackgroundLocationTrackingService: init error: $e\n$st');
       }
       return false;
     }
   }
 
-  /// Database'dan interval'ni yuklash
-  Future<void> _loadIntervalFromDatabase() async {
-    try {
-      final userCode = _prefs.getUserCode();
-      if (userCode == null || userCode.isEmpty) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: No user code, using default interval');
-        }
-        return;
-      }
-
-      // sales_req_permissions jadvalidan interval'ni olish
-      final permissions = await _dbService.getSalesReqPermissions(userCode);
-      if (permissions != null) {
-        // SalesReqPermissions obyektidan locationUpdateInterval ni olish
-        final interval = permissions.locationUpdateInterval;
-        if (interval > 0) {
-          // Minimum interval'ni tekshirish
-          _currentIntervalSeconds = interval < _minIntervalSeconds 
-              ? _minIntervalSeconds 
-              : interval;
-          
-          if (kDebugMode) {
-            print('BackgroundLocationTrackingService: Loaded interval from DB: $_currentIntervalSeconds seconds');
-          }
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error loading interval: $e');
-      }
-      // Default interval ishlatiladi
-    }
-  }
-
-  /// Connectivity listener'ni sozlash
   void _setupConnectivityListener() {
     _connectivitySubscription?.cancel();
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
@@ -248,16 +188,12 @@ class BackgroundLocationTrackingService {
     );
   }
 
-  /// Connectivity o'zgarganda chaqiriladi
   void _onConnectivityChanged(List<ConnectivityResult> results) {
     final isConnected = results.any((r) => r != ConnectivityResult.none);
-    
     if (kDebugMode) {
-      print('BackgroundLocationTrackingService: Connectivity changed - connected: $isConnected');
+      print('BackgroundLocationTrackingService: Connectivity changed connected=$isConnected');
     }
-
     if (isConnected && _offlineQueue.isNotEmpty) {
-      // Internet qayta ulandi, offline queue'ni yuborish
       _sendOfflineQueue();
     }
   }
@@ -265,224 +201,265 @@ class BackgroundLocationTrackingService {
   // ===========================================================================
   // TRACKING CONTROL
   // ===========================================================================
-  
-  /// Joylashuv kuzatishni boshlash
-  /// 
-  /// Bu metod quyidagi ishlarni bajaradi:
-  /// 1. Location permission'ni tekshirish
-  /// 2. Timer'ni sozlash
-  /// 3. Position stream'ni boshlash
-  /// 
-  /// Qaytaradi: Future<bool> - muvaffaqiyatli boshlandi mi
+
   Future<bool> startTracking() async {
     try {
       if (!_isInitialized) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Not initialized, initializing first...');
-        }
-        final initialized = await initialize();
-        if (!initialized) {
-          return false;
-        }
+        final ok = await initialize();
+        if (!ok) return false;
       }
+      if (_isTrackingActive) return true;
 
-      if (_isTrackingActive) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Tracking already active');
-        }
-        return true;
-      }
-
-      if (kDebugMode) {
-        print('═══════════════════════════════════════════════════════════════');
-        print('BackgroundLocationTrackingService: Starting tracking...');
-        print('BackgroundLocationTrackingService: Interval: $_currentIntervalSeconds seconds');
-        print('═══════════════════════════════════════════════════════════════');
-      }
-
-      // 1. Location permission'ni tekshirish
       final hasPermission = await _checkLocationPermission();
       if (!hasPermission) {
         if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Location permission not granted');
+          print('BackgroundLocationTrackingService: permission not granted');
         }
         return false;
       }
 
-      // 2. Dastlabki joylashuvni olish va yuborish
+      // Policy va device registration'ni parallel chaqirish.
+      // Failure-tolerant — yangi server hali tayyor bo'lmasligi mumkin.
+      // ignore: unawaited_futures
+      _refreshPolicy();
+      // ignore: unawaited_futures
+      _deviceRegistrationService.register();
+
+      // Birinchi ping (policy va token mavjud bo'lsa darhol yuboradi).
       await _updateAndSendLocation();
 
-      // 3. Timer'ni sozlash
       _startLocationTimer();
-
-      // 4. Position stream'ni boshlash (masofaga asoslangan yangilanishlar uchun)
       _startPositionStream();
+      _startPolicyTimer();
 
-      // 5. Tracking enabled flag'ni saqlash
       await _prefs.preferences.setBool(_trackingEnabledKey, true);
-
       _isTrackingActive = true;
 
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Tracking started successfully');
+        print('BackgroundLocationTrackingService: tracking started');
       }
-
       return true;
-    } catch (e, stackTrace) {
+    } catch (e, st) {
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error starting tracking: $e');
-        print('BackgroundLocationTrackingService: Stack trace: $stackTrace');
+        print('BackgroundLocationTrackingService: startTracking error: $e\n$st');
       }
       return false;
     }
   }
 
-  /// Joylashuv kuzatishni to'xtatish
-  /// 
-  /// Bu metod timer va stream'larni bekor qiladi.
   Future<void> stopTracking() async {
     try {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Stopping tracking...');
-      }
-
-      // Timer'ni bekor qilish
       _locationTimer?.cancel();
       _locationTimer = null;
-
-      // Position stream'ni bekor qilish
+      _policyTimer?.cancel();
+      _policyTimer = null;
       await _positionStream?.cancel();
       _positionStream = null;
-
-      // Tracking enabled flag'ni o'chirish
       await _prefs.preferences.setBool(_trackingEnabledKey, false);
-
       _isTrackingActive = false;
 
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Tracking stopped');
+        print('BackgroundLocationTrackingService: tracking stopped');
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error stopping tracking: $e');
-        print('BackgroundLocationTrackingService: Stack trace: $stackTrace');
+        print('BackgroundLocationTrackingService: stopTracking error: $e');
       }
     }
   }
 
-  /// Tracking holatini tekshirish
-  bool get isTrackingActive => _isTrackingActive;
-
-  /// Current interval (sekundlarda)
-  int get currentIntervalSeconds => _currentIntervalSeconds;
+  Future<void> dispose() async {
+    try {
+      _locationTimer?.cancel();
+      _policyTimer?.cancel();
+      await _positionStream?.cancel();
+      await _connectivitySubscription?.cancel();
+      _locationTimer = null;
+      _policyTimer = null;
+      _positionStream = null;
+      _connectivitySubscription = null;
+      _isInitialized = false;
+      _isTrackingActive = false;
+    } catch (e) {
+      if (kDebugMode) {
+        print('BackgroundLocationTrackingService: dispose error: $e');
+      }
+    }
+  }
 
   // ===========================================================================
-  // LOCATION TIMER
+  // PERMISSION
   // ===========================================================================
-  
-  /// Location timer'ni boshlash
+
+  Future<bool> _checkLocationPermission() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return false;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) return false;
+      return permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ===========================================================================
+  // TIMERS
+  // ===========================================================================
+
   void _startLocationTimer() {
     _locationTimer?.cancel();
-    
     _locationTimer = Timer.periodic(
       Duration(seconds: _currentIntervalSeconds),
-      (_) async {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Timer triggered at ${DateTime.now()}');
-        }
-        await _updateAndSendLocation();
-      },
+      (_) => _updateAndSendLocation(),
     );
-
     if (kDebugMode) {
-      print('BackgroundLocationTrackingService: Timer started with ${_currentIntervalSeconds}s interval');
+      print('BackgroundLocationTrackingService: location timer started ${_currentIntervalSeconds}s');
     }
   }
 
-  /// Position stream'ni boshlash
+  void _startPolicyTimer() {
+    _policyTimer?.cancel();
+    _policyTimer = Timer.periodic(_policyRefreshInterval, (_) => _refreshPolicy());
+  }
+
   void _startPositionStream() {
     _positionStream?.cancel();
-    
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 50, // 50 metr harakat qilganda yangilash
+        distanceFilter: 50,
       ),
     ).listen(
       (Position position) {
         _lastPosition = position;
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Position stream update: ${position.latitude}, ${position.longitude}');
-        }
       },
-      onError: (error) {
+      onError: (e) {
         if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Position stream error: $error');
+          print('BackgroundLocationTrackingService: position stream error: $e');
         }
       },
     );
+  }
+
+  Future<void> _refreshPolicy() async {
+    try {
+      final envelope = await _policyService.fetchPolicy();
+      if (envelope != null) {
+        _applyPolicyInterval(envelope.policy);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('BackgroundLocationTrackingService: refreshPolicy error: $e');
+      }
+    }
+  }
+
+  void _applyPolicyInterval(TrackingPolicy policy) {
+    final raw = policy.gpsIntervalSeconds;
+    if (raw <= 0) return; // policy kelgan, lekin interval belgilanmagan
+    final clamped = raw < _minIntervalSeconds ? _minIntervalSeconds : raw;
+    if (clamped == _currentIntervalSeconds) return;
+    _currentIntervalSeconds = clamped;
+    if (_isTrackingActive) {
+      _startLocationTimer();
+    }
+    if (kDebugMode) {
+      print('BackgroundLocationTrackingService: applied interval $_currentIntervalSeconds s');
+    }
   }
 
   // ===========================================================================
   // LOCATION UPDATE & SEND
   // ===========================================================================
-  
-  /// Joylashuvni yangilash va serverga yuborish
+
   Future<void> _updateAndSendLocation() async {
+    if (_isSending) return;
+    _isSending = true;
     try {
-      if (_isSending) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Already sending, skipping...');
-        }
+      final envelope = _policyService.cached ?? TrackingPolicyEnvelope.defaultOff();
+      final policy = envelope.policy;
+      restLog('GPS', 'tick — policy source=${envelope.source.toServerValue()} '
+          'is_active=${policy.isActive} gps_enabled=${policy.gpsEnabled} '
+          'interval=${policy.gpsIntervalSeconds}s '
+          'min_distance=${policy.gpsMinDistanceMeters}m '
+          'min_accuracy=${policy.gpsMinAccuracyMeters}m');
+
+      // 1. Policy bilan tekshirish
+      if (!_policyService.shouldCollectGps(policy)) {
+        restLog('GPS', 'SKIP — policy disabled (is_active or gps_enabled false)');
+        return;
+      }
+      final now = DateTime.now();
+      if (!_policyService.isWithinActiveHours(policy, now)) {
+        restLog('GPS', 'SKIP — outside active hours '
+            '${policy.activeHoursStart}..${policy.activeHoursEnd} (now=${now.hour}:${now.minute.toString().padLeft(2, '0')})');
+        return;
+      }
+      if (!_policyService.isWithinActiveDays(policy, now)) {
+        restLog('GPS', 'SKIP — outside active days ${policy.activeDays} (today weekday=${now.weekday})');
         return;
       }
 
-      _isSending = true;
-
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Updating and sending location...');
-      }
-
-      // 1. Joylashuvni olish
+      // 2. GPS olish
+      restLog('GPS', 'requesting fresh position from Geolocator (high accuracy, 15s timeout)');
       final position = await _getCurrentPosition();
       if (position == null) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Could not get position');
-        }
-        _isSending = false;
+        restLog('GPS', 'no position obtained (Geolocator returned null and no last cached)');
+        return;
+      }
+      restLog('GPS', 'got position lat=${position.latitude.toStringAsFixed(6)} '
+          'lng=${position.longitude.toStringAsFixed(6)} '
+          'acc=${position.accuracy.toStringAsFixed(1)}m '
+          'alt=${position.altitude.toStringAsFixed(1)}m '
+          'speed=${position.speed.toStringAsFixed(2)}m/s '
+          'heading=${position.heading.toStringAsFixed(1)}°');
+      _lastPosition = position;
+
+      // 3. Aniqlik filtri
+      if (!_policyService.isAccuracyAcceptable(policy, position.accuracy)) {
+        restLog('GPS', 'DROP — accuracy ${position.accuracy.toStringAsFixed(1)}m > limit ${policy.gpsMinAccuracyMeters}m');
         return;
       }
 
-      _lastPosition = position;
-
-      // 2. AgentLocationRecord yaratish
-      final record = await _buildLocationRecord(position);
-
-      // 3. Serverga yuborish
-      final success = await _sendLocationToServer(record);
-
-      if (!success) {
-        // Offline queue'ga qo'shish
-        await _addToOfflineQueue(record);
+      // 4. Masofa filtri
+      if (!_policyService.isDistanceAcceptable(policy, _lastSentPosition, position)) {
+        final delta = _lastSentPosition == null
+            ? 'n/a'
+            : '${Geolocator.distanceBetween(_lastSentPosition!.latitude, _lastSentPosition!.longitude, position.latitude, position.longitude).toStringAsFixed(1)}m';
+        restLog('GPS', 'DROP — moved $delta < min_distance ${policy.gpsMinDistanceMeters}m');
+        return;
       }
 
-      // 4. Last update vaqtini saqlash
+      // 5. Payload yasash va yuborish
+      restLog('GPS', 'building telemetry ping (collect: device=${policy.collectDeviceInfo} '
+          'battery=${policy.collectBattery} network=${policy.collectNetwork} sensors=${policy.collectSensors})');
+      final ping = await _buildTelemetryPing(position, policy);
+      restLog('GPS', 'payload fields=${ping.toJson().length} → POST telemetry');
+      final ok = await _sendSinglePing(ping);
+      if (ok) {
+        _lastSentPosition = position;
+        restLog('GPS', 'SENT — server accepted ping');
+      } else {
+        await _addToOfflineQueue(ping);
+        restLog('GPS', 'FAIL — queued offline (size=${_offlineQueue.length})');
+      }
+
       await _prefs.preferences.setString(
         _lastLocationUpdateKey,
         DateTime.now().toIso8601String(),
       );
-
-      _isSending = false;
-    } catch (e, stackTrace) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error in _updateAndSendLocation: $e');
-        print('BackgroundLocationTrackingService: Stack trace: $stackTrace');
-      }
+    } catch (e, st) {
+      restLog('GPS', 'ERROR _updateAndSendLocation: $e\n$st');
+    } finally {
       _isSending = false;
     }
   }
 
-  /// Joriy joylashuvni olish
   Future<Position?> _getCurrentPosition() async {
     try {
       return await Geolocator.getCurrentPosition(
@@ -492,172 +469,253 @@ class BackgroundLocationTrackingService {
         ),
       );
     } catch (e) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error getting position: $e');
-      }
-      // Oxirgi ma'lum joylashuvni qaytarish
+      restLog('GPS', 'getCurrentPosition error: $e (falling back to last cached)');
       return _lastPosition;
     }
   }
 
-  /// AgentLocationRecord yaratish
-  Future<AgentLocationRecord> _buildLocationRecord(Position position) async {
+  Future<TelemetryPingRequest> _buildTelemetryPing(
+    Position position,
+    TrackingPolicy policy,
+  ) async {
+    final agentCode = _prefs.getUserCode() ?? '';
+    final agentName = _prefs.getUserName();
+    final deviceData = await _deviceDataCollector.collectAllData();
+    final pkg = _packageInfo ?? await _safePackageInfo();
+
+    final lat = position.latitude.toStringAsFixed(6);
+    final lng = position.longitude.toStringAsFixed(6);
+
+    String? toFixedString(double? v, int n) => v?.toStringAsFixed(n);
+
+    String? batteryLevel;
+    bool? isCharging;
+    String? batteryHealth;
+    String? batteryTemperature;
+    String? batteryVoltage;
+    if (policy.collectBattery) {
+      batteryLevel = deviceData['battery_level']?.toString();
+      isCharging = deviceData['is_charging'] as bool?;
+      batteryHealth = deviceData['battery_health'] as String?;
+      batteryTemperature = deviceData['battery_temperature']?.toString();
+      batteryVoltage = deviceData['battery_voltage']?.toString();
+    }
+
+    String? networkType;
+    String? wifiSsid;
+    String? wifiBssid;
+    String? cellularOperator;
+    String? cellularNetworkType;
+    String? ipAddress;
+    String? connectionType;
+    String? signalStrength;
+    if (policy.collectNetwork) {
+      networkType = deviceData['network_type'] as String?;
+      wifiSsid = deviceData['wifi_ssid'] as String?;
+      wifiBssid = deviceData['wifi_bssid'] as String?;
+      cellularOperator = deviceData['cellular_operator'] as String?;
+      cellularNetworkType = deviceData['cellular_network_type'] as String?;
+      ipAddress = deviceData['ip_address'] as String?;
+      connectionType = deviceData['connection_type'] as String?;
+      signalStrength = deviceData['signal_strength']?.toString();
+    }
+
+    String? deviceId;
+    String? deviceName;
+    String? deviceManufacturer;
+    String? deviceModel;
+    String? deviceFingerprint;
+    String? platform;
+    String? osVersion;
+    int? screenWidth;
+    int? screenHeight;
+    String? screenDensity;
+    String? appVersion;
+    String? appBuildNumber;
+    bool? isRooted;
+    bool? isJailbroken;
+    bool? encryptionEnabled;
+    String? screenLockType;
+    if (policy.collectDeviceInfo) {
+      deviceId = deviceData['device_id'] as String?;
+      deviceName = deviceData['device_name'] as String?;
+      deviceManufacturer = deviceData['device_manufacturer'] as String?;
+      deviceModel = deviceData['device_model'] as String?;
+      deviceFingerprint = deviceData['device_fingerprint'] as String?;
+      platform = _normalizePlatform(deviceData['platform'] as String?);
+      osVersion = deviceData['os_version'] as String?;
+      screenWidth = deviceData['screen_width'] as int?;
+      screenHeight = deviceData['screen_height'] as int?;
+      screenDensity = deviceData['screen_density'] as String?;
+      appVersion = pkg?.version;
+      appBuildNumber = pkg?.buildNumber;
+      isRooted = deviceData['is_rooted'] as bool?;
+      isJailbroken = deviceData['is_jailbroken'] as bool?;
+      encryptionEnabled = deviceData['encryption_enabled'] as bool?;
+      screenLockType = deviceData['screen_lock_type'] as String?;
+    } else {
+      // Hatto collect_device_info=false bo'lsa ham device_id va platform ni
+      // jo'natamiz — server LocationPing'ni Device bilan bog'laydi.
+      deviceId = deviceData['device_id'] as String?;
+      platform = _normalizePlatform(deviceData['platform'] as String?);
+    }
+
+    String? accelerometerX;
+    String? accelerometerY;
+    String? accelerometerZ;
+    String? gyroscopeX;
+    String? gyroscopeY;
+    String? gyroscopeZ;
+    if (policy.collectSensors) {
+      accelerometerX = deviceData['accelerometer_x']?.toString();
+      accelerometerY = deviceData['accelerometer_y']?.toString();
+      accelerometerZ = deviceData['accelerometer_z']?.toString();
+      gyroscopeX = deviceData['gyroscope_x']?.toString();
+      gyroscopeY = deviceData['gyroscope_y']?.toString();
+      gyroscopeZ = deviceData['gyroscope_z']?.toString();
+    }
+
+    return TelemetryPingRequest(
+      latitude: lat,
+      longitude: lng,
+      agentCode: agentCode.isEmpty ? null : agentCode,
+      agentName: agentName,
+      accuracy: toFixedString(position.accuracy, 2),
+      altitude: toFixedString(position.altitude, 2),
+      speed: toFixedString(position.speed, 2),
+      heading: toFixedString(position.heading, 2),
+      locationProvider: 'geolocator',
+      timezone: deviceData['timezone'] as String?,
+      deviceId: deviceId,
+      deviceName: deviceName,
+      deviceManufacturer: deviceManufacturer,
+      deviceModel: deviceModel,
+      deviceFingerprint: deviceFingerprint,
+      platform: platform,
+      osVersion: osVersion,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      screenDensity: screenDensity,
+      appVersion: appVersion,
+      appBuildNumber: appBuildNumber,
+      batteryLevel: batteryLevel,
+      isCharging: isCharging,
+      batteryHealth: batteryHealth,
+      batteryTemperature: batteryTemperature,
+      batteryVoltage: batteryVoltage,
+      signalStrength: signalStrength,
+      networkType: networkType,
+      wifiSsid: wifiSsid,
+      wifiBssid: wifiBssid,
+      cellularOperator: cellularOperator,
+      cellularNetworkType: cellularNetworkType,
+      ipAddress: ipAddress,
+      connectionType: connectionType,
+      accelerometerX: accelerometerX,
+      accelerometerY: accelerometerY,
+      accelerometerZ: accelerometerZ,
+      gyroscopeX: gyroscopeX,
+      gyroscopeY: gyroscopeY,
+      gyroscopeZ: gyroscopeZ,
+      isRooted: isRooted,
+      isJailbroken: isJailbroken,
+      encryptionEnabled: encryptionEnabled,
+      screenLockType: screenLockType,
+      loggedAt: DateTime.now().toUtc(),
+    );
+  }
+
+  String? _normalizePlatform(String? raw) {
+    if (raw == null) return null;
+    final lower = raw.toLowerCase();
+    if (lower.contains('android')) return 'android';
+    if (lower.contains('ios')) return 'ios';
+    if (lower.contains('web')) return 'web';
+    return 'other';
+  }
+
+  Future<PackageInfo?> _safePackageInfo() async {
     try {
-      // Agent ma'lumotlarini olish
-      final agentCode = _prefs.getUserCode() ?? '';
-      final agentName = _prefs.getUserName();
-
-      // Qurilma ma'lumotlarini to'plash
-      final deviceData = await _deviceDataCollector.collectAllData();
-
-      // AgentLocationRecord yaratish
-      return AgentLocationRecord(
-        // Majburiy maydonlar
-        agentCode: agentCode,
-        latitude: position.latitude.toStringAsFixed(6),
-        longitude: position.longitude.toStringAsFixed(6),
-        
-        // Agent ma'lumotlari
-        agentName: agentName,
-        
-        // Qurilma ma'lumotlari
-        deviceId: deviceData['device_id'] as String?,
-        deviceName: deviceData['device_name'] as String?,
-        deviceManufacturer: deviceData['device_manufacturer'] as String?,
-        deviceModel: deviceData['device_model'] as String?,
-        platform: deviceData['platform'] as String?,
-        osVersion: deviceData['os_version'] as String?,
-        
-        // Ekran ma'lumotlari
-        screenWidth: deviceData['screen_width'] as int?,
-        screenHeight: deviceData['screen_height'] as int?,
-        screenDensity: deviceData['screen_density'] as String?,
-        
-        // Joylashuv aniqligi
-        accuracy: position.accuracy.toStringAsFixed(2),
-        altitude: position.altitude.toStringAsFixed(2),
-        speed: position.speed.toStringAsFixed(2),
-        heading: position.heading.toStringAsFixed(2),
-        
-        // Tarmoq ma'lumotlari
-        networkType: deviceData['network_type'] as String?,
-        connectionType: deviceData['connection_type'] as String?,
-        
-        // Vaqt mintaqasi
-        timezone: deviceData['timezone'] as String?,
-        
-        // Lokatsiya manbasi
-        locationProvider: 'geolocator',
-        
-        // Qurilma fingerprint
-        deviceFingerprint: deviceData['device_fingerprint'] as String?,
-        
-        // Xavfsizlik
-        isRooted: deviceData['is_rooted'] as bool?,
-        isJailbroken: deviceData['is_jailbroken'] as bool?,
-        
-        // Batareya ma'lumotlari
-        batteryLevel: deviceData['battery_level']?.toString(),
-        isCharging: deviceData['is_charging'] as bool?,
-        batteryHealth: deviceData['battery_health'] as String?,
-        batteryTemperature: deviceData['battery_temperature']?.toString(),
-        batteryVoltage: deviceData['battery_voltage']?.toString(),
-        
-        // Log vaqti
-        loggedAt: DateTime.now(),
-      );
-    } catch (e, stackTrace) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error building location record: $e');
-        print('BackgroundLocationTrackingService: Stack trace: $stackTrace');
-      }
-      
-      // Minimal record qaytarish
-      return AgentLocationRecord(
-        agentCode: _prefs.getUserCode() ?? '',
-        latitude: position.latitude.toStringAsFixed(6),
-        longitude: position.longitude.toStringAsFixed(6),
-        loggedAt: DateTime.now(),
-      );
+      _packageInfo = await PackageInfo.fromPlatform();
+      return _packageInfo;
+    } catch (_) {
+      return null;
     }
   }
 
   // ===========================================================================
   // API COMMUNICATION
   // ===========================================================================
-  
-  /// Joylashuvni serverga yuborish
-  /// 
-  /// Parametrlar:
-  /// - [record] - Yuborilishi kerak bo'lgan AgentLocationRecord
-  /// 
-  /// Qaytaradi: Future<bool> - muvaffaqiyatli yuborildi mi
-  Future<bool> _sendLocationToServer(AgentLocationRecord record) async {
+
+  /// Bitta pingni yuborish (single payload).
+  Future<bool> _sendSinglePing(TelemetryPingRequest ping) async {
+    return _postPings([ping], asBatch: false);
+  }
+
+  /// Bir nechta pingni batch sifatida yuborish (`{"pings": [...]}`).
+  Future<bool> _postPings(
+    List<TelemetryPingRequest> pings, {
+    required bool asBatch,
+  }) async {
+    if (pings.isEmpty) return true;
     try {
-      // Token olish (avtomatik qayta autentifikatsiya bilan)
-      final token = await _tokenService.ensureValidToken();
+      final token = await _tokenService.ensureValidV2Token();
       if (token == null || token.isEmpty) {
         if (kDebugMode) {
-          print('BackgroundLocationTrackingService: No valid token after re-authentication attempt, adding to offline queue');
+          print('BackgroundLocationTrackingService: no V2 token, queueing');
         }
         return false;
       }
 
-      // Internet ulanishini tekshirish
       final isConnected = await _deviceDataCollector.isConnectedToInternet();
-      if (!isConnected) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: No internet, adding to offline queue');
-        }
-        return false;
-      }
+      if (!isConnected) return false;
 
-      final url = '$_apiBaseUrl$_locationEndpoint';
-      
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Sending location to $url');
-        print('BackgroundLocationTrackingService: Data: ${record.toJson()}');
-      }
+      final url = '${TokenService.v2BaseUrl}$_telemetryEndpoint';
+      final body = asBatch
+          ? <String, dynamic>{'pings': pings.map((p) => p.toJson()).toList()}
+          : pings.first.toJson();
 
-      // API so'rovi
       final response = await _dio.post(
         url,
-        data: record.toJson(),
+        data: body,
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          sendTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 30),
         ),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Location sent successfully');
-          print('BackgroundLocationTrackingService: Response: ${response.data}');
+        if (response.data is Map) {
+          final parsed = TelemetryAcceptedResponse.fromJson(
+            Map<String, dynamic>.from(response.data as Map),
+          );
+          if (kDebugMode) {
+            print('BackgroundLocationTrackingService: accepted=${parsed.acceptedCount} rejected=${parsed.rejectedCount}');
+            if (parsed.rejected.isNotEmpty) {
+              for (final r in parsed.rejected) {
+                print('  rejected[${r.index}] ${r.reason}');
+              }
+            }
+          }
         }
         return true;
-      } else {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Failed with status ${response.statusCode}');
-          print('BackgroundLocationTrackingService: Response: ${response.data}');
-        }
-        return false;
       }
-    } on DioException catch (e) {
+
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: DioException: ${e.type}');
-        print('BackgroundLocationTrackingService: Message: ${e.message}');
-        print('BackgroundLocationTrackingService: Response: ${e.response?.data}');
+        print('BackgroundLocationTrackingService: postPings status=${response.statusCode} data=${response.data}');
       }
       return false;
-    } catch (e, stackTrace) {
+    } on DioException catch (e) {
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error sending location: $e');
-        print('BackgroundLocationTrackingService: Stack trace: $stackTrace');
+        print('BackgroundLocationTrackingService: postPings DioException ${e.type} status=${e.response?.statusCode}');
+      }
+      return false;
+    } catch (e, st) {
+      if (kDebugMode) {
+        print('BackgroundLocationTrackingService: postPings error: $e\n$st');
       }
       return false;
     }
@@ -666,247 +724,100 @@ class BackgroundLocationTrackingService {
   // ===========================================================================
   // OFFLINE QUEUE
   // ===========================================================================
-  
-  /// Offline queue'ga qo'shish
-  Future<void> _addToOfflineQueue(AgentLocationRecord record) async {
+
+  Future<void> _addToOfflineQueue(TelemetryPingRequest ping) async {
     try {
-      _offlineQueue.add(record);
+      _offlineQueue.add(ping);
+      if (_offlineQueue.length > _offlineQueueMaxSize) {
+        _offlineQueue.removeRange(0, _offlineQueue.length - _offlineQueueMaxSize);
+      }
       await _saveOfflineQueue();
-      
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Added to offline queue. Queue size: ${_offlineQueue.length}');
+        print('BackgroundLocationTrackingService: queued ping. size=${_offlineQueue.length}');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error adding to offline queue: $e');
+        print('BackgroundLocationTrackingService: addToOfflineQueue error: $e');
       }
     }
   }
 
-  /// Offline queue'ni saqlash
   Future<void> _saveOfflineQueue() async {
     try {
-      final jsonList = _offlineQueue.map((r) => r.toJson()).toList();
-      final jsonString = jsonEncode(jsonList);
-      await _prefs.preferences.setString(_offlineQueueKey, jsonString);
+      final list = _offlineQueue.map((p) => p.toJson()).toList();
+      await _prefs.preferences.setString(_offlineQueueKey, jsonEncode(list));
     } catch (e) {
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error saving offline queue: $e');
+        print('BackgroundLocationTrackingService: saveOfflineQueue error: $e');
       }
     }
   }
 
-  /// Offline queue'ni yuklash
   Future<void> _loadOfflineQueue() async {
     try {
-      final jsonString = _prefs.preferences.getString(_offlineQueueKey);
-      if (jsonString != null && jsonString.isNotEmpty) {
-        final jsonList = jsonDecode(jsonString) as List;
-        _offlineQueue = jsonList
-            .map((json) => AgentLocationRecord.fromJson(json as Map<String, dynamic>))
+      final raw = _prefs.preferences.getString(_offlineQueueKey);
+      if (raw == null || raw.isEmpty) return;
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        _offlineQueue = decoded
+            .whereType<Map>()
+            .map((e) => TelemetryPingRequest.fromJson(Map<String, dynamic>.from(e)))
             .toList();
-        
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Loaded ${_offlineQueue.length} items from offline queue');
-        }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error loading offline queue: $e');
+        print('BackgroundLocationTrackingService: loadOfflineQueue error: $e');
       }
       _offlineQueue = [];
     }
   }
 
-  /// Offline queue'ni yuborish
   Future<void> _sendOfflineQueue() async {
-    if (_offlineQueue.isEmpty) return;
-    if (_isSending) return;
-
+    if (_offlineQueue.isEmpty || _isSending) return;
+    _isSending = true;
     try {
-      _isSending = true;
-      
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Sending ${_offlineQueue.length} items from offline queue');
+      while (_offlineQueue.isNotEmpty) {
+        final batch = _offlineQueue.take(_batchUploadMaxSize).toList();
+        final ok = await _postPings(batch, asBatch: true);
+        if (!ok) break;
+        _offlineQueue.removeRange(0, batch.length);
       }
-
-      final itemsToRemove = <AgentLocationRecord>[];
-
-      for (final record in _offlineQueue) {
-        final success = await _sendLocationToServer(record);
-        if (success) {
-          itemsToRemove.add(record);
-        } else {
-          // Bitta xato bo'lsa, qolganlarini keyinroq yuborish
-          break;
-        }
-      }
-
-      // Muvaffaqiyatli yuborilganlarni o'chirish
-      for (final item in itemsToRemove) {
-        _offlineQueue.remove(item);
-      }
-
       await _saveOfflineQueue();
-
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Sent ${itemsToRemove.length} items. Remaining: ${_offlineQueue.length}');
+        print('BackgroundLocationTrackingService: offline queue flushed. remaining=${_offlineQueue.length}');
       }
-
-      _isSending = false;
-    } catch (e, stackTrace) {
+    } catch (e, st) {
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error sending offline queue: $e');
-        print('BackgroundLocationTrackingService: Stack trace: $stackTrace');
+        print('BackgroundLocationTrackingService: sendOfflineQueue error: $e\n$st');
       }
+    } finally {
       _isSending = false;
     }
   }
 
-  /// Offline queue'ni tozalash
   Future<void> clearOfflineQueue() async {
     _offlineQueue.clear();
     await _prefs.preferences.remove(_offlineQueueKey);
-    
-    if (kDebugMode) {
-      print('BackgroundLocationTrackingService: Offline queue cleared');
-    }
-  }
-
-  /// Offline queue size
-  int get offlineQueueSize => _offlineQueue.length;
-
-  // ===========================================================================
-  // PERMISSION CHECK
-  // ===========================================================================
-  
-  /// Location permission'ni tekshirish
-  Future<bool> _checkLocationPermission() async {
-    try {
-      // Location service yoqilganmi
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Location service disabled');
-        }
-        return false;
-      }
-
-      // Permission tekshirish
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Location permission denied forever');
-        }
-        return false;
-      }
-
-      final hasPermission = permission == LocationPermission.always ||
-          permission == LocationPermission.whileInUse;
-
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Location permission: $permission, hasPermission: $hasPermission');
-      }
-
-      return hasPermission;
-    } catch (e) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error checking permission: $e');
-      }
-      return false;
-    }
   }
 
   // ===========================================================================
-  // INTERVAL UPDATE
+  // PUBLIC API (backward-compatible signatures)
   // ===========================================================================
-  
-  /// Interval'ni yangilash
-  /// 
-  /// Bu metod server'dan yangi interval kelganda chaqiriladi.
-  /// 
-  /// Parametrlar:
-  /// - [intervalSeconds] - Yangi interval (sekundlarda)
+
+  /// Tashqi kod (masalan, server policy update kelgan SOAP push) chaqiradigan
+  /// metod — interval yangilanadi va timer qayta tushiriladi. Endi asosiy
+  /// manba TrackingPolicyService bo'lsa-da, bu metod saqlanadi (backward compat).
   Future<void> updateInterval(int intervalSeconds) async {
-    try {
-      if (intervalSeconds <= 0) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Invalid interval: $intervalSeconds');
-        }
-        return;
-      }
-
-      final newInterval = intervalSeconds < _minIntervalSeconds 
-          ? _minIntervalSeconds 
-          : intervalSeconds;
-
-      if (newInterval == _currentIntervalSeconds) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: Interval unchanged');
-        }
-        return;
-      }
-
-      _currentIntervalSeconds = newInterval;
-
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Interval updated to $_currentIntervalSeconds seconds');
-      }
-
-      // Agar tracking active bo'lsa, timer'ni qayta boshlash
-      if (_isTrackingActive) {
-        _startLocationTimer();
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error updating interval: $e');
-      }
+    if (intervalSeconds <= 0) return;
+    final clamped =
+        intervalSeconds < _minIntervalSeconds ? _minIntervalSeconds : intervalSeconds;
+    if (clamped == _currentIntervalSeconds) return;
+    _currentIntervalSeconds = clamped;
+    if (_isTrackingActive) {
+      _startLocationTimer();
     }
   }
 
-  // ===========================================================================
-  // CLEANUP
-  // ===========================================================================
-  
-  /// Service'ni tozalash
-  Future<void> dispose() async {
-    try {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Disposing...');
-      }
-
-      _locationTimer?.cancel();
-      _locationTimer = null;
-
-      await _positionStream?.cancel();
-      _positionStream = null;
-
-      await _connectivitySubscription?.cancel();
-      _connectivitySubscription = null;
-
-      _isInitialized = false;
-      _isTrackingActive = false;
-
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Disposed');
-      }
-    } catch (e, stackTrace) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Error disposing: $e');
-        print('BackgroundLocationTrackingService: Stack trace: $stackTrace');
-      }
-    }
-  }
-
-  // ===========================================================================
-  // DEBUG INFO
-  // ===========================================================================
-  
-  /// Debug ma'lumotlarini olish
   Map<String, dynamic> getDebugInfo() {
     return {
       'isInitialized': _isInitialized,
@@ -917,6 +828,7 @@ class BackgroundLocationTrackingService {
           ? '${_lastPosition!.latitude}, ${_lastPosition!.longitude}'
           : null,
       'lastUpdate': _prefs.preferences.getString(_lastLocationUpdateKey),
+      'cachedPolicySource': _policyService.cached?.source.toServerValue(),
     };
   }
 }

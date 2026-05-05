@@ -48,6 +48,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _obtainRestApiTokens(event.username, event.password);
 
       // =========================================================================
+      // V2 (yangi server) JWT tokenlarni parallel olish.
+      // Lokatsiya/telemetry servislari yangi serverga yuborgan so'rovlar uchun
+      // ishlatiladi. Eski REST tokenlar tegmaydi.
+      // Failure-tolerant: yangi server javob bermasa ham, login oqim davom etadi.
+      // =========================================================================
+      await _obtainV2Tokens(event.username, event.password);
+
+      // =========================================================================
       // Background Location Tracking - login muvaffaqiyatli bo'lgandan keyin
       // joylashuvni kuzatishni boshlash
       // =========================================================================
@@ -191,7 +199,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _stopBackgroundLocationTracking();
 
       // =========================================================================
-      // 2. User ma'lumotlarini tozalash
+      // 2. V2 (yangi server) tokenlarini tozalash. Eski REST tokenlar boshqa
+      //    servislar tomonidan boshqariladi va bu yerda tegmaydi.
+      // =========================================================================
+      try {
+        await sl<TokenService>().clearV2Tokens();
+      } catch (e) {
+        if (kDebugMode) {
+          print('AuthBloc: Error clearing V2 tokens (non-critical): $e');
+        }
+      }
+
+      // =========================================================================
+      // 3. User ma'lumotlarini tozalash
       // =========================================================================
       // Clear user code from preferences
       await _prefs.clearUserData();
@@ -252,8 +272,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  /// Yangi server (V2) JWT tokenlarini olish.
+  ///
+  /// Bu metod login muvaffaqiyatli bo'lgandan keyin chaqiriladi va yangi
+  /// serverga (`http://localhost:8000/api/auth/token/`) login + password
+  /// yuboradi. Olingan access + refresh tokenlar V2 kalit ostida saqlanadi
+  /// va keyinchalik telemetry/policy/device-register servislari ishlatadi.
+  ///
+  /// Failure-tolerant: yangi server mavjud bo'lmasa yoki muvaffaqiyatsiz
+  /// bo'lsa, login oqim ham buzilmaydi (eski REST servislar mustaqil ishlaydi).
+  Future<void> _obtainV2Tokens(String username, String password) async {
+    try {
+      if (kDebugMode) {
+        print('AuthBloc: Obtaining V2 (new server) tokens...');
+      }
+      final tokenService = sl<TokenService>();
+      final ok = await tokenService.obtainV2Tokens(
+        login: username,
+        password: password,
+      );
+      if (kDebugMode) {
+        if (ok) {
+          print('AuthBloc: V2 tokens obtained successfully');
+        } else {
+          print('AuthBloc: V2 tokens obtain returned false (non-critical)');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AuthBloc: Error obtaining V2 tokens (non-critical): $e');
+      }
+    }
+  }
+
   /// Background location tracking'ni to'xtatish
-  /// 
+  ///
   /// Bu metod logout paytida chaqiriladi.
   /// Tracking to'xtatiladi va resurslar tozalanadi.
   Future<void> _stopBackgroundLocationTracking() async {

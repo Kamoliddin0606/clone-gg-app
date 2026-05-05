@@ -21,6 +21,9 @@ import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_servi
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/sync_notification_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/tracking_policy_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/device_registration_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/rest_logging.dart';
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/local_uuid_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/startup_access_service.dart';
@@ -86,7 +89,11 @@ Future<void> setupServiceLocator() async {
     sl.registerLazySingleton(() => DatabaseHelper());
   }
   if (!sl.isRegistered<Dio>()) {
-    sl.registerLazySingleton(() => Dio());
+    sl.registerLazySingleton(() {
+      final dio = Dio();
+      attachRestLogger(dio, 'REST');
+      return dio;
+    });
   }
   if (!sl.isRegistered<ApiService>()) {
     sl.registerLazySingleton(() => ApiService(
@@ -114,9 +121,10 @@ Future<void> setupServiceLocator() async {
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),
     ));
-    
+    attachRestLogger(tokenDio, 'AUTH');
+
     sl.registerLazySingleton<TokenService>(() => TokenService(
-      tokenDio, 
+      tokenDio,
       sl<SharedPreferencesService>()
     ));
   }
@@ -190,12 +198,28 @@ Future<void> setupServiceLocator() async {
 
   // Background Location Tracking Service - fonda joylashuvni kuzatish uchun
   // Bu service ilova aktiv bo'lmasa ham ishlaydi va serverga location yuboradi
-  // Alohida Dio instance ishlatadi - boshqa service interceptorlaridan ta'sirlanmaydi
+  // Alohida Dio instance ishlatadi - boshqa service interceptorlaridan ta'sirlanmaydi.
+  // V2 (yangi server) telemetry endpointlariga yuboradi va TrackingPolicyService
+  // hamda DeviceRegistrationService bilan birga ishlaydi.
+  if (!sl.isRegistered<TrackingPolicyService>()) {
+    sl.registerLazySingleton<TrackingPolicyService>(() => TrackingPolicyService(
+      tokenService: sl<TokenService>(),
+      prefs: sl<SharedPreferencesService>(),
+    ));
+  }
+  if (!sl.isRegistered<DeviceRegistrationService>()) {
+    sl.registerLazySingleton<DeviceRegistrationService>(() => DeviceRegistrationService(
+      tokenService: sl<TokenService>(),
+      prefs: sl<SharedPreferencesService>(),
+    ));
+  }
   if (!sl.isRegistered<BackgroundLocationTrackingService>()) {
     sl.registerLazySingleton<BackgroundLocationTrackingService>(() => BackgroundLocationTrackingService(
       prefs: sl<SharedPreferencesService>(),
       tokenService: sl<TokenService>(),
       dbService: sl<ApiDatabaseService>(),
+      policyService: sl<TrackingPolicyService>(),
+      deviceRegistrationService: sl<DeviceRegistrationService>(),
     ));
   }
 

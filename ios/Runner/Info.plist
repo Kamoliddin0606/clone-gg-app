@@ -30,10 +30,46 @@
 	<string>This app needs access to the camera to take photos for reports.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Backgroundda masofa va marshrut uchun joylashuv kerak.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Backgroundda masofa va marshrut uchun joylashuv kerak.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Nearby clientlarni ko'rsatish uchun joylashuv kerak.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to the photo library to select images for reports.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>178.218.200.120</key>
+			<dict>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<false/>
+			</dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<false/>
+			</dict>
+			<key>kit.gloriya.uz</key>
+			<dict>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

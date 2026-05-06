@@ -3167,5 +3167,24 @@
   "settingsNotComplete": "Please complete all required settings",
   "noOrganizationsAvailable": "No organizations available",
   "noWarehousesAvailable": "No warehouses available",
-  "noPriceTypesAvailable": "No price types available"
+  "noPriceTypesAvailable": "No price types available",
+  "userInactive": "Your account is inactive. Contact your administrator.",
+  "userOutsideActiveWindow": "Access window: {start} – {end}",
+  "@userOutsideActiveWindow": {
+    "placeholders": {
+      "start": { "type": "String" },
+      "end": { "type": "String" }
+    }
+  },
+  "licenseExpired": "Your organization's license has expired.",
+  "licenseMissing": "Your organization has no active license.",
+  "licenseSeatExceeded": "All license seats are taken (you are #{rank} of {seatCount}).",
+  "@licenseSeatExceeded": {
+    "placeholders": {
+      "rank": { "type": "int" },
+      "seatCount": { "type": "int" }
+    }
+  },
+  "clockTamperingDetected": "Device clock changed. Please reconnect to verify access.",
+  "noInternetForFirstLogin": "First-time login requires an internet connection."
 }

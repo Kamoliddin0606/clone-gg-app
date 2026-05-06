@@ -2986,5 +2986,24 @@
   "settingsNotComplete": "Iltimos, barcha majburiy sozlamalarni to'ldiring",
   "noOrganizationsAvailable": "Mavjud tashkilotlar yo'q",
   "noWarehousesAvailable": "Mavjud omborlar yo'q",
-  "noPriceTypesAvailable": "Mavjud narx turlari yo'q"
+  "noPriceTypesAvailable": "Mavjud narx turlari yo'q",
+  "userInactive": "Hisobingiz nofaol. Administratorga murojaat qiling.",
+  "userOutsideActiveWindow": "Ruxsat oynasi: {start} – {end}",
+  "@userOutsideActiveWindow": {
+    "placeholders": {
+      "start": { "type": "String" },
+      "end": { "type": "String" }
+    }
+  },
+  "licenseExpired": "Tashkilot litsenziyasi muddati o'tgan.",
+  "licenseMissing": "Tashkilotda faol litsenziya yo'q.",
+  "licenseSeatExceeded": "Litsenziya o'rinlari to'la (siz #{rank}/{seatCount}).",
+  "@licenseSeatExceeded": {
+    "placeholders": {
+      "rank": { "type": "int" },
+      "seatCount": { "type": "int" }
+    }
+  },
+  "clockTamperingDetected": "Qurilma soati o'zgargan. Ruxsatni tekshirish uchun internetga ulaning.",
+  "noInternetForFirstLogin": "Birinchi kirish uchun internet ulanishi kerak."
 }

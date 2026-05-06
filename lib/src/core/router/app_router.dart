@@ -21,22 +21,12 @@ import 'package:gloria_marketing_flutter/src/features/marketing/presentation/pag
 import 'package:gloria_marketing_flutter/src/features/warehouse_manager/presentation/pages/warehouse_manager_home_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/main_agent_screen.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_check_page.dart';
-import 'package:gloria_marketing_flutter/src/core/widgets/security_check_page.dart';
-import 'package:gloria_marketing_flutter/src/core/widgets/access_blocked_page.dart';
-import 'package:gloria_marketing_flutter/src/features/auth/presentation/pages/access_control_page.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/startup_access_bloc.dart';
-import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart' show sl;
-import 'package:gloria_marketing_flutter/src/core/services/app_access_control_service.dart';
 import 'package:gloria_marketing_flutter/src/features/faq/presentation/pages/faq_page.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-  static const String accessControlRoute = '/access-control';
-  static const String securityCheckRoute = '/security-check';
-  static const String accessBlockedRoute = '/access-blocked';
   static const String permissionCheckRoute = '/permission-check';
   static const String loginRoute = '/';
   static const String agentHomeRoute = '/agent-home';
@@ -62,24 +52,6 @@ class AppRouter {
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case accessControlRoute:
-        return MaterialPageRoute(
-          builder: (_) => AccessControlPage(
-            accessControlService: sl<AppAccessControlService>(),
-          ),
-        );
-      case securityCheckRoute:
-        return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => sl<StartupAccessBloc>(),
-            child: const SecurityCheckPage(),
-          ),
-        );
-      case accessBlockedRoute:
-        final arguments = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
-          builder: (_) => AccessBlockedPage.fromArguments(arguments),
-        );
       case permissionCheckRoute:
         return MaterialPageRoute(builder: (_) => const PermissionCheckPage());
       case loginRoute:

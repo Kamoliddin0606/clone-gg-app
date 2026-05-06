@@ -47,14 +47,18 @@ class SoapApiService {
     _dio.options.sendTimeout = const Duration(seconds: 30);
 
     _dio.interceptors.addAll([
-      LogInterceptor(
-        request: true,
-        requestHeader: true,
-        requestBody: true,
-        responseHeader: true,
-        responseBody: true,
-        error: true,
-      ),
+      // SOAP request/response bodies are huge XML envelopes (often 100+ KB)
+      // and printing them on every call slows the app and floods the terminal.
+      // The interceptor is intentionally disabled. Re-enable temporarily when
+      // debugging a specific SOAP method, then comment back out.
+      // LogInterceptor(
+      //   request: true,
+      //   requestHeader: true,
+      //   requestBody: true,
+      //   responseHeader: true,
+      //   responseBody: true,
+      //   error: true,
+      // ),
       InterceptorsWrapper(
         onRequest: (options, handler) {
           // Add common headers
@@ -168,11 +172,12 @@ class SoapApiService {
           },
         ),
       );
-      if (kDebugMode) print('KPI data response: ${response.data}');
+      // Suppressed: full SOAP body is too large for the terminal.
+      // if (kDebugMode) print('KPI data response: ${response.data}');
       final document = XmlDocument.parse(response.data);
 
       final returnElement = document.findAllElements('m:return').first;
-      if (kDebugMode) print('KPI data response: $returnElement');
+      // if (kDebugMode) print('KPI data response: $returnElement');
 
       return KpiData(
         plan: returnElement.findElements('m:TotalPlan').first.innerText,
@@ -1449,8 +1454,8 @@ class SoapApiService {
           },
         ),
       );
-      if (kDebugMode)
-        print('buyurtmalar royxati soap holatda: ${response.data}');
+      // Suppressed: full SOAP body is too large for the terminal.
+      // if (kDebugMode) print('buyurtmalar royxati soap holatda: ${response.data}');
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 
@@ -2748,13 +2753,14 @@ class SoapApiService {
 </soap:Envelope>
 ''';
 
-    if (kDebugMode) {
-      print('═══════════════════════════════════════════════════════════════');
-      print('SOAP REQUEST - SetContract');
-      print('═══════════════════════════════════════════════════════════════');
-      print(soapEnvelope);
-      print('═══════════════════════════════════════════════════════════════');
-    }
+    // Suppressed: SOAP envelope dump is too large for the terminal.
+    // if (kDebugMode) {
+    //   print('═══════════════════════════════════════════════════════════════');
+    //   print('SOAP REQUEST - SetContract');
+    //   print('═══════════════════════════════════════════════════════════════');
+    //   print(soapEnvelope);
+    //   print('═══════════════════════════════════════════════════════════════');
+    // }
 
     try {
       final response = await _dio.post(
@@ -2875,13 +2881,14 @@ class SoapApiService {
 </soap:Envelope>
 ''';
 
-    if (kDebugMode) {
-      print('═══════════════════════════════════════════════════════════════');
-      print('SOAP REQUEST - SetClient');
-      print('═══════════════════════════════════════════════════════════════');
-      print(soapEnvelope);
-      print('═══════════════════════════════════════════════════════════════');
-    }
+    // Suppressed: SOAP envelope dump is too large for the terminal.
+    // if (kDebugMode) {
+    //   print('═══════════════════════════════════════════════════════════════');
+    //   print('SOAP REQUEST - SetClient');
+    //   print('═══════════════════════════════════════════════════════════════');
+    //   print(soapEnvelope);
+    //   print('═══════════════════════════════════════════════════════════════');
+    // }
 
     try {
       final response = await _dio.post(
@@ -2898,20 +2905,15 @@ class SoapApiService {
 
       final responseData = response.data?.toString() ?? '';
 
-      if (kDebugMode) {
-        print(
-          '═══════════════════════════════════════════════════════════════',
-        );
-        print('SOAP RESPONSE - SetClient');
-        print('Status Code: ${response.statusCode}');
-        print(
-          '═══════════════════════════════════════════════════════════════',
-        );
-        print(responseData);
-        print(
-          '═══════════════════════════════════════════════════════════════',
-        );
-      }
+      // Suppressed: SOAP response body is too large for the terminal.
+      // if (kDebugMode) {
+      //   print('═══════════════════════════════════════════════════════════════');
+      //   print('SOAP RESPONSE - SetClient');
+      //   print('Status Code: ${response.statusCode}');
+      //   print('═══════════════════════════════════════════════════════════════');
+      //   print(responseData);
+      //   print('═══════════════════════════════════════════════════════════════');
+      // }
 
       if (responseData.contains('Fault') || response.statusCode != 200) {
         String? faultMsg;
@@ -3065,13 +3067,14 @@ class SoapApiService {
 
       final responseData = response.data?.toString() ?? '';
 
-      if (kDebugMode) {
-        print('═══════════════════════════════════════════════════════════════');
-        print('SOAP RESPONSE - getSalesClassifiersList');
-        print('═══════════════════════════════════════════════════════════════');
-        print(responseData);
-        print('═══════════════════════════════════════════════════════════════');
-      }
+      // Suppressed: SOAP response body is too large for the terminal.
+      // if (kDebugMode) {
+      //   print('═══════════════════════════════════════════════════════════════');
+      //   print('SOAP RESPONSE - getSalesClassifiersList');
+      //   print('═══════════════════════════════════════════════════════════════');
+      //   print(responseData);
+      //   print('═══════════════════════════════════════════════════════════════');
+      // }
 
       // Parse XML response
       final document = XmlDocument.parse(responseData);

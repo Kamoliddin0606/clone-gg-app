@@ -8,11 +8,9 @@ import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
-import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/app_access_control_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/time_verification_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/app_start_guard.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_dialog.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
@@ -84,68 +82,34 @@ void main() async {
     }
   }
 
-  // Initialize Access Control Services
-  // These services must be initialized before app starts
-  try {
-    final connectivityService = sl<ConnectivityMonitoringService>();
-    await connectivityService.initialize();
-    
-    final accessControlService = sl<AppAccessControlService>();
-    await accessControlService.initialize();
-    
-    if (kDebugMode) {
-      debugPrint('[Main] Access control services initialized');
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Error initializing access control services: $e');
-    }
-  }
-
-  // Initialize Time Verification Services
-  // ConnectivityMonitorService monitors network changes
-  // TimeVerificationService verifies user access based on server time
+  // Initialize connectivity monitor (still needed by AppStartGuard and UI).
   try {
     final connectivityMonitor = sl<ConnectivityMonitorService>();
     await connectivityMonitor.initialize();
-    
-    // Setup global connectivity listener
-    // Automatically triggers verification when connectivity is restored
-    connectivityMonitor.connectivityStream.listen((hasConnection) {
-      if (hasConnection) {
-        if (kDebugMode) {
-          debugPrint('[Main] Connectivity restored - triggering time verification');
-        }
-        
-        // Trigger verification on connectivity restore
-        sl<TimeVerificationService>().verifyTimeLimit().then((result) {
-          if (kDebugMode) {
-            debugPrint('[Main] Time verification result: ${result.status}');
-          }
-          
-          // If user should be blocked, clear data
-          if (result.shouldBlock) {
-            if (kDebugMode) {
-              debugPrint('[Main] User access expired - blocking and clearing data');
-            }
-            sl<TimeVerificationService>().blockUserAndClearData(
-              result.message ?? 'Access expired',
-            );
-          }
-        }).catchError((error) {
-          if (kDebugMode) {
-            debugPrint('[Main] Time verification error: $error');
-          }
-        });
-      }
-    });
-    
+  } catch (e) {
     if (kDebugMode) {
-      debugPrint('[Main] Time verification services initialized');
+      debugPrint('[Main] Error initializing connectivity monitor: $e');
+    }
+  }
+
+  // Determine the initial route via the new AppStartGuard. The legacy
+  // AppAccessControl/TimeVerification flow has been replaced — see
+  // `app_start_guard.dart` for the decision tree.
+  String initialRouteName = AppRouter.loginRoute;
+  try {
+    final guard = sl<AppStartGuard>();
+    final result = await guard.decide();
+    if (result.decision == StartDecision.showHome) {
+      initialRouteName = AppRouter.mainAgentScreenRoute;
+    } else {
+      initialRouteName = AppRouter.loginRoute;
+    }
+    if (kDebugMode) {
+      debugPrint('[Main] AppStartGuard → ${result.decision} (reason=${result.reason?.runtimeType})');
     }
   } catch (e) {
     if (kDebugMode) {
-      debugPrint('[Main] Error initializing time verification services: $e');
+      debugPrint('[Main] AppStartGuard error (defaulting to login): $e');
     }
   }
 
@@ -226,7 +190,7 @@ void main() async {
     }
   }
 
-  runApp(const App());
+  runApp(App(initialRoute: initialRouteName));
 }
 
 class _ApiKeyProvider {
@@ -299,7 +263,10 @@ class _ApiKeyProvider {
 
 
 class App extends StatefulWidget {
-  const App({super.key});
+  /// Initial route resolved by [AppStartGuard] in `main()` before `runApp`.
+  final String initialRoute;
+
+  const App({super.key, this.initialRoute = AppRouter.loginRoute});
 
   @override
   State<App> createState() => _AppState();
@@ -307,13 +274,11 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> with WidgetsBindingObserver {
   final LocaleProvider _localeProvider = LocaleProvider();
-  StreamSubscription? _accessRevokedSubscription;
 
   @override
   void initState() {
     super.initState();
     _initializeLocale();
-    _setupAccessRevokedListener();
     // App lifecycle events'ni kuzatish uchun observer qo'shish
     WidgetsBinding.instance.addObserver(this);
   }
@@ -322,55 +287,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   void dispose() {
     // Observer'ni olib tashlash
     WidgetsBinding.instance.removeObserver(this);
-    _accessRevokedSubscription?.cancel();
     super.dispose();
-  }
-
-  /// Setup listener for access revocation events
-  /// Shows dialog and navigates to login when user access is revoked
-  void _setupAccessRevokedListener() {
-    try {
-      final accessControlService = sl<AppAccessControlService>();
-      _accessRevokedSubscription = accessControlService.accessRevokedStream.listen(
-        (result) {
-          if (kDebugMode) {
-            debugPrint('[App] Access revoked: ${result.message}');
-          }
-          
-          // Show dialog and navigate to login
-          _handleAccessRevoked(result);
-        },
-        onError: (error) {
-          if (kDebugMode) {
-            debugPrint('[App] Error in access revoked stream: $error');
-          }
-        },
-      );
-      
-      if (kDebugMode) {
-        debugPrint('[App] Access revoked listener setup complete');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[App] Error setting up access revoked listener: $e');
-      }
-    }
-  }
-
-  /// Handle access revoked event
-  /// Navigates to access control page which shows blocking UI
-  Future<void> _handleAccessRevoked(AccessCheckResult result) async {
-    if (kDebugMode) {
-      debugPrint('[App] Access revoked - navigating to access control page');
-      debugPrint('[App] Reason: ${result.reason}, Message: ${result.message}');
-    }
-
-    // Navigate to access control page which will show the blocking UI
-    // The access control page already handles expired access with proper UI
-    AppRouter.navigatorKey.currentState?.pushNamedAndRemoveUntil(
-      AppRouter.accessControlRoute,
-      (route) => false,
-    );
   }
 
   /// App lifecycle state o'zgarganda chaqiriladi
@@ -465,7 +382,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 themeMode: themeMode,
                 locale: localeProvider.locale,
                 onGenerateRoute: AppRouter.generateRoute,
-                initialRoute: AppRouter.accessControlRoute,
+                initialRoute: widget.initialRoute,
                 localizationsDelegates: AppLocalizations.localizationsDelegates,
                 supportedLocales: AppLocalizations.supportedLocales,
               );

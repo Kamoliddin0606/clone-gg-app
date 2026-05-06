@@ -9,6 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_failure.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -34,6 +35,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
+      // ========================================================================
+      // Pre-flight V2 gate (license / seat / window / inactive checks).
+      // Server-side denials block the login *before* we hit SOAP. Network or
+      // unknown errors are treated as soft and let the legacy SOAP flow run
+      // so the user can still work offline.
+      // ========================================================================
+      final v2Failure = await _obtainV2Tokens(event.username, event.password);
+      if (v2Failure != null) {
+        emit(AuthFailureState(
+          message: _legacyMessageFor(v2Failure),
+          errorType: AuthErrorType.authentication,
+          failure: v2Failure,
+        ));
+        return;
+      }
+
       final user = await authRepository.login(
         username: event.username,
         password: event.password,
@@ -42,18 +59,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // Validate user data with database after successful login
       await _validateAndSyncUserData(user);
 
-      // =========================================================================
-      // REST API Token olish - Background services uchun kerak
-      // =========================================================================
-      await _obtainRestApiTokens(event.username, event.password);
-
-      // =========================================================================
-      // V2 (yangi server) JWT tokenlarni parallel olish.
-      // Lokatsiya/telemetry servislari yangi serverga yuborgan so'rovlar uchun
-      // ishlatiladi. Eski REST tokenlar tegmaydi.
-      // Failure-tolerant: yangi server javob bermasa ham, login oqim davom etadi.
-      // =========================================================================
-      await _obtainV2Tokens(event.username, event.password);
+      // V1 1C-Login REST tokens are no longer fetched on login — the V2
+      // backend (POST /api/auth/token/) is the single source of truth and
+      // its tokens are already persisted by `_obtainV2Tokens` above.
+      // Legacy services that still expect V1 tokens will silently no-op
+      // until they are migrated to V2.
 
       // =========================================================================
       // Background Location Tracking - login muvaffaqiyatli bo'lgandan keyin
@@ -81,7 +91,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         message = e.toString();
       }
 
-      emit(AuthFailure(message: message, errorType: errorType));
+      emit(AuthFailureState(message: message, errorType: errorType));
     }
   }
 
@@ -237,51 +247,49 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// REST API tokenlarini olish
-  /// 
-  /// Bu metod login muvaffaqiyatli bo'lgandan keyin chaqiriladi.
-  /// 1C-Login endpointi orqali access va refresh tokenlarni oladi.
-  /// BackgroundLocationTrackingService va boshqa REST API servislar uchun kerak.
+  /// V1 1C-Login is removed. Kept as a stub so any future re-introduction
+  /// has a single place to revisit. Does NOT make any network calls.
+  // ignore: unused_element
   Future<void> _obtainRestApiTokens(String username, String password) async {
-    try {
-      if (kDebugMode) {
-        print('AuthBloc: Obtaining REST API tokens via 1C-Login...');
-      }
+  }
 
-      final tokenService = sl<TokenService>();
-      
-      // 1C-Login orqali tokenlarni olish
-      final success = await tokenService.authenticateWith1CLogin(
-        login: username,
-        password: password,
-      );
-      
-      if (kDebugMode) {
-        if (success) {
-          print('AuthBloc: REST API tokens obtained successfully');
-        } else {
-          print('AuthBloc: Failed to obtain REST API tokens (non-critical)');
-        }
-      }
-    } catch (e) {
-      // Log the error but don't fail the login process
-      if (kDebugMode) {
-        print('AuthBloc: Error obtaining REST API tokens: $e');
-      }
-      // Continue with login success - REST API tokens are not critical for basic login
+  /// Fallback non-localized message used in the legacy `state.message`
+  /// field when emitting [AuthFailureState] for a typed [AuthFailure].
+  /// The UI prefers the localized rendering via `state.failure.messageKey`,
+  /// so this is only shown when localization is unavailable.
+  String _legacyMessageFor(AuthFailure failure) {
+    switch (failure) {
+      case InvalidCredentialsFailure():
+        return 'Login yoki parol noto\'g\'ri.';
+      case UserInactiveFailure():
+        return 'Hisobingiz nofaol.';
+      case UserOutsideActiveWindowFailure():
+        return 'Ruxsat oynasi tashqarisida.';
+      case LicenseMissingFailure():
+        return 'Tashkilotda faol litsenziya yo\'q.';
+      case LicenseExpiredFailure():
+        return 'Tashkilot litsenziyasi muddati o\'tgan.';
+      case LicenseSeatExceededFailure():
+        return 'Litsenziya o\'rinlari to\'la.';
+      case NetworkFailure():
+        return 'Server bilan bog\'lanib bo\'lmadi.';
+      case UnknownAuthFailure():
+        return 'Noma\'lum xato.';
     }
   }
 
-  /// Yangi server (V2) JWT tokenlarini olish.
+  /// Obtain JWT tokens from the V2 backend (`POST /api/auth/token/`).
   ///
-  /// Bu metod login muvaffaqiyatli bo'lgandan keyin chaqiriladi va yangi
-  /// serverga (`http://localhost:8000/api/auth/token/`) login + password
-  /// yuboradi. Olingan access + refresh tokenlar V2 kalit ostida saqlanadi
-  /// va keyinchalik telemetry/policy/device-register servislari ishlatadi.
-  ///
-  /// Failure-tolerant: yangi server mavjud bo'lmasa yoki muvaffaqiyatsiz
-  /// bo'lsa, login oqim ham buzilmaydi (eski REST servislar mustaqil ishlaydi).
-  Future<void> _obtainV2Tokens(String username, String password) async {
+  /// Mixed-tolerance behaviour:
+  /// - On success: tokens + `gates` envelope are persisted by [TokenService].
+  /// - On a server-side denial (HTTP 401/403/409 with a known `error.code`,
+  ///   e.g. `license_expired`, `user_inactive`, `license_seat_exceeded`),
+  ///   we propagate an [AuthFailure] back to the caller so the bloc can
+  ///   block the login flow.
+  /// - On any other failure (no internet, server unreachable, unknown
+  ///   payload), we return `null` so the legacy SOAP login can still
+  ///   sign the user in offline-friendly.
+  Future<AuthFailure?> _obtainV2Tokens(String username, String password) async {
     try {
       if (kDebugMode) {
         print('AuthBloc: Obtaining V2 (new server) tokens...');
@@ -291,17 +299,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         login: username,
         password: password,
       );
-      if (kDebugMode) {
-        if (ok) {
-          print('AuthBloc: V2 tokens obtained successfully');
-        } else {
-          print('AuthBloc: V2 tokens obtain returned false (non-critical)');
-        }
+      if (ok) {
+        if (kDebugMode) print('AuthBloc: V2 tokens obtained successfully');
+        return null;
       }
+      // Translate the typed failure into either a hard denial (server
+      // explicitly rejected the user) or a soft failure (network etc.).
+      final failure = tokenService.lastV2LoginFailure;
+      if (failure == null) return null;
+      if (failure is NetworkFailure || failure is UnknownAuthFailure) {
+        if (kDebugMode) {
+          print('AuthBloc: V2 transport/unknown failure — falling back to legacy SOAP');
+        }
+        return null;
+      }
+      if (kDebugMode) {
+        print('AuthBloc: V2 server denial: ${failure.runtimeType} → blocking login');
+      }
+      return failure;
     } catch (e) {
       if (kDebugMode) {
-        print('AuthBloc: Error obtaining V2 tokens (non-critical): $e');
+        print('AuthBloc: Error obtaining V2 tokens (treated as soft failure): $e');
       }
+      return null;
     }
   }
 

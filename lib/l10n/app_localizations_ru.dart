@@ -5272,4 +5272,29 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noPriceTypesAvailable => 'Нет доступных типов цен';
+
+  @override
+  String get userInactive => 'Учётная запись неактивна. Обратитесь к администратору.';
+
+  @override
+  String userOutsideActiveWindow(String start, String end) {
+    return 'Окно доступа: $start – $end';
+  }
+
+  @override
+  String get licenseExpired => 'Лицензия организации истекла.';
+
+  @override
+  String get licenseMissing => 'У организации нет активной лицензии.';
+
+  @override
+  String licenseSeatExceeded(int rank, int seatCount) {
+    return 'Все места по лицензии заняты (вы №$rank из $seatCount).';
+  }
+
+  @override
+  String get clockTamperingDetected => 'Часы устройства изменились. Подключитесь к интернету для проверки.';
+
+  @override
+  String get noInternetForFirstLogin => 'Первый вход требует подключения к интернету.';
 }

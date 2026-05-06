@@ -13,9 +13,11 @@
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:battery_plus/battery_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// Qurilma ma'lumotlarini to'plovchi helper class
 /// 
@@ -396,26 +398,46 @@ class DeviceDataCollector {
   /// shuning uchun bu metod Flutter widget'dan chaqirilishi kerak.
   /// 
   /// Returns: Map<String, dynamic> ekran ma'lumotlari
-  Map<String, dynamic> collectScreenInfo({
-    required double screenWidth,
-    required double screenHeight,
-    required double screenDensity,
-  }) {
+  /// Collect screen size and density without a [BuildContext]. Pulls from
+  /// the platform's first view via [WidgetsBinding.platformDispatcher],
+  /// so this works inside services and background isolates as long as
+  /// `WidgetsFlutterBinding.ensureInitialized()` has been called (true
+  /// for our app — done in `main()`).
+  ///
+  /// If [WidgetsBinding] is somehow unavailable, returns nulls without
+  /// throwing — caller treats them as "not collected".
+  Map<String, dynamic> collectScreenInfo() {
     try {
-      if (kDebugMode) {
-        print('DeviceDataCollector: Screen info - ${screenWidth}x$screenHeight, density: $screenDensity');
+      final binding = WidgetsBinding.instance;
+      // ignore: unnecessary_null_comparison
+      if (binding == null) {
+        return <String, dynamic>{
+          'screen_width': null,
+          'screen_height': null,
+          'screen_density': null,
+        };
       }
-
-      return {
-        'screen_width': screenWidth.toInt(),
-        'screen_height': screenHeight.toInt(),
-        'screen_density': screenDensity.toStringAsFixed(2),
+      final views = binding.platformDispatcher.views;
+      if (views.isEmpty) {
+        return <String, dynamic>{
+          'screen_width': null,
+          'screen_height': null,
+          'screen_density': null,
+        };
+      }
+      final view = views.first;
+      final size = view.physicalSize;
+      final density = view.devicePixelRatio;
+      return <String, dynamic>{
+        'screen_width': size.width.toInt(),
+        'screen_height': size.height.toInt(),
+        'screen_density': density.toStringAsFixed(2),
       };
     } catch (e) {
       if (kDebugMode) {
         print('DeviceDataCollector: Error collecting screen info: $e');
       }
-      return {
+      return <String, dynamic>{
         'screen_width': null,
         'screen_height': null,
         'screen_density': null,
@@ -470,25 +492,28 @@ class DeviceDataCollector {
   /// 
   /// Returns: Map<String, dynamic> kamera ma'lumotlari
   Future<Map<String, dynamic>> collectCameraInfo() async {
+    // Without a dedicated camera-enumeration plugin, we surface
+    // platform-aware defaults: every modern iPhone and Android phone
+    // ships with both cameras. Tablets/desktops get nulls so the field
+    // is not falsely reported.
     try {
-      // Kamera mavjudligini tekshirish
-      // Hozircha default qiymatlar
-      
-      if (kDebugMode) {
-        print('DeviceDataCollector: Camera info collection - placeholder');
+      if (Platform.isIOS || Platform.isAndroid) {
+        return <String, dynamic>{
+          'camera_front': true,
+          'camera_back': true,
+          'camera_resolution': null,
+        };
       }
-
-      return {
-        'camera_front': true, // Ko'p qurilmalarda old kamera bor
-        'camera_back': true, // Ko'p qurilmalarda orqa kamera bor
-        'camera_resolution': null, // Kamera o'lchami
+      return <String, dynamic>{
+        'camera_front': null,
+        'camera_back': null,
+        'camera_resolution': null,
       };
-    } catch (e, stackTrace) {
+    } catch (e) {
       if (kDebugMode) {
         print('DeviceDataCollector: Error collecting camera info: $e');
-        print('DeviceDataCollector: Stack trace: $stackTrace');
       }
-      return {
+      return <String, dynamic>{
         'camera_front': null,
         'camera_back': null,
         'camera_resolution': null,
@@ -609,27 +634,26 @@ class DeviceDataCollector {
   /// Returns: Map<String, dynamic> ilova ma'lumotlari
   Future<Map<String, dynamic>> collectAppInfo() async {
     try {
-      // Hozircha statik ma'lumotlar
-      // TODO: package_info_plus dan olish
-      
-      if (kDebugMode) {
-        print('DeviceDataCollector: App info collection - static values');
-      }
-
-      return {
-        'app_version': '1.0.0', // Ilova versiyasi
-        'app_build_number': '1', // Build raqami
-        'app_installation_date': null, // O'rnatilgan sana
-        'app_last_update': null, // Oxirgi yangilanish
+      final pkg = await PackageInfo.fromPlatform();
+      // package_info_plus does not surface install/update timestamps
+      // directly; leaving them null keeps the contract consistent and
+      // future-proof when a richer source is added.
+      return <String, dynamic>{
+        'app_version': pkg.version,
+        'app_build_number': pkg.buildNumber,
+        'app_installation_date': null,
+        'app_last_update': null,
+        'app_package_name': pkg.packageName,
+        'app_name': pkg.appName,
       };
     } catch (e, stackTrace) {
       if (kDebugMode) {
         print('DeviceDataCollector: Error collecting app info: $e');
         print('DeviceDataCollector: Stack trace: $stackTrace');
       }
-      return {
-        'app_version': 'unknown',
-        'app_build_number': 'unknown',
+      return <String, dynamic>{
+        'app_version': null,
+        'app_build_number': null,
         'app_installation_date': null,
         'app_last_update': null,
       };
@@ -664,11 +688,7 @@ class DeviceDataCollector {
   /// va bitta Map ichida qaytaradi.
   /// 
   /// Returns: Map<String, dynamic> barcha qurilma ma'lumotlari
-  Future<Map<String, dynamic>> collectAllData({
-    double? screenWidth,
-    double? screenHeight,
-    double? screenDensity,
-  }) async {
+  Future<Map<String, dynamic>> collectAllData() async {
     try {
       if (kDebugMode) {
         print('DeviceDataCollector: Starting to collect all device data...');
@@ -713,14 +733,9 @@ class DeviceDataCollector {
       // App info
       allData.addAll(results[7]);
 
-      // Screen info (agar berilgan bo'lsa)
-      if (screenWidth != null && screenHeight != null && screenDensity != null) {
-        allData.addAll(collectScreenInfo(
-          screenWidth: screenWidth,
-          screenHeight: screenHeight,
-          screenDensity: screenDensity,
-        ));
-      }
+      // Screen info — collected without a BuildContext, so it works in
+      // services / background isolates.
+      allData.addAll(collectScreenInfo());
 
       // Timezone
       allData['timezone'] = getTimezone();

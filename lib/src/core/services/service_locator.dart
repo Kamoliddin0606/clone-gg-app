@@ -26,19 +26,12 @@ import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/device_r
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/rest_logging.dart';
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/local_uuid_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/startup_access_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/gemini_time_verification_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/app_access_control_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/time_verification_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
-import 'package:gloria_marketing_flutter/src/features/time_verification/domain/repositories/time_verification_repository.dart';
-import 'package:gloria_marketing_flutter/src/features/time_verification/data/repositories/time_verification_repository_impl.dart';
-import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/startup_access_bloc.dart';
+import 'package:gloria_marketing_flutter/src/core/services/app_start_guard.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -90,9 +83,13 @@ Future<void> setupServiceLocator() async {
   }
   if (!sl.isRegistered<Dio>()) {
     sl.registerLazySingleton(() {
-      final dio = Dio();
-      attachRestLogger(dio, 'REST');
-      return dio;
+      // Shared Dio used by SoapApiService + RestApiService. SOAP envelopes
+      // are too large to print on every call, so the REST logger is left
+      // detached. V2 services (token, policy, device, telemetry) each have
+      // their own Dio instance with `attachRestLogger` so their HTTP traffic
+      // still surfaces under [AUTH] / [POLICY] / [DEVICE] / [TELEMETRY].
+      // attachRestLogger(dio, 'REST');
+      return Dio();
     });
   }
   if (!sl.isRegistered<ApiService>()) {
@@ -300,31 +297,19 @@ Future<void> setupServiceLocator() async {
     ));
   }
 
-  // Security Services - Device va Account Access tekshiruvi uchun
+  // Security helpers — kept for callers that still need a stable per-install
+  // identifier (e.g. telemetry device fingerprint).
   if (!sl.isRegistered<LocalUuidService>()) {
     sl.registerLazySingleton<LocalUuidService>(() => LocalUuidService());
   }
-  if (!sl.isRegistered<StartupAccessService>()) {
-    sl.registerLazySingleton<StartupAccessService>(() => StartupAccessService(
-      localUuidService: sl<LocalUuidService>(),
-      prefsService: sl<SharedPreferencesService>(),
-      soapApiService: sl<SoapApiService>(),
-    ));
+
+  // Connectivity monitoring used by AppStartGuard (and downstream UI).
+  if (!sl.isRegistered<ConnectivityMonitorService>()) {
+    sl.registerLazySingleton<ConnectivityMonitorService>(() => ConnectivityMonitorService());
   }
 
-  // Access Control Services - App access validity and time verification
-  // Note: AccessValidityService is deprecated and replaced by TimeVerificationService
-  // which fetches timeLimit from server instead of using hardcoded date
-  if (!sl.isRegistered<ConnectivityMonitoringService>()) {
-    sl.registerLazySingleton<ConnectivityMonitoringService>(() => ConnectivityMonitoringService());
-  }
   // Gemini AI Services - Unified API key management
-  // All Gemini services use ApiKeyService for centralized key management
-  // IMPORTANT: Gemini services need a SEPARATE Dio instance without auth interceptors
-  // The shared Dio instance has SoapApiService interceptors that add wrong headers
-  // (Authorization Bearer, SOAP Accept headers) which cause 401 errors with Gemini API
   if (!sl.isRegistered<GeminiDocumentScannerService>()) {
-    // Create dedicated Dio instance for Gemini - no interceptors
     final geminiDio = Dio(BaseOptions(
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
@@ -335,44 +320,17 @@ Future<void> setupServiceLocator() async {
       dio: geminiDio,
     ));
   }
-  if (!sl.isRegistered<GeminiTimeVerificationService>()) {
-    // Create dedicated Dio instance for Gemini Time Verification - no interceptors
-    final geminiTimeDio = Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
-    ));
-    sl.registerLazySingleton<GeminiTimeVerificationService>(() => GeminiTimeVerificationService(
-      apiKeyService: sl<ApiKeyService>(),
-      dio: geminiTimeDio,
-    ));
-  }
-  if (!sl.isRegistered<AppAccessControlService>()) {
-    sl.registerLazySingleton<AppAccessControlService>(() => AppAccessControlService(
-      timeVerificationService: sl<TimeVerificationService>(),
-      connectivityService: sl<ConnectivityMonitoringService>(),
-      prefsService: sl<SharedPreferencesService>(),
-    ));
-  }
 
-  // Time Verification Services - Server time-based access control
-  // Fetches server time and time limit via GetServerTime SOAP endpoint
-  // Supports both online (server time) and offline (local time) verification
-  // Automatically clears data when access expires
-  if (!sl.isRegistered<TimeVerificationRepository>()) {
-    sl.registerLazySingleton<TimeVerificationRepository>(() => TimeVerificationRepositoryImpl(
-      apiService: sl<ApiService>(),
-    ));
-  }
-  if (!sl.isRegistered<TimeVerificationService>()) {
-    sl.registerLazySingleton<TimeVerificationService>(() => TimeVerificationService(
-      repository: sl<TimeVerificationRepository>(),
+  // Boot-time access guard. Replaces the legacy AppAccessControlService /
+  // TimeVerificationService / StartupAccessBloc trio. Decides on each cold
+  // start whether to land on `/login` or `/home` based on the cached
+  // `gates` envelope from the V2 backend.
+  if (!sl.isRegistered<AppStartGuard>()) {
+    sl.registerLazySingleton<AppStartGuard>(() => AppStartGuard(
       prefs: sl<SharedPreferencesService>(),
-      dataSyncService: sl<DataSyncService>(),
+      tokenService: sl<TokenService>(),
+      connectivity: sl<ConnectivityMonitorService>(),
     ));
-  }
-  if (!sl.isRegistered<ConnectivityMonitorService>()) {
-    sl.registerLazySingleton<ConnectivityMonitorService>(() => ConnectivityMonitorService());
   }
 
   // Blocs
@@ -381,11 +339,6 @@ Future<void> setupServiceLocator() async {
       authRepository: sl(),
       dataSyncService: sl(),
       prefs: sl(),
-    ));
-  }
-  if (!sl.isRegistered<StartupAccessBloc>()) {
-    sl.registerFactory(() => StartupAccessBloc(
-      accessService: sl<StartupAccessService>(),
     ));
   }
 }

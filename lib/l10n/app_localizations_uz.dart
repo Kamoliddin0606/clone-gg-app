@@ -5272,4 +5272,29 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get noPriceTypesAvailable => 'Mavjud narx turlari yo\'q';
+
+  @override
+  String get userInactive => 'Hisobingiz nofaol. Administratorga murojaat qiling.';
+
+  @override
+  String userOutsideActiveWindow(String start, String end) {
+    return 'Ruxsat oynasi: $start – $end';
+  }
+
+  @override
+  String get licenseExpired => 'Tashkilot litsenziyasi muddati o\'tgan.';
+
+  @override
+  String get licenseMissing => 'Tashkilotda faol litsenziya yo\'q.';
+
+  @override
+  String licenseSeatExceeded(int rank, int seatCount) {
+    return 'Litsenziya o\'rinlari to\'la (siz #$rank/$seatCount).';
+  }
+
+  @override
+  String get clockTamperingDetected => 'Qurilma soati o\'zgargan. Ruxsatni tekshirish uchun internetga ulaning.';
+
+  @override
+  String get noInternetForFirstLogin => 'Birinchi kirish uchun internet ulanishi kerak.';
 }

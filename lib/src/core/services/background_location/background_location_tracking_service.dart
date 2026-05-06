@@ -381,38 +381,55 @@ class BackgroundLocationTrackingService {
     if (_isSending) return;
     _isSending = true;
     try {
+      // Step 0: read policy from RAM cache (no network).
       final envelope = _policyService.cached ?? TrackingPolicyEnvelope.defaultOff();
       final policy = envelope.policy;
-      restLog('GPS', 'tick — policy source=${envelope.source.toServerValue()} '
-          'is_active=${policy.isActive} gps_enabled=${policy.gpsEnabled} '
+      final cacheStatus = _policyService.cached == null ? 'DEFAULT_OFF (no cache)' : 'CACHED';
+      restLog('GPS', '┌─ tick @ ${DateTime.now().toIso8601String()}');
+      restLog('GPS', '│ policy source=$cacheStatus → ${envelope.source.toServerValue()} rev=${envelope.revision}');
+      restLog('GPS', '│ rules: is_active=${policy.isActive} gps_enabled=${policy.gpsEnabled} '
           'interval=${policy.gpsIntervalSeconds}s '
           'min_distance=${policy.gpsMinDistanceMeters}m '
           'min_accuracy=${policy.gpsMinAccuracyMeters}m');
+      restLog('GPS', '│ window: hours=${policy.activeHoursStart ?? "*"}..${policy.activeHoursEnd ?? "*"} '
+          'days=${policy.activeDays.isEmpty ? "[every]" : policy.activeDays}');
 
-      // 1. Policy bilan tekshirish
-      if (!_policyService.shouldCollectGps(policy)) {
-        restLog('GPS', 'SKIP — policy disabled (is_active or gps_enabled false)');
+      // FILTER 1: gps_enabled + is_active
+      final shouldCollect = _policyService.shouldCollectGps(policy);
+      restLog('GPS', '│ filter[1/5] shouldCollectGps → ${shouldCollect ? "PASS" : "FAIL"}');
+      if (!shouldCollect) {
+        restLog('GPS', '└─ SKIP: policy disabled (is_active=${policy.isActive}, gps_enabled=${policy.gpsEnabled})');
         return;
       }
+
+      // FILTER 2: active_hours
       final now = DateTime.now();
-      if (!_policyService.isWithinActiveHours(policy, now)) {
-        restLog('GPS', 'SKIP — outside active hours '
-            '${policy.activeHoursStart}..${policy.activeHoursEnd} (now=${now.hour}:${now.minute.toString().padLeft(2, '0')})');
-        return;
-      }
-      if (!_policyService.isWithinActiveDays(policy, now)) {
-        restLog('GPS', 'SKIP — outside active days ${policy.activeDays} (today weekday=${now.weekday})');
+      final hoursOk = _policyService.isWithinActiveHours(policy, now);
+      final nowHm = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      restLog('GPS', '│ filter[2/5] isWithinActiveHours (now=$nowHm) → ${hoursOk ? "PASS" : "FAIL"}');
+      if (!hoursOk) {
+        restLog('GPS', '└─ SKIP: outside active hours ${policy.activeHoursStart}..${policy.activeHoursEnd}');
         return;
       }
 
-      // 2. GPS olish
-      restLog('GPS', 'requesting fresh position from Geolocator (high accuracy, 15s timeout)');
+      // FILTER 3: active_days
+      final daysOk = _policyService.isWithinActiveDays(policy, now);
+      const dayCodes = ['mon','tue','wed','thu','fri','sat','sun'];
+      final todayCode = dayCodes[(now.weekday - 1).clamp(0, 6)];
+      restLog('GPS', '│ filter[3/5] isWithinActiveDays (today=$todayCode) → ${daysOk ? "PASS" : "FAIL"}');
+      if (!daysOk) {
+        restLog('GPS', '└─ SKIP: today=$todayCode not in ${policy.activeDays}');
+        return;
+      }
+
+      // GPS request
+      restLog('GPS', '│ requesting fresh position (high-accuracy, 15s timeout)');
       final position = await _getCurrentPosition();
       if (position == null) {
-        restLog('GPS', 'no position obtained (Geolocator returned null and no last cached)');
+        restLog('GPS', '└─ no position obtained (Geolocator returned null and no cached fallback)');
         return;
       }
-      restLog('GPS', 'got position lat=${position.latitude.toStringAsFixed(6)} '
+      restLog('GPS', '│ got position lat=${position.latitude.toStringAsFixed(6)} '
           'lng=${position.longitude.toStringAsFixed(6)} '
           'acc=${position.accuracy.toStringAsFixed(1)}m '
           'alt=${position.altitude.toStringAsFixed(1)}m '
@@ -420,33 +437,41 @@ class BackgroundLocationTrackingService {
           'heading=${position.heading.toStringAsFixed(1)}°');
       _lastPosition = position;
 
-      // 3. Aniqlik filtri
-      if (!_policyService.isAccuracyAcceptable(policy, position.accuracy)) {
-        restLog('GPS', 'DROP — accuracy ${position.accuracy.toStringAsFixed(1)}m > limit ${policy.gpsMinAccuracyMeters}m');
+      // FILTER 4: gps_min_accuracy_meters
+      final accOk = _policyService.isAccuracyAcceptable(policy, position.accuracy);
+      restLog('GPS', '│ filter[4/5] isAccuracyAcceptable '
+          '(${position.accuracy.toStringAsFixed(1)}m vs limit ${policy.gpsMinAccuracyMeters}m) → ${accOk ? "PASS" : "FAIL"}');
+      if (!accOk) {
+        restLog('GPS', '└─ DROP: accuracy ${position.accuracy.toStringAsFixed(1)}m > ${policy.gpsMinAccuracyMeters}m');
         return;
       }
 
-      // 4. Masofa filtri
-      if (!_policyService.isDistanceAcceptable(policy, _lastSentPosition, position)) {
-        final delta = _lastSentPosition == null
-            ? 'n/a'
-            : '${Geolocator.distanceBetween(_lastSentPosition!.latitude, _lastSentPosition!.longitude, position.latitude, position.longitude).toStringAsFixed(1)}m';
-        restLog('GPS', 'DROP — moved $delta < min_distance ${policy.gpsMinDistanceMeters}m');
+      // FILTER 5: gps_min_distance_meters
+      final distOk = _policyService.isDistanceAcceptable(policy, _lastSentPosition, position);
+      final delta = _lastSentPosition == null
+          ? 'n/a (first fix)'
+          : '${Geolocator.distanceBetween(_lastSentPosition!.latitude, _lastSentPosition!.longitude, position.latitude, position.longitude).toStringAsFixed(1)}m';
+      restLog('GPS', '│ filter[5/5] isDistanceAcceptable '
+          '(moved=$delta vs min ${policy.gpsMinDistanceMeters}m) → ${distOk ? "PASS" : "FAIL"}');
+      if (!distOk) {
+        restLog('GPS', '└─ DROP: moved $delta < ${policy.gpsMinDistanceMeters}m');
         return;
       }
+      restLog('GPS', '│ ALL FILTERS PASSED → building telemetry payload');
 
-      // 5. Payload yasash va yuborish
-      restLog('GPS', 'building telemetry ping (collect: device=${policy.collectDeviceInfo} '
-          'battery=${policy.collectBattery} network=${policy.collectNetwork} sensors=${policy.collectSensors})');
+      // Build payload
+      restLog('GPS', '│ collect flags: device=${policy.collectDeviceInfo} '
+          'battery=${policy.collectBattery} network=${policy.collectNetwork} sensors=${policy.collectSensors}');
       final ping = await _buildTelemetryPing(position, policy);
-      restLog('GPS', 'payload fields=${ping.toJson().length} → POST telemetry');
+      restLog('GPS', '│ payload fields=${ping.toJson().length} → POST telemetry');
+
       final ok = await _sendSinglePing(ping);
       if (ok) {
         _lastSentPosition = position;
-        restLog('GPS', 'SENT — server accepted ping');
+        restLog('GPS', '└─ SENT ✅ server accepted ping');
       } else {
         await _addToOfflineQueue(ping);
-        restLog('GPS', 'FAIL — queued offline (size=${_offlineQueue.length})');
+        restLog('GPS', '└─ FAIL ⚠️ queued offline (size=${_offlineQueue.length})');
       }
 
       await _prefs.preferences.setString(
@@ -480,6 +505,8 @@ class BackgroundLocationTrackingService {
   ) async {
     final agentCode = _prefs.getUserCode() ?? '';
     final agentName = _prefs.getUserName();
+    final agentPhone = _prefs.getTelegramID();    // best-effort: stored phone-like ID
+    final region = _prefs.getServerName();         // server/region name (best-effort)
     final deviceData = await _deviceDataCollector.collectAllData();
     final pkg = _packageInfo ?? await _safePackageInfo();
 
@@ -575,11 +602,51 @@ class BackgroundLocationTrackingService {
       gyroscopeZ = deviceData['gyroscope_z']?.toString();
     }
 
+    String? magnetometerX;
+    String? magnetometerY;
+    String? magnetometerZ;
+    String? proximitySensor;
+    String? lightSensor;
+    String? temperature;
+    String? humidity;
+    String? pressure;
+    if (policy.collectSensors) {
+      magnetometerX = deviceData['magnetometer_x']?.toString();
+      magnetometerY = deviceData['magnetometer_y']?.toString();
+      magnetometerZ = deviceData['magnetometer_z']?.toString();
+      proximitySensor = deviceData['proximity_sensor']?.toString();
+      lightSensor = deviceData['light_sensor']?.toString();
+      temperature = deviceData['temperature']?.toString();
+      humidity = deviceData['humidity']?.toString();
+      pressure = deviceData['pressure']?.toString();
+    }
+
+    int? ramTotal;
+    int? ramAvailable;
+    int? storageTotal;
+    int? storageAvailable;
+    bool? cameraFront;
+    bool? cameraBack;
+    String? cameraResolution;
+    if (policy.collectDeviceInfo) {
+      ramTotal = deviceData['ram_total'] as int?;
+      ramAvailable = deviceData['ram_available'] as int?;
+      storageTotal = deviceData['storage_total'] as int?;
+      storageAvailable = deviceData['storage_available'] as int?;
+      cameraFront = deviceData['camera_front'] as bool?;
+      cameraBack = deviceData['camera_back'] as bool?;
+      cameraResolution = deviceData['camera_resolution'] as String?;
+    }
+
     return TelemetryPingRequest(
       latitude: lat,
       longitude: lng,
       agentCode: agentCode.isEmpty ? null : agentCode,
       agentName: agentName,
+      agentPhone: agentPhone,
+      region: region,
+      isActive: true,
+      isDeleted: false,
       accuracy: toFixedString(position.accuracy, 2),
       altitude: toFixedString(position.altitude, 2),
       speed: toFixedString(position.speed, 2),
@@ -596,6 +663,13 @@ class BackgroundLocationTrackingService {
       screenWidth: screenWidth,
       screenHeight: screenHeight,
       screenDensity: screenDensity,
+      ramTotal: ramTotal,
+      ramAvailable: ramAvailable,
+      storageTotal: storageTotal,
+      storageAvailable: storageAvailable,
+      cameraFront: cameraFront,
+      cameraBack: cameraBack,
+      cameraResolution: cameraResolution,
       appVersion: appVersion,
       appBuildNumber: appBuildNumber,
       batteryLevel: batteryLevel,
@@ -617,6 +691,14 @@ class BackgroundLocationTrackingService {
       gyroscopeX: gyroscopeX,
       gyroscopeY: gyroscopeY,
       gyroscopeZ: gyroscopeZ,
+      magnetometerX: magnetometerX,
+      magnetometerY: magnetometerY,
+      magnetometerZ: magnetometerZ,
+      proximitySensor: proximitySensor,
+      lightSensor: lightSensor,
+      temperature: temperature,
+      humidity: humidity,
+      pressure: pressure,
       isRooted: isRooted,
       isJailbroken: isJailbroken,
       encryptionEnabled: encryptionEnabled,

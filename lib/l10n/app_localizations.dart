@@ -7096,7 +7096,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectInfoTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Contract number will be generated based on the selected project's numbering system'**
+  /// **'Contract number will be generated based on the selected project\'s numbering system'**
   String get projectInfoTooltip;
 
   /// No description provided for @projectInfoSection.
@@ -10002,6 +10002,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No price types available'**
   String get noPriceTypesAvailable;
+
+  /// No description provided for @userInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is inactive. Contact your administrator.'**
+  String get userInactive;
+
+  /// No description provided for @userOutsideActiveWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Access window: {start} – {end}'**
+  String userOutsideActiveWindow(String start, String end);
+
+  /// No description provided for @licenseExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your organization\'s license has expired.'**
+  String get licenseExpired;
+
+  /// No description provided for @licenseMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Your organization has no active license.'**
+  String get licenseMissing;
+
+  /// No description provided for @licenseSeatExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'All license seats are taken (you are #{rank} of {seatCount}).'**
+  String licenseSeatExceeded(int rank, int seatCount);
+
+  /// No description provided for @clockTamperingDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Device clock changed. Please reconnect to verify access.'**
+  String get clockTamperingDetected;
+
+  /// No description provided for @noInternetForFirstLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'First-time login requires an internet connection.'**
+  String get noInternetForFirstLogin;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

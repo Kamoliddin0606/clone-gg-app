@@ -27,17 +27,26 @@ enum AuthErrorType {
   unknown, // Other errors
 }
 
-class AuthFailure extends AuthState {
+/// Renamed from `AuthFailure` to avoid clashing with the new sealed
+/// `AuthFailure` model under `data/models/auth_failure.dart`. The state
+/// now also carries the typed [failure] (preferred over the legacy
+/// [message]/[errorType] pair) so the UI can localize via `messageKey`.
+class AuthFailureState extends AuthState {
   final String message;
   final AuthErrorType errorType;
 
-  const AuthFailure({
+  /// Typed backend failure when available. `null` for purely client-side
+  /// errors (e.g. validation) where there is no `error.code` to map.
+  final AuthFailure? failure;
+
+  const AuthFailureState({
     required this.message,
     this.errorType = AuthErrorType.unknown,
+    this.failure,
   });
 
   @override
-  List<Object> get props => [message, errorType];
+  List<Object> get props => [message, errorType, failure ?? Object()];
 }
 
 /// Logout muvaffaqiyatli bo'lganda

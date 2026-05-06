@@ -7,6 +7,7 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_failure.dart';
 
 import '../../../../core/network/server_service.dart';
 
@@ -456,7 +457,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
           ),
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
-              if (state is AuthFailure) {
+              if (state is AuthFailureState) {
                 if (kDebugMode) print('Auth failure: ${state.message}, type: ${state.errorType}');
                 if (state.errorType == AuthErrorType.connectivity) {
                   // Only try offline login for connectivity issues
@@ -464,9 +465,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 } else {
                   // For authentication or server errors, just show the error message
                   if (mounted) {
+                    final failure = state.failure;
+                    final localized = failure == null
+                        ? state.message
+                        : _localizeAuthFailure(context, failure) ?? state.message;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(state.message),
+                        content: Text(localized),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -505,6 +510,36 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       ),
     );
   }
+
+  /// Map a typed [AuthFailure] to its localized message via [AppLocalizations].
+  /// Returns `null` when the localization key is missing — caller falls
+  /// back to the legacy `state.message` so the user always sees something.
+  String? _localizeAuthFailure(BuildContext context, AuthFailure failure) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return null;
+    switch (failure) {
+      case InvalidCredentialsFailure():
+        return l10n.invalidCredentials;
+      case UserInactiveFailure():
+        return l10n.userInactive;
+      case UserOutsideActiveWindowFailure(:final activeStart, :final activeEnd):
+        return l10n.userOutsideActiveWindow(
+          activeStart?.toIso8601String() ?? '—',
+          activeEnd?.toIso8601String() ?? '—',
+        );
+      case LicenseMissingFailure():
+        return l10n.licenseMissing;
+      case LicenseExpiredFailure():
+        return l10n.licenseExpired;
+      case LicenseSeatExceededFailure(:final userRank, :final seatCount):
+        return l10n.licenseSeatExceeded(userRank, seatCount);
+      case NetworkFailure():
+        return l10n.networkError;
+      case UnknownAuthFailure():
+        return l10n.networkError;
+    }
+  }
+
   Widget _serverChip() {
     final server = sl<ServerService>();
     return ValueListenableBuilder<ServerEnv>(

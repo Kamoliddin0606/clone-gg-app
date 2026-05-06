@@ -12,6 +12,9 @@ class TelemetryPingRequest {
   final String? agentCode;
   final String? agentName;
   final String? agentPhone;
+  final String? region;
+  final bool? isActive;
+  final bool? isDeleted;
 
   // Joylashuv aniqligi va metadata
   final String? accuracy;
@@ -65,6 +68,10 @@ class TelemetryPingRequest {
   final String? ipAddress;
   final String? connectionType;
 
+  // App ma'lumotlari (qo'shimcha — package_info_plus orqali)
+  final DateTime? appInstallationDate;
+  final DateTime? appLastUpdate;
+
   // Sensorlar (collect_sensors=true bo'lganda)
   final String? accelerometerX;
   final String? accelerometerY;
@@ -72,12 +79,24 @@ class TelemetryPingRequest {
   final String? gyroscopeX;
   final String? gyroscopeY;
   final String? gyroscopeZ;
+  final String? magnetometerX;
+  final String? magnetometerY;
+  final String? magnetometerZ;
+  final String? proximitySensor;
+  final String? lightSensor;
+  final String? temperature;
+  final String? humidity;
+  final String? pressure;
 
   // Xavfsizlik
   final bool? isRooted;
   final bool? isJailbroken;
   final bool? encryptionEnabled;
   final String? screenLockType;
+
+  // Erkin ko'rinishdagi metadata
+  final String? note;
+  final Map<String, dynamic>? metadata;
 
   // Vaqt belgisi
   final DateTime? loggedAt;
@@ -88,6 +107,9 @@ class TelemetryPingRequest {
     this.agentCode,
     this.agentName,
     this.agentPhone,
+    this.region,
+    this.isActive,
+    this.isDeleted,
     this.accuracy,
     this.altitude,
     this.speed,
@@ -117,6 +139,8 @@ class TelemetryPingRequest {
     this.cameraResolution,
     this.appVersion,
     this.appBuildNumber,
+    this.appInstallationDate,
+    this.appLastUpdate,
     this.batteryLevel,
     this.isCharging,
     this.batteryHealth,
@@ -136,10 +160,20 @@ class TelemetryPingRequest {
     this.gyroscopeX,
     this.gyroscopeY,
     this.gyroscopeZ,
+    this.magnetometerX,
+    this.magnetometerY,
+    this.magnetometerZ,
+    this.proximitySensor,
+    this.lightSensor,
+    this.temperature,
+    this.humidity,
+    this.pressure,
     this.isRooted,
     this.isJailbroken,
     this.encryptionEnabled,
     this.screenLockType,
+    this.note,
+    this.metadata,
     this.loggedAt,
   });
 
@@ -157,6 +191,9 @@ class TelemetryPingRequest {
     put('agent_code', agentCode);
     put('agent_name', agentName);
     put('agent_phone', agentPhone);
+    put('region', region);
+    put('is_active', isActive);
+    put('is_deleted', isDeleted);
     put('accuracy', accuracy);
     put('altitude', altitude);
     put('speed', speed);
@@ -186,6 +223,13 @@ class TelemetryPingRequest {
     put('camera_resolution', cameraResolution);
     put('app_version', appVersion);
     put('app_build_number', appBuildNumber);
+    if (appInstallationDate != null) {
+      map['app_installation_date'] =
+          appInstallationDate!.toUtc().toIso8601String();
+    }
+    if (appLastUpdate != null) {
+      map['app_last_update'] = appLastUpdate!.toUtc().toIso8601String();
+    }
     put('battery_level', batteryLevel);
     put('is_charging', isCharging);
     put('battery_health', batteryHealth);
@@ -205,10 +249,22 @@ class TelemetryPingRequest {
     put('gyroscope_x', gyroscopeX);
     put('gyroscope_y', gyroscopeY);
     put('gyroscope_z', gyroscopeZ);
+    put('magnetometer_x', magnetometerX);
+    put('magnetometer_y', magnetometerY);
+    put('magnetometer_z', magnetometerZ);
+    put('proximity_sensor', proximitySensor);
+    put('light_sensor', lightSensor);
+    put('temperature', temperature);
+    put('humidity', humidity);
+    put('pressure', pressure);
     put('is_rooted', isRooted);
     put('is_jailbroken', isJailbroken);
     put('encryption_enabled', encryptionEnabled);
     put('screen_lock_type', screenLockType);
+    put('note', note);
+    if (metadata != null && metadata!.isNotEmpty) {
+      map['metadata'] = metadata;
+    }
     if (loggedAt != null) {
       map['logged_at'] = loggedAt!.toUtc().toIso8601String();
     }
@@ -225,12 +281,24 @@ class TelemetryPingRequest {
         parsedLoggedAt = null;
       }
     }
+    DateTime? parseUtc(Object? raw) {
+      if (raw is! String || raw.isEmpty) return null;
+      try {
+        return DateTime.parse(raw).toUtc();
+      } catch (_) {
+        return null;
+      }
+    }
+
     return TelemetryPingRequest(
       latitude: (json['latitude'] ?? '').toString(),
       longitude: (json['longitude'] ?? '').toString(),
       agentCode: json['agent_code'] as String?,
       agentName: json['agent_name'] as String?,
       agentPhone: json['agent_phone'] as String?,
+      region: json['region'] as String?,
+      isActive: json['is_active'] as bool?,
+      isDeleted: json['is_deleted'] as bool?,
       accuracy: json['accuracy'] as String?,
       altitude: json['altitude'] as String?,
       speed: json['speed'] as String?,
@@ -260,6 +328,8 @@ class TelemetryPingRequest {
       cameraResolution: json['camera_resolution'] as String?,
       appVersion: json['app_version'] as String?,
       appBuildNumber: json['app_build_number'] as String?,
+      appInstallationDate: parseUtc(json['app_installation_date']),
+      appLastUpdate: parseUtc(json['app_last_update']),
       batteryLevel: json['battery_level'] as String?,
       isCharging: json['is_charging'] as bool?,
       batteryHealth: json['battery_health'] as String?,
@@ -279,10 +349,22 @@ class TelemetryPingRequest {
       gyroscopeX: json['gyroscope_x'] as String?,
       gyroscopeY: json['gyroscope_y'] as String?,
       gyroscopeZ: json['gyroscope_z'] as String?,
+      magnetometerX: json['magnetometer_x'] as String?,
+      magnetometerY: json['magnetometer_y'] as String?,
+      magnetometerZ: json['magnetometer_z'] as String?,
+      proximitySensor: json['proximity_sensor'] as String?,
+      lightSensor: json['light_sensor'] as String?,
+      temperature: json['temperature'] as String?,
+      humidity: json['humidity'] as String?,
+      pressure: json['pressure'] as String?,
       isRooted: json['is_rooted'] as bool?,
       isJailbroken: json['is_jailbroken'] as bool?,
       encryptionEnabled: json['encryption_enabled'] as bool?,
       screenLockType: json['screen_lock_type'] as String?,
+      note: json['note'] as String?,
+      metadata: json['metadata'] is Map<String, dynamic>
+          ? Map<String, dynamic>.from(json['metadata'] as Map)
+          : null,
       loggedAt: parsedLoggedAt,
     );
   }

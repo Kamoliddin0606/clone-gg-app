@@ -5272,4 +5272,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noPriceTypesAvailable => 'No price types available';
+
+  @override
+  String get userInactive => 'Your account is inactive. Contact your administrator.';
+
+  @override
+  String userOutsideActiveWindow(String start, String end) {
+    return 'Access window: $start – $end';
+  }
+
+  @override
+  String get licenseExpired => 'Your organization\'s license has expired.';
+
+  @override
+  String get licenseMissing => 'Your organization has no active license.';
+
+  @override
+  String licenseSeatExceeded(int rank, int seatCount) {
+    return 'All license seats are taken (you are #$rank of $seatCount).';
+  }
+
+  @override
+  String get clockTamperingDetected => 'Device clock changed. Please reconnect to verify access.';
+
+  @override
+  String get noInternetForFirstLogin => 'First-time login requires an internet connection.';
 }

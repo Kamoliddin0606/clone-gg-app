@@ -50,13 +50,38 @@ class TrackingPolicyService {
   Future<TrackingPolicyEnvelope?> loadFromCache() async {
     try {
       final raw = _prefs.preferences.getString(_cacheBodyKey);
-      if (raw == null || raw.isEmpty) return null;
+      if (raw == null || raw.isEmpty) {
+        if (kDebugMode) {
+          print('═══════════════════════════════════════════════════════════════');
+          print('[POLICY-FLOW] 📂 loadFromCache → MISS (empty / no key)');
+          print('  prefs key   : $_cacheBodyKey');
+          print('═══════════════════════════════════════════════════════════════');
+        }
+        return null;
+      }
       final json = jsonDecode(raw) as Map<String, dynamic>;
       _cached = TrackingPolicyEnvelope.fromJson(json);
+      if (kDebugMode) {
+        final p = _cached!.policy;
+        final updatedAt = _prefs.preferences.getString(_cacheUpdatedAtKey);
+        final etag = _prefs.preferences.getString(_cacheEtagKey);
+        print('═══════════════════════════════════════════════════════════════');
+        print('[POLICY-FLOW] 📂 loadFromCache → HIT');
+        print('  prefs key       : $_cacheBodyKey (${raw.length} chars)');
+        print('  cached_etag     : $etag');
+        print('  cached_updated  : $updatedAt');
+        print('  envelope.source : ${_cached!.source.toServerValue()}');
+        print('  envelope.rev    : ${_cached!.revision}');
+        print('  policy.is_active: ${p.isActive}, gps_enabled: ${p.gpsEnabled}');
+        print('  policy.interval : ${p.gpsIntervalSeconds}s, min_dist=${p.gpsMinDistanceMeters}m, min_acc=${p.gpsMinAccuracyMeters}m');
+        print('  active_hours    : ${p.activeHoursStart} .. ${p.activeHoursEnd}');
+        print('  active_days     : ${p.activeDays.isEmpty ? "[every day]" : p.activeDays}');
+        print('═══════════════════════════════════════════════════════════════');
+      }
       return _cached;
     } catch (e) {
       if (kDebugMode) {
-        print('TrackingPolicyService: loadFromCache error: $e');
+        print('[POLICY-FLOW] ❌ loadFromCache error: $e');
       }
       return null;
     }
@@ -85,6 +110,12 @@ class TrackingPolicyService {
       };
       if (etag != null && etag.isNotEmpty) {
         headers['If-None-Match'] = etag;
+      }
+      if (kDebugMode) {
+        print('═══════════════════════════════════════════════════════════════');
+        print('[POLICY-FLOW] 🌐 fetchPolicy → GET $url');
+        print('  If-None-Match : ${etag ?? "(none — first fetch)"}');
+        print('═══════════════════════════════════════════════════════════════');
       }
 
       final response = await _dio.get(
@@ -166,17 +197,24 @@ class TrackingPolicyService {
       final etag = (headerEtag != null && headerEtag.isNotEmpty)
           ? headerEtag
           : envelope.etag;
-      await _prefs.preferences.setString(_cacheBodyKey, jsonEncode(envelope.toJson()));
+      final body = jsonEncode(envelope.toJson());
+      await _prefs.preferences.setString(_cacheBodyKey, body);
       if (etag.isNotEmpty) {
         await _prefs.preferences.setString(_cacheEtagKey, etag);
       }
-      await _prefs.preferences.setString(
-        _cacheUpdatedAtKey,
-        DateTime.now().toIso8601String(),
-      );
+      final updatedAt = DateTime.now().toIso8601String();
+      await _prefs.preferences.setString(_cacheUpdatedAtKey, updatedAt);
+      if (kDebugMode) {
+        print('═══════════════════════════════════════════════════════════════');
+        print('[POLICY-FLOW] 💾 _saveToCache → WRITTEN');
+        print('  $_cacheBodyKey      : ${body.length} chars JSON');
+        print('  $_cacheEtagKey      : $etag');
+        print('  $_cacheUpdatedAtKey : $updatedAt');
+        print('═══════════════════════════════════════════════════════════════');
+      }
     } catch (e) {
       if (kDebugMode) {
-        print('TrackingPolicyService: _saveToCache error: $e');
+        print('[POLICY-FLOW] ❌ _saveToCache error: $e');
       }
     }
   }
@@ -186,6 +224,9 @@ class TrackingPolicyService {
     await _prefs.preferences.remove(_cacheBodyKey);
     await _prefs.preferences.remove(_cacheEtagKey);
     await _prefs.preferences.remove(_cacheUpdatedAtKey);
+    if (kDebugMode) {
+      print('[POLICY-FLOW] 🗑️  clearCache → 3 keys removed (body/etag/updated_at)');
+    }
   }
 
   // ===========================================================================

@@ -174,9 +174,11 @@ class LocationService {
       await _prefs.setString(_userLocationKey, jsonEncode(locationData));
       await _prefs.setString(_lastLocationUpdateKey, DateTime.now().toIso8601String());
 
-      if (kDebugMode) {
-        print('Location updated: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
-      }
+      // Suppressed: spammed every 10 seconds AND on every position-stream
+      // event. Re-enable temporarily when debugging foreground UI location.
+      // if (kDebugMode) {
+      //   print('Location updated: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
+      // }
     } catch (e) {
       if (kDebugMode) {
         print('Error storing location: $e');

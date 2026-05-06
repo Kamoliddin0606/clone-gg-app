@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_gates_envelope.dart';
+
 class SharedPreferencesService {
   late final SharedPreferences _preferences;
   static const String _usernameKey = 'saved_username';
@@ -104,10 +106,8 @@ class SharedPreferencesService {
 
   // Get user code
   String? getUserCode() {
-    if (kDebugMode) {
-      print('Getting user code from SharedPreferences');
-      print('User code key: $_userCodeKey');
-    }
+    // Suppressed: this getter is called dozens of times per second by
+    // various services and floods the terminal.
     return _preferences.getString(_userCodeKey);
   }
 
@@ -517,84 +517,58 @@ class SharedPreferencesService {
     return _preferences.getBool(_isFirstTimeSyncKey) ?? false;
   }
 
-  // Time limit management for server time verification
-  
-  /// Save time limit to preferences
-  /// Time limit is stored in ISO 8601 format for consistency
-  Future<void> setTimeLimit(DateTime limit) async {
-    try {
-      await _preferences.setString(_timeLimitKey, limit.toIso8601String());
-      if (kDebugMode) {
-        print('Time limit saved: ${limit.toIso8601String()}');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error saving time limit: $e');
-      }
-      rethrow;
+  // ===========================================================================
+  // CACHED LOGIN GATES (V2 backend)
+  // ===========================================================================
+  // The backend's `gates` envelope is cached so the app can decide on cold
+  // start whether the session is still valid without contacting the server.
+
+  static const String _cachedGatesJsonKey = 'cached_login_gates_json';
+
+  /// Persist the latest [LoginGatesEnvelope] as a single JSON string.
+  /// Called after a successful login or token refresh.
+  Future<void> setCachedGates(LoginGatesEnvelope envelope) async {
+    final body = envelope.encode();
+    await _preferences.setString(_cachedGatesJsonKey, body);
+    if (kDebugMode) {
+      print('[GATES-FLOW] 💾 setCachedGates → ${body.length} chars '
+          '(bypass=${envelope.bypass}, license_valid_to=${envelope.licenseValidTo}, '
+          'user_active_end=${envelope.userActiveEnd})');
     }
   }
 
-  /// Get time limit from preferences
-  /// Returns null if no time limit is stored
-  DateTime? getTimeLimit() {
-    try {
-      final limitStr = _preferences.getString(_timeLimitKey);
-      if (limitStr == null) {
-        if (kDebugMode) {
-          print('No time limit found in preferences');
-        }
-        return null;
+  /// Read the previously cached envelope. Returns `null` when the cache
+  /// is empty, missing, or fails to decode.
+  LoginGatesEnvelope? getCachedGates() {
+    final raw = _preferences.getString(_cachedGatesJsonKey);
+    final env = LoginGatesEnvelope.tryDecode(raw);
+    if (kDebugMode) {
+      if (env == null) {
+        print('[GATES-FLOW] 📂 getCachedGates → MISS');
+      } else {
+        print('[GATES-FLOW] 📂 getCachedGates → HIT '
+            '(bypass=${env.bypass}, license_valid_to=${env.licenseValidTo})');
       }
-      final limit = DateTime.parse(limitStr);
-      if (kDebugMode) {
-        print('Retrieved time limit: ${limit.toIso8601String()}');
-      }
-      return limit;
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error retrieving time limit: $e');
-      }
-      return null;
+    }
+    return env;
+  }
+
+  /// Clear the cached gates — used on logout, refresh-revocation, or
+  /// when the backend explicitly tells the mobile app the session is no
+  /// longer valid.
+  Future<void> clearCachedGates() async {
+    await _preferences.remove(_cachedGatesJsonKey);
+    if (kDebugMode) {
+      print('[GATES-FLOW] 🗑️  clearCachedGates → key removed');
     }
   }
 
-  /// Clear time limit from preferences
-  Future<void> clearTimeLimit() async {
-    try {
+  /// First-boot cleanup of legacy access-control keys. Safe to call on
+  /// every cold start — does nothing when the keys are already absent.
+  Future<void> migrateLegacyKeys() async {
+    // Legacy SOAP `getServerTime` cache — replaced by `gates.serverTime`.
+    if (_preferences.containsKey(_timeLimitKey)) {
       await _preferences.remove(_timeLimitKey);
-      if (kDebugMode) {
-        print('Time limit cleared from preferences');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error clearing time limit: $e');
-      }
-      rethrow;
     }
-  }
-
-  /// Check if time limit exists in preferences
-  bool hasTimeLimit() {
-    final hasLimit = _preferences.containsKey(_timeLimitKey);
-    if (kDebugMode) {
-      print('Has time limit: $hasLimit');
-    }
-    return hasLimit;
-  }
-
-  /// Check if stored time limit is still valid (not expired)
-  /// Uses local device time for comparison
-  bool isTimeLimitValid() {
-    final limit = getTimeLimit();
-    if (limit == null) {
-      return false;
-    }
-    final now = DateTime.now();
-    final isValid = now.isBefore(limit);
-    if (kDebugMode) {
-      print('Time limit validity check: $isValid (now: $now, limit: $limit)');
-    }
-    return isValid;
   }
 }

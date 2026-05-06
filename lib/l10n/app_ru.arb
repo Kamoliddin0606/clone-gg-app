@@ -3065,5 +3065,24 @@
   "settingsNotComplete": "Пожалуйста, заполните все обязательные настройки",
   "noOrganizationsAvailable": "Нет доступных организаций",
   "noWarehousesAvailable": "Нет доступных складов",
-  "noPriceTypesAvailable": "Нет доступных типов цен"
+  "noPriceTypesAvailable": "Нет доступных типов цен",
+  "userInactive": "Учётная запись неактивна. Обратитесь к администратору.",
+  "userOutsideActiveWindow": "Окно доступа: {start} – {end}",
+  "@userOutsideActiveWindow": {
+    "placeholders": {
+      "start": { "type": "String" },
+      "end": { "type": "String" }
+    }
+  },
+  "licenseExpired": "Лицензия организации истекла.",
+  "licenseMissing": "У организации нет активной лицензии.",
+  "licenseSeatExceeded": "Все места по лицензии заняты (вы №{rank} из {seatCount}).",
+  "@licenseSeatExceeded": {
+    "placeholders": {
+      "rank": { "type": "int" },
+      "seatCount": { "type": "int" }
+    }
+  },
+  "clockTamperingDetected": "Часы устройства изменились. Подключитесь к интернету для проверки.",
+  "noInternetForFirstLogin": "Первый вход требует подключения к интернету."
 }

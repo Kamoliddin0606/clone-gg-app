@@ -270,14 +270,18 @@ class RestApiService {
     _dio.options.sendTimeout = const Duration(seconds: 30);
 
     _dio.interceptors.addAll([
-      LogInterceptor(
-        request: true,
-        requestHeader: true,
-        requestBody: true,
-        responseHeader: true,
-        responseBody: true,
-        error: true,
-      ),
+      // RestApiService shares the global Dio instance with SoapApiService,
+      // so this LogInterceptor was duplicating every SOAP envelope dump.
+      // Disabled to keep the terminal readable; re-enable for targeted REST
+      // debugging only.
+      // LogInterceptor(
+      //   request: true,
+      //   requestHeader: true,
+      //   requestBody: true,
+      //   responseHeader: true,
+      //   responseBody: true,
+      //   error: true,
+      // ),
       InterceptorsWrapper(
         onRequest: (options, handler) {
           // Add common headers for REST API

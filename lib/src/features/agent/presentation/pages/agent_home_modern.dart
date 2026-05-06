@@ -10,7 +10,7 @@ import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -964,8 +964,8 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
               // ),
                   // Offline indicator - uses StreamBuilder to react to connectivity changes
                   StreamBuilder<bool>(
-                    stream: sl<ConnectivityMonitoringService>().connectivityStream,
-                    initialData: sl<ConnectivityMonitoringService>().isConnected,
+                    stream: sl<ConnectivityMonitorService>().connectivityStream,
+                    initialData: sl<ConnectivityMonitorService>().isConnected,
                     builder: (context, snapshot) {
                       final isConnected = snapshot.data ?? true;
                       // Also check SharedPreferences for initial offline login state

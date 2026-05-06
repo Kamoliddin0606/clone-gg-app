@@ -196,7 +196,7 @@ void main() {
         emitsInOrder([
           AuthLoading(),
           predicate<AuthState>((state) =>
-              state is AuthFailure &&
+              state is AuthFailureState &&
               state.errorType == AuthErrorType.unknown),
         ]),
       );

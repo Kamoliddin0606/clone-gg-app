@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_failure.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_gates_envelope.dart';
 
 /// Token Service for managing authentication tokens for REST API
 /// This service handles token acquisition, storage, refresh, and validation
@@ -32,9 +34,11 @@ class TokenService {
   // tomonidan ishlatiladi. Eski server REST endpointlari va ularga bog'liq
   // servislarga tegmasdan, parallel ishlaydi.
 
-  /// Yangi server base URL (production'da o'zgartiriladi).
-  // static const String v2BaseUrl = 'http://178.218.200.120:8080';
-  static const String v2BaseUrl = 'http://localhost:8080';
+  /// Yangi server base URL.
+  /// NOTE: real iPhone/Android cannot reach `localhost` — that resolves to
+  /// the device itself, not the developer's Mac. Use the public IP.
+  //static const String v2BaseUrl = 'http://178.218.200.120:8080';
+  static const String v2BaseUrl = 'http://192.168.0.123:8080';   // dev-only
 
   /// JWT access + refresh juftligini olish endpointi.
   static const String _v2TokenEndpoint = '/api/auth/token/';
@@ -83,14 +87,13 @@ class TokenService {
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          // Log successful responses for debugging
-          if (kDebugMode) {
-            print('TokenService: Response received from ${response.requestOptions.path}');
-            print('TokenService: Status code: ${response.statusCode}');
-            if (response.data is Map) {
-              print('TokenService: Response keys: ${(response.data as Map).keys.toList()}');
-            }
-          }
+          // Suppressed: V2 telemetry/policy/device responses already log
+          // under their own Dio instances. This interceptor was firing on
+          // every response and duplicating output.
+          // if (kDebugMode) {
+          //   print('TokenService: Response received from ${response.requestOptions.path}');
+          //   print('TokenService: Status code: ${response.statusCode}');
+          // }
           return handler.next(response);
         },
         onError: (DioException error, handler) async {
@@ -497,9 +500,9 @@ class TokenService {
     try {
       final refreshToken = _prefsService.preferences.getString(_refreshTokenKey);
       if (refreshToken == null || refreshToken.isEmpty) {
-        if (kDebugMode) {
-          print('TokenService: No refresh token available');
-        }
+        // V1 refresh token is no longer issued at login — this branch is
+        // expected to fire for every authenticated REST request. Logging
+        // it would flood the terminal.
         return null;
       }
 
@@ -590,9 +593,8 @@ class TokenService {
       final expiryString = _prefsService.preferences.getString(_tokenExpiryKey);
 
       if (accessToken == null || accessToken.isEmpty) {
-        if (kDebugMode) {
-          print('TokenService: No access token stored');
-        }
+        // Expected when V1 tokens are not yet issued — silenced to avoid
+        // log spam. The refresh attempt below covers diagnostics.
         final newToken = await _refreshAccessToken();
         if (newToken != null && newToken.isNotEmpty) {
           return newToken;
@@ -866,59 +868,12 @@ class TokenService {
         return refreshedToken;
       }
 
+      // V1 1C-Login re-authentication is disabled — all auth now flows
+      // through the V2 backend (`obtainV2Tokens` / `refreshAccessV2`).
+      // Parameters are intentionally kept on the public signature for
+      // backwards binary compatibility with callers; they are no longer used.
       if (kDebugMode) {
-        print('TokenService: Yangilash muvaffaqiyatsiz, qayta autentifikatsiya qilinmoqda (1C-Login)...');
-      }
-
-      // =========================================================================
-      // 3-BOSQICH: 1C-Login orqali qayta autentifikatsiya
-      // =========================================================================
-      // Parametrlardan yoki SharedPreferences'dan credentials olish
-      final authLogin = username ?? _prefsService.getSavedUsername();
-      final authPassword = password ?? _prefsService.getPassword();
-      final authProjectName = _prefsService.getBaseUrl();
-
-      if (kDebugMode) {
-        print('TokenService: Credentials olindi - login: ${authLogin != null ? "***" : "null"}, password: ${authPassword != null ? "***" : "null"}, projectName: $authProjectName');
-      }
-
-      // Credentials tekshirish
-      if (authLogin == null || authLogin.isEmpty ||
-          authPassword == null || authPassword.isEmpty) {
-        if (kDebugMode) {
-          print('TokenService: Qayta autentifikatsiya uchun credentials mavjud emas');
-        }
-        // Yaroqsiz tokenlarni tozalash
-        await clearTokens();
-        return null;
-      }
-
-      // Project name (baseURL) tekshirish
-      if (authProjectName == null || authProjectName.isEmpty) {
-        if (kDebugMode) {
-          print('TokenService: Project name (baseURL) mavjud emas, 1C-Login amalga oshirilmaydi');
-        }
-        await clearTokens();
-        return null;
-      }
-
-      // 1C-Login orqali qayta autentifikatsiya
-      final success = await authenticateWith1CLogin(
-        login: authLogin,
-        password: authPassword,
-        projectName: authProjectName,
-      );
-
-      if (success) {
-        if (kDebugMode) {
-          print('TokenService: 1C-Login orqali qayta autentifikatsiya muvaffaqiyatli');
-        }
-        // Yangi olingan tokenni qaytarish
-        return _prefsService.preferences.getString(_accessTokenKey);
-      }
-
-      if (kDebugMode) {
-        print('TokenService: 1C-Login orqali qayta autentifikatsiya muvaffaqiyatsiz');
+        print('TokenService: V1 1C-Login re-auth is disabled — returning null without network call (login=${username == null ? "null" : "***"})');
       }
       // Muvaffaqiyatsiz bo'lsa tokenlarni tozalash
       await clearTokens();
@@ -1018,6 +973,15 @@ class TokenService {
 
         if (access != null && access.isNotEmpty) {
           await _storeV2Tokens(access, refresh);
+          // Persist the `gates` envelope so AppStartGuard can read it on
+          // subsequent cold starts. Tolerates missing gates by skipping.
+          try {
+            final envelope = LoginGatesEnvelope.fromJson(data);
+            await _prefsService.setCachedGates(envelope);
+          } catch (_) {
+            // Backend may not return gates yet — non-fatal.
+          }
+          _lastV2LoginFailure = null;
           if (kDebugMode) {
             print('═══════════════════════════════════════════════════════════════');
             print('TokenService[V2]: ✅ TOKENS RECEIVED FROM SERVER');
@@ -1036,18 +1000,54 @@ class TokenService {
       if (kDebugMode) {
         print('TokenService[V2]: Unexpected response status=${response.statusCode}, data=${response.data}');
       }
+      _lastV2LoginFailure = const UnknownAuthFailure();
       return false;
     } on DioException catch (e) {
       if (kDebugMode) {
         print('TokenService[V2]: DioException ${e.type} status=${e.response?.statusCode} message=${e.message}');
       }
+      _lastV2LoginFailure = _mapDioToFailure(e);
       return false;
     } catch (e) {
       if (kDebugMode) {
         print('TokenService[V2]: Unexpected error: $e');
       }
+      _lastV2LoginFailure = const UnknownAuthFailure();
       return false;
     }
+  }
+
+  // Most recent typed failure from `obtainV2Tokens` / `refreshAccessV2`.
+  // Surfaced via [lastV2LoginFailure] / [lastV2RefreshFailure] so the UI
+  // and AppStartGuard can show actionable copy. Reset to `null` on success.
+  AuthFailure? _lastV2LoginFailure;
+  AuthFailure? _lastV2RefreshFailure;
+
+  /// Last typed failure from `/api/auth/token/`. `null` when the most
+  /// recent call succeeded (or none has been made).
+  AuthFailure? get lastV2LoginFailure => _lastV2LoginFailure;
+
+  /// Last typed failure from `/api/auth/token/refresh/`.
+  AuthFailure? get lastV2RefreshFailure => _lastV2RefreshFailure;
+
+  /// Public wrapper around the private V2 refresh that also persists the
+  /// fresh `gates` envelope. Returns the new access token on success or
+  /// `null` on any failure (consult [lastV2RefreshFailure] for context).
+  Future<String?> refreshAccessV2() => _refreshV2AccessToken();
+
+  /// Convenience accessor for `AppStartGuard` so it does not couple to
+  /// SharedPreferences directly.
+  LoginGatesEnvelope? getCachedGates() => _prefsService.getCachedGates();
+
+  /// Map a Dio failure to an [AuthFailure]. HTTP error envelopes carry
+  /// `error.code`; pure transport failures fall through to [NetworkFailure].
+  AuthFailure _mapDioToFailure(DioException e) {
+    final response = e.response;
+    final body = response?.data;
+    if (response != null && body is Map<String, dynamic>) {
+      return AuthFailure.fromErrorEnvelope(body, response.statusCode ?? 0);
+    }
+    return const NetworkFailure();
   }
 
   /// V2 access tokenni refresh qilish (rotation: yangi refresh ham keladi).
@@ -1088,6 +1088,15 @@ class TokenService {
 
         if (newAccess != null && newAccess.isNotEmpty) {
           await _storeV2Tokens(newAccess, newRefresh);
+          // Backend recomputes `gates` on every refresh — overwrite cache
+          // so license extensions / window changes propagate within ~60 min.
+          try {
+            final envelope = LoginGatesEnvelope.fromJson(data);
+            await _prefsService.setCachedGates(envelope);
+          } catch (_) {
+            // Skip silently when payload omits gates.
+          }
+          _lastV2RefreshFailure = null;
           if (kDebugMode) {
             final rotated = data['refresh'] != null;
             print('═══════════════════════════════════════════════════════════════');
@@ -1108,25 +1117,31 @@ class TokenService {
           print('TokenService[V2]: Refresh token invalid (401), clearing V2 tokens');
         }
         await clearV2Tokens();
+        await _prefsService.clearCachedGates();
+        _lastV2RefreshFailure = const InvalidCredentialsFailure();
         return null;
       }
 
       if (kDebugMode) {
         print('TokenService[V2]: Refresh failed status=${response.statusCode}');
       }
+      _lastV2RefreshFailure = const UnknownAuthFailure();
       return null;
     } on DioException catch (e) {
       if (kDebugMode) {
         print('TokenService[V2]: Refresh DioException ${e.type} status=${e.response?.statusCode}');
       }
+      _lastV2RefreshFailure = _mapDioToFailure(e);
       if (e.response?.statusCode == 401) {
         await clearV2Tokens();
+        await _prefsService.clearCachedGates();
       }
       return null;
     } catch (e) {
       if (kDebugMode) {
         print('TokenService[V2]: Refresh unexpected error: $e');
       }
+      _lastV2RefreshFailure = const UnknownAuthFailure();
       return null;
     }
   }

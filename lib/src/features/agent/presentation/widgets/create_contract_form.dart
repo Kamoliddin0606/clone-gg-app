@@ -11,7 +11,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitoring_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/searchable_client_dialog.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
@@ -176,10 +176,10 @@ class _CreateContractFormState extends State<CreateContractForm>
       });
 
       final dbService = sl<ApiDatabaseService>();
-      final connectivityService = sl<ConnectivityMonitoringService>();
+      final connectivityService = sl<ConnectivityMonitorService>();
 
       // Check internet connectivity
-      final isOnline = await connectivityService.checkConnectivity();
+      final isOnline = await connectivityService.hasConnection();
 
       if (isOnline) {
         // Internet available: fetch from server, save to DB, then load from DB

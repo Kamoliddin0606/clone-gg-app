@@ -3084,5 +3084,30 @@
     }
   },
   "clockTamperingDetected": "Часы устройства изменились. Подключитесь к интернету для проверки.",
-  "noInternetForFirstLogin": "Первый вход требует подключения к интернету."
+  "noInternetForFirstLogin": "Первый вход требует подключения к интернету.",
+  "mobileDeviceBoundToOtherUser": "Это устройство привязано к другому пользователю. Попросите администратора снять привязку.",
+  "mobileUserBoundToOtherDevice": "Ваш аккаунт уже привязан к другому телефону. Попросите администратора снять старую привязку, чтобы войти на этом устройстве.",
+  "deviceBindingInvalid": "Сессия устройства больше не действительна. Войдите снова.",
+  "sessionRevoked": "Сессия отозвана. Войдите снова.",
+  "retry": "Повторить",
+  "oneCUserNotFound": "Этот пользователь не зарегистрирован в учётной системе. Обратитесь к администратору.",
+  "debugBackendUrl": "Backend: {url}",
+  "@debugBackendUrl": {
+    "placeholders": {
+      "url": { "type": "String" }
+    }
+  },
+  "debugTestConnection": "Проверить подключение",
+  "debugConnectionOk": "OK · {ms}ms",
+  "@debugConnectionOk": {
+    "placeholders": {
+      "ms": { "type": "int" }
+    }
+  },
+  "debugConnectionFailed": "Ошибка: {reason}",
+  "@debugConnectionFailed": {
+    "placeholders": {
+      "reason": { "type": "String" }
+    }
+  }
 }

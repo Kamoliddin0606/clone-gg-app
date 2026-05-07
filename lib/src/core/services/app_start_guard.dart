@@ -105,7 +105,7 @@ class AppStartGuard {
       // Step 2: clock-tampering sanity check.
       final now = _clock.nowUtc();
       if (now.isBefore(cached.serverTime)) {
-        await _prefs.clearCachedGates();
+        await _clearAuthCaches();
         return StartDecisionResult(
           decision: StartDecision.showLoginRevoked,
           reason: UserOutsideActiveWindowFailure(
@@ -125,7 +125,7 @@ class AppStartGuard {
             await _prefs.setCachedGates(envelope);
             return const StartDecisionResult(decision: StartDecision.showHome);
           case _RefreshDenied(:final failure):
-            await _prefs.clearCachedGates();
+            await _clearAuthCaches();
             return StartDecisionResult(
               decision: StartDecision.showLoginRevoked,
               reason: failure,
@@ -140,7 +140,7 @@ class AppStartGuard {
       if (!cached.bypass &&
           cached.licenseValidTo != null &&
           !now.isBefore(cached.licenseValidTo!)) {
-        await _prefs.clearCachedGates();
+        await _clearAuthCaches();
         return const StartDecisionResult(
           decision: StartDecision.showLoginExpired,
           reason: LicenseExpiredFailure(),
@@ -210,6 +210,14 @@ class AppStartGuard {
       return '${str.substring(0, 4)}…(${str.length} chars)';
     }
     return str;
+  }
+
+  /// Atomic cleanup used at every "session is no longer valid" branch.
+  /// Cache coherence rule: gates and device binding are always cleared
+  /// together — never leave one of the pair lingering past a denial.
+  Future<void> _clearAuthCaches() async {
+    await _prefs.clearCachedGates();
+    await _prefs.clearCachedDeviceBinding();
   }
 
   Future<bool> _isOnline() async {

@@ -99,7 +99,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get noData => 'Ma\'lumot yo\'q';
 
   @override
-  String get retry => 'Qayta urinib ko\'ring';
+  String get retry => 'Qayta urinish';
 
   @override
   String get search => 'Qidirish';
@@ -5297,4 +5297,37 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get noInternetForFirstLogin => 'Birinchi kirish uchun internet ulanishi kerak.';
+
+  @override
+  String get mobileDeviceBoundToOtherUser => 'Bu qurilma boshqa foydalanuvchiga biriktirilgan. Administratordan bog\'lanishni olib tashlashni so\'rang.';
+
+  @override
+  String get mobileUserBoundToOtherDevice => 'Sizning hisobingiz boshqa telefonga biriktirilgan. Eski bog\'lanishni olib tashlash uchun administratorga murojaat qiling.';
+
+  @override
+  String get deviceBindingInvalid => 'Qurilma sessiyasi endi yaroqsiz. Iltimos, qaytadan kiring.';
+
+  @override
+  String get sessionRevoked => 'Sessiyangiz to\'xtatildi. Iltimos, qaytadan kiring.';
+
+  @override
+  String get oneCUserNotFound => 'Bu foydalanuvchi tizim hisobida ro\'yxatdan o\'tmagan. Administratorga murojaat qiling.';
+
+  @override
+  String debugBackendUrl(String url) {
+    return 'Backend: $url';
+  }
+
+  @override
+  String get debugTestConnection => 'Aloqani tekshirish';
+
+  @override
+  String debugConnectionOk(int ms) {
+    return 'OK · ${ms}ms';
+  }
+
+  @override
+  String debugConnectionFailed(String reason) {
+    return 'Xato: $reason';
+  }
 }

@@ -11,6 +11,8 @@ import 'package:gloria_marketing_flutter/src/core/services/permission_manager.da
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/app_start_guard.dart';
+import 'package:gloria_marketing_flutter/src/core/services/health_check_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_dialog.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
@@ -90,6 +92,24 @@ void main() async {
     if (kDebugMode) {
       debugPrint('[Main] Error initializing connectivity monitor: $e');
     }
+  }
+
+  // Debug-only: log the resolved V2 backend URL and fire a single liveness
+  // probe so engineers see misconfigured `--dart-define` values immediately.
+  // Release builds skip both — no extra request, no log noise.
+  if (kDebugMode) {
+    debugPrint('[CONFIG] V2_BASE_URL=${TokenService.v2BaseUrl}');
+    // Fire-and-forget; we don't want to block the boot sequence on it.
+    // ignore: unawaited_futures
+    sl<HealthCheckService>().pingV2().then((result) {
+      if (result.ok) {
+        debugPrint(
+          '[HEALTH] V2 backend reachable in ${result.latency?.inMilliseconds}ms',
+        );
+      } else {
+        debugPrint('[HEALTH] V2 backend UNREACHABLE: ${result.errorMessage}');
+      }
+    });
   }
 
   // Determine the initial route via the new AppStartGuard. The legacy

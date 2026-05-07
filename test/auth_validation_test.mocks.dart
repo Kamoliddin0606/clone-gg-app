@@ -8,13 +8,15 @@ import 'dart:async' as _i8;
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart'
     as _i9;
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart'
-    as _i34;
+    as _i38;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart'
     as _i24;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart'
     as _i4;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart'
     as _i23;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart'
+    as _i30;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart'
     as _i18;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart'
@@ -24,13 +26,13 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_report.dart'
     as _i22;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart'
-    as _i29;
+    as _i32;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart'
     as _i5;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart'
-    as _i28;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart'
     as _i31;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart'
+    as _i34;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart'
     as _i13;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart'
@@ -40,19 +42,25 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart'
     as _i12;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart'
-    as _i33;
+    as _i37;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart'
     as _i14;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart'
     as _i21;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart'
     as _i27;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart'
+    as _i28;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart'
-    as _i30;
+    as _i33;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
     as _i11;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart'
+    as _i29;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart'
-    as _i32;
+    as _i35;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart'
+    as _i36;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart'
     as _i16;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart'
@@ -61,6 +69,10 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_pl
     as _i26;
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart'
     as _i10;
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/device_binding.dart'
+    as _i41;
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_gates_envelope.dart'
+    as _i40;
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart'
     as _i2;
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart'
@@ -68,7 +80,7 @@ import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/a
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart'
     as _i17;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i35;
+import 'package:mockito/src/dummies.dart' as _i39;
 import 'package:shared_preferences/shared_preferences.dart' as _i6;
 
 // ignore_for_file: type=lint
@@ -122,21 +134,24 @@ class MockAuthRepository extends _i1.Mock implements _i7.AuthRepository {
   }
 
   @override
-  _i8.Future<_i2.UserEntity> login({
+  _i8.Future<_i2.UserEntity> establish1cSession({
     required String? username,
     required String? password,
+    String? appVersion,
   }) =>
       (super.noSuchMethod(
-            Invocation.method(#login, [], {
+            Invocation.method(#establish1cSession, [], {
               #username: username,
               #password: password,
+              #appVersion: appVersion,
             }),
             returnValue: _i8.Future<_i2.UserEntity>.value(
               _FakeUserEntity_0(
                 this,
-                Invocation.method(#login, [], {
+                Invocation.method(#establish1cSession, [], {
                   #username: username,
                   #password: password,
+                  #appVersion: appVersion,
                 }),
               ),
             ),
@@ -840,6 +855,51 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
           as _i8.Future<void>);
 
   @override
+  _i8.Future<void> syncSalesClassifiers({bool? forceRefresh = false}) =>
+      (super.noSuchMethod(
+            Invocation.method(#syncSalesClassifiers, [], {
+              #forceRefresh: forceRefresh,
+            }),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<List<_i28.SalesChannel>> getCachedSalesChannels() =>
+      (super.noSuchMethod(
+            Invocation.method(#getCachedSalesChannels, []),
+            returnValue: _i8.Future<List<_i28.SalesChannel>>.value(
+              <_i28.SalesChannel>[],
+            ),
+          )
+          as _i8.Future<List<_i28.SalesChannel>>);
+
+  @override
+  _i8.Future<List<_i29.TradingPointType>> getCachedTradingPointTypes({
+    String? channelGroup,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#getCachedTradingPointTypes, [], {
+              #channelGroup: channelGroup,
+            }),
+            returnValue: _i8.Future<List<_i29.TradingPointType>>.value(
+              <_i29.TradingPointType>[],
+            ),
+          )
+          as _i8.Future<List<_i29.TradingPointType>>);
+
+  @override
+  _i8.Future<List<_i30.ClientClass>> getCachedClientClasses() =>
+      (super.noSuchMethod(
+            Invocation.method(#getCachedClientClasses, []),
+            returnValue: _i8.Future<List<_i30.ClientClass>>.value(
+              <_i30.ClientClass>[],
+            ),
+          )
+          as _i8.Future<List<_i30.ClientClass>>);
+
+  @override
   _i8.Future<void> resolveConflicts({
     required String? dataType,
     required List<Map<String, dynamic>>? localData,
@@ -885,7 +945,15 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
           as bool);
 
   @override
-  _i8.Future<List<_i28.OrderStatus>> syncOrderStatuses({
+  bool isProwashServerSelected() =>
+      (super.noSuchMethod(
+            Invocation.method(#isProwashServerSelected, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i8.Future<List<_i31.OrderStatus>> syncOrderStatuses({
     required String? userCode,
     bool? forceRefresh = false,
   }) =>
@@ -894,14 +962,14 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
               #userCode: userCode,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i8.Future<List<_i28.OrderStatus>>.value(
-              <_i28.OrderStatus>[],
+            returnValue: _i8.Future<List<_i31.OrderStatus>>.value(
+              <_i31.OrderStatus>[],
             ),
           )
-          as _i8.Future<List<_i28.OrderStatus>>);
+          as _i8.Future<List<_i31.OrderStatus>>);
 
   @override
-  _i8.Future<List<_i29.Order>> syncOrders({
+  _i8.Future<List<_i32.Order>> syncOrders({
     required String? userCode,
     bool? forceRefresh = false,
   }) =>
@@ -910,22 +978,22 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
               #userCode: userCode,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i8.Future<List<_i29.Order>>.value(<_i29.Order>[]),
+            returnValue: _i8.Future<List<_i32.Order>>.value(<_i32.Order>[]),
           )
-          as _i8.Future<List<_i29.Order>>);
+          as _i8.Future<List<_i32.Order>>);
 
   @override
-  _i8.Future<List<_i28.OrderStatus>> getCachedOrderStatuses() =>
+  _i8.Future<List<_i31.OrderStatus>> getCachedOrderStatuses() =>
       (super.noSuchMethod(
             Invocation.method(#getCachedOrderStatuses, []),
-            returnValue: _i8.Future<List<_i28.OrderStatus>>.value(
-              <_i28.OrderStatus>[],
+            returnValue: _i8.Future<List<_i31.OrderStatus>>.value(
+              <_i31.OrderStatus>[],
             ),
           )
-          as _i8.Future<List<_i28.OrderStatus>>);
+          as _i8.Future<List<_i31.OrderStatus>>);
 
   @override
-  _i8.Future<List<_i29.Order>> getCachedOrders({
+  _i8.Future<List<_i32.Order>> getCachedOrders({
     String? clientCode,
     String? mainStatus,
     String? typePriceCode,
@@ -936,17 +1004,17 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
               #mainStatus: mainStatus,
               #typePriceCode: typePriceCode,
             }),
-            returnValue: _i8.Future<List<_i29.Order>>.value(<_i29.Order>[]),
+            returnValue: _i8.Future<List<_i32.Order>>.value(<_i32.Order>[]),
           )
-          as _i8.Future<List<_i29.Order>>);
+          as _i8.Future<List<_i32.Order>>);
 
   @override
-  _i8.Future<_i29.Order?> getCachedOrderByNumOrder(String? numOrder) =>
+  _i8.Future<_i32.Order?> getCachedOrderByNumOrder(String? numOrder) =>
       (super.noSuchMethod(
             Invocation.method(#getCachedOrderByNumOrder, [numOrder]),
-            returnValue: _i8.Future<_i29.Order?>.value(),
+            returnValue: _i8.Future<_i32.Order?>.value(),
           )
-          as _i8.Future<_i29.Order?>);
+          as _i8.Future<_i32.Order?>);
 
   @override
   _i8.Future<void> updateCachedOrderStatus(
@@ -1069,7 +1137,7 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
           as _i8.Future<void>);
 
   @override
-  _i8.Future<_i30.SalesReqPermissions?> syncSalesReqPermissions({
+  _i8.Future<_i33.SalesReqPermissions?> syncSalesReqPermissions({
     required String? userCode,
     bool? forceRefresh = false,
   }) =>
@@ -1078,22 +1146,22 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
               #userCode: userCode,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i8.Future<_i30.SalesReqPermissions?>.value(),
+            returnValue: _i8.Future<_i33.SalesReqPermissions?>.value(),
           )
-          as _i8.Future<_i30.SalesReqPermissions?>);
+          as _i8.Future<_i33.SalesReqPermissions?>);
 
   @override
-  _i8.Future<_i30.SalesReqPermissions?> getCachedSalesReqPermissions(
+  _i8.Future<_i33.SalesReqPermissions?> getCachedSalesReqPermissions(
     String? userCode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getCachedSalesReqPermissions, [userCode]),
-            returnValue: _i8.Future<_i30.SalesReqPermissions?>.value(),
+            returnValue: _i8.Future<_i33.SalesReqPermissions?>.value(),
           )
-          as _i8.Future<_i30.SalesReqPermissions?>);
+          as _i8.Future<_i33.SalesReqPermissions?>);
 
   @override
-  _i8.Future<List<_i31.PlannedRoute>> syncPlannedRoutes({
+  _i8.Future<List<_i34.PlannedRoute>> syncPlannedRoutes({
     required String? userCode,
     bool? forceRefresh = false,
   }) =>
@@ -1102,26 +1170,26 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
               #userCode: userCode,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i8.Future<List<_i31.PlannedRoute>>.value(
-              <_i31.PlannedRoute>[],
+            returnValue: _i8.Future<List<_i34.PlannedRoute>>.value(
+              <_i34.PlannedRoute>[],
             ),
           )
-          as _i8.Future<List<_i31.PlannedRoute>>);
+          as _i8.Future<List<_i34.PlannedRoute>>);
 
   @override
-  _i8.Future<List<_i31.PlannedRoute>> getCachedPlannedRoutes(
+  _i8.Future<List<_i34.PlannedRoute>> getCachedPlannedRoutes(
     String? userCode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getCachedPlannedRoutes, [userCode]),
-            returnValue: _i8.Future<List<_i31.PlannedRoute>>.value(
-              <_i31.PlannedRoute>[],
+            returnValue: _i8.Future<List<_i34.PlannedRoute>>.value(
+              <_i34.PlannedRoute>[],
             ),
           )
-          as _i8.Future<List<_i31.PlannedRoute>>);
+          as _i8.Future<List<_i34.PlannedRoute>>);
 
   @override
-  _i8.Future<List<_i31.PlannedRoute>> getCachedPlannedRoutesByWeekday(
+  _i8.Future<List<_i34.PlannedRoute>> getCachedPlannedRoutesByWeekday(
     String? userCode,
     int? codeWeekday,
   ) =>
@@ -1130,14 +1198,14 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
               userCode,
               codeWeekday,
             ]),
-            returnValue: _i8.Future<List<_i31.PlannedRoute>>.value(
-              <_i31.PlannedRoute>[],
+            returnValue: _i8.Future<List<_i34.PlannedRoute>>.value(
+              <_i34.PlannedRoute>[],
             ),
           )
-          as _i8.Future<List<_i31.PlannedRoute>>);
+          as _i8.Future<List<_i34.PlannedRoute>>);
 
   @override
-  _i8.Future<List<_i31.PlannedRoute>> getCachedPlannedRoutesByClient(
+  _i8.Future<List<_i34.PlannedRoute>> getCachedPlannedRoutesByClient(
     String? userCode,
     String? codeClient,
   ) =>
@@ -1146,11 +1214,11 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
               userCode,
               codeClient,
             ]),
-            returnValue: _i8.Future<List<_i31.PlannedRoute>>.value(
-              <_i31.PlannedRoute>[],
+            returnValue: _i8.Future<List<_i34.PlannedRoute>>.value(
+              <_i34.PlannedRoute>[],
             ),
           )
-          as _i8.Future<List<_i31.PlannedRoute>>);
+          as _i8.Future<List<_i34.PlannedRoute>>);
 
   @override
   _i8.Future<void> updateClientCoordinates({
@@ -1198,7 +1266,7 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
           as bool);
 
   @override
-  _i8.Future<List<_i32.UserOrganization>> syncUserOrganizations({
+  _i8.Future<List<_i35.UserOrganization>> syncUserOrganizations({
     required String? userCode,
     bool? forceRefresh = false,
   }) =>
@@ -1207,14 +1275,40 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
               #userCode: userCode,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i8.Future<List<_i32.UserOrganization>>.value(
-              <_i32.UserOrganization>[],
+            returnValue: _i8.Future<List<_i35.UserOrganization>>.value(
+              <_i35.UserOrganization>[],
             ),
           )
-          as _i8.Future<List<_i32.UserOrganization>>);
+          as _i8.Future<List<_i35.UserOrganization>>);
 
   @override
-  _i8.Future<List<_i30.VisitStep>> syncVisitSteps({
+  _i8.Future<List<_i36.UserProject>> syncUserProjects({
+    required String? userCode,
+    bool? forceRefresh = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#syncUserProjects, [], {
+              #userCode: userCode,
+              #forceRefresh: forceRefresh,
+            }),
+            returnValue: _i8.Future<List<_i36.UserProject>>.value(
+              <_i36.UserProject>[],
+            ),
+          )
+          as _i8.Future<List<_i36.UserProject>>);
+
+  @override
+  _i8.Future<List<_i36.UserProject>> getCachedUserProjects(String? userCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#getCachedUserProjects, [userCode]),
+            returnValue: _i8.Future<List<_i36.UserProject>>.value(
+              <_i36.UserProject>[],
+            ),
+          )
+          as _i8.Future<List<_i36.UserProject>>);
+
+  @override
+  _i8.Future<List<_i33.VisitStep>> syncVisitSteps({
     required String? userCode,
     bool? forceRefresh = false,
   }) =>
@@ -1223,26 +1317,26 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
               #userCode: userCode,
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i8.Future<List<_i30.VisitStep>>.value(
-              <_i30.VisitStep>[],
+            returnValue: _i8.Future<List<_i33.VisitStep>>.value(
+              <_i33.VisitStep>[],
             ),
           )
-          as _i8.Future<List<_i30.VisitStep>>);
+          as _i8.Future<List<_i33.VisitStep>>);
 
   @override
-  _i8.Future<List<_i30.VisitStep>> getCachedVisitSteps(String? userCode) =>
+  _i8.Future<List<_i33.VisitStep>> getCachedVisitSteps(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getCachedVisitSteps, [userCode]),
-            returnValue: _i8.Future<List<_i30.VisitStep>>.value(
-              <_i30.VisitStep>[],
+            returnValue: _i8.Future<List<_i33.VisitStep>>.value(
+              <_i33.VisitStep>[],
             ),
           )
-          as _i8.Future<List<_i30.VisitStep>>);
+          as _i8.Future<List<_i33.VisitStep>>);
 
   @override
   _i8.Future<void> saveVisitSteps(
     String? userCode,
-    List<_i30.VisitStep>? visitSteps,
+    List<_i33.VisitStep>? visitSteps,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitSteps, [userCode, visitSteps]),
@@ -1255,7 +1349,7 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
   _i8.Future<void> updateVisitStep(
     String? userCode,
     int? visitStepId,
-    _i30.VisitStep? visitStep,
+    _i33.VisitStep? visitStep,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateVisitStep, [
@@ -1296,45 +1390,45 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
           as _i8.Future<List<Map<String, dynamic>>>);
 
   @override
-  _i8.Future<List<_i33.ProductImage>> syncProductImages({
+  _i8.Future<List<_i37.ProductImage>> syncProductImages({
     bool? forceRefresh = false,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#syncProductImages, [], {
               #forceRefresh: forceRefresh,
             }),
-            returnValue: _i8.Future<List<_i33.ProductImage>>.value(
-              <_i33.ProductImage>[],
+            returnValue: _i8.Future<List<_i37.ProductImage>>.value(
+              <_i37.ProductImage>[],
             ),
           )
-          as _i8.Future<List<_i33.ProductImage>>);
+          as _i8.Future<List<_i37.ProductImage>>);
 
   @override
-  _i8.Future<List<_i33.ProductImage>> getCachedProductImages(
+  _i8.Future<List<_i37.ProductImage>> getCachedProductImages(
     String? productCode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getCachedProductImages, [productCode]),
-            returnValue: _i8.Future<List<_i33.ProductImage>>.value(
-              <_i33.ProductImage>[],
+            returnValue: _i8.Future<List<_i37.ProductImage>>.value(
+              <_i37.ProductImage>[],
             ),
           )
-          as _i8.Future<List<_i33.ProductImage>>);
+          as _i8.Future<List<_i37.ProductImage>>);
 
   @override
-  _i8.Future<_i33.ProductImage?> getMainProductImage(String? productCode) =>
+  _i8.Future<_i37.ProductImage?> getMainProductImage(String? productCode) =>
       (super.noSuchMethod(
             Invocation.method(#getMainProductImage, [productCode]),
-            returnValue: _i8.Future<_i33.ProductImage?>.value(),
+            returnValue: _i8.Future<_i37.ProductImage?>.value(),
           )
-          as _i8.Future<_i33.ProductImage?>);
+          as _i8.Future<_i37.ProductImage?>);
 }
 
 /// A class which mocks [SharedPreferencesService].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockSharedPreferencesService extends _i1.Mock
-    implements _i34.SharedPreferencesService {
+    implements _i38.SharedPreferencesService {
   MockSharedPreferencesService() {
     _i1.throwOnMissingStub(this);
   }
@@ -1495,6 +1589,50 @@ class MockSharedPreferencesService extends _i1.Mock
           as _i8.Future<void>);
 
   @override
+  _i8.Future<void> setUserSelectedLanguageCode(String? languageCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#setUserSelectedLanguageCode, [languageCode]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  bool hasUserSelectedLanguage() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasUserSelectedLanguage, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i8.Future<void> clearUserSelectedLanguageCode() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearUserSelectedLanguageCode, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> setCachedOsLanguageCode(String? languageCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#setCachedOsLanguageCode, [languageCode]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> clearCachedOsLanguageCode() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearCachedOsLanguageCode, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
   _i8.Future<void> setLanguageCode(String? languageCode) =>
       (super.noSuchMethod(
             Invocation.method(#setLanguageCode, [languageCode]),
@@ -1507,7 +1645,7 @@ class MockSharedPreferencesService extends _i1.Mock
   String getLanguageCode() =>
       (super.noSuchMethod(
             Invocation.method(#getLanguageCode, []),
-            returnValue: _i35.dummyValue<String>(
+            returnValue: _i39.dummyValue<String>(
               this,
               Invocation.method(#getLanguageCode, []),
             ),
@@ -1616,6 +1754,85 @@ class MockSharedPreferencesService extends _i1.Mock
   _i8.Future<void> setBgSyncCustomMinutes(int? minutes) =>
       (super.noSuchMethod(
             Invocation.method(#setBgSyncCustomMinutes, [minutes]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> setSyncNeeded(bool? value) =>
+      (super.noSuchMethod(
+            Invocation.method(#setSyncNeeded, [value]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  bool isSyncNeeded() =>
+      (super.noSuchMethod(
+            Invocation.method(#isSyncNeeded, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i8.Future<void> setIsFirstTimeSync(bool? value) =>
+      (super.noSuchMethod(
+            Invocation.method(#setIsFirstTimeSync, [value]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  bool isFirstTimeSync() =>
+      (super.noSuchMethod(
+            Invocation.method(#isFirstTimeSync, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i8.Future<void> setCachedGates(_i40.LoginGatesEnvelope? envelope) =>
+      (super.noSuchMethod(
+            Invocation.method(#setCachedGates, [envelope]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> clearCachedGates() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearCachedGates, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> migrateLegacyKeys() =>
+      (super.noSuchMethod(
+            Invocation.method(#migrateLegacyKeys, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> setCachedDeviceBinding(_i41.DeviceBinding? value) =>
+      (super.noSuchMethod(
+            Invocation.method(#setCachedDeviceBinding, [value]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> clearCachedDeviceBinding() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearCachedDeviceBinding, []),
             returnValue: _i8.Future<void>.value(),
             returnValueForMissingStub: _i8.Future<void>.value(),
           )

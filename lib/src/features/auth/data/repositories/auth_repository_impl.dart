@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:gloria_marketing_flutter/src/core/exceptions/auth_exceptions.dart';
 import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/user_model.dart';
@@ -15,7 +16,7 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.apiService, required this.serverService});
 
   @override
-  Future<UserEntity> login({
+  Future<UserEntity> establish1cSession({
     required String username,
     required String password,
     String? appVersion,
@@ -103,8 +104,13 @@ class AuthRepositoryImpl implements AuthRepository {
           'TopicID': returnElement.findElements('m:topicID').firstOrNull?.innerText ?? '',
         }, username: username, baseUrl: serverService.baseUrl);
       } else {
-        // Failed login
+        // Failed login. CodeError == '0' typically means "user not found
+        // in 1C" — we surface that as a typed exception so the bloc can
+        // emit a localized banner instead of a generic SOAP error.
         final message = returnElement.findElements('m:Message').firstOrNull?.innerText;
+        if (codeError == '0') {
+          throw OneCUserNotFoundException(username: username);
+        }
         throw Exception(message ?? 'Unknown login error');
       }
     } catch (e) {

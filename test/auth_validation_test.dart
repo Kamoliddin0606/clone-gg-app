@@ -1,6 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/login_device_payload_builder.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_failure.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_device_payload.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -15,16 +21,81 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 ])
 import 'auth_validation_test.mocks.dart';
 
+// Minimal fakes so the bloc's pre-flight V2 step succeeds during these
+// tests. AuthBloc internally fetches these from `GetIt.instance` so we
+// must register them — without them every login is treated as a V2
+// transport error and the SOAP path under test never runs.
+class _FakeTokenService extends Fake implements TokenService {
+  @override
+  Future<bool> obtainV2Tokens({
+    required String login,
+    required String password,
+    LoginDevicePayload? device,
+  }) async => true;
+
+  @override
+  AuthFailure? get lastV2LoginFailure => null;
+}
+
+class _FakeLoginDevicePayloadBuilder extends Fake
+    implements LoginDevicePayloadBuilder {
+  @override
+  Future<LoginDevicePayload> build({bool forceRebuild = false}) async {
+    return const LoginDevicePayload(
+      clientType: 'mobile',
+      appInstanceId: 'fake',
+      platform: 'ios',
+      deviceName: 'Fake',
+      osVersion: 'iOS 26',
+      appVersion: '0.0.0',
+    );
+  }
+}
+
+class _FakeBackgroundLocationTrackingService extends Fake
+    implements BackgroundLocationTrackingService {
+  @override
+  Future<bool> initialize() async => true;
+  @override
+  Future<bool> startTracking() async => true;
+  @override
+  Future<void> stopTracking() async {}
+  @override
+  Future<void> dispose() async {}
+  @override
+  int get currentIntervalSeconds => 0;
+}
+
 void main() {
   late AuthBloc authBloc;
   late MockAuthRepository mockAuthRepository;
   late MockDataSyncService mockDataSyncService;
   late MockSharedPreferencesService mockPrefs;
 
+  final sl = GetIt.instance;
+
   setUp(() {
     mockAuthRepository = MockAuthRepository();
     mockDataSyncService = MockDataSyncService();
     mockPrefs = MockSharedPreferencesService();
+
+    if (sl.isRegistered<TokenService>()) sl.unregister<TokenService>();
+    if (sl.isRegistered<LoginDevicePayloadBuilder>()) {
+      sl.unregister<LoginDevicePayloadBuilder>();
+    }
+    if (sl.isRegistered<BackgroundLocationTrackingService>()) {
+      sl.unregister<BackgroundLocationTrackingService>();
+    }
+    sl.registerSingleton<TokenService>(_FakeTokenService());
+    sl.registerSingleton<LoginDevicePayloadBuilder>(
+      _FakeLoginDevicePayloadBuilder(),
+    );
+    sl.registerSingleton<BackgroundLocationTrackingService>(
+      _FakeBackgroundLocationTrackingService(),
+    );
+
+    // Default stub: bloc only reads getSavedUsername in a debug print.
+    when(mockPrefs.getSavedUsername()).thenReturn(null);
 
     authBloc = AuthBloc(
       authRepository: mockAuthRepository,
@@ -35,6 +106,13 @@ void main() {
 
   tearDown(() {
     authBloc.close();
+    if (sl.isRegistered<TokenService>()) sl.unregister<TokenService>();
+    if (sl.isRegistered<LoginDevicePayloadBuilder>()) {
+      sl.unregister<LoginDevicePayloadBuilder>();
+    }
+    if (sl.isRegistered<BackgroundLocationTrackingService>()) {
+      sl.unregister<BackgroundLocationTrackingService>();
+    }
   });
 
   group('AuthBloc User Validation Tests', () {
@@ -55,7 +133,7 @@ void main() {
 
     test('should validate user data and sync when validation fails', () async {
       // Arrange
-      when(mockAuthRepository.login(
+      when(mockAuthRepository.establish1cSession(
         username: 'testuser',
         password: 'password',
       )).thenAnswer((_) async => testUser);
@@ -104,7 +182,7 @@ void main() {
 
     test('should skip sync when user validation passes', () async {
       // Arrange
-      when(mockAuthRepository.login(
+      when(mockAuthRepository.establish1cSession(
         username: 'testuser',
         password: 'password',
       )).thenAnswer((_) async => testUser);
@@ -147,7 +225,7 @@ void main() {
 
     test('should continue login on sync error', () async {
       // Arrange
-      when(mockAuthRepository.login(
+      when(mockAuthRepository.establish1cSession(
         username: 'testuser',
         password: 'password',
       )).thenAnswer((_) async => testUser);
@@ -179,7 +257,7 @@ void main() {
 
     test('should handle authentication error', () async {
       // Arrange
-      when(mockAuthRepository.login(
+      when(mockAuthRepository.establish1cSession(
         username: 'testuser',
         password: 'wrongpassword',
       )).thenThrow(Exception('Invalid credentials'));

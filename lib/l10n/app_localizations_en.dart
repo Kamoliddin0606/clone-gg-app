@@ -5297,4 +5297,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noInternetForFirstLogin => 'First-time login requires an internet connection.';
+
+  @override
+  String get mobileDeviceBoundToOtherUser => 'This device is bound to another user. Ask your administrator to release the binding.';
+
+  @override
+  String get mobileUserBoundToOtherDevice => 'Your account is already bound to another phone. Ask your administrator to release the old binding so you can sign in on this device.';
+
+  @override
+  String get deviceBindingInvalid => 'Your device session is no longer valid. Please sign in again.';
+
+  @override
+  String get sessionRevoked => 'Your session has been revoked. Please sign in again.';
+
+  @override
+  String get oneCUserNotFound => 'This account is not registered in the operations system. Contact your administrator.';
+
+  @override
+  String debugBackendUrl(String url) {
+    return 'Backend: $url';
+  }
+
+  @override
+  String get debugTestConnection => 'Test connection';
+
+  @override
+  String debugConnectionOk(int ms) {
+    return 'OK · ${ms}ms';
+  }
+
+  @override
+  String debugConnectionFailed(String reason) {
+    return 'Failed: $reason';
+  }
 }

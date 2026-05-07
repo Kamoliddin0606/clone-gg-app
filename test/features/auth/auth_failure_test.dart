@@ -91,5 +91,53 @@ void main() {
       const f = NetworkFailure();
       expect(f.messageKey, 'networkError');
     });
+
+    // ─── device-binding codes (HTTP 423 ×2, 401 ×2) ───────────────────
+    test('MOBILE_DEVICE_BOUND_TO_OTHER_USER (HTTP 423)', () {
+      final f = AuthFailure.fromErrorEnvelope(
+        _envelope('MOBILE_DEVICE_BOUND_TO_OTHER_USER'),
+        423,
+      );
+      expect(f, isA<MobileDeviceBoundToOtherUserFailure>());
+      expect(f.messageKey, 'mobileDeviceBoundToOtherUser');
+    });
+
+    test('MOBILE_USER_BOUND_TO_OTHER_DEVICE (HTTP 423)', () {
+      final f = AuthFailure.fromErrorEnvelope(
+        _envelope('MOBILE_USER_BOUND_TO_OTHER_DEVICE'),
+        423,
+      );
+      expect(f, isA<MobileUserBoundToOtherDeviceFailure>());
+      expect(f.messageKey, 'mobileUserBoundToOtherDevice');
+    });
+
+    test('device_binding_invalid (HTTP 401)', () {
+      final f = AuthFailure.fromErrorEnvelope(
+        _envelope('device_binding_invalid'),
+        401,
+      );
+      expect(f, isA<DeviceBindingInvalidFailure>());
+      expect(f.messageKey, 'deviceBindingInvalid');
+    });
+
+    test('session_revoked (HTTP 401)', () {
+      final f = AuthFailure.fromErrorEnvelope(
+        _envelope('session_revoked'),
+        401,
+      );
+      expect(f, isA<SessionRevokedFailure>());
+      expect(f.messageKey, 'sessionRevoked');
+    });
+
+    test('device-binding error codes are case-sensitive', () {
+      // The mobile-side rule must match the backend's casing exactly.
+      // Lower-cased "mobile_device_bound_to_other_user" must NOT map to
+      // the typed variant — it should fall through to UnknownAuthFailure.
+      final f = AuthFailure.fromErrorEnvelope(
+        _envelope('mobile_device_bound_to_other_user'),
+        423,
+      );
+      expect(f, isA<UnknownAuthFailure>());
+    });
   });
 }

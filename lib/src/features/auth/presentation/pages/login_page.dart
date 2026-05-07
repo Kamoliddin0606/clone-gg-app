@@ -7,6 +7,8 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/src/core/services/health_check_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_failure.dart';
 
 import '../../../../core/network/server_service.dart';
@@ -24,6 +26,13 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   bool _rememberMe = false;
   bool _isServerExplicitlySelected = false;
   late AnimationController _animationController;
+
+  /// Localization key supplied via `Navigator.pushNamed(... arguments: ...)`
+  /// when a session-end handler routes the user back to login. Shown once
+  /// in [didChangeDependencies] then cleared so re-builds do not repeat
+  /// the banner.
+  String? _pendingBannerKey;
+  bool _bannerShown = false;
 
   // (Saqladim — lekin pastda Theme.of(context) ranglari ishlatiladi)
   static const Color primaryColor = Color(0xFF50AAEA);
@@ -79,6 +88,33 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       duration: const Duration(milliseconds: 800),
     )..forward();
     _loadSavedCredentials();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pick up a session-end banner key passed by `handleSessionEnded`
+    // through `Navigator.pushNamedAndRemoveUntil(..., arguments: ...)`.
+    if (_bannerShown) return;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is String && args.isNotEmpty) {
+      _pendingBannerKey = args;
+    }
+    if (_pendingBannerKey != null) {
+      _bannerShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final localized =
+            _localizeMessageKey(context, _pendingBannerKey!) ?? _pendingBannerKey!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(localized),
+            backgroundColor: Colors.orange.shade800,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      });
+    }
   }
 
   @override
@@ -459,13 +495,20 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             listener: (context, state) {
               if (state is AuthFailureState) {
                 if (kDebugMode) print('Auth failure: ${state.message}, type: ${state.errorType}');
-                if (state.errorType == AuthErrorType.connectivity) {
-                  // Only try offline login for connectivity issues
+                final failure = state.failure;
+                if (failure is NetworkFailure) {
+                  // Hard-block on transport error: no SOAP fallback,
+                  // no auto-retry. The user must press Retry deliberately,
+                  // which clears the credential fields.
+                  if (mounted) _showNetworkFailureBanner(context);
+                } else if (state.errorType == AuthErrorType.connectivity) {
+                  // Legacy path: pre-V2 connectivity exceptions (e.g. SOAP
+                  // 1C session warm-up failed offline). Keep the offline
+                  // login path so the user can still work with cached data.
                   _tryOfflineLogin(_usernameController.text, _passwordController.text);
                 } else {
                   // For authentication or server errors, just show the error message
                   if (mounted) {
-                    final failure = state.failure;
                     final localized = failure == null
                         ? state.message
                         : _localizeAuthFailure(context, failure) ?? state.message;
@@ -537,7 +580,131 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         return l10n.networkError;
       case UnknownAuthFailure():
         return l10n.networkError;
+      case MobileDeviceBoundToOtherUserFailure():
+        return l10n.mobileDeviceBoundToOtherUser;
+      case MobileUserBoundToOtherDeviceFailure():
+        return l10n.mobileUserBoundToOtherDevice;
+      case DeviceBindingInvalidFailure():
+        return l10n.deviceBindingInvalid;
+      case SessionRevokedFailure():
+        return l10n.sessionRevoked;
+      case OneCUserNotFoundFailure():
+        return l10n.oneCUserNotFound;
     }
+  }
+
+  /// Shows a persistent [MaterialBanner] explaining the V2 backend is
+  /// unreachable. The Retry button clears the credential fields and
+  /// returns focus to the username input — auto-retry is forbidden
+  /// (login storm risk + bypass risk).
+  void _showNetworkFailureBanner(BuildContext context) {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    final title = l10n?.networkError ?? 'Network error';
+    final retryLabel = l10n?.retry ?? 'Retry';
+    messenger.clearMaterialBanners();
+    messenger.showMaterialBanner(
+      MaterialBanner(
+        content: Text(title),
+        leading: const Icon(Icons.cloud_off_outlined),
+        backgroundColor: Theme.of(context).colorScheme.errorContainer,
+        actions: [
+          TextButton(
+            onPressed: () {
+              messenger.hideCurrentMaterialBanner();
+              if (!mounted) return;
+              setState(() {
+                _usernameController.clear();
+                _passwordController.clear();
+              });
+              FocusScope.of(context).requestFocus(FocusNode());
+            },
+            child: Text(retryLabel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Look up a localized string by its `messageKey` (e.g. when navigated
+  /// to with an [AuthFailure.messageKey] route argument from a session-end
+  /// handler). Returns `null` for unknown keys.
+  String? _localizeMessageKey(BuildContext context, String key) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return null;
+    switch (key) {
+      case 'invalidCredentials':
+        return l10n.invalidCredentials;
+      case 'userInactive':
+        return l10n.userInactive;
+      case 'licenseMissing':
+        return l10n.licenseMissing;
+      case 'licenseExpired':
+        return l10n.licenseExpired;
+      case 'networkError':
+        return l10n.networkError;
+      case 'mobileDeviceBoundToOtherUser':
+        return l10n.mobileDeviceBoundToOtherUser;
+      case 'mobileUserBoundToOtherDevice':
+        return l10n.mobileUserBoundToOtherDevice;
+      case 'deviceBindingInvalid':
+        return l10n.deviceBindingInvalid;
+      case 'sessionRevoked':
+        return l10n.sessionRevoked;
+      case 'oneCUserNotFound':
+        return l10n.oneCUserNotFound;
+      default:
+        return null;
+    }
+  }
+
+  /// Debug-only footer shown at the bottom of the login form. Surfaces
+  /// the resolved V2 backend URL (so engineers spot misconfigured
+  /// `--dart-define` values without diving into logs) and a one-shot
+  /// liveness probe button. Gated by [kDebugMode] — release builds
+  /// strip it entirely.
+  Widget _debugBackendFooter(BuildContext context) {
+    if (!kDebugMode) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.debugBackendUrl(TokenService.v2BaseUrl),
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontFamily: 'monospace',
+              color: theme.colorScheme.outline,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => _testBackendConnection(context),
+            icon: const Icon(Icons.network_check, size: 18),
+            label: Text(l10n.debugTestConnection),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _testBackendConnection(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final result = await sl<HealthCheckService>().pingV2();
+    if (!mounted) return;
+    final text = result.ok
+        ? l10n.debugConnectionOk(result.latency?.inMilliseconds ?? 0)
+        : l10n.debugConnectionFailed(result.errorMessage ?? '?');
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        backgroundColor: result.ok ? Colors.green : Colors.red,
+      ),
+    );
   }
 
   Widget _serverChip() {
@@ -647,6 +814,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             );
           },
         ),
+        _debugBackendFooter(context),
       ],
     );
   }

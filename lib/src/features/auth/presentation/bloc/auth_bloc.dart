@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:gloria_marketing_flutter/src/core/exceptions/auth_exceptions.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
@@ -9,10 +10,25 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/login_device_payload_builder.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_failure.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_device_payload.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
+
+/// Outcome of the V2 JWT login attempt. Lets the bloc tell apart a server
+/// denial (block the user with a localized banner) from a transport error
+/// (offer Retry — never silently fall back to legacy SOAP).
+enum V2LoginOutcome { success, serverDenied, transportError }
+
+/// Pair of [V2LoginOutcome] + the typed [AuthFailure] that produced it.
+/// Carries the failure even on `transportError` for diagnostics.
+class V2LoginResult {
+  final V2LoginOutcome outcome;
+  final AuthFailure? failure;
+  const V2LoginResult(this.outcome, [this.failure]);
+}
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
@@ -36,34 +52,57 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       // ========================================================================
-      // Pre-flight V2 gate (license / seat / window / inactive checks).
-      // Server-side denials block the login *before* we hit SOAP. Network or
-      // unknown errors are treated as soft and let the legacy SOAP flow run
-      // so the user can still work offline.
+      // V2 JWT is the single source of truth for authentication.
+      // - success       → continue to 1C session warm-up.
+      // - serverDenied  → emit a typed AuthFailureState; STOP. Includes
+      //                   license / seat / window / inactive / device-binding.
+      // - transportError → emit NetworkFailure; STOP. We never silently fall
+      //                   back to legacy SOAP — that bypasses the backend's
+      //                   device-binding rule.
       // ========================================================================
-      final v2Failure = await _obtainV2Tokens(event.username, event.password);
-      if (v2Failure != null) {
+      final v2 = await _obtainV2Tokens(event.username, event.password);
+      switch (v2.outcome) {
+        case V2LoginOutcome.serverDenied:
+          final failure = v2.failure ?? const UnknownAuthFailure();
+          emit(AuthFailureState(
+            message: _legacyMessageFor(failure),
+            errorType: AuthErrorType.authentication,
+            failure: failure,
+          ));
+          return;
+        case V2LoginOutcome.transportError:
+          const failure = NetworkFailure();
+          emit(AuthFailureState(
+            message: _legacyMessageFor(failure),
+            errorType: AuthErrorType.connectivity,
+            failure: failure,
+          ));
+          return;
+        case V2LoginOutcome.success:
+          break;
+      }
+
+      // V2 succeeded — establish the 1C SOAP session for downstream
+      // business calls (KPI / products / prices / orders). This is NOT
+      // an authentication step.
+      final UserEntity user;
+      try {
+        user = await authRepository.establish1cSession(
+          username: event.username,
+          password: event.password,
+        );
+      } on OneCUserNotFoundException {
+        const failure = OneCUserNotFoundFailure();
         emit(AuthFailureState(
-          message: _legacyMessageFor(v2Failure),
+          message: _legacyMessageFor(failure),
           errorType: AuthErrorType.authentication,
-          failure: v2Failure,
+          failure: failure,
         ));
         return;
       }
 
-      final user = await authRepository.login(
-        username: event.username,
-        password: event.password,
-      );
-
       // Validate user data with database after successful login
       await _validateAndSyncUserData(user);
-
-      // V1 1C-Login REST tokens are no longer fetched on login — the V2
-      // backend (POST /api/auth/token/) is the single source of truth and
-      // its tokens are already persisted by `_obtainV2Tokens` above.
-      // Legacy services that still expect V1 tokens will silently no-op
-      // until they are migrated to V2.
 
       // =========================================================================
       // Background Location Tracking - login muvaffaqiyatli bo'lgandan keyin
@@ -209,14 +248,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _stopBackgroundLocationTracking();
 
       // =========================================================================
-      // 2. V2 (yangi server) tokenlarini tozalash. Eski REST tokenlar boshqa
-      //    servislar tomonidan boshqariladi va bu yerda tegmaydi.
+      // 2. V2 (yangi server) tokenlarini va kesh ma'lumotlarini tozalash.
+      //    Eski REST tokenlar boshqa servislar tomonidan boshqariladi va bu
+      //    yerda tegmaydi. Cache coherence: gates, device binding, va tokenlar
+      //    har doim birga tozalanadi — biri ikkinchisisiz qolmasin.
       // =========================================================================
       try {
         await sl<TokenService>().clearV2Tokens();
+        await _prefs.clearCachedGates();
+        await _prefs.clearCachedDeviceBinding();
       } catch (e) {
         if (kDebugMode) {
-          print('AuthBloc: Error clearing V2 tokens (non-critical): $e');
+          print('AuthBloc: Error clearing V2 caches (non-critical): $e');
         }
       }
 
@@ -275,53 +318,79 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return 'Server bilan bog\'lanib bo\'lmadi.';
       case UnknownAuthFailure():
         return 'Noma\'lum xato.';
+      case MobileDeviceBoundToOtherUserFailure():
+        return 'Bu qurilma boshqa foydalanuvchiga biriktirilgan.';
+      case MobileUserBoundToOtherDeviceFailure():
+        return 'Sizning hisobingiz boshqa qurilmaga biriktirilgan.';
+      case DeviceBindingInvalidFailure():
+        return 'Qurilma sessiyasi endi yaroqsiz. Qaytadan kiring.';
+      case SessionRevokedFailure():
+        return 'Sessiyangiz to\'xtatildi. Qaytadan kiring.';
+      case OneCUserNotFoundFailure():
+        return 'Bu hisob operatsion tizimda ro\'yxatdan o\'tmagan. Administratorga murojaat qiling.';
     }
   }
 
   /// Obtain JWT tokens from the V2 backend (`POST /api/auth/token/`).
   ///
-  /// Mixed-tolerance behaviour:
-  /// - On success: tokens + `gates` envelope are persisted by [TokenService].
-  /// - On a server-side denial (HTTP 401/403/409 with a known `error.code`,
-  ///   e.g. `license_expired`, `user_inactive`, `license_seat_exceeded`),
-  ///   we propagate an [AuthFailure] back to the caller so the bloc can
-  ///   block the login flow.
-  /// - On any other failure (no internet, server unreachable, unknown
-  ///   payload), we return `null` so the legacy SOAP login can still
-  ///   sign the user in offline-friendly.
-  Future<AuthFailure?> _obtainV2Tokens(String username, String password) async {
+  /// Returns a [V2LoginResult] with explicit outcome — the caller MUST
+  /// branch on it. A `transportError` outcome blocks the login (no SOAP
+  /// fallback) so the backend's device-binding rule cannot be bypassed
+  /// by an offline client.
+  Future<V2LoginResult> _obtainV2Tokens(String username, String password) async {
     try {
       if (kDebugMode) {
         print('AuthBloc: Obtaining V2 (new server) tokens...');
       }
       final tokenService = sl<TokenService>();
+
+      // Build the device-binding payload. Failure-tolerant: if any
+      // plugin throws (rare), we send the request without the block —
+      // Stage 1 of the rollout still accepts device-less logins.
+      LoginDevicePayload? device;
+      try {
+        device = await sl<LoginDevicePayloadBuilder>().build();
+      } catch (e) {
+        if (kDebugMode) {
+          print('AuthBloc: device payload build failed (non-fatal): $e');
+        }
+      }
+
       final ok = await tokenService.obtainV2Tokens(
         login: username,
         password: password,
+        device: device,
       );
       if (ok) {
         if (kDebugMode) print('AuthBloc: V2 tokens obtained successfully');
-        return null;
+        return const V2LoginResult(V2LoginOutcome.success);
       }
-      // Translate the typed failure into either a hard denial (server
-      // explicitly rejected the user) or a soft failure (network etc.).
+
       final failure = tokenService.lastV2LoginFailure;
-      if (failure == null) return null;
       if (failure is NetworkFailure || failure is UnknownAuthFailure) {
         if (kDebugMode) {
-          print('AuthBloc: V2 transport/unknown failure — falling back to legacy SOAP');
+          print('AuthBloc: V2 transport/unknown failure — login blocked, '
+              'no SOAP fallback (failure=${failure.runtimeType})');
         }
-        return null;
+        return V2LoginResult(V2LoginOutcome.transportError, failure);
       }
+      if (failure != null) {
+        if (kDebugMode) {
+          print('AuthBloc: V2 server denial: ${failure.runtimeType} → blocking login');
+        }
+        return V2LoginResult(V2LoginOutcome.serverDenied, failure);
+      }
+      // No typed failure available — treat as transport error to be safe.
       if (kDebugMode) {
-        print('AuthBloc: V2 server denial: ${failure.runtimeType} → blocking login');
+        print('AuthBloc: V2 returned false but no typed failure — '
+            'classifying as transport error');
       }
-      return failure;
+      return const V2LoginResult(V2LoginOutcome.transportError);
     } catch (e) {
       if (kDebugMode) {
-        print('AuthBloc: Error obtaining V2 tokens (treated as soft failure): $e');
+        print('AuthBloc: Error obtaining V2 tokens (transport error): $e');
       }
-      return null;
+      return const V2LoginResult(V2LoginOutcome.transportError);
     }
   }
 

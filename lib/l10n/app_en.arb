@@ -3186,5 +3186,30 @@
     }
   },
   "clockTamperingDetected": "Device clock changed. Please reconnect to verify access.",
-  "noInternetForFirstLogin": "First-time login requires an internet connection."
+  "noInternetForFirstLogin": "First-time login requires an internet connection.",
+  "mobileDeviceBoundToOtherUser": "This device is bound to another user. Ask your administrator to release the binding.",
+  "mobileUserBoundToOtherDevice": "Your account is already bound to another phone. Ask your administrator to release the old binding so you can sign in on this device.",
+  "deviceBindingInvalid": "Your device session is no longer valid. Please sign in again.",
+  "sessionRevoked": "Your session has been revoked. Please sign in again.",
+  "retry": "Retry",
+  "oneCUserNotFound": "This account is not registered in the operations system. Contact your administrator.",
+  "debugBackendUrl": "Backend: {url}",
+  "@debugBackendUrl": {
+    "placeholders": {
+      "url": { "type": "String" }
+    }
+  },
+  "debugTestConnection": "Test connection",
+  "debugConnectionOk": "OK · {ms}ms",
+  "@debugConnectionOk": {
+    "placeholders": {
+      "ms": { "type": "int" }
+    }
+  },
+  "debugConnectionFailed": "Failed: {reason}",
+  "@debugConnectionFailed": {
+    "placeholders": {
+      "reason": { "type": "String" }
+    }
+  }
 }

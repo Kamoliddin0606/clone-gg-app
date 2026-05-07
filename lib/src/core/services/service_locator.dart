@@ -26,12 +26,14 @@ import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/device_r
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/rest_logging.dart';
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/local_uuid_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/login_device_payload_builder.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/app_start_guard.dart';
+import 'package:gloria_marketing_flutter/src/core/services/health_check_service.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -298,9 +300,18 @@ Future<void> setupServiceLocator() async {
   }
 
   // Security helpers — kept for callers that still need a stable per-install
-  // identifier (e.g. telemetry device fingerprint).
+  // identifier (e.g. telemetry device fingerprint, device binding).
   if (!sl.isRegistered<LocalUuidService>()) {
     sl.registerLazySingleton<LocalUuidService>(() => LocalUuidService());
+  }
+
+  // Builder for the JWT login `device` block. Memoises the payload after
+  // the first build so repeat logins skip the I/O. Depends on the
+  // LocalUuidService registered immediately above.
+  if (!sl.isRegistered<LoginDevicePayloadBuilder>()) {
+    sl.registerLazySingleton<LoginDevicePayloadBuilder>(
+      () => LoginDevicePayloadBuilder(uuidService: sl<LocalUuidService>()),
+    );
   }
 
   // Connectivity monitoring used by AppStartGuard (and downstream UI).
@@ -319,6 +330,12 @@ Future<void> setupServiceLocator() async {
       apiKeyService: sl<ApiKeyService>(),
       dio: geminiDio,
     ));
+  }
+
+  // V2 backend liveness probe. Used at startup (debug log) and from the
+  // LoginPage "Test connection" button. Self-contained Dio instance.
+  if (!sl.isRegistered<HealthCheckService>()) {
+    sl.registerLazySingleton<HealthCheckService>(() => HealthCheckService());
   }
 
   // Boot-time access guard. Replaces the legacy AppAccessControlService /

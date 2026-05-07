@@ -10044,6 +10044,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'First-time login requires an internet connection.'**
   String get noInternetForFirstLogin;
+
+  /// No description provided for @mobileDeviceBoundToOtherUser.
+  ///
+  /// In en, this message translates to:
+  /// **'This device is bound to another user. Ask your administrator to release the binding.'**
+  String get mobileDeviceBoundToOtherUser;
+
+  /// No description provided for @mobileUserBoundToOtherDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is already bound to another phone. Ask your administrator to release the old binding so you can sign in on this device.'**
+  String get mobileUserBoundToOtherDevice;
+
+  /// No description provided for @deviceBindingInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Your device session is no longer valid. Please sign in again.'**
+  String get deviceBindingInvalid;
+
+  /// No description provided for @sessionRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has been revoked. Please sign in again.'**
+  String get sessionRevoked;
+
+  /// No description provided for @oneCUserNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This account is not registered in the operations system. Contact your administrator.'**
+  String get oneCUserNotFound;
+
+  /// No description provided for @debugBackendUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend: {url}'**
+  String debugBackendUrl(String url);
+
+  /// No description provided for @debugTestConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Test connection'**
+  String get debugTestConnection;
+
+  /// No description provided for @debugConnectionOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK · {ms}ms'**
+  String debugConnectionOk(int ms);
+
+  /// No description provided for @debugConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {reason}'**
+  String debugConnectionFailed(String reason);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

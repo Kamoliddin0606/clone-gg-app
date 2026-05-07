@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_failure.dart';
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_device_payload.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_gates_envelope.dart';
 
 /// Token Service for managing authentication tokens for REST API
@@ -24,7 +25,12 @@ class TokenService {
   /// Yangi 1C-login avtorizatsiya endpointi.
   /// Bu endpoint foydalanuvchi login, password va project_name (baseURL) ma'lumotlarini
   /// qabul qilib, access va refresh tokenlarni qaytaradi.
-  static const String _1cLoginBaseUrl = 'http://178.218.200.120:1596';
+  ///
+  /// Override at build time with `--dart-define=SOAP_BASE_URL=http://host:port`.
+  static const String _1cLoginBaseUrl = String.fromEnvironment(
+    'SOAP_BASE_URL',
+    defaultValue: 'http://178.218.200.120:1596',
+  );
   static const String _1cLoginEndpoint = '/api/v1/auth/1c-login/';
 
   // =========================================================================
@@ -35,10 +41,15 @@ class TokenService {
   // servislarga tegmasdan, parallel ishlaydi.
 
   /// Yangi server base URL.
+  ///
+  /// Override at build time with `--dart-define=V2_BASE_URL=http://host:port`.
   /// NOTE: real iPhone/Android cannot reach `localhost` — that resolves to
-  /// the device itself, not the developer's Mac. Use the public IP.
-  //static const String v2BaseUrl = 'http://178.218.200.120:8080';
-  static const String v2BaseUrl = 'http://192.168.0.123:8080';   // dev-only
+  /// the device itself, not the developer's Mac. Pass the LAN IP / public host
+  /// via `--dart-define` for on-device runs.
+  static const String v2BaseUrl = String.fromEnvironment(
+    'V2_BASE_URL',
+    defaultValue: 'http://192.168.0.194:8080',
+  );
 
   /// JWT access + refresh juftligini olish endpointi.
   static const String _v2TokenEndpoint = '/api/auth/token/';
@@ -939,6 +950,7 @@ class TokenService {
   Future<bool> obtainV2Tokens({
     required String login,
     required String password,
+    LoginDevicePayload? device,
   }) async {
     final url = '$v2BaseUrl$_v2TokenEndpoint';
     try {
@@ -947,15 +959,25 @@ class TokenService {
       }
 
       if (kDebugMode) {
-        print('TokenService[V2]: Obtaining tokens from $url');
+        print('TokenService[V2]: Obtaining tokens from $url '
+            '(device=${device == null ? "absent" : "present"})');
+      }
+
+      // Compose the request body. The `device` block is sent ONLY when
+      // the caller provided one — Stage 1 of the binding rollout treats
+      // it as optional. Stage 2 onwards will reject device-less mobile
+      // logins with HTTP 400 `DEVICE_PAYLOAD_REQUIRED`.
+      final body = <String, dynamic>{
+        'login': login,
+        'password': password,
+      };
+      if (device != null) {
+        body['device'] = device.toJson();
       }
 
       final response = await _dio.post(
         url,
-        data: {
-          'login': login,
-          'password': password,
-        },
+        data: body,
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -973,11 +995,13 @@ class TokenService {
 
         if (access != null && access.isNotEmpty) {
           await _storeV2Tokens(access, refresh);
-          // Persist the `gates` envelope so AppStartGuard can read it on
-          // subsequent cold starts. Tolerates missing gates by skipping.
+          // Persist the `gates` envelope + the `device` echo so
+          // AppStartGuard and the React admin's binding list stay in
+          // sync across cold starts. Tolerates missing fields.
           try {
             final envelope = LoginGatesEnvelope.fromJson(data);
             await _prefsService.setCachedGates(envelope);
+            await _prefsService.setCachedDeviceBinding(envelope.device);
           } catch (_) {
             // Backend may not return gates yet — non-fatal.
           }
@@ -1088,11 +1112,13 @@ class TokenService {
 
         if (newAccess != null && newAccess.isNotEmpty) {
           await _storeV2Tokens(newAccess, newRefresh);
-          // Backend recomputes `gates` on every refresh — overwrite cache
-          // so license extensions / window changes propagate within ~60 min.
+          // Backend recomputes `gates` AND `device` on every refresh.
+          // Overwrite both caches so license extensions / window changes
+          // / freshly rotated session ids propagate within ~60 min.
           try {
             final envelope = LoginGatesEnvelope.fromJson(data);
             await _prefsService.setCachedGates(envelope);
+            await _prefsService.setCachedDeviceBinding(envelope.device);
           } catch (_) {
             // Skip silently when payload omits gates.
           }

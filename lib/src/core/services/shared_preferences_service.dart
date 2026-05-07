@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/device_binding.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_gates_envelope.dart';
 
 class SharedPreferencesService {
@@ -569,6 +570,59 @@ class SharedPreferencesService {
     // Legacy SOAP `getServerTime` cache — replaced by `gates.serverTime`.
     if (_preferences.containsKey(_timeLimitKey)) {
       await _preferences.remove(_timeLimitKey);
+    }
+  }
+
+  // ===========================================================================
+  // CACHED DEVICE BINDING (V2 device-binding rollout)
+  // ===========================================================================
+  // Mirrors the [setCachedGates] / [getCachedGates] / [clearCachedGates]
+  // pattern. Stores the most recent `device` block returned by the V2 backend
+  // alongside `gates`. Cached so the React admin's bindings list and the
+  // mobile session always agree on which `binding_id` / `session_id` are
+  // active even after a cold start.
+
+  static const String _cachedDeviceBindingKey = 'cached_device_binding_json';
+
+  /// Persist the latest [DeviceBinding]. Pass `null` to clear the cache
+  /// (e.g. when the backend response omits the block during Stage 1).
+  Future<void> setCachedDeviceBinding(DeviceBinding? value) async {
+    if (value == null) {
+      await _preferences.remove(_cachedDeviceBindingKey);
+      if (kDebugMode) {
+        print('[GATES-FLOW] 💾 setCachedDeviceBinding(null) → key removed');
+      }
+      return;
+    }
+    final body = value.encode();
+    await _preferences.setString(_cachedDeviceBindingKey, body);
+    if (kDebugMode) {
+      print('[GATES-FLOW] 💾 setCachedDeviceBinding → ${body.length} chars '
+          '($value)');
+    }
+  }
+
+  /// Read the previously cached [DeviceBinding]. Returns `null` for
+  /// empty / corrupt input, identical to the [getCachedGates] contract.
+  DeviceBinding? getCachedDeviceBinding() {
+    final raw = _preferences.getString(_cachedDeviceBindingKey);
+    final value = DeviceBinding.tryDecode(raw);
+    if (kDebugMode) {
+      if (value == null) {
+        print('[GATES-FLOW] 📂 getCachedDeviceBinding → MISS');
+      } else {
+        print('[GATES-FLOW] 📂 getCachedDeviceBinding → HIT ($value)');
+      }
+    }
+    return value;
+  }
+
+  /// Drop the cached binding — used on logout, refresh-revocation, and
+  /// any path that already calls [clearCachedGates].
+  Future<void> clearCachedDeviceBinding() async {
+    await _preferences.remove(_cachedDeviceBindingKey);
+    if (kDebugMode) {
+      print('[GATES-FLOW] 🗑️  clearCachedDeviceBinding → key removed');
     }
   }
 }

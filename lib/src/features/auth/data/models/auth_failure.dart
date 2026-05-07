@@ -53,6 +53,14 @@ sealed class AuthFailure {
         );
       case _Codes.tokenNotValid:
         return const InvalidCredentialsFailure();
+      case _Codes.mobileDeviceBoundToOtherUser:
+        return const MobileDeviceBoundToOtherUserFailure();
+      case _Codes.mobileUserBoundToOtherDevice:
+        return const MobileUserBoundToOtherDeviceFailure();
+      case _Codes.deviceBindingInvalid:
+        return const DeviceBindingInvalidFailure();
+      case _Codes.sessionRevoked:
+        return const SessionRevokedFailure();
       default:
         // Some servers omit `code` and only set HTTP 401 — treat as
         // bad credentials so the user sees actionable copy.
@@ -176,6 +184,65 @@ final class UnknownAuthFailure extends AuthFailure {
   String get messageKey => 'networkError';
 }
 
+// ─── Device-binding failures ─────────────────────────────────────────
+// Returned by the backend when the per-organization "1 user ↔ 1 mobile
+// device" rule is violated, or when an existing binding/session is
+// revoked or invalidated. The mobile app cannot resolve any of them on
+// its own — they require an admin action in the React panel.
+
+/// HTTP 423 + `MOBILE_DEVICE_BOUND_TO_OTHER_USER` — this physical
+/// handset is already bound to a different login under the same
+/// organization. Admin must release the old binding before this user
+/// can sign in here.
+final class MobileDeviceBoundToOtherUserFailure extends AuthFailure {
+  const MobileDeviceBoundToOtherUserFailure();
+
+  @override
+  String get messageKey => 'mobileDeviceBoundToOtherUser';
+}
+
+/// HTTP 423 + `MOBILE_USER_BOUND_TO_OTHER_DEVICE` — this login is
+/// already bound to a different mobile device. Admin must release the
+/// old binding before the user can switch phones.
+final class MobileUserBoundToOtherDeviceFailure extends AuthFailure {
+  const MobileUserBoundToOtherDeviceFailure();
+
+  @override
+  String get messageKey => 'mobileUserBoundToOtherDevice';
+}
+
+/// HTTP 401 + `device_binding_invalid` — a per-request validation flag
+/// emitted after Stage 4 of the rollout. The binding referenced by the
+/// access token is no longer active (released or blocked); the only
+/// recovery is a fresh login on a binding that admin has activated.
+final class DeviceBindingInvalidFailure extends AuthFailure {
+  const DeviceBindingInvalidFailure();
+
+  @override
+  String get messageKey => 'deviceBindingInvalid';
+}
+
+/// HTTP 401 + `session_revoked` — admin clicked "Revoke session" or
+/// "Revoke all sessions" in the React panel. Mobile must clear caches
+/// and route to the login screen.
+final class SessionRevokedFailure extends AuthFailure {
+  const SessionRevokedFailure();
+
+  @override
+  String get messageKey => 'sessionRevoked';
+}
+
+/// V2 JWT login succeeded but the same login is unknown to 1C — the
+/// SOAP-side session warm-up cannot proceed. Surfaced after V2 success
+/// so the user knows their auth credentials are correct but their
+/// account has not been provisioned in the operations system.
+final class OneCUserNotFoundFailure extends AuthFailure {
+  const OneCUserNotFoundFailure();
+
+  @override
+  String get messageKey => 'oneCUserNotFound';
+}
+
 class _BodyKeys {
   static const String error = 'error';
   static const String code = 'code';
@@ -199,4 +266,13 @@ class _Codes {
   static const String licenseExpired = 'license_expired';
   static const String licenseSeatExceeded = 'license_seat_exceeded';
   static const String tokenNotValid = 'token_not_valid';
+
+  // Device-binding error codes (rolled out in stages on the backend).
+  // Names mirror the backend exactly — do NOT fold case.
+  static const String mobileDeviceBoundToOtherUser =
+      'MOBILE_DEVICE_BOUND_TO_OTHER_USER';
+  static const String mobileUserBoundToOtherDevice =
+      'MOBILE_USER_BOUND_TO_OTHER_DEVICE';
+  static const String deviceBindingInvalid = 'device_binding_invalid';
+  static const String sessionRevoked = 'session_revoked';
 }

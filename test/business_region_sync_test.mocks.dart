@@ -3,82 +3,96 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i7;
+import 'dart:async' as _i8;
 
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
-    as _i40;
+    as _i47;
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart'
-    as _i24;
+    as _i28;
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart'
-    as _i6;
+    as _i7;
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart'
-    as _i9;
+    as _i12;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart'
-    as _i32;
+    as _i36;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart'
-    as _i11;
+    as _i14;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart'
-    as _i31;
+    as _i35;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart'
+    as _i46;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart'
-    as _i17;
+    as _i20;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart'
-    as _i22;
+    as _i26;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart'
-    as _i19;
+    as _i22;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart'
-    as _i23;
+    as _i27;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/kpi_data.dart'
     as _i3;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/main_report.dart'
-    as _i30;
+    as _i34;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.dart'
-    as _i20;
+    as _i23;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart'
     as _i4;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart'
-    as _i18;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart'
-    as _i37;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart'
-    as _i14;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart'
-    as _i27;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart'
-    as _i25;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart'
-    as _i13;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart'
-    as _i39;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart'
-    as _i15;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart'
-    as _i26;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart'
-    as _i29;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart'
-    as _i35;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart'
-    as _i38;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
-    as _i10;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart'
-    as _i28;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart'
     as _i21;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart'
-    as _i12;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart'
-    as _i36;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart'
-    as _i33;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart'
-    as _i34;
-import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart'
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart'
+    as _i41;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/price_type.dart'
+    as _i17;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_balance.dart'
+    as _i31;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_brand.dart'
+    as _i29;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart'
     as _i16;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart'
+    as _i43;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart'
+    as _i18;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart'
+    as _i30;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart'
+    as _i33;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart'
+    as _i44;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_classifiers_response.dart'
+    as _i5;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart'
+    as _i39;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart'
+    as _i42;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
+    as _i13;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart'
+    as _i45;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart'
+    as _i32;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart'
+    as _i24;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart'
+    as _i25;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_warehouse.dart'
+    as _i15;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_data.dart'
+    as _i40;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan.dart'
+    as _i37;
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart'
+    as _i38;
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/device_binding.dart'
+    as _i11;
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_gates_envelope.dart'
+    as _i10;
+import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart'
+    as _i19;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i8;
+import 'package:mockito/src/dummies.dart' as _i9;
 import 'package:shared_preferences/shared_preferences.dart' as _i2;
-import 'package:sqflite/sqflite.dart' as _i5;
+import 'package:sqflite/sqflite.dart' as _i6;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -111,8 +125,19 @@ class _FakeOrderDetail_2 extends _i1.SmartFake implements _i4.OrderDetail {
     : super(parent, parentInvocation);
 }
 
-class _FakeDatabase_3 extends _i1.SmartFake implements _i5.Database {
-  _FakeDatabase_3(Object parent, Invocation parentInvocation)
+class _FakeSalesClassifiersResponse_3 extends _i1.SmartFake
+    implements _i5.SalesClassifiersResponse {
+  _FakeSalesClassifiersResponse_3(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeDateTime_4 extends _i1.SmartFake implements DateTime {
+  _FakeDateTime_4(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeDatabase_5 extends _i1.SmartFake implements _i6.Database {
+  _FakeDatabase_5(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -120,7 +145,7 @@ class _FakeDatabase_3 extends _i1.SmartFake implements _i5.Database {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockSharedPreferencesService extends _i1.Mock
-    implements _i6.SharedPreferencesService {
+    implements _i7.SharedPreferencesService {
   MockSharedPreferencesService() {
     _i1.throwOnMissingStub(this);
   }
@@ -137,16 +162,16 @@ class MockSharedPreferencesService extends _i1.Mock
           as _i2.SharedPreferences);
 
   @override
-  _i7.Future<void> init() =>
+  _i8.Future<void> init() =>
       (super.noSuchMethod(
             Invocation.method(#init, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveCredentials(
+  _i8.Future<void> saveCredentials(
     String? username,
     String? password,
     bool? rememberMe,
@@ -157,13 +182,13 @@ class MockSharedPreferencesService extends _i1.Mock
               password,
               rememberMe,
             ]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveUserData({
+  _i8.Future<void> saveUserData({
     required String? userCode,
     required String? userName,
     required String? warehouseCode,
@@ -182,10 +207,10 @@ class MockSharedPreferencesService extends _i1.Mock
               #chatID: chatID,
               #topicID: topicID,
             }),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
   bool isRememberMeEnabled() =>
@@ -196,72 +221,72 @@ class MockSharedPreferencesService extends _i1.Mock
           as bool);
 
   @override
-  _i7.Future<void> clearCredentials() =>
+  _i8.Future<void> clearCredentials() =>
       (super.noSuchMethod(
             Invocation.method(#clearCredentials, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> setRememberMe(bool? value) =>
+  _i8.Future<void> setRememberMe(bool? value) =>
       (super.noSuchMethod(
             Invocation.method(#setRememberMe, [value]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> clearUserData() =>
+  _i8.Future<void> clearUserData() =>
       (super.noSuchMethod(
             Invocation.method(#clearUserData, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<bool> setServerName(String? name) =>
+  _i8.Future<bool> setServerName(String? name) =>
       (super.noSuchMethod(
             Invocation.method(#setServerName, [name]),
-            returnValue: _i7.Future<bool>.value(false),
+            returnValue: _i8.Future<bool>.value(false),
           )
-          as _i7.Future<bool>);
+          as _i8.Future<bool>);
 
   @override
-  _i7.Future<bool> clearServerName() =>
+  _i8.Future<bool> clearServerName() =>
       (super.noSuchMethod(
             Invocation.method(#clearServerName, []),
-            returnValue: _i7.Future<bool>.value(false),
+            returnValue: _i8.Future<bool>.value(false),
           )
-          as _i7.Future<bool>);
+          as _i8.Future<bool>);
 
   @override
-  _i7.Future<bool> setBaseUrl(String? url) =>
+  _i8.Future<bool> setBaseUrl(String? url) =>
       (super.noSuchMethod(
             Invocation.method(#setBaseUrl, [url]),
-            returnValue: _i7.Future<bool>.value(false),
+            returnValue: _i8.Future<bool>.value(false),
           )
-          as _i7.Future<bool>);
+          as _i8.Future<bool>);
 
   @override
-  _i7.Future<bool> clearBaseUrl() =>
+  _i8.Future<bool> clearBaseUrl() =>
       (super.noSuchMethod(
             Invocation.method(#clearBaseUrl, []),
-            returnValue: _i7.Future<bool>.value(false),
+            returnValue: _i8.Future<bool>.value(false),
           )
-          as _i7.Future<bool>);
+          as _i8.Future<bool>);
 
   @override
-  _i7.Future<void> setOfflineMode(bool? isOffline) =>
+  _i8.Future<void> setOfflineMode(bool? isOffline) =>
       (super.noSuchMethod(
             Invocation.method(#setOfflineMode, [isOffline]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
   bool isOfflineMode() =>
@@ -272,28 +297,72 @@ class MockSharedPreferencesService extends _i1.Mock
           as bool);
 
   @override
-  _i7.Future<void> clearOfflineMode() =>
+  _i8.Future<void> clearOfflineMode() =>
       (super.noSuchMethod(
             Invocation.method(#clearOfflineMode, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> setLanguageCode(String? languageCode) =>
+  _i8.Future<void> setUserSelectedLanguageCode(String? languageCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#setUserSelectedLanguageCode, [languageCode]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  bool hasUserSelectedLanguage() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasUserSelectedLanguage, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i8.Future<void> clearUserSelectedLanguageCode() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearUserSelectedLanguageCode, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> setCachedOsLanguageCode(String? languageCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#setCachedOsLanguageCode, [languageCode]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> clearCachedOsLanguageCode() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearCachedOsLanguageCode, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> setLanguageCode(String? languageCode) =>
       (super.noSuchMethod(
             Invocation.method(#setLanguageCode, [languageCode]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
   String getLanguageCode() =>
       (super.noSuchMethod(
             Invocation.method(#getLanguageCode, []),
-            returnValue: _i8.dummyValue<String>(
+            returnValue: _i9.dummyValue<String>(
               this,
               Invocation.method(#getLanguageCode, []),
             ),
@@ -301,22 +370,22 @@ class MockSharedPreferencesService extends _i1.Mock
           as String);
 
   @override
-  _i7.Future<void> clearLanguageCode() =>
+  _i8.Future<void> clearLanguageCode() =>
       (super.noSuchMethod(
             Invocation.method(#clearLanguageCode, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> setReportSentToTelegram(bool? value) =>
+  _i8.Future<void> setReportSentToTelegram(bool? value) =>
       (super.noSuchMethod(
             Invocation.method(#setReportSentToTelegram, [value]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
   bool isReportSentToTelegram() =>
@@ -327,7 +396,7 @@ class MockSharedPreferencesService extends _i1.Mock
           as bool);
 
   @override
-  _i7.Future<bool> saveMapTokens({
+  _i8.Future<bool> saveMapTokens({
     required String? yandexToken,
     required String? googleToken,
   }) =>
@@ -336,9 +405,9 @@ class MockSharedPreferencesService extends _i1.Mock
               #yandexToken: yandexToken,
               #googleToken: googleToken,
             }),
-            returnValue: _i7.Future<bool>.value(false),
+            returnValue: _i8.Future<bool>.value(false),
           )
-          as _i7.Future<bool>);
+          as _i8.Future<bool>);
 
   @override
   Map<String, String> getMapTokens() =>
@@ -357,21 +426,21 @@ class MockSharedPreferencesService extends _i1.Mock
           as bool);
 
   @override
-  _i7.Future<bool> clearMapTokens() =>
+  _i8.Future<bool> clearMapTokens() =>
       (super.noSuchMethod(
             Invocation.method(#clearMapTokens, []),
-            returnValue: _i7.Future<bool>.value(false),
+            returnValue: _i8.Future<bool>.value(false),
           )
-          as _i7.Future<bool>);
+          as _i8.Future<bool>);
 
   @override
-  _i7.Future<void> setBgSyncEnabled(bool? enabled) =>
+  _i8.Future<void> setBgSyncEnabled(bool? enabled) =>
       (super.noSuchMethod(
             Invocation.method(#setBgSyncEnabled, [enabled]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
   bool isBgSyncEnabled() =>
@@ -382,13 +451,13 @@ class MockSharedPreferencesService extends _i1.Mock
           as bool);
 
   @override
-  _i7.Future<void> setBgSyncInterval(int? hours) =>
+  _i8.Future<void> setBgSyncInterval(int? hours) =>
       (super.noSuchMethod(
             Invocation.method(#setBgSyncInterval, [hours]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
   int getBgSyncInterval() =>
@@ -399,25 +468,104 @@ class MockSharedPreferencesService extends _i1.Mock
           as int);
 
   @override
-  _i7.Future<void> setBgSyncCustomMinutes(int? minutes) =>
+  _i8.Future<void> setBgSyncCustomMinutes(int? minutes) =>
       (super.noSuchMethod(
             Invocation.method(#setBgSyncCustomMinutes, [minutes]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> setSyncNeeded(bool? value) =>
+      (super.noSuchMethod(
+            Invocation.method(#setSyncNeeded, [value]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  bool isSyncNeeded() =>
+      (super.noSuchMethod(
+            Invocation.method(#isSyncNeeded, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i8.Future<void> setIsFirstTimeSync(bool? value) =>
+      (super.noSuchMethod(
+            Invocation.method(#setIsFirstTimeSync, [value]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  bool isFirstTimeSync() =>
+      (super.noSuchMethod(
+            Invocation.method(#isFirstTimeSync, []),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  _i8.Future<void> setCachedGates(_i10.LoginGatesEnvelope? envelope) =>
+      (super.noSuchMethod(
+            Invocation.method(#setCachedGates, [envelope]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> clearCachedGates() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearCachedGates, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> migrateLegacyKeys() =>
+      (super.noSuchMethod(
+            Invocation.method(#migrateLegacyKeys, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> setCachedDeviceBinding(_i11.DeviceBinding? value) =>
+      (super.noSuchMethod(
+            Invocation.method(#setCachedDeviceBinding, [value]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> clearCachedDeviceBinding() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearCachedDeviceBinding, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
 }
 
 /// A class which mocks [SoapApiService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
+class MockSoapApiService extends _i1.Mock implements _i12.SoapApiService {
   MockSoapApiService() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i7.Future<_i3.KpiData> getKpiData({
+  _i8.Future<_i3.KpiData> getKpiData({
     required String? userCode,
     required String? password,
   }) =>
@@ -426,7 +574,7 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #userCode: userCode,
               #password: password,
             }),
-            returnValue: _i7.Future<_i3.KpiData>.value(
+            returnValue: _i8.Future<_i3.KpiData>.value(
               _FakeKpiData_1(
                 this,
                 Invocation.method(#getKpiData, [], {
@@ -436,10 +584,10 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               ),
             ),
           )
-          as _i7.Future<_i3.KpiData>);
+          as _i8.Future<_i3.KpiData>);
 
   @override
-  _i7.Future<List<_i10.TradingPoint>> getClients({
+  _i8.Future<List<_i13.TradingPoint>> getClients({
     required String? userCode,
     required String? password,
   }) =>
@@ -448,38 +596,38 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #userCode: userCode,
               #password: password,
             }),
-            returnValue: _i7.Future<List<_i10.TradingPoint>>.value(
-              <_i10.TradingPoint>[],
+            returnValue: _i8.Future<List<_i13.TradingPoint>>.value(
+              <_i13.TradingPoint>[],
             ),
           )
-          as _i7.Future<List<_i10.TradingPoint>>);
+          as _i8.Future<List<_i13.TradingPoint>>);
 
   @override
-  _i7.Future<List<_i11.BusinessRegion>> getBusinessRegions({
+  _i8.Future<List<_i14.BusinessRegion>> getBusinessRegions({
     required String? userCode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getBusinessRegions, [], {#userCode: userCode}),
-            returnValue: _i7.Future<List<_i11.BusinessRegion>>.value(
-              <_i11.BusinessRegion>[],
+            returnValue: _i8.Future<List<_i14.BusinessRegion>>.value(
+              <_i14.BusinessRegion>[],
             ),
           )
-          as _i7.Future<List<_i11.BusinessRegion>>);
+          as _i8.Future<List<_i14.BusinessRegion>>);
 
   @override
-  _i7.Future<List<_i12.UserWarehouse>> getWarehousesUser({
+  _i8.Future<List<_i15.UserWarehouse>> getWarehousesUser({
     required String? userCode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getWarehousesUser, [], {#userCode: userCode}),
-            returnValue: _i7.Future<List<_i12.UserWarehouse>>.value(
-              <_i12.UserWarehouse>[],
+            returnValue: _i8.Future<List<_i15.UserWarehouse>>.value(
+              <_i15.UserWarehouse>[],
             ),
           )
-          as _i7.Future<List<_i12.UserWarehouse>>);
+          as _i8.Future<List<_i15.UserWarehouse>>);
 
   @override
-  _i7.Future<String> createBusinessRegion({
+  _i8.Future<String> createBusinessRegion({
     required String? userCode,
     required String? code,
     required String? name,
@@ -490,8 +638,8 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #code: code,
               #name: name,
             }),
-            returnValue: _i7.Future<String>.value(
-              _i8.dummyValue<String>(
+            returnValue: _i8.Future<String>.value(
+              _i9.dummyValue<String>(
                 this,
                 Invocation.method(#createBusinessRegion, [], {
                   #userCode: userCode,
@@ -501,10 +649,10 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               ),
             ),
           )
-          as _i7.Future<String>);
+          as _i8.Future<String>);
 
   @override
-  _i7.Future<String> updateBusinessRegion({
+  _i8.Future<String> updateBusinessRegion({
     required String? userCode,
     required String? code,
     required String? name,
@@ -515,8 +663,8 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #code: code,
               #name: name,
             }),
-            returnValue: _i7.Future<String>.value(
-              _i8.dummyValue<String>(
+            returnValue: _i8.Future<String>.value(
+              _i9.dummyValue<String>(
                 this,
                 Invocation.method(#updateBusinessRegion, [], {
                   #userCode: userCode,
@@ -526,10 +674,10 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               ),
             ),
           )
-          as _i7.Future<String>);
+          as _i8.Future<String>);
 
   @override
-  _i7.Future<String> deleteBusinessRegion({
+  _i8.Future<String> deleteBusinessRegion({
     required String? userCode,
     required String? code,
   }) =>
@@ -538,8 +686,8 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #userCode: userCode,
               #code: code,
             }),
-            returnValue: _i7.Future<String>.value(
-              _i8.dummyValue<String>(
+            returnValue: _i8.Future<String>.value(
+              _i9.dummyValue<String>(
                 this,
                 Invocation.method(#deleteBusinessRegion, [], {
                   #userCode: userCode,
@@ -548,16 +696,16 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               ),
             ),
           )
-          as _i7.Future<String>);
+          as _i8.Future<String>);
 
   @override
-  _i7.Future<String> deleteAllBusinessRegions({required String? userCode}) =>
+  _i8.Future<String> deleteAllBusinessRegions({required String? userCode}) =>
       (super.noSuchMethod(
             Invocation.method(#deleteAllBusinessRegions, [], {
               #userCode: userCode,
             }),
-            returnValue: _i7.Future<String>.value(
-              _i8.dummyValue<String>(
+            returnValue: _i8.Future<String>.value(
+              _i9.dummyValue<String>(
                 this,
                 Invocation.method(#deleteAllBusinessRegions, [], {
                   #userCode: userCode,
@@ -565,10 +713,10 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               ),
             ),
           )
-          as _i7.Future<String>);
+          as _i8.Future<String>);
 
   @override
-  _i7.Future<List<_i13.ProductData>> getProducts({
+  _i8.Future<List<_i16.ProductData>> getProducts({
     required String? codeProject,
     required String? codeSklad,
   }) =>
@@ -577,14 +725,14 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #codeProject: codeProject,
               #codeSklad: codeSklad,
             }),
-            returnValue: _i7.Future<List<_i13.ProductData>>.value(
-              <_i13.ProductData>[],
+            returnValue: _i8.Future<List<_i16.ProductData>>.value(
+              <_i16.ProductData>[],
             ),
           )
-          as _i7.Future<List<_i13.ProductData>>);
+          as _i8.Future<List<_i16.ProductData>>);
 
   @override
-  _i7.Future<Map<String, dynamic>> getProductBalances({
+  _i8.Future<Map<String, dynamic>> getProductBalances({
     required String? codeProject,
     required String? codeSklad,
   }) =>
@@ -593,58 +741,58 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #codeProject: codeProject,
               #codeSklad: codeSklad,
             }),
-            returnValue: _i7.Future<Map<String, dynamic>>.value(
+            returnValue: _i8.Future<Map<String, dynamic>>.value(
               <String, dynamic>{},
             ),
           )
-          as _i7.Future<Map<String, dynamic>>);
+          as _i8.Future<Map<String, dynamic>>);
 
   @override
-  _i7.Future<List<_i14.PriceType>> getPriceTypes({required String? userCode}) =>
+  _i8.Future<List<_i17.PriceType>> getPriceTypes({required String? userCode}) =>
       (super.noSuchMethod(
             Invocation.method(#getPriceTypes, [], {#userCode: userCode}),
-            returnValue: _i7.Future<List<_i14.PriceType>>.value(
-              <_i14.PriceType>[],
+            returnValue: _i8.Future<List<_i17.PriceType>>.value(
+              <_i17.PriceType>[],
             ),
           )
-          as _i7.Future<List<_i14.PriceType>>);
+          as _i8.Future<List<_i17.PriceType>>);
 
   @override
-  _i7.Future<List<_i15.ProductPrice>> getProductPrices({
+  _i8.Future<List<_i18.ProductPrice>> getProductPrices({
     required String? userCode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getProductPrices, [], {#userCode: userCode}),
-            returnValue: _i7.Future<List<_i15.ProductPrice>>.value(
-              <_i15.ProductPrice>[],
+            returnValue: _i8.Future<List<_i18.ProductPrice>>.value(
+              <_i18.ProductPrice>[],
             ),
           )
-          as _i7.Future<List<_i15.ProductPrice>>);
+          as _i8.Future<List<_i18.ProductPrice>>);
 
   @override
-  _i7.Future<List<_i16.PromotionModel>> getPromotions({String? authToken}) =>
+  _i8.Future<List<_i19.PromotionModel>> getPromotions({String? authToken}) =>
       (super.noSuchMethod(
             Invocation.method(#getPromotions, [], {#authToken: authToken}),
-            returnValue: _i7.Future<List<_i16.PromotionModel>>.value(
-              <_i16.PromotionModel>[],
+            returnValue: _i8.Future<List<_i19.PromotionModel>>.value(
+              <_i19.PromotionModel>[],
             ),
           )
-          as _i7.Future<List<_i16.PromotionModel>>);
+          as _i8.Future<List<_i19.PromotionModel>>);
 
   @override
-  _i7.Future<List<_i17.ClientContract>> getAllContracts({
+  _i8.Future<List<_i20.ClientContract>> getAllContracts({
     required String? userCode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getAllContracts, [], {#userCode: userCode}),
-            returnValue: _i7.Future<List<_i17.ClientContract>>.value(
-              <_i17.ClientContract>[],
+            returnValue: _i8.Future<List<_i20.ClientContract>>.value(
+              <_i20.ClientContract>[],
             ),
           )
-          as _i7.Future<List<_i17.ClientContract>>);
+          as _i8.Future<List<_i20.ClientContract>>);
 
   @override
-  _i7.Future<Map<String, dynamic>> getReportByPeriod({
+  _i8.Future<Map<String, dynamic>> getReportByPeriod({
     required String? userCode,
     required String? dateStart,
     required String? dateEnd,
@@ -655,29 +803,29 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #dateStart: dateStart,
               #dateEnd: dateEnd,
             }),
-            returnValue: _i7.Future<Map<String, dynamic>>.value(
+            returnValue: _i8.Future<Map<String, dynamic>>.value(
               <String, dynamic>{},
             ),
           )
-          as _i7.Future<Map<String, dynamic>>);
+          as _i8.Future<Map<String, dynamic>>);
 
   @override
-  _i7.Future<List<_i18.OrderStatus>> getOrderStatusList({
+  _i8.Future<List<_i21.OrderStatus>> getOrderStatusList({
     required String? userCode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getOrderStatusList, [], {#userCode: userCode}),
-            returnValue: _i7.Future<List<_i18.OrderStatus>>.value(
-              <_i18.OrderStatus>[],
+            returnValue: _i8.Future<List<_i21.OrderStatus>>.value(
+              <_i21.OrderStatus>[],
             ),
           )
-          as _i7.Future<List<_i18.OrderStatus>>);
+          as _i8.Future<List<_i21.OrderStatus>>);
 
   @override
-  String generateSetOrderSoapRequest(_i19.CreateOrder? order) =>
+  String generateSetOrderSoapRequest(_i22.CreateOrder? order) =>
       (super.noSuchMethod(
             Invocation.method(#generateSetOrderSoapRequest, [order]),
-            returnValue: _i8.dummyValue<String>(
+            returnValue: _i9.dummyValue<String>(
               this,
               Invocation.method(#generateSetOrderSoapRequest, [order]),
             ),
@@ -685,51 +833,51 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
           as String);
 
   @override
-  _i7.Future<List<_i20.Order>> getOrderList({required String? userCode}) =>
+  _i8.Future<List<_i23.Order>> getOrderList({required String? userCode}) =>
       (super.noSuchMethod(
             Invocation.method(#getOrderList, [], {#userCode: userCode}),
-            returnValue: _i7.Future<List<_i20.Order>>.value(<_i20.Order>[]),
+            returnValue: _i8.Future<List<_i23.Order>>.value(<_i23.Order>[]),
           )
-          as _i7.Future<List<_i20.Order>>);
+          as _i8.Future<List<_i23.Order>>);
 
   @override
-  _i7.Future<Map<String, dynamic>> getSalesReqPermissions({
+  _i8.Future<Map<String, dynamic>> getSalesReqPermissions({
     required String? userCode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getSalesReqPermissions, [], {
               #userCode: userCode,
             }),
-            returnValue: _i7.Future<Map<String, dynamic>>.value(
+            returnValue: _i8.Future<Map<String, dynamic>>.value(
               <String, dynamic>{},
             ),
           )
-          as _i7.Future<Map<String, dynamic>>);
+          as _i8.Future<Map<String, dynamic>>);
 
   @override
-  _i7.Future<List<Map<String, dynamic>>> getPlannedRouteList({
+  _i8.Future<List<Map<String, dynamic>>> getPlannedRouteList({
     required String? userCode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getPlannedRouteList, [], {#userCode: userCode}),
-            returnValue: _i7.Future<List<Map<String, dynamic>>>.value(
+            returnValue: _i8.Future<List<Map<String, dynamic>>>.value(
               <Map<String, dynamic>>[],
             ),
           )
-          as _i7.Future<List<Map<String, dynamic>>>);
+          as _i8.Future<List<Map<String, dynamic>>>);
 
   @override
-  _i7.Future<Map<String, String>> getMapTokens() =>
+  _i8.Future<Map<String, String>> getMapTokens() =>
       (super.noSuchMethod(
             Invocation.method(#getMapTokens, []),
-            returnValue: _i7.Future<Map<String, String>>.value(
+            returnValue: _i8.Future<Map<String, String>>.value(
               <String, String>{},
             ),
           )
-          as _i7.Future<Map<String, String>>);
+          as _i8.Future<Map<String, String>>);
 
   @override
-  _i7.Future<String> updateClientCoordinates({
+  _i8.Future<String> updateClientCoordinates({
     required String? userCode,
     required String? clientCode,
     required double? latitude,
@@ -742,8 +890,8 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #latitude: latitude,
               #longitude: longitude,
             }),
-            returnValue: _i7.Future<String>.value(
-              _i8.dummyValue<String>(
+            returnValue: _i8.Future<String>.value(
+              _i9.dummyValue<String>(
                 this,
                 Invocation.method(#updateClientCoordinates, [], {
                   #userCode: userCode,
@@ -754,10 +902,10 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               ),
             ),
           )
-          as _i7.Future<String>);
+          as _i8.Future<String>);
 
   @override
-  _i7.Future<_i4.OrderDetail> getOrderDetails({
+  _i8.Future<_i4.OrderDetail> getOrderDetails({
     required String? numberOrder,
     required String? orderDate1,
     required String? orderDate2,
@@ -768,7 +916,7 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #orderDate1: orderDate1,
               #orderDate2: orderDate2,
             }),
-            returnValue: _i7.Future<_i4.OrderDetail>.value(
+            returnValue: _i8.Future<_i4.OrderDetail>.value(
               _FakeOrderDetail_2(
                 this,
                 Invocation.method(#getOrderDetails, [], {
@@ -779,36 +927,48 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               ),
             ),
           )
-          as _i7.Future<_i4.OrderDetail>);
+          as _i8.Future<_i4.OrderDetail>);
 
   @override
-  _i7.Future<Map<String, dynamic>> setOrder({
-    required _i19.CreateOrder? order,
+  _i8.Future<Map<String, dynamic>> setOrder({
+    required _i22.CreateOrder? order,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#setOrder, [], {#order: order}),
-            returnValue: _i7.Future<Map<String, dynamic>>.value(
+            returnValue: _i8.Future<Map<String, dynamic>>.value(
               <String, dynamic>{},
             ),
           )
-          as _i7.Future<Map<String, dynamic>>);
+          as _i8.Future<Map<String, dynamic>>);
 
   @override
-  _i7.Future<List<_i21.UserOrganization>> getOrganizationsByUserCode({
+  _i8.Future<List<_i24.UserOrganization>> getOrganizationsByUserCode({
     required String? userCode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getOrganizationsByUserCode, [], {
               #userCode: userCode,
             }),
-            returnValue: _i7.Future<List<_i21.UserOrganization>>.value(
-              <_i21.UserOrganization>[],
+            returnValue: _i8.Future<List<_i24.UserOrganization>>.value(
+              <_i24.UserOrganization>[],
             ),
           )
-          as _i7.Future<List<_i21.UserOrganization>>);
+          as _i8.Future<List<_i24.UserOrganization>>);
 
   @override
-  _i7.Future<Map<String, dynamic>> checkAccessOnStartup({
+  _i8.Future<List<_i25.UserProject>> getProjectsUser({
+    required String? userCode,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#getProjectsUser, [], {#userCode: userCode}),
+            returnValue: _i8.Future<List<_i25.UserProject>>.value(
+              <_i25.UserProject>[],
+            ),
+          )
+          as _i8.Future<List<_i25.UserProject>>);
+
+  @override
+  _i8.Future<Map<String, dynamic>> checkAccessOnStartup({
     required String? userId,
     required String? localUuid,
     String? appDeviceId,
@@ -833,24 +993,24 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #appVersion: appVersion,
               #deviceFingerprint: deviceFingerprint,
             }),
-            returnValue: _i7.Future<Map<String, dynamic>>.value(
+            returnValue: _i8.Future<Map<String, dynamic>>.value(
               <String, dynamic>{},
             ),
           )
-          as _i7.Future<Map<String, dynamic>>);
+          as _i8.Future<Map<String, dynamic>>);
 
   @override
-  _i7.Future<List<_i22.ContractType>> getTypeOfContract() =>
+  _i8.Future<List<_i26.ContractType>> getTypeOfContract() =>
       (super.noSuchMethod(
             Invocation.method(#getTypeOfContract, []),
-            returnValue: _i7.Future<List<_i22.ContractType>>.value(
-              <_i22.ContractType>[],
+            returnValue: _i8.Future<List<_i26.ContractType>>.value(
+              <_i26.ContractType>[],
             ),
           )
-          as _i7.Future<List<_i22.ContractType>>);
+          as _i8.Future<List<_i26.ContractType>>);
 
   @override
-  _i7.Future<List<_i23.DistrictContracting>> getCitiesDistrictContracting({
+  _i8.Future<List<_i27.DistrictContracting>> getCitiesDistrictContracting({
     required String? codeUser,
     required String? codeProject,
   }) =>
@@ -859,14 +1019,14 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #codeUser: codeUser,
               #codeProject: codeProject,
             }),
-            returnValue: _i7.Future<List<_i23.DistrictContracting>>.value(
-              <_i23.DistrictContracting>[],
+            returnValue: _i8.Future<List<_i27.DistrictContracting>>.value(
+              <_i27.DistrictContracting>[],
             ),
           )
-          as _i7.Future<List<_i23.DistrictContracting>>);
+          as _i8.Future<List<_i27.DistrictContracting>>);
 
   @override
-  _i7.Future<Map<String, dynamic>> setContract({
+  _i8.Future<Map<String, dynamic>> setContract({
     required String? dateOfContract,
     required String? codeUser,
     required String? codeClient,
@@ -901,14 +1061,14 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #psCodeDistrict: psCodeDistrict,
               #psNameDistrict: psNameDistrict,
             }),
-            returnValue: _i7.Future<Map<String, dynamic>>.value(
+            returnValue: _i8.Future<Map<String, dynamic>>.value(
               <String, dynamic>{},
             ),
           )
-          as _i7.Future<Map<String, dynamic>>);
+          as _i8.Future<Map<String, dynamic>>);
 
   @override
-  _i7.Future<Map<String, dynamic>> setClient({
+  _i8.Future<Map<String, dynamic>> setClient({
     required String? name,
     required String? signboard,
     required String? inn,
@@ -926,6 +1086,9 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
     String? director,
     String? mfo,
     String? bankAccount,
+    String? channelCode,
+    String? tradingPointTypeCode,
+    String? clientClass,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#setClient, [], {
@@ -946,157 +1109,245 @@ class MockSoapApiService extends _i1.Mock implements _i9.SoapApiService {
               #director: director,
               #mfo: mfo,
               #bankAccount: bankAccount,
+              #channelCode: channelCode,
+              #tradingPointTypeCode: tradingPointTypeCode,
+              #clientClass: clientClass,
             }),
-            returnValue: _i7.Future<Map<String, dynamic>>.value(
+            returnValue: _i8.Future<Map<String, dynamic>>.value(
               <String, dynamic>{},
             ),
           )
-          as _i7.Future<Map<String, dynamic>>);
+          as _i8.Future<Map<String, dynamic>>);
+
+  @override
+  _i8.Future<_i5.SalesClassifiersResponse> getSalesClassifiersList() =>
+      (super.noSuchMethod(
+            Invocation.method(#getSalesClassifiersList, []),
+            returnValue: _i8.Future<_i5.SalesClassifiersResponse>.value(
+              _FakeSalesClassifiersResponse_3(
+                this,
+                Invocation.method(#getSalesClassifiersList, []),
+              ),
+            ),
+          )
+          as _i8.Future<_i5.SalesClassifiersResponse>);
+
+  @override
+  _i8.Future<DateTime> getServerTime() =>
+      (super.noSuchMethod(
+            Invocation.method(#getServerTime, []),
+            returnValue: _i8.Future<DateTime>.value(
+              _FakeDateTime_4(this, Invocation.method(#getServerTime, [])),
+            ),
+          )
+          as _i8.Future<DateTime>);
 }
 
 /// A class which mocks [ApiDatabaseService].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockApiDatabaseService extends _i1.Mock
-    implements _i24.ApiDatabaseService {
+    implements _i28.ApiDatabaseService {
   MockApiDatabaseService() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i7.Future<_i5.Database> get database =>
+  _i8.Future<_i6.Database> get database =>
       (super.noSuchMethod(
             Invocation.getter(#database),
-            returnValue: _i7.Future<_i5.Database>.value(
-              _FakeDatabase_3(this, Invocation.getter(#database)),
+            returnValue: _i8.Future<_i6.Database>.value(
+              _FakeDatabase_5(this, Invocation.getter(#database)),
             ),
           )
-          as _i7.Future<_i5.Database>);
+          as _i8.Future<_i6.Database>);
 
   @override
-  _i7.Future<void> saveKpiData(String? userCode, _i3.KpiData? kpiData) =>
+  _i8.Future<void> saveKpiData(String? userCode, _i3.KpiData? kpiData) =>
       (super.noSuchMethod(
             Invocation.method(#saveKpiData, [userCode, kpiData]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<_i3.KpiData?> getKpiData(String? userCode) =>
+  _i8.Future<_i3.KpiData?> getKpiData(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getKpiData, [userCode]),
-            returnValue: _i7.Future<_i3.KpiData?>.value(),
+            returnValue: _i8.Future<_i3.KpiData?>.value(),
           )
-          as _i7.Future<_i3.KpiData?>);
+          as _i8.Future<_i3.KpiData?>);
 
   @override
-  _i7.Future<void> saveClients(List<_i10.TradingPoint>? clients) =>
+  _i8.Future<void> saveClients(List<_i13.TradingPoint>? clients) =>
       (super.noSuchMethod(
             Invocation.method(#saveClients, [clients]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i10.TradingPoint>> getClients() =>
+  _i8.Future<Map<String, int>> saveClientsIncremental(
+    List<_i13.TradingPoint>? clients,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveClientsIncremental, [clients]),
+            returnValue: _i8.Future<Map<String, int>>.value(<String, int>{}),
+          )
+          as _i8.Future<Map<String, int>>);
+
+  @override
+  _i8.Future<List<_i13.TradingPoint>> getClients() =>
       (super.noSuchMethod(
             Invocation.method(#getClients, []),
-            returnValue: _i7.Future<List<_i10.TradingPoint>>.value(
-              <_i10.TradingPoint>[],
+            returnValue: _i8.Future<List<_i13.TradingPoint>>.value(
+              <_i13.TradingPoint>[],
             ),
           )
-          as _i7.Future<List<_i10.TradingPoint>>);
+          as _i8.Future<List<_i13.TradingPoint>>);
 
   @override
-  _i7.Future<List<String>> getUniqueTradePointTypes() =>
+  _i8.Future<List<String>> getUniqueTradePointTypes() =>
       (super.noSuchMethod(
             Invocation.method(#getUniqueTradePointTypes, []),
-            returnValue: _i7.Future<List<String>>.value(<String>[]),
+            returnValue: _i8.Future<List<String>>.value(<String>[]),
           )
-          as _i7.Future<List<String>>);
+          as _i8.Future<List<String>>);
 
   @override
-  _i7.Future<void> saveProducts(List<_i13.ProductData>? products) =>
+  _i8.Future<void> saveProducts(List<_i16.ProductData>? products) =>
       (super.noSuchMethod(
             Invocation.method(#saveProducts, [products]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i13.ProductData>> getProducts() =>
+  _i8.Future<Map<String, int>> saveProductsIncremental(
+    List<_i16.ProductData>? products,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveProductsIncremental, [products]),
+            returnValue: _i8.Future<Map<String, int>>.value(<String, int>{}),
+          )
+          as _i8.Future<Map<String, int>>);
+
+  @override
+  _i8.Future<List<_i16.ProductData>> getProducts() =>
       (super.noSuchMethod(
             Invocation.method(#getProducts, []),
-            returnValue: _i7.Future<List<_i13.ProductData>>.value(
-              <_i13.ProductData>[],
+            returnValue: _i8.Future<List<_i16.ProductData>>.value(
+              <_i16.ProductData>[],
             ),
           )
-          as _i7.Future<List<_i13.ProductData>>);
+          as _i8.Future<List<_i16.ProductData>>);
 
   @override
-  _i7.Future<_i13.ProductData?> getProductByCode(String? productCode) =>
+  _i8.Future<_i16.ProductData?> getProductByCode(String? productCode) =>
       (super.noSuchMethod(
             Invocation.method(#getProductByCode, [productCode]),
-            returnValue: _i7.Future<_i13.ProductData?>.value(),
+            returnValue: _i8.Future<_i16.ProductData?>.value(),
           )
-          as _i7.Future<_i13.ProductData?>);
+          as _i8.Future<_i16.ProductData?>);
 
   @override
-  _i7.Future<void> savePriceTypes(List<_i14.PriceType>? priceTypes) =>
+  _i8.Future<void> savePriceTypes(List<_i17.PriceType>? priceTypes) =>
       (super.noSuchMethod(
             Invocation.method(#savePriceTypes, [priceTypes]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i14.PriceType>> getPriceTypes() =>
+  _i8.Future<List<_i17.PriceType>> getPriceTypes() =>
       (super.noSuchMethod(
             Invocation.method(#getPriceTypes, []),
-            returnValue: _i7.Future<List<_i14.PriceType>>.value(
-              <_i14.PriceType>[],
+            returnValue: _i8.Future<List<_i17.PriceType>>.value(
+              <_i17.PriceType>[],
             ),
           )
-          as _i7.Future<List<_i14.PriceType>>);
+          as _i8.Future<List<_i17.PriceType>>);
 
   @override
-  _i7.Future<void> saveProductPrices(List<_i15.ProductPrice>? productPrices) =>
+  _i8.Future<_i17.PriceType?> getPriceTypeByCode(String? code) =>
+      (super.noSuchMethod(
+            Invocation.method(#getPriceTypeByCode, [code]),
+            returnValue: _i8.Future<_i17.PriceType?>.value(),
+          )
+          as _i8.Future<_i17.PriceType?>);
+
+  @override
+  _i8.Future<String> getPriceTypeDisplayName(
+    String? code, {
+    double? price = 0.0,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #getPriceTypeDisplayName,
+              [code],
+              {#price: price},
+            ),
+            returnValue: _i8.Future<String>.value(
+              _i9.dummyValue<String>(
+                this,
+                Invocation.method(
+                  #getPriceTypeDisplayName,
+                  [code],
+                  {#price: price},
+                ),
+              ),
+            ),
+          )
+          as _i8.Future<String>);
+
+  @override
+  _i8.Future<void> saveProductPrices(List<_i18.ProductPrice>? productPrices) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductPrices, [productPrices]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i15.ProductPrice>> getProductPrices({
+  _i8.Future<Map<String, int>> saveProductPricesIncremental(
+    List<_i18.ProductPrice>? productPrices,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveProductPricesIncremental, [productPrices]),
+            returnValue: _i8.Future<Map<String, int>>.value(<String, int>{}),
+          )
+          as _i8.Future<Map<String, int>>);
+
+  @override
+  _i8.Future<List<_i18.ProductPrice>> getProductPrices({
     String? priceTypeCode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getProductPrices, [], {
               #priceTypeCode: priceTypeCode,
             }),
-            returnValue: _i7.Future<List<_i15.ProductPrice>>.value(
-              <_i15.ProductPrice>[],
+            returnValue: _i8.Future<List<_i18.ProductPrice>>.value(
+              <_i18.ProductPrice>[],
             ),
           )
-          as _i7.Future<List<_i15.ProductPrice>>);
+          as _i8.Future<List<_i18.ProductPrice>>);
 
   @override
-  _i7.Future<void> savePromotions(List<_i16.PromotionModel>? promotions) =>
+  _i8.Future<void> savePromotions(List<_i19.PromotionModel>? promotions) =>
       (super.noSuchMethod(
             Invocation.method(#savePromotions, [promotions]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i16.PromotionModel>> getPromotions({
+  _i8.Future<List<_i19.PromotionModel>> getPromotions({
     bool? onlyActive = true,
     String? searchQuery,
     DateTime? dateFilter,
@@ -1107,237 +1358,237 @@ class MockApiDatabaseService extends _i1.Mock
               #searchQuery: searchQuery,
               #dateFilter: dateFilter,
             }),
-            returnValue: _i7.Future<List<_i16.PromotionModel>>.value(
-              <_i16.PromotionModel>[],
+            returnValue: _i8.Future<List<_i19.PromotionModel>>.value(
+              <_i19.PromotionModel>[],
             ),
           )
-          as _i7.Future<List<_i16.PromotionModel>>);
+          as _i8.Future<List<_i19.PromotionModel>>);
 
   @override
-  _i7.Future<_i16.PromotionModel?> getPromotionByCode(String? code) =>
+  _i8.Future<_i19.PromotionModel?> getPromotionByCode(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#getPromotionByCode, [code]),
-            returnValue: _i7.Future<_i16.PromotionModel?>.value(),
+            returnValue: _i8.Future<_i19.PromotionModel?>.value(),
           )
-          as _i7.Future<_i16.PromotionModel?>);
+          as _i8.Future<_i19.PromotionModel?>);
 
   @override
-  _i7.Future<void> updatePromotionSyncTime(String? code, DateTime? syncTime) =>
+  _i8.Future<void> updatePromotionSyncTime(String? code, DateTime? syncTime) =>
       (super.noSuchMethod(
             Invocation.method(#updatePromotionSyncTime, [code, syncTime]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deletePromotion(String? code) =>
+  _i8.Future<void> deletePromotion(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#deletePromotion, [code]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<int> getPromotionCount({bool? onlyActive = true}) =>
+  _i8.Future<int> getPromotionCount({bool? onlyActive = true}) =>
       (super.noSuchMethod(
             Invocation.method(#getPromotionCount, [], {
               #onlyActive: onlyActive,
             }),
-            returnValue: _i7.Future<int>.value(0),
+            returnValue: _i8.Future<int>.value(0),
           )
-          as _i7.Future<int>);
+          as _i8.Future<int>);
 
   @override
-  _i7.Future<void> saveBusinessRegions(List<_i11.BusinessRegion>? regions) =>
+  _i8.Future<void> saveBusinessRegions(List<_i14.BusinessRegion>? regions) =>
       (super.noSuchMethod(
             Invocation.method(#saveBusinessRegions, [regions]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i11.BusinessRegion>> getBusinessRegions() =>
+  _i8.Future<List<_i14.BusinessRegion>> getBusinessRegions() =>
       (super.noSuchMethod(
             Invocation.method(#getBusinessRegions, []),
-            returnValue: _i7.Future<List<_i11.BusinessRegion>>.value(
-              <_i11.BusinessRegion>[],
+            returnValue: _i8.Future<List<_i14.BusinessRegion>>.value(
+              <_i14.BusinessRegion>[],
             ),
           )
-          as _i7.Future<List<_i11.BusinessRegion>>);
+          as _i8.Future<List<_i14.BusinessRegion>>);
 
   @override
-  _i7.Future<_i11.BusinessRegion?> getBusinessRegionByCode(String? code) =>
+  _i8.Future<_i14.BusinessRegion?> getBusinessRegionByCode(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#getBusinessRegionByCode, [code]),
-            returnValue: _i7.Future<_i11.BusinessRegion?>.value(),
+            returnValue: _i8.Future<_i14.BusinessRegion?>.value(),
           )
-          as _i7.Future<_i11.BusinessRegion?>);
+          as _i8.Future<_i14.BusinessRegion?>);
 
   @override
-  _i7.Future<void> saveBusinessRegion(_i11.BusinessRegion? region) =>
+  _i8.Future<void> saveBusinessRegion(_i14.BusinessRegion? region) =>
       (super.noSuchMethod(
             Invocation.method(#saveBusinessRegion, [region]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateBusinessRegion(
+  _i8.Future<void> updateBusinessRegion(
     String? code,
-    _i11.BusinessRegion? region,
+    _i14.BusinessRegion? region,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateBusinessRegion, [code, region]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteBusinessRegion(String? code) =>
+  _i8.Future<void> deleteBusinessRegion(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#deleteBusinessRegion, [code]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveUserWarehouses(List<_i12.UserWarehouse>? warehouses) =>
+  _i8.Future<void> saveUserWarehouses(List<_i15.UserWarehouse>? warehouses) =>
       (super.noSuchMethod(
             Invocation.method(#saveUserWarehouses, [warehouses]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i12.UserWarehouse>> getUserWarehouses() =>
+  _i8.Future<List<_i15.UserWarehouse>> getUserWarehouses() =>
       (super.noSuchMethod(
             Invocation.method(#getUserWarehouses, []),
-            returnValue: _i7.Future<List<_i12.UserWarehouse>>.value(
-              <_i12.UserWarehouse>[],
+            returnValue: _i8.Future<List<_i15.UserWarehouse>>.value(
+              <_i15.UserWarehouse>[],
             ),
           )
-          as _i7.Future<List<_i12.UserWarehouse>>);
+          as _i8.Future<List<_i15.UserWarehouse>>);
 
   @override
-  _i7.Future<_i12.UserWarehouse?> getUserWarehouseByCode(String? code) =>
+  _i8.Future<_i15.UserWarehouse?> getUserWarehouseByCode(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#getUserWarehouseByCode, [code]),
-            returnValue: _i7.Future<_i12.UserWarehouse?>.value(),
+            returnValue: _i8.Future<_i15.UserWarehouse?>.value(),
           )
-          as _i7.Future<_i12.UserWarehouse?>);
+          as _i8.Future<_i15.UserWarehouse?>);
 
   @override
-  _i7.Future<void> saveUserWarehouse(_i12.UserWarehouse? warehouse) =>
+  _i8.Future<void> saveUserWarehouse(_i15.UserWarehouse? warehouse) =>
       (super.noSuchMethod(
             Invocation.method(#saveUserWarehouse, [warehouse]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateUserWarehouse(
+  _i8.Future<void> updateUserWarehouse(
     String? code,
-    _i12.UserWarehouse? warehouse,
+    _i15.UserWarehouse? warehouse,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateUserWarehouse, [code, warehouse]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteUserWarehouse(String? code) =>
+  _i8.Future<void> deleteUserWarehouse(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#deleteUserWarehouse, [code]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveProductBrands(List<_i25.ProductBrand>? brands) =>
+  _i8.Future<void> saveProductBrands(List<_i29.ProductBrand>? brands) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductBrands, [brands]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i25.ProductBrand>> getProductBrands() =>
+  _i8.Future<List<_i29.ProductBrand>> getProductBrands() =>
       (super.noSuchMethod(
             Invocation.method(#getProductBrands, []),
-            returnValue: _i7.Future<List<_i25.ProductBrand>>.value(
-              <_i25.ProductBrand>[],
+            returnValue: _i8.Future<List<_i29.ProductBrand>>.value(
+              <_i29.ProductBrand>[],
             ),
           )
-          as _i7.Future<List<_i25.ProductBrand>>);
+          as _i8.Future<List<_i29.ProductBrand>>);
 
   @override
-  _i7.Future<_i25.ProductBrand?> getProductBrandByName(String? name) =>
+  _i8.Future<_i29.ProductBrand?> getProductBrandByName(String? name) =>
       (super.noSuchMethod(
             Invocation.method(#getProductBrandByName, [name]),
-            returnValue: _i7.Future<_i25.ProductBrand?>.value(),
+            returnValue: _i8.Future<_i29.ProductBrand?>.value(),
           )
-          as _i7.Future<_i25.ProductBrand?>);
+          as _i8.Future<_i29.ProductBrand?>);
 
   @override
-  _i7.Future<void> saveProductBrand(_i25.ProductBrand? brand) =>
+  _i8.Future<void> saveProductBrand(_i29.ProductBrand? brand) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductBrand, [brand]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateProductBrand(String? name, _i25.ProductBrand? brand) =>
+  _i8.Future<void> updateProductBrand(String? name, _i29.ProductBrand? brand) =>
       (super.noSuchMethod(
             Invocation.method(#updateProductBrand, [name, brand]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteProductBrand(String? name) =>
+  _i8.Future<void> deleteProductBrand(String? name) =>
       (super.noSuchMethod(
             Invocation.method(#deleteProductBrand, [name]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveProductSeries(List<_i26.ProductSeries>? series) =>
+  _i8.Future<void> saveProductSeries(List<_i30.ProductSeries>? series) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductSeries, [series]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i26.ProductSeries>> getProductSeries({String? brandName}) =>
+  _i8.Future<List<_i30.ProductSeries>> getProductSeries({String? brandName}) =>
       (super.noSuchMethod(
             Invocation.method(#getProductSeries, [], {#brandName: brandName}),
-            returnValue: _i7.Future<List<_i26.ProductSeries>>.value(
-              <_i26.ProductSeries>[],
+            returnValue: _i8.Future<List<_i30.ProductSeries>>.value(
+              <_i30.ProductSeries>[],
             ),
           )
-          as _i7.Future<List<_i26.ProductSeries>>);
+          as _i8.Future<List<_i30.ProductSeries>>);
 
   @override
-  _i7.Future<_i26.ProductSeries?> getProductSeriesByNameAndBrand(
+  _i8.Future<_i30.ProductSeries?> getProductSeriesByNameAndBrand(
     String? name,
     String? brandName,
   ) =>
@@ -1346,52 +1597,62 @@ class MockApiDatabaseService extends _i1.Mock
               name,
               brandName,
             ]),
-            returnValue: _i7.Future<_i26.ProductSeries?>.value(),
+            returnValue: _i8.Future<_i30.ProductSeries?>.value(),
           )
-          as _i7.Future<_i26.ProductSeries?>);
+          as _i8.Future<_i30.ProductSeries?>);
 
   @override
-  _i7.Future<void> saveProductSerie(_i26.ProductSeries? series) =>
+  _i8.Future<void> saveProductSerie(_i30.ProductSeries? series) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductSerie, [series]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateProductSeries(
+  _i8.Future<void> updateProductSeries(
     String? name,
     String? brandName,
-    _i26.ProductSeries? series,
+    _i30.ProductSeries? series,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateProductSeries, [name, brandName, series]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteProductSeries(String? name, String? brandName) =>
+  _i8.Future<void> deleteProductSeries(String? name, String? brandName) =>
       (super.noSuchMethod(
             Invocation.method(#deleteProductSeries, [name, brandName]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveProductBalances(List<_i27.ProductBalance>? balances) =>
+  _i8.Future<void> saveProductBalances(List<_i31.ProductBalance>? balances) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductBalances, [balances]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i27.ProductBalance>> getProductBalances({
+  _i8.Future<Map<String, int>> saveProductBalancesIncremental(
+    List<_i31.ProductBalance>? balances,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveProductBalancesIncremental, [balances]),
+            returnValue: _i8.Future<Map<String, int>>.value(<String, int>{}),
+          )
+          as _i8.Future<Map<String, int>>);
+
+  @override
+  _i8.Future<List<_i31.ProductBalance>> getProductBalances({
     String? warehouseCode,
     String? productBrand,
     String? productSeries,
@@ -1402,14 +1663,14 @@ class MockApiDatabaseService extends _i1.Mock
               #productBrand: productBrand,
               #productSeries: productSeries,
             }),
-            returnValue: _i7.Future<List<_i27.ProductBalance>>.value(
-              <_i27.ProductBalance>[],
+            returnValue: _i8.Future<List<_i31.ProductBalance>>.value(
+              <_i31.ProductBalance>[],
             ),
           )
-          as _i7.Future<List<_i27.ProductBalance>>);
+          as _i8.Future<List<_i31.ProductBalance>>);
 
   @override
-  _i7.Future<_i27.ProductBalance?> getProductBalanceByCodes(
+  _i8.Future<_i31.ProductBalance?> getProductBalanceByCodes(
     String? warehouseCode,
     String? productCode,
   ) =>
@@ -1418,24 +1679,24 @@ class MockApiDatabaseService extends _i1.Mock
               warehouseCode,
               productCode,
             ]),
-            returnValue: _i7.Future<_i27.ProductBalance?>.value(),
+            returnValue: _i8.Future<_i31.ProductBalance?>.value(),
           )
-          as _i7.Future<_i27.ProductBalance?>);
+          as _i8.Future<_i31.ProductBalance?>);
 
   @override
-  _i7.Future<void> saveProductBalance(_i27.ProductBalance? balance) =>
+  _i8.Future<void> saveProductBalance(_i31.ProductBalance? balance) =>
       (super.noSuchMethod(
             Invocation.method(#saveProductBalance, [balance]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateProductBalance(
+  _i8.Future<void> updateProductBalance(
     String? warehouseCode,
     String? productCode,
-    _i27.ProductBalance? balance,
+    _i31.ProductBalance? balance,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateProductBalance, [
@@ -1443,13 +1704,13 @@ class MockApiDatabaseService extends _i1.Mock
               productCode,
               balance,
             ]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteProductBalance(
+  _i8.Future<void> deleteProductBalance(
     String? warehouseCode,
     String? productCode,
   ) =>
@@ -1458,25 +1719,25 @@ class MockApiDatabaseService extends _i1.Mock
               warehouseCode,
               productCode,
             ]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i28.TradingPointWithPermissions>>
+  _i8.Future<List<_i32.TradingPointWithPermissions>>
   getTradingPointsWithPermissions(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getTradingPointsWithPermissions, [userCode]),
             returnValue:
-                _i7.Future<List<_i28.TradingPointWithPermissions>>.value(
-                  <_i28.TradingPointWithPermissions>[],
+                _i8.Future<List<_i32.TradingPointWithPermissions>>.value(
+                  <_i32.TradingPointWithPermissions>[],
                 ),
           )
-          as _i7.Future<List<_i28.TradingPointWithPermissions>>);
+          as _i8.Future<List<_i32.TradingPointWithPermissions>>);
 
   @override
-  _i7.Future<List<_i29.ProductWithPrice>> getProductsWithPrices({
+  _i8.Future<List<_i33.ProductWithPrice>> getProductsWithPrices({
     required String? priceTypeCode,
     List<String>? warehouseCodes,
     String? searchQuery,
@@ -1489,23 +1750,23 @@ class MockApiDatabaseService extends _i1.Mock
               #searchQuery: searchQuery,
               #codeProject: codeProject,
             }),
-            returnValue: _i7.Future<List<_i29.ProductWithPrice>>.value(
-              <_i29.ProductWithPrice>[],
+            returnValue: _i8.Future<List<_i33.ProductWithPrice>>.value(
+              <_i33.ProductWithPrice>[],
             ),
           )
-          as _i7.Future<List<_i29.ProductWithPrice>>);
+          as _i8.Future<List<_i33.ProductWithPrice>>);
 
   @override
-  _i7.Future<void> saveClientContracts(List<_i17.ClientContract>? contracts) =>
+  _i8.Future<void> saveClientContracts(List<_i20.ClientContract>? contracts) =>
       (super.noSuchMethod(
             Invocation.method(#saveClientContracts, [contracts]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i17.ClientContract>> getClientContracts({
+  _i8.Future<List<_i20.ClientContract>> getClientContracts({
     String? clientCode,
     bool? active,
   }) =>
@@ -1514,14 +1775,14 @@ class MockApiDatabaseService extends _i1.Mock
               #clientCode: clientCode,
               #active: active,
             }),
-            returnValue: _i7.Future<List<_i17.ClientContract>>.value(
-              <_i17.ClientContract>[],
+            returnValue: _i8.Future<List<_i20.ClientContract>>.value(
+              <_i20.ClientContract>[],
             ),
           )
-          as _i7.Future<List<_i17.ClientContract>>);
+          as _i8.Future<List<_i20.ClientContract>>);
 
   @override
-  _i7.Future<List<_i17.ClientContractWithName>> getClientContractsWithNames({
+  _i8.Future<List<_i20.ClientContractWithName>> getClientContractsWithNames({
     String? clientCode,
     bool? active,
   }) =>
@@ -1530,138 +1791,138 @@ class MockApiDatabaseService extends _i1.Mock
               #clientCode: clientCode,
               #active: active,
             }),
-            returnValue: _i7.Future<List<_i17.ClientContractWithName>>.value(
-              <_i17.ClientContractWithName>[],
+            returnValue: _i8.Future<List<_i20.ClientContractWithName>>.value(
+              <_i20.ClientContractWithName>[],
             ),
           )
-          as _i7.Future<List<_i17.ClientContractWithName>>);
+          as _i8.Future<List<_i20.ClientContractWithName>>);
 
   @override
-  _i7.Future<_i17.ClientContract?> getClientContractByCode(
+  _i8.Future<_i20.ClientContract?> getClientContractByCode(
     String? codeContract,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getClientContractByCode, [codeContract]),
-            returnValue: _i7.Future<_i17.ClientContract?>.value(),
+            returnValue: _i8.Future<_i20.ClientContract?>.value(),
           )
-          as _i7.Future<_i17.ClientContract?>);
+          as _i8.Future<_i20.ClientContract?>);
 
   @override
-  _i7.Future<void> saveClientContract(_i17.ClientContract? contract) =>
+  _i8.Future<void> saveClientContract(_i20.ClientContract? contract) =>
       (super.noSuchMethod(
             Invocation.method(#saveClientContract, [contract]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateClientContract(
+  _i8.Future<void> updateClientContract(
     String? codeContract,
-    _i17.ClientContract? contract,
+    _i20.ClientContract? contract,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateClientContract, [codeContract, contract]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteClientContract(String? codeContract) =>
+  _i8.Future<void> deleteClientContract(String? codeContract) =>
       (super.noSuchMethod(
             Invocation.method(#deleteClientContract, [codeContract]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveMainReports(List<_i30.MainReport>? reports) =>
+  _i8.Future<void> saveMainReports(List<_i34.MainReport>? reports) =>
       (super.noSuchMethod(
             Invocation.method(#saveMainReports, [reports]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i30.MainReport>> getMainReports({String? userCode}) =>
+  _i8.Future<List<_i34.MainReport>> getMainReports({String? userCode}) =>
       (super.noSuchMethod(
             Invocation.method(#getMainReports, [], {#userCode: userCode}),
-            returnValue: _i7.Future<List<_i30.MainReport>>.value(
-              <_i30.MainReport>[],
+            returnValue: _i8.Future<List<_i34.MainReport>>.value(
+              <_i34.MainReport>[],
             ),
           )
-          as _i7.Future<List<_i30.MainReport>>);
+          as _i8.Future<List<_i34.MainReport>>);
 
   @override
-  _i7.Future<_i30.MainReport?> getMainReportById(int? id) =>
+  _i8.Future<_i34.MainReport?> getMainReportById(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#getMainReportById, [id]),
-            returnValue: _i7.Future<_i30.MainReport?>.value(),
+            returnValue: _i8.Future<_i34.MainReport?>.value(),
           )
-          as _i7.Future<_i30.MainReport?>);
+          as _i8.Future<_i34.MainReport?>);
 
   @override
-  _i7.Future<void> saveBusinessRegionReports(
-    List<_i31.BusinessRegionReport>? reports,
+  _i8.Future<void> saveBusinessRegionReports(
+    List<_i35.BusinessRegionReport>? reports,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#saveBusinessRegionReports, [reports]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i31.BusinessRegionReport>> getBusinessRegionReports({
+  _i8.Future<List<_i35.BusinessRegionReport>> getBusinessRegionReports({
     int? mainReportId,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getBusinessRegionReports, [], {
               #mainReportId: mainReportId,
             }),
-            returnValue: _i7.Future<List<_i31.BusinessRegionReport>>.value(
-              <_i31.BusinessRegionReport>[],
+            returnValue: _i8.Future<List<_i35.BusinessRegionReport>>.value(
+              <_i35.BusinessRegionReport>[],
             ),
           )
-          as _i7.Future<List<_i31.BusinessRegionReport>>);
+          as _i8.Future<List<_i35.BusinessRegionReport>>);
 
   @override
-  _i7.Future<void> saveAKBByCategories(List<_i32.AKBByCategory>? categories) =>
+  _i8.Future<void> saveAKBByCategories(List<_i36.AKBByCategory>? categories) =>
       (super.noSuchMethod(
             Invocation.method(#saveAKBByCategories, [categories]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i32.AKBByCategory>> getAKBByCategories({
+  _i8.Future<List<_i36.AKBByCategory>> getAKBByCategories({
     int? mainReportId,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getAKBByCategories, [], {
               #mainReportId: mainReportId,
             }),
-            returnValue: _i7.Future<List<_i32.AKBByCategory>>.value(
-              <_i32.AKBByCategory>[],
+            returnValue: _i8.Future<List<_i36.AKBByCategory>>.value(
+              <_i36.AKBByCategory>[],
             ),
           )
-          as _i7.Future<List<_i32.AKBByCategory>>);
+          as _i8.Future<List<_i36.AKBByCategory>>);
 
   @override
-  _i7.Future<void> saveVisitPlans(List<_i33.VisitPlan>? plans) =>
+  _i8.Future<void> saveVisitPlans(List<_i37.VisitPlan>? plans) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitPlans, [plans]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i33.VisitPlan>> getVisitPlans({
+  _i8.Future<List<_i37.VisitPlan>> getVisitPlans({
     int? mainReportId,
     String? clientCode,
   }) =>
@@ -1670,132 +1931,132 @@ class MockApiDatabaseService extends _i1.Mock
               #mainReportId: mainReportId,
               #clientCode: clientCode,
             }),
-            returnValue: _i7.Future<List<_i33.VisitPlan>>.value(
-              <_i33.VisitPlan>[],
+            returnValue: _i8.Future<List<_i37.VisitPlan>>.value(
+              <_i37.VisitPlan>[],
             ),
           )
-          as _i7.Future<List<_i33.VisitPlan>>);
+          as _i8.Future<List<_i37.VisitPlan>>);
 
   @override
-  _i7.Future<void> saveVisitPlanLists(List<_i34.VisitPlanList>? lists) =>
+  _i8.Future<void> saveVisitPlanLists(List<_i38.VisitPlanList>? lists) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitPlanLists, [lists]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i34.VisitPlanList>> getVisitPlanLists({int? visitPlanId}) =>
+  _i8.Future<List<_i38.VisitPlanList>> getVisitPlanLists({int? visitPlanId}) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitPlanLists, [], {
               #visitPlanId: visitPlanId,
             }),
-            returnValue: _i7.Future<List<_i34.VisitPlanList>>.value(
-              <_i34.VisitPlanList>[],
+            returnValue: _i8.Future<List<_i38.VisitPlanList>>.value(
+              <_i38.VisitPlanList>[],
             ),
           )
-          as _i7.Future<List<_i34.VisitPlanList>>);
+          as _i8.Future<List<_i38.VisitPlanList>>);
 
   @override
-  _i7.Future<void> saveMainReportsByDelete(List<_i30.MainReport>? reports) =>
+  _i8.Future<void> saveMainReportsByDelete(List<_i34.MainReport>? reports) =>
       (super.noSuchMethod(
             Invocation.method(#saveMainReportsByDelete, [reports]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> clearAllData() =>
+  _i8.Future<void> clearAllData() =>
       (super.noSuchMethod(
             Invocation.method(#clearAllData, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> clearMainReport() =>
+  _i8.Future<void> clearMainReport() =>
       (super.noSuchMethod(
             Invocation.method(#clearMainReport, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveOrderStatuses(List<_i18.OrderStatus>? statuses) =>
+  _i8.Future<void> saveOrderStatuses(List<_i21.OrderStatus>? statuses) =>
       (super.noSuchMethod(
             Invocation.method(#saveOrderStatuses, [statuses]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i18.OrderStatus>> getOrderStatuses() =>
+  _i8.Future<List<_i21.OrderStatus>> getOrderStatuses() =>
       (super.noSuchMethod(
             Invocation.method(#getOrderStatuses, []),
-            returnValue: _i7.Future<List<_i18.OrderStatus>>.value(
-              <_i18.OrderStatus>[],
+            returnValue: _i8.Future<List<_i21.OrderStatus>>.value(
+              <_i21.OrderStatus>[],
             ),
           )
-          as _i7.Future<List<_i18.OrderStatus>>);
+          as _i8.Future<List<_i21.OrderStatus>>);
 
   @override
-  _i7.Future<_i18.OrderStatus?> getOrderStatusByMessage(String? message) =>
+  _i8.Future<_i21.OrderStatus?> getOrderStatusByMessage(String? message) =>
       (super.noSuchMethod(
             Invocation.method(#getOrderStatusByMessage, [message]),
-            returnValue: _i7.Future<_i18.OrderStatus?>.value(),
+            returnValue: _i8.Future<_i21.OrderStatus?>.value(),
           )
-          as _i7.Future<_i18.OrderStatus?>);
+          as _i8.Future<_i21.OrderStatus?>);
 
   @override
-  _i7.Future<void> saveCourier(String? name, String? car) =>
+  _i8.Future<void> saveCourier(String? name, String? car) =>
       (super.noSuchMethod(
             Invocation.method(#saveCourier, [name, car]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveCourierCar(String? car) =>
+  _i8.Future<void> saveCourierCar(String? car) =>
       (super.noSuchMethod(
             Invocation.method(#saveCourierCar, [car]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<String>> getUniqueCourierNames() =>
+  _i8.Future<List<String>> getUniqueCourierNames() =>
       (super.noSuchMethod(
             Invocation.method(#getUniqueCourierNames, []),
-            returnValue: _i7.Future<List<String>>.value(<String>[]),
+            returnValue: _i8.Future<List<String>>.value(<String>[]),
           )
-          as _i7.Future<List<String>>);
+          as _i8.Future<List<String>>);
 
   @override
-  _i7.Future<List<String>> getUniqueCourierCars() =>
+  _i8.Future<List<String>> getUniqueCourierCars() =>
       (super.noSuchMethod(
             Invocation.method(#getUniqueCourierCars, []),
-            returnValue: _i7.Future<List<String>>.value(<String>[]),
+            returnValue: _i8.Future<List<String>>.value(<String>[]),
           )
-          as _i7.Future<List<String>>);
+          as _i8.Future<List<String>>);
 
   @override
-  _i7.Future<void> saveOrders(List<_i20.Order>? orders) =>
+  _i8.Future<void> saveOrders(List<_i23.Order>? orders) =>
       (super.noSuchMethod(
             Invocation.method(#saveOrders, [orders]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i20.Order>> getOrders({
+  _i8.Future<List<_i23.Order>> getOrders({
     String? clientCode,
     String? mainStatus,
     String? typePriceCode,
@@ -1806,65 +2067,65 @@ class MockApiDatabaseService extends _i1.Mock
               #mainStatus: mainStatus,
               #typePriceCode: typePriceCode,
             }),
-            returnValue: _i7.Future<List<_i20.Order>>.value(<_i20.Order>[]),
+            returnValue: _i8.Future<List<_i23.Order>>.value(<_i23.Order>[]),
           )
-          as _i7.Future<List<_i20.Order>>);
+          as _i8.Future<List<_i23.Order>>);
 
   @override
-  _i7.Future<_i20.Order?> getOrderByNumOrder(String? numOrder) =>
+  _i8.Future<_i23.Order?> getOrderByNumOrder(String? numOrder) =>
       (super.noSuchMethod(
             Invocation.method(#getOrderByNumOrder, [numOrder]),
-            returnValue: _i7.Future<_i20.Order?>.value(),
+            returnValue: _i8.Future<_i23.Order?>.value(),
           )
-          as _i7.Future<_i20.Order?>);
+          as _i8.Future<_i23.Order?>);
 
   @override
-  _i7.Future<void> updateOrderStatus(String? numOrder, String? mainStatus) =>
+  _i8.Future<void> updateOrderStatus(String? numOrder, String? mainStatus) =>
       (super.noSuchMethod(
             Invocation.method(#updateOrderStatus, [numOrder, mainStatus]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteOrder(String? numOrder) =>
+  _i8.Future<void> deleteOrder(String? numOrder) =>
       (super.noSuchMethod(
             Invocation.method(#deleteOrder, [numOrder]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveOrderDetails(List<_i4.OrderDetail>? orderDetails) =>
+  _i8.Future<void> saveOrderDetails(List<_i4.OrderDetail>? orderDetails) =>
       (super.noSuchMethod(
             Invocation.method(#saveOrderDetails, [orderDetails]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i4.OrderDetail>> getOrderDetails({String? numOrder}) =>
+  _i8.Future<List<_i4.OrderDetail>> getOrderDetails({String? numOrder}) =>
       (super.noSuchMethod(
             Invocation.method(#getOrderDetails, [], {#numOrder: numOrder}),
-            returnValue: _i7.Future<List<_i4.OrderDetail>>.value(
+            returnValue: _i8.Future<List<_i4.OrderDetail>>.value(
               <_i4.OrderDetail>[],
             ),
           )
-          as _i7.Future<List<_i4.OrderDetail>>);
+          as _i8.Future<List<_i4.OrderDetail>>);
 
   @override
-  _i7.Future<_i4.OrderDetail?> getOrderDetailByNumOrder(String? numOrder) =>
+  _i8.Future<_i4.OrderDetail?> getOrderDetailByNumOrder(String? numOrder) =>
       (super.noSuchMethod(
             Invocation.method(#getOrderDetailByNumOrder, [numOrder]),
-            returnValue: _i7.Future<_i4.OrderDetail?>.value(),
+            returnValue: _i8.Future<_i4.OrderDetail?>.value(),
           )
-          as _i7.Future<_i4.OrderDetail?>);
+          as _i8.Future<_i4.OrderDetail?>);
 
   @override
-  _i7.Future<void> saveOrderDetail(
+  _i8.Future<void> saveOrderDetail(
     _i4.OrderDetail? orderDetail, {
     bool? validateOrderExists = false,
   }) =>
@@ -1874,93 +2135,93 @@ class MockApiDatabaseService extends _i1.Mock
               [orderDetail],
               {#validateOrderExists: validateOrderExists},
             ),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateOrderDetail(
+  _i8.Future<void> updateOrderDetail(
     String? numOrder,
     _i4.OrderDetail? orderDetail,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateOrderDetail, [numOrder, orderDetail]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteOrderDetail(String? numOrder) =>
+  _i8.Future<void> deleteOrderDetail(String? numOrder) =>
       (super.noSuchMethod(
             Invocation.method(#deleteOrderDetail, [numOrder]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveSalesReqPermissions(
-    List<_i35.SalesReqPermissions>? permissions,
+  _i8.Future<void> saveSalesReqPermissions(
+    List<_i39.SalesReqPermissions>? permissions,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#saveSalesReqPermissions, [permissions]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<_i35.SalesReqPermissions?> getSalesReqPermissions(
+  _i8.Future<_i39.SalesReqPermissions?> getSalesReqPermissions(
     String? userCode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getSalesReqPermissions, [userCode]),
-            returnValue: _i7.Future<_i35.SalesReqPermissions?>.value(),
+            returnValue: _i8.Future<_i39.SalesReqPermissions?>.value(),
           )
-          as _i7.Future<_i35.SalesReqPermissions?>);
+          as _i8.Future<_i39.SalesReqPermissions?>);
 
   @override
-  _i7.Future<List<_i35.SalesReqPermissions>> getAllSalesReqPermissions() =>
+  _i8.Future<List<_i39.SalesReqPermissions>> getAllSalesReqPermissions() =>
       (super.noSuchMethod(
             Invocation.method(#getAllSalesReqPermissions, []),
-            returnValue: _i7.Future<List<_i35.SalesReqPermissions>>.value(
-              <_i35.SalesReqPermissions>[],
+            returnValue: _i8.Future<List<_i39.SalesReqPermissions>>.value(
+              <_i39.SalesReqPermissions>[],
             ),
           )
-          as _i7.Future<List<_i35.SalesReqPermissions>>);
+          as _i8.Future<List<_i39.SalesReqPermissions>>);
 
   @override
-  _i7.Future<void> saveVisitStepsLegacy(List<_i35.VisitStep>? visitSteps) =>
+  _i8.Future<void> saveVisitStepsLegacy(List<_i39.VisitStep>? visitSteps) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitStepsLegacy, [visitSteps]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteSalesReqPermissions(String? userCode) =>
+  _i8.Future<void> deleteSalesReqPermissions(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#deleteSalesReqPermissions, [userCode]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> clearSalesReqPermissions() =>
+  _i8.Future<void> clearSalesReqPermissions() =>
       (super.noSuchMethod(
             Invocation.method(#clearSalesReqPermissions, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveVisitSteps(
-    List<_i35.VisitStep>? visitSteps,
+  _i8.Future<void> saveVisitSteps(
+    List<_i39.VisitStep>? visitSteps,
     int? salesReqPermissionsId,
   ) =>
       (super.noSuchMethod(
@@ -1968,142 +2229,142 @@ class MockApiDatabaseService extends _i1.Mock
               visitSteps,
               salesReqPermissionsId,
             ]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i35.VisitStep>> getVisitSteps(int? salesReqPermissionsId) =>
+  _i8.Future<List<_i39.VisitStep>> getVisitSteps(int? salesReqPermissionsId) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitSteps, [salesReqPermissionsId]),
-            returnValue: _i7.Future<List<_i35.VisitStep>>.value(
-              <_i35.VisitStep>[],
+            returnValue: _i8.Future<List<_i39.VisitStep>>.value(
+              <_i39.VisitStep>[],
             ),
           )
-          as _i7.Future<List<_i35.VisitStep>>);
+          as _i8.Future<List<_i39.VisitStep>>);
 
   @override
-  _i7.Future<_i35.VisitStep?> getVisitStepById(int? id) =>
+  _i8.Future<_i39.VisitStep?> getVisitStepById(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitStepById, [id]),
-            returnValue: _i7.Future<_i35.VisitStep?>.value(),
+            returnValue: _i8.Future<_i39.VisitStep?>.value(),
           )
-          as _i7.Future<_i35.VisitStep?>);
+          as _i8.Future<_i39.VisitStep?>);
 
   @override
-  _i7.Future<void> updateVisitStep(int? id, _i35.VisitStep? visitStep) =>
+  _i8.Future<void> updateVisitStep(int? id, _i39.VisitStep? visitStep) =>
       (super.noSuchMethod(
             Invocation.method(#updateVisitStep, [id, visitStep]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteVisitStep(int? id) =>
+  _i8.Future<void> deleteVisitStep(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#deleteVisitStep, [id]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteVisitStepsByPermissionsId(
+  _i8.Future<void> deleteVisitStepsByPermissionsId(
     int? salesReqPermissionsId,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#deleteVisitStepsByPermissionsId, [
               salesReqPermissionsId,
             ]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i35.VisitStep>> getAllVisitSteps() =>
+  _i8.Future<List<_i39.VisitStep>> getAllVisitSteps() =>
       (super.noSuchMethod(
             Invocation.method(#getAllVisitSteps, []),
-            returnValue: _i7.Future<List<_i35.VisitStep>>.value(
-              <_i35.VisitStep>[],
+            returnValue: _i8.Future<List<_i39.VisitStep>>.value(
+              <_i39.VisitStep>[],
             ),
           )
-          as _i7.Future<List<_i35.VisitStep>>);
+          as _i8.Future<List<_i39.VisitStep>>);
 
   @override
-  _i7.Future<int> getVisitStepsCount(int? salesReqPermissionsId) =>
+  _i8.Future<int> getVisitStepsCount(int? salesReqPermissionsId) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitStepsCount, [salesReqPermissionsId]),
-            returnValue: _i7.Future<int>.value(0),
+            returnValue: _i8.Future<int>.value(0),
           )
-          as _i7.Future<int>);
+          as _i8.Future<int>);
 
   @override
-  _i7.Future<void> saveVisitStepData(_i36.VisitData? visitData) =>
+  _i8.Future<void> saveVisitStepData(_i40.VisitData? visitData) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitStepData, [visitData]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveVisitStepDataBatch(
-    List<_i36.VisitData>? visitDataList,
+  _i8.Future<void> saveVisitStepDataBatch(
+    List<_i40.VisitData>? visitDataList,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#saveVisitStepDataBatch, [visitDataList]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i36.VisitData>> getVisitStepDataByVisitId(String? visitId) =>
+  _i8.Future<List<_i40.VisitData>> getVisitStepDataByVisitId(String? visitId) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitStepDataByVisitId, [visitId]),
-            returnValue: _i7.Future<List<_i36.VisitData>>.value(
-              <_i36.VisitData>[],
+            returnValue: _i8.Future<List<_i40.VisitData>>.value(
+              <_i40.VisitData>[],
             ),
           )
-          as _i7.Future<List<_i36.VisitData>>);
+          as _i8.Future<List<_i40.VisitData>>);
 
   @override
-  _i7.Future<List<_i36.VisitData>> getVisitStepDataByUser(String? userCode) =>
+  _i8.Future<List<_i40.VisitData>> getVisitStepDataByUser(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitStepDataByUser, [userCode]),
-            returnValue: _i7.Future<List<_i36.VisitData>>.value(
-              <_i36.VisitData>[],
+            returnValue: _i8.Future<List<_i40.VisitData>>.value(
+              <_i40.VisitData>[],
             ),
           )
-          as _i7.Future<List<_i36.VisitData>>);
+          as _i8.Future<List<_i40.VisitData>>);
 
   @override
-  _i7.Future<List<_i36.VisitData>> getVisitStepDataByClient(
+  _i8.Future<List<_i40.VisitData>> getVisitStepDataByClient(
     String? clientCode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getVisitStepDataByClient, [clientCode]),
-            returnValue: _i7.Future<List<_i36.VisitData>>.value(
-              <_i36.VisitData>[],
+            returnValue: _i8.Future<List<_i40.VisitData>>.value(
+              <_i40.VisitData>[],
             ),
           )
-          as _i7.Future<List<_i36.VisitData>>);
+          as _i8.Future<List<_i40.VisitData>>);
 
   @override
-  _i7.Future<List<_i36.VisitData>> getPendingSyncVisitStepData() =>
+  _i8.Future<List<_i40.VisitData>> getPendingSyncVisitStepData() =>
       (super.noSuchMethod(
             Invocation.method(#getPendingSyncVisitStepData, []),
-            returnValue: _i7.Future<List<_i36.VisitData>>.value(
-              <_i36.VisitData>[],
+            returnValue: _i8.Future<List<_i40.VisitData>>.value(
+              <_i40.VisitData>[],
             ),
           )
-          as _i7.Future<List<_i36.VisitData>>);
+          as _i8.Future<List<_i40.VisitData>>);
 
   @override
-  _i7.Future<void> updateVisitStepDataSyncStatus(
+  _i8.Future<void> updateVisitStepDataSyncStatus(
     int? id,
     bool? isSynced, {
     String? syncError,
@@ -2114,54 +2375,54 @@ class MockApiDatabaseService extends _i1.Mock
               [id, isSynced],
               {#syncError: syncError},
             ),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<Map<String, dynamic>> getVisitStepDataStats() =>
+  _i8.Future<Map<String, dynamic>> getVisitStepDataStats() =>
       (super.noSuchMethod(
             Invocation.method(#getVisitStepDataStats, []),
-            returnValue: _i7.Future<Map<String, dynamic>>.value(
+            returnValue: _i8.Future<Map<String, dynamic>>.value(
               <String, dynamic>{},
             ),
           )
-          as _i7.Future<Map<String, dynamic>>);
+          as _i8.Future<Map<String, dynamic>>);
 
   @override
-  _i7.Future<void> deleteOldVisitStepData({
+  _i8.Future<void> deleteOldVisitStepData({
     Duration? olderThan = const Duration(days: 30),
   }) =>
       (super.noSuchMethod(
             Invocation.method(#deleteOldVisitStepData, [], {
               #olderThan: olderThan,
             }),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteVisitStepDataByVisitId(String? visitId) =>
+  _i8.Future<void> deleteVisitStepDataByVisitId(String? visitId) =>
       (super.noSuchMethod(
             Invocation.method(#deleteVisitStepDataByVisitId, [visitId]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteVisitStepDataByClient(String? clientCode) =>
+  _i8.Future<void> deleteVisitStepDataByClient(String? clientCode) =>
       (super.noSuchMethod(
             Invocation.method(#deleteVisitStepDataByClient, [clientCode]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteVisitStepDataByStepCode(
+  _i8.Future<void> deleteVisitStepDataByStepCode(
     String? visitId,
     int? stepCode,
   ) =>
@@ -2170,51 +2431,51 @@ class MockApiDatabaseService extends _i1.Mock
               visitId,
               stepCode,
             ]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteVisitStepData(int? id) =>
+  _i8.Future<void> deleteVisitStepData(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#deleteVisitStepData, [id]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> savePlannedRoutes(List<_i37.PlannedRoute>? routes) =>
+  _i8.Future<void> savePlannedRoutes(List<_i41.PlannedRoute>? routes) =>
       (super.noSuchMethod(
             Invocation.method(#savePlannedRoutes, [routes]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i37.PlannedRoute>> getPlannedRoutes(String? userCode) =>
+  _i8.Future<List<_i41.PlannedRoute>> getPlannedRoutes(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getPlannedRoutes, [userCode]),
-            returnValue: _i7.Future<List<_i37.PlannedRoute>>.value(
-              <_i37.PlannedRoute>[],
+            returnValue: _i8.Future<List<_i41.PlannedRoute>>.value(
+              <_i41.PlannedRoute>[],
             ),
           )
-          as _i7.Future<List<_i37.PlannedRoute>>);
+          as _i8.Future<List<_i41.PlannedRoute>>);
 
   @override
-  _i7.Future<List<_i37.PlannedRoute>> getAllPlannedRoutes() =>
+  _i8.Future<List<_i41.PlannedRoute>> getAllPlannedRoutes() =>
       (super.noSuchMethod(
             Invocation.method(#getAllPlannedRoutes, []),
-            returnValue: _i7.Future<List<_i37.PlannedRoute>>.value(
-              <_i37.PlannedRoute>[],
+            returnValue: _i8.Future<List<_i41.PlannedRoute>>.value(
+              <_i41.PlannedRoute>[],
             ),
           )
-          as _i7.Future<List<_i37.PlannedRoute>>);
+          as _i8.Future<List<_i41.PlannedRoute>>);
 
   @override
-  _i7.Future<List<_i37.PlannedRoute>> getPlannedRoutesByWeekday(
+  _i8.Future<List<_i41.PlannedRoute>> getPlannedRoutesByWeekday(
     String? userCode,
     int? codeWeekday,
   ) =>
@@ -2223,14 +2484,14 @@ class MockApiDatabaseService extends _i1.Mock
               userCode,
               codeWeekday,
             ]),
-            returnValue: _i7.Future<List<_i37.PlannedRoute>>.value(
-              <_i37.PlannedRoute>[],
+            returnValue: _i8.Future<List<_i41.PlannedRoute>>.value(
+              <_i41.PlannedRoute>[],
             ),
           )
-          as _i7.Future<List<_i37.PlannedRoute>>);
+          as _i8.Future<List<_i41.PlannedRoute>>);
 
   @override
-  _i7.Future<List<_i37.PlannedRoute>> getPlannedRoutesByClient(
+  _i8.Future<List<_i41.PlannedRoute>> getPlannedRoutesByClient(
     String? userCode,
     String? codeClient,
   ) =>
@@ -2239,49 +2500,49 @@ class MockApiDatabaseService extends _i1.Mock
               userCode,
               codeClient,
             ]),
-            returnValue: _i7.Future<List<_i37.PlannedRoute>>.value(
-              <_i37.PlannedRoute>[],
+            returnValue: _i8.Future<List<_i41.PlannedRoute>>.value(
+              <_i41.PlannedRoute>[],
             ),
           )
-          as _i7.Future<List<_i37.PlannedRoute>>);
+          as _i8.Future<List<_i41.PlannedRoute>>);
 
   @override
-  _i7.Future<List<int>> getUniqueWeekdays(String? userCode) =>
+  _i8.Future<List<int>> getUniqueWeekdays(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getUniqueWeekdays, [userCode]),
-            returnValue: _i7.Future<List<int>>.value(<int>[]),
+            returnValue: _i8.Future<List<int>>.value(<int>[]),
           )
-          as _i7.Future<List<int>>);
+          as _i8.Future<List<int>>);
 
   @override
-  _i7.Future<void> deletePlannedRoutes(String? userCode) =>
+  _i8.Future<void> deletePlannedRoutes(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#deletePlannedRoutes, [userCode]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> clearPlannedRoutes() =>
+  _i8.Future<void> clearPlannedRoutes() =>
       (super.noSuchMethod(
             Invocation.method(#clearPlannedRoutes, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveCreateOrder(_i19.CreateOrder? order) =>
+  _i8.Future<void> saveCreateOrder(_i22.CreateOrder? order) =>
       (super.noSuchMethod(
             Invocation.method(#saveCreateOrder, [order]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i19.CreateOrder>> getCreateOrders(
+  _i8.Future<List<_i22.CreateOrder>> getCreateOrders(
     String? codeAgent, {
     bool? isSynced,
   }) =>
@@ -2291,22 +2552,22 @@ class MockApiDatabaseService extends _i1.Mock
               [codeAgent],
               {#isSynced: isSynced},
             ),
-            returnValue: _i7.Future<List<_i19.CreateOrder>>.value(
-              <_i19.CreateOrder>[],
+            returnValue: _i8.Future<List<_i22.CreateOrder>>.value(
+              <_i22.CreateOrder>[],
             ),
           )
-          as _i7.Future<List<_i19.CreateOrder>>);
+          as _i8.Future<List<_i22.CreateOrder>>);
 
   @override
-  _i7.Future<_i19.CreateOrder?> getCreateOrderById(int? id) =>
+  _i8.Future<_i22.CreateOrder?> getCreateOrderById(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#getCreateOrderById, [id]),
-            returnValue: _i7.Future<_i19.CreateOrder?>.value(),
+            returnValue: _i8.Future<_i22.CreateOrder?>.value(),
           )
-          as _i7.Future<_i19.CreateOrder?>);
+          as _i8.Future<_i22.CreateOrder?>);
 
   @override
-  _i7.Future<void> updateCreateOrderSyncStatus(
+  _i8.Future<void> updateCreateOrderSyncStatus(
     int? id,
     bool? isSynced, {
     String? syncError,
@@ -2317,41 +2578,41 @@ class MockApiDatabaseService extends _i1.Mock
               [id, isSynced],
               {#syncError: syncError},
             ),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteCreateOrder(int? id) =>
+  _i8.Future<void> deleteCreateOrder(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#deleteCreateOrder, [id]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i19.CreateOrder>> getUnsyncedCreateOrders() =>
+  _i8.Future<List<_i22.CreateOrder>> getUnsyncedCreateOrders() =>
       (super.noSuchMethod(
             Invocation.method(#getUnsyncedCreateOrders, []),
-            returnValue: _i7.Future<List<_i19.CreateOrder>>.value(
-              <_i19.CreateOrder>[],
+            returnValue: _i8.Future<List<_i22.CreateOrder>>.value(
+              <_i22.CreateOrder>[],
             ),
           )
-          as _i7.Future<List<_i19.CreateOrder>>);
+          as _i8.Future<List<_i22.CreateOrder>>);
 
   @override
-  _i7.Future<void> clearCreateOrderData() =>
+  _i8.Future<void> clearCreateOrderData() =>
       (super.noSuchMethod(
             Invocation.method(#clearCreateOrderData, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateClientCoordinates(
+  _i8.Future<void> updateClientCoordinates(
     String? clientCode,
     double? latitude,
     double? longitude,
@@ -2362,114 +2623,114 @@ class MockApiDatabaseService extends _i1.Mock
               latitude,
               longitude,
             ]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> ensureSalesReqPermissionsTableExists() =>
+  _i8.Future<void> ensureSalesReqPermissionsTableExists() =>
       (super.noSuchMethod(
             Invocation.method(#ensureSalesReqPermissionsTableExists, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveUserOrganizations(
+  _i8.Future<void> saveUserOrganizations(
     String? userCode,
-    List<_i21.UserOrganization>? organizations,
+    List<_i24.UserOrganization>? organizations,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#saveUserOrganizations, [
               userCode,
               organizations,
             ]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i21.UserOrganization>> getUserOrganizations(
+  _i8.Future<List<_i24.UserOrganization>> getUserOrganizations(
     String? userCode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getUserOrganizations, [userCode]),
-            returnValue: _i7.Future<List<_i21.UserOrganization>>.value(
-              <_i21.UserOrganization>[],
+            returnValue: _i8.Future<List<_i24.UserOrganization>>.value(
+              <_i24.UserOrganization>[],
             ),
           )
-          as _i7.Future<List<_i21.UserOrganization>>);
+          as _i8.Future<List<_i24.UserOrganization>>);
 
   @override
-  _i7.Future<_i21.UserOrganization?> getUserOrganizationByCode(String? code) =>
+  _i8.Future<_i24.UserOrganization?> getUserOrganizationByCode(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#getUserOrganizationByCode, [code]),
-            returnValue: _i7.Future<_i21.UserOrganization?>.value(),
+            returnValue: _i8.Future<_i24.UserOrganization?>.value(),
           )
-          as _i7.Future<_i21.UserOrganization?>);
+          as _i8.Future<_i24.UserOrganization?>);
 
   @override
-  _i7.Future<void> saveUserOrganization(_i21.UserOrganization? organization) =>
+  _i8.Future<void> saveUserOrganization(_i24.UserOrganization? organization) =>
       (super.noSuchMethod(
             Invocation.method(#saveUserOrganization, [organization]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateUserOrganization(
+  _i8.Future<void> updateUserOrganization(
     String? code,
-    _i21.UserOrganization? organization,
+    _i24.UserOrganization? organization,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateUserOrganization, [code, organization]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteUserOrganization(String? code) =>
+  _i8.Future<void> deleteUserOrganization(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#deleteUserOrganization, [code]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteUserOrganizationsByUserCode(String? userCode) =>
+  _i8.Future<void> deleteUserOrganizationsByUserCode(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#deleteUserOrganizationsByUserCode, [userCode]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i21.UserOrganization>> getAllUserOrganizations() =>
+  _i8.Future<List<_i24.UserOrganization>> getAllUserOrganizations() =>
       (super.noSuchMethod(
             Invocation.method(#getAllUserOrganizations, []),
-            returnValue: _i7.Future<List<_i21.UserOrganization>>.value(
-              <_i21.UserOrganization>[],
+            returnValue: _i8.Future<List<_i24.UserOrganization>>.value(
+              <_i24.UserOrganization>[],
             ),
           )
-          as _i7.Future<List<_i21.UserOrganization>>);
+          as _i8.Future<List<_i24.UserOrganization>>);
 
   @override
-  _i7.Future<int> getUserOrganizationsCount(String? userCode) =>
+  _i8.Future<int> getUserOrganizationsCount(String? userCode) =>
       (super.noSuchMethod(
             Invocation.method(#getUserOrganizationsCount, [userCode]),
-            returnValue: _i7.Future<int>.value(0),
+            returnValue: _i8.Future<int>.value(0),
           )
-          as _i7.Future<int>);
+          as _i8.Future<int>);
 
   @override
-  _i7.Future<void> ensureTableExists(
+  _i8.Future<void> ensureTableExists(
     String? tableName,
     String? createTableSql, [
     List<String>? indexSqls,
@@ -2480,10 +2741,10 @@ class MockApiDatabaseService extends _i1.Mock
               createTableSql,
               indexSqls,
             ]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
   Map<String, Map<String, dynamic>> getTableCreationSql() =>
@@ -2494,118 +2755,272 @@ class MockApiDatabaseService extends _i1.Mock
           as Map<String, Map<String, dynamic>>);
 
   @override
-  _i7.Future<void> ensureUserOrganizationsTableExists() =>
+  _i8.Future<DateTime?> getLastSyncTime(String? tableName) =>
+      (super.noSuchMethod(
+            Invocation.method(#getLastSyncTime, [tableName]),
+            returnValue: _i8.Future<DateTime?>.value(),
+          )
+          as _i8.Future<DateTime?>);
+
+  @override
+  _i8.Future<void> updateSyncMetadata(
+    String? tableName, {
+    int? recordsCount = 0,
+    int? durationMs = 0,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #updateSyncMetadata,
+              [tableName],
+              {#recordsCount: recordsCount, #durationMs: durationMs},
+            ),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<bool> shouldSync(String? tableName, Duration? maxAge) =>
+      (super.noSuchMethod(
+            Invocation.method(#shouldSync, [tableName, maxAge]),
+            returnValue: _i8.Future<bool>.value(false),
+          )
+          as _i8.Future<bool>);
+
+  @override
+  _i8.Future<List<Map<String, dynamic>>> getAllSyncMetadata() =>
+      (super.noSuchMethod(
+            Invocation.method(#getAllSyncMetadata, []),
+            returnValue: _i8.Future<List<Map<String, dynamic>>>.value(
+              <Map<String, dynamic>>[],
+            ),
+          )
+          as _i8.Future<List<Map<String, dynamic>>>);
+
+  @override
+  _i8.Future<void> clearSyncMetadata(String? tableName) =>
+      (super.noSuchMethod(
+            Invocation.method(#clearSyncMetadata, [tableName]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> clearAllSyncMetadata() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearAllSyncMetadata, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> ensureUserOrganizationsTableExists() =>
       (super.noSuchMethod(
             Invocation.method(#ensureUserOrganizationsTableExists, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> ensureOrderDetailsTablesExist() =>
+  _i8.Future<void> ensureUserProjectsTableExists() =>
+      (super.noSuchMethod(
+            Invocation.method(#ensureUserProjectsTableExists, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> saveUserProjects(
+    String? userCode,
+    List<_i25.UserProject>? projects,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveUserProjects, [userCode, projects]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<List<_i25.UserProject>> getUserProjects(String? userCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#getUserProjects, [userCode]),
+            returnValue: _i8.Future<List<_i25.UserProject>>.value(
+              <_i25.UserProject>[],
+            ),
+          )
+          as _i8.Future<List<_i25.UserProject>>);
+
+  @override
+  _i8.Future<_i25.UserProject?> getUserProjectByCode(String? code) =>
+      (super.noSuchMethod(
+            Invocation.method(#getUserProjectByCode, [code]),
+            returnValue: _i8.Future<_i25.UserProject?>.value(),
+          )
+          as _i8.Future<_i25.UserProject?>);
+
+  @override
+  _i8.Future<void> saveUserProject(_i25.UserProject? project) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveUserProject, [project]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> updateUserProject(String? code, _i25.UserProject? project) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateUserProject, [code, project]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> deleteUserProject(String? code) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteUserProject, [code]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> deleteAllUserProjects(String? userCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteAllUserProjects, [userCode]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<List<_i25.UserProject>> getAllUserProjects() =>
+      (super.noSuchMethod(
+            Invocation.method(#getAllUserProjects, []),
+            returnValue: _i8.Future<List<_i25.UserProject>>.value(
+              <_i25.UserProject>[],
+            ),
+          )
+          as _i8.Future<List<_i25.UserProject>>);
+
+  @override
+  _i8.Future<int> getUserProjectsCount(String? userCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#getUserProjectsCount, [userCode]),
+            returnValue: _i8.Future<int>.value(0),
+          )
+          as _i8.Future<int>);
+
+  @override
+  _i8.Future<void> ensureOrderDetailsTablesExist() =>
       (super.noSuchMethod(
             Invocation.method(#ensureOrderDetailsTablesExist, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i38.Thumbnail>> getThumbnails() =>
+  _i8.Future<List<_i42.Thumbnail>> getThumbnails() =>
       (super.noSuchMethod(
             Invocation.method(#getThumbnails, []),
-            returnValue: _i7.Future<List<_i38.Thumbnail>>.value(
-              <_i38.Thumbnail>[],
+            returnValue: _i8.Future<List<_i42.Thumbnail>>.value(
+              <_i42.Thumbnail>[],
             ),
           )
-          as _i7.Future<List<_i38.Thumbnail>>);
+          as _i8.Future<List<_i42.Thumbnail>>);
 
   @override
-  _i7.Future<int> getTableRowCount(String? tableName) =>
+  _i8.Future<int> getTableRowCount(String? tableName) =>
       (super.noSuchMethod(
             Invocation.method(#getTableRowCount, [tableName]),
-            returnValue: _i7.Future<int>.value(0),
+            returnValue: _i8.Future<int>.value(0),
           )
-          as _i7.Future<int>);
+          as _i8.Future<int>);
 
   @override
-  _i7.Future<void> saveContractTypes(List<_i22.ContractType>? contractTypes) =>
+  _i8.Future<void> saveContractTypes(List<_i26.ContractType>? contractTypes) =>
       (super.noSuchMethod(
             Invocation.method(#saveContractTypes, [contractTypes]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i22.ContractType>> getContractTypes() =>
+  _i8.Future<List<_i26.ContractType>> getContractTypes() =>
       (super.noSuchMethod(
             Invocation.method(#getContractTypes, []),
-            returnValue: _i7.Future<List<_i22.ContractType>>.value(
-              <_i22.ContractType>[],
+            returnValue: _i8.Future<List<_i26.ContractType>>.value(
+              <_i26.ContractType>[],
             ),
           )
-          as _i7.Future<List<_i22.ContractType>>);
+          as _i8.Future<List<_i26.ContractType>>);
 
   @override
-  _i7.Future<bool> hasContractTypes() =>
+  _i8.Future<bool> hasContractTypes() =>
       (super.noSuchMethod(
             Invocation.method(#hasContractTypes, []),
-            returnValue: _i7.Future<bool>.value(false),
+            returnValue: _i8.Future<bool>.value(false),
           )
-          as _i7.Future<bool>);
+          as _i8.Future<bool>);
 
   @override
-  _i7.Future<void> clearContractTypes() =>
+  _i8.Future<void> clearContractTypes() =>
       (super.noSuchMethod(
             Invocation.method(#clearContractTypes, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveDistrictContracting(
-    List<_i23.DistrictContracting>? districts,
+  _i8.Future<void> saveDistrictContracting(
+    List<_i27.DistrictContracting>? districts,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#saveDistrictContracting, [districts]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i23.DistrictContracting>> getDistrictContracting() =>
+  _i8.Future<List<_i27.DistrictContracting>> getDistrictContracting() =>
       (super.noSuchMethod(
             Invocation.method(#getDistrictContracting, []),
-            returnValue: _i7.Future<List<_i23.DistrictContracting>>.value(
-              <_i23.DistrictContracting>[],
+            returnValue: _i8.Future<List<_i27.DistrictContracting>>.value(
+              <_i27.DistrictContracting>[],
             ),
           )
-          as _i7.Future<List<_i23.DistrictContracting>>);
+          as _i8.Future<List<_i27.DistrictContracting>>);
 
   @override
-  _i7.Future<bool> hasDistrictContracting() =>
+  _i8.Future<bool> hasDistrictContracting() =>
       (super.noSuchMethod(
             Invocation.method(#hasDistrictContracting, []),
-            returnValue: _i7.Future<bool>.value(false),
+            returnValue: _i8.Future<bool>.value(false),
           )
-          as _i7.Future<bool>);
+          as _i8.Future<bool>);
 
   @override
-  _i7.Future<void> clearDistrictContracting() =>
+  _i8.Future<void> clearDistrictContracting() =>
       (super.noSuchMethod(
             Invocation.method(#clearDistrictContracting, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> saveProductImages(
-    List<_i39.ProductImage>? images, {
+  _i8.Future<void> saveProductImages(
+    List<_i43.ProductImage>? images, {
     String? productCode,
   }) =>
       (super.noSuchMethod(
@@ -2614,159 +3029,284 @@ class MockApiDatabaseService extends _i1.Mock
               [images],
               {#productCode: productCode},
             ),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<List<_i39.ProductImage>> getProductImages(String? productCode) =>
+  _i8.Future<List<_i43.ProductImage>> getProductImages(String? productCode) =>
       (super.noSuchMethod(
             Invocation.method(#getProductImages, [productCode]),
-            returnValue: _i7.Future<List<_i39.ProductImage>>.value(
-              <_i39.ProductImage>[],
+            returnValue: _i8.Future<List<_i43.ProductImage>>.value(
+              <_i43.ProductImage>[],
             ),
           )
-          as _i7.Future<List<_i39.ProductImage>>);
+          as _i8.Future<List<_i43.ProductImage>>);
 
   @override
-  _i7.Future<_i39.ProductImage?> getMainProductImage(String? productCode) =>
+  _i8.Future<_i43.ProductImage?> getMainProductImage(String? productCode) =>
       (super.noSuchMethod(
             Invocation.method(#getMainProductImage, [productCode]),
-            returnValue: _i7.Future<_i39.ProductImage?>.value(),
+            returnValue: _i8.Future<_i43.ProductImage?>.value(),
           )
-          as _i7.Future<_i39.ProductImage?>);
+          as _i8.Future<_i43.ProductImage?>);
 
   @override
-  _i7.Future<List<_i39.ProductImage>> getAllProductImages() =>
+  _i8.Future<List<_i43.ProductImage>> getAllProductImages() =>
       (super.noSuchMethod(
             Invocation.method(#getAllProductImages, []),
-            returnValue: _i7.Future<List<_i39.ProductImage>>.value(
-              <_i39.ProductImage>[],
+            returnValue: _i8.Future<List<_i43.ProductImage>>.value(
+              <_i43.ProductImage>[],
             ),
           )
-          as _i7.Future<List<_i39.ProductImage>>);
+          as _i8.Future<List<_i43.ProductImage>>);
 
   @override
-  _i7.Future<bool> hasProductImages() =>
+  _i8.Future<bool> hasProductImages() =>
       (super.noSuchMethod(
             Invocation.method(#hasProductImages, []),
-            returnValue: _i7.Future<bool>.value(false),
+            returnValue: _i8.Future<bool>.value(false),
           )
-          as _i7.Future<bool>);
+          as _i8.Future<bool>);
 
   @override
-  _i7.Future<int> getProductImagesCount() =>
+  _i8.Future<int> getProductImagesCount() =>
       (super.noSuchMethod(
             Invocation.method(#getProductImagesCount, []),
-            returnValue: _i7.Future<int>.value(0),
+            returnValue: _i8.Future<int>.value(0),
           )
-          as _i7.Future<int>);
+          as _i8.Future<int>);
 
   @override
-  _i7.Future<void> clearProductImages() =>
+  _i8.Future<void> clearProductImages() =>
       (super.noSuchMethod(
             Invocation.method(#clearProductImages, []),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteProductImages(String? productCode) =>
+  _i8.Future<void> deleteProductImages(String? productCode) =>
       (super.noSuchMethod(
             Invocation.method(#deleteProductImages, [productCode]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<List<String>> getAllProductCodes() =>
+      (super.noSuchMethod(
+            Invocation.method(#getAllProductCodes, []),
+            returnValue: _i8.Future<List<String>>.value(<String>[]),
+          )
+          as _i8.Future<List<String>>);
+
+  @override
+  _i8.Future<bool> productExists(String? productCode) =>
+      (super.noSuchMethod(
+            Invocation.method(#productExists, [productCode]),
+            returnValue: _i8.Future<bool>.value(false),
+          )
+          as _i8.Future<bool>);
+
+  @override
+  _i8.Future<int> upsertProductImages(
+    List<_i43.ProductImage>? images, {
+    Set<String>? validProductCodes,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #upsertProductImages,
+              [images],
+              {#validProductCodes: validProductCodes},
+            ),
+            returnValue: _i8.Future<int>.value(0),
+          )
+          as _i8.Future<int>);
+
+  @override
+  _i8.Future<Map<String, List<_i43.ProductImage>>> getProductImagesBatch(
+    List<String>? productCodes,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getProductImagesBatch, [productCodes]),
+            returnValue: _i8.Future<Map<String, List<_i43.ProductImage>>>.value(
+              <String, List<_i43.ProductImage>>{},
+            ),
+          )
+          as _i8.Future<Map<String, List<_i43.ProductImage>>>);
+
+  @override
+  _i8.Future<Map<String, _i43.ProductImage>> getMainProductImagesBatch(
+    List<String>? productCodes,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getMainProductImagesBatch, [productCodes]),
+            returnValue: _i8.Future<Map<String, _i43.ProductImage>>.value(
+              <String, _i43.ProductImage>{},
+            ),
+          )
+          as _i8.Future<Map<String, _i43.ProductImage>>);
+
+  @override
+  _i8.Future<void> saveSalesChannels(List<_i44.SalesChannel>? channels) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveSalesChannels, [channels]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> saveTradingPointTypes(List<_i45.TradingPointType>? types) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveTradingPointTypes, [types]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> saveClientClasses(List<_i46.ClientClass>? classes) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveClientClasses, [classes]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<List<_i44.SalesChannel>> getSalesChannels() =>
+      (super.noSuchMethod(
+            Invocation.method(#getSalesChannels, []),
+            returnValue: _i8.Future<List<_i44.SalesChannel>>.value(
+              <_i44.SalesChannel>[],
+            ),
+          )
+          as _i8.Future<List<_i44.SalesChannel>>);
+
+  @override
+  _i8.Future<List<_i45.TradingPointType>> getTradingPointTypes({
+    String? channelGroup,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#getTradingPointTypes, [], {
+              #channelGroup: channelGroup,
+            }),
+            returnValue: _i8.Future<List<_i45.TradingPointType>>.value(
+              <_i45.TradingPointType>[],
+            ),
+          )
+          as _i8.Future<List<_i45.TradingPointType>>);
+
+  @override
+  _i8.Future<List<_i46.ClientClass>> getClientClasses() =>
+      (super.noSuchMethod(
+            Invocation.method(#getClientClasses, []),
+            returnValue: _i8.Future<List<_i46.ClientClass>>.value(
+              <_i46.ClientClass>[],
+            ),
+          )
+          as _i8.Future<List<_i46.ClientClass>>);
+
+  @override
+  _i8.Future<void> ensureSalesClassifiersTablesExist() =>
+      (super.noSuchMethod(
+            Invocation.method(#ensureSalesClassifiersTablesExist, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
 }
 
 /// A class which mocks [DatabaseHelper].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDatabaseHelper extends _i1.Mock implements _i40.DatabaseHelper {
+class MockDatabaseHelper extends _i1.Mock implements _i47.DatabaseHelper {
   MockDatabaseHelper() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i7.Future<_i5.Database> get database =>
+  _i8.Future<_i6.Database> get database =>
       (super.noSuchMethod(
             Invocation.getter(#database),
-            returnValue: _i7.Future<_i5.Database>.value(
-              _FakeDatabase_3(this, Invocation.getter(#database)),
+            returnValue: _i8.Future<_i6.Database>.value(
+              _FakeDatabase_5(this, Invocation.getter(#database)),
             ),
           )
-          as _i7.Future<_i5.Database>);
+          as _i8.Future<_i6.Database>);
 
   @override
-  _i7.Future<void> saveUser(Map<String, dynamic>? userData) =>
+  _i8.Future<void> saveUser(Map<String, dynamic>? userData) =>
       (super.noSuchMethod(
             Invocation.method(#saveUser, [userData]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<Map<String, dynamic>?> getUserByCredentials(
+  _i8.Future<Map<String, dynamic>?> getUserByCredentials(
     String? username,
     String? password,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getUserByCredentials, [username, password]),
-            returnValue: _i7.Future<Map<String, dynamic>?>.value(),
+            returnValue: _i8.Future<Map<String, dynamic>?>.value(),
           )
-          as _i7.Future<Map<String, dynamic>?>);
+          as _i8.Future<Map<String, dynamic>?>);
 
   @override
-  _i7.Future<Map<String, dynamic>?> getUserByCode(String? code) =>
+  _i8.Future<Map<String, dynamic>?> getUserByCode(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#getUserByCode, [code]),
-            returnValue: _i7.Future<Map<String, dynamic>?>.value(),
+            returnValue: _i8.Future<Map<String, dynamic>?>.value(),
           )
-          as _i7.Future<Map<String, dynamic>?>);
+          as _i8.Future<Map<String, dynamic>?>);
 
   @override
-  _i7.Future<List<Map<String, dynamic>>> getAllUsers() =>
+  _i8.Future<List<Map<String, dynamic>>> getAllUsers() =>
       (super.noSuchMethod(
             Invocation.method(#getAllUsers, []),
-            returnValue: _i7.Future<List<Map<String, dynamic>>>.value(
+            returnValue: _i8.Future<List<Map<String, dynamic>>>.value(
               <Map<String, dynamic>>[],
             ),
           )
-          as _i7.Future<List<Map<String, dynamic>>>);
+          as _i8.Future<List<Map<String, dynamic>>>);
 
   @override
-  _i7.Future<void> updateUser(String? code, Map<String, dynamic>? userData) =>
+  _i8.Future<void> updateUser(String? code, Map<String, dynamic>? userData) =>
       (super.noSuchMethod(
             Invocation.method(#updateUser, [code, userData]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> deleteUser(String? code) =>
+  _i8.Future<void> deleteUser(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#deleteUser, [code]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> clearAllUsersExcept(String? code) =>
+  _i8.Future<void> clearAllUsersExcept(String? code) =>
       (super.noSuchMethod(
             Invocation.method(#clearAllUsersExcept, [code]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<void> updateClientCoordinates(
+  _i8.Future<void> updateClientCoordinates(
     String? clientCode,
     double? latitude,
     double? longitude,
@@ -2777,16 +3317,16 @@ class MockDatabaseHelper extends _i1.Mock implements _i40.DatabaseHelper {
               latitude,
               longitude,
             ]),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
           )
-          as _i7.Future<void>);
+          as _i8.Future<void>);
 
   @override
-  _i7.Future<int> getTableRowCount(String? tableName) =>
+  _i8.Future<int> getTableRowCount(String? tableName) =>
       (super.noSuchMethod(
             Invocation.method(#getTableRowCount, [tableName]),
-            returnValue: _i7.Future<int>.value(0),
+            returnValue: _i8.Future<int>.value(0),
           )
-          as _i7.Future<int>);
+          as _i8.Future<int>);
 }

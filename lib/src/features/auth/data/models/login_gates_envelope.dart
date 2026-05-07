@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'device_binding.dart';
+
 /// Envelope for `POST /api/auth/token/` (and `/refresh/`) responses.
 ///
 /// Bundles the JWT access + refresh pair with the backend's `gates` block
@@ -38,6 +40,12 @@ class LoginGatesEnvelope {
   /// `licenseValidTo == null` as "no expiry" instead of "missing".
   final bool bypass;
 
+  /// Echo of the server-side device binding for this session. `null`
+  /// during Stage 1 of the binding rollout (record-only) when the
+  /// backend may legitimately omit the block. Always non-null after
+  /// Stage 2 once the strict mobile flow ships.
+  final DeviceBinding? device;
+
   const LoginGatesEnvelope({
     required this.accessToken,
     required this.refreshToken,
@@ -46,6 +54,7 @@ class LoginGatesEnvelope {
     required this.organizationId,
     required this.serverTime,
     required this.bypass,
+    this.device,
   });
 
   /// Tolerates missing optional fields by defaulting to `null`/`false`.
@@ -74,6 +83,13 @@ class LoginGatesEnvelope {
       serverTime = DateTime.now().toUtc();
     }
 
+    // The `device` block lives at the SAME LEVEL as `access` / `refresh`
+    // / `gates`, NOT inside `gates`. See backend contract.
+    final deviceRaw = json[_Keys.device];
+    final DeviceBinding? device = deviceRaw is Map<String, dynamic>
+        ? DeviceBinding.fromJson(deviceRaw)
+        : null;
+
     return LoginGatesEnvelope(
       accessToken: access,
       refreshToken: refresh,
@@ -82,11 +98,12 @@ class LoginGatesEnvelope {
       organizationId: gates[_Keys.organizationId] as String?,
       serverTime: serverTime,
       bypass: gates[_Keys.bypass] as bool? ?? false,
+      device: device,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{
+    final map = <String, dynamic>{
       _Keys.access: accessToken,
       _Keys.refresh: refreshToken,
       _Keys.gates: <String, dynamic>{
@@ -97,6 +114,10 @@ class LoginGatesEnvelope {
         _Keys.bypass: bypass,
       },
     };
+    if (device != null) {
+      map[_Keys.device] = device!.toJson();
+    }
+    return map;
   }
 
   /// Compact JSON representation for SharedPreferences storage.
@@ -123,6 +144,7 @@ class LoginGatesEnvelope {
     String? organizationId,
     DateTime? serverTime,
     bool? bypass,
+    DeviceBinding? device,
   }) {
     return LoginGatesEnvelope(
       accessToken: accessToken ?? this.accessToken,
@@ -132,6 +154,7 @@ class LoginGatesEnvelope {
       organizationId: organizationId ?? this.organizationId,
       serverTime: serverTime ?? this.serverTime,
       bypass: bypass ?? this.bypass,
+      device: device ?? this.device,
     );
   }
 
@@ -145,7 +168,8 @@ class LoginGatesEnvelope {
         other.licenseValidTo == licenseValidTo &&
         other.organizationId == organizationId &&
         other.serverTime == serverTime &&
-        other.bypass == bypass;
+        other.bypass == bypass &&
+        other.device == device;
   }
 
   @override
@@ -157,6 +181,7 @@ class LoginGatesEnvelope {
         organizationId,
         serverTime,
         bypass,
+        device,
       );
 
   static DateTime? _parseUtc(Object? value) {
@@ -175,6 +200,7 @@ class _Keys {
   static const String access = 'access';
   static const String refresh = 'refresh';
   static const String gates = 'gates';
+  static const String device = 'device';
   static const String userActiveEnd = 'user_active_end';
   static const String licenseValidTo = 'license_valid_to';
   static const String organizationId = 'organization_id';

@@ -3005,5 +3005,30 @@
     }
   },
   "clockTamperingDetected": "Qurilma soati o'zgargan. Ruxsatni tekshirish uchun internetga ulaning.",
-  "noInternetForFirstLogin": "Birinchi kirish uchun internet ulanishi kerak."
+  "noInternetForFirstLogin": "Birinchi kirish uchun internet ulanishi kerak.",
+  "mobileDeviceBoundToOtherUser": "Bu qurilma boshqa foydalanuvchiga biriktirilgan. Administratordan bog'lanishni olib tashlashni so'rang.",
+  "mobileUserBoundToOtherDevice": "Sizning hisobingiz boshqa telefonga biriktirilgan. Eski bog'lanishni olib tashlash uchun administratorga murojaat qiling.",
+  "deviceBindingInvalid": "Qurilma sessiyasi endi yaroqsiz. Iltimos, qaytadan kiring.",
+  "sessionRevoked": "Sessiyangiz to'xtatildi. Iltimos, qaytadan kiring.",
+  "retry": "Qayta urinish",
+  "oneCUserNotFound": "Bu foydalanuvchi tizim hisobida ro'yxatdan o'tmagan. Administratorga murojaat qiling.",
+  "debugBackendUrl": "Backend: {url}",
+  "@debugBackendUrl": {
+    "placeholders": {
+      "url": { "type": "String" }
+    }
+  },
+  "debugTestConnection": "Aloqani tekshirish",
+  "debugConnectionOk": "OK · {ms}ms",
+  "@debugConnectionOk": {
+    "placeholders": {
+      "ms": { "type": "int" }
+    }
+  },
+  "debugConnectionFailed": "Xato: {reason}",
+  "@debugConnectionFailed": {
+    "placeholders": {
+      "reason": { "type": "String" }
+    }
+  }
 }

@@ -94,5 +94,59 @@ void main() {
       final c = a.copyWith(bypass: true);
       expect(c, isNot(equals(a)));
     });
+
+    // ─── device-binding additions ─────────────────────────────────────
+    test('fromJson parses the optional `device` block', () {
+      final env = LoginGatesEnvelope.fromJson({
+        ...fullJson,
+        'device': {
+          'binding_id': 'bind-1',
+          'client_type': 'mobile',
+          'session_id': 'sess-1',
+        },
+      });
+      expect(env.device, isNotNull);
+      expect(env.device!.bindingId, 'bind-1');
+      expect(env.device!.clientType, 'mobile');
+      expect(env.device!.sessionId, 'sess-1');
+    });
+
+    test('fromJson tolerates a missing `device` block (Stage 1 grace)', () {
+      final env = LoginGatesEnvelope.fromJson(fullJson);
+      expect(env.device, isNull);
+    });
+
+    test('toJson omits the `device` key when device is null', () {
+      final env = LoginGatesEnvelope.fromJson(fullJson);
+      expect(env.toJson().containsKey('device'), isFalse);
+    });
+
+    test('toJson serialises the `device` block at the same level as gates', () {
+      final env = LoginGatesEnvelope.fromJson({
+        ...fullJson,
+        'device': {
+          'binding_id': 'bind-1',
+          'client_type': 'mobile',
+          'session_id': 'sess-1',
+        },
+      });
+      final json = env.toJson();
+      expect(json.containsKey('device'), isTrue);
+      expect(json.containsKey('gates'), isTrue);
+      expect((json['device'] as Map)['binding_id'], 'bind-1');
+    });
+
+    test('equality differs when device differs', () {
+      final without = LoginGatesEnvelope.fromJson(fullJson);
+      final withDevice = LoginGatesEnvelope.fromJson({
+        ...fullJson,
+        'device': {
+          'binding_id': 'bind-1',
+          'client_type': 'mobile',
+          'session_id': 'sess-1',
+        },
+      });
+      expect(without, isNot(equals(withDevice)));
+    });
   });
 }

@@ -5297,4 +5297,37 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noInternetForFirstLogin => 'Первый вход требует подключения к интернету.';
+
+  @override
+  String get mobileDeviceBoundToOtherUser => 'Это устройство привязано к другому пользователю. Попросите администратора снять привязку.';
+
+  @override
+  String get mobileUserBoundToOtherDevice => 'Ваш аккаунт уже привязан к другому телефону. Попросите администратора снять старую привязку, чтобы войти на этом устройстве.';
+
+  @override
+  String get deviceBindingInvalid => 'Сессия устройства больше не действительна. Войдите снова.';
+
+  @override
+  String get sessionRevoked => 'Сессия отозвана. Войдите снова.';
+
+  @override
+  String get oneCUserNotFound => 'Этот пользователь не зарегистрирован в учётной системе. Обратитесь к администратору.';
+
+  @override
+  String debugBackendUrl(String url) {
+    return 'Backend: $url';
+  }
+
+  @override
+  String get debugTestConnection => 'Проверить подключение';
+
+  @override
+  String debugConnectionOk(int ms) {
+    return 'OK · ${ms}ms';
+  }
+
+  @override
+  String debugConnectionFailed(String reason) {
+    return 'Ошибка: $reason';
+  }
 }

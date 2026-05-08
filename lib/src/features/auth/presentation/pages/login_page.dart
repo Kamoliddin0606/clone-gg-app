@@ -579,7 +579,11 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       case NetworkFailure():
         return l10n.networkError;
       case UnknownAuthFailure():
-        return l10n.networkError;
+        // Server responded with an unrecognised `error.code` — surface
+        // a "server error" message rather than the misleading "network
+        // error". The raw code goes to logs (see TokenService) for
+        // ops to investigate.
+        return l10n.serverError;
       case MobileDeviceBoundToOtherUserFailure():
         return l10n.mobileDeviceBoundToOtherUser;
       case MobileUserBoundToOtherDeviceFailure():

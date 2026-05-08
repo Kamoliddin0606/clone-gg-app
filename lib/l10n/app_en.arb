@@ -3211,5 +3211,10 @@
     "placeholders": {
       "reason": { "type": "String" }
     }
-  }
+  },
+  "imageNotAvailable": "Image not available",
+  "imageProcessing": "Image is being processed",
+  "imageLoadFailed": "Could not load image",
+  "imageLoadRetry": "Retry",
+  "projectImageEmpty": "No images yet"
 }

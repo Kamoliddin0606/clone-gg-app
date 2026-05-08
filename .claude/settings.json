@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/kamoliddin/Documents/GitHub/SelUp_Backend/src/apps/media/**)",
+      "Read(//Users/kamoliddin/Documents/GitHub/SelUp_Backend/src/apps/mobile_compat_api/**)",
+      "Read(//Users/kamoliddin/Documents/GitHub/SelUp_Backend/src/apps/admin_api/**)",
+      "Read(//Users/kamoliddin/Documents/GitHub/SelUp_Backend/src/apps/catalog/**)",
+      "Read(//Users/kamoliddin/Documents/GitHub/SelUp_Backend/src/apps/sync/**)"
+    ]
+  }
+}

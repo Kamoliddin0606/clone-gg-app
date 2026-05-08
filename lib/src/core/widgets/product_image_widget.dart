@@ -1,65 +1,77 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
+import 'package:flutter_blurhash/flutter_blurhash.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/agent_organization_context.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/image_cache_manager.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/image_target_type.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/new_backend_image_repository.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/unified_image.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
 
-/// Adaptive product image widget with size-aware URL selection
-/// 
-/// This widget automatically:
-/// - Fetches product image from cache/database
-/// - Selects optimal image size based on display requirements
-/// - Shows shimmer loading placeholder
-/// - Falls back to default icon on error or missing image
-/// - Supports hero animations for detail views
-/// 
-/// Usage:
-/// ```dart
-/// ProductImageWidget(
-///   productCode: 'PRODUCT_001',
-///   size: ProductImageSize.small,
-///   width: 56,
-///   height: 56,
-/// )
-/// ```
+/// Image size buckets a product widget may request.
+///
+/// The four values map onto the variant ladder the backend
+/// produces (thumbnail/small share the small WebP; medium uses
+/// medium; large uses large). Public enum because it's part of
+/// `ProductImageWidget`'s API.
+enum ProductImageSize { thumbnail, small, medium, large }
+
+/// Adaptive product image widget with size-aware URL selection.
+///
+/// Reads images directly from the V2 backend's
+/// `/api/mobile/v1/images/` endpoint via [NewBackendImageRepository].
+/// The legacy media host is no longer consulted — uploads happen
+/// through the web admin panel; the mobile app is a read-only
+/// consumer.
 class ProductImageWidget extends StatefulWidget {
-  /// Product code to fetch image for
+  /// Product 1C code (`code_1c`). The backend resolves the image
+  /// rows for `(target_type=product, external_code, target_organization_id)`.
   final String productCode;
-  
-  /// Desired image size category
+
+  /// Owning organisation UUID. When omitted, falls back to the
+  /// agent's primary org via [AgentOrganizationContext]. Multi-org
+  /// agents who view a product from a non-primary org MUST pass it
+  /// explicitly.
+  final String? targetOrganizationId;
+
+  /// Desired image size category.
   final ProductImageSize size;
-  
-  /// Widget width (optional)
+
+  /// Widget width (optional).
   final double? width;
-  
-  /// Widget height (optional)
+
+  /// Widget height (optional).
   final double? height;
-  
-  /// How to fit the image within bounds
+
+  /// How to fit the image within bounds.
   final BoxFit fit;
-  
-  /// Border radius for image container
+
+  /// Border radius for image container.
   final BorderRadius? borderRadius;
-  
-  /// Optional hero tag for animations
+
+  /// Optional hero tag for animations.
   final String? heroTag;
-  
-  /// Custom placeholder widget
+
+  /// Custom placeholder widget (fully replaces the built-in branch).
   final Widget? placeholder;
-  
-  /// Custom error widget
+
+  /// Custom error widget (fully replaces the built-in branch).
   final Widget? errorWidget;
-  
-  /// Background color for container
+
+  /// Background color for container.
   final Color? backgroundColor;
-  
-  /// Whether to show shimmer animation during load
+
+  /// Whether to show shimmer animation during load. Ignored when a
+  /// BlurHash placeholder is available — the BlurHash supersedes
+  /// the shimmer.
   final bool showShimmer;
 
   const ProductImageWidget({
     super.key,
     required this.productCode,
+    this.targetOrganizationId,
     this.size = ProductImageSize.small,
     this.width,
     this.height,
@@ -78,13 +90,13 @@ class ProductImageWidget extends StatefulWidget {
 
 class _ProductImageWidgetState extends State<ProductImageWidget>
     with SingleTickerProviderStateMixin {
-  final ProductImageService _imageService = sl<ProductImageService>();
-  
-  ProductImage? _image;
+  final NewBackendImageRepository _repo = sl<NewBackendImageRepository>();
+
+  UnifiedImage? _image;
   bool _isLoading = true;
   bool _hasError = false;
-  
-  // Shimmer animation
+  CancelToken? _cancelToken;
+
   late AnimationController _shimmerController;
   late Animation<double> _shimmerAnimation;
 
@@ -98,13 +110,15 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
   @override
   void didUpdateWidget(ProductImageWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.productCode != widget.productCode) {
+    if (oldWidget.productCode != widget.productCode ||
+        oldWidget.targetOrganizationId != widget.targetOrganizationId) {
       _loadImage();
     }
   }
 
   @override
   void dispose() {
+    _cancelToken?.cancel('ProductImageWidget disposed');
     _shimmerController.dispose();
     super.dispose();
   }
@@ -125,8 +139,9 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
   Future<void> _loadImage() async {
     if (widget.productCode.isEmpty) {
       if (kDebugMode) {
-        print('ProductImageWidget: Empty productCode');
+        debugPrint('ProductImageWidget: empty productCode');
       }
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _hasError = true;
@@ -139,48 +154,47 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
       _hasError = false;
     });
 
+    _cancelToken?.cancel('ProductImageWidget reloading');
+    _cancelToken = CancelToken();
+
     try {
-      if (kDebugMode) {
-        print('ProductImageWidget: Loading image for productCode: ${widget.productCode}');
-      }
-      final image = await _imageService.getMainImage(widget.productCode);
-      if (kDebugMode) {
-        print('ProductImageWidget: Got image: ${image != null ? "YES" : "NULL"}, hasValidUrl: ${image != null ? _imageService.hasValidUrl(image) : false}');
-        if (image != null) {
-          print('ProductImageWidget: Image URLs - thumbnail: ${image.imageThumbnailUrl}, sm: ${image.imageSmUrl}, md: ${image.imageMdUrl}, lg: ${image.imageLgUrl}');
-        }
-      }
-      if (mounted) {
-        setState(() {
-          _image = image;
-          _isLoading = false;
-          _hasError = image == null || !_imageService.hasValidUrl(image);
-        });
-        if (!_isLoading) {
-          _shimmerController.stop();
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('ProductImageWidget: Error loading image: $e');
-      }
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-        });
+      final image = await _repo.primaryForTarget(
+        targetType: ImageTargetType.product,
+        targetCode1c: widget.productCode,
+        targetOrganizationId: _resolveOrgId(),
+        cancelToken: _cancelToken,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _image = image;
+        _isLoading = false;
+        _hasError = image == null || !image.hasUrl;
+      });
+      if (!_isLoading) {
         _shimmerController.stop();
       }
+    } catch (e) {
+      if (e is DioException && CancelToken.isCancel(e)) return;
+      if (kDebugMode) {
+        debugPrint('ProductImageWidget: error loading image: $e');
+      }
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+      _shimmerController.stop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final effectiveBorderRadius = widget.borderRadius ?? BorderRadius.circular(8);
-    
+    final effectiveBorderRadius =
+        widget.borderRadius ?? BorderRadius.circular(8);
+
     Widget content;
-    
     if (_isLoading) {
       content = _buildLoadingState(theme, effectiveBorderRadius);
     } else if (_hasError || _image == null) {
@@ -188,21 +202,26 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
     } else {
       content = _buildImageState(theme, effectiveBorderRadius);
     }
-    
-    // Wrap with hero if tag provided
+
     if (widget.heroTag != null) {
-      return Hero(
-        tag: widget.heroTag!,
-        child: content,
-      );
+      return Hero(tag: widget.heroTag!, child: content);
     }
-    
     return content;
   }
 
   Widget _buildLoadingState(ThemeData theme, BorderRadius borderRadius) {
-    if (widget.placeholder != null) {
-      return widget.placeholder!;
+    if (widget.placeholder != null) return widget.placeholder!;
+
+    final image = _image;
+    if (image != null && image.hasBlurhash) {
+      return ClipRRect(
+        borderRadius: borderRadius,
+        child: SizedBox(
+          width: widget.width,
+          height: widget.height,
+          child: BlurHash(hash: image.blurhash),
+        ),
+      );
     }
 
     if (!widget.showShimmer) {
@@ -246,10 +265,7 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
   }
 
   Widget _buildErrorState(ThemeData theme, BorderRadius borderRadius) {
-    if (widget.errorWidget != null) {
-      return widget.errorWidget!;
-    }
-
+    if (widget.errorWidget != null) return widget.errorWidget!;
     return _buildContainer(
       theme,
       borderRadius,
@@ -262,8 +278,8 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
   }
 
   Widget _buildImageState(ThemeData theme, BorderRadius borderRadius) {
-    final imageUrl = _imageService.selectImageUrl(_image, widget.size);
-    
+    final image = _image!;
+    final imageUrl = image.urlForSize(_unifiedSize(widget.size));
     if (imageUrl == null || imageUrl.isEmpty) {
       return _buildErrorState(theme, borderRadius);
     }
@@ -272,17 +288,35 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
       borderRadius: borderRadius,
       child: CachedNetworkImage(
         imageUrl: imageUrl,
+        cacheManager: ImageCacheManager.instance,
         width: widget.width,
         height: widget.height,
         fit: widget.fit,
-        placeholder: (context, url) => _buildLoadingState(theme, borderRadius),
-        errorWidget: (context, url, error) => _buildErrorState(theme, borderRadius),
+        placeholder: (context, url) =>
+            _buildPlaceholderForCachedImage(theme, borderRadius, image),
+        errorWidget: (context, url, error) =>
+            _buildErrorState(theme, borderRadius),
         fadeInDuration: const Duration(milliseconds: 200),
         fadeOutDuration: const Duration(milliseconds: 200),
         memCacheWidth: _getMemCacheSize(),
         memCacheHeight: _getMemCacheSize(),
       ),
     );
+  }
+
+  Widget _buildPlaceholderForCachedImage(
+    ThemeData theme,
+    BorderRadius borderRadius,
+    UnifiedImage image,
+  ) {
+    if (image.hasBlurhash) {
+      return SizedBox(
+        width: widget.width,
+        height: widget.height,
+        child: BlurHash(hash: image.blurhash),
+      );
+    }
+    return _buildLoadingState(theme, borderRadius);
   }
 
   Widget _buildContainer(
@@ -294,10 +328,12 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
     return Container(
       width: widget.width,
       height: widget.height,
-      decoration: decoration ?? BoxDecoration(
-        color: widget.backgroundColor ?? theme.colorScheme.surfaceContainerHighest,
-        borderRadius: borderRadius,
-      ),
+      decoration: decoration ??
+          BoxDecoration(
+            color: widget.backgroundColor ??
+                theme.colorScheme.surfaceContainerHighest,
+            borderRadius: borderRadius,
+          ),
       child: child != null ? Center(child: child) : null,
     );
   }
@@ -305,9 +341,8 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
   double _getIconSize() {
     final minDimension = (widget.width ?? 56).clamp(24.0, double.infinity);
     final heightDimension = widget.height ?? minDimension;
-    final size = minDimension < heightDimension ? minDimension : heightDimension;
-    
-    // Scale icon based on container size
+    final size =
+        minDimension < heightDimension ? minDimension : heightDimension;
     if (size <= 48) return 20;
     if (size <= 80) return 28;
     if (size <= 120) return 36;
@@ -316,7 +351,6 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
   }
 
   int? _getMemCacheSize() {
-    // Optimize memory cache based on size category
     switch (widget.size) {
       case ProductImageSize.thumbnail:
         return 150;
@@ -325,98 +359,34 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
       case ProductImageSize.medium:
         return 600;
       case ProductImageSize.large:
-        return null; // Full resolution
+        return null;
     }
+  }
+
+  /// Resolves the org id passed to the repository. Explicit
+  /// [ProductImageWidget.targetOrganizationId] always wins (multi-org
+  /// agents). Otherwise we fall back to the agent's primary org via
+  /// [AgentOrganizationContext]. Empty string when neither is
+  /// available — the repository fails closed in that case.
+  String _resolveOrgId() {
+    final explicit = widget.targetOrganizationId;
+    if (explicit != null && explicit.isNotEmpty) return explicit;
+    if (sl.isRegistered<AgentOrganizationContext>()) {
+      return sl<AgentOrganizationContext>().primaryOrganizationId ?? '';
+    }
+    return '';
   }
 }
 
-/// Synchronous version that uses pre-loaded cache
-/// 
-/// Use this when you've already called preloadMainImages() and want
-/// synchronous access without additional async operations.
-class ProductImageWidgetSync extends StatelessWidget {
-  final String productCode;
-  final ProductImageSize size;
-  final double? width;
-  final double? height;
-  final BoxFit fit;
-  final BorderRadius? borderRadius;
-  final String? heroTag;
-
-  const ProductImageWidgetSync({
-    super.key,
-    required this.productCode,
-    this.size = ProductImageSize.small,
-    this.width,
-    this.height,
-    this.fit = BoxFit.cover,
-    this.borderRadius,
-    this.heroTag,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final imageService = sl<ProductImageService>();
-    final theme = Theme.of(context);
-    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(8);
-    
-    // Get from cache synchronously
-    final image = imageService.getCachedMainImage(productCode);
-    final imageUrl = imageService.selectImageUrl(image, size);
-    
-    Widget content;
-    
-    if (imageUrl == null || imageUrl.isEmpty) {
-      content = _buildDefaultIcon(theme, effectiveBorderRadius);
-    } else {
-      content = ClipRRect(
-        borderRadius: effectiveBorderRadius,
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          width: width,
-          height: height,
-          fit: fit,
-          placeholder: (_, __) => _buildDefaultIcon(theme, effectiveBorderRadius),
-          errorWidget: (_, __, ___) => _buildDefaultIcon(theme, effectiveBorderRadius),
-          fadeInDuration: const Duration(milliseconds: 150),
-        ),
-      );
-    }
-    
-    if (heroTag != null) {
-      return Hero(tag: heroTag!, child: content);
-    }
-    
-    return content;
-  }
-
-  Widget _buildDefaultIcon(ThemeData theme, BorderRadius borderRadius) {
-    final iconSize = _getIconSize();
-    
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: borderRadius,
-      ),
-      child: Icon(
-        Icons.inventory_2_outlined,
-        size: iconSize,
-        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-      ),
-    );
-  }
-
-  double _getIconSize() {
-    final minDimension = (width ?? 56).clamp(24.0, double.infinity);
-    final heightDimension = height ?? minDimension;
-    final size = minDimension < heightDimension ? minDimension : heightDimension;
-    
-    if (size <= 48) return 20;
-    if (size <= 80) return 28;
-    if (size <= 120) return 36;
-    if (size <= 200) return 48;
-    return 64;
+UnifiedImageSize _unifiedSize(ProductImageSize size) {
+  switch (size) {
+    case ProductImageSize.thumbnail:
+      return UnifiedImageSize.thumbnail;
+    case ProductImageSize.small:
+      return UnifiedImageSize.small;
+    case ProductImageSize.medium:
+      return UnifiedImageSize.medium;
+    case ProductImageSize.large:
+      return UnifiedImageSize.large;
   }
 }

@@ -5330,4 +5330,19 @@ class AppLocalizationsUz extends AppLocalizations {
   String debugConnectionFailed(String reason) {
     return 'Xato: $reason';
   }
+
+  @override
+  String get imageNotAvailable => 'Rasm mavjud emas';
+
+  @override
+  String get imageProcessing => 'Rasm tayyorlanmoqda';
+
+  @override
+  String get imageLoadFailed => 'Rasmni yuklab bo\'lmadi';
+
+  @override
+  String get imageLoadRetry => 'Qayta urinish';
+
+  @override
+  String get projectImageEmpty => 'Hali rasmlar yo\'q';
 }

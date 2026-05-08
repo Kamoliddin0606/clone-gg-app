@@ -5330,4 +5330,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String debugConnectionFailed(String reason) {
     return 'Ошибка: $reason';
   }
+
+  @override
+  String get imageNotAvailable => 'Изображение недоступно';
+
+  @override
+  String get imageProcessing => 'Изображение обрабатывается';
+
+  @override
+  String get imageLoadFailed => 'Не удалось загрузить изображение';
+
+  @override
+  String get imageLoadRetry => 'Повторить';
+
+  @override
+  String get projectImageEmpty => 'Пока нет изображений';
 }

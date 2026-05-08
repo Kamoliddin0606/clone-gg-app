@@ -228,7 +228,10 @@ class DataSyncConfig {
       dependsOn: ['products'],
       cascadeTo: [],
       groupId: 'product_catalog',
-      syncFunction: () => ds.syncProductImages(forceRefresh: true),
+      // Image data now flows through `/api/mobile/v1/images/` and is
+      // fetched on demand by `ProductImageWidget`. The legacy DB
+      // cache stays in place but is no longer hydrated.
+      syncFunction: () => Future.value(),
     );
 
     // =========================================================================

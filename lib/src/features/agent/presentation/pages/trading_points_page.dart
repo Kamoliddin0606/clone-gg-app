@@ -1779,6 +1779,8 @@ class _TradingPointsPageState extends State<TradingPointsPage>
                                     12,
                                     12,
                                   ),
+                                  cacheExtent: 600,
+                                  addAutomaticKeepAlives: false,
                                   itemCount: _filteredTradingPoints.length,
                                   separatorBuilder: (_, __) =>
                                       const SizedBox(height: 8),
@@ -1840,6 +1842,8 @@ class _TradingPointsPageState extends State<TradingPointsPage>
                                     12,
                                     12,
                                   ),
+                                  cacheExtent: 600,
+                                  addAutomaticKeepAlives: false,
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: 2,

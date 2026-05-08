@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/rest_logging.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 
@@ -53,9 +54,18 @@ class HealthCheckService {
     ));
     attachRestLogger(dio, _tag);
 
+    // Cached access tokenni body'ga qo'shamiz — yo'q bo'lsa endpoint 400
+    // qaytaradi (liveness uchun yetarli, lekin loglarni ifloslantiradi).
+    final cachedToken = sl.isRegistered<TokenService>()
+        ? sl<TokenService>().getStoredV2AccessToken()
+        : null;
+    final body = (cachedToken != null && cachedToken.isNotEmpty)
+        ? {'token': cachedToken}
+        : <String, dynamic>{};
+
     final stopwatch = Stopwatch()..start();
     try {
-      final response = await dio.post('/api/auth/token/verify/', data: {});
+      final response = await dio.post('/api/auth/token/verify/', data: body);
       stopwatch.stop();
       final code = response.statusCode ?? 0;
       final reachable = code >= 200 && code < 500;

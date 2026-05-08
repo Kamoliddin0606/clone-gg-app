@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
-import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/widgets/product_image_widget.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
+import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 
 /// Transliterate Cyrillic characters to Latin (Uzbek standard)
 String transliterateToLatin(String text) {
@@ -60,18 +60,10 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
     setState(() {});
   }
 
-  /// Show product details dialog fetching data from products table
+  /// Show product details dialog fetching data from products table.
   Future<void> _showProductDetails(String productCode) async {
     final dbService = sl<ApiDatabaseService>();
-    
-    // Fetch product data and image in parallel
-    final results = await Future.wait([
-      dbService.getProductByCode(productCode),
-      dbService.getMainProductImage(productCode),
-    ]);
-    
-    final product = results[0] as ProductData?;
-    final productImage = results[1] as ProductImage?;
+    final product = await dbService.getProductByCode(productCode);
 
     if (!mounted) return;
 
@@ -86,14 +78,15 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
       return;
     }
 
-    _showProductDetailsDialog(product, productImage: productImage);
+    _showProductDetailsDialog(product);
   }
 
-  /// Display product details in a bottom sheet dialog
-  void _showProductDetailsDialog(ProductData product, {ProductImage? productImage}) {
+  /// Display product details in a bottom sheet dialog. The image is
+  /// rendered through [ProductImageWidget] which fetches from
+  /// `/api/mobile/v1/images/` directly — no separate prefetch needed.
+  void _showProductDetailsDialog(ProductData product) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final imageUrl = productImage?.thumbnailOrBestUrl;
 
     showModalBottomSheet(
       context: context,
@@ -125,59 +118,32 @@ class _PromotionDetailPageState extends State<PromotionDetailPage>
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    // Show product image if available, otherwise show code avatar
-                    imageUrl != null && imageUrl.isNotEmpty
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              imageUrl,
-                              width: 56,
-                              height: 56,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Container(
-                                  width: 56,
-                                  height: 56,
-                                  color: colorScheme.surfaceContainerHighest,
-                                  child: Center(
-                                    child: SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: colorScheme.primary,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) => CircleAvatar(
-                                radius: 28,
-                                backgroundColor: colorScheme.primaryContainer,
-                                child: Text(
-                                  product.code.length >= 2 ? product.code.substring(0, 2) : product.code,
-                                  style: TextStyle(
-                                    color: colorScheme.onPrimaryContainer,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          )
-                        : CircleAvatar(
-                            radius: 28,
-                            backgroundColor: colorScheme.primaryContainer,
-                            child: Text(
-                              product.code.length >= 2 ? product.code.substring(0, 2) : product.code,
-                              style: TextStyle(
-                                color: colorScheme.onPrimaryContainer,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
+                    // Product image — backed by /api/mobile/v1/images/.
+                    // The widget renders its own placeholder + error
+                    // states, so we no longer need the manual code-avatar
+                    // fallback at this scale.
+                    ProductImageWidget(
+                      productCode: product.code,
+                      size: ProductImageSize.small,
+                      width: 56,
+                      height: 56,
+                      borderRadius: BorderRadius.circular(8),
+                      backgroundColor: colorScheme.primaryContainer,
+                      errorWidget: CircleAvatar(
+                        radius: 28,
+                        backgroundColor: colorScheme.primaryContainer,
+                        child: Text(
+                          product.code.length >= 2
+                              ? product.code.substring(0, 2)
+                              : product.code,
+                          style: TextStyle(
+                            color: colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(

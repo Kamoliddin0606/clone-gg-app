@@ -1148,7 +1148,7 @@ class _StatsGrid extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.6,
+        childAspectRatio: 1.5,
       ),
       itemCount: items.length,
       itemBuilder: (context, i) => _GlassTile(data: items[i]),
@@ -1181,7 +1181,7 @@ class _GlassTile extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(22),
                   gradient: LinearGradient(
@@ -1196,12 +1196,28 @@ class _GlassTile extends StatelessWidget {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Icon(data.icon, size: 20, color: Theme.of(context).brightness == Brightness.light ? Colors.black87 : Colors.white70),
-                    const Spacer(),
-                    Text(data.title, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).brightness == Brightness.light ? Colors.black87 : Colors.white70)),
-                    const SizedBox(height: 6),
-                    Text(data.value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          data.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).brightness == Brightness.light ? Colors.black87 : Colors.white70),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          data.value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: Theme.of(context).brightness == Brightness.light ? Colors.black : Colors.white),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

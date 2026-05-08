@@ -367,10 +367,12 @@ class DeviceDataCollector {
         'battery_temperature': null, // Platform orqali olinmaydi
         'battery_voltage': null, // Platform orqali olinmaydi
       };
-    } catch (e, stackTrace) {
+    } catch (e) {
+      // iOS simulatorda va ba'zi qurilmalarda battery_plus PlatformException
+      // (UNAVAILABLE) qaytaradi — bu kutilgan holat. Stack trace o'rniga
+      // qisqa warning yozamiz, ping'lar har 10 sekundda kelishini hisobga olib.
       if (kDebugMode) {
-        print('DeviceDataCollector: Error collecting battery info: $e');
-        print('DeviceDataCollector: Stack trace: $stackTrace');
+        print('DeviceDataCollector: battery info unavailable ($e)');
       }
       return {
         'battery_level': null,

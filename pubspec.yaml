@@ -67,6 +67,10 @@ dependencies:
   # UI enhancements
   shimmer: ^3.0.0
   cached_network_image: ^3.4.1
+  # Pinned explicitly: ImageCacheManager (lib/src/core/services/images/) imports
+  # `Config` directly to configure stalePeriod + size cap for entity images.
+  flutter_cache_manager: ^3.4.1
+  flutter_blurhash: ^0.8.2
 
   # Connectivity
   connectivity_plus: ^7.0.0

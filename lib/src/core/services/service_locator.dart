@@ -29,7 +29,8 @@ import 'package:gloria_marketing_flutter/src/core/services/local_uuid_service.da
 import 'package:gloria_marketing_flutter/src/core/services/login_device_payload_builder.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/agent_organization_context.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/new_backend_image_repository.dart';
 import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/app_start_guard.dart';
@@ -292,11 +293,25 @@ Future<void> setupServiceLocator() async {
     ));
   }
 
-  // Product Image Service - caching and size-aware URL selection
-  if (!sl.isRegistered<ProductImageService>()) {
-    sl.registerLazySingleton<ProductImageService>(() => ProductImageService(
-      dbService: sl<ApiDatabaseService>(),
-    ));
+  // Image stack (lib/src/core/services/images/) — single repository
+  // talking to /api/mobile/v1/images/. The legacy 1596 host has been
+  // decommissioned for image traffic; uploads happen via the web admin
+  // panel. See `mobile.md` runbook for the contract.
+  if (!sl.isRegistered<NewBackendImageRepository>()) {
+    sl.registerLazySingleton<NewBackendImageRepository>(
+      () => NewBackendImageRepository(
+        dio: sl<Dio>(),
+        tokenService: sl<TokenService>(),
+      ),
+    );
+  }
+  // Helper that surfaces the agent's primary organisation id from the
+  // cached gates envelope. Image widget call sites use it as a default
+  // when the entity itself does not (yet) carry an organization_id.
+  if (!sl.isRegistered<AgentOrganizationContext>()) {
+    sl.registerLazySingleton<AgentOrganizationContext>(
+      () => AgentOrganizationContext(prefs: sl<SharedPreferencesService>()),
+    );
   }
 
   // Security helpers — kept for callers that still need a stable per-install

@@ -3030,5 +3030,10 @@
     "placeholders": {
       "reason": { "type": "String" }
     }
-  }
+  },
+  "imageNotAvailable": "Rasm mavjud emas",
+  "imageProcessing": "Rasm tayyorlanmoqda",
+  "imageLoadFailed": "Rasmni yuklab bo'lmadi",
+  "imageLoadRetry": "Qayta urinish",
+  "projectImageEmpty": "Hali rasmlar yo'q"
 }

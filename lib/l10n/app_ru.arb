@@ -3109,5 +3109,10 @@
     "placeholders": {
       "reason": { "type": "String" }
     }
-  }
+  },
+  "imageNotAvailable": "Изображение недоступно",
+  "imageProcessing": "Изображение обрабатывается",
+  "imageLoadFailed": "Не удалось загрузить изображение",
+  "imageLoadRetry": "Повторить",
+  "projectImageEmpty": "Пока нет изображений"
 }

@@ -317,7 +317,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       case NetworkFailure():
         return 'Server bilan bog\'lanib bo\'lmadi.';
       case UnknownAuthFailure():
-        return 'Noma\'lum xato.';
+        return 'Server xatoligi. Qayta urinib ko\'ring yoki administratorga murojaat qiling.';
       case MobileDeviceBoundToOtherUserFailure():
         return 'Bu qurilma boshqa foydalanuvchiga biriktirilgan.';
       case MobileUserBoundToOtherDeviceFailure():
@@ -367,20 +367,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
 
       final failure = tokenService.lastV2LoginFailure;
-      if (failure is NetworkFailure || failure is UnknownAuthFailure) {
+      // Only `NetworkFailure` (no HTTP response at all) is a true
+      // transport error. `UnknownAuthFailure` carries an HTTP response
+      // body the backend produced — even if we don't recognise the
+      // `error.code`, the server reached us. Routing it through
+      // `transportError` would mask a credentials/permission denial
+      // behind the generic "no internet" banner. Surface it as
+      // `serverDenied` so the UI shows the typed failure instead.
+      if (failure is NetworkFailure) {
         if (kDebugMode) {
-          print('AuthBloc: V2 transport/unknown failure — login blocked, '
-              'no SOAP fallback (failure=${failure.runtimeType})');
+          print('AuthBloc: V2 transport failure — login blocked, '
+              'no SOAP fallback (failure=NetworkFailure)');
         }
         return V2LoginResult(V2LoginOutcome.transportError, failure);
       }
       if (failure != null) {
         if (kDebugMode) {
-          print('AuthBloc: V2 server denial: ${failure.runtimeType} → blocking login');
+          print('AuthBloc: V2 server denial: ${failure.runtimeType} '
+              '${failure is UnknownAuthFailure ? "(rawCode=${failure.rawCode}) " : ""}'
+              '→ blocking login');
         }
         return V2LoginResult(V2LoginOutcome.serverDenied, failure);
       }
-      // No typed failure available — treat as transport error to be safe.
+      // No typed failure available (V2 returned false without setting
+      // `lastV2LoginFailure`). This is genuinely unknown territory —
+      // treat as transport so the user can retry rather than seeing a
+      // misleading "credentials wrong" message.
       if (kDebugMode) {
         print('AuthBloc: V2 returned false but no typed failure — '
             'classifying as transport error');

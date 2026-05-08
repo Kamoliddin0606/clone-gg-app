@@ -31,6 +31,7 @@ sealed class AuthFailure {
 
     switch (code) {
       case _Codes.authenticationFailed:
+      case _Codes.noActiveAccount:
         return const InvalidCredentialsFailure();
       case _Codes.userInactive:
         return const UserInactiveFailure();
@@ -180,8 +181,13 @@ final class UnknownAuthFailure extends AuthFailure {
 
   const UnknownAuthFailure({this.rawCode});
 
+  /// Points at `serverError` rather than `networkError` because this
+  /// failure ALWAYS comes from a real HTTP response — the request
+  /// reached the backend, the backend returned a body, we just
+  /// didn't recognise the `error.code`. Showing a "no internet"
+  /// banner here would be misleading.
   @override
-  String get messageKey => 'networkError';
+  String get messageKey => 'serverError';
 }
 
 // ─── Device-binding failures ─────────────────────────────────────────
@@ -260,6 +266,10 @@ class _DetailKeys {
 
 class _Codes {
   static const String authenticationFailed = 'authentication_failed';
+  // SimpleJWT (Django) returns this when the credentials don't match
+  // any active user. Treat it as bad credentials so the user sees
+  // actionable copy instead of "unknown error".
+  static const String noActiveAccount = 'no_active_account';
   static const String userInactive = 'user_inactive';
   static const String userOutsideActiveWindow = 'user_outside_active_window';
   static const String licenseMissing = 'license_missing';

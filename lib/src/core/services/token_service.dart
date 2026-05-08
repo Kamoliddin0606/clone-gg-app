@@ -923,6 +923,11 @@ class TokenService {
     return _prefsService.preferences.getString(_refreshTokenKey);
   }
 
+  /// Get stored V2 access token without refreshing.
+  String? getStoredV2AccessToken() {
+    return _prefsService.preferences.getString(_v2AccessTokenKey);
+  }
+
   // ===========================================================================
   // ===========================================================================
   //                     V2 (NEW SERVER) AUTHENTICATION

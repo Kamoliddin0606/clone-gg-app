@@ -13,7 +13,6 @@ import '../../data/models/user_warehouse.dart';
 import '../../data/models/product_brand.dart';
 import '../../data/models/product_series.dart';
 import '../../../../core/widgets/product_image_widget.dart';
-import '../../../../core/services/product_image_service.dart';
 import 'product_detail_page.dart';
 
 enum _ViewMode { list, grid }
@@ -990,6 +989,8 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                       child: _viewMode == _ViewMode.list
                           ? ListView.separated(
                               padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                              cacheExtent: 600,
+                              addAutomaticKeepAlives: false,
                               itemCount: _getFilteredProducts().length,
                               separatorBuilder: (_, _) =>
                                   const SizedBox(height: 8),
@@ -1000,6 +1001,8 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                             )
                           : GridView.builder(
                               padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                              cacheExtent: 600,
+                              addAutomaticKeepAlives: false,
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,

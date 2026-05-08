@@ -11,9 +11,11 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/ag
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/formatters.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/create_order_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/product_detail_page.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/agent_organization_context.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/image_target_type.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/new_backend_image_repository.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/unified_image.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/product_image_widget.dart';
-import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
 
 // Local copy of matchesSearch function for transliteration search
 bool matchesSearch(String text, String query) {
@@ -242,9 +244,9 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
   int _currentFullScreenIndex = 0;
   late PageController _fullScreenPageController;
 
-  /// Image carousel state for fullscreen view
-  /// Caches loaded images per product to avoid repeated API calls
-  final Map<String, List<ProductImage>> _productImagesCache = {};
+  /// Image carousel state for fullscreen view.
+  /// Caches loaded images per product to avoid repeated API calls.
+  final Map<String, List<UnifiedImage>> _productImagesCache = {};
   
   /// Tracks current image index for each product in carousel
   final Map<String, int> _productImageIndices = {};
@@ -380,16 +382,24 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     _loadingProductImages.add(productCode);
 
     try {
-      final imageService = sl<ProductImageService>();
-      final images = await imageService.getAllImages(productCode);
-      
-      // Debug: Log loaded images count
-      debugPrint('ProductSelectionPage: Loaded ${images.length} images for $productCode');
-      
+      final repo = sl<NewBackendImageRepository>();
+      final orgId = sl.isRegistered<AgentOrganizationContext>()
+          ? sl<AgentOrganizationContext>().primaryOrganizationId ?? ''
+          : '';
+      final page = await repo.listForTarget(
+        targetType: ImageTargetType.product,
+        targetCode1c: productCode,
+        targetOrganizationId: orgId,
+      );
+      debugPrint(
+        'ProductSelectionPage: Loaded ${page.images.length} images for $productCode',
+      );
+
       if (mounted) {
         setState(() {
-          // Sort: main image first, then by date
-          _productImagesCache[productCode] = _sortImagesMainFirst(images);
+          // Server orders the page; we re-sort only to bring the
+          // primary cover to the front.
+          _productImagesCache[productCode] = _sortImagesPrimaryFirst(page.images);
           _productImageIndices[productCode] = 0;
           _loadingProductImages.remove(productCode);
         });
@@ -400,15 +410,16 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     }
   }
 
-  /// Sort images with main image first, then by creation date
-  List<ProductImage> _sortImagesMainFirst(List<ProductImage> images) {
+  /// Stable sort that brings the cover image to the front. The server
+  /// already orders rows by `order ASC` then `created_at`; we only
+  /// touch the primary placement.
+  List<UnifiedImage> _sortImagesPrimaryFirst(List<UnifiedImage> images) {
     if (images.isEmpty) return images;
-    
-    final sorted = List<ProductImage>.from(images);
+    final sorted = List<UnifiedImage>.from(images);
     sorted.sort((a, b) {
-      if (a.isMain && !b.isMain) return -1;
-      if (!a.isMain && b.isMain) return 1;
-      return b.createdAt.compareTo(a.createdAt);
+      if (a.isPrimary && !b.isPrimary) return -1;
+      if (!a.isPrimary && b.isPrimary) return 1;
+      return a.order.compareTo(b.order);
     });
     return sorted;
   }
@@ -1183,6 +1194,8 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     final filteredProducts = _getFilteredProducts();
     return ListView.builder(
       padding: const EdgeInsets.all(16),
+      cacheExtent: 600,
+      addAutomaticKeepAlives: false,
       itemCount: filteredProducts.length,
       itemBuilder: (context, index) {
         final product = filteredProducts[index];
@@ -1196,6 +1209,8 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     final filteredProducts = _getFilteredProducts();
     return GridView.builder(
       padding: const EdgeInsets.all(16),
+      cacheExtent: 600,
+      addAutomaticKeepAlives: false,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 1, // Two columns for balanced layout
         crossAxisSpacing: 12,
@@ -2072,16 +2087,14 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
   /// Build image carousel for fullscreen view
   /// Navigation via arrows only (swipe reserved for product navigation)
   Widget _buildImageCarousel({
-    required List<ProductImage> images,
+    required List<UnifiedImage> images,
     required String productCode,
     required int currentIndex,
   }) {
     // Show the image at currentIndex directly (no PageView needed since no swipe)
     final image = images[currentIndex];
-    final imageUrl = image.imageLgUrl ?? 
-                     image.imageMdUrl ?? 
-                     image.imageUrl ?? 
-                     image.imageThumbnailUrl;
+    final imageUrl =
+        image.largeUrl ?? image.mediumUrl ?? image.smallUrl;
 
     return Stack(
       fit: StackFit.expand,
@@ -2120,7 +2133,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
           _buildImagePlaceholder(),
 
         // Main image badge
-        if (image.isMain)
+        if (image.isPrimary)
           Positioned(
             top: MediaQuery.of(context).padding.top + 60,
             left: 16,
@@ -3046,7 +3059,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
 /// Fullscreen image viewer with zoom and swipe capabilities
 /// Used for viewing product images in detail from grid views
 class _ProductImageFullScreenViewer extends StatefulWidget {
-  final List<ProductImage> images;
+  final List<UnifiedImage> images;
   final int initialIndex;
   final String productCode;
 
@@ -3105,7 +3118,7 @@ class _ProductImageFullScreenViewerState
               itemBuilder: (context, index) {
                 final image = widget.images[index];
                 final imageUrl =
-                    image.imageLgUrl ?? image.imageMdUrl ?? image.imageUrl;
+                    image.largeUrl ?? image.mediumUrl ?? image.smallUrl;
 
                 return InteractiveViewer(
                   transformationController: _transformationController,

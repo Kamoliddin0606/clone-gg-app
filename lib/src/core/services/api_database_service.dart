@@ -5408,6 +5408,10 @@ class ApiDatabaseService {
 
   // Clear all data
   Future<void> clearAllData() async {
+    // Eski o'rnatilgan bazalarda order_details va shu bilan bog'liq jadvallar
+    // bo'lmasligi mumkin (migratsiya tushib qolgan). Tozalashdan oldin ularni
+    // mavjudligini ta'minlaymiz, aks holda DELETE FROM "no such table" beradi.
+    await ensureOrderDetailsTablesExist();
     final db = await database;
     // Clear sales req permissions and visit steps tables
     await db.delete('sales_req_permissions');

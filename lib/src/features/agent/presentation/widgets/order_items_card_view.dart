@@ -10,7 +10,6 @@ import 'package:get_it/get_it.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../../../../core/services/api_database_service.dart';
 import '../../../../core/widgets/product_image_widget.dart';
-import '../../../../core/services/product_image_service.dart';
 import '../../data/models/product_with_price.dart';
 import '../pages/product_detail_page.dart';
 import '../shared/formatters.dart';
@@ -99,6 +98,8 @@ class _OrderItemsCardViewState extends State<OrderItemsCardView> {
             child: ListView.separated(
               controller: widget.controller,
               padding: const EdgeInsets.all(16),
+              cacheExtent: 600,
+              addAutomaticKeepAlives: false,
               itemCount: widget.order.items.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (_, i) {
@@ -457,18 +458,28 @@ class _ExpandableOrderItemCard extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '${NumberFormat('#,##0.###').format(item.quantity)}x ${item.article}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: cs.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
+                          Flexible(
+                            child: Text(
+                              '${NumberFormat('#,##0.###').format(item.quantity)}x ${item.article}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: cs.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                          Text(
-                            uzsFormat.format(item.calculatedTotal),
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: cs.primary,
-                              fontWeight: FontWeight.w700,
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              uzsFormat.format(item.calculatedTotal),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: cs.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],
@@ -557,19 +568,28 @@ class _ExpandableOrderItemCard extends StatelessWidget {
           color: isHighlighted ? cs.primary : cs.onSurfaceVariant,
         ),
         const SizedBox(width: 8),
-        Text(
-          '$label:',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: cs.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
+        Flexible(
+          child: Text(
+            '$label:',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
-        const Spacer(),
-        Text(
-          value,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w600,
-            color: isHighlighted ? cs.primary : cs.onSurface,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w600,
+              color: isHighlighted ? cs.primary : cs.onSurface,
+            ),
           ),
         ),
       ],

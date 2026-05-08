@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
-import 'package:gloria_marketing_flutter/src/core/widgets/product_image_widget.dart';
-import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/agent_organization_context.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/image_target_type.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/new_backend_image_repository.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/unified_image.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/widgets/product_image_widget.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
 import 'package:intl/intl.dart';
 
 /// Product detail page displaying comprehensive product information
@@ -45,8 +47,8 @@ class _ProductDetailPageState extends State<ProductDetailPage>
     _DetailSection.additional: false,
   };
 
-  // Product images
-  List<ProductImage> _productImages = [];
+  // Product images sourced from /api/mobile/v1/images/.
+  List<UnifiedImage> _productImages = [];
   int _currentImageIndex = 0;
 
   // Number formatter
@@ -83,30 +85,36 @@ class _ProductDetailPageState extends State<ProductDetailPage>
 
   Future<void> _loadProductImages() async {
     try {
-      final imageService = sl<ProductImageService>();
-      final images = await imageService.getAllImages(widget.product.productCode);
+      final repo = sl<NewBackendImageRepository>();
+      final orgId = sl.isRegistered<AgentOrganizationContext>()
+          ? sl<AgentOrganizationContext>().primaryOrganizationId ?? ''
+          : '';
+      final page = await repo.listForTarget(
+        targetType: ImageTargetType.product,
+        targetCode1c: widget.product.productCode,
+        targetOrganizationId: orgId,
+      );
       if (mounted) {
         setState(() {
-          // Sort images: main image first, then by created date
-          _productImages = _sortImagesMainFirst(images);
+          // Server already orders by `order ASC` then `created_at`.
+          // Re-sort only to bring the cover (`is_primary`) to the front.
+          _productImages = _sortImagesPrimaryFirst(page.images);
         });
       }
     } catch (e) {
-      // Image loading failed, will show default image
+      // Image loading failed; the carousel falls back to the default
+      // ProductImageWidget tile.
     }
   }
 
-  /// Sort images with main image first
-  List<ProductImage> _sortImagesMainFirst(List<ProductImage> images) {
+  /// Stable sort that brings the cover image to the front.
+  List<UnifiedImage> _sortImagesPrimaryFirst(List<UnifiedImage> images) {
     if (images.isEmpty) return images;
-    
-    final sorted = List<ProductImage>.from(images);
+    final sorted = List<UnifiedImage>.from(images);
     sorted.sort((a, b) {
-      // Main image comes first
-      if (a.isMain && !b.isMain) return -1;
-      if (!a.isMain && b.isMain) return 1;
-      // Then sort by created date (newest first)
-      return b.createdAt.compareTo(a.createdAt);
+      if (a.isPrimary && !b.isPrimary) return -1;
+      if (!a.isPrimary && b.isPrimary) return 1;
+      return a.order.compareTo(b.order);
     });
     return sorted;
   }
@@ -900,9 +908,9 @@ ${AppLocalizations.of(context)?.productCode ?? 'Kod'}: ${product.productCode}
   }
 
   /// Build carousel image with main badge indicator
-  Widget _buildCarouselImage(ProductImage image, int index) {
+  Widget _buildCarouselImage(UnifiedImage image, int index) {
     final cs = Theme.of(context).colorScheme;
-    final imageUrl = image.imageMdUrl ?? image.imageSmUrl ?? image.imageUrl ?? image.imageThumbnailUrl;
+    final imageUrl = image.mediumUrl ?? image.smallUrl ?? image.largeUrl;
     
     return Stack(
       fit: StackFit.expand,
@@ -929,7 +937,7 @@ ${AppLocalizations.of(context)?.productCode ?? 'Kod'}: ${product.productCode}
           _buildPlaceholder(cs),
         
         // Main image badge
-        if (image.isMain)
+        if (image.isPrimary)
           Positioned(
             top: 12,
             left: 12,
@@ -1019,7 +1027,7 @@ enum _DetailSection {
 // ===========================================================================
 
 class _FullScreenImageViewer extends StatefulWidget {
-  final List<ProductImage> images;
+  final List<UnifiedImage> images;
   final int initialIndex;
   final String productCode;
 
@@ -1074,7 +1082,7 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
               },
               itemBuilder: (context, index) {
                 final image = widget.images[index];
-                final imageUrl = image.imageLgUrl ?? image.imageMdUrl ?? image.imageUrl;
+                final imageUrl = image.largeUrl ?? image.mediumUrl ?? image.smallUrl;
                 
                 return InteractiveViewer(
                   transformationController: _transformationController,

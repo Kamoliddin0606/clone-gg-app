@@ -1,11 +1,18 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
+import 'package:flutter_blurhash/flutter_blurhash.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/agent_organization_context.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/image_cache_manager.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/image_target_type.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/new_backend_image_repository.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/unified_image.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 
-/// Image size categories for adaptive URL selection
-/// 
+/// Image size categories for adaptive URL selection.
+///
 /// Different UI contexts require different image sizes for optimal
 /// performance and visual quality:
 /// - [thumbnail]: 48-64px - compact list items, small indicators
@@ -13,78 +20,66 @@ import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart'
 /// - [medium]: 150-200px - grid view items
 /// - [large]: 300+px - detail views, full-screen displays
 enum ClientImageSize {
-  /// 48-64px - compact list items, small indicators
   thumbnail,
-  
-  /// 80-120px - standard list view items
   small,
-  
-  /// 150-200px - grid view items
   medium,
-  
-  /// 300+px - detail views, full-screen displays
   large,
 }
 
-/// Adaptive client image widget with size-aware URL selection and on-demand loading
-/// 
-/// This widget automatically:
-/// - Fetches client image metadata from cache/database
-/// - Selects optimal image size based on display requirements
-/// - Loads images on-demand using CachedNetworkImage
-/// - Shows shimmer loading placeholder
-/// - Falls back to default icon on error or missing image
-/// - Supports hero animations for detail views
-/// 
-/// Usage:
-/// ```dart
-/// ClientImageWidget(
-///   clientCode: 'C-001',
-///   size: ClientImageSize.small,
-///   width: 56,
-///   height: 56,
-/// )
-/// ```
+/// Adaptive client image widget with size-aware URL selection.
+///
+/// Reads images directly from the V2 backend's
+/// `/api/mobile/v1/images/` endpoint via [NewBackendImageRepository].
+/// The legacy media host is no longer consulted — uploads happen
+/// through the web admin panel; the mobile app is a read-only
+/// consumer.
 class ClientImageWidget extends StatefulWidget {
-  /// Client code to fetch image for
+  /// Client code to fetch image for (matches `target_id` for customers).
   final String clientCode;
-  
-  /// Desired image size category
+
+  /// Organisation that owns this customer. Empty/`null` keeps the
+  /// resolver on the legacy repo.
+  final String? targetOrganizationId;
+
+  /// Desired image size category.
   final ClientImageSize size;
-  
-  /// Widget width (optional)
+
+  /// Widget width (optional).
   final double? width;
-  
-  /// Widget height (optional)
+
+  /// Widget height (optional).
   final double? height;
-  
-  /// How to fit the image within bounds
+
+  /// How to fit the image within bounds.
   final BoxFit fit;
-  
-  /// Border radius for image container
+
+  /// Border radius for image container.
   final BorderRadius? borderRadius;
-  
-  /// Optional hero tag for animations
+
+  /// Optional hero tag for animations.
   final String? heroTag;
-  
-  /// Custom placeholder widget
+
+  /// Custom placeholder widget (fully replaces the built-in branch).
   final Widget? placeholder;
-  
-  /// Custom error widget
+
+  /// Custom error widget (fully replaces the built-in branch).
   final Widget? errorWidget;
-  
-  /// Background color for container
+
+  /// Background color for container.
   final Color? backgroundColor;
-  
-  /// Whether to show shimmer animation during load
+
+  /// Whether to show shimmer animation during load. Ignored when a
+  /// BlurHash placeholder is available.
   final bool showShimmer;
-  
-  /// Whether to load main image only (default: true)
+
+  /// Whether to load main image only (default `true`). Preserved for
+  /// API compatibility — primary lookups still skip non-main rows.
   final bool mainImageOnly;
 
   const ClientImageWidget({
     super.key,
     required this.clientCode,
+    this.targetOrganizationId,
     this.size = ClientImageSize.small,
     this.width,
     this.height,
@@ -104,13 +99,13 @@ class ClientImageWidget extends StatefulWidget {
 
 class _ClientImageWidgetState extends State<ClientImageWidget>
     with SingleTickerProviderStateMixin {
-  final ClientImagesService _imageService = sl<ClientImagesService>();
-  
-  ClientImage? _image;
+  final NewBackendImageRepository _repo = sl<NewBackendImageRepository>();
+
+  UnifiedImage? _image;
   bool _isLoading = true;
   bool _hasError = false;
-  
-  // Shimmer animation
+  CancelToken? _cancelToken;
+
   late AnimationController _shimmerController;
   late Animation<double> _shimmerAnimation;
 
@@ -124,13 +119,15 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
   @override
   void didUpdateWidget(ClientImageWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.clientCode != widget.clientCode) {
+    if (oldWidget.clientCode != widget.clientCode ||
+        oldWidget.targetOrganizationId != widget.targetOrganizationId) {
       _loadImage();
     }
   }
 
   @override
   void dispose() {
+    _cancelToken?.cancel('ClientImageWidget disposed');
     _shimmerController.dispose();
     super.dispose();
   }
@@ -151,8 +148,9 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
   Future<void> _loadImage() async {
     if (widget.clientCode.isEmpty) {
       if (kDebugMode) {
-        print('ClientImageWidget: Empty clientCode');
+        debugPrint('ClientImageWidget: empty clientCode');
       }
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _hasError = true;
@@ -165,97 +163,50 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
       _hasError = false;
     });
 
+    _cancelToken?.cancel('ClientImageWidget reloading');
+    _cancelToken = CancelToken();
+
     try {
-      if (kDebugMode) {
-        print('ClientImageWidget: Loading image for clientCode: ${widget.clientCode}');
+      UnifiedImage? image;
+      if (widget.mainImageOnly) {
+        image = await _repo.primaryForTarget(
+          targetType: ImageTargetType.customer,
+          targetCode1c: widget.clientCode,
+          targetOrganizationId: _resolveOrgId(),
+          cancelToken: _cancelToken,
+        );
+      } else {
+        final page = await _repo.listForTarget(
+          targetType: ImageTargetType.customer,
+          targetCode1c: widget.clientCode,
+          targetOrganizationId: _resolveOrgId(),
+          cancelToken: _cancelToken,
+        );
+        image = page.images.isEmpty ? null : page.images.first;
       }
-      
-      final image = widget.mainImageOnly
-          ? await _imageService.getMainClientImage(widget.clientCode)
-          : (await _imageService.getClientImages(widget.clientCode)).firstOrNull;
-      
-      if (kDebugMode) {
-        print('ClientImageWidget: Got image: ${image != null ? "YES" : "NULL"}');
-        if (image != null) {
-          print('ClientImageWidget: Image URLs - thumbnail: ${image.imageThumbnailUrl}, sm: ${image.imageSmUrl}, md: ${image.imageMdUrl}, lg: ${image.imageLgUrl}');
-        }
-      }
-      
-      if (mounted) {
-        setState(() {
-          _image = image;
-          _isLoading = false;
-          _hasError = image == null || !_hasValidUrl(image);
-        });
-        if (!_isLoading) {
-          _shimmerController.stop();
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('ClientImageWidget: Error loading image: $e');
-      }
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-        });
+
+      if (!mounted) return;
+      setState(() {
+        _image = image;
+        _isLoading = false;
+        _hasError = image == null || !image.hasUrl;
+      });
+      if (!_isLoading) {
         _shimmerController.stop();
       }
-    }
-  }
-
-  /// Check if any image URL is available
-  bool _hasValidUrl(ClientImage? image) {
-    if (image == null) return false;
-    return image.imageUrl != null ||
-           image.image != null ||
-           image.imageThumbnailUrl != null ||
-           image.imageSmUrl != null ||
-           image.imageMdUrl != null ||
-           image.imageLgUrl != null;
-  }
-
-  /// Select the optimal image URL based on requested size
-  /// 
-  /// Automatically falls back to available sizes if the requested
-  /// size is not available. Prioritizes smaller sizes for better
-  /// performance when exact size is not critical.
-  String? _selectImageUrl(ClientImage? image, ClientImageSize size) {
-    if (image == null) return null;
-
-    switch (size) {
-      case ClientImageSize.thumbnail:
-        // Smallest available - prefer thumbnail, then small
-        return image.imageThumbnailUrl ?? 
-               image.imageSmUrl ?? 
-               image.imageMdUrl ?? 
-               image.imageUrl ?? 
-               image.image;
-               
-      case ClientImageSize.small:
-        // Small size - prefer sm, fall back to thumbnail or medium
-        return image.imageSmUrl ?? 
-               image.imageThumbnailUrl ?? 
-               image.imageMdUrl ?? 
-               image.imageUrl ?? 
-               image.image;
-               
-      case ClientImageSize.medium:
-        // Medium size - prefer md, fall back to sm or lg
-        return image.imageMdUrl ?? 
-               image.imageSmUrl ?? 
-               image.imageLgUrl ?? 
-               image.imageUrl ?? 
-               image.image;
-               
-      case ClientImageSize.large:
-        // Large size - prefer lg, fall back to original or md
-        return image.imageLgUrl ?? 
-               image.imageMdUrl ?? 
-               image.imageUrl ?? 
-               image.image ?? 
-               image.imageSmUrl;
+    } catch (e) {
+      if (e is DioException && CancelToken.isCancel(e)) {
+        return;
+      }
+      if (kDebugMode) {
+        debugPrint('ClientImageWidget: error loading image: $e');
+      }
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+      _shimmerController.stop();
     }
   }
 
@@ -263,9 +214,8 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final effectiveBorderRadius = widget.borderRadius ?? BorderRadius.circular(8);
-    
+
     Widget content;
-    
     if (_isLoading) {
       content = _buildLoadingState(theme, effectiveBorderRadius);
     } else if (_hasError || _image == null) {
@@ -273,21 +223,28 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
     } else {
       content = _buildImageState(theme, effectiveBorderRadius);
     }
-    
-    // Wrap with hero if tag provided
+
     if (widget.heroTag != null) {
-      return Hero(
-        tag: widget.heroTag!,
-        child: content,
-      );
+      return Hero(tag: widget.heroTag!, child: content);
     }
-    
     return content;
   }
 
   Widget _buildLoadingState(ThemeData theme, BorderRadius borderRadius) {
     if (widget.placeholder != null) {
       return widget.placeholder!;
+    }
+
+    final image = _image;
+    if (image != null && image.hasBlurhash) {
+      return ClipRRect(
+        borderRadius: borderRadius,
+        child: SizedBox(
+          width: widget.width,
+          height: widget.height,
+          child: BlurHash(hash: image.blurhash),
+        ),
+      );
     }
 
     if (!widget.showShimmer) {
@@ -334,7 +291,6 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
     if (widget.errorWidget != null) {
       return widget.errorWidget!;
     }
-
     return _buildContainer(
       theme,
       borderRadius,
@@ -347,8 +303,8 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
   }
 
   Widget _buildImageState(ThemeData theme, BorderRadius borderRadius) {
-    final imageUrl = _selectImageUrl(_image, widget.size);
-    
+    final image = _image!;
+    final imageUrl = image.urlForSize(_unifiedSize(widget.size));
     if (imageUrl == null || imageUrl.isEmpty) {
       return _buildErrorState(theme, borderRadius);
     }
@@ -357,17 +313,35 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
       borderRadius: borderRadius,
       child: CachedNetworkImage(
         imageUrl: imageUrl,
+        cacheManager: ImageCacheManager.instance,
         width: widget.width,
         height: widget.height,
         fit: widget.fit,
-        placeholder: (context, url) => _buildLoadingState(theme, borderRadius),
-        errorWidget: (context, url, error) => _buildErrorState(theme, borderRadius),
+        placeholder: (context, url) =>
+            _buildPlaceholderForCachedImage(theme, borderRadius, image),
+        errorWidget: (context, url, error) =>
+            _buildErrorState(theme, borderRadius),
         fadeInDuration: const Duration(milliseconds: 200),
         fadeOutDuration: const Duration(milliseconds: 200),
         memCacheWidth: _getMemCacheSize(),
         memCacheHeight: _getMemCacheSize(),
       ),
     );
+  }
+
+  Widget _buildPlaceholderForCachedImage(
+    ThemeData theme,
+    BorderRadius borderRadius,
+    UnifiedImage image,
+  ) {
+    if (image.hasBlurhash) {
+      return SizedBox(
+        width: widget.width,
+        height: widget.height,
+        child: BlurHash(hash: image.blurhash),
+      );
+    }
+    return _buildLoadingState(theme, borderRadius);
   }
 
   Widget _buildContainer(
@@ -379,10 +353,11 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
     return Container(
       width: widget.width,
       height: widget.height,
-      decoration: decoration ?? BoxDecoration(
-        color: widget.backgroundColor ?? theme.colorScheme.surfaceContainerHighest,
-        borderRadius: borderRadius,
-      ),
+      decoration: decoration ??
+          BoxDecoration(
+            color: widget.backgroundColor ?? theme.colorScheme.surfaceContainerHighest,
+            borderRadius: borderRadius,
+          ),
       child: child != null ? Center(child: child) : null,
     );
   }
@@ -391,8 +366,6 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
     final minDimension = (widget.width ?? 56).clamp(24.0, double.infinity);
     final heightDimension = widget.height ?? minDimension;
     final size = minDimension < heightDimension ? minDimension : heightDimension;
-    
-    // Scale icon based on container size
     if (size <= 48) return 20;
     if (size <= 80) return 28;
     if (size <= 120) return 36;
@@ -401,7 +374,6 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
   }
 
   int? _getMemCacheSize() {
-    // Optimize memory cache based on size category
     switch (widget.size) {
       case ClientImageSize.thumbnail:
         return 150;
@@ -410,44 +382,66 @@ class _ClientImageWidgetState extends State<ClientImageWidget>
       case ClientImageSize.medium:
         return 600;
       case ClientImageSize.large:
-        return null; // Full resolution
+        return null;
     }
+  }
+
+  /// Picks the org id passed to the resolver. Explicit
+  /// [ClientImageWidget.targetOrganizationId] always wins; otherwise
+  /// we fall back to the agent's primary org so existing call sites
+  /// can opt into the new backend without rewiring every screen.
+  String _resolveOrgId() {
+    final explicit = widget.targetOrganizationId;
+    if (explicit != null && explicit.isNotEmpty) return explicit;
+    if (sl.isRegistered<AgentOrganizationContext>()) {
+      return sl<AgentOrganizationContext>().primaryOrganizationId ?? '';
+    }
+    return '';
   }
 }
 
-/// Helper function to select image URL based on size
-/// 
-/// Can be used standalone without widget for custom implementations
-String? selectClientImageUrl(ClientImage? image, ClientImageSize size) {
-  if (image == null) return null;
-
+UnifiedImageSize _unifiedSize(ClientImageSize size) {
   switch (size) {
     case ClientImageSize.thumbnail:
-      return image.imageThumbnailUrl ?? 
-             image.imageSmUrl ?? 
-             image.imageMdUrl ?? 
-             image.imageUrl ?? 
-             image.image;
-             
+      return UnifiedImageSize.thumbnail;
     case ClientImageSize.small:
-      return image.imageSmUrl ?? 
-             image.imageThumbnailUrl ?? 
-             image.imageMdUrl ?? 
-             image.imageUrl ?? 
-             image.image;
-             
+      return UnifiedImageSize.small;
     case ClientImageSize.medium:
-      return image.imageMdUrl ?? 
-             image.imageSmUrl ?? 
-             image.imageLgUrl ?? 
-             image.imageUrl ?? 
-             image.image;
-             
+      return UnifiedImageSize.medium;
     case ClientImageSize.large:
-      return image.imageLgUrl ?? 
-             image.imageMdUrl ?? 
-             image.imageUrl ?? 
-             image.image ?? 
-             image.imageSmUrl;
+      return UnifiedImageSize.large;
+  }
+}
+
+/// Helper function to select image URL based on size from a legacy
+/// [ClientImage]. Kept for callers outside the widget that still hold
+/// a raw [ClientImage] reference (image upload flow, debug screens).
+String? selectClientImageUrl(ClientImage? image, ClientImageSize size) {
+  if (image == null) return null;
+  switch (size) {
+    case ClientImageSize.thumbnail:
+      return image.imageThumbnailUrl ??
+          image.imageSmUrl ??
+          image.imageMdUrl ??
+          image.imageUrl ??
+          image.image;
+    case ClientImageSize.small:
+      return image.imageSmUrl ??
+          image.imageThumbnailUrl ??
+          image.imageMdUrl ??
+          image.imageUrl ??
+          image.image;
+    case ClientImageSize.medium:
+      return image.imageMdUrl ??
+          image.imageSmUrl ??
+          image.imageLgUrl ??
+          image.imageUrl ??
+          image.image;
+    case ClientImageSize.large:
+      return image.imageLgUrl ??
+          image.imageMdUrl ??
+          image.imageUrl ??
+          image.image ??
+          image.imageSmUrl;
   }
 }

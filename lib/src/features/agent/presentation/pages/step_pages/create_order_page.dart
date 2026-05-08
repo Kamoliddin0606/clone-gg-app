@@ -21,7 +21,6 @@ import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/formatters.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/product_selection_page.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/product_image_widget.dart';
-import 'package:gloria_marketing_flutter/src/core/services/product_image_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/visit_steps_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/visit_timer_widget.dart';
@@ -1609,6 +1608,8 @@ class _CreateOrderPageState extends State<CreateOrderPage>
   Widget _buildListView(ThemeData theme) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
+      cacheExtent: 600,
+      addAutomaticKeepAlives: false,
       itemCount: _selectedProducts.length,
       itemBuilder: (context, index) {
         final product = _selectedProducts[index];
@@ -1622,6 +1623,8 @@ class _CreateOrderPageState extends State<CreateOrderPage>
   Widget _buildGridView(ThemeData theme) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
+      cacheExtent: 600,
+      addAutomaticKeepAlives: false,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 1, // Two columns for balanced layout
         crossAxisSpacing: 12,

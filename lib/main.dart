@@ -403,6 +403,15 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 locale: localeProvider.locale,
                 onGenerateRoute: AppRouter.generateRoute,
                 initialRoute: widget.initialRoute,
+                // Default Navigator.defaultGenerateInitialRoutes initialRoute'ni
+                // '/' bo'yicha bo'laklab har bir prefix uchun route push qiladi.
+                // loginRoute = '/' bo'lgani uchun '/main-agent' bilan ishga
+                // tushganda stack [LoginPage, MainAgentScreen] bo'lib qoladi va
+                // back tugmasi LoginPage'ga olib chiqadi. Faqat bitta initial
+                // route push qilamiz.
+                onGenerateInitialRoutes: (initialRoute) => [
+                  AppRouter.generateRoute(RouteSettings(name: initialRoute)),
+                ],
                 localizationsDelegates: AppLocalizations.localizationsDelegates,
                 supportedLocales: AppLocalizations.supportedLocales,
               );

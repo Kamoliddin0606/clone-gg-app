@@ -10098,6 +10098,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed: {reason}'**
   String debugConnectionFailed(String reason);
+
+  /// No description provided for @imageNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Image not available'**
+  String get imageNotAvailable;
+
+  /// No description provided for @imageProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Image is being processed'**
+  String get imageProcessing;
+
+  /// No description provided for @imageLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load image'**
+  String get imageLoadFailed;
+
+  /// No description provided for @imageLoadRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get imageLoadRetry;
+
+  /// No description provided for @projectImageEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No images yet'**
+  String get projectImageEmpty;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

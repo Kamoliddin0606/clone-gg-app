@@ -305,6 +305,7 @@ class KnowledgeDbDao {
 
     final translations = await _readTranslations(db, docIds);
     final tagsByDoc = await _readTagsForDocuments(db, docIds);
+    final mandatoryIds = await _readMandatoryDocIds(db, docIds);
     final mediaIds = rows
         .map((r) => r['cover_media_id'] as String?)
         .whereType<String>()
@@ -322,6 +323,7 @@ class KnowledgeDbDao {
         docType: DocTypeX.fromString(row['doc_type'] as String?),
         status: DocStatusX.fromString(row['status'] as String?),
         isPinned: (row['is_pinned'] as int? ?? 0) == 1,
+        mandatory: mandatoryIds.contains(id),
         coverMedia: (row['cover_media_id'] as String?) != null
             ? media[row['cover_media_id'] as String]
             : null,
@@ -659,6 +661,37 @@ class KnowledgeDbDao {
     for (final r in links) {
       final docId = r['document_id'] as String;
       out.putIfAbsent(docId, () => []).add(KnowledgeTag.fromDbMap(r));
+    }
+    return out;
+  }
+
+  /// Returns the subset of [docIds] that have at least one
+  /// non-deleted assignment row with `mandatory = 1`. Used by
+  /// listings to surface the "Majburiy" badge — the actual
+  /// visibility filter (which user/staff/role sees what) is enforced
+  /// server-side, so the doc being in the list at all already means
+  /// the agent has access to it.
+  Future<Set<String>> _readMandatoryDocIds(
+    Database db,
+    List<String> docIds,
+  ) async {
+    if (docIds.isEmpty) return const <String>{};
+    final out = <String>{};
+    const chunkSize = 500;
+    for (var i = 0; i < docIds.length; i += chunkSize) {
+      final chunk =
+          docIds.sublist(i, (i + chunkSize).clamp(0, docIds.length));
+      final placeholders = List.filled(chunk.length, '?').join(',');
+      final rows = await db.rawQuery(
+        'SELECT DISTINCT document_id FROM knowledge_assignments '
+        'WHERE document_id IN ($placeholders) AND mandatory = 1 '
+        'AND deleted_at IS NULL',
+        chunk,
+      );
+      for (final r in rows) {
+        final id = r['document_id'];
+        if (id is String) out.add(id);
+      }
     }
     return out;
   }

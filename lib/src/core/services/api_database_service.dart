@@ -57,7 +57,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 37, // v37: knowledge base tables (categories, documents, sections, blocks, media, assignments, tags)
+      version: 38, // v38: knowledge_assignments.target_staff_id column + index
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -283,6 +283,7 @@ class ApiDatabaseService {
         target_type TEXT,
         target_role_id TEXT,
         target_user_id TEXT,
+        target_staff_id TEXT,
         target_branch_id TEXT,
         target_territory_id TEXT,
         mandatory INTEGER,
@@ -293,6 +294,9 @@ class ApiDatabaseService {
     ''');
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_kn_asg_doc ON knowledge_assignments(document_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_kn_asg_staff ON knowledge_assignments(target_staff_id)',
     );
 
     await db.execute('''
@@ -1691,6 +1695,36 @@ class ApiDatabaseService {
       await _createKnowledgeBaseTables(db);
       if (kDebugMode) {
         print('ApiDatabaseService: Created knowledge base tables (version 37)');
+      }
+    }
+
+    if (oldVersion < 38) {
+      // Knowledge assignment STAFF target — backend now scopes
+      // documents by staff record (not just user/role). The column
+      // is nullable, so existing rows survive the migration; the
+      // sync feed will populate it on next refresh.
+      //
+      // ALTER TABLE column add is wrapped in try/catch because
+      // sqflite raises a "duplicate column" SQLITE_ERROR when the
+      // db was created against the v38 schema directly via
+      // [_onCreate] (fresh installs). Idempotency keeps the
+      // migration safe to re-run.
+      try {
+        await db.execute(
+          'ALTER TABLE knowledge_assignments ADD COLUMN target_staff_id TEXT',
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          print(
+              'ApiDatabaseService: skip ADD target_staff_id (likely already present): $e');
+        }
+      }
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_kn_asg_staff ON knowledge_assignments(target_staff_id)',
+      );
+      if (kDebugMode) {
+        print(
+            'ApiDatabaseService: knowledge_assignments.target_staff_id ready (version 38)');
       }
     }
   }

@@ -1,3 +1,5 @@
+import '_json_utils.dart';
+
 class KnowledgeCategory {
   final String id;
   final String organizationId;
@@ -41,7 +43,7 @@ class KnowledgeCategory {
       color: json['color'] as String?,
       coverMediaId: json['cover_media_id'] as String?,
       orderIdx: (json['order'] as int?) ?? (json['order_idx'] as int?) ?? 0,
-      isActive: (json['is_active'] as bool?) ?? true,
+      isActive: parseBool(json['is_active']) ?? true,
       updatedAt: DateTime.tryParse((json['updated_at'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       deletedAt: json['deleted_at'] != null

@@ -89,6 +89,16 @@ class KnowledgeDocumentCard extends StatelessWidget {
                             ),
                           ),
                         ),
+                        if (document.mandatory)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 6),
+                            child: Tooltip(
+                              message:
+                                  l10n?.knowledgeMandatoryBadge ?? 'Mandatory',
+                              child: Icon(Icons.priority_high,
+                                  size: 16, color: Colors.red.shade700),
+                            ),
+                          ),
                         if (document.isPinned)
                           Padding(
                             padding: const EdgeInsets.only(left: 6),

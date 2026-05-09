@@ -4,6 +4,8 @@ import 'package:gloria_marketing_flutter/src/features/knowledge/data/models/know
 import 'package:gloria_marketing_flutter/src/features/knowledge/domain/enums/doc_status.dart';
 import 'package:gloria_marketing_flutter/src/features/knowledge/domain/enums/doc_type.dart';
 
+import '_json_utils.dart';
+
 /// Lightweight projection used by listings (category page, search, pinned
 /// carousel). Detail-only fields (sections, blocks, assignments) are
 /// fetched lazily via [KnowledgeApiService.getDocumentDetail].
@@ -15,6 +17,13 @@ class KnowledgeDocumentSummary {
   final DocType docType;
   final DocStatus status;
   final bool isPinned;
+
+  /// `true` when at least one assignment row for this document has
+  /// `mandatory=true`. Visibility is filtered server-side, so when
+  /// the doc is in the list at all, this flag tells the UI whether
+  /// to show the "Majburiy" badge.
+  final bool mandatory;
+
   final KnowledgeMedia? coverMedia;
   final String? coverMediaId;
   final List<KnowledgeDocumentTranslation> translations;
@@ -31,6 +40,7 @@ class KnowledgeDocumentSummary {
     this.docType = DocType.unknown,
     this.status = DocStatus.unknown,
     this.isPinned = false,
+    this.mandatory = false,
     this.coverMedia,
     this.coverMediaId,
     this.translations = const [],
@@ -39,6 +49,26 @@ class KnowledgeDocumentSummary {
     this.expiresAt,
     required this.updatedAt,
   });
+
+  KnowledgeDocumentSummary copyWith({bool? mandatory}) {
+    return KnowledgeDocumentSummary(
+      id: id,
+      organizationId: organizationId,
+      categoryId: categoryId,
+      slug: slug,
+      docType: docType,
+      status: status,
+      isPinned: isPinned,
+      mandatory: mandatory ?? this.mandatory,
+      coverMedia: coverMedia,
+      coverMediaId: coverMediaId,
+      translations: translations,
+      tags: tags,
+      publishedAt: publishedAt,
+      expiresAt: expiresAt,
+      updatedAt: updatedAt,
+    );
+  }
 
   factory KnowledgeDocumentSummary.fromJson(Map<String, dynamic> json) {
     final id = json['id'] as String;
@@ -75,7 +105,7 @@ class KnowledgeDocumentSummary {
       slug: json['slug'] as String?,
       docType: DocTypeX.fromString(json['doc_type'] as String?),
       status: DocStatusX.fromString(json['status'] as String?),
-      isPinned: (json['is_pinned'] as bool?) ?? false,
+      isPinned: parseBool(json['is_pinned']) ?? false,
       coverMedia: cover,
       coverMediaId: cover?.id ?? json['cover_media_id'] as String?,
       translations: translations,

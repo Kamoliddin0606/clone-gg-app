@@ -30,6 +30,10 @@ curl -s -H "Authorization: Bearer $TOKEN" -H "X-Organization-Id: $ORG" "$BASE/do
 
 curl -s -H "Authorization: Bearer $TOKEN" -H "X-Organization-Id: $ORG" "$BASE/sync/?since=2025-01-01T00:00:00Z" | jq 'keys'
 # ["assignments", "categories", "content_blocks", "document_tags", "document_translations", "documents", "sections", "server_time", "tags"]
+
+# Assignment'da target_staff_id field bor-yo'qligini tekshirish (STAFF target qo'llanishi):
+curl -s -H "Authorization: Bearer $TOKEN" -H "X-Organization-Id: $ORG" "$BASE/sync/?since=2025-01-01T00:00:00Z" | jq '.assignments.added[0] | keys'
+# "target_staff_id" ro'yxatda bo'lishi kerak (null yoki uuid)
 ```
 
 Agar yuqoridagilar **ishlamasa** — to'xtang. Backend sessiyasi avval bajarilishi kerak (`SelUp_Backend/.claude/prompts/knowledge_base_session.md`).
@@ -133,7 +137,20 @@ Response:
   "document_translations": {...},
   "sections":              {...},
   "content_blocks":        {...},
-  "assignments":           {...},
+  "assignments":           {"added": [
+                              {
+                                "id": "uuid",
+                                "document_id": "uuid",
+                                "target_type": "STAFF",
+                                "target_role_id": null,
+                                "target_user_id": null,
+                                "target_staff_id": "uuid",
+                                "target_branch_id": null,
+                                "target_territory_id": null,
+                                "mandatory": true,
+                                "due_at": null
+                              }
+                           ], "updated": [...], "deleted": ["uuid", ...]},
   "tags":                  {...},
   "document_tags":         {...},
   "server_time": "2025-01-15T10:00:00Z"
@@ -141,6 +158,20 @@ Response:
 ```
 
 `server_time` — keyingi `since=` sifatida ishlatiladi (clock drift'dan himoya).
+
+### Assignment target_type ro'yxati
+
+`ALL`, `ROLE`, `USER`, `STAFF`, `BRANCH`, `TERRITORY`.
+
+> **Eslatma:** Visibility (kim ko'radi) **server tomonida** filterlanadi —
+> mobile faqat foydalanuvchiga ko'rinadigan hujjatlar haqida ma'lumot oladi.
+> Mobile target_type'ga qarab UI metadata ko'rsatishi mumkin (mandatory
+> badge, "siz uchun maxsus" indikatori), lekin **offline visibility logikasi
+> qurish shart emas**.
+>
+> **Forward-compat:** noma'lum target_type qiymatini `unknown` deb tugating
+> (`BlockType.unknown` patterni bilan bir xil) — backend yangi qiymat
+> qo'shsa, mobile crash bo'lmasin.
 
 ### Block tiplari ro'yxati
 
@@ -242,7 +273,8 @@ lib/src/features/knowledge/
 │   ├── enums/
 │   │   ├── doc_type.dart
 │   │   ├── doc_status.dart
-│   │   └── block_type.dart                           # + unknown for forward-compat
+│   │   ├── block_type.dart                           # + unknown for forward-compat
+│   │   └── assignment_target_type.dart               # ALL | ROLE | USER | STAFF | BRANCH | TERRITORY + unknown
 │   └── usecases/
 │       ├── get_categories_for_user.dart
 │       └── get_document_detail.dart
@@ -388,9 +420,10 @@ CREATE TABLE knowledge_assignments (
   id TEXT PRIMARY KEY,
   organization_id TEXT NOT NULL,
   document_id TEXT NOT NULL,
-  target_type TEXT,
+  target_type TEXT,                -- ALL | ROLE | USER | STAFF | BRANCH | TERRITORY
   target_role_id TEXT,
   target_user_id TEXT,
+  target_staff_id TEXT,            -- Staff record (asosiy biriktirish nuqtasi)
   target_branch_id TEXT,
   target_territory_id TEXT,
   mandatory INTEGER,
@@ -399,6 +432,7 @@ CREATE TABLE knowledge_assignments (
   deleted_at INTEGER
 );
 CREATE INDEX idx_kn_asg_doc ON knowledge_assignments(document_id);
+CREATE INDEX idx_kn_asg_staff ON knowledge_assignments(target_staff_id);
 
 CREATE TABLE knowledge_tags (
   id TEXT PRIMARY KEY,
@@ -506,6 +540,88 @@ extension BlockTypeX on BlockType {
 ```
 
 `DocType` va `DocStatus` shu pattern bilan.
+
+### `AssignmentTargetType` enum — `domain/enums/assignment_target_type.dart`
+
+```dart
+enum AssignmentTargetType {
+  all, role, user, staff, branch, territory,
+  unknown;
+
+  String get wireValue => switch (this) {
+    AssignmentTargetType.all       => 'ALL',
+    AssignmentTargetType.role      => 'ROLE',
+    AssignmentTargetType.user      => 'USER',
+    AssignmentTargetType.staff     => 'STAFF',
+    AssignmentTargetType.branch    => 'BRANCH',
+    AssignmentTargetType.territory => 'TERRITORY',
+    AssignmentTargetType.unknown   => 'UNKNOWN',
+  };
+}
+
+extension AssignmentTargetTypeX on AssignmentTargetType {
+  static AssignmentTargetType fromString(String? s) {
+    if (s == null) return AssignmentTargetType.unknown;
+    return AssignmentTargetType.values.firstWhere(
+      (e) => e.wireValue == s,
+      orElse: () => AssignmentTargetType.unknown,
+    );
+  }
+}
+```
+
+### `KnowledgeAssignment` modeli
+
+```dart
+class KnowledgeAssignment {
+  final String id;
+  final String organizationId;
+  final String documentId;
+  final AssignmentTargetType targetType;
+  final String? targetRoleId;
+  final String? targetUserId;
+  final String? targetStaffId;       // ← Staff record (asosiy biriktirish nuqtasi)
+  final String? targetBranchId;
+  final String? targetTerritoryId;
+  final bool mandatory;
+  final DateTime? dueAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+
+  factory KnowledgeAssignment.fromJson(Map<String, dynamic> json) =>
+      KnowledgeAssignment(
+        id: json['id'] as String,
+        organizationId: json['organization_id'] as String,
+        documentId: json['document_id'] as String,
+        targetType: AssignmentTargetTypeX.fromString(json['target_type'] as String?),
+        targetRoleId: json['target_role_id'] as String?,
+        targetUserId: json['target_user_id'] as String?,
+        targetStaffId: json['target_staff_id'] as String?,
+        targetBranchId: json['target_branch_id'] as String?,
+        targetTerritoryId: json['target_territory_id'] as String?,
+        mandatory: (json['mandatory'] as bool?) ?? false,
+        dueAt: _parseIso(json['due_at']),
+        updatedAt: _parseIso(json['updated_at'])!,
+        deletedAt: _parseIso(json['deleted_at']),
+      );
+
+  Map<String, Object?> toDbMap() => {
+        'id': id,
+        'organization_id': organizationId,
+        'document_id': documentId,
+        'target_type': targetType.wireValue,
+        'target_role_id': targetRoleId,
+        'target_user_id': targetUserId,
+        'target_staff_id': targetStaffId,
+        'target_branch_id': targetBranchId,
+        'target_territory_id': targetTerritoryId,
+        'mandatory': mandatory ? 1 : 0,
+        'due_at': dueAt?.millisecondsSinceEpoch,
+        'updated_at': updatedAt.millisecondsSinceEpoch,
+        'deleted_at': deletedAt?.millisecondsSinceEpoch,
+      };
+}
+```
 
 ### Boshqa modellar
 Standart `fromJson/toJson` + `copyWith`. SQLite uchun `toDbMap/fromDbMap` (JSON fieldlar `jsonEncode`/`jsonDecode` orqali serialize qilinadi).

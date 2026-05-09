@@ -5,6 +5,8 @@ import 'package:gloria_marketing_flutter/src/features/knowledge/data/models/know
 import 'package:gloria_marketing_flutter/src/features/knowledge/domain/enums/doc_status.dart';
 import 'package:gloria_marketing_flutter/src/features/knowledge/domain/enums/doc_type.dart';
 
+import '_json_utils.dart';
+
 class KnowledgeDocumentTranslation {
   final String documentId;
   final String language;
@@ -147,7 +149,7 @@ class KnowledgeDocument {
       slug: json['slug'] as String?,
       docType: DocTypeX.fromString(json['doc_type'] as String?),
       status: DocStatusX.fromString(json['status'] as String?),
-      isPinned: (json['is_pinned'] as bool?) ?? false,
+      isPinned: parseBool(json['is_pinned']) ?? false,
       coverMediaId: cover?.id ?? json['cover_media_id'] as String?,
       coverMedia: cover,
       translations: translations,

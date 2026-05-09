@@ -31,7 +31,6 @@ import 'package:gloria_marketing_flutter/src/features/marketing/data/models/prom
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/district_contracting.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
@@ -58,7 +57,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 36, // Incremented to version 36 for user_projects table
+      version: 37, // v37: knowledge base tables (categories, documents, sections, blocks, media, assignments, tags)
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -156,6 +155,169 @@ class ApiDatabaseService {
         google_token TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Knowledge Base tables (v37). The same DDL runs from the v37
+    // upgrade branch — keep both copies in sync if columns change.
+    await _createKnowledgeBaseTables(db);
+  }
+
+  /// CREATE TABLE statements for the Knowledge Base feature (v37).
+  ///
+  /// Called from both [_onCreate] (fresh installs) and the
+  /// `oldVersion < 37` branch of [_onUpgrade] (upgrades from v36 or
+  /// earlier). Idempotent — every statement uses IF NOT EXISTS.
+  Future<void> _createKnowledgeBaseTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS knowledge_categories (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        parent_id TEXT,
+        slug TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        icon TEXT,
+        color TEXT,
+        cover_media_id TEXT,
+        order_idx INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        updated_at INTEGER NOT NULL,
+        deleted_at INTEGER
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_kn_cat_org_parent ON knowledge_categories(organization_id, parent_id, order_idx)',
+    );
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS knowledge_documents (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        category_id TEXT NOT NULL,
+        slug TEXT,
+        doc_type TEXT,
+        status TEXT,
+        is_pinned INTEGER DEFAULT 0,
+        cover_media_id TEXT,
+        published_at INTEGER,
+        expires_at INTEGER,
+        updated_at INTEGER NOT NULL,
+        deleted_at INTEGER
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_kn_doc_org_cat ON knowledge_documents(organization_id, category_id, status, published_at DESC)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_kn_doc_pinned ON knowledge_documents(organization_id, is_pinned, published_at DESC)',
+    );
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS knowledge_document_translations (
+        document_id TEXT NOT NULL,
+        language TEXT NOT NULL,
+        title TEXT,
+        summary TEXT,
+        PRIMARY KEY(document_id, language)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS knowledge_sections (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        document_id TEXT NOT NULL,
+        parent_id TEXT,
+        anchor TEXT,
+        title_i18n_json TEXT,
+        order_idx INTEGER,
+        updated_at INTEGER NOT NULL,
+        deleted_at INTEGER
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_kn_sec_doc ON knowledge_sections(document_id, parent_id, order_idx)',
+    );
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS knowledge_content_blocks (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        section_id TEXT NOT NULL,
+        order_idx INTEGER,
+        block_type TEXT,
+        data_json TEXT,
+        media_id TEXT,
+        updated_at INTEGER NOT NULL,
+        deleted_at INTEGER
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_kn_block_sec ON knowledge_content_blocks(section_id, order_idx)',
+    );
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS knowledge_media (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        kind TEXT,
+        mime_type TEXT,
+        size_bytes INTEGER,
+        small_url TEXT,
+        medium_url TEXT,
+        large_url TEXT,
+        blurhash TEXT,
+        width INTEGER,
+        height INTEGER,
+        storage_key TEXT,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS knowledge_assignments (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        document_id TEXT NOT NULL,
+        target_type TEXT,
+        target_role_id TEXT,
+        target_user_id TEXT,
+        target_branch_id TEXT,
+        target_territory_id TEXT,
+        mandatory INTEGER,
+        due_at INTEGER,
+        updated_at INTEGER NOT NULL,
+        deleted_at INTEGER
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_kn_asg_doc ON knowledge_assignments(document_id)',
+    );
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS knowledge_tags (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        slug TEXT,
+        name TEXT,
+        updated_at INTEGER NOT NULL,
+        deleted_at INTEGER
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS knowledge_document_tags (
+        document_id TEXT NOT NULL,
+        tag_id TEXT NOT NULL,
+        PRIMARY KEY(document_id, tag_id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS knowledge_sync_state (
+        resource_name TEXT PRIMARY KEY,
+        last_synced_at INTEGER
       )
     ''');
   }
@@ -1518,6 +1680,17 @@ class ApiDatabaseService {
 
       if (kDebugMode) {
         print('ApiDatabaseService: Created user_projects table (version 36)');
+      }
+    }
+
+    if (oldVersion < 37) {
+      // Knowledge Base feature — categories, documents, sections,
+      // content blocks, media, assignments, tags. Schema is shared
+      // with [_onCreate]; see [_createKnowledgeBaseTables] for the
+      // single source of truth.
+      await _createKnowledgeBaseTables(db);
+      if (kDebugMode) {
+        print('ApiDatabaseService: Created knowledge base tables (version 37)');
       }
     }
   }
@@ -9405,532 +9578,6 @@ class ApiDatabaseService {
     }
   }
 
-  // =========================================================================
-  // Product Images CRUD Methods
-  // =========================================================================
-
-  /// Save product images to cache
-  ///
-  /// Parameters:
-  /// - [images] - List of ProductImage objects to save
-  /// - [productCode] - Optional product code to delete existing images for before saving
-  Future<void> saveProductImages(
-    List<ProductImage> images, {
-    String? productCode,
-  }) async {
-    try {
-      if (kDebugMode) {
-        print(
-          'ApiDatabaseService: Saving ${images.length} product images${productCode != null ? " for product $productCode" : ""}',
-        );
-      }
-
-      final db = await database;
-
-      // Ensure table exists (fallback for migration issues)
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS product_images (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          server_id INTEGER,
-          product_code TEXT NOT NULL,
-          nomenklatura_id INTEGER,
-          image TEXT,
-          image_url TEXT,
-          image_sm_url TEXT,
-          image_md_url TEXT,
-          image_lg_url TEXT,
-          image_thumbnail_url TEXT,
-          image_dimensions TEXT,
-          image_sm_dimensions TEXT,
-          image_md_dimensions TEXT,
-          image_lg_dimensions TEXT,
-          image_thumbnail_dimensions TEXT,
-          is_main INTEGER DEFAULT 0,
-          category TEXT,
-          note TEXT,
-          status TEXT,
-          source TEXT,
-          created_at_server TEXT,
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL,
-          FOREIGN KEY (product_code) REFERENCES products (code) ON DELETE CASCADE
-        )
-      ''');
-      await db.execute(
-        'CREATE INDEX IF NOT EXISTS idx_product_images_product_code ON product_images(product_code)',
-      );
-      await db.execute(
-        'CREATE INDEX IF NOT EXISTS idx_product_images_server_id ON product_images(server_id)',
-      );
-
-      await db.transaction((txn) async {
-        // Delete existing images for product if specified
-        if (productCode != null) {
-          await txn.delete(
-            'product_images',
-            where: 'product_code = ?',
-            whereArgs: [productCode],
-          );
-        }
-
-        for (final image in images) {
-          final map = image.toMap();
-          map.remove('id'); // Remove id for insertion
-          await txn.insert(
-            'product_images',
-            map,
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-        }
-      });
-
-      if (kDebugMode) {
-        print(
-          'ApiDatabaseService: Successfully saved ${images.length} product images',
-        );
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error saving product images: $e');
-      }
-      rethrow;
-    }
-  }
-
-  /// Get all product images for a specific product
-  ///
-  /// Returns a list of ProductImage objects ordered by is_main DESC, created_at DESC.
-  Future<List<ProductImage>> getProductImages(String productCode) async {
-    try {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Getting product images for $productCode');
-      }
-
-      final db = await database;
-      final results = await db.query(
-        'product_images',
-        where: 'product_code = ?',
-        whereArgs: [productCode],
-        orderBy: 'is_main DESC, created_at DESC',
-      );
-
-      return results.map((row) => ProductImage.fromMap(row)).toList();
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error getting product images: $e');
-      }
-      return [];
-    }
-  }
-
-  /// Get main product image for a specific product
-  ///
-  /// Returns the main ProductImage if found, null otherwise.
-  Future<ProductImage?> getMainProductImage(String productCode) async {
-    try {
-      final db = await database;
-
-      if (kDebugMode) {
-        // Debug: Check total images and sample product codes
-        final countResult = await db.rawQuery(
-          'SELECT COUNT(*) as cnt FROM product_images',
-        );
-        final sampleCodes = await db.rawQuery(
-          'SELECT DISTINCT product_code FROM product_images LIMIT 5',
-        );
-        print(
-          'ApiDatabaseService: Total images in DB: ${countResult.first['cnt']}',
-        );
-        print(
-          'ApiDatabaseService: Sample product_codes in product_images: ${sampleCodes.map((e) => e['product_code']).toList()}',
-        );
-        print('ApiDatabaseService: Looking for productCode: $productCode');
-      }
-
-      final results = await db.query(
-        'product_images',
-        where: 'product_code = ? AND is_main = 1',
-        whereArgs: [productCode],
-        limit: 1,
-      );
-
-      if (results.isEmpty) {
-        // Fallback to any image if no main image
-        final anyResults = await db.query(
-          'product_images',
-          where: 'product_code = ?',
-          whereArgs: [productCode],
-          orderBy: 'created_at DESC',
-          limit: 1,
-        );
-        if (kDebugMode) {
-          print(
-            'ApiDatabaseService: No main image, fallback query returned ${anyResults.length} results',
-          );
-        }
-        if (anyResults.isEmpty) return null;
-        return ProductImage.fromMap(anyResults.first);
-      }
-
-      return ProductImage.fromMap(results.first);
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error getting main product image: $e');
-      }
-      return null;
-    }
-  }
-
-  /// Get all cached product images
-  ///
-  /// Returns a list of all ProductImage objects in the database.
-  Future<List<ProductImage>> getAllProductImages() async {
-    try {
-      final db = await database;
-      final results = await db.query(
-        'product_images',
-        orderBy: 'product_code ASC, is_main DESC',
-      );
-
-      return results.map((row) => ProductImage.fromMap(row)).toList();
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error getting all product images: $e');
-      }
-      return [];
-    }
-  }
-
-  /// Check if product images exist in cache
-  Future<bool> hasProductImages() async {
-    try {
-      final db = await database;
-      final result = await db.rawQuery('SELECT COUNT(*) FROM product_images');
-      final count = Sqflite.firstIntValue(result) ?? 0;
-      return count > 0;
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error checking product images: $e');
-      }
-      return false;
-    }
-  }
-
-  /// Get product images count
-  Future<int> getProductImagesCount() async {
-    try {
-      final db = await database;
-      final result = await db.rawQuery('SELECT COUNT(*) FROM product_images');
-      return Sqflite.firstIntValue(result) ?? 0;
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error getting product images count: $e');
-      }
-      return 0;
-    }
-  }
-
-  /// Clear all cached product images
-  Future<void> clearProductImages() async {
-    try {
-      final db = await database;
-      await db.delete('product_images');
-      if (kDebugMode) {
-        print('ApiDatabaseService: Cleared product images cache');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error clearing product images: $e');
-      }
-      rethrow;
-    }
-  }
-
-  /// Delete product images for a specific product
-  Future<void> deleteProductImages(String productCode) async {
-    try {
-      final db = await database;
-      await db.delete(
-        'product_images',
-        where: 'product_code = ?',
-        whereArgs: [productCode],
-      );
-      if (kDebugMode) {
-        print('ApiDatabaseService: Deleted product images for $productCode');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error deleting product images: $e');
-      }
-      rethrow;
-    }
-  }
-
-  // =========================================================================
-  // Product Code Lookup Methods (for image matching)
-  // =========================================================================
-
-  /// Get all product codes from the products table
-  ///
-  /// Returns a list of all product codes for efficient O(1) lookup when
-  /// matching API images with local products. This is used during sync
-  /// to verify that a product exists before saving its image.
-  Future<List<String>> getAllProductCodes() async {
-    try {
-      final db = await database;
-      final results = await db.query('products', columns: ['code']);
-
-      final codes = results
-          .map((row) => row['code'] as String)
-          .where((code) => code.isNotEmpty)
-          .toList();
-
-      if (kDebugMode) {
-        print('ApiDatabaseService: Retrieved ${codes.length} product codes');
-      }
-
-      return codes;
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error getting all product codes: $e');
-      }
-      return [];
-    }
-  }
-
-  /// Check if a product exists by its code
-  ///
-  /// Returns true if a product with the given code exists in the database.
-  Future<bool> productExists(String productCode) async {
-    if (productCode.isEmpty) return false;
-
-    try {
-      final db = await database;
-      final result = await db.query(
-        'products',
-        columns: ['code'],
-        where: 'code = ?',
-        whereArgs: [productCode],
-        limit: 1,
-      );
-      return result.isNotEmpty;
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error checking product existence: $e');
-      }
-      return false;
-    }
-  }
-
-  /// Upsert product images with smart matching
-  ///
-  /// Updates existing images (by server_id) or inserts new ones.
-  /// Only saves images for products that exist in the local database.
-  /// Uses batch operations for optimal performance.
-  ///
-  /// Parameters:
-  /// - [images] - List of ProductImage objects to upsert
-  /// - [validProductCodes] - Optional set of valid product codes for filtering
-  ///
-  /// Returns the number of images successfully upserted.
-  Future<int> upsertProductImages(
-    List<ProductImage> images, {
-    Set<String>? validProductCodes,
-  }) async {
-    if (images.isEmpty) return 0;
-
-    try {
-      final db = await database;
-      final now = DateTime.now().toIso8601String();
-      int upsertedCount = 0;
-
-      // Filter images to only those with valid product codes if provided
-      final imagesToSave = validProductCodes != null
-          ? images
-                .where((img) => validProductCodes.contains(img.productCode))
-                .toList()
-          : images;
-
-      if (imagesToSave.isEmpty) {
-        if (kDebugMode) {
-          print(
-            'ApiDatabaseService: No valid images to upsert after filtering',
-          );
-        }
-        return 0;
-      }
-
-      if (kDebugMode) {
-        print(
-          'ApiDatabaseService: Upserting ${imagesToSave.length} product images',
-        );
-      }
-
-      await db.transaction((txn) async {
-        for (final image in imagesToSave) {
-          final map = image.toMap();
-          map.remove('id'); // Remove local id for upsert
-          map['updated_at'] = now; // Update timestamp
-
-          // Check if image with same server_id exists
-          if (image.serverId != null) {
-            final existing = await txn.query(
-              'product_images',
-              where: 'server_id = ?',
-              whereArgs: [image.serverId],
-              limit: 1,
-            );
-
-            if (existing.isNotEmpty) {
-              // Update existing record
-              await txn.update(
-                'product_images',
-                map,
-                where: 'server_id = ?',
-                whereArgs: [image.serverId],
-              );
-            } else {
-              // Insert new record
-              map['created_at'] = now;
-              await txn.insert(
-                'product_images',
-                map,
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
-            }
-          } else {
-            // No server_id, check by product_code and image_url
-            final existing = await txn.query(
-              'product_images',
-              where: 'product_code = ? AND image_url = ?',
-              whereArgs: [image.productCode, image.imageUrl],
-              limit: 1,
-            );
-
-            if (existing.isNotEmpty) {
-              await txn.update(
-                'product_images',
-                map,
-                where: 'product_code = ? AND image_url = ?',
-                whereArgs: [image.productCode, image.imageUrl],
-              );
-            } else {
-              map['created_at'] = now;
-              await txn.insert(
-                'product_images',
-                map,
-                conflictAlgorithm: ConflictAlgorithm.replace,
-              );
-            }
-          }
-          upsertedCount++;
-        }
-      });
-
-      if (kDebugMode) {
-        print(
-          'ApiDatabaseService: Successfully upserted $upsertedCount product images',
-        );
-      }
-
-      return upsertedCount;
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error upserting product images: $e');
-      }
-      rethrow;
-    }
-  }
-
-  /// Get product images by multiple product codes efficiently
-  ///
-  /// Returns a map of product code to list of ProductImage objects.
-  /// Optimized for batch loading when displaying product lists.
-  Future<Map<String, List<ProductImage>>> getProductImagesBatch(
-    List<String> productCodes,
-  ) async {
-    if (productCodes.isEmpty) return {};
-
-    try {
-      final db = await database;
-
-      // Build IN clause for efficiency
-      final placeholders = List.filled(productCodes.length, '?').join(',');
-      final results = await db.rawQuery(
-        'SELECT * FROM product_images WHERE product_code IN ($placeholders) ORDER BY is_main DESC, created_at DESC',
-        productCodes,
-      );
-
-      // Group results by product_code
-      final Map<String, List<ProductImage>> grouped = {};
-      for (final row in results) {
-        final image = ProductImage.fromMap(row);
-        grouped.putIfAbsent(image.productCode, () => []).add(image);
-      }
-
-      if (kDebugMode) {
-        print(
-          'ApiDatabaseService: Retrieved images for ${grouped.length} products',
-        );
-      }
-
-      return grouped;
-    } catch (e) {
-      if (kDebugMode) {
-        print('ApiDatabaseService: Error getting product images batch: $e');
-      }
-      return {};
-    }
-  }
-
-  /// Get main product images for multiple product codes efficiently
-  ///
-  /// Returns a map of product code to main ProductImage.
-  /// Optimized for displaying product thumbnails in lists.
-  Future<Map<String, ProductImage>> getMainProductImagesBatch(
-    List<String> productCodes,
-  ) async {
-    if (productCodes.isEmpty) return {};
-
-    try {
-      final db = await database;
-
-      // Build IN clause
-      final placeholders = List.filled(productCodes.length, '?').join(',');
-
-      // Get all images for these products, ordered by is_main and created_at
-      final results = await db.rawQuery('''
-        SELECT * FROM product_images 
-        WHERE product_code IN ($placeholders) 
-        ORDER BY product_code, is_main DESC, created_at DESC
-        ''', productCodes);
-
-      // Group by product_code and take first (main or most recent) for each
-      final Map<String, ProductImage> mainImages = {};
-      for (final row in results) {
-        final image = ProductImage.fromMap(row);
-        // Only add if not already present (first one is the main/most recent)
-        if (!mainImages.containsKey(image.productCode)) {
-          mainImages[image.productCode] = image;
-        }
-      }
-
-      if (kDebugMode) {
-        print(
-          'ApiDatabaseService: Retrieved main images for ${mainImages.length} products',
-        );
-      }
-
-      return mainImages;
-    } catch (e) {
-      if (kDebugMode) {
-        print(
-          'ApiDatabaseService: Error getting main product images batch: $e',
-        );
-      }
-      return {};
-    }
-  }
 
   // ============================================================================
   // Sales Classifiers Methods

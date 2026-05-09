@@ -6,7 +6,7 @@
 import 'dart:async' as _i8;
 
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
-    as _i47;
+    as _i46;
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart'
     as _i28;
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart'
@@ -20,7 +20,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart'
     as _i35;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart'
-    as _i46;
+    as _i45;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart'
     as _i20;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart'
@@ -49,8 +49,6 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
     as _i29;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart'
     as _i16;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart'
-    as _i43;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart'
     as _i18;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart'
@@ -58,7 +56,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart'
     as _i33;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart'
-    as _i44;
+    as _i43;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_classifiers_response.dart'
     as _i5;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart'
@@ -68,7 +66,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnai
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
     as _i13;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart'
-    as _i45;
+    as _i44;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart'
     as _i32;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart'
@@ -3019,140 +3017,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i8.Future<void>);
 
   @override
-  _i8.Future<void> saveProductImages(
-    List<_i43.ProductImage>? images, {
-    String? productCode,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(
-              #saveProductImages,
-              [images],
-              {#productCode: productCode},
-            ),
-            returnValue: _i8.Future<void>.value(),
-            returnValueForMissingStub: _i8.Future<void>.value(),
-          )
-          as _i8.Future<void>);
-
-  @override
-  _i8.Future<List<_i43.ProductImage>> getProductImages(String? productCode) =>
-      (super.noSuchMethod(
-            Invocation.method(#getProductImages, [productCode]),
-            returnValue: _i8.Future<List<_i43.ProductImage>>.value(
-              <_i43.ProductImage>[],
-            ),
-          )
-          as _i8.Future<List<_i43.ProductImage>>);
-
-  @override
-  _i8.Future<_i43.ProductImage?> getMainProductImage(String? productCode) =>
-      (super.noSuchMethod(
-            Invocation.method(#getMainProductImage, [productCode]),
-            returnValue: _i8.Future<_i43.ProductImage?>.value(),
-          )
-          as _i8.Future<_i43.ProductImage?>);
-
-  @override
-  _i8.Future<List<_i43.ProductImage>> getAllProductImages() =>
-      (super.noSuchMethod(
-            Invocation.method(#getAllProductImages, []),
-            returnValue: _i8.Future<List<_i43.ProductImage>>.value(
-              <_i43.ProductImage>[],
-            ),
-          )
-          as _i8.Future<List<_i43.ProductImage>>);
-
-  @override
-  _i8.Future<bool> hasProductImages() =>
-      (super.noSuchMethod(
-            Invocation.method(#hasProductImages, []),
-            returnValue: _i8.Future<bool>.value(false),
-          )
-          as _i8.Future<bool>);
-
-  @override
-  _i8.Future<int> getProductImagesCount() =>
-      (super.noSuchMethod(
-            Invocation.method(#getProductImagesCount, []),
-            returnValue: _i8.Future<int>.value(0),
-          )
-          as _i8.Future<int>);
-
-  @override
-  _i8.Future<void> clearProductImages() =>
-      (super.noSuchMethod(
-            Invocation.method(#clearProductImages, []),
-            returnValue: _i8.Future<void>.value(),
-            returnValueForMissingStub: _i8.Future<void>.value(),
-          )
-          as _i8.Future<void>);
-
-  @override
-  _i8.Future<void> deleteProductImages(String? productCode) =>
-      (super.noSuchMethod(
-            Invocation.method(#deleteProductImages, [productCode]),
-            returnValue: _i8.Future<void>.value(),
-            returnValueForMissingStub: _i8.Future<void>.value(),
-          )
-          as _i8.Future<void>);
-
-  @override
-  _i8.Future<List<String>> getAllProductCodes() =>
-      (super.noSuchMethod(
-            Invocation.method(#getAllProductCodes, []),
-            returnValue: _i8.Future<List<String>>.value(<String>[]),
-          )
-          as _i8.Future<List<String>>);
-
-  @override
-  _i8.Future<bool> productExists(String? productCode) =>
-      (super.noSuchMethod(
-            Invocation.method(#productExists, [productCode]),
-            returnValue: _i8.Future<bool>.value(false),
-          )
-          as _i8.Future<bool>);
-
-  @override
-  _i8.Future<int> upsertProductImages(
-    List<_i43.ProductImage>? images, {
-    Set<String>? validProductCodes,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(
-              #upsertProductImages,
-              [images],
-              {#validProductCodes: validProductCodes},
-            ),
-            returnValue: _i8.Future<int>.value(0),
-          )
-          as _i8.Future<int>);
-
-  @override
-  _i8.Future<Map<String, List<_i43.ProductImage>>> getProductImagesBatch(
-    List<String>? productCodes,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#getProductImagesBatch, [productCodes]),
-            returnValue: _i8.Future<Map<String, List<_i43.ProductImage>>>.value(
-              <String, List<_i43.ProductImage>>{},
-            ),
-          )
-          as _i8.Future<Map<String, List<_i43.ProductImage>>>);
-
-  @override
-  _i8.Future<Map<String, _i43.ProductImage>> getMainProductImagesBatch(
-    List<String>? productCodes,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#getMainProductImagesBatch, [productCodes]),
-            returnValue: _i8.Future<Map<String, _i43.ProductImage>>.value(
-              <String, _i43.ProductImage>{},
-            ),
-          )
-          as _i8.Future<Map<String, _i43.ProductImage>>);
-
-  @override
-  _i8.Future<void> saveSalesChannels(List<_i44.SalesChannel>? channels) =>
+  _i8.Future<void> saveSalesChannels(List<_i43.SalesChannel>? channels) =>
       (super.noSuchMethod(
             Invocation.method(#saveSalesChannels, [channels]),
             returnValue: _i8.Future<void>.value(),
@@ -3161,7 +3026,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i8.Future<void>);
 
   @override
-  _i8.Future<void> saveTradingPointTypes(List<_i45.TradingPointType>? types) =>
+  _i8.Future<void> saveTradingPointTypes(List<_i44.TradingPointType>? types) =>
       (super.noSuchMethod(
             Invocation.method(#saveTradingPointTypes, [types]),
             returnValue: _i8.Future<void>.value(),
@@ -3170,7 +3035,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i8.Future<void>);
 
   @override
-  _i8.Future<void> saveClientClasses(List<_i46.ClientClass>? classes) =>
+  _i8.Future<void> saveClientClasses(List<_i45.ClientClass>? classes) =>
       (super.noSuchMethod(
             Invocation.method(#saveClientClasses, [classes]),
             returnValue: _i8.Future<void>.value(),
@@ -3179,38 +3044,38 @@ class MockApiDatabaseService extends _i1.Mock
           as _i8.Future<void>);
 
   @override
-  _i8.Future<List<_i44.SalesChannel>> getSalesChannels() =>
+  _i8.Future<List<_i43.SalesChannel>> getSalesChannels() =>
       (super.noSuchMethod(
             Invocation.method(#getSalesChannels, []),
-            returnValue: _i8.Future<List<_i44.SalesChannel>>.value(
-              <_i44.SalesChannel>[],
+            returnValue: _i8.Future<List<_i43.SalesChannel>>.value(
+              <_i43.SalesChannel>[],
             ),
           )
-          as _i8.Future<List<_i44.SalesChannel>>);
+          as _i8.Future<List<_i43.SalesChannel>>);
 
   @override
-  _i8.Future<List<_i45.TradingPointType>> getTradingPointTypes({
+  _i8.Future<List<_i44.TradingPointType>> getTradingPointTypes({
     String? channelGroup,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getTradingPointTypes, [], {
               #channelGroup: channelGroup,
             }),
-            returnValue: _i8.Future<List<_i45.TradingPointType>>.value(
-              <_i45.TradingPointType>[],
+            returnValue: _i8.Future<List<_i44.TradingPointType>>.value(
+              <_i44.TradingPointType>[],
             ),
           )
-          as _i8.Future<List<_i45.TradingPointType>>);
+          as _i8.Future<List<_i44.TradingPointType>>);
 
   @override
-  _i8.Future<List<_i46.ClientClass>> getClientClasses() =>
+  _i8.Future<List<_i45.ClientClass>> getClientClasses() =>
       (super.noSuchMethod(
             Invocation.method(#getClientClasses, []),
-            returnValue: _i8.Future<List<_i46.ClientClass>>.value(
-              <_i46.ClientClass>[],
+            returnValue: _i8.Future<List<_i45.ClientClass>>.value(
+              <_i45.ClientClass>[],
             ),
           )
-          as _i8.Future<List<_i46.ClientClass>>);
+          as _i8.Future<List<_i45.ClientClass>>);
 
   @override
   _i8.Future<void> ensureSalesClassifiersTablesExist() =>
@@ -3225,7 +3090,7 @@ class MockApiDatabaseService extends _i1.Mock
 /// A class which mocks [DatabaseHelper].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDatabaseHelper extends _i1.Mock implements _i47.DatabaseHelper {
+class MockDatabaseHelper extends _i1.Mock implements _i46.DatabaseHelper {
   MockDatabaseHelper() {
     _i1.throwOnMissingStub(this);
   }

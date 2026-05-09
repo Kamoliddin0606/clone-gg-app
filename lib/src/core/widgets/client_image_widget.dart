@@ -9,7 +9,6 @@ import 'package:gloria_marketing_flutter/src/core/services/images/image_target_t
 import 'package:gloria_marketing_flutter/src/core/services/images/new_backend_image_repository.dart';
 import 'package:gloria_marketing_flutter/src/core/services/images/unified_image.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
-import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 
 /// Image size categories for adaptive URL selection.
 ///
@@ -413,35 +412,3 @@ UnifiedImageSize _unifiedSize(ClientImageSize size) {
   }
 }
 
-/// Helper function to select image URL based on size from a legacy
-/// [ClientImage]. Kept for callers outside the widget that still hold
-/// a raw [ClientImage] reference (image upload flow, debug screens).
-String? selectClientImageUrl(ClientImage? image, ClientImageSize size) {
-  if (image == null) return null;
-  switch (size) {
-    case ClientImageSize.thumbnail:
-      return image.imageThumbnailUrl ??
-          image.imageSmUrl ??
-          image.imageMdUrl ??
-          image.imageUrl ??
-          image.image;
-    case ClientImageSize.small:
-      return image.imageSmUrl ??
-          image.imageThumbnailUrl ??
-          image.imageMdUrl ??
-          image.imageUrl ??
-          image.image;
-    case ClientImageSize.medium:
-      return image.imageMdUrl ??
-          image.imageSmUrl ??
-          image.imageLgUrl ??
-          image.imageUrl ??
-          image.image;
-    case ClientImageSize.large:
-      return image.imageLgUrl ??
-          image.imageMdUrl ??
-          image.imageUrl ??
-          image.image ??
-          image.imageSmUrl;
-  }
-}

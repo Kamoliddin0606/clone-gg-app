@@ -8,7 +8,7 @@ import 'dart:async' as _i8;
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart'
     as _i9;
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart'
-    as _i38;
+    as _i37;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart'
     as _i24;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart'
@@ -41,8 +41,6 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
     as _i20;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart'
     as _i12;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart'
-    as _i37;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart'
     as _i14;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart'
@@ -70,9 +68,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_pl
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart'
     as _i10;
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/device_binding.dart'
-    as _i41;
-import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_gates_envelope.dart'
     as _i40;
+import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_gates_envelope.dart'
+    as _i39;
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart'
     as _i2;
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart'
@@ -80,7 +78,7 @@ import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/a
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart'
     as _i17;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i39;
+import 'package:mockito/src/dummies.dart' as _i38;
 import 'package:shared_preferences/shared_preferences.dart' as _i6;
 
 // ignore_for_file: type=lint
@@ -1388,47 +1386,13 @@ class MockDataSyncService extends _i1.Mock implements _i9.DataSyncService {
             ),
           )
           as _i8.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i8.Future<List<_i37.ProductImage>> syncProductImages({
-    bool? forceRefresh = false,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#syncProductImages, [], {
-              #forceRefresh: forceRefresh,
-            }),
-            returnValue: _i8.Future<List<_i37.ProductImage>>.value(
-              <_i37.ProductImage>[],
-            ),
-          )
-          as _i8.Future<List<_i37.ProductImage>>);
-
-  @override
-  _i8.Future<List<_i37.ProductImage>> getCachedProductImages(
-    String? productCode,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#getCachedProductImages, [productCode]),
-            returnValue: _i8.Future<List<_i37.ProductImage>>.value(
-              <_i37.ProductImage>[],
-            ),
-          )
-          as _i8.Future<List<_i37.ProductImage>>);
-
-  @override
-  _i8.Future<_i37.ProductImage?> getMainProductImage(String? productCode) =>
-      (super.noSuchMethod(
-            Invocation.method(#getMainProductImage, [productCode]),
-            returnValue: _i8.Future<_i37.ProductImage?>.value(),
-          )
-          as _i8.Future<_i37.ProductImage?>);
 }
 
 /// A class which mocks [SharedPreferencesService].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockSharedPreferencesService extends _i1.Mock
-    implements _i38.SharedPreferencesService {
+    implements _i37.SharedPreferencesService {
   MockSharedPreferencesService() {
     _i1.throwOnMissingStub(this);
   }
@@ -1645,7 +1609,7 @@ class MockSharedPreferencesService extends _i1.Mock
   String getLanguageCode() =>
       (super.noSuchMethod(
             Invocation.method(#getLanguageCode, []),
-            returnValue: _i39.dummyValue<String>(
+            returnValue: _i38.dummyValue<String>(
               this,
               Invocation.method(#getLanguageCode, []),
             ),
@@ -1794,7 +1758,7 @@ class MockSharedPreferencesService extends _i1.Mock
           as bool);
 
   @override
-  _i8.Future<void> setCachedGates(_i40.LoginGatesEnvelope? envelope) =>
+  _i8.Future<void> setCachedGates(_i39.LoginGatesEnvelope? envelope) =>
       (super.noSuchMethod(
             Invocation.method(#setCachedGates, [envelope]),
             returnValue: _i8.Future<void>.value(),
@@ -1821,7 +1785,7 @@ class MockSharedPreferencesService extends _i1.Mock
           as _i8.Future<void>);
 
   @override
-  _i8.Future<void> setCachedDeviceBinding(_i41.DeviceBinding? value) =>
+  _i8.Future<void> setCachedDeviceBinding(_i40.DeviceBinding? value) =>
       (super.noSuchMethod(
             Invocation.method(#setCachedDeviceBinding, [value]),
             returnValue: _i8.Future<void>.value(),

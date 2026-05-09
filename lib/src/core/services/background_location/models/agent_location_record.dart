@@ -3,8 +3,8 @@
 /// =============================================================================
 /// 
 /// Bu model serverga yuboriladigan location ma'lumotlarini o'z ichiga oladi.
-/// API endpointi: http://178.218.200.120:1596/api/v1/agent-location/
-/// 
+/// API endpointi: agent-location telemetry endpoint (V2 backend).
+///
 /// Barcha maydonlar API dokumentatsiyasiga mos keladi.
 /// Majburiy maydonlar: agent_code, latitude, longitude
 /// =============================================================================

@@ -6,17 +6,17 @@
 import 'dart:async' as _i13;
 
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
-    as _i50;
+    as _i49;
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart'
     as _i17;
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart'
-    as _i47;
+    as _i46;
 import 'package:gloria_marketing_flutter/src/core/services/reports_sync_service.dart'
-    as _i49;
+    as _i48;
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart'
     as _i12;
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart'
-    as _i46;
+    as _i45;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/akb_by_category.dart'
     as _i10;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart'
@@ -24,7 +24,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region_report.dart'
     as _i9;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart'
-    as _i45;
+    as _i44;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_contract.dart'
     as _i29;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/contract_type.dart'
@@ -53,8 +53,6 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
     as _i24;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_data.dart'
     as _i19;
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart'
-    as _i42;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_price.dart'
     as _i21;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_series.dart'
@@ -62,7 +60,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_with_price.dart'
     as _i28;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart'
-    as _i43;
+    as _i42;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_classifiers_response.dart'
     as _i6;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart'
@@ -72,7 +70,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/thumbnai
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
     as _i18;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart'
-    as _i44;
+    as _i43;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart'
     as _i27;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart'
@@ -88,7 +86,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_pl
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_plan_list.dart'
     as _i30;
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart'
-    as _i48;
+    as _i47;
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/device_binding.dart'
     as _i16;
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_gates_envelope.dart'
@@ -2473,141 +2471,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i13.Future<void>);
 
   @override
-  _i13.Future<void> saveProductImages(
-    List<_i42.ProductImage>? images, {
-    String? productCode,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(
-              #saveProductImages,
-              [images],
-              {#productCode: productCode},
-            ),
-            returnValue: _i13.Future<void>.value(),
-            returnValueForMissingStub: _i13.Future<void>.value(),
-          )
-          as _i13.Future<void>);
-
-  @override
-  _i13.Future<List<_i42.ProductImage>> getProductImages(String? productCode) =>
-      (super.noSuchMethod(
-            Invocation.method(#getProductImages, [productCode]),
-            returnValue: _i13.Future<List<_i42.ProductImage>>.value(
-              <_i42.ProductImage>[],
-            ),
-          )
-          as _i13.Future<List<_i42.ProductImage>>);
-
-  @override
-  _i13.Future<_i42.ProductImage?> getMainProductImage(String? productCode) =>
-      (super.noSuchMethod(
-            Invocation.method(#getMainProductImage, [productCode]),
-            returnValue: _i13.Future<_i42.ProductImage?>.value(),
-          )
-          as _i13.Future<_i42.ProductImage?>);
-
-  @override
-  _i13.Future<List<_i42.ProductImage>> getAllProductImages() =>
-      (super.noSuchMethod(
-            Invocation.method(#getAllProductImages, []),
-            returnValue: _i13.Future<List<_i42.ProductImage>>.value(
-              <_i42.ProductImage>[],
-            ),
-          )
-          as _i13.Future<List<_i42.ProductImage>>);
-
-  @override
-  _i13.Future<bool> hasProductImages() =>
-      (super.noSuchMethod(
-            Invocation.method(#hasProductImages, []),
-            returnValue: _i13.Future<bool>.value(false),
-          )
-          as _i13.Future<bool>);
-
-  @override
-  _i13.Future<int> getProductImagesCount() =>
-      (super.noSuchMethod(
-            Invocation.method(#getProductImagesCount, []),
-            returnValue: _i13.Future<int>.value(0),
-          )
-          as _i13.Future<int>);
-
-  @override
-  _i13.Future<void> clearProductImages() =>
-      (super.noSuchMethod(
-            Invocation.method(#clearProductImages, []),
-            returnValue: _i13.Future<void>.value(),
-            returnValueForMissingStub: _i13.Future<void>.value(),
-          )
-          as _i13.Future<void>);
-
-  @override
-  _i13.Future<void> deleteProductImages(String? productCode) =>
-      (super.noSuchMethod(
-            Invocation.method(#deleteProductImages, [productCode]),
-            returnValue: _i13.Future<void>.value(),
-            returnValueForMissingStub: _i13.Future<void>.value(),
-          )
-          as _i13.Future<void>);
-
-  @override
-  _i13.Future<List<String>> getAllProductCodes() =>
-      (super.noSuchMethod(
-            Invocation.method(#getAllProductCodes, []),
-            returnValue: _i13.Future<List<String>>.value(<String>[]),
-          )
-          as _i13.Future<List<String>>);
-
-  @override
-  _i13.Future<bool> productExists(String? productCode) =>
-      (super.noSuchMethod(
-            Invocation.method(#productExists, [productCode]),
-            returnValue: _i13.Future<bool>.value(false),
-          )
-          as _i13.Future<bool>);
-
-  @override
-  _i13.Future<int> upsertProductImages(
-    List<_i42.ProductImage>? images, {
-    Set<String>? validProductCodes,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(
-              #upsertProductImages,
-              [images],
-              {#validProductCodes: validProductCodes},
-            ),
-            returnValue: _i13.Future<int>.value(0),
-          )
-          as _i13.Future<int>);
-
-  @override
-  _i13.Future<Map<String, List<_i42.ProductImage>>> getProductImagesBatch(
-    List<String>? productCodes,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#getProductImagesBatch, [productCodes]),
-            returnValue:
-                _i13.Future<Map<String, List<_i42.ProductImage>>>.value(
-                  <String, List<_i42.ProductImage>>{},
-                ),
-          )
-          as _i13.Future<Map<String, List<_i42.ProductImage>>>);
-
-  @override
-  _i13.Future<Map<String, _i42.ProductImage>> getMainProductImagesBatch(
-    List<String>? productCodes,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#getMainProductImagesBatch, [productCodes]),
-            returnValue: _i13.Future<Map<String, _i42.ProductImage>>.value(
-              <String, _i42.ProductImage>{},
-            ),
-          )
-          as _i13.Future<Map<String, _i42.ProductImage>>);
-
-  @override
-  _i13.Future<void> saveSalesChannels(List<_i43.SalesChannel>? channels) =>
+  _i13.Future<void> saveSalesChannels(List<_i42.SalesChannel>? channels) =>
       (super.noSuchMethod(
             Invocation.method(#saveSalesChannels, [channels]),
             returnValue: _i13.Future<void>.value(),
@@ -2616,7 +2480,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i13.Future<void>);
 
   @override
-  _i13.Future<void> saveTradingPointTypes(List<_i44.TradingPointType>? types) =>
+  _i13.Future<void> saveTradingPointTypes(List<_i43.TradingPointType>? types) =>
       (super.noSuchMethod(
             Invocation.method(#saveTradingPointTypes, [types]),
             returnValue: _i13.Future<void>.value(),
@@ -2625,7 +2489,7 @@ class MockApiDatabaseService extends _i1.Mock
           as _i13.Future<void>);
 
   @override
-  _i13.Future<void> saveClientClasses(List<_i45.ClientClass>? classes) =>
+  _i13.Future<void> saveClientClasses(List<_i44.ClientClass>? classes) =>
       (super.noSuchMethod(
             Invocation.method(#saveClientClasses, [classes]),
             returnValue: _i13.Future<void>.value(),
@@ -2634,38 +2498,38 @@ class MockApiDatabaseService extends _i1.Mock
           as _i13.Future<void>);
 
   @override
-  _i13.Future<List<_i43.SalesChannel>> getSalesChannels() =>
+  _i13.Future<List<_i42.SalesChannel>> getSalesChannels() =>
       (super.noSuchMethod(
             Invocation.method(#getSalesChannels, []),
-            returnValue: _i13.Future<List<_i43.SalesChannel>>.value(
-              <_i43.SalesChannel>[],
+            returnValue: _i13.Future<List<_i42.SalesChannel>>.value(
+              <_i42.SalesChannel>[],
             ),
           )
-          as _i13.Future<List<_i43.SalesChannel>>);
+          as _i13.Future<List<_i42.SalesChannel>>);
 
   @override
-  _i13.Future<List<_i44.TradingPointType>> getTradingPointTypes({
+  _i13.Future<List<_i43.TradingPointType>> getTradingPointTypes({
     String? channelGroup,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getTradingPointTypes, [], {
               #channelGroup: channelGroup,
             }),
-            returnValue: _i13.Future<List<_i44.TradingPointType>>.value(
-              <_i44.TradingPointType>[],
+            returnValue: _i13.Future<List<_i43.TradingPointType>>.value(
+              <_i43.TradingPointType>[],
             ),
           )
-          as _i13.Future<List<_i44.TradingPointType>>);
+          as _i13.Future<List<_i43.TradingPointType>>);
 
   @override
-  _i13.Future<List<_i45.ClientClass>> getClientClasses() =>
+  _i13.Future<List<_i44.ClientClass>> getClientClasses() =>
       (super.noSuchMethod(
             Invocation.method(#getClientClasses, []),
-            returnValue: _i13.Future<List<_i45.ClientClass>>.value(
-              <_i45.ClientClass>[],
+            returnValue: _i13.Future<List<_i44.ClientClass>>.value(
+              <_i44.ClientClass>[],
             ),
           )
-          as _i13.Future<List<_i45.ClientClass>>);
+          as _i13.Future<List<_i44.ClientClass>>);
 
   @override
   _i13.Future<void> ensureSalesClassifiersTablesExist() =>
@@ -2680,7 +2544,7 @@ class MockApiDatabaseService extends _i1.Mock
 /// A class which mocks [SoapApiService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockSoapApiService extends _i1.Mock implements _i46.SoapApiService {
+class MockSoapApiService extends _i1.Mock implements _i45.SoapApiService {
   MockSoapApiService() {
     _i1.throwOnMissingStub(this);
   }
@@ -3269,7 +3133,7 @@ class MockSoapApiService extends _i1.Mock implements _i46.SoapApiService {
 /// A class which mocks [DataSyncService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDataSyncService extends _i1.Mock implements _i47.DataSyncService {
+class MockDataSyncService extends _i1.Mock implements _i46.DataSyncService {
   MockDataSyncService() {
     _i1.throwOnMissingStub(this);
   }
@@ -3375,7 +3239,7 @@ class MockDataSyncService extends _i1.Mock implements _i47.DataSyncService {
           as _i13.Future<void>);
 
   @override
-  _i13.Stream<_i48.SyncStep> syncAllUserDataWithProgress({
+  _i13.Stream<_i47.SyncStep> syncAllUserDataWithProgress({
     required String? userCode,
     required String? password,
     required String? codeProject,
@@ -3388,9 +3252,9 @@ class MockDataSyncService extends _i1.Mock implements _i47.DataSyncService {
               #codeProject: codeProject,
               #codeSklad: codeSklad,
             }),
-            returnValue: _i13.Stream<_i48.SyncStep>.empty(),
+            returnValue: _i13.Stream<_i47.SyncStep>.empty(),
           )
-          as _i13.Stream<_i48.SyncStep>);
+          as _i13.Stream<_i47.SyncStep>);
 
   @override
   _i13.Future<_i4.KpiData> syncKpiData({
@@ -3973,46 +3837,46 @@ class MockDataSyncService extends _i1.Mock implements _i47.DataSyncService {
           as _i13.Future<void>);
 
   @override
-  _i13.Future<List<_i43.SalesChannel>> getCachedSalesChannels() =>
+  _i13.Future<List<_i42.SalesChannel>> getCachedSalesChannels() =>
       (super.noSuchMethod(
             Invocation.method(#getCachedSalesChannels, []),
-            returnValue: _i13.Future<List<_i43.SalesChannel>>.value(
-              <_i43.SalesChannel>[],
+            returnValue: _i13.Future<List<_i42.SalesChannel>>.value(
+              <_i42.SalesChannel>[],
             ),
           )
-          as _i13.Future<List<_i43.SalesChannel>>);
+          as _i13.Future<List<_i42.SalesChannel>>);
 
   @override
-  _i13.Future<List<_i44.TradingPointType>> getCachedTradingPointTypes({
+  _i13.Future<List<_i43.TradingPointType>> getCachedTradingPointTypes({
     String? channelGroup,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#getCachedTradingPointTypes, [], {
               #channelGroup: channelGroup,
             }),
-            returnValue: _i13.Future<List<_i44.TradingPointType>>.value(
-              <_i44.TradingPointType>[],
+            returnValue: _i13.Future<List<_i43.TradingPointType>>.value(
+              <_i43.TradingPointType>[],
             ),
           )
-          as _i13.Future<List<_i44.TradingPointType>>);
+          as _i13.Future<List<_i43.TradingPointType>>);
 
   @override
-  _i13.Future<List<_i45.ClientClass>> getCachedClientClasses() =>
+  _i13.Future<List<_i44.ClientClass>> getCachedClientClasses() =>
       (super.noSuchMethod(
             Invocation.method(#getCachedClientClasses, []),
-            returnValue: _i13.Future<List<_i45.ClientClass>>.value(
-              <_i45.ClientClass>[],
+            returnValue: _i13.Future<List<_i44.ClientClass>>.value(
+              <_i44.ClientClass>[],
             ),
           )
-          as _i13.Future<List<_i45.ClientClass>>);
+          as _i13.Future<List<_i44.ClientClass>>);
 
   @override
   _i13.Future<void> resolveConflicts({
     required String? dataType,
     required List<Map<String, dynamic>>? localData,
     required List<Map<String, dynamic>>? remoteData,
-    _i47.ConflictResolutionStrategy? strategy =
-        _i47.ConflictResolutionStrategy.lastWriteWins,
+    _i46.ConflictResolutionStrategy? strategy =
+        _i46.ConflictResolutionStrategy.lastWriteWins,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#resolveConflicts, [], {
@@ -4497,47 +4361,13 @@ class MockDataSyncService extends _i1.Mock implements _i47.DataSyncService {
             ),
           )
           as _i13.Future<List<Map<String, dynamic>>>);
-
-  @override
-  _i13.Future<List<_i42.ProductImage>> syncProductImages({
-    bool? forceRefresh = false,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#syncProductImages, [], {
-              #forceRefresh: forceRefresh,
-            }),
-            returnValue: _i13.Future<List<_i42.ProductImage>>.value(
-              <_i42.ProductImage>[],
-            ),
-          )
-          as _i13.Future<List<_i42.ProductImage>>);
-
-  @override
-  _i13.Future<List<_i42.ProductImage>> getCachedProductImages(
-    String? productCode,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#getCachedProductImages, [productCode]),
-            returnValue: _i13.Future<List<_i42.ProductImage>>.value(
-              <_i42.ProductImage>[],
-            ),
-          )
-          as _i13.Future<List<_i42.ProductImage>>);
-
-  @override
-  _i13.Future<_i42.ProductImage?> getMainProductImage(String? productCode) =>
-      (super.noSuchMethod(
-            Invocation.method(#getMainProductImage, [productCode]),
-            returnValue: _i13.Future<_i42.ProductImage?>.value(),
-          )
-          as _i13.Future<_i42.ProductImage?>);
 }
 
 /// A class which mocks [ReportsSyncService].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockReportsSyncService extends _i1.Mock
-    implements _i49.ReportsSyncService {
+    implements _i48.ReportsSyncService {
   MockReportsSyncService() {
     _i1.throwOnMissingStub(this);
   }
@@ -4558,7 +4388,7 @@ class MockReportsSyncService extends _i1.Mock
           as _i13.Future<void>);
 
   @override
-  _i13.Stream<_i49.ReportSyncStep> syncAllReportsWithProgress({
+  _i13.Stream<_i48.ReportSyncStep> syncAllReportsWithProgress({
     required String? userCode,
     required String? password,
     required DateTime? dateStart,
@@ -4571,9 +4401,9 @@ class MockReportsSyncService extends _i1.Mock
               #dateStart: dateStart,
               #dateEnd: dateEnd,
             }),
-            returnValue: _i13.Stream<_i49.ReportSyncStep>.empty(),
+            returnValue: _i13.Stream<_i48.ReportSyncStep>.empty(),
           )
-          as _i13.Stream<_i49.ReportSyncStep>);
+          as _i13.Stream<_i48.ReportSyncStep>);
 
   @override
   _i13.Future<Map<String, dynamic>> syncReportByPeriod({
@@ -4845,7 +4675,7 @@ class MockReportsSyncService extends _i1.Mock
 /// A class which mocks [DatabaseHelper].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDatabaseHelper extends _i1.Mock implements _i50.DatabaseHelper {
+class MockDatabaseHelper extends _i1.Mock implements _i49.DatabaseHelper {
   MockDatabaseHelper() {
     _i1.throwOnMissingStub(this);
   }

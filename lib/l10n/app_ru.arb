@@ -11,7 +11,7 @@
   "tradingPoints": "Торговые точки",
   "tradingPointsFilter": "Торговые точки",
   "warehouses": "Склады",
-  "contracts": "Контракты",
+  "contracts": "Договоры",
   "reports": "Отчеты",
   "settings": "Настройки",
   "marketing": "Маркетинг",
@@ -29,7 +29,7 @@
   "no": "Нет",
   "error": "Ошибка",
   "loading": "Загрузка...",
-  "noData": "Данные отсутствуют",
+  "noData": "Нет данных",
   "retry": "Повторить",
   "search": "Поиск",
   "filter": "Фильтр",
@@ -68,10 +68,10 @@
   "settingsSaved": "Настройки успешно сохранены",
   "dataSync": "Синхронизация данных",
   "syncNow": "Синхронизировать сейчас",
-  "lastSync": "Последняя синхронизация",
+  "lastSync": "Последняя синхронизация: {time}",
   "syncing": "Синхронизация...",
   "syncComplete": "Синхронизация завершена",
-  "syncError": "Ошибка синхронизации",
+  "syncError": "Ошибка синхронизации: {error}",
   "noInternet": "Нет подключения к интернету",
   "offlineMode": "Офлайн режим - отображаются кэшированные данные",
   "onlineMode": "Онлайн режим",
@@ -80,7 +80,7 @@
   "sessionExpired": "Сессия истекла",
   "permissionDenied": "Доступ запрещен",
   "fileNotFound": "Файл не найден",
-  "unknownError": "Произошла неизвестная ошибка",
+  "unknownError": "Неизвестная ошибка",
   "tryAgain": "Пожалуйста, попробуйте еще раз",
   "contactSupport": "Связаться с поддержкой",
   "version": "Версия",
@@ -128,10 +128,10 @@
   "due": "Срок",
   "productDetails": "Детали товара",
   "sku": "SKU",
-  "location": "Расположение",
+  "location": "Местоположение",
   "pcs": "шт",
   "kg": "кг",
-  "contractDetails": "Детали контракта",
+  "contractDetails": "Детали договора",
   "contractCode": "Код контракта",
   "active": "Активный",
   "inactive": "Неактивный",
@@ -155,11 +155,9 @@
   "visit": "Посещение",
   "visitClient": "Посетить клиента",
   "createOrder": "Создать заказ",
-  "unplannedOrder": "Внеплановый заказ",
+  "unplannedOrder": "Незапланированный заказ",
   "viewContracts": "Просмотреть контракты",
-  "contracts": "Контракты",
   "refusal": "Отказ",
-  "orders": "Заказы",
   "route": "Маршрут",
   "refusalReason": "Причина отказа",
   "selectReason": "Выберите причину отказа",
@@ -231,7 +229,7 @@
   "start": "Начало",
   "end": "Конец",
   "beginning": "Начало",
-  "finish": "Конец",
+  "finish": "Завершить",
   "open": "Открыть",
   "closed": "Закрыть",
   "available": "Доступно",
@@ -240,12 +238,9 @@
   "disabled": "Отключено",
   "on": "Вкл",
   "off": "Выкл",
-  "yes": "Да",
-  "no": "Нет",
   "booleanTrue": "Истина",
   "booleanFalse": "Ложь",
   "interfaceSettings": "Настройки интерфейса",
-  "selectLanguage": "Выберите язык",
   "languageChanged": "Язык успешно изменен",
   "restartRequired": "Перезапустите приложение для применения изменений языка",
   "currentLanguage": "Текущий язык",
@@ -256,7 +251,6 @@
   "languageChangeWarning": "Изменение языка перезапустит приложение",
   "success": "Успех",
   "prices": "Цены",
-  "warehouses": "Склады",
   "businessRegions": "Бизнес Регионы",
   "permissions": "Разрешения",
   "apply": "Применить",
@@ -271,7 +265,6 @@
   "emergency": "Чрезвычайная ситуация",
   "notice": "Уведомление",
   "alert": "Тревога",
-  "emergency": "Чрезвычайная ситуация",
   "agentPermissions": "Разрешения агента",
   "userPermissionsAndVisitSteps": "Разрешения пользователя и этапы посещения",
   "dataValidation": "Проверка данных",
@@ -282,47 +275,31 @@
   "skipTINDuplicateCheck": "Пропустить проверку дубликатов ИНН",
   "allowCreationWithoutTIN": "Разрешить создание без ИНН",
   "allowCreatingPointOfSale": "Разрешить создание точки продаж",
-  "visit": "Посещение",
   "strictSequence": "Строгая последовательность",
-  "unplannedOrder": "Незапланированный заказ",
   "plannedRoute": "Запланированный маршрут",
   "general": "Общее",
   "mandatoryExecution": "Обязательное выполнение",
-  "optional": "Необязательно",
+  "optional": "Необязательный",
   "permissionsDataNotAvailable": "Данные разрешений недоступны",
-  "permissions": "Разрешения",
-  "permissionDenied": "Доступ запрещен",
   "languageChangeError": "Ошибка изменения языка",
   "languageAutoDetected": "Язык определён автоматически из системы",
   "customers": "Клиенты",
-  "reports": "Отчеты",
-  "marketing": "Маркетинг",
-  "cash": "Касса",
   "debitCredit": "Дебет-Кредит",
-  "warehouses": "Склады",
   "products": "Товары",
-  "prices": "Цены",
-  "contracts": "Контракты",
-  "orders": "Заказы",
   "dbView": "DB View",
   "darkMode": "Темный режим",
-  "settings": "Настройки",
-  "logout": "Выход",
   "kpiDataUpdateError": "Ошибка обновления данных KPI",
   "onlineModeReturn": "Вернуться в онлайн режим",
   "onlineModeReturnConfirm": "Хотите проверить подключение к интернету и серверу и вернуться в онлайн режим?",
-  "no": "Нет",
-  "yes": "Да",
   "serverUrlNotFound": "URL сервера не найден",
   "serverUrl": "URL сервера",
   "connectionError": "Ошибка подключения",
   "menu": "Меню",
   "offline": "Офлайн",
   "refresh": "Обновить",
-  "ok": "OK",
   "okb": "OKB",
   "akbPlan": "План AKB",
-  "akbFact": "Факт AKB",
+  "akbFact": "АКБ факт",
   "forecastPercentOfFact": "Прогноз % от факта",
   "totalPlan": "Общий план",
   "totalFact": "Общий факт",
@@ -333,7 +310,6 @@
   "factVsRemaining": "Факт vs Остаток",
   "forecastTrend": "Тренд прогноза",
   "fromFactToForecast": "От факта к прогнозу",
-  "fact": "Факт",
   "remaining": "Остаток",
   "onTrack": "По плану",
   "atRisk": "Под угрозой",
@@ -344,22 +320,13 @@
   "akbGap": "Разрыв AKB",
   "forecastVsPlan": "Прогноз vs План",
   "todayPerformance": "Производительность сегодня",
-  "forecast": "Прогноз",
   "planExecution": "Выполнение плана",
-  "plan": "План",
-  "fact": "Факт",
-  "remaining": "Остаток",
-  "createOrder": "Создать заказ",
-  "customers": "Клиенты",
-  "products": "Товары",
   "rememberMe": "Запомнить меня",
   "databaseView": "Просмотр базы данных",
   "preferenceKey": "Ключ настройки",
   "value": "Значение",
   "id": "ID",
   "code": "Код",
-  "username": "Имя пользователя",
-  "password": "Пароль",
   "name": "Имя",
   "role": "Роль",
   "warehouseCode": "Код склада",
@@ -369,27 +336,13 @@
   "chatId": "Chat ID",
   "topicId": "Topic ID",
   "createdAt": "Создано",
-  "updatedAt": "Обновлено",
-  "plan": "План",
-  "fact": "Факт",
+  "updatedAt": "Обновлено: {date} {time}",
   "totalPercent": "Общий %",
-  "forecast": "Прогноз",
   "forecastPercent": "Прогноз %",
-  "okb": "OKB",
-  "akbPlan": "План AKB",
-  "akbFact": "Факт AKB",
   "akbPercent": "% AKB",
   "updateDate": "Дата обновления",
   "exit": "Выход",
   "confirmExit": "Вы действительно хотите выйти?",
-  "cancel": "Отмена",
-  "retry": "Повторить",
-  "noData": "Нет данных",
-  "error": "Ошибка",
-  "loading": "Загрузка...",
-  "yes": "Да",
-  "no": "Нет",
-  "ok": "OK",
   "contactPerson": "Контакт",
   "lastVisitDate": "Последний визит",
   "hasOrders": "Есть заказы",
@@ -414,13 +367,11 @@
   "currentMapProvider": "Текущий провайдер карт",
   "availableMaps": "Доступные карты",
   "mapConfiguration": "Конфигурация карт",
-  "visitProgress": "Процесс посещения",
+  "visitProgress": "Прогресс визита",
   "visitStepNumber": "Шаг посещения",
-  "completed": "Завершено",
   "skipped": "Пропущено",
   "current": "Текущий",
   "mandatory": "Обязательный",
-  "optional": "Необязательный",
   "completedAt": "Завершено в",
   "skippedAt": "Пропущено в",
   "notes": "Заметки",
@@ -428,7 +379,7 @@
   "previousStepsRequired": "Необходимо завершить предыдущие шаги",
   "completeStep": "Завершить шаг",
   "skipStep": "Пропустить шаг",
-  "confirmCompletion": "Подтвердить завершение",
+  "confirmCompletion": "Подтвердите завершение",
   "stepCompletedSuccessfully": "Шаг успешно завершен",
   "stepSkippedSuccessfully": "Шаг успешно пропущен",
   "visitCompletedSuccessfully": "Посещение успешно завершено!",
@@ -436,10 +387,8 @@
   "allRequiredStepsMustBeCompleted": "Все обязательные шаги должны быть завершены",
   "visitInfo": "Информация о посещении",
   "client": "Клиент",
-  "strictSequence": "Строгая последовательность",
   "totalSteps": "Всего шагов",
   "requiredSteps": "Обязательные шаги",
-  "retry": "Повторить",
   "unknownState": "Неизвестное состояние",
   "cancelCompletion": "Отменить завершение",
   "confirmSkip": "Подтвердить пропуск",
@@ -453,7 +402,7 @@
   "orderNotFound": "Заказ не найден",
   "readOnly": "Только просмотр",
   "pageUnderDevelopment": "Страница в разработке",
-  "stepCompletedReadOnly": "Этот шаг завершен. Режим только просмотра.",
+  "stepCompletedReadOnly": "Этот шаг завершен. Режим только чтения.",
   "stepTypeNotImplemented": "Для этого типа шага страница еще не реализована.",
   "orderDetailsNavigationErrorPrefix": "Ошибка при открытии деталей заказа",
   "errorOccurredPrefix": "Произошла ошибка",
@@ -461,13 +410,12 @@
   "visitFinishErrorPrefix": "Ошибка при завершении визита",
   "stepsCount": "шагов",
   "visitFinishing": "Завершение визита...",
-  "orderNumber": "Номер заказа",
+  "orderNumber": "Заказ № {number}",
   "dataSaveError": "Ошибка сохранения данных",
   "saveErrorPrefix": "Ошибка сохранения",
   "dataLoadError": "Ошибка загрузки данных",
   "productsLoadError": "Ошибка загрузки продуктов",
   "settingsUpdateError": "Ошибка обновления настроек",
-  "save": "Сохранить",
   "clearOrder": "Очистить заказ",
   "suggestedOrders": "Рекомендуемые заказы",
   "productSelectionError": "Ошибка перехода к выбору продуктов",
@@ -480,11 +428,11 @@
   "clearOrderConfirmMessage": "Все выбранные продукты и связанные данные будут удалены. Настройки будут сохранены. Продолжить?",
   "clientDataLoadError": "Ошибка загрузки данных клиента",
   "locationNotAvailable": "Данные о местоположении недоступны. Посещение невозможно.",
-  "visitCompletedFor": "Посещение успешно завершено для",
+  "visitCompletedFor": "визит успешно завершен для",
   "contractsPageError": "Ошибка перехода на страницу контрактов",
   "loadingClientImages": "Загрузка изображений клиента...",
   "clientImagesLoaded": "Изображения клиента загружены",
-  "imageLoadError": "Ошибка загрузки изображений",
+  "imageLoadError": "Ошибка загрузки изображения",
   "disableVisitTodayFilter": "Отключить фильтр сегодняшних посещений",
   "showVisitTodayOnly": "Показать только клиентов с посещением сегодня",
   "newClient": "Новый клиент",
@@ -492,7 +440,7 @@
   "tradingPointsNotFound": "Торговые точки не найдены",
   "clientCount": "Количество клиентов",
   "manageClientImages": "Управление изображениями клиента",
-  "ordersCount": "Количество заказов",
+  "ordersCount": "{count} заказов",
   "orderNumberPrefix": "Заказ №",
   "viewOrder": "Просмотр заказа",
   "clientOrdersFor": "заказы клиента",
@@ -527,33 +475,32 @@
   "enterField": "Введите",
   "imageServiceNotAvailable": "Сервис изображений недоступен",
   "searchHint": "Поиск...",
-  "pullToRefresh": "Потяните вниз для обновления!",
+  "pullToRefresh": "Потяните для обновления",
   "pullToRefreshOrSyncData": "Если обновление не работает, используйте опцию 'синхронизировать все данные' в меню настроек",
   "checkingDistance": "Проверка расстояния...",
   "distanceRestrictionError": "Вы слишком далеко от клиента. Подойдите ближе для завершения визита.",
   "cancelVisit": "Отменить визит",
   "cancelVisitConfirmation": "Вы уверены, что хотите отменить визит? Весь прогресс будет потерян.",
   "syncStatusIdle": "Ожидание",
-  "syncStatusProducts": "Обновление товаров",
-  "syncStatusBalances": "Обновление остатков",
-  "syncStatusOrders": "Обновление заказов",
-  "syncStatusCompleted": "Обновлено",
-  "syncStatusError": "Ошибка",
+  "syncStatusProducts": "Синхронизация товаров",
+  "syncStatusBalances": "Синхронизация остатков",
+  "syncStatusOrders": "Синхронизация заказов",
+  "syncStatusCompleted": "Синхронизация завершена",
+  "syncStatusError": "Ошибка синхронизации",
   "syncInProgress": "Синхронизация...",
   "syncErrorUserNotFound": "Код пользователя не найден",
   "syncAlreadyInProgress": "Синхронизация уже выполняется",
   "syncCompleted": "Данные успешно обновлены",
-  "syncError": "Ошибка синхронизации",
   "clientBalance": "Баланс клиента",
   "clientBalanceDetails": "Детали баланса",
-  "clientIsDebtor": "Клиент должник",
-  "clientHasOverpayment": "Переплата",
+  "clientIsDebtor": "Клиент должник. Общий долг: {amount} сум",
+  "clientHasOverpayment": "Клиент переплатил. Переплата: {amount} сум",
   "balanceIsZero": "Баланс равен нулю",
-  "totalDebt": "Общая задолженность",
+  "totalDebt": "Общий долг",
   "totalPayment": "Общая оплата",
   "totalOrder": "Общий заказ",
-  "unpaidOrders": "Неоплаченные заказы",
-  "overdueOrders": "Просроченные заказы",
+  "unpaidOrders": "{count} неоплачено",
+  "overdueOrders": "{count} просрочено",
   "balanceStatus": "Статус баланса",
   "contractsTab": "Договоры",
   "ordersTab": "Заказы",
@@ -571,7 +518,7 @@
       }
     }
   },
-  "refreshAfterSeconds": "Обновить через {seconds} сек",
+  "refreshAfterSeconds": "Можно обновить через {seconds} секунд",
   "@refreshAfterSeconds": {
     "placeholders": {
       "seconds": {
@@ -579,7 +526,7 @@
       }
     }
   },
-  "balanceUpdated": "Обновлено: {date}",
+  "balanceUpdated": "Обновлено",
   "@balanceUpdated": {
     "placeholders": {
       "date": {
@@ -601,8 +548,7 @@
   "balanceServiceNotAvailable": "Сервис баланса недоступен",
   "clientInnNotFound": "ИНН клиента не найден",
   "statistics": "Статистика",
-  "contractsCount": "Количество договоров",
-  "ordersCount": "Количество заказов",
+  "contractsCount": "{count} контрактов",
   "contract": "Договор",
   "order": "Заказ",
   "overpayment": "Переплата",
@@ -616,9 +562,9 @@
   "excessLabel": "Излишек",
   "ordersStatus": "Статус заказов",
   "clearBalanceCache": "Очистить кэш баланса",
-  "clearBalanceCacheConfirm": "Очистить все кэшированные данные баланса?",
+  "clearBalanceCacheConfirm": "Все данные баланса клиентов будут удалены. Они будут перезагружены при следующем просмотре баланса.",
   "balanceCacheCleared": "Кэш баланса очищен",
-  "fakturaNetworkError": "Ошибка сети при подключении к Faktura.uz",
+  "fakturaNetworkError": "Ошибка сети",
   "visited": "Посещено",
   "plannedForToday": "Запланировано на сегодня",
   "additionalInformation": "Дополнительная информация",
@@ -642,7 +588,6 @@
   "overviewTabShort": "Обзор",
   "contractsTabShort": "Договоры",
   "ordersTabShort": "Заказы",
-  "updatedAt": "Обновлено: {date} {time}",
   "@updatedAt": {
     "placeholders": {
       "date": {
@@ -697,14 +642,14 @@
       }
     }
   },
-  "noDataAvailable": "Данные отсутствуют",
-  "noContractsFound": "Договоры не найдены",
+  "noDataAvailable": "Нет данных",
+  "noContractsFound": "Контракты не найдены",
   "noOrdersFound": "Заказы не найдены",
   "paidLabel": "Оплачено",
-  "debtLabelChart": "Задолженность",
+  "debtLabelChart": "Долг",
   "paymentLabel": "Оплата",
   "partialLabel": "Частично",
-  "unpaidLabel": "Не оплачено",
+  "unpaidLabel": "Неоплачено",
   "countItems": "{count} шт",
   "@countItems": {
     "placeholders": {
@@ -713,7 +658,7 @@
       }
     }
   },
-  "contractDialog": "Договор",
+  "contractDialog": "Контракт",
   "codeLabel": "Код: {code}",
   "@codeLabel": {
     "placeholders": {
@@ -722,10 +667,10 @@
       }
     }
   },
-  "projectLabel": "Проект: {name}",
+  "projectLabel": "Проект: {project}",
   "@projectLabel": {
     "placeholders": {
-      "name": {
+      "project": {
         "type": "String"
       }
     }
@@ -773,7 +718,7 @@
   "contactSupportTeam": "Связаться с поддержкой",
   "logoutConfirmTitle": "Выход",
   "logoutConfirmMessage": "Вы действительно хотите выйти из системы?",
-  "newContract": "Новый контракт",
+  "newContract": "Новый договор",
   "createContract": "Создать контракт",
   "createContractTitle": "Новый контракт",
   "createContractSubtitle": "Заполните все поля",
@@ -798,7 +743,7 @@
   "regionInfo": "Информация о регионе",
   "creatingContract": "Создание...",
   "serverTimeout": "Время подключения к серверу истекло",
-  "noInternetConnection": "Нет подключения к интернету",
+  "noInternetConnection": "Нет подключения к интернету. Пожалуйста, подключитесь к интернету",
   "createClientTitle": "Новый клиент",
   "createClientBasicInfo": "Основная информация",
   "createClientContactInfo": "Контактная информация",
@@ -880,7 +825,7 @@
       }
     }
   },
-  "innLabel": "ИНН: {inn}",
+  "innLabel": "ИНН",
   "@innLabel": {
     "placeholders": {
       "inn": {
@@ -949,7 +894,6 @@
   },
   "waitingForLocation": "Ожидание данных о местоположении...",
   "visitCompletedTitle": "Посещение завершено",
-  "visitCompletedSuccessfully": "Посещение успешно завершено!",
   "stepsCompletedCount": "{count} шагов завершено",
   "@stepsCompletedCount": {
     "placeholders": {
@@ -1014,7 +958,7 @@
       }
     }
   },
-  "errorOccurred": "Произошла ошибка: {error}",
+  "errorOccurred": "Произошла ошибка",
   "@errorOccurred": {
     "placeholders": {
       "error": {
@@ -1062,7 +1006,6 @@
       }
     }
   },
-  "finish": "Завершить",
   "imageCapturedSuccessfully": "Изображение успешно получено",
   "imageCaptureError": "Ошибка получения изображения: {error}",
   "@imageCaptureError": {
@@ -1072,7 +1015,7 @@
       }
     }
   },
-  "xmlRequestLabel": "XML Запрос",
+  "xmlRequestLabel": "XML запрос",
   "xmlCopied": "XML скопирован",
   "enterNumberHint": "Введите номер",
   "balanceStatusTitle": "Статус баланса",
@@ -1098,7 +1041,7 @@
   "updateCoordinatesNotImplemented": "Обновление координат - функция будет реализована",
   "osmNotLoadedFallback": "OpenStreetMap не загружен. Используется Google Maps.",
   "confirmLocationTitle": "Подтвердить местоположение",
-  "orderDetailsNotFound": "Детали заказа не найдены",
+  "orderDetailsNotFound": "Детали заказа не найдены.",
   "unknown": "Неизвестно",
   "locationPermissionDenied": "Разрешение на местоположение не предоставлено",
   "permissionCheckError": "Ошибка проверки разрешения: {error}",
@@ -1191,14 +1134,6 @@
     }
   },
   "imageSetAsPrimary": "Изображение установлено как основное",
-  "imagesUploadedCount": "{count} изображений успешно загружено",
-  "@imagesUploadedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "serverImagesLoadError": "Ошибка загрузки изображений с сервера: {error}",
   "@serverImagesLoadError": {
     "placeholders": {
@@ -1217,15 +1152,6 @@
   },
   "cameraCaptureError": "Ошибка получения с камеры: {error}",
   "@cameraCaptureError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "imagesUploadedSuccessfully": "Изображения успешно загружены",
-  "imagesUploadError": "Ошибка загрузки изображений: {error}",
-  "@imagesUploadError": {
     "placeholders": {
       "error": {
         "type": "String"
@@ -1278,11 +1204,11 @@
   },
   "kpiDashboardTitle": "KPI Панель",
   "reportSentTitle": "Отчет отправлен",
-  "editFeatureComingSoon": "Функция редактирования скоро будет добавлена",
+  "editFeatureComingSoon": "Функция редактирования скоро появится",
   "sendPdf": "Отправить PDF",
-  "printFeatureComingSoon": "Функция печати скоро будет добавлена",
+  "printFeatureComingSoon": "Функция печати скоро появится",
   "print": "Печать",
-  "stepCompleted": "{stepName} завершено",
+  "stepCompleted": "{stepName} завершен",
   "@stepCompleted": {
     "placeholders": {
       "stepName": {
@@ -1290,7 +1216,7 @@
       }
     }
   },
-  "stepSkip": "{stepName} пропущено",
+  "stepSkip": "Пропуск {stepName}",
   "@stepSkip": {
     "placeholders": {
       "stepName": {
@@ -1298,9 +1224,9 @@
       }
     }
   },
-  "syncWithDependencies": "Синхронизация с зависимостями",
+  "syncWithDependencies": "Синхронизировать с зависимостями",
   "recommended": "Рекомендуется",
-  "syncTableOnly": "Синхронизация только таблицы",
+  "syncTableOnly": "Синхронизировать только таблицу",
   "syncWarning": "Может не удаться, если зависимости не синхронизированы",
   "tableOnly": "Только таблица",
   "withDependencies": "С зависимостями",
@@ -1308,17 +1234,8 @@
   "statusNew": "Новый",
   "retail": "Розничная",
   "continueAction": "Продолжить",
-  "send": "Отправить",
-  "previousStepsMustBeCompleted": "Предыдущие шаги должны быть выполнены",
+  "previousStepsMustBeCompleted": "Предыдущие шаги должны быть завершены",
   "reload": "Перезагрузить",
-  "refreshAfterSeconds": "Можно обновить через {seconds} секунд",
-  "@refreshAfterSeconds": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "imageDeleted": "Изображение удалено",
   "imageDeleteError": "Ошибка удаления изображения: {error}",
   "@imageDeleteError": {
@@ -1330,20 +1247,10 @@
   },
   "deleteImageTitle": "Удалить изображение",
   "deleteImageConfirmation": "Вы уверены, что хотите удалить это изображение?",
-  "delete": "Удалить",
   "photoAfterTitle": "Фото ПОСЛЕ (Facing correction)",
   "photoBeforeTitle": "Фото ДО (Facing correction)",
-  "stepCompletedReadOnly": "Этот шаг завершен. Режим только чтения.",
   "photosNotLoadedYet": "Фотографии еще не загружены",
   "timeUnknown": "Время неизвестно",
-  "codeLabel": "Код: {code}",
-  "@codeLabel": {
-    "placeholders": {
-      "code": {
-        "type": "String"
-      }
-    }
-  },
   "unitOfMeasure": "Единица измерения",
   "category": "Категория",
   "brand": "Бренд",
@@ -1351,8 +1258,6 @@
   "barcode": "Штрих-код",
   "vendorCode": "Артикул",
   "warehouseInformation": "Информация о складе",
-  "quantity": "Количество",
-  "available": "Доступно",
   "reserved": "Зарезервировано",
   "physicalProperties": "Физические свойства",
   "weight": "Вес",
@@ -1381,14 +1286,6 @@
   "readOnlyMode": "Только чтение",
   "shelfAuditTitle": "Аудит полки (остатки)",
   "pageInDevelopment": "Страница находится в разработке",
-  "productNotFoundMessage": "Информация о товаре не найдена: {code}",
-  "@productNotFoundMessage": {
-    "placeholders": {
-      "code": {
-        "type": "String"
-      }
-    }
-  },
   "apiKeyLabel": "API Ключ: {status}",
   "@apiKeyLabel": {
     "placeholders": {
@@ -1402,8 +1299,6 @@
   "apiKeyNotConfigured": "Не настроено",
   "editInformation": "Редактировать информацию",
   "editClientCoordinates": "Редактировать координаты клиента",
-  "currentMapProvider": "Текущий провайдер карт",
-  "availableMaps": "Доступные карты",
   "clientPhotosTitle": "Фото клиента",
   "clientPhotosDescription": "Здесь отображаются фотографии, относящиеся к клиенту {name}",
   "@clientPhotosDescription": {
@@ -1427,7 +1322,6 @@
   "noImagesAvailable": "Изображения недоступны",
   "clickPlusToAddImage": "Нажмите кнопку +, чтобы добавить изображение",
   "setAsMainImage": "Установить как основное",
-  "orderDetailsTitle": "Детали заказа",
   "clientNameLabel": "Имя клиента",
   "orderNumberLabel": "Номер заказа",
   "orderDateLabel": "Дата заказа",
@@ -1435,23 +1329,19 @@
   "mainStatusLabel": "Основной статус",
   "statusCodeLabel": "Код статуса",
   "totalProductsLabel": "Всего товаров",
-  "productNameLabel": "Название товара",
+  "productNameLabel": "Наименование товара",
   "articleLabel": "Артикул",
   "quantityLabel": "Количество",
   "priceLabel": "Цена",
   "amountLabel": "Сумма",
   "priceTypeLabel": "Тип цены",
-  "noProductsInOrder": "В этом заказе нет товаров",
+  "noProductsInOrder": "Нет товаров в заказе",
   "productListEmpty": "Список товаров пуст",
   "productsNotSelected": "Товары не выбраны",
   "clickPlusToAddProduct": "Нажмите кнопку +, чтобы добавить товар",
-  "reportPeriod": "Период отчета",
-  "monthlyOKB": "Ежемесячный ОКБ",
-  "akbPlan": "АКБ план",
-  "akbFact": "АКБ факт",
+  "reportPeriod": "Период отчёта",
+  "monthlyOKB": "Ежемесячный OKB",
   "selectPeriod": "Выберите период",
-  "apply": "Применить",
-  "location": "Местоположение",
   "creatingLocation": "Определение...",
   "locationNotFound": "Местоположение не найдено",
   "createClient": "Создать клиента",
@@ -1495,11 +1385,8 @@
   "tables": "Таблицы",
   "sendPdfLabel": "Отправить PDF",
   "warehouse": "Склад",
-  "viewPanel": "Панель просмотра",
-  "menu": "Меню",
   "takePhotoTooltip": "Сделать фото",
   "changeShippingDateTooltip": "Изменить дату доставки",
-  "manageClientImages": "Управление изображениями клиента",
   "sendReportViaTelegram": "Отправить отчет через Telegram бот",
   "fullscreen": "Полный экран",
   "updateCoordinates": "Обновить координаты",
@@ -1515,9 +1402,6 @@
   "organizationLabel": "Организация",
   "codeLabel2": "Код",
   "regionsLoading": "Загрузка регионов...",
-  "errorPrefix": "Ошибка",
-  "noData": "Нет данных",
-  "innLabel": "ИНН",
   "cyclingRegular": "Обычный велосипед",
   "cyclingRoad": "Шоссейный велосипед",
   "cyclingMountain": "Горный велосипед",
@@ -1549,7 +1433,6 @@
       }
     }
   },
-  "prices": "Цены",
   "selectPriceType": "Выберите тип цены",
   "selectPriceTypeHint": "Нажмите кнопку фильтра выше, чтобы выбрать тип цены из панели фильтров",
   "productsCount": "Количество товаров: {count}",
@@ -1562,18 +1445,8 @@
   },
   "categories": "Категории",
   "selectBrandFirst": "Сначала выберите бренд",
-  "reports": "Отчеты",
   "reportsSection": "Раздел отчетов",
   "tasks": "Задачи",
-  "tradingPoints": "Торговые точки",
-  "regionsLoadError": "Ошибка загрузки регионов: {error}",
-  "@regionsLoadError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "locationError": "Ошибка получения местоположения: {error}",
   "@locationError": {
     "placeholders": {
@@ -1586,33 +1459,23 @@
   "pleaseSelectRegion": "Пожалуйста, выберите регион",
   "pleaseSelectTradePointType": "Пожалуйста, выберите тип торговой точки",
   "locationDataNotFound": "Данные о местоположении не найдены",
-  "noInternetConnection": "Нет подключения к интернету. Пожалуйста, подключитесь к интернету",
   "all": "Все",
   "closeEditMode": "Закрыть режим редактирования",
-  "editFeatureComingSoon": "Функция редактирования скоро появится",
-  "active": "Активный",
-  "inactive": "Неактивный",
   "activeClients": "Активные клиенты",
   "activeClientsTooltip": "Клиенты с активными заказами сегодня",
-  "cash": "Наличные",
   "cashless": "Безналичные",
-  "ordersTotal": "Всего заказов",
-  "fact": "Факт",
-  "visitedTradingPoints": "Посещенные т.т.",
-  "visitedTradingPointsTooltip": "Количество посещенных торговых точек",
-  "territoryOKB": "Территория ОКБ",
+  "ordersTotal": "Общая сумма заказов",
+  "visitedTradingPoints": "Посещённые торговые точки",
+  "visitedTradingPointsTooltip": "Количество посещённых торговых точек",
+  "territoryOKB": "Территория OKB",
   "territoryOKBTooltip": "Охват клиентской базы по территории",
-  "today": "Сегодня",
   "todayMainIndicators": "Сегодня — основные показатели",
   "last7Days": "Последние 7 дней",
   "last30Days": "Последние 30 дней",
-  "monthlyPlanFactForecast": "Месячный план / Факт / Прогноз",
-  "monthlyOkbAkb": "Ежемесячный ОКБ/АКБ",
-  "contracts": "Договоры",
-  "contractsNotFound": "Договоры не найдены",
-  "newContract": "Новый договор",
-  "contractsListRefreshed": "Список договоров обновлен",
-  "contractsCount": "Количество договоров: {count}",
+  "monthlyPlanFactForecast": "Ежемесячный План / Факт / Прогноз",
+  "monthlyOkbAkb": "Ежемесячный OKB/AKB",
+  "contractsNotFound": "Контракты не найдены",
+  "contractsListRefreshed": "Список контрактов обновлён",
   "@contractsCount": {
     "placeholders": {
       "count": {
@@ -1620,9 +1483,8 @@
       }
     }
   },
-  "contractDetails": "Детали договора",
-  "contractAmount": "Сумма договора",
-  "contractDocument": "Документ договора",
+  "contractAmount": "Сумма контракта",
+  "contractDocument": "Документ контракта",
   "clientOrders": "Заказы клиента {name}",
   "@clientOrders": {
     "placeholders": {
@@ -1631,7 +1493,6 @@
       }
     }
   },
-  "orderNumber": "Заказ № {number}",
   "@orderNumber": {
     "placeholders": {
       "number": {
@@ -1639,10 +1500,8 @@
       }
     }
   },
-  "orders": "Заказы",
-  "filter": "Фильтр",
   "filterApplyError": "Ошибка применения фильтра",
-  "main": "Основной",
+  "main": "Основное",
   "contents": "Содержимое",
   "mainReports": "Основные отчеты",
   "mainReportsDescription": "KPI показатели и основная статистика",
@@ -1652,25 +1511,12 @@
   "plannedVisits": "Запланированные визиты",
   "visitEfficiency": "Эффективность визитов",
   "lastVisits": "Последние визиты",
-  "dataLoading": "Данные загружаются...",
+  "dataLoading": "Загрузка данных...",
   "successful": "Успешно",
   "orderPlaced": "Заказ размещен",
   "rejected": "Отклонено",
-  "reportDataRefreshed": "Данные отчета успешно обновлены",
-  "imagesUploadedCount": "{count} изображений успешно загружено",
-  "@imagesUploadedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "clientLocationUpdated": "Местоположение клиента успешно обновлено",
+  "reportDataRefreshed": "Данные отчёта успешно обновлены",
   "apiKeySaved": "API ключ успешно сохранен",
-  "errorOccurred": "Произошла ошибка",
-  "unknownError": "Неизвестная ошибка",
-  "imageLoadError": "Ошибка загрузки изображения",
-  "dataLoadError": "Ошибка загрузки данных",
   "saveError": "Ошибка сохранения: {error}",
   "@saveError": {
     "placeholders": {
@@ -1722,7 +1568,6 @@
   "currentMonth": "Текущий месяц",
   "selectReportDatesHint": "Укажите даты начала и окончания для отчета",
   "offlineCannotRefresh": "Невозможно обновить данные в офлайн режиме",
-  "manageClientImages": "Управление изображениями клиента",
   "distanceRequirementMessage": "Вам нужно соответствовать требованию расстояния для посещения {name}.",
   "@distanceRequirementMessage": {
     "placeholders": {
@@ -1739,13 +1584,10 @@
       }
     }
   },
-  "orderStatusDelivered": "Доставлено",
+  "orderStatusDelivered": "Доставлен",
   "orderStatusInProcess": "В процессе",
   "orderStatusReturn": "Возврат",
-  "orderStatusExpired": "Истек",
-  "loadingClientImages": "Загрузка изображений клиента...",
-  "clientDataLoadError": "Ошибка загрузки данных клиента",
-  "visitCompletedFor": "визит успешно завершен для",
+  "orderStatusExpired": "Просрочен",
   "contractStatusActive": "Действует",
   "contractStatusExpired": "Истек",
   "contractStatusCancelled": "Отменен",
@@ -1753,990 +1595,6 @@
   "contractStatusSuspended": "Приостановлен",
   "contractTabAll": "Все",
   "appPreparing": "Подготовка приложения...",
-  "permissionsChecking": "Проверка разрешений...",
-  "permissionsCheckTitle": "Проверка разрешений",
-  "permissionsCheckDescription": "Для полноценной работы приложения требуются следующие разрешения:",
-  "permissionFileStorage": "Хранение файлов",
-  "permissionFileStorageDesc": "Сохранение данных",
-  "permissionLocation": "Местоположение",
-  "permissionLocationDesc": "Карта и расчет расстояния",
-  "permissionCamera": "Камера",
-  "permissionCameraDesc": "Фотосъемка",
-  "permissionMicrophone": "Микрофон",
-  "permissionMicrophoneDesc": "Запись звука",
-  "permissionNotifications": "Уведомления",
-  "permissionNotificationsDesc": "Показ сообщений",
-  "permissionAudio": "Музыка и аудио",
-  "permissionAudioDesc": "Работа с аудио файлами",
-  "permissionPhotosVideos": "Фото и видео",
-  "permissionPhotosVideosDesc": "Работа с медиа файлами",
-  "permissionsLimitedWarning": "Без разрешений приложение будет работать в ограниченном режиме.",
-  "startButton": "Начать",
-  "permissionStorageTitle": "Разрешение на хранение файлов",
-  "permissionStorageDescAndroid13": "Выбор папки для хранения данных приложения",
-  "permissionStorageDescOther": "Сохранение и загрузка данных приложения",
-  "permissionStoragePurposeAndroid13": "Выберите папку для хранения фото, документов и данных",
-  "permissionStoragePurposeOther": "Хранение фото, документов и данных",
-  "permissionLocationTitle": "Разрешение на местоположение",
-  "permissionLocationDescription": "Сортировка торговых точек по расстоянию",
-  "permissionLocationPurpose": "Показ местоположения на карте и расчет расстояния",
-  "permissionLocationAlwaysTitle": "Разрешение на постоянное местоположение",
-  "permissionLocationAlwaysDescription": "Определение местоположения при работе приложения в фоновом режиме",
-  "permissionLocationAlwaysPurpose": "Фоновый сервис и уведомления",
-  "permissionCameraTitle": "Разрешение на камеру",
-  "permissionCameraDescription": "Фотосъемка и сканирование штрих-кодов",
-  "permissionCameraPurpose": "Фотосъемка товаров и торговых точек",
-  "permissionMicrophoneTitle": "Разрешение на микрофон",
-  "permissionMicrophoneDescription": "Запись звука и аудио сообщений",
-  "permissionMicrophonePurpose": "Голосовые напоминания и аудио записи",
-  "permissionNotificationTitle": "Разрешение на уведомления",
-  "permissionNotificationDescription": "Показ важных сообщений",
-  "permissionNotificationPurpose": "Напоминания, новости и уведомления",
-  "permissionAudioTitle": "Разрешение на музыку и аудио",
-  "permissionAudioDescription": "Работа с аудио файлами",
-  "permissionAudioPurpose": "Работа с музыкой, аудио сообщениями и голосовыми файлами",
-  "permissionPhotosVideosTitle": "Разрешение на фото и видео",
-  "permissionPhotosVideosDescription": "Работа с медиа файлами",
-  "permissionPhotosVideosPurpose": "Работа с фото, видео и медиа файлами",
-  "permissionRequired": "{permission} требуется",
-  "@permissionRequired": {
-    "placeholders": {
-      "permission": {
-        "type": "String"
-      }
-    }
-  },
-  "permissionRequiredSettings": "{description}. Пожалуйста, предоставьте разрешение в настройках приложения.",
-  "@permissionRequiredSettings": {
-    "placeholders": {
-      "description": {
-        "type": "String"
-      }
-    }
-  },
-  "laterButton": "Позже",
-  "goToSettings": "Перейти в настройки",
-  "permissionPurpose": "Цель: {purpose}",
-  "@permissionPurpose": {
-    "placeholders": {
-      "purpose": {
-        "type": "String"
-      }
-    }
-  },
-  "allowPermissionQuestion": "Хотите предоставить разрешение?",
-  "grantPermission": "Предоставить разрешение",
-  "checking": "Проверка...",
-  "initializingSyncEngine": "Инициализация системы синхронизации...",
-  "dataSynchronization": "Синхронизация данных",
-  "tablesSynced": "{synced} из {total} таблиц синхронизировано",
-  "@tablesSynced": {
-    "placeholders": {
-      "synced": {"type": "int"},
-      "total": {"type": "int"}
-    }
-  },
-  "lastSync": "Последняя синхронизация: {time}",
-  "@lastSync": {
-    "placeholders": {
-      "time": {"type": "String"}
-    }
-  },
-  "syncing": "Синхронизация...",
-  "syncAllData": "Синхронизировать все данные",
-  "syncAllTablesInOrder": "Это синхронизирует все таблицы в порядке зависимостей",
-  "dataGroups": "Группы данных",
-  "backgroundAutoSync": "Фоновая авто-синхронизация",
-  "backgroundSyncDescription": "Держите данные актуальными даже когда приложение закрыто. Требуется подключение к интернету.",
-  "syncInterval": "Интервал синхронизации",
-  "customIntervalMinutes": "Пользовательский интервал (минуты)",
-  "customIntervalNote": "* Пользовательский интервал имеет приоритет, если установлен 60 или более",
-  "clientBalanceCache": "Кэш баланса клиентов",
-  "clientBalancesCached": "{count} балансов клиентов в кэше",
-  "@clientBalancesCached": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "balanceCacheDescription": "Данные баланса клиентов хранятся в локальном кэше. Вы можете очистить кэш, если данные устарели.",
-  "clearing": "Очистка...",
-  "clearCache": "Очистить кэш",
-  "balanceCacheCleared": "Кэш баланса очищен",
-  "clearBalanceCacheConfirm": "Все данные баланса клиентов будут удалены. Они будут перезагружены при следующем просмотре баланса.",
-  "backgroundSyncEnabled": "Фоновая синхронизация включена",
-  "backgroundSyncDisabled": "Фоновая синхронизация отключена",
-  "minimumIntervalIs60": "Минимальный интервал 60 минут",
-  "justNow": "только что",
-  "minutesAgo": "{minutes}м назад",
-  "@minutesAgo": {
-    "placeholders": {
-      "minutes": {"type": "int"}
-    }
-  },
-  "hoursAgo": "{hours}ч назад",
-  "@hoursAgo": {
-    "placeholders": {
-      "hours": {"type": "int"}
-    }
-  },
-  "yesterday": "вчера",
-  "daysAgo": "{days} дней назад",
-  "@daysAgo": {
-    "placeholders": {
-      "days": {"type": "int"}
-    }
-  },
-  "weeksAgo": "{weeks} недель назад",
-  "@weeksAgo": {
-    "placeholders": {
-      "weeks": {"type": "int"}
-    }
-  },
-  "unknownProduct": "Неизвестный продукт",
-  "errorOccurredTitle": "Произошла ошибка",
-  "akbClientReport": "Отчет по клиентам АКБ",
-  "akbClients": "Клиенты АКБ",
-  "akbPercentage": "Процент АКБ",
-  "akbClientsList": "Список клиентов АКБ",
-  "details": "Подробности",
-  "today": "Сегодня",
-  "yesterday": "Вчера",
-  "daysAgoShort": "{days} дней назад",
-  "@daysAgoShort": {
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
-
-  "locationPermissionNeeded": "Требуется разрешение на местоположение",
-  "locationPermissionRequestMessage": "Для сортировки торговых точек по расстоянию и отображения на карте требуется ваше местоположение. Разрешить?",
-  "later": "Позже",
-  "grantPermission": "Разрешить",
-  "locationSettingsMessage": "Для сортировки по расстоянию и функций карты требуется разрешение на местоположение. Пожалуйста, предоставьте разрешение в настройках приложения.",
-  "goToSettings": "Перейти в настройки",
-  "enableLocationServicesMessage": "Службы определения местоположения должны быть включены для сортировки по расстоянию и функций карты. Пожалуйста, включите службы определения местоположения.",
-  "locationSettings": "Настройки местоположения",
-  
-  "reportDataRefreshed": "Данные отчёта успешно обновлены",
-  "dataRefreshError": "Ошибка обновления данных",
-  "dateFromTo": "с {start} по {end}",
-  "@dateFromTo": {
-    "placeholders": {
-      "start": {"type": "String"},
-      "end": {"type": "String"}
-    }
-  },
-  "monthlyOkbAkb": "Ежемесячный OKB/AKB",
-  "monthlyOKB": "Ежемесячный OKB",
-  "monthlyPlanFactForecast": "Ежемесячный План / Факт / Прогноз",
-  "todayMainIndicators": "Сегодня — основные показатели",
-  "territoryOKB": "Территория OKB",
-  "territoryOKBTooltip": "Охват клиентской базы по территории",
-  "visitedTradingPoints": "Посещённые торговые точки",
-  "visitedTradingPointsTooltip": "Количество посещённых торговых точек",
-  "activeClients": "Активные клиенты",
-  "activeClientsTooltip": "Клиенты с активными заказами сегодня",
-  "cashless": "Безналичные",
-  "ordersTotal": "Общая сумма заказов",
-  "akbByRegions": "AKB по регионам",
-  "akbByProductCategories": "AKB по категориям товаров",
-  "tradingPointAbbr": "т.т.",
-  "footerNoteText": "Данные импортированы из отчёта Telegram. Вы можете изменить текст для переключения на новый источник — UI будет обновлён.",
-  "reportPeriod": "Период отчёта",
-
-  "syncStepCheckingUser": "Проверка пользователя...",
-  "syncStepClearingData": "Очистка старых данных...",
-  "syncStepSyncingKpi": "Загрузка данных KPI...",
-  "syncStepSyncingClients": "Загрузка списка клиентов...",
-  "syncStepSyncingProducts": "Загрузка товаров...",
-  "syncStepSyncingPriceTypes": "Загрузка типов цен...",
-  "syncStepSyncingBusinessRegions": "Загрузка бизнес-регионов...",
-  "syncStepSyncingUserWarehouses": "Загрузка складов пользователя...",
-  "syncStepSyncingProductPrices": "Загрузка цен товаров...",
-  "syncStepSyncingProductBalances": "Загрузка остатков товаров...",
-  "syncStepSyncingClientContracts": "Загрузка контрактов клиентов...",
-  "syncStepUpdatingClientContractStatus": "Обновление статусов контрактов...",
-  "syncStepSyncingContractTypes": "Загрузка типов договоров...",
-  "syncStepSyncingDistrictContracting": "Загрузка районов...",
-  "syncStepSyncingOrderStatuses": "Загрузка статусов заказов...",
-  "syncStepSyncingOrders": "Загрузка заказов...",
-  "syncStepSyncingSalesReqPermissions": "Загрузка разрешений агента...",
-  "syncStepSyncingPlannedRoutes": "Загрузка запланированных маршрутов...",
-  "syncStepSyncingUserOrganizations": "Загрузка организаций пользователя...",
-  "syncStepSyncingUserProjects": "Загрузка проектов пользователя...",
-  "syncStepSyncingPromotions": "Загрузка акций...",
-  "syncStepSyncingMapTokens": "Загрузка токенов карт...",
-  "syncStepSyncingReports": "Загрузка отчётов...",
-  "syncStepSyncingThumbnails": "Загрузка изображений...",
-  "syncStepCompleted": "Данные обновлены!",
-  "syncStepError": "Произошла ошибка",
-  "syncSuccessTitle": "Успех!",
-  "syncUpdatingTitle": "Обновление данных...",
-  "syncSkippedRecent": "Пропущено (недавно синхронизировано)",
-  "syncBackgroundContinues": "Синхронизация продолжается в фоне",
-  "paymentRequiredError": "Требуется оплата. Проверьте подписку.",
-  "authenticationError": "Ошибка аутентификации. Войдите снова.",
-  "accessForbiddenError": "Доступ запрещён. У вас нет разрешения.",
-  "serviceNotFoundError": "Сервис не найден. Обратитесь в поддержку.",
-  "serverUnavailableError": "Сервер недоступен. Попробуйте позже.",
-  "dataUpdateError": "Ошибка обновления данных. Используются кэшированные данные.",
-
-  "syncStatusErrors": "Ошибки",
-  "syncStatusSynced": "Синхронизировано",
-  "syncStatusPartial": "Частично",
-  "syncStatusNotSynced": "Не синхронизировано",
-  "tablesOfTotalSynced": "{synced} из {total} таблиц синхронизировано",
-  "@tablesOfTotalSynced": {
-    "placeholders": {
-      "synced": {"type": "int"},
-      "total": {"type": "int"}
-    }
-  },
-  "syncEntireGroup": "Синхронизировать всю группу",
-  "tablesInThisGroup": "Таблицы в этой группе",
-
-  "neverSynced": "Никогда не синхронизировано",
-  "tableEmpty": "Таблица пуста",
-  "recordsCount": "{count} записей",
-  "@recordsCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "lastSyncLabel": "Последняя синхронизация: {time}",
-  "@lastSyncLabel": {
-    "placeholders": {
-      "time": {"type": "String"}
-    }
-  },
-  "syncTable": "Синхронизировать таблицу",
-  "dependencies": "Зависимости",
-  "willCascadeTo": "Будет каскадировано на",
-  "tableOnly": "Только таблица",
-  "withDependencies": "С зависимостями",
-  "syncWithDependencies": "Синхронизировать с зависимостями",
-  "syncTableOnly": "Синхронизировать только таблицу",
-  "recommended": "Рекомендуется",
-  "syncWarning": "Может не удаться, если зависимости не синхронизированы",
-
-  "tradingPointsLabel": "Торговые точки",
-  "tradingPointsNotAvailable": "Торговые точки недоступны",
-  "dateRangeLabel": "Диапазон дат",
-  "allDatesLabel": "Все даты",
-  "clearLabel": "Очистить",
-  "statusLabel": "Статус",
-  "statusAll": "Все",
-  "statusActive": "Активный",
-  "statusInactive": "Неактивный",
-  "statusExpired": "Истёк",
-  "statusPending": "Ожидает",
-
-  "contractsNotFound": "Контракты не найдены",
-  "contractsCount": "{count} контрактов",
-  "@contractsCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "contractsListRefreshed": "Список контрактов обновлён",
-  "filterApplyError": "Ошибка применения фильтра",
-  "clientContractsCount": "Контракты клиента {name} ({count})",
-  "@clientContractsCount": {
-    "placeholders": {
-      "name": {"type": "String"},
-      "count": {"type": "int"}
-    }
-  },
-  "refreshError": "Ошибка обновления: {error}",
-  "@refreshError": {
-    "placeholders": {
-      "error": {"type": "String"}
-    }
-  },
-
-  "dataTab": "Данные",
-  "documentTab": "Документ",
-  "clientLabel": "Клиент: {name}",
-  "@clientLabel": {
-    "placeholders": {
-      "name": {"type": "String"}
-    }
-  },
-  "startDateLabel": "Дата начала",
-  "endDateLabel": "Дата окончания",
-  "unknownDate": "Неизвестно",
-  "contractAmount": "Сумма контракта",
-  "statusAndType": "Статус и тип",
-  "typeLabel2": "Тип",
-  "additionalInfo": "Дополнительная информация",
-  "certificateLimited": "Сертификат ограничен",
-  "yesText": "Да",
-  "noText": "Нет",
-  "referenceNumberLabel": "Номер справки",
-  "certificateNumberLabel": "Номер сертификата",
-  "passportNumberLabel": "Номер паспорта",
-  "districtCodeLabel": "Код района",
-  "districtNameLabel": "Название района",
-  "projectCodeLabel": "Код проекта",
-  "projectFieldLabel": "Проект",
-  "selectProject": "Выберите проект",
-  "projectRequired": "Выбор проекта обязателен",
-  "projectInfoTooltip": "Номер договора будет сгенерирован на основе системы нумерации выбранного проекта",
-  "projectInfoSection": "Информация о проекте",
-  "editFeatureComingSoon": "Функция редактирования скоро появится",
-  "contractDocument": "Документ контракта",
-  "creditLabel": "Кредит",
-  "fullPaymentLabel": "100% оплата",
-  "uzbekLanguage": "Узбекский",
-  "russianLanguage": "Русский",
-  "sendPdfLabel": "Отправить PDF",
-  "printFeatureComingSoon": "Функция печати скоро появится",
-  "print": "Печать",
-  "pdfPreparing": "Подготовка PDF...",
-  "tapToReveal": "Нажмите",
-
-  "warehousesTitle": "Склады",
-  "warehousesNotFound": "Склады не найдены",
-  "warehousesCount": "Количество складов: {count}",
-  "@warehousesCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "warehouseDataLoadError": "Ошибка загрузки данных склада: {error}",
-  "@warehouseDataLoadError": {
-    "placeholders": {
-      "error": {"type": "String"}
-    }
-  },
-  "organizationLabel": "Организация",
-  "codeLabel2": "Код",
-  "createdLabel": "Создано: {date}",
-  "@createdLabel": {
-    "placeholders": {
-      "date": {"type": "String"}
-    }
-  },
-  "updatedLabel": "Обновлено: {date}",
-  "@updatedLabel": {
-    "placeholders": {
-      "date": {"type": "String"}
-    }
-  },
-
-  "visitCompletedToday": "Визит выполнен сегодня",
-  "visitExpectedToday": "Визит ожидается сегодня",
-  "visitNotPlannedToday": "Визит не запланирован на сегодня",
-  "visitOrderLabel": "Порядок визита: {number}",
-  "@visitOrderLabel": {
-    "placeholders": {
-      "number": {"type": "int"}
-    }
-  },
-
-  "selectClientTitle": "Выберите клиента",
-  "clientsAvailable": "{count} клиентов доступно",
-  "@clientsAvailable": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "searchByNameCodeInn": "Имя, код, ИНН, телефон, тип...",
-  "searchInCyrillicOrLatin": "Поиск на кириллице или латинице",
-  "foundCount": "{count} найдено",
-  "@foundCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "clientNotFound": "Клиент не найден",
-  "tryDifferentSearch": "Попробуйте другой поисковый запрос",
-
-  "selectDateRange": "Выберите диапазон дат",
-  "confirmButton": "Подтвердить",
-  "cancelButton": "Отмена",
-  "selectedPeriod": "Выбранный период",
-
-  "newContractTitle": "Новый контракт",
-  "fillAllFields": "Заполните все поля",
-  "contractTypesLoadError": "Ошибка загрузки типов контрактов",
-  "pleaseSelectClient": "Пожалуйста, выберите клиента",
-  "pleaseSelectContractType": "Пожалуйста, выберите тип контракта",
-  "contractCreatedSuccessfully": "Контракт успешно создан",
-  "contractCreationError": "Ошибка создания контракта",
-  "documentInfoSection": "Информация о документе",
-  "regionInfoSection": "Информация о регионе",
-  "referenceNumberField": "Номер справки",
-  "enterNumberHint": "Введите номер",
-  "termLabel": "Срок",
-  "certificateNumberField": "Номер сертификата",
-  "certificateUnlimitedField": "Сертификат бессрочный",
-  "passportNumberField": "Номер паспорта",
-  "xmlRequestLabel": "XML запрос",
-  "xmlCopied": "XML скопирован",
-
-  "priceTypeLabel": "Тип цены",
-  "clientCodeLabel": "Код клиента",
-  "organizationCodeLabel": "Код организации",
-  "courierLabel": "Курьер",
-  "vehicleLabel": "Транспорт",
-  "licensePlateLabel": "Номер машины",
-  "supervisorCommentLabel": "Комментарий супервайзера",
-  "logistCommentLabel": "Комментарий логиста",
-  "agentCommentLabel": "Комментарий агента",
-  "noProductsInOrder": "Нет товаров в заказе",
-  "productListEmpty": "Список товаров пуст",
-  "totalProductsLabel": "Всего товаров",
-  "productNameLabel": "Наименование товара",
-  "articleLabel": "Артикул",
-  "quantityLabel": "Количество",
-  "priceLabel": "Цена",
-  "amountLabel": "Сумма",
-  "clientNameLabel": "Имя клиента",
-  "orderNumberLabel": "Номер заказа",
-  "orderDateLabel": "Дата заказа",
-  "orderTotalLabel": "Сумма заказа",
-  "mainStatusLabel": "Основной статус",
-  "statusCodeLabel": "Код статуса",
-
-  "networkErrorMessage": "Ошибка сети. Проверьте интернет-соединение.",
-  "serverTimeoutMessage": "Время ожидания сервера истекло.",
-  "orderDetailsNotFound": "Детали заказа не найдены.",
-  "orderDetailsLoadError": "Ошибка загрузки деталей заказа.",
-  "orderDetailsTitle": "Детали заказа",
-  "main": "Основное",
-  "contents": "Содержимое",
-
-  "all": "Все",
-  "clientOrders": "Заказы клиента {name}",
-  "@clientOrders": {
-    "placeholders": {
-      "name": {"type": "String"}
-    }
-  },
-  "dataLoading": "Загрузка данных...",
-  "dataLoadFailed": "Ошибка загрузки данных: {error}",
-  "@dataLoadFailed": {
-    "placeholders": {
-      "error": {"type": "String"}
-    }
-  },
-  "categories": "Категории",
-  "brands": "Бренды",
-
-  "yesterdayText": "Вчера",
-  "fileStoragePermission": "Разрешение на хранение файлов",
-  "fileStorageDescriptionAndroid13": "Выберите папку для сохранения данных приложения",
-  "fileStorageDescription": "Для сохранения и загрузки данных приложения",
-  "fileStoragePurposeAndroid13": "Выберите папку для сохранения фото, документов и данных",
-  "fileStoragePurpose": "Сохранение фото, документов и данных",
-  "locationPermissionTitle": "Разрешение на местоположение",
-  "locationPermissionDescription": "Для сортировки торговых точек по расстоянию",
-  "locationPermissionPurpose": "Показ местоположения на карте и расчет расстояния",
-  "alwaysLocationPermissionTitle": "Разрешение на постоянное местоположение",
-  "alwaysLocationPermissionDescription": "Для определения местоположения в фоновом режиме",
-  "alwaysLocationPermissionPurpose": "Фоновый сервис и уведомления",
-  "cameraPermissionTitle": "Разрешение на камеру",
-  "cameraPermissionDescription": "Для фотосъемки и сканирования штрих-кодов",
-  "cameraPermissionPurpose": "Фотосъемка товаров и торговых точек",
-  "microphonePermissionTitle": "Разрешение на микрофон",
-  "microphonePermissionDescription": "Для записи голоса и аудио сообщений",
-  "microphonePermissionPurpose": "Голосовые заметки и аудио записи",
-  "notificationPermissionTitle": "Разрешение на уведомления",
-  "notificationPermissionDescription": "Для показа важных сообщений",
-  "notificationPermissionPurpose": "Напоминания, новости и уведомления",
-  "audioPermissionTitle": "Разрешение на музыку и аудио",
-  "audioPermissionDescription": "Для работы с аудио файлами",
-  "audioPermissionPurpose": "Музыка, аудио сообщения и голосовые файлы",
-  "photosAndVideosPermissionTitle": "Разрешение на фото и видео",
-  "photosAndVideosPermissionDescription": "Для работы с медиа файлами",
-  "photosAndVideosPermissionPurpose": "Работа с фото, видео и медиа файлами",
-  "permissionRequiredMessage": "{description}. Пожалуйста, предоставьте разрешение в настройках приложения.",
-  "@permissionRequiredMessage": {
-    "placeholders": {
-      "description": {"type": "String"}
-    }
-  },
-  "goToSettingsButton": "Перейти в настройки",
-  "grantPermissionButton": "Дать разрешение",
-  "checkingPermission": "Проверка...",
-  "permissionCheckTitle": "Проверка разрешений",
-  "permissionCheckMessage": "Для корректной работы приложению необходимы следующие разрешения:",
-  "permissionSaveData": "Сохранение данных",
-  "permissionMapDistance": "Карта и расчет расстояния",
-  "permissionTakePhotos": "Фотосъемка",
-  "permissionRecordVoice": "Запись голоса",
-  "permissionShowMessages": "Показ сообщений",
-  "permissionLimitedMode": "Без разрешений приложение будет работать в ограниченном режиме.",
-  "purposeLabel": "Цель: {purpose}",
-  "@purposeLabel": {
-    "placeholders": {
-      "purpose": {"type": "String"}
-    }
-  },
-  "grantPermissionQuestion": "Хотите дать разрешение?",
-
-  "serviceInitError": "Ошибка инициализации сервисов",
-  "balanceServiceNotAvailable": "Сервис баланса недоступен",
-  "clientInnNotAvailable": "ИНН клиента недоступен",
-  "balanceLoadError": "Ошибка загрузки баланса",
-  "clientIsDebtor": "Клиент должник. Общий долг: {amount} сум",
-  "@clientIsDebtor": {
-    "placeholders": {
-      "amount": {"type": "String"}
-    }
-  },
-  "clientHasOverpayment": "Клиент переплатил. Переплата: {amount} сум",
-  "@clientHasOverpayment": {
-    "placeholders": {
-      "amount": {"type": "String"}
-    }
-  },
-  "clientBalanceZero": "Баланс клиента равен нулю.",
-  "clientBalance": "Баланс клиента",
-  "errorOccurred": "Произошла ошибка",
-  "balanceDataNotFound": "Данные баланса не найдены",
-  "updatedAtTime": "Обновлено: {time}",
-  "@updatedAtTime": {
-    "placeholders": {
-      "time": {"type": "String"}
-    }
-  },
-  "clientDebtorStatus": "Клиент должник",
-  "overpaymentStatus": "Переплата",
-  "balanceZeroStatus": "Баланс равен нулю",
-  "unpaidOrders": "{count} неоплачено",
-  "@unpaidOrders": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "overdueOrders": "{count} просрочено",
-  "@overdueOrders": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "tablesOfTotalSynced": "{synced} из {total} таблиц синхронизировано",
-  "@tablesOfTotalSynced": {
-    "placeholders": {
-      "synced": {"type": "int"},
-      "total": {"type": "int"}
-    }
-  },
-  "syncStatusErrors": "Ошибки",
-  "syncStatusSynced": "Синхронизировано",
-  "syncStatusPartial": "Частично",
-  "syncStatusNotSynced": "Не синхронизировано",
-  "justNow": "Только что",
-  "minutesAgo": "{minutes} мин назад",
-  "@minutesAgo": {
-    "placeholders": {
-      "minutes": {"type": "int"}
-    }
-  },
-  "hoursAgo": "{hours} ч назад",
-  "@hoursAgo": {
-    "placeholders": {
-      "hours": {"type": "int"}
-    }
-  },
-  "daysAgo": "{days} дней назад",
-  "@daysAgo": {
-    "placeholders": {
-      "days": {"type": "int"}
-    }
-  },
-  "weeksAgo": "{weeks} недель назад",
-  "@weeksAgo": {
-    "placeholders": {
-      "weeks": {"type": "int"}
-    }
-  },
-  "paymentRequiredError": "Требуется оплата. Проверьте вашу подписку.",
-  "authenticationError": "Ошибка аутентификации. Войдите заново.",
-  "accessForbiddenError": "Доступ запрещён. У вас нет разрешения.",
-  "serviceNotFoundError": "Сервис не найден. Обратитесь в поддержку.",
-  "serverUnavailableError": "Сервер недоступен. Попробуйте позже.",
-  "dataUpdateError": "Ошибка обновления данных. Используются кэшированные данные.",
-  "syncSuccessTitle": "Успешно!",
-  "syncUpdatingTitle": "Обновление данных...",
-  "clientInnNotFound": "ИНН клиента не найден",
-  "balanceUpdated": "Обновлено",
-  "balanceIsZero": "Баланс равен нулю",
-  "noBalanceData": "Данные баланса не найдены",
-  "balanceStatus": "Статус баланса",
-  "totalDebt": "Общий долг",
-  "refreshError": "Ошибка обновления",
-  "noDataAvailable": "Нет данных",
-  "paidLabel": "Оплачено",
-  "debtLabelChart": "Долг",
-  "noContractsFound": "Контракты не найдены",
-  "paymentAmount": "Оплата: {amount}",
-  "@paymentAmount": {
-    "placeholders": {
-      "amount": {"type": "String"}
-    }
-  },
-  "debtAmount": "Долг: {amount}",
-  "@debtAmount": {
-    "placeholders": {
-      "amount": {"type": "String"}
-    }
-  },
-  "contractDialog": "Контракт",
-  "codeLabel": "Код: {code}",
-  "@codeLabel": {
-    "placeholders": {
-      "code": {"type": "String"}
-    }
-  },
-  "idLabel": "ID: {id}",
-  "@idLabel": {
-    "placeholders": {
-      "id": {"type": "String"}
-    }
-  },
-  "projectLabel": "Проект: {project}",
-  "@projectLabel": {
-    "placeholders": {
-      "project": {"type": "String"}
-    }
-  },
-  "closeButton": "Закрыть",
-  "noOrdersFound": "Заказы не найдены",
-  "countItems": "{count} шт",
-  "@countItems": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "partialLabel": "Частично",
-  "unpaidLabel": "Неоплачено",
-  "savingStatus": "Сохранение...",
-  "unsavedChangesStatus": "Несохраненные изменения",
-  "offlineStatus": "Офлайн",
-  "pendingSyncCount": "{count} ожидает синхронизации",
-  "@pendingSyncCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "allSyncedStatus": "Все синхронизировано",
-  "autoSaving": "Автосохранение...",
-  "savingStepData": "Сохранение данных шага...",
-  "visitProgress": "Прогресс визита",
-  "mandatoryLabel": "Обязательно",
-  "optionalLabel": "Необязательно",
-  "currentLabel": "Текущий",
-  "completedLabel": "Завершено",
-  "skippedLabel": "Пропущено",
-  "notesLabel": "Заметки: {notes}",
-  "@notesLabel": {
-    "placeholders": {
-      "notes": {"type": "String"}
-    }
-  },
-  "reasonLabel": "Причина: {reason}",
-  "@reasonLabel": {
-    "placeholders": {
-      "reason": {"type": "String"}
-    }
-  },
-  "skipStep": "Пропустить шаг",
-  "completeStep": "Завершить шаг",
-  "previousStepsMustBeCompleted": "Предыдущие шаги должны быть завершены",
-  "stepCompleted": "{stepName} завершен",
-  "@stepCompleted": {
-    "placeholders": {
-      "stepName": {"type": "String"}
-    }
-  },
-  "confirmCompletion": "Подтвердите завершение",
-  "enterNotesOptional": "Введите заметки (необязательно)",
-  "stepSkip": "Пропуск {stepName}",
-  "@stepSkip": {
-    "placeholders": {
-      "stepName": {"type": "String"}
-    }
-  },
-  "enterSkipReason": "Введите причину пропуска",
-  "reasonHint": "Причина",
-  "confirmSkip": "Подтвердить пропуск",
-  "syncStatusIdle": "Ожидание",
-  "syncStatusProducts": "Синхронизация товаров",
-  "syncStatusBalances": "Синхронизация остатков",
-  "syncStatusOrders": "Синхронизация заказов",
-  "syncStatusCompleted": "Синхронизация завершена",
-  "syncStatusError": "Ошибка синхронизации",
-  "syncInProgress": "Синхронизация...",
-  "syncStarting": "Начало синхронизации...",
-  "weekdayMon": "Пн",
-  "weekdayTue": "Вт",
-  "weekdayWed": "Ср",
-  "weekdayThu": "Чт",
-  "weekdayFri": "Пт",
-  "weekdaySat": "Сб",
-  "weekdaySun": "Вс",
-  "copyLabel": "Копировать",
-  "reloadLabel": "Перезагрузить",
-  "createContract": "Создать контракт",
-  "refreshContractTypesAndRegions": "Обновить типы контрактов и регионы",
-  "selectContractType": "Выберите тип контракта",
-  "contractTypesNotFound": "Типы контрактов не найдены",
-  "loading": "Загрузка...",
-  "creating": "Создание...",
-  "orderStatusNew": "Новый",
-  "orderStatusConfirmed": "Подтверждён",
-  "orderStatusDelivering": "В доставке",
-  "orderStatusDelivered": "Доставлен",
-  "orderStatusReturnRequested": "Запрос на возврат",
-  "orderStatusCancelled": "Отменён",
-  "orderStatusDeliveredUnpaid": "Доставлен, не оплачен",
-  "orderStatusDeliveredPartiallyPaid": "Доставлен, частично оплачен",
-  "orderStatusExpired": "Просрочен",
-  "orderStatusUnknown": "Неизвестно",
-  "filterTooltip": "Фильтр",
-  "fullscreenTooltip": "Полный экран",
-  "refusalReasonClientNotAvailable": "Клиент недоступен",
-  "refusalReasonNoTime": "Нет времени",
-  "refusalReasonProductNotNeeded": "Товар не нужен",
-  "refusalReasonPriceNotSuitable": "Цена не подходит",
-  "refusalReasonWorksWithOtherSupplier": "Работает с другим поставщиком",
-  "refusalReasonOther": "Другая причина",
-  "apiKeyStatusConfigured": "настроен",
-  "apiKeyStatusNotConfigured": "не настроен",
-  "apiKeyStatusNotRequired": "ключ не требуется",
-  "apiKeyStatusError": "ошибка",
-  "fakturaFetchCompanyData": "Загрузить",
-  "fakturaRefreshCompanyData": "Обновить",
-  "fakturaEnterInn": "Пожалуйста, введите ИНН",
-  "fakturaInvalidInnFormat": "Неверный формат ИНН. Должно быть 9 или 14 цифр",
-  "fakturaCompanyDataLoaded": "Данные организации успешно загружены: {companyName}",
-  "@fakturaCompanyDataLoaded": {
-    "placeholders": {
-      "companyName": {
-        "type": "String"
-      }
-    }
-  },
-  "fakturaRegionNotFound": "Регион не найден: {regionName}. Пожалуйста, выберите вручную",
-  "@fakturaRegionNotFound": {
-    "placeholders": {
-      "regionName": {
-        "type": "String"
-      }
-    }
-  },
-  "fakturaAuthError": "Ошибка аутентификации",
-  "fakturaAuthErrorRetry": "Ошибка аутентификации. Пожалуйста, попробуйте еще раз",
-  "fakturaCompanyNotFound": "Организация не найдена. Проверьте ИНН",
-  "fakturaInvalidRequest": "Неверный запрос. Проверьте формат ИНН",
-  "fakturaServerError": "Ошибка сервера: {statusCode}",
-  "@fakturaServerError": {
-    "placeholders": {
-      "statusCode": {
-        "type": "String"
-      }
-    }
-  },
-  "fakturaNetworkError": "Ошибка сети",
-  "fakturaInnEmpty": "ИНН не может быть пустым",
-  "fakturaTokenRefreshError": "Ошибка обновления токена",
-  "reportMenuTitle": "Меню отчетов",
-  "reportAlreadySent": "Отчет уже отправлен в вашу группу Telegram. Хотите отправить снова?",
-  "reportSentSuccess": "Отчет отправлен",
-  "resendReport": "Отправить снова",
-  "toggleHeaderShow": "Показать заголовок",
-  "toggleHeaderHide": "Скрыть заголовок",
-  "periodNotSelected": "Период не выбран",
-  "userDataNotFound": "Данные пользователя не найдены",
-  "dataSyncing": "Синхронизация данных...",
-  "reportsUpdated": "Отчеты обновлены",
-  "syncError": "Ошибка синхронизации: {error}",
-  "@syncError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "applyButton": "Применить",
-  "reportMainEvyap": "Основные отчеты(для EVYAP)",
-  "reportMainEvyapDesc": "Показатели KPI и основная статистика",
-  "reportVisits": "Отчет по визитам",
-  "reportVisitsDesc": "Информация о визитах к клиентам",
-  "reportAkbClient": "AKB Client",
-  "reportAkbClientDesc": "Отчет по клиентам AKB",
-  "reportAkbSum": "AKB Sum",
-  "reportAkbSumDesc": "Финансовый отчет по суммам AKB",
-  "reportAkbProduct": "AKB Product",
-  "reportAkbProductDesc": "Отчет по продуктам AKB",
-  "reportCategory": "Отчеты по категориям",
-  "reportCategoryDesc": "Анализ продаж по категориям",
-  "reportMonthlyResults": "Месячные результаты",
-  "reportMonthlyResultsDesc": "Результаты продаж и тенденции за месяц",
-  "reportMonthlyKpi": "Месячный KPI (зарплата)",
-  "reportMonthlyKpiDesc": "Выполнение месячного KPI и отчет по зарплате",
-  "reportsSection": "Раздел отчетов",
-  "akbAmount": "Сумма AKB",
-  "akbPlan": "План AKB",
-  "akbProducts": "Продукты AKB",
-  "productTypes": "Типы продуктов",
-  "categoriesCount": "Количество категорий",
-  "topSelling": "Самые продаваемые",
-  "monthlySales": "Месячные продажи",
-  "monthlyGrowth": "Месячный рост",
-  "kpiCompletion": "Выполнение KPI",
-  "salaryAmount": "Сумма зарплаты",
-  "scannerTitle": "Сканер документов",
-  "scannerSubtitle": "Сканируйте сертификат для автозаполнения",
-  "scannerTakePhoto": "Снять фото",
-  "scannerChoosePhoto": "Галерея",
-  "scannerProcessing": "Анализ документа...",
-  "scannerPleaseWait": "ИИ извлекает данные из изображения",
-  "scannerDataExtracted": "Извлечено {count} полей",
-  "@scannerDataExtracted": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "scannerCameraError": "Ошибка доступа к камере. Проверьте разрешения",
-  "scannerGalleryError": "Ошибка доступа к галерее. Проверьте разрешения",
-  "scannerImageEmpty": "Выбранное изображение пустое или повреждено",
-  "scannerNetworkError": "Ошибка сети. Проверьте интернет-соединение",
-  "scannerAuthError": "Ошибка аутентификации ИИ. Попробуйте снова",
-  "scannerRateLimitError": "Слишком много запросов. Подождите немного",
-  "scannerNoDataExtracted": "Не удалось извлечь данные. Попробуйте более четкое изображение",
-  "scannerParseError": "Ошибка обработки ответа ИИ. Попробуйте снова",
-  "scannerUnknownError": "Произошла непредвиденная ошибка. Попробуйте снова",
-  "scannerFormUpdated": "Форма обновлена отсканированными данными",
-  "scannerVerifyingWithFaktura": "Проверка данных через Faktura.uz...",
-  "scannerDataVerified": "Данные проверены и обновлены из Faktura.uz",
-  "scannerDataMismatch": "{count} полей обновлено из Faktura.uz",
-  "@scannerDataMismatch": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "faqPageTitle": "Регламент",
-  "faqSupervisorSubtitle": "Обязанности супервайзера",
-  "faqSalesRepSubtitle": "Регламент торгового представителя",
-  "faqRoleSupervisor": "Супервайзер",
-  "faqRoleSalesRep": "Торговый представитель",
-  "faqSectionsCount": "разделов",
-  "faqSvGpsTitle": "GPS-мониторинг",
-  "faqSvGpsMorningTitle": "Утренний отчет (до 9:15)",
-  "faqSvGpsMorningContent": "Ежедневно до 9:15 утра супервайзер обязан направлять в рабочую группу отчёт о статусе выхода торговых представителей на маршрут, с указанием, кто вышел вовремя, а кто нет.",
-  "faqSvGpsEveningTitle": "Вечерний отчет (до 18:00)",
-  "faqSvGpsEveningContent": "До 18:00 — отправляется итоговый GPS-отчёт по завершению рабочего дня.",
-  "faqSvSalesTitle": "Отчёт по продажам",
-  "faqSvSalesInterimTitle": "Промежуточный отчет (до 13:00)",
-  "faqSvSalesInterimContent": "До 13:00 — направляется промежуточный отчёт с суммой и количеством собранных заказов.",
-  "faqSvSalesFinalTitle": "Финальный отчет (до 18:00)",
-  "faqSvSalesFinalContent": "До 18:00 — финальный отчёт, включающий:\n• итоговую сумму продаж за день\n• количество заказов\n• план выезда и прогноз заказов на следующий день\n• отчёт по возвратам (если имеются)",
-  "faqSvKpiTitle": "KPI и планирование",
-  "faqSvKpiMondayTitle": "Офисный день (понедельник)",
-  "faqSvKpiMondayContent": "Каждый понедельник — офисный день.",
-  "faqSvKpiAnalysisTitle": "Анализ и задачи",
-  "faqSvKpiAnalysisContent": "Проводится подведение итогов за прошедшую неделю, анализ KPI и постановка задач на текущую неделю.",
-  "faqSvTravelTitle": "Travel Plans",
-  "faqSvTravelMonthlyTitle": "Ежемесячное планирование",
-  "faqSvTravelMonthlyContent": "Ежемесячно, 30–31 числа, супервайзеры направляют личным сообщением региональному менеджеру индивидуальные Travel Plans на следующий месяц.",
-  "faqSvTimeTitle": "Учёт рабочего времени",
-  "faqSvTimeWeeklyTitle": "Еженедельный табель",
-  "faqSvTimeWeeklyContent": "Табель составляется на еженедельной основе (по понедельникам) с указанием количества отработанных дней торговыми представителями.",
-  "faqSvTimeMonthlyTitle": "Месячный табель",
-  "faqSvTimeMonthlyContent": "Финальный табель за месяц предоставляется в последний день календарного месяца.",
-  "faqSvSalaryTitle": "Зарплата и KPI",
-  "faqSvSalaryKpiTitle": "Итоги по KPI",
-  "faqSvSalaryKpiContent": "Ежемесячно, в период с 1 по 3 число (в зависимости от выходных), супервайзер обязан подвести итоги за весь месяц по KPI.",
-  "faqSvSalaryCalcTitle": "Расчёт зарплаты",
-  "faqSvSalaryCalcContent": "Подготовить и передать расчёт заработной платы торговых представителей EVYAP на основании выполненных показателей.",
-  "faqTpGeneralTitle": "Общие положения",
-  "faqTpGeneralPurposeTitle": "Цель документа",
-  "faqTpGeneralPurposeContent": "Настоящий регламент устанавливает правила организации и выполнения обязанностей торговыми представителями ООО «Gloriya Global». Цель документа — обеспечение дисциплины, прозрачности и эффективности работы торговых представителей.",
-  "faqTpHoursTitle": "Рабочее время и маршрут",
-  "faqTpHoursScheduleTitle": "График работы",
-  "faqTpHoursScheduleContent": "Рабочий день начинается в 9:00 и заканчивается в 18:00.",
-  "faqTpHoursRouteTitle": "Выход на маршрут",
-  "faqTpHoursRouteContent": "Торговый представитель обязан вовремя выходить на маршрут согласно утверждённому графику.",
-  "faqTpHoursDelayTitle": "Опоздания",
-  "faqTpHoursDelayContent": "Опоздание более чем на 15 минут без уважительной причины фиксируется как нарушение трудовой дисциплины.",
-  "faqTpVisitsTitle": "Посещение торговых точек",
-  "faqTpVisitsDailyTitle": "Ежедневные визиты",
-  "faqTpVisitsDailyContent": "Каждый торговый представитель обязан ежедневно посещать все торговые точки согласно маршруту.",
-  "faqTpVisitsChangesTitle": "Изменения маршрута",
-  "faqTpVisitsChangesContent": "В случае изменения маршрута (отсутствие клиента, закрытие точки и т.д.) необходимо сообщить в рабочий чат с указанием причины.",
-  "faqTpVisitsPhotoTitle": "Фото/видео отчёт",
-  "faqTpVisitsPhotoContent": "По каждой точке необходимо предоставить фото- или видеоотчёт (выкладка, активность, заказ).",
-  "faqTpVideoTitle": "Видеоотчёты (Telegram)",
-  "faqTpVideoMorningTitle": "Утренний видеоотчёт",
-  "faqTpVideoMorningContent": "В начале рабочего дня (до 9:30) торговый представитель обязан отправить видеосообщение («кружок») в общий чат Telegram, где указать:\n• что вышел на маршрут\n• район или направление на день\n• основные задачи",
-  "faqTpVideoDuringTitle": "Отчёты в течение дня",
-  "faqTpVideoDuringContent": "В течение дня приветствуется отправка коротких видеосообщений с торговых точек — демонстрация выкладки, новинок или активностей.",
-  "faqTpVideoEndTitle": "Итоговый видеоотчёт",
-  "faqTpVideoEndContent": "В конце дня рекомендуется краткий видеоотчёт с итогами.",
-  "faqTpReportingTitle": "Отчётность",
-  "faqTpReportingRealTimeTitle": "Отправка в реальном времени",
-  "faqTpReportingRealTimeContent": "Все фото, видео и комментарии по маршруту должны быть отправлены в момент визита.",
-  "faqTpReportingConsequenceTitle": "Последствия невыполнения",
-  "faqTpReportingConsequenceContent": "Невыполнение ежедневной отчётности расценивается как невыход в маршрут или отсутствие активности.",
-  "faqTpResponsibilityTitle": "Ответственность",
-  "faqTpResponsibilityRulesTitle": "Дисциплинарная ответственность",
-  "faqTpResponsibilityRulesContent": "Несоблюдение настоящего регламента влечёт дисциплинарную ответственность в соответствии с внутренними правилами компании.",
-  "faqTpResponsibilityMeasuresTitle": "Меры взыскания",
-  "faqTpResponsibilityMeasuresContent": "Меры ответственности: предупреждение → выговор → удержание премии.",
-  "productImageLoading": "Загрузка изображения...",
-  "productImageError": "Не удалось загрузить изображение",
-  "productNoImage": "Изображение недоступно",
-  "productImageSyncProgress": "Синхронизация изображений: {current}/{total}",
-  "@productImageSyncProgress": {
-    "placeholders": {
-      "current": {"type": "int"},
-      "total": {"type": "int"}
-    }
-  },
-  "productImageSyncComplete": "Синхронизация изображений завершена",
-  "productImageSyncFailed": "Ошибка синхронизации изображений",
-  "productImageTapToView": "Нажмите для просмотра",
-  "productImageCount": "{count} изображений",
-  "@productImageCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "productBasicInfo": "Основная информация",
-  "productPricingInfo": "Информация о ценах",
-  "productStockInfo": "Информация о складе",
-  "productAdditionalInfo": "Дополнительная информация",
-  "productCode": "Код товара",
-  "productVendorCode": "Артикул",
-  "productBarcode": "Штрих-код",
-  "productCategory": "Категория",
-  "productSeries": "Серия",
-  "productPriceType": "Тип цены",
-  "productPrice": "Цена",
-  "productPriceValidFrom": "Действует с",
-  "productPriceValidTo": "Действует до",
-  "productWarehouse": "Склад",
-  "productStock": "Остаток",
-  "productQuantity": "Общее количество",
-  "productReserved": "Зарезервировано",
-  "productAvailable": "Доступно",
-  "productUnit": "Единица измерения",
-  "productWeight": "Вес",
-  "productCapacity": "Объём",
-  "productBrand": "Бренд",
-  "productProject": "Код проекта",
-  "copiedToClipboard": "Скопировано в буфер обмена",
-  "productInfoCopied": "Информация о товаре скопирована",
   "permissionsChecking": "Проверка разрешений...",
   "permissionsCheckTitle": "Проверка разрешений",
   "permissionsCheckDescription": "Для полной работы приложения требуются следующие разрешения:",
@@ -2809,10 +1667,677 @@
     }
   },
   "allowPermissionQuestion": "Хотите предоставить разрешение?",
-  "later": "Позже",
   "grantPermission": "Предоставить разрешение",
   "checking": "Проверка...",
-  "pullToRefresh": "Потяните для обновления",
+  "initializingSyncEngine": "Инициализация системы синхронизации...",
+  "dataSynchronization": "Синхронизация данных",
+  "tablesSynced": "{synced} из {total} таблиц синхронизировано",
+  "@tablesSynced": {
+    "placeholders": {
+      "synced": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@lastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncAllData": "Синхронизировать все данные",
+  "syncAllTablesInOrder": "Это синхронизирует все таблицы в порядке зависимостей",
+  "dataGroups": "Группы данных",
+  "backgroundAutoSync": "Фоновая авто-синхронизация",
+  "backgroundSyncDescription": "Держите данные актуальными даже когда приложение закрыто. Требуется подключение к интернету.",
+  "syncInterval": "Интервал синхронизации",
+  "customIntervalNote": "* Пользовательский интервал имеет приоритет, если установлен 60 или более",
+  "clientBalanceCache": "Кэш баланса клиентов",
+  "clientBalancesCached": "{count} балансов клиентов в кэше",
+  "@clientBalancesCached": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "balanceCacheDescription": "Данные баланса клиентов хранятся в локальном кэше. Вы можете очистить кэш, если данные устарели.",
+  "clearing": "Очистка...",
+  "clearCache": "Очистить кэш",
+  "backgroundSyncEnabled": "Фоновая синхронизация включена",
+  "backgroundSyncDisabled": "Фоновая синхронизация отключена",
+  "minimumIntervalIs60": "Минимальный интервал 60 минут",
+  "justNow": "Только что",
+  "minutesAgo": "{minutes} мин назад",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{hours} ч назад",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{days} дней назад",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "weeksAgo": "{weeks} недель назад",
+  "@weeksAgo": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "unknownProduct": "Неизвестный продукт",
+  "errorOccurredTitle": "Произошла ошибка",
+  "akbClientReport": "Отчет по клиентам АКБ",
+  "akbClients": "Клиенты АКБ",
+  "akbPercentage": "Процент АКБ",
+  "akbClientsList": "Список клиентов АКБ",
+  "daysAgoShort": "{days} дней назад",
+  "@daysAgoShort": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "locationPermissionNeeded": "Требуется разрешение на местоположение",
+  "locationPermissionRequestMessage": "Для сортировки торговых точек по расстоянию и отображения на карте требуется ваше местоположение. Разрешить?",
+  "later": "Позже",
+  "locationSettingsMessage": "Для сортировки по расстоянию и функций карты требуется разрешение на местоположение. Пожалуйста, предоставьте разрешение в настройках приложения.",
+  "enableLocationServicesMessage": "Службы определения местоположения должны быть включены для сортировки по расстоянию и функций карты. Пожалуйста, включите службы определения местоположения.",
+  "locationSettings": "Настройки местоположения",
+  "dataRefreshError": "Ошибка обновления данных",
+  "dateFromTo": "с {start} по {end}",
+  "@dateFromTo": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "akbByRegions": "AKB по регионам",
+  "akbByProductCategories": "AKB по категориям товаров",
+  "tradingPointAbbr": "т.т.",
+  "footerNoteText": "Данные импортированы из отчёта Telegram. Вы можете изменить текст для переключения на новый источник — UI будет обновлён.",
+  "syncStepCheckingUser": "Проверка пользователя...",
+  "syncStepClearingData": "Очистка старых данных...",
+  "syncStepSyncingKpi": "Загрузка данных KPI...",
+  "syncStepSyncingClients": "Загрузка списка клиентов...",
+  "syncStepSyncingProducts": "Загрузка товаров...",
+  "syncStepSyncingPriceTypes": "Загрузка типов цен...",
+  "syncStepSyncingBusinessRegions": "Загрузка бизнес-регионов...",
+  "syncStepSyncingUserWarehouses": "Загрузка складов пользователя...",
+  "syncStepSyncingProductPrices": "Загрузка цен товаров...",
+  "syncStepSyncingProductBalances": "Загрузка остатков товаров...",
+  "syncStepSyncingClientContracts": "Загрузка контрактов клиентов...",
+  "syncStepUpdatingClientContractStatus": "Обновление статусов контрактов...",
+  "syncStepSyncingContractTypes": "Загрузка типов договоров...",
+  "syncStepSyncingDistrictContracting": "Загрузка районов...",
+  "syncStepSyncingOrderStatuses": "Загрузка статусов заказов...",
+  "syncStepSyncingOrders": "Загрузка заказов...",
+  "syncStepSyncingSalesReqPermissions": "Загрузка разрешений агента...",
+  "syncStepSyncingPlannedRoutes": "Загрузка запланированных маршрутов...",
+  "syncStepSyncingUserOrganizations": "Загрузка организаций пользователя...",
+  "syncStepSyncingUserProjects": "Загрузка проектов пользователя...",
+  "syncStepSyncingPromotions": "Загрузка акций...",
+  "syncStepSyncingMapTokens": "Загрузка токенов карт...",
+  "syncStepSyncingReports": "Загрузка отчётов...",
+  "syncStepSyncingThumbnails": "Загрузка изображений...",
+  "syncStepCompleted": "Данные обновлены!",
+  "syncStepError": "Произошла ошибка",
+  "syncSuccessTitle": "Успешно!",
+  "syncUpdatingTitle": "Обновление данных...",
+  "syncSkippedRecent": "Пропущено (недавно синхронизировано)",
+  "syncBackgroundContinues": "Синхронизация продолжается в фоне",
+  "paymentRequiredError": "Требуется оплата. Проверьте вашу подписку.",
+  "authenticationError": "Ошибка аутентификации. Войдите заново.",
+  "accessForbiddenError": "Доступ запрещён. У вас нет разрешения.",
+  "serviceNotFoundError": "Сервис не найден. Обратитесь в поддержку.",
+  "serverUnavailableError": "Сервер недоступен. Попробуйте позже.",
+  "dataUpdateError": "Ошибка обновления данных. Используются кэшированные данные.",
+  "syncStatusErrors": "Ошибки",
+  "syncStatusSynced": "Синхронизировано",
+  "syncStatusPartial": "Частично",
+  "syncStatusNotSynced": "Не синхронизировано",
+  "tablesOfTotalSynced": "{synced} из {total} таблиц синхронизировано",
+  "@tablesOfTotalSynced": {
+    "placeholders": {
+      "synced": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tablesInThisGroup": "Таблицы в этой группе",
+  "neverSynced": "Никогда не синхронизировано",
+  "tableEmpty": "Таблица пуста",
+  "recordsCount": "{count} записей",
+  "@recordsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastSyncLabel": "Последняя синхронизация: {time}",
+  "@lastSyncLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTable": "Синхронизировать таблицу",
+  "dependencies": "Зависимости",
+  "willCascadeTo": "Будет каскадировано на",
+  "tradingPointsLabel": "Торговые точки",
+  "tradingPointsNotAvailable": "Торговые точки недоступны",
+  "dateRangeLabel": "Диапазон дат",
+  "allDatesLabel": "Все даты",
+  "clearLabel": "Очистить",
+  "statusLabel": "Статус",
+  "statusAll": "Все",
+  "statusActive": "Активный",
+  "statusInactive": "Неактивный",
+  "statusExpired": "Истёк",
+  "statusPending": "Ожидает",
+  "clientContractsCount": "Контракты клиента {name} ({count})",
+  "@clientContractsCount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refreshError": "Ошибка обновления",
+  "@refreshError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "dataTab": "Данные",
+  "documentTab": "Документ",
+  "clientLabel": "Клиент: {name}",
+  "@clientLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "startDateLabel": "Начало: {date}",
+  "endDateLabel": "Окончание: {date}",
+  "unknownDate": "Неизвестно",
+  "statusAndType": "Статус и тип",
+  "typeLabel2": "Тип",
+  "additionalInfo": "Дополнительная информация",
+  "certificateLimited": "Сертификат ограничен",
+  "yesText": "Да",
+  "noText": "Нет",
+  "referenceNumberLabel": "Номер справки",
+  "certificateNumberLabel": "Номер сертификата",
+  "passportNumberLabel": "Номер паспорта",
+  "districtCodeLabel": "Код района",
+  "districtNameLabel": "Название района",
+  "projectCodeLabel": "Код проекта",
+  "projectFieldLabel": "Проект",
+  "selectProject": "Выберите проект",
+  "projectRequired": "Выбор проекта обязателен",
+  "projectInfoTooltip": "Номер договора будет сгенерирован на основе системы нумерации выбранного проекта",
+  "projectInfoSection": "Информация о проекте",
+  "creditLabel": "Кредит",
+  "fullPaymentLabel": "100% оплата",
+  "uzbekLanguage": "Узбекский",
+  "russianLanguage": "Русский",
+  "pdfPreparing": "Подготовка PDF...",
+  "tapToReveal": "Нажмите",
+  "warehousesTitle": "Склады",
+  "warehousesNotFound": "Склады не найдены",
+  "warehousesCount": "Количество складов: {count}",
+  "@warehousesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createdLabel": "Создано: {date}",
+  "@createdLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "updatedLabel": "Обновлено: {date}",
+  "@updatedLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "visitCompletedToday": "Визит выполнен сегодня",
+  "visitExpectedToday": "Визит ожидается сегодня",
+  "visitNotPlannedToday": "Визит не запланирован на сегодня",
+  "visitOrderLabel": "Порядок визита: {number}",
+  "@visitOrderLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "selectClientTitle": "Выберите клиента",
+  "clientsAvailable": "{count} клиентов доступно",
+  "@clientsAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchByNameCodeInn": "Имя, код, ИНН, телефон, тип...",
+  "searchInCyrillicOrLatin": "Поиск на кириллице или латинице",
+  "foundCount": "{count} найдено",
+  "@foundCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clientNotFound": "Клиент не найден",
+  "tryDifferentSearch": "Попробуйте другой поисковый запрос",
+  "confirmButton": "Подтвердить",
+  "cancelButton": "Отмена",
+  "newContractTitle": "Новый контракт",
+  "fillAllFields": "Заполните все поля",
+  "contractTypesLoadError": "Ошибка загрузки типов контрактов",
+  "pleaseSelectClient": "Пожалуйста, выберите клиента",
+  "pleaseSelectContractType": "Пожалуйста, выберите тип контракта",
+  "contractCreatedSuccessfully": "Контракт успешно создан",
+  "contractCreationError": "Ошибка создания контракта",
+  "documentInfoSection": "Информация о документе",
+  "regionInfoSection": "Информация о регионе",
+  "referenceNumberField": "Номер справки",
+  "termLabel": "Срок",
+  "certificateNumberField": "Номер сертификата",
+  "certificateUnlimitedField": "Сертификат бессрочный",
+  "passportNumberField": "Номер паспорта",
+  "clientCodeLabel": "Код клиента",
+  "organizationCodeLabel": "Код организации",
+  "courierLabel": "Курьер",
+  "vehicleLabel": "Транспорт",
+  "licensePlateLabel": "Номер машины",
+  "supervisorCommentLabel": "Комментарий супервайзера",
+  "logistCommentLabel": "Комментарий логиста",
+  "agentCommentLabel": "Комментарий агента",
+  "networkErrorMessage": "Ошибка сети. Проверьте интернет-соединение.",
+  "serverTimeoutMessage": "Время ожидания сервера истекло.",
+  "orderDetailsLoadError": "Ошибка загрузки деталей заказа.",
+  "dataLoadFailed": "Ошибка загрузки данных: {error}",
+  "@dataLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "brands": "Бренды",
+  "yesterdayText": "Вчера",
+  "fileStoragePermission": "Разрешение на хранение файлов",
+  "fileStorageDescriptionAndroid13": "Выберите папку для сохранения данных приложения",
+  "fileStorageDescription": "Для сохранения и загрузки данных приложения",
+  "fileStoragePurposeAndroid13": "Выберите папку для сохранения фото, документов и данных",
+  "fileStoragePurpose": "Сохранение фото, документов и данных",
+  "locationPermissionTitle": "Разрешение на местоположение",
+  "locationPermissionDescription": "Для сортировки торговых точек по расстоянию",
+  "locationPermissionPurpose": "Показ местоположения на карте и расчет расстояния",
+  "alwaysLocationPermissionTitle": "Разрешение на постоянное местоположение",
+  "alwaysLocationPermissionDescription": "Для определения местоположения в фоновом режиме",
+  "alwaysLocationPermissionPurpose": "Фоновый сервис и уведомления",
+  "cameraPermissionTitle": "Разрешение на камеру",
+  "cameraPermissionDescription": "Для фотосъемки и сканирования штрих-кодов",
+  "cameraPermissionPurpose": "Фотосъемка товаров и торговых точек",
+  "microphonePermissionTitle": "Разрешение на микрофон",
+  "microphonePermissionDescription": "Для записи голоса и аудио сообщений",
+  "microphonePermissionPurpose": "Голосовые заметки и аудио записи",
+  "notificationPermissionTitle": "Разрешение на уведомления",
+  "notificationPermissionDescription": "Для показа важных сообщений",
+  "notificationPermissionPurpose": "Напоминания, новости и уведомления",
+  "audioPermissionTitle": "Разрешение на музыку и аудио",
+  "audioPermissionDescription": "Для работы с аудио файлами",
+  "audioPermissionPurpose": "Музыка, аудио сообщения и голосовые файлы",
+  "photosAndVideosPermissionTitle": "Разрешение на фото и видео",
+  "photosAndVideosPermissionDescription": "Для работы с медиа файлами",
+  "photosAndVideosPermissionPurpose": "Работа с фото, видео и медиа файлами",
+  "permissionRequiredMessage": "{description}. Пожалуйста, предоставьте разрешение в настройках приложения.",
+  "@permissionRequiredMessage": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "goToSettingsButton": "Перейти в настройки",
+  "grantPermissionButton": "Дать разрешение",
+  "checkingPermission": "Проверка...",
+  "permissionCheckTitle": "Проверка разрешений",
+  "permissionCheckMessage": "Для корректной работы приложению необходимы следующие разрешения:",
+  "permissionSaveData": "Сохранение данных",
+  "permissionMapDistance": "Карта и расчет расстояния",
+  "permissionTakePhotos": "Фотосъемка",
+  "permissionRecordVoice": "Запись голоса",
+  "permissionShowMessages": "Показ сообщений",
+  "permissionLimitedMode": "Без разрешений приложение будет работать в ограниченном режиме.",
+  "purposeLabel": "Цель: {purpose}",
+  "@purposeLabel": {
+    "placeholders": {
+      "purpose": {
+        "type": "String"
+      }
+    }
+  },
+  "grantPermissionQuestion": "Хотите дать разрешение?",
+  "serviceInitError": "Ошибка инициализации сервисов",
+  "clientInnNotAvailable": "ИНН клиента недоступен",
+  "@clientIsDebtor": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@clientHasOverpayment": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "clientBalanceZero": "Баланс клиента равен нулю.",
+  "balanceDataNotFound": "Данные баланса не найдены",
+  "updatedAtTime": "Обновлено: {time}",
+  "@updatedAtTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "clientDebtorStatus": "Клиент должник",
+  "overpaymentStatus": "Переплата",
+  "balanceZeroStatus": "Баланс равен нулю",
+  "@unpaidOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@overdueOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "savingStatus": "Сохранение...",
+  "unsavedChangesStatus": "Несохраненные изменения",
+  "offlineStatus": "Офлайн",
+  "pendingSyncCount": "{count} ожидает синхронизации",
+  "@pendingSyncCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "allSyncedStatus": "Все синхронизировано",
+  "autoSaving": "Автосохранение...",
+  "savingStepData": "Сохранение данных шага...",
+  "mandatoryLabel": "Обязательно",
+  "optionalLabel": "Необязательно",
+  "currentLabel": "Текущий",
+  "completedLabel": "Завершено",
+  "skippedLabel": "Пропущено",
+  "notesLabel": "Заметки: {notes}",
+  "@notesLabel": {
+    "placeholders": {
+      "notes": {
+        "type": "String"
+      }
+    }
+  },
+  "reasonLabel": "Причина: {reason}",
+  "@reasonLabel": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "reasonHint": "Причина",
+  "syncStarting": "Начало синхронизации...",
+  "weekdayMon": "Пн",
+  "weekdayTue": "Вт",
+  "weekdayWed": "Ср",
+  "weekdayThu": "Чт",
+  "weekdayFri": "Пт",
+  "weekdaySat": "Сб",
+  "weekdaySun": "Вс",
+  "copyLabel": "Копировать",
+  "reloadLabel": "Перезагрузить",
+  "refreshContractTypesAndRegions": "Обновить типы контрактов и регионы",
+  "orderStatusNew": "Новый",
+  "orderStatusConfirmed": "Подтверждён",
+  "orderStatusDelivering": "В доставке",
+  "orderStatusReturnRequested": "Запрос на возврат",
+  "orderStatusCancelled": "Отменён",
+  "orderStatusDeliveredUnpaid": "Доставлен, не оплачен",
+  "orderStatusDeliveredPartiallyPaid": "Доставлен, частично оплачен",
+  "orderStatusUnknown": "Неизвестно",
+  "filterTooltip": "Фильтр",
+  "fullscreenTooltip": "Полный экран",
+  "refusalReasonClientNotAvailable": "Клиент недоступен",
+  "refusalReasonNoTime": "Нет времени",
+  "refusalReasonProductNotNeeded": "Товар не нужен",
+  "refusalReasonPriceNotSuitable": "Цена не подходит",
+  "refusalReasonWorksWithOtherSupplier": "Работает с другим поставщиком",
+  "refusalReasonOther": "Другая причина",
+  "apiKeyStatusConfigured": "настроен",
+  "apiKeyStatusNotConfigured": "не настроен",
+  "apiKeyStatusNotRequired": "ключ не требуется",
+  "apiKeyStatusError": "ошибка",
+  "fakturaFetchCompanyData": "Загрузить",
+  "fakturaRefreshCompanyData": "Обновить",
+  "fakturaEnterInn": "Пожалуйста, введите ИНН",
+  "fakturaInvalidInnFormat": "Неверный формат ИНН. Должно быть 9 или 14 цифр",
+  "fakturaCompanyDataLoaded": "Данные организации успешно загружены: {companyName}",
+  "@fakturaCompanyDataLoaded": {
+    "placeholders": {
+      "companyName": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaRegionNotFound": "Регион не найден: {regionName}. Пожалуйста, выберите вручную",
+  "@fakturaRegionNotFound": {
+    "placeholders": {
+      "regionName": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaAuthError": "Ошибка аутентификации",
+  "fakturaAuthErrorRetry": "Ошибка аутентификации. Пожалуйста, попробуйте еще раз",
+  "fakturaCompanyNotFound": "Организация не найдена. Проверьте ИНН",
+  "fakturaInvalidRequest": "Неверный запрос. Проверьте формат ИНН",
+  "fakturaServerError": "Ошибка сервера: {statusCode}",
+  "@fakturaServerError": {
+    "placeholders": {
+      "statusCode": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaInnEmpty": "ИНН не может быть пустым",
+  "fakturaTokenRefreshError": "Ошибка обновления токена",
+  "reportMenuTitle": "Меню отчетов",
+  "reportAlreadySent": "Отчет уже отправлен в вашу группу Telegram. Хотите отправить снова?",
+  "reportSentSuccess": "Отчет отправлен",
+  "resendReport": "Отправить снова",
+  "toggleHeaderShow": "Показать заголовок",
+  "toggleHeaderHide": "Скрыть заголовок",
+  "periodNotSelected": "Период не выбран",
+  "dataSyncing": "Синхронизация данных...",
+  "reportsUpdated": "Отчеты обновлены",
+  "@syncError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "applyButton": "Применить",
+  "reportMainEvyap": "Основные отчеты(для EVYAP)",
+  "reportMainEvyapDesc": "Показатели KPI и основная статистика",
+  "reportVisits": "Отчет по визитам",
+  "reportVisitsDesc": "Информация о визитах к клиентам",
+  "reportAkbClient": "AKB Client",
+  "reportAkbClientDesc": "Отчет по клиентам AKB",
+  "reportAkbSum": "AKB Sum",
+  "reportAkbSumDesc": "Финансовый отчет по суммам AKB",
+  "reportAkbProduct": "AKB Product",
+  "reportAkbProductDesc": "Отчет по продуктам AKB",
+  "reportCategory": "Отчеты по категориям",
+  "reportCategoryDesc": "Анализ продаж по категориям",
+  "reportMonthlyResults": "Месячные результаты",
+  "reportMonthlyResultsDesc": "Результаты продаж и тенденции за месяц",
+  "reportMonthlyKpi": "Месячный KPI (зарплата)",
+  "reportMonthlyKpiDesc": "Выполнение месячного KPI и отчет по зарплате",
+  "akbAmount": "Сумма AKB",
+  "akbProducts": "Продукты AKB",
+  "productTypes": "Типы продуктов",
+  "categoriesCount": "Количество категорий",
+  "topSelling": "Самые продаваемые",
+  "monthlySales": "Месячные продажи",
+  "monthlyGrowth": "Месячный рост",
+  "kpiCompletion": "Выполнение KPI",
+  "salaryAmount": "Сумма зарплаты",
+  "scannerTitle": "Сканер документов",
+  "scannerSubtitle": "Сканируйте сертификат для автозаполнения",
+  "scannerTakePhoto": "Снять фото",
+  "scannerChoosePhoto": "Галерея",
+  "scannerProcessing": "Анализ документа...",
+  "scannerPleaseWait": "ИИ извлекает данные из изображения",
+  "scannerDataExtracted": "Извлечено {count} полей",
+  "@scannerDataExtracted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scannerCameraError": "Ошибка доступа к камере. Проверьте разрешения",
+  "scannerGalleryError": "Ошибка доступа к галерее. Проверьте разрешения",
+  "scannerImageEmpty": "Выбранное изображение пустое или повреждено",
+  "scannerNetworkError": "Ошибка сети. Проверьте интернет-соединение",
+  "scannerAuthError": "Ошибка аутентификации ИИ. Попробуйте снова",
+  "scannerRateLimitError": "Слишком много запросов. Подождите немного",
+  "scannerNoDataExtracted": "Не удалось извлечь данные. Попробуйте более четкое изображение",
+  "scannerParseError": "Ошибка обработки ответа ИИ. Попробуйте снова",
+  "scannerUnknownError": "Произошла непредвиденная ошибка. Попробуйте снова",
+  "scannerFormUpdated": "Форма обновлена отсканированными данными",
+  "scannerVerifyingWithFaktura": "Проверка данных через Faktura.uz...",
+  "scannerDataVerified": "Данные проверены и обновлены из Faktura.uz",
+  "scannerDataMismatch": "{count} полей обновлено из Faktura.uz",
+  "@scannerDataMismatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productImageLoading": "Загрузка изображения...",
+  "productImageError": "Не удалось загрузить изображение",
+  "productNoImage": "Изображение недоступно",
+  "productImageSyncProgress": "Синхронизация изображений: {current}/{total}",
+  "@productImageSyncProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "productImageSyncComplete": "Синхронизация изображений завершена",
+  "productImageSyncFailed": "Ошибка синхронизации изображений",
+  "productImageTapToView": "Нажмите для просмотра",
+  "productImageCount": "{count} изображений",
+  "@productImageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productBasicInfo": "Основная информация",
+  "productPricingInfo": "Информация о ценах",
+  "productStockInfo": "Информация о складе",
+  "productAdditionalInfo": "Дополнительная информация",
+  "productCode": "Код товара",
+  "productVendorCode": "Артикул",
+  "productBarcode": "Штрих-код",
+  "productCategory": "Категория",
+  "productSeries": "Серия",
+  "productPriceType": "Тип цены",
+  "productPrice": "Цена",
+  "productPriceValidFrom": "Действует с",
+  "productPriceValidTo": "Действует до",
+  "productWarehouse": "Склад",
+  "productStock": "Остаток",
+  "productQuantity": "Общее количество",
+  "productReserved": "Зарезервировано",
+  "productAvailable": "Доступно",
+  "productUnit": "Единица измерения",
+  "productWeight": "Вес",
+  "productCapacity": "Объём",
+  "productBrand": "Бренд",
+  "productProject": "Код проекта",
+  "copiedToClipboard": "Скопировано в буфер обмена",
+  "productInfoCopied": "Информация о товаре скопирована",
   "checkingCache": "Проверка кэша...",
   "loadingFromDatabase": "Загрузка из базы данных...",
   "syncingFromServer": "Синхронизация с сервером...",
@@ -2826,16 +2351,19 @@
   "syncFailed": "Ошибка синхронизации. Попробуйте снова.",
   "noInternetForSync": "Нет подключения к интернету. Проверьте сеть.",
   "retrySync": "Повторить",
-  "ordersCount": "{count} заказов",
   "@ordersCount": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "lastUpdated": "Обновлено: {time}",
   "@lastUpdated": {
     "placeholders": {
-      "time": {"type": "String"}
+      "time": {
+        "type": "String"
+      }
     }
   },
   "connectionRestored": "Соединение восстановлено",
@@ -2856,19 +2384,25 @@
   "accessExpiredDate": "Истёк: {date}",
   "@accessExpiredDate": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "accessValidUntil": "Действителен до: {date}",
   "@accessValidUntil": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "accessDaysRemaining": "Осталось дней: {days}",
   "@accessDaysRemaining": {
     "placeholders": {
-      "days": {"type": "int"}
+      "days": {
+        "type": "int"
+      }
     }
   },
   "accessTimeManipulation": "Обнаружена манипуляция временем",
@@ -2890,7 +2424,9 @@
   "accessWarningExpiringSoonMessage": "Ваш доступ истечёт через {days} дней. Пожалуйста, свяжитесь с поддержкой для продления.",
   "@accessWarningExpiringSoonMessage": {
     "placeholders": {
-      "days": {"type": "int"}
+      "days": {
+        "type": "int"
+      }
     }
   },
   "accessContinue": "Продолжить",
@@ -2899,12 +2435,10 @@
   "accessInternetRestored": "Подключение к интернету восстановлено. Проверка...",
   "accessCleaningData": "Очистка данных...",
   "accessRevoking": "Отзыв доступа...",
-
   "syncRequiredFirstTime": "Требуется синхронизация при первом входе",
   "syncRecommended": "Рекомендуется синхронизация данных",
   "goToSyncSettings": "Откройте настройки синхронизации для обновления данных",
   "openSettings": "Открыть настройки",
-
   "geminiApiKeyNotFound": "Ключ API Gemini не настроен",
   "geminiNetworkError": "Произошла ошибка сети. Проверьте подключение",
   "geminiAuthError": "Ошибка аутентификации. Проверьте ключ API в настройках",
@@ -2920,52 +2454,72 @@
   "syncParallelProgress": "Параллельная синхронизация {count} таблиц...",
   "@syncParallelProgress": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncDeltaMode": "Инкрементное обновление",
   "syncSkippedUnchanged": "Пропущено {count} неизменённых записей",
   "@syncSkippedUnchanged": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncInserted": "Добавлено {count} новых записей",
   "@syncInserted": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncUpdated": "Обновлено {count} записей",
   "@syncUpdated": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncDeleted": "Удалено {count} записей",
   "@syncDeleted": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncLevelProgress": "Уровень {level}/{total}: {tables}",
   "@syncLevelProgress": {
     "placeholders": {
-      "level": {"type": "int"},
-      "total": {"type": "int"},
-      "tables": {"type": "String"}
+      "level": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "tables": {
+        "type": "String"
+      }
     }
   },
   "syncCacheSaved": "Сэкономлено {count} дублирующих API-запросов",
   "@syncCacheSaved": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncOptimizedComplete": "Оптимизированная синхронизация завершена за {seconds}с",
   "@syncOptimizedComplete": {
     "placeholders": {
-      "seconds": {"type": "String"}
+      "seconds": {
+        "type": "String"
+      }
     }
   },
   "serverConnectionFailed": "Ошибка подключения к серверу",
@@ -2978,22 +2532,32 @@
   "serverSwitchedTo": "Сервер переключен на: {url}",
   "@serverSwitchedTo": {
     "placeholders": {
-      "url": {"type": "String"}
+      "url": {
+        "type": "String"
+      }
     }
   },
   "retryingPrimaryServer": "Повторная попытка подключения к основному серверу...",
   "connectionAttempt": "Попытка подключения {current}/{total}",
   "@connectionAttempt": {
     "placeholders": {
-      "current": {"type": "int"},
-      "total": {"type": "int"}
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "serverUrlInfo": "Сервер: {name} ({type})",
   "@serverUrlInfo": {
     "placeholders": {
-      "name": {"type": "String"},
-      "type": {"type": "String"}
+      "name": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
     }
   },
   "primaryServer": "Основной",
@@ -3011,7 +2575,6 @@
   "offlineAccessBlockedNote": "После первого подключения вы сможете использовать приложение офлайн.",
   "offlineAccessNoLimit": "Офлайн-режим недоступен",
   "offlineAccessNoLimitMessage": "Необходимо подключиться к интернету хотя бы один раз перед использованием офлайн-режима.",
-  "contactSupport": "Связаться с поддержкой",
   "retryConnection": "Повторить подключение",
   "connectToInternet": "Подключиться к интернету",
   "verifyingAccess": "Проверка доступа...",
@@ -3019,7 +2582,6 @@
   "verificationFailed": "Проверка не удалась",
   "timeLimitUpdated": "Срок доступа обновлен",
   "promoOrder": "Промо заказ",
-
   "marketingDataRefreshing": "Обновление данных маркетинга...",
   "announcements": "Объявления",
   "news": "Новости",
@@ -3036,8 +2598,6 @@
   "promotionOfType": "Акция типа {type}",
   "participatingProductsCount": "Товаров в акции: {count} SKU",
   "bonusProductsCount": "Товаров в качестве бонуса: {count} SKU",
-  "startDateLabel": "Начало: {date}",
-  "endDateLabel": "Окончание: {date}",
   "bonuses": "Бонусы",
   "productClass": "Класс",
   "salesChannel": "Канал продаж",
@@ -3057,7 +2617,6 @@
   "initialOrderSettingsDescription": "Пожалуйста, настройте следующие параметры перед созданием первого заказа. Эти настройки будут использоваться по умолчанию для этого заказа.",
   "selectOrganization": "Выберите организацию",
   "selectWarehouse": "Выберите склад",
-  "selectPriceType": "Выберите тип цены",
   "organizationRequired": "Организация обязательна",
   "warehouseRequired": "Склад обязателен",
   "priceTypeRequired": "Тип цены обязателен",
@@ -3070,8 +2629,12 @@
   "userOutsideActiveWindow": "Окно доступа: {start} – {end}",
   "@userOutsideActiveWindow": {
     "placeholders": {
-      "start": { "type": "String" },
-      "end": { "type": "String" }
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
     }
   },
   "licenseExpired": "Лицензия организации истекла.",
@@ -3079,8 +2642,12 @@
   "licenseSeatExceeded": "Все места по лицензии заняты (вы №{rank} из {seatCount}).",
   "@licenseSeatExceeded": {
     "placeholders": {
-      "rank": { "type": "int" },
-      "seatCount": { "type": "int" }
+      "rank": {
+        "type": "int"
+      },
+      "seatCount": {
+        "type": "int"
+      }
     }
   },
   "clockTamperingDetected": "Часы устройства изменились. Подключитесь к интернету для проверки.",
@@ -3089,30 +2656,53 @@
   "mobileUserBoundToOtherDevice": "Ваш аккаунт уже привязан к другому телефону. Попросите администратора снять старую привязку, чтобы войти на этом устройстве.",
   "deviceBindingInvalid": "Сессия устройства больше не действительна. Войдите снова.",
   "sessionRevoked": "Сессия отозвана. Войдите снова.",
-  "retry": "Повторить",
   "oneCUserNotFound": "Этот пользователь не зарегистрирован в учётной системе. Обратитесь к администратору.",
   "debugBackendUrl": "Backend: {url}",
   "@debugBackendUrl": {
     "placeholders": {
-      "url": { "type": "String" }
+      "url": {
+        "type": "String"
+      }
     }
   },
   "debugTestConnection": "Проверить подключение",
   "debugConnectionOk": "OK · {ms}ms",
   "@debugConnectionOk": {
     "placeholders": {
-      "ms": { "type": "int" }
+      "ms": {
+        "type": "int"
+      }
     }
   },
   "debugConnectionFailed": "Ошибка: {reason}",
   "@debugConnectionFailed": {
     "placeholders": {
-      "reason": { "type": "String" }
+      "reason": {
+        "type": "String"
+      }
     }
   },
   "imageNotAvailable": "Изображение недоступно",
   "imageProcessing": "Изображение обрабатывается",
   "imageLoadFailed": "Не удалось загрузить изображение",
   "imageLoadRetry": "Повторить",
-  "projectImageEmpty": "Пока нет изображений"
+  "projectImageEmpty": "Пока нет изображений",
+  "knowledgeBaseTitle": "База знаний",
+  "knowledgeBaseSubtitle": "Регламенты, инструкции и обучение",
+  "knowledgePinnedSection": "Закреплённые",
+  "knowledgeCategoriesSection": "Категории",
+  "knowledgeCategoryEmpty": "В этой категории пока нет документов",
+  "knowledgeDocumentLoading": "Загружаем документ…",
+  "knowledgeDocumentNotFound": "Документ не найден",
+  "knowledgeNoDocumentsAssigned": "Документы пока недоступны",
+  "knowledgeSearchTitle": "Поиск",
+  "knowledgeSearchPlaceholder": "Поиск документов…",
+  "knowledgeSearchEmpty": "По запросу ничего не найдено",
+  "knowledgeRetry": "Повторить",
+  "knowledgeOfflineNotice": "Вы офлайн. Показан кэш.",
+  "knowledgeTocTitle": "Содержание",
+  "knowledgeOpenInBrowser": "Открыть в браузере",
+  "knowledgeFilterAll": "Все",
+  "knowledgePinnedBadge": "Закреплён",
+  "knowledgeMandatoryBadge": "Обязательно"
 }

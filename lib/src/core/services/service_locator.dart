@@ -8,7 +8,6 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/reports_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/report_data_service.dart';
@@ -17,7 +16,6 @@ import 'package:gloria_marketing_flutter/src/core/services/telegram_token_servic
 import 'package:gloria_marketing_flutter/src/core/services/location_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/sync_notification_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
@@ -45,6 +43,11 @@ import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_
 import 'package:gloria_marketing_flutter/src/features/agent/services/photo_storage_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_draft_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_creation_service.dart';
+
+import 'package:gloria_marketing_flutter/src/features/knowledge/data/repositories/knowledge_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/knowledge/data/services/knowledge_api_service.dart';
+import 'package:gloria_marketing_flutter/src/features/knowledge/data/services/knowledge_db_dao.dart';
+import 'package:gloria_marketing_flutter/src/features/knowledge/data/services/knowledge_sync_service.dart';
 
 import '../network/server_service.dart';
 
@@ -86,11 +89,11 @@ Future<void> setupServiceLocator() async {
   }
   if (!sl.isRegistered<Dio>()) {
     sl.registerLazySingleton(() {
-      // Shared Dio used by SoapApiService + RestApiService. SOAP envelopes
-      // are too large to print on every call, so the REST logger is left
-      // detached. V2 services (token, policy, device, telemetry) each have
-      // their own Dio instance with `attachRestLogger` so their HTTP traffic
-      // still surfaces under [AUTH] / [POLICY] / [DEVICE] / [TELEMETRY].
+      // Shared Dio used by SoapApiService. SOAP envelopes are too large to
+      // print on every call, so the REST logger is left detached. V2 services
+      // (token, policy, device, telemetry) each have their own Dio instance
+      // with `attachRestLogger` so their HTTP traffic still surfaces under
+      // [AUTH] / [POLICY] / [DEVICE] / [TELEMETRY].
       // attachRestLogger(dio, 'REST');
       return Dio();
     });
@@ -107,12 +110,9 @@ Future<void> setupServiceLocator() async {
   if (!sl.isRegistered<ApiDatabaseService>()) {
     sl.registerLazySingleton<ApiDatabaseService>(() => ApiDatabaseService());
   }
-  if (!sl.isRegistered<RestApiService>()) {
-    sl.registerLazySingleton<RestApiService>(() => RestApiService(sl<Dio>()));
-  }
   // TokenService - REST API token management with dedicated Dio instance
   // IMPORTANT: TokenService needs a SEPARATE Dio instance without other service interceptors
-  // The shared Dio instance has RestApiService and SoapApiService interceptors that can
+  // The shared Dio instance has SoapApiService interceptors that can
   // interfere with the 1C-Login authentication endpoint responses
   if (!sl.isRegistered<TokenService>()) {
     // Create dedicated Dio instance for TokenService - no other interceptors
@@ -126,14 +126,6 @@ Future<void> setupServiceLocator() async {
     sl.registerLazySingleton<TokenService>(() => TokenService(
       tokenDio,
       sl<SharedPreferencesService>()
-    ));
-  }
-  if (!sl.isRegistered<ClientImagesService>()) {
-    sl.registerLazySingleton<ClientImagesService>(() => ClientImagesService(
-      databaseService: sl<ApiDatabaseService>(),
-      apiService: sl<RestApiService>(),
-      tokenService: sl<TokenService>(),
-      dio: sl<Dio>(),
     ));
   }
   if (!sl.isRegistered<DataSyncService>()) {
@@ -294,9 +286,8 @@ Future<void> setupServiceLocator() async {
   }
 
   // Image stack (lib/src/core/services/images/) — single repository
-  // talking to /api/mobile/v1/images/. The legacy 1596 host has been
-  // decommissioned for image traffic; uploads happen via the web admin
-  // panel. See `mobile.md` runbook for the contract.
+  // talking to /api/mobile/v1/images/. Legacy image host fully
+  // decommissioned 2026-05-08; uploads happen via the web admin panel.
   if (!sl.isRegistered<NewBackendImageRepository>()) {
     sl.registerLazySingleton<NewBackendImageRepository>(
       () => NewBackendImageRepository(
@@ -363,6 +354,39 @@ Future<void> setupServiceLocator() async {
       tokenService: sl<TokenService>(),
       connectivity: sl<ConnectivityMonitorService>(),
     ));
+  }
+
+  // Knowledge Base feature — offline-first reglament/training docs.
+  // KnowledgeApiService re-resolves the V2 token + X-Organization-Id
+  // per request via TokenService + AgentOrganizationContext, so it
+  // stays correct after multi-tenant org switching.
+  if (!sl.isRegistered<KnowledgeApiService>()) {
+    sl.registerLazySingleton<KnowledgeApiService>(() => KnowledgeApiService(
+          sl<TokenService>(),
+          sl<AgentOrganizationContext>(),
+        ));
+  }
+  if (!sl.isRegistered<KnowledgeDbDao>()) {
+    sl.registerLazySingleton<KnowledgeDbDao>(
+      () => KnowledgeDbDao(sl<ApiDatabaseService>()),
+    );
+  }
+  if (!sl.isRegistered<KnowledgeSyncService>()) {
+    sl.registerLazySingleton<KnowledgeSyncService>(
+      () => KnowledgeSyncService(
+        sl<KnowledgeApiService>(),
+        sl<KnowledgeDbDao>(),
+      ),
+    );
+  }
+  if (!sl.isRegistered<KnowledgeRepository>()) {
+    sl.registerLazySingleton<KnowledgeRepository>(
+      () => KnowledgeRepository(
+        sl<KnowledgeSyncService>(),
+        sl<KnowledgeDbDao>(),
+        sl<AgentOrganizationContext>(),
+      ),
+    );
   }
 
   // Blocs

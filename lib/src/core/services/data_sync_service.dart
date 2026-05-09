@@ -38,12 +38,11 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_org
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/data/models/promotion_model.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/product_image.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
-import 'package:gloria_marketing_flutter/src/core/services/rest_api_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
+import 'package:gloria_marketing_flutter/src/features/knowledge/data/models/knowledge_document.dart';
+import 'package:gloria_marketing_flutter/src/features/knowledge/data/services/knowledge_sync_service.dart';
 
 /// Centralized service for data synchronization and user validation
 class DataSyncService {
@@ -2439,188 +2438,52 @@ class DataSyncService {
     }
   }
 
-  // =========================================================================
-  // Product Images Sync (REST API)
-  // =========================================================================
+  // Legacy product image sync was removed 2026-05-08. Images are now
+  // fetched on demand via NewBackendImageRepository
+  // (`/api/mobile/v1/images/`) directly from the image widgets.
 
-  /// Sync product images from REST API media server
-  /// 
-  /// Fetches all product images from the nomenklatura-image endpoint
-  /// and saves them to local database for offline access.
-  Future<List<ProductImage>> syncProductImages({
+  // ===========================================================================
+  // KNOWLEDGE BASE — thin wrappers over KnowledgeSyncService.
+  //
+  // These exist so DataSyncConfig table rows can call into a single
+  // service (the one DI'd into config). The actual logic lives in
+  // [KnowledgeSyncService]; we resolve it lazily from the service
+  // locator to avoid threading another dependency through every
+  // DataSyncService construction site.
+  // ===========================================================================
+
+  KnowledgeSyncService get _knowledgeSyncService =>
+      sl<KnowledgeSyncService>();
+
+  Future<void> syncKnowledge({bool forceRefresh = false}) =>
+      _knowledgeSyncService.syncIncremental(forceRefresh: forceRefresh);
+
+  Future<void> syncKnowledgeCategories({bool forceRefresh = false}) =>
+      _knowledgeSyncService.syncCategories(forceRefresh: forceRefresh);
+
+  Future<void> syncKnowledgeDocuments({bool forceRefresh = false}) =>
+      _knowledgeSyncService.syncDocuments(forceRefresh: forceRefresh);
+
+  Future<void> syncKnowledgeDocumentTranslations({
     bool forceRefresh = false,
-  }) async {
-    try {
-      if (!forceRefresh) {
-        final hasImages = await _dbService.hasProductImages();
-        if (hasImages) {
-          return await _dbService.getAllProductImages();
-        }
-      }
+  }) =>
+      _knowledgeSyncService.syncDocumentTranslations(
+          forceRefresh: forceRefresh);
 
-      return await _syncProductImagesFromServer();
-    } catch (e) {
-      if (kDebugMode) {
-        print('DataSyncService: Error syncing product images: $e');
-      }
-      // Return cached images on error
-      return await _dbService.getAllProductImages();
-    }
-  }
+  Future<void> syncKnowledgeSections({bool forceRefresh = false}) =>
+      _knowledgeSyncService.syncSections(forceRefresh: forceRefresh);
 
-  /// Sync product images from server with proper code_1c matching
-  /// 
-  /// This method fetches images from the nomenklatura-image API endpoint
-  /// and only saves images where the API's code_1c matches an existing
-  /// product's code in the local database.
-  /// 
-  /// Algorithm:
-  /// 1. Fetch all local product codes (efficient single query)
-  /// 2. Fetch all images from server API
-  /// 3. Extract code_1c from API response (nomenklatura_code field)
-  /// 4. Filter images - only keep those matching local product codes
-  /// 5. Upsert matched images (update existing, insert new)
-  Future<List<ProductImage>> _syncProductImagesFromServer() async {
-    try {
-      // Get REST API service and token
-      final restApiService = sl<RestApiService>();
-      final tokenService = sl<TokenService>();
-      
-      final token = await tokenService.getValidAccessToken();
-      if (token == null || token.isEmpty) {
-        if (kDebugMode) {
-          print('DataSyncService: No auth token for product images sync');
-        }
-        return [];
-      }
+  Future<void> syncKnowledgeContentBlocks({bool forceRefresh = false}) =>
+      _knowledgeSyncService.syncContentBlocks(forceRefresh: forceRefresh);
 
-      // Step 1: Get all local product codes for O(1) matching
-      final localProductCodes = await _dbService.getAllProductCodes();
-      final productCodeSet = localProductCodes.toSet();
+  Future<void> syncKnowledgeAssignments({bool forceRefresh = false}) =>
+      _knowledgeSyncService.syncAssignments(forceRefresh: forceRefresh);
 
-      if (productCodeSet.isEmpty) {
-        if (kDebugMode) {
-          print('DataSyncService: No local products found, skipping image sync');
-        }
-        return [];
-      }
+  Future<void> syncKnowledgeTags({bool forceRefresh = false}) =>
+      _knowledgeSyncService.syncTags(forceRefresh: forceRefresh);
 
-      if (kDebugMode) {
-        print('DataSyncService: Found ${productCodeSet.length} local product codes for matching');
-      }
-
-      // Step 2: Fetch all product images from server (filtered by project)
-      // Note: API now returns code_1c directly, no need for ID mapping
-      final codeProject = _prefs.getCodeProject();
-      
-      if (kDebugMode) {
-        print('DataSyncService: Fetching images for project: ${codeProject ?? "all"}');
-      }
-      
-      final rawImages = await restApiService.getAllProductImages(
-        authToken: token,
-        projectCode: codeProject,
-        onProgress: (fetched, total) {
-          if (kDebugMode) {
-            print('DataSyncService: Product images progress: $fetched / ${total ?? "?"}');
-          }
-        },
-      );
-
-      if (rawImages.isEmpty) {
-        if (kDebugMode) {
-          print('DataSyncService: No product images received from server');
-        }
-        return [];
-      }
-
-      if (kDebugMode) {
-        print('DataSyncService: Received ${rawImages.length} images from server');
-      }
-
-      // Step 3 & 4: Extract code_1c and filter by matching local products
-      final matchedImages = <ProductImage>[];
-      int skippedCount = 0;
-      final unmatchedCodes = <String>{};
-
-      // Debug: print first 3 raw image responses to see structure
-      if (kDebugMode && rawImages.isNotEmpty) {
-        print('DataSyncService: Sample raw image response keys: ${rawImages.first.keys.toList()}');
-        print('DataSyncService: Sample raw image response: ${rawImages.first}');
-        print('DataSyncService: Sample local product codes: ${productCodeSet.take(5).toList()}');
-      }
-
-      for (final raw in rawImages) {
-        // Extract product code from API response
-        // API returns code_1c directly in the response
-        String? code1c;
-        
-        if (raw['code_1c'] != null) {
-          code1c = raw['code_1c'].toString().trim();
-        } else if (raw['nomenklatura_code'] != null) {
-          code1c = raw['nomenklatura_code'].toString().trim();
-        }
-
-        // Skip if no valid code found
-        if (code1c == null || code1c.isEmpty) {
-          skippedCount++;
-          continue;
-        }
-
-        // Only save if product exists in local database
-        if (productCodeSet.contains(code1c)) {
-          matchedImages.add(ProductImage.fromApiResponse(raw, code1c));
-        } else {
-          skippedCount++;
-          if (unmatchedCodes.length < 5) {
-            unmatchedCodes.add(code1c);
-          }
-        }
-      }
-      
-      if (kDebugMode && unmatchedCodes.isNotEmpty) {
-        print('DataSyncService: Sample unmatched codes from API: $unmatchedCodes');
-      }
-
-      if (kDebugMode) {
-        print('DataSyncService: Matched ${matchedImages.length} images, skipped $skippedCount (no matching product)');
-      }
-
-      if (matchedImages.isEmpty) {
-        if (kDebugMode) {
-          print('DataSyncService: No matching product images to save');
-        }
-        return [];
-      }
-
-      // Step 5: Upsert matched images (smart update/insert)
-      final upsertedCount = await _dbService.upsertProductImages(
-        matchedImages,
-        validProductCodes: productCodeSet,
-      );
-
-      if (kDebugMode) {
-        print('DataSyncService: Product images sync completed: $upsertedCount images upserted');
-      }
-
-      return matchedImages;
-    } catch (e) {
-      if (kDebugMode) {
-        print('DataSyncService: Error fetching product images from server: $e');
-      }
-      rethrow;
-    }
-  }
-
-  /// Get cached product images for a specific product
-  Future<List<ProductImage>> getCachedProductImages(String productCode) async {
-    return await _dbService.getProductImages(productCode);
-  }
-
-  /// Get main product image for a specific product
-  Future<ProductImage?> getMainProductImage(String productCode) async {
-    return await _dbService.getMainProductImage(productCode);
-  }
+  Future<KnowledgeDocument> fetchKnowledgeDocumentDetail(String id) =>
+      _knowledgeSyncService.fetchDocumentDetail(id);
 }
 
 /// Conflict resolution strategies

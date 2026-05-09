@@ -2393,11 +2393,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get imageSetAsPrimary => 'Изображение установлено как основное';
 
   @override
-  String imagesUploadedCount(int count) {
-    return '$count изображений успешно загружено';
-  }
-
-  @override
   String serverImagesLoadError(String error) {
     return 'Ошибка загрузки изображений с сервера: $error';
   }
@@ -2410,14 +2405,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String cameraCaptureError(String error) {
     return 'Ошибка получения с камеры: $error';
-  }
-
-  @override
-  String get imagesUploadedSuccessfully => 'Изображения успешно загружены';
-
-  @override
-  String imagesUploadError(String error) {
-    return 'Ошибка загрузки изображений: $error';
   }
 
   @override
@@ -4429,210 +4416,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get faqPageTitle => 'Регламент';
-
-  @override
-  String get faqSupervisorSubtitle => 'Обязанности супервайзера';
-
-  @override
-  String get faqSalesRepSubtitle => 'Регламент торгового представителя';
-
-  @override
-  String get faqRoleSupervisor => 'Супервайзер';
-
-  @override
-  String get faqRoleSalesRep => 'Торговый представитель';
-
-  @override
-  String get faqSectionsCount => 'разделов';
-
-  @override
-  String get faqSvGpsTitle => 'GPS-мониторинг';
-
-  @override
-  String get faqSvGpsMorningTitle => 'Утренний отчет (до 9:15)';
-
-  @override
-  String get faqSvGpsMorningContent => 'Ежедневно до 9:15 утра супервайзер обязан направлять в рабочую группу отчёт о статусе выхода торговых представителей на маршрут, с указанием, кто вышел вовремя, а кто нет.';
-
-  @override
-  String get faqSvGpsEveningTitle => 'Вечерний отчет (до 18:00)';
-
-  @override
-  String get faqSvGpsEveningContent => 'До 18:00 — отправляется итоговый GPS-отчёт по завершению рабочего дня.';
-
-  @override
-  String get faqSvSalesTitle => 'Отчёт по продажам';
-
-  @override
-  String get faqSvSalesInterimTitle => 'Промежуточный отчет (до 13:00)';
-
-  @override
-  String get faqSvSalesInterimContent => 'До 13:00 — направляется промежуточный отчёт с суммой и количеством собранных заказов.';
-
-  @override
-  String get faqSvSalesFinalTitle => 'Финальный отчет (до 18:00)';
-
-  @override
-  String get faqSvSalesFinalContent => 'До 18:00 — финальный отчёт, включающий:\n• итоговую сумму продаж за день\n• количество заказов\n• план выезда и прогноз заказов на следующий день\n• отчёт по возвратам (если имеются)';
-
-  @override
-  String get faqSvKpiTitle => 'KPI и планирование';
-
-  @override
-  String get faqSvKpiMondayTitle => 'Офисный день (понедельник)';
-
-  @override
-  String get faqSvKpiMondayContent => 'Каждый понедельник — офисный день.';
-
-  @override
-  String get faqSvKpiAnalysisTitle => 'Анализ и задачи';
-
-  @override
-  String get faqSvKpiAnalysisContent => 'Проводится подведение итогов за прошедшую неделю, анализ KPI и постановка задач на текущую неделю.';
-
-  @override
-  String get faqSvTravelTitle => 'Travel Plans';
-
-  @override
-  String get faqSvTravelMonthlyTitle => 'Ежемесячное планирование';
-
-  @override
-  String get faqSvTravelMonthlyContent => 'Ежемесячно, 30–31 числа, супервайзеры направляют личным сообщением региональному менеджеру индивидуальные Travel Plans на следующий месяц.';
-
-  @override
-  String get faqSvTimeTitle => 'Учёт рабочего времени';
-
-  @override
-  String get faqSvTimeWeeklyTitle => 'Еженедельный табель';
-
-  @override
-  String get faqSvTimeWeeklyContent => 'Табель составляется на еженедельной основе (по понедельникам) с указанием количества отработанных дней торговыми представителями.';
-
-  @override
-  String get faqSvTimeMonthlyTitle => 'Месячный табель';
-
-  @override
-  String get faqSvTimeMonthlyContent => 'Финальный табель за месяц предоставляется в последний день календарного месяца.';
-
-  @override
-  String get faqSvSalaryTitle => 'Зарплата и KPI';
-
-  @override
-  String get faqSvSalaryKpiTitle => 'Итоги по KPI';
-
-  @override
-  String get faqSvSalaryKpiContent => 'Ежемесячно, в период с 1 по 3 число (в зависимости от выходных), супервайзер обязан подвести итоги за весь месяц по KPI.';
-
-  @override
-  String get faqSvSalaryCalcTitle => 'Расчёт зарплаты';
-
-  @override
-  String get faqSvSalaryCalcContent => 'Подготовить и передать расчёт заработной платы торговых представителей EVYAP на основании выполненных показателей.';
-
-  @override
-  String get faqTpGeneralTitle => 'Общие положения';
-
-  @override
-  String get faqTpGeneralPurposeTitle => 'Цель документа';
-
-  @override
-  String get faqTpGeneralPurposeContent => 'Настоящий регламент устанавливает правила организации и выполнения обязанностей торговыми представителями ООО «Gloriya Global». Цель документа — обеспечение дисциплины, прозрачности и эффективности работы торговых представителей.';
-
-  @override
-  String get faqTpHoursTitle => 'Рабочее время и маршрут';
-
-  @override
-  String get faqTpHoursScheduleTitle => 'График работы';
-
-  @override
-  String get faqTpHoursScheduleContent => 'Рабочий день начинается в 9:00 и заканчивается в 18:00.';
-
-  @override
-  String get faqTpHoursRouteTitle => 'Выход на маршрут';
-
-  @override
-  String get faqTpHoursRouteContent => 'Торговый представитель обязан вовремя выходить на маршрут согласно утверждённому графику.';
-
-  @override
-  String get faqTpHoursDelayTitle => 'Опоздания';
-
-  @override
-  String get faqTpHoursDelayContent => 'Опоздание более чем на 15 минут без уважительной причины фиксируется как нарушение трудовой дисциплины.';
-
-  @override
-  String get faqTpVisitsTitle => 'Посещение торговых точек';
-
-  @override
-  String get faqTpVisitsDailyTitle => 'Ежедневные визиты';
-
-  @override
-  String get faqTpVisitsDailyContent => 'Каждый торговый представитель обязан ежедневно посещать все торговые точки согласно маршруту.';
-
-  @override
-  String get faqTpVisitsChangesTitle => 'Изменения маршрута';
-
-  @override
-  String get faqTpVisitsChangesContent => 'В случае изменения маршрута (отсутствие клиента, закрытие точки и т.д.) необходимо сообщить в рабочий чат с указанием причины.';
-
-  @override
-  String get faqTpVisitsPhotoTitle => 'Фото/видео отчёт';
-
-  @override
-  String get faqTpVisitsPhotoContent => 'По каждой точке необходимо предоставить фото- или видеоотчёт (выкладка, активность, заказ).';
-
-  @override
-  String get faqTpVideoTitle => 'Видеоотчёты (Telegram)';
-
-  @override
-  String get faqTpVideoMorningTitle => 'Утренний видеоотчёт';
-
-  @override
-  String get faqTpVideoMorningContent => 'В начале рабочего дня (до 9:30) торговый представитель обязан отправить видеосообщение («кружок») в общий чат Telegram, где указать:\n• что вышел на маршрут\n• район или направление на день\n• основные задачи';
-
-  @override
-  String get faqTpVideoDuringTitle => 'Отчёты в течение дня';
-
-  @override
-  String get faqTpVideoDuringContent => 'В течение дня приветствуется отправка коротких видеосообщений с торговых точек — демонстрация выкладки, новинок или активностей.';
-
-  @override
-  String get faqTpVideoEndTitle => 'Итоговый видеоотчёт';
-
-  @override
-  String get faqTpVideoEndContent => 'В конце дня рекомендуется краткий видеоотчёт с итогами.';
-
-  @override
-  String get faqTpReportingTitle => 'Отчётность';
-
-  @override
-  String get faqTpReportingRealTimeTitle => 'Отправка в реальном времени';
-
-  @override
-  String get faqTpReportingRealTimeContent => 'Все фото, видео и комментарии по маршруту должны быть отправлены в момент визита.';
-
-  @override
-  String get faqTpReportingConsequenceTitle => 'Последствия невыполнения';
-
-  @override
-  String get faqTpReportingConsequenceContent => 'Невыполнение ежедневной отчётности расценивается как невыход в маршрут или отсутствие активности.';
-
-  @override
-  String get faqTpResponsibilityTitle => 'Ответственность';
-
-  @override
-  String get faqTpResponsibilityRulesTitle => 'Дисциплинарная ответственность';
-
-  @override
-  String get faqTpResponsibilityRulesContent => 'Несоблюдение настоящего регламента влечёт дисциплинарную ответственность в соответствии с внутренними правилами компании.';
-
-  @override
-  String get faqTpResponsibilityMeasuresTitle => 'Меры взыскания';
-
-  @override
-  String get faqTpResponsibilityMeasuresContent => 'Меры ответственности: предупреждение → выговор → удержание премии.';
-
-  @override
   String get productImageLoading => 'Загрузка изображения...';
 
   @override
@@ -5345,4 +5128,58 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get projectImageEmpty => 'Пока нет изображений';
+
+  @override
+  String get knowledgeBaseTitle => 'База знаний';
+
+  @override
+  String get knowledgeBaseSubtitle => 'Регламенты, инструкции и обучение';
+
+  @override
+  String get knowledgePinnedSection => 'Закреплённые';
+
+  @override
+  String get knowledgeCategoriesSection => 'Категории';
+
+  @override
+  String get knowledgeCategoryEmpty => 'В этой категории пока нет документов';
+
+  @override
+  String get knowledgeDocumentLoading => 'Загружаем документ…';
+
+  @override
+  String get knowledgeDocumentNotFound => 'Документ не найден';
+
+  @override
+  String get knowledgeNoDocumentsAssigned => 'Документы пока недоступны';
+
+  @override
+  String get knowledgeSearchTitle => 'Поиск';
+
+  @override
+  String get knowledgeSearchPlaceholder => 'Поиск документов…';
+
+  @override
+  String get knowledgeSearchEmpty => 'По запросу ничего не найдено';
+
+  @override
+  String get knowledgeRetry => 'Повторить';
+
+  @override
+  String get knowledgeOfflineNotice => 'Вы офлайн. Показан кэш.';
+
+  @override
+  String get knowledgeTocTitle => 'Содержание';
+
+  @override
+  String get knowledgeOpenInBrowser => 'Открыть в браузере';
+
+  @override
+  String get knowledgeFilterAll => 'Все';
+
+  @override
+  String get knowledgePinnedBadge => 'Закреплён';
+
+  @override
+  String get knowledgeMandatoryBadge => 'Обязательно';
 }

@@ -96,6 +96,12 @@ dependencies:
   printing: ^5.13.4
   share_plus: ^10.1.4
 
+  # Knowledge Base feature
+  flutter_markdown: ^0.7.4
+  youtube_player_flutter: ^9.0.0
+  webview_flutter: ^4.7.0
+  visibility_detector: ^0.4.0+2
+
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   flutter_test:

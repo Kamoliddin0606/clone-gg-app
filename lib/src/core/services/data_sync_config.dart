@@ -633,6 +633,112 @@ class DataSyncConfig {
       groupId: 'system',
       syncFunction: () => ds.syncMapTokens(),
     );
+
+    // =========================================================================
+    // GROUP: KNOWLEDGE BASE (Reglament, qo'llanma, training)
+    //
+    // Backend exposes one envelope (`/api/mobile/v2/knowledge/sync/`).
+    // All seven table rows below funnel through that single call —
+    // [KnowledgeSyncService._runOnceOrShared] coalesces concurrent
+    // invocations so the orchestrator's per-table iteration doesn't
+    // hammer the endpoint.
+    // =========================================================================
+
+    _tables['knowledge_categories'] = DataSyncTable(
+      id: 'knowledge_categories',
+      tableName: 'knowledge_categories',
+      nameEn: 'Knowledge Categories',
+      nameRu: 'Категории знаний',
+      nameUz: 'Bilim kategoriyalari',
+      icon: Icons.category_outlined,
+      dependsOn: const [],
+      cascadeTo: const ['knowledge_documents'],
+      groupId: 'knowledge',
+      syncFunction: () => ds.syncKnowledgeCategories(forceRefresh: true),
+    );
+
+    _tables['knowledge_documents'] = DataSyncTable(
+      id: 'knowledge_documents',
+      tableName: 'knowledge_documents',
+      nameEn: 'Knowledge Documents',
+      nameRu: 'Документы',
+      nameUz: 'Hujjatlar',
+      icon: Icons.article_outlined,
+      dependsOn: const ['knowledge_categories'],
+      cascadeTo: const [
+        'knowledge_document_translations',
+        'knowledge_sections',
+        'knowledge_assignments',
+      ],
+      groupId: 'knowledge',
+      syncFunction: () => ds.syncKnowledgeDocuments(forceRefresh: true),
+    );
+
+    _tables['knowledge_document_translations'] = DataSyncTable(
+      id: 'knowledge_document_translations',
+      tableName: 'knowledge_document_translations',
+      nameEn: 'Document Translations',
+      nameRu: 'Переводы документов',
+      nameUz: 'Hujjat tarjimalari',
+      icon: Icons.translate,
+      dependsOn: const ['knowledge_documents'],
+      cascadeTo: const [],
+      groupId: 'knowledge',
+      syncFunction: () =>
+          ds.syncKnowledgeDocumentTranslations(forceRefresh: true),
+    );
+
+    _tables['knowledge_sections'] = DataSyncTable(
+      id: 'knowledge_sections',
+      tableName: 'knowledge_sections',
+      nameEn: 'Sections',
+      nameRu: 'Разделы',
+      nameUz: 'Bo\'limlar',
+      icon: Icons.format_list_bulleted,
+      dependsOn: const ['knowledge_documents'],
+      cascadeTo: const ['knowledge_content_blocks'],
+      groupId: 'knowledge',
+      syncFunction: () => ds.syncKnowledgeSections(forceRefresh: true),
+    );
+
+    _tables['knowledge_content_blocks'] = DataSyncTable(
+      id: 'knowledge_content_blocks',
+      tableName: 'knowledge_content_blocks',
+      nameEn: 'Content Blocks',
+      nameRu: 'Блоки содержимого',
+      nameUz: 'Kontent bloklari',
+      icon: Icons.view_agenda_outlined,
+      dependsOn: const ['knowledge_sections'],
+      cascadeTo: const [],
+      groupId: 'knowledge',
+      syncFunction: () => ds.syncKnowledgeContentBlocks(forceRefresh: true),
+    );
+
+    _tables['knowledge_assignments'] = DataSyncTable(
+      id: 'knowledge_assignments',
+      tableName: 'knowledge_assignments',
+      nameEn: 'Assignments',
+      nameRu: 'Назначения',
+      nameUz: 'Tayinlovlar',
+      icon: Icons.assignment_ind_outlined,
+      dependsOn: const ['knowledge_documents'],
+      cascadeTo: const [],
+      groupId: 'knowledge',
+      syncFunction: () => ds.syncKnowledgeAssignments(forceRefresh: true),
+    );
+
+    _tables['knowledge_tags'] = DataSyncTable(
+      id: 'knowledge_tags',
+      tableName: 'knowledge_tags',
+      nameEn: 'Tags',
+      nameRu: 'Теги',
+      nameUz: 'Teglar',
+      icon: Icons.tag,
+      dependsOn: const [],
+      cascadeTo: const [],
+      groupId: 'knowledge',
+      syncFunction: () => ds.syncKnowledgeTags(forceRefresh: true),
+    );
   }
 
   static void _initializeGroups() {
@@ -729,6 +835,24 @@ class DataSyncConfig {
       icon: Icons.settings,
       tableIds: ['map_tokens'],
       color: Colors.grey,
+    );
+
+    _groups['knowledge'] = const DataSyncGroup(
+      id: 'knowledge',
+      nameEn: 'Knowledge Base',
+      nameRu: 'База знаний',
+      nameUz: 'Bilimlar manbayi',
+      icon: Icons.menu_book,
+      tableIds: [
+        'knowledge_categories',
+        'knowledge_documents',
+        'knowledge_document_translations',
+        'knowledge_sections',
+        'knowledge_content_blocks',
+        'knowledge_assignments',
+        'knowledge_tags',
+      ],
+      color: Colors.deepPurple,
     );
   }
 

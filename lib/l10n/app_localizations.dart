@@ -4621,12 +4621,6 @@ abstract class AppLocalizations {
   /// **'Image set as primary'**
   String get imageSetAsPrimary;
 
-  /// No description provided for @imagesUploadedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} images uploaded successfully'**
-  String imagesUploadedCount(int count);
-
   /// No description provided for @serverImagesLoadError.
   ///
   /// In en, this message translates to:
@@ -4644,18 +4638,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error capturing from camera: {error}'**
   String cameraCaptureError(String error);
-
-  /// No description provided for @imagesUploadedSuccessfully.
-  ///
-  /// In en, this message translates to:
-  /// **'Images uploaded successfully'**
-  String get imagesUploadedSuccessfully;
-
-  /// No description provided for @imagesUploadError.
-  ///
-  /// In en, this message translates to:
-  /// **'Error uploading images: {error}'**
-  String imagesUploadError(String error);
 
   /// No description provided for @orderDraftSaved.
   ///
@@ -8413,414 +8395,6 @@ abstract class AppLocalizations {
   /// **'{count} fields updated from Faktura.uz'**
   String scannerDataMismatch(int count);
 
-  /// No description provided for @faqPageTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Regulations'**
-  String get faqPageTitle;
-
-  /// No description provided for @faqSupervisorSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Supervisor duties'**
-  String get faqSupervisorSubtitle;
-
-  /// No description provided for @faqSalesRepSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Sales representative regulations'**
-  String get faqSalesRepSubtitle;
-
-  /// No description provided for @faqRoleSupervisor.
-  ///
-  /// In en, this message translates to:
-  /// **'Supervisor'**
-  String get faqRoleSupervisor;
-
-  /// No description provided for @faqRoleSalesRep.
-  ///
-  /// In en, this message translates to:
-  /// **'Sales Representative'**
-  String get faqRoleSalesRep;
-
-  /// No description provided for @faqSectionsCount.
-  ///
-  /// In en, this message translates to:
-  /// **'sections'**
-  String get faqSectionsCount;
-
-  /// No description provided for @faqSvGpsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'GPS Monitoring'**
-  String get faqSvGpsTitle;
-
-  /// No description provided for @faqSvGpsMorningTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Morning report (by 9:15)'**
-  String get faqSvGpsMorningTitle;
-
-  /// No description provided for @faqSvGpsMorningContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Daily by 9:15 AM, the supervisor must send a report to the work group about the status of sales representatives\' route departure.'**
-  String get faqSvGpsMorningContent;
-
-  /// No description provided for @faqSvGpsEveningTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Evening report (by 18:00)'**
-  String get faqSvGpsEveningTitle;
-
-  /// No description provided for @faqSvGpsEveningContent.
-  ///
-  /// In en, this message translates to:
-  /// **'By 18:00 — the final GPS report is sent at the end of the work day.'**
-  String get faqSvGpsEveningContent;
-
-  /// No description provided for @faqSvSalesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Sales Report'**
-  String get faqSvSalesTitle;
-
-  /// No description provided for @faqSvSalesInterimTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Interim report (by 13:00)'**
-  String get faqSvSalesInterimTitle;
-
-  /// No description provided for @faqSvSalesInterimContent.
-  ///
-  /// In en, this message translates to:
-  /// **'By 13:00 — an interim report is sent with the sum and number of collected orders.'**
-  String get faqSvSalesInterimContent;
-
-  /// No description provided for @faqSvSalesFinalTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Final report (by 18:00)'**
-  String get faqSvSalesFinalTitle;
-
-  /// No description provided for @faqSvSalesFinalContent.
-  ///
-  /// In en, this message translates to:
-  /// **'By 18:00 — final report including: total sales for the day, number of orders, departure plan and forecast for the next day, returns report.'**
-  String get faqSvSalesFinalContent;
-
-  /// No description provided for @faqSvKpiTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'KPI and Planning'**
-  String get faqSvKpiTitle;
-
-  /// No description provided for @faqSvKpiMondayTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Office day (Monday)'**
-  String get faqSvKpiMondayTitle;
-
-  /// No description provided for @faqSvKpiMondayContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Every Monday is an office day.'**
-  String get faqSvKpiMondayContent;
-
-  /// No description provided for @faqSvKpiAnalysisTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Analysis and tasks'**
-  String get faqSvKpiAnalysisTitle;
-
-  /// No description provided for @faqSvKpiAnalysisContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Weekly results are summarized, KPI analysis is conducted, and tasks for the current week are set.'**
-  String get faqSvKpiAnalysisContent;
-
-  /// No description provided for @faqSvTravelTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Travel Plans'**
-  String get faqSvTravelTitle;
-
-  /// No description provided for @faqSvTravelMonthlyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Monthly planning'**
-  String get faqSvTravelMonthlyTitle;
-
-  /// No description provided for @faqSvTravelMonthlyContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Monthly, on the 30th-31st, supervisors send individual Travel Plans for the next month to the regional manager.'**
-  String get faqSvTravelMonthlyContent;
-
-  /// No description provided for @faqSvTimeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Time Tracking'**
-  String get faqSvTimeTitle;
-
-  /// No description provided for @faqSvTimeWeeklyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Weekly timesheet'**
-  String get faqSvTimeWeeklyTitle;
-
-  /// No description provided for @faqSvTimeWeeklyContent.
-  ///
-  /// In en, this message translates to:
-  /// **'The timesheet is compiled weekly (on Mondays) indicating the number of days worked by sales representatives.'**
-  String get faqSvTimeWeeklyContent;
-
-  /// No description provided for @faqSvTimeMonthlyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Monthly timesheet'**
-  String get faqSvTimeMonthlyTitle;
-
-  /// No description provided for @faqSvTimeMonthlyContent.
-  ///
-  /// In en, this message translates to:
-  /// **'The final monthly timesheet is provided on the last day of the calendar month.'**
-  String get faqSvTimeMonthlyContent;
-
-  /// No description provided for @faqSvSalaryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Salary and KPI'**
-  String get faqSvSalaryTitle;
-
-  /// No description provided for @faqSvSalaryKpiTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'KPI summary'**
-  String get faqSvSalaryKpiTitle;
-
-  /// No description provided for @faqSvSalaryKpiContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Monthly, from the 1st to 3rd (depending on weekends), the supervisor must summarize KPI results for the entire month.'**
-  String get faqSvSalaryKpiContent;
-
-  /// No description provided for @faqSvSalaryCalcTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Salary calculation'**
-  String get faqSvSalaryCalcTitle;
-
-  /// No description provided for @faqSvSalaryCalcContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Prepare and submit salary calculations for EVYAP sales representatives based on achieved indicators.'**
-  String get faqSvSalaryCalcContent;
-
-  /// No description provided for @faqTpGeneralTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'General Provisions'**
-  String get faqTpGeneralTitle;
-
-  /// No description provided for @faqTpGeneralPurposeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Document purpose'**
-  String get faqTpGeneralPurposeTitle;
-
-  /// No description provided for @faqTpGeneralPurposeContent.
-  ///
-  /// In en, this message translates to:
-  /// **'This regulation establishes rules for organizing and performing duties by sales representatives. The goal is to ensure discipline, transparency and efficiency.'**
-  String get faqTpGeneralPurposeContent;
-
-  /// No description provided for @faqTpHoursTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Working Hours and Route'**
-  String get faqTpHoursTitle;
-
-  /// No description provided for @faqTpHoursScheduleTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Work schedule'**
-  String get faqTpHoursScheduleTitle;
-
-  /// No description provided for @faqTpHoursScheduleContent.
-  ///
-  /// In en, this message translates to:
-  /// **'The work day starts at 9:00 and ends at 18:00.'**
-  String get faqTpHoursScheduleContent;
-
-  /// No description provided for @faqTpHoursRouteTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Route departure'**
-  String get faqTpHoursRouteTitle;
-
-  /// No description provided for @faqTpHoursRouteContent.
-  ///
-  /// In en, this message translates to:
-  /// **'The sales representative must leave for the route on time according to the approved schedule.'**
-  String get faqTpHoursRouteContent;
-
-  /// No description provided for @faqTpHoursDelayTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delays'**
-  String get faqTpHoursDelayTitle;
-
-  /// No description provided for @faqTpHoursDelayContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Being more than 15 minutes late without a valid reason is recorded as a violation of labor discipline.'**
-  String get faqTpHoursDelayContent;
-
-  /// No description provided for @faqTpVisitsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Trade Point Visits'**
-  String get faqTpVisitsTitle;
-
-  /// No description provided for @faqTpVisitsDailyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Daily visits'**
-  String get faqTpVisitsDailyTitle;
-
-  /// No description provided for @faqTpVisitsDailyContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Each sales representative must visit all trade points daily according to the route.'**
-  String get faqTpVisitsDailyContent;
-
-  /// No description provided for @faqTpVisitsChangesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Route changes'**
-  String get faqTpVisitsChangesTitle;
-
-  /// No description provided for @faqTpVisitsChangesContent.
-  ///
-  /// In en, this message translates to:
-  /// **'In case of route changes (client absence, point closure, etc.), notify the work chat with the reason.'**
-  String get faqTpVisitsChangesContent;
-
-  /// No description provided for @faqTpVisitsPhotoTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Photo/video report'**
-  String get faqTpVisitsPhotoTitle;
-
-  /// No description provided for @faqTpVisitsPhotoContent.
-  ///
-  /// In en, this message translates to:
-  /// **'For each point, a photo or video report must be provided (display, activity, order).'**
-  String get faqTpVisitsPhotoContent;
-
-  /// No description provided for @faqTpVideoTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Video Reports (Telegram)'**
-  String get faqTpVideoTitle;
-
-  /// No description provided for @faqTpVideoMorningTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Morning video report'**
-  String get faqTpVideoMorningTitle;
-
-  /// No description provided for @faqTpVideoMorningContent.
-  ///
-  /// In en, this message translates to:
-  /// **'At the start of the work day (by 9:30), the sales representative must send a video message to the Telegram chat.'**
-  String get faqTpVideoMorningContent;
-
-  /// No description provided for @faqTpVideoDuringTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Reports during the day'**
-  String get faqTpVideoDuringTitle;
-
-  /// No description provided for @faqTpVideoDuringContent.
-  ///
-  /// In en, this message translates to:
-  /// **'During the day, sending short video messages from trade points is encouraged — demonstrating displays, new products or activities.'**
-  String get faqTpVideoDuringContent;
-
-  /// No description provided for @faqTpVideoEndTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'End of day video report'**
-  String get faqTpVideoEndTitle;
-
-  /// No description provided for @faqTpVideoEndContent.
-  ///
-  /// In en, this message translates to:
-  /// **'At the end of the day, a brief video report with results is recommended.'**
-  String get faqTpVideoEndContent;
-
-  /// No description provided for @faqTpReportingTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Reporting'**
-  String get faqTpReportingTitle;
-
-  /// No description provided for @faqTpReportingRealTimeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Real-time submission'**
-  String get faqTpReportingRealTimeTitle;
-
-  /// No description provided for @faqTpReportingRealTimeContent.
-  ///
-  /// In en, this message translates to:
-  /// **'All photos, videos and comments on the route must be sent at the time of the visit.'**
-  String get faqTpReportingRealTimeContent;
-
-  /// No description provided for @faqTpReportingConsequenceTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Non-compliance consequences'**
-  String get faqTpReportingConsequenceTitle;
-
-  /// No description provided for @faqTpReportingConsequenceContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Failure to submit daily reports is considered as not going on the route or lack of activity.'**
-  String get faqTpReportingConsequenceContent;
-
-  /// No description provided for @faqTpResponsibilityTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Responsibility'**
-  String get faqTpResponsibilityTitle;
-
-  /// No description provided for @faqTpResponsibilityRulesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Disciplinary responsibility'**
-  String get faqTpResponsibilityRulesTitle;
-
-  /// No description provided for @faqTpResponsibilityRulesContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Non-compliance with these regulations entails disciplinary responsibility in accordance with company internal rules.'**
-  String get faqTpResponsibilityRulesContent;
-
-  /// No description provided for @faqTpResponsibilityMeasuresTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Penalty measures'**
-  String get faqTpResponsibilityMeasuresTitle;
-
-  /// No description provided for @faqTpResponsibilityMeasuresContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Responsibility measures: warning → reprimand → bonus deduction.'**
-  String get faqTpResponsibilityMeasuresContent;
-
   /// No description provided for @productImageLoading.
   ///
   /// In en, this message translates to:
@@ -10128,6 +9702,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No images yet'**
   String get projectImageEmpty;
+
+  /// No description provided for @knowledgeBaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge Base'**
+  String get knowledgeBaseTitle;
+
+  /// No description provided for @knowledgeBaseSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Regulations, guides, and training'**
+  String get knowledgeBaseSubtitle;
+
+  /// No description provided for @knowledgePinnedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get knowledgePinnedSection;
+
+  /// No description provided for @knowledgeCategoriesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get knowledgeCategoriesSection;
+
+  /// No description provided for @knowledgeCategoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No documents in this category'**
+  String get knowledgeCategoryEmpty;
+
+  /// No description provided for @knowledgeDocumentLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading document…'**
+  String get knowledgeDocumentLoading;
+
+  /// No description provided for @knowledgeDocumentNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Document not found'**
+  String get knowledgeDocumentNotFound;
+
+  /// No description provided for @knowledgeNoDocumentsAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No documents available yet'**
+  String get knowledgeNoDocumentsAssigned;
+
+  /// No description provided for @knowledgeSearchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get knowledgeSearchTitle;
+
+  /// No description provided for @knowledgeSearchPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search documents…'**
+  String get knowledgeSearchPlaceholder;
+
+  /// No description provided for @knowledgeSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matched your query'**
+  String get knowledgeSearchEmpty;
+
+  /// No description provided for @knowledgeRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get knowledgeRetry;
+
+  /// No description provided for @knowledgeOfflineNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Showing cached content.'**
+  String get knowledgeOfflineNotice;
+
+  /// No description provided for @knowledgeTocTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Table of contents'**
+  String get knowledgeTocTitle;
+
+  /// No description provided for @knowledgeOpenInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in browser'**
+  String get knowledgeOpenInBrowser;
+
+  /// No description provided for @knowledgeFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get knowledgeFilterAll;
+
+  /// No description provided for @knowledgePinnedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get knowledgePinnedBadge;
+
+  /// No description provided for @knowledgeMandatoryBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Mandatory'**
+  String get knowledgeMandatoryBadge;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -21,7 +21,10 @@ import 'package:gloria_marketing_flutter/src/features/marketing/presentation/pag
 import 'package:gloria_marketing_flutter/src/features/warehouse_manager/presentation/pages/warehouse_manager_home_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/main_agent_screen.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_check_page.dart';
-import 'package:gloria_marketing_flutter/src/features/faq/presentation/pages/faq_page.dart';
+import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pages/knowledge_home_page.dart';
+import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pages/knowledge_category_page.dart';
+import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pages/knowledge_document_page.dart';
+import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pages/knowledge_search_page.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -49,6 +52,10 @@ class AppRouter {
   static const String ordersRoute = '/orders';
   static const String dbViewRoute = '/db-view';
   static const String faqRoute = '/faq';
+  static const String knowledgeRoute = '/knowledge';
+  static const String knowledgeCategoryRoute = '/knowledge/category';
+  static const String knowledgeDocumentRoute = '/knowledge/document';
+  static const String knowledgeSearchRoute = '/knowledge/search';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -150,7 +157,44 @@ class AppRouter {
       case dbViewRoute:
         return MaterialPageRoute(builder: (_) => const DbViewPage());
       case faqRoute:
-        return MaterialPageRoute(builder: (_) => const FaqPage());
+        // Backward compat: legacy /faq deep links land on the new
+        // Knowledge Base home, scoped to the regulation category.
+        return MaterialPageRoute(
+          builder: (_) =>
+              const KnowledgeHomePage(initialCategorySlug: 'reglament'),
+        );
+      case knowledgeRoute:
+        return MaterialPageRoute(builder: (_) => const KnowledgeHomePage());
+      case knowledgeCategoryRoute:
+        final args = settings.arguments;
+        final id = args is Map ? args['id'] as String? : null;
+        if (id == null || id.isEmpty) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(child: Text('Category id is required')),
+            ),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => KnowledgeCategoryPage(categoryId: id),
+        );
+      case knowledgeDocumentRoute:
+        final args = settings.arguments;
+        final id = args is Map ? args['id'] as String? : null;
+        if (id == null || id.isEmpty) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(child: Text('Document id is required')),
+            ),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => KnowledgeDocumentPage(documentId: id),
+        );
+      case knowledgeSearchRoute:
+        return MaterialPageRoute(
+          builder: (_) => const KnowledgeSearchPage(),
+        );
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

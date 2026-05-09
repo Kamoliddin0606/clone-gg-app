@@ -2138,9 +2138,10 @@ class _AppDrawer extends StatelessWidget {
                   onTap: () => Navigator.pushNamed(context, AppRouter.dbViewRoute),
                 ),
                 _MenuItem(
-                  icon: Icons.help_outline,
-                  title: AppLocalizations.of(context)!.faqPageTitle,
-                  onTap: () => Navigator.pushNamed(context, AppRouter.faqRoute),
+                  icon: Icons.menu_book,
+                  title: AppLocalizations.of(context)!.knowledgeBaseTitle,
+                  onTap: () =>
+                      Navigator.pushNamed(context, AppRouter.knowledgeRoute),
                 ),
               ],
             ),

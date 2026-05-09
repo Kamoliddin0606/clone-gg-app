@@ -8,7 +8,7 @@
   "enterCredentials": "Please enter your login credentials",
   "forgotPassword": "Forgot Password?",
   "orders": "Orders",
-  "tradingPoints": "Trading Points",
+  "tradingPoints": "Trading points",
   "tradingPointsFilter": "Trading Points",
   "warehouses": "Warehouses",
   "contracts": "Contracts",
@@ -29,7 +29,7 @@
   "no": "No",
   "error": "Error",
   "loading": "Loading...",
-  "noData": "No data available",
+  "noData": "No data",
   "retry": "Retry",
   "search": "Search",
   "filter": "Filter",
@@ -68,10 +68,10 @@
   "settingsSaved": "Settings saved successfully",
   "dataSync": "Data Synchronization",
   "syncNow": "Sync Now",
-  "lastSync": "Last sync",
-  "syncing": "Synchronizing...",
+  "lastSync": "Last sync: {time}",
+  "syncing": "Syncing...",
   "syncComplete": "Synchronization completed",
-  "syncError": "Synchronization error",
+  "syncError": "Sync error: {error}",
   "noInternet": "No internet connection",
   "offlineMode": "Offline mode - cached data is displayed",
   "onlineMode": "Online mode",
@@ -80,9 +80,9 @@
   "sessionExpired": "Session expired",
   "permissionDenied": "Permission denied",
   "fileNotFound": "File not found",
-  "unknownError": "Unknown error occurred",
+  "unknownError": "Unknown error",
   "tryAgain": "Please try again",
-  "contactSupport": "Contact support",
+  "contactSupport": "Contact Support",
   "version": "Version",
   "about": "About",
   "help": "Help",
@@ -131,7 +131,7 @@
   "location": "Location",
   "pcs": "pcs",
   "kg": "kg",
-  "contractDetails": "Contract Details",
+  "contractDetails": "Contract details",
   "contractCode": "Contract Code",
   "active": "Active",
   "inactive": "Inactive",
@@ -157,9 +157,7 @@
   "createOrder": "Create Order",
   "unplannedOrder": "Unplanned Order",
   "viewContracts": "View Contracts",
-  "contracts": "Contracts",
   "refusal": "Refusal",
-  "orders": "Orders",
   "route": "Route",
   "refusalReason": "Refusal Reason",
   "selectReason": "Select refusal reason",
@@ -240,12 +238,9 @@
   "disabled": "Disabled",
   "on": "On",
   "off": "Off",
-  "yes": "Yes",
-  "no": "No",
   "booleanTrue": "True",
   "booleanFalse": "False",
   "interfaceSettings": "Interface Settings",
-  "selectLanguage": "Select Language",
   "languageChanged": "Language changed successfully",
   "restartRequired": "Please restart the app to apply language changes",
   "currentLanguage": "Current Language",
@@ -256,7 +251,6 @@
   "languageChangeWarning": "Changing the language will restart the app",
   "success": "Success",
   "prices": "Prices",
-  "warehouses": "Warehouses",
   "businessRegions": "Business Regions",
   "permissions": "Permissions",
   "apply": "Apply",
@@ -271,7 +265,6 @@
   "emergency": "Emergency",
   "notice": "Notice",
   "alert": "Alert",
-  "emergency": "Emergency",
   "agentPermissions": "Agent Permissions",
   "userPermissionsAndVisitSteps": "User permissions and visit steps",
   "dataValidation": "Data Validation",
@@ -282,46 +275,30 @@
   "skipTINDuplicateCheck": "Skip TIN duplicate check",
   "allowCreationWithoutTIN": "Allow creation without TIN",
   "allowCreatingPointOfSale": "Allow creating point of sale",
-  "visit": "Visit",
   "strictSequence": "Strict Sequence",
-  "unplannedOrder": "Unplanned Order",
   "plannedRoute": "Planned Route",
   "general": "General",
   "mandatoryExecution": "Mandatory Execution",
   "optional": "Optional",
   "permissionsDataNotAvailable": "Permissions data not available",
-  "permissions": "Permissions",
-  "permissionDenied": "Permission denied",
   "languageChangeError": "Error changing language",
   "languageAutoDetected": "Language auto-detected from system",
   "customers": "Customers",
-  "reports": "Reports",
-  "marketing": "Marketing",
-  "cash": "Cash",
   "debitCredit": "Debit-Credit",
-  "warehouses": "Warehouses",
   "products": "Products",
-  "prices": "Prices",
-  "contracts": "Contracts",
-  "orders": "Orders",
   "dbView": "DB View",
   "darkMode": "Dark mode",
-  "settings": "Settings",
-  "logout": "Logout",
   "kpiDataUpdateError": "KPI data update error",
   "onlineModeReturn": "Return to online mode",
   "onlineModeReturnConfirm": "Do you want to check internet and server connection and return to online mode?",
-  "no": "No",
-  "yes": "Yes",
   "serverUrlNotFound": "Server URL not found",
   "serverUrl": "Server URL",
   "connectionError": "Connection error",
   "menu": "Menu",
   "offline": "Offline",
   "refresh": "Refresh",
-  "ok": "OK",
   "okb": "OKB",
-  "akbPlan": "AKB Plan",
+  "akbPlan": "AKB plan",
   "akbFact": "AKB Fact",
   "forecastPercentOfFact": "Forecast % of Fact",
   "totalPlan": "Total Plan",
@@ -333,7 +310,6 @@
   "factVsRemaining": "Fact vs Remaining",
   "forecastTrend": "Forecast Trend",
   "fromFactToForecast": "From Fact to Forecast",
-  "fact": "Fact",
   "remaining": "Remaining",
   "onTrack": "On track",
   "atRisk": "At risk",
@@ -344,22 +320,13 @@
   "akbGap": "AKB Gap",
   "forecastVsPlan": "Forecast vs Plan",
   "todayPerformance": "Today Performance",
-  "forecast": "Forecast",
   "planExecution": "Plan Execution",
-  "plan": "Plan",
-  "fact": "Fact",
-  "remaining": "Remaining",
-  "createOrder": "Create Order",
-  "customers": "Customers",
-  "products": "Products",
   "rememberMe": "Remember me",
   "databaseView": "Database View",
   "preferenceKey": "Preference Key",
   "value": "Value",
   "id": "ID",
   "code": "Code",
-  "username": "Username",
-  "password": "Password",
   "name": "Name",
   "role": "Role",
   "warehouseCode": "Warehouse Code",
@@ -369,27 +336,13 @@
   "chatId": "Chat ID",
   "topicId": "Topic ID",
   "createdAt": "Created At",
-  "updatedAt": "Updated At",
-  "plan": "Plan",
-  "fact": "Fact",
+  "updatedAt": "Updated: {date} {time}",
   "totalPercent": "Total %",
-  "forecast": "Forecast",
   "forecastPercent": "Forecast %",
-  "okb": "OKB",
-  "akbPlan": "AKB Plan",
-  "akbFact": "AKB Fact",
   "akbPercent": "AKB %",
   "updateDate": "Update Date",
   "exit": "Exit",
   "confirmExit": "Are you sure you want to exit?",
-  "cancel": "Cancel",
-  "retry": "Retry",
-  "noData": "No data",
-  "error": "Error",
-  "loading": "Loading...",
-  "yes": "Yes",
-  "no": "No",
-  "ok": "OK",
   "contactPerson": "Contact",
   "lastVisitDate": "Last Visit",
   "hasOrders": "Has Orders",
@@ -416,11 +369,9 @@
   "mapConfiguration": "Map Configuration",
   "visitProgress": "Visit Progress",
   "visitStepNumber": "Visit Step",
-  "completed": "Completed",
   "skipped": "Skipped",
   "current": "Current",
   "mandatory": "Mandatory",
-  "optional": "Optional",
   "completedAt": "Completed at",
   "skippedAt": "Skipped at",
   "notes": "Notes",
@@ -436,10 +387,8 @@
   "allRequiredStepsMustBeCompleted": "All required steps must be completed",
   "visitInfo": "Visit Information",
   "client": "Client",
-  "strictSequence": "Strict Sequence",
   "totalSteps": "Total Steps",
   "requiredSteps": "Required Steps",
-  "retry": "Retry",
   "unknownState": "Unknown state",
   "cancelCompletion": "Cancel Completion",
   "confirmSkip": "Confirm Skip",
@@ -453,7 +402,7 @@
   "orderNotFound": "Order not found",
   "readOnly": "Read-only",
   "pageUnderDevelopment": "Page under development",
-  "stepCompletedReadOnly": "This step is completed. View-only mode.",
+  "stepCompletedReadOnly": "This step is completed. Read-only mode.",
   "stepTypeNotImplemented": "This step type page is not implemented yet.",
   "orderDetailsNavigationErrorPrefix": "Error opening order details",
   "errorOccurredPrefix": "Error occurred",
@@ -461,13 +410,12 @@
   "visitFinishErrorPrefix": "Error finishing visit",
   "stepsCount": "steps",
   "visitFinishing": "Finishing visit...",
-  "orderNumber": "Order number",
+  "orderNumber": "Order № {number}",
   "dataSaveError": "Error saving data",
   "saveErrorPrefix": "Save error",
   "dataLoadError": "Error loading data",
   "productsLoadError": "Error loading products",
   "settingsUpdateError": "Error updating settings",
-  "save": "Save",
   "clearOrder": "Clear order",
   "suggestedOrders": "Suggested orders",
   "productSelectionError": "Error navigating to product selection",
@@ -480,11 +428,11 @@
   "clearOrderConfirmMessage": "All selected products and related data will be deleted. Settings will be preserved. Do you want to continue?",
   "clientDataLoadError": "Error loading client data",
   "locationNotAvailable": "Location data not available. Visit cannot be completed.",
-  "visitCompletedFor": "Visit completed successfully for",
+  "visitCompletedFor": "visit completed successfully for",
   "contractsPageError": "Error navigating to contracts page",
   "loadingClientImages": "Loading client images...",
   "clientImagesLoaded": "Client images loaded",
-  "imageLoadError": "Error loading images",
+  "imageLoadError": "Error loading image",
   "disableVisitTodayFilter": "Disable today's visit filter",
   "showVisitTodayOnly": "Show only today's visit clients",
   "newClient": "New client",
@@ -492,7 +440,7 @@
   "tradingPointsNotFound": "Trading points not found",
   "clientCount": "Client count",
   "manageClientImages": "Manage client images",
-  "ordersCount": "Orders count",
+  "ordersCount": "{count} orders",
   "orderNumberPrefix": "Order №",
   "viewOrder": "View Order",
   "clientOrdersFor": "orders for client",
@@ -527,34 +475,33 @@
   "enterField": "Please enter",
   "imageServiceNotAvailable": "Image service not available",
   "searchHint": "Search...",
-  "pullToRefresh": "Pull down to refresh!",
+  "pullToRefresh": "Pull to refresh",
   "pullToRefreshOrSyncData": "If pull to refresh doesn't work, use 'sync all data' option in settings menu",
   "checkingDistance": "Checking distance...",
   "distanceRestrictionError": "You are too far from the client. Please move closer to complete the visit.",
   "cancelVisit": "Cancel Visit",
   "cancelVisitConfirmation": "Are you sure you want to cancel this visit? All progress will be lost.",
   "syncStatusIdle": "Waiting",
-  "syncStatusProducts": "Updating products",
-  "syncStatusBalances": "Updating balances",
-  "syncStatusOrders": "Updating orders",
-  "syncStatusCompleted": "Updated",
-  "syncStatusError": "Error",
-  "syncInProgress": "Syncing...",
+  "syncStatusProducts": "Syncing products",
+  "syncStatusBalances": "Syncing balances",
+  "syncStatusOrders": "Syncing orders",
+  "syncStatusCompleted": "Sync completed",
+  "syncStatusError": "Sync error",
+  "syncInProgress": "Synchronization in Progress",
   "syncErrorUserNotFound": "User code not found",
   "syncAlreadyInProgress": "Sync already in progress",
   "syncCompleted": "Data updated successfully",
-  "syncError": "Sync error occurred",
-  "clientBalance": "Client Balance",
+  "clientBalance": "Client balance",
   "clientBalanceDetails": "Balance Details",
-  "clientIsDebtor": "Client is debtor",
-  "clientHasOverpayment": "Overpayment available",
+  "clientIsDebtor": "Client is debtor. Total debt: {amount} sum",
+  "clientHasOverpayment": "Client has overpaid. Overpayment: {amount} sum",
   "balanceIsZero": "Balance is zero",
-  "totalDebt": "Total Debt",
+  "totalDebt": "Total debt",
   "totalPayment": "Total Payment",
   "totalOrder": "Total Order",
-  "unpaidOrders": "Unpaid Orders",
-  "overdueOrders": "Overdue Orders",
-  "balanceStatus": "Balance Status",
+  "unpaidOrders": "{count} unpaid",
+  "overdueOrders": "{count} overdue",
+  "balanceStatus": "Balance status",
   "contractsTab": "Contracts",
   "ordersTab": "Orders",
   "overviewTab": "Overview",
@@ -571,7 +518,7 @@
       }
     }
   },
-  "refreshAfterSeconds": "Refresh after {seconds}s",
+  "refreshAfterSeconds": "Can refresh after {seconds} seconds",
   "@refreshAfterSeconds": {
     "placeholders": {
       "seconds": {
@@ -579,7 +526,7 @@
       }
     }
   },
-  "balanceUpdated": "Updated: {date}",
+  "balanceUpdated": "Updated",
   "@balanceUpdated": {
     "placeholders": {
       "date": {
@@ -596,13 +543,12 @@
     }
   },
   "balanceDataMayBeOutdated": "Balance data may be outdated",
-  "noBalanceData": "No balance data found",
+  "noBalanceData": "Balance data not found",
   "balanceLoadError": "Error loading balance",
   "balanceServiceNotAvailable": "Balance service not available",
   "clientInnNotFound": "Client INN not found",
   "statistics": "Statistics",
-  "contractsCount": "Contracts Count",
-  "ordersCount": "Orders Count",
+  "contractsCount": "{count} contracts",
   "contract": "Contract",
   "order": "Order",
   "overpayment": "Overpayment",
@@ -616,9 +562,9 @@
   "excessLabel": "Excess",
   "ordersStatus": "Orders Status",
   "clearBalanceCache": "Clear Balance Cache",
-  "clearBalanceCacheConfirm": "Clear all cached balance data?",
+  "clearBalanceCacheConfirm": "All client balance data will be deleted. It will be reloaded next time balance is viewed.",
   "balanceCacheCleared": "Balance cache cleared",
-  "fakturaNetworkError": "Network error. Please check your internet connection",
+  "fakturaNetworkError": "Network error while connecting to Faktura.uz",
   "tradePointTypesEmpty": "Trade point types list is empty. Please add trade points first.",
   "tradePointTypesLoadError": "Error loading trade point types.",
   "timeoutError": "Request timed out. Please try again.",
@@ -637,7 +583,6 @@
   "overviewTabShort": "Overview",
   "contractsTabShort": "Contracts",
   "ordersTabShort": "Orders",
-  "updatedAt": "Updated: {date} {time}",
   "@updatedAt": {
     "placeholders": {
       "date": {
@@ -717,10 +662,10 @@
       }
     }
   },
-  "projectLabel": "Project: {name}",
+  "projectLabel": "Project: {project}",
   "@projectLabel": {
     "placeholders": {
-      "name": {
+      "project": {
         "type": "String"
       }
     }
@@ -768,8 +713,8 @@
   "contactSupportTeam": "Contact Support",
   "logoutConfirmTitle": "Logout",
   "logoutConfirmMessage": "Are you sure you want to log out?",
-  "newContract": "New Contract",
-  "createContract": "Create Contract",
+  "newContract": "New contract",
+  "createContract": "Create contract",
   "createContractTitle": "New Contract",
   "createContractSubtitle": "Fill in all fields",
   "contractCreatedSuccess": "Contract created successfully",
@@ -794,7 +739,7 @@
   "creatingContract": "Creating...",
   "networkError": "Network error",
   "serverTimeout": "Server connection timed out",
-  "noInternetConnection": "No internet connection",
+  "noInternetConnection": "No internet connection. Please connect to the internet",
   "createClientTitle": "New Client",
   "createClientBasicInfo": "Basic Information",
   "createClientContactInfo": "Contact Information",
@@ -876,7 +821,7 @@
       }
     }
   },
-  "innLabel": "INN: {inn}",
+  "innLabel": "INN",
   "@innLabel": {
     "placeholders": {
       "inn": {
@@ -945,7 +890,6 @@
   },
   "waitingForLocation": "Waiting for location data...",
   "visitCompletedTitle": "Visit Completed",
-  "visitCompletedSuccessfully": "Visit completed successfully!",
   "stepsCompletedCount": "{count} steps completed",
   "@stepsCompletedCount": {
     "placeholders": {
@@ -1010,7 +954,7 @@
       }
     }
   },
-  "errorOccurred": "Error occurred: {error}",
+  "errorOccurred": "Error occurred",
   "@errorOccurred": {
     "placeholders": {
       "error": {
@@ -1058,7 +1002,6 @@
       }
     }
   },
-  "finish": "Finish",
   "imageCapturedSuccessfully": "Image captured successfully",
   "imageCaptureError": "Error capturing image: {error}",
   "@imageCaptureError": {
@@ -1094,7 +1037,7 @@
   "updateCoordinatesNotImplemented": "Update coordinates - functionality to be implemented",
   "osmNotLoadedFallback": "OpenStreetMap not loaded. Using Google Maps.",
   "confirmLocationTitle": "Confirm Location",
-  "orderDetailsNotFound": "Order details not found",
+  "orderDetailsNotFound": "Order details not found.",
   "unknown": "Unknown",
   "locationPermissionDenied": "Location permission denied",
   "permissionCheckError": "Error checking permission: {error}",
@@ -1187,14 +1130,6 @@
     }
   },
   "imageSetAsPrimary": "Image set as primary",
-  "imagesUploadedCount": "{count} images uploaded successfully",
-  "@imagesUploadedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "serverImagesLoadError": "Error loading server images: {error}",
   "@serverImagesLoadError": {
     "placeholders": {
@@ -1219,15 +1154,6 @@
       }
     }
   },
-  "imagesUploadedSuccessfully": "Images uploaded successfully",
-  "imagesUploadError": "Error uploading images: {error}",
-  "@imagesUploadError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "orderDraftSaved": "Order Draft saved: {fileName}",
   "@orderDraftSaved": {
     "placeholders": {
@@ -1245,7 +1171,7 @@
       }
     }
   },
-  "orderDetailsTitle": "Order Details",
+  "orderDetailsTitle": "Order details",
   "camera": "Camera",
   "gallery": "Gallery",
   "clientImagesTitle": "{clientName} - Images",
@@ -1304,17 +1230,8 @@
   "statusNew": "New",
   "retail": "Retail",
   "continueAction": "Continue",
-  "send": "Send",
   "previousStepsMustBeCompleted": "Previous steps must be completed",
   "reload": "Reload",
-  "refreshAfterSeconds": "Can refresh after {seconds} seconds",
-  "@refreshAfterSeconds": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "imageDeleted": "Image deleted",
   "imageDeleteError": "Error deleting image: {error}",
   "@imageDeleteError": {
@@ -1326,20 +1243,10 @@
   },
   "deleteImageTitle": "Delete Image",
   "deleteImageConfirmation": "Are you sure you want to delete this image?",
-  "delete": "Delete",
   "photoAfterTitle": "Photo AFTER (Facing correction)",
   "photoBeforeTitle": "Photo BEFORE (Facing correction)",
-  "stepCompletedReadOnly": "This step is completed. Read-only mode.",
   "photosNotLoadedYet": "Photos not loaded yet",
   "timeUnknown": "Time unknown",
-  "codeLabel": "Code: {code}",
-  "@codeLabel": {
-    "placeholders": {
-      "code": {
-        "type": "String"
-      }
-    }
-  },
   "unitOfMeasure": "Unit of Measure",
   "category": "Category",
   "brand": "Brand",
@@ -1347,8 +1254,6 @@
   "barcode": "Barcode",
   "vendorCode": "Vendor Code",
   "warehouseInformation": "Warehouse Information",
-  "quantity": "Quantity",
-  "available": "Available",
   "reserved": "Reserved",
   "physicalProperties": "Physical Properties",
   "weight": "Weight",
@@ -1377,14 +1282,6 @@
   "readOnlyMode": "Read Only",
   "shelfAuditTitle": "Shelf Audit (Remains)",
   "pageInDevelopment": "Page is currently under development",
-  "productNotFoundMessage": "Product information not found: {code}",
-  "@productNotFoundMessage": {
-    "placeholders": {
-      "code": {
-        "type": "String"
-      }
-    }
-  },
   "apiKeyLabel": "API Key: {status}",
   "@apiKeyLabel": {
     "placeholders": {
@@ -1398,8 +1295,6 @@
   "apiKeyNotConfigured": "Not configured",
   "editInformation": "Edit Information",
   "editClientCoordinates": "Edit Client Coordinates",
-  "currentMapProvider": "Current Map Provider",
-  "availableMaps": "Available Maps",
   "clientPhotosTitle": "Client Photos",
   "clientPhotosDescription": "Here are photos related to the client {name}",
   "@clientPhotosDescription": {
@@ -1423,31 +1318,26 @@
   "noImagesAvailable": "No images available",
   "clickPlusToAddImage": "Click the + button to add an image",
   "setAsMainImage": "Set as main image",
-  "orderDetailsTitle": "Order Details",
-  "clientNameLabel": "Client Name",
-  "orderNumberLabel": "Order Number",
-  "orderDateLabel": "Order Date",
-  "orderTotalLabel": "Order Total",
-  "mainStatusLabel": "Main Status",
-  "statusCodeLabel": "Status Code",
-  "totalProductsLabel": "Total Products",
-  "productNameLabel": "Product Name",
+  "clientNameLabel": "Client name",
+  "orderNumberLabel": "Order number",
+  "orderDateLabel": "Order date",
+  "orderTotalLabel": "Order total",
+  "mainStatusLabel": "Main status",
+  "statusCodeLabel": "Status code",
+  "totalProductsLabel": "Total products",
+  "productNameLabel": "Product name",
   "articleLabel": "Article",
   "quantityLabel": "Quantity",
   "priceLabel": "Price",
   "amountLabel": "Amount",
-  "priceTypeLabel": "Price Type",
-  "noProductsInOrder": "No products in this order",
+  "priceTypeLabel": "Price type",
+  "noProductsInOrder": "No products in order",
   "productListEmpty": "Product list is empty",
   "productsNotSelected": "Products not selected",
   "clickPlusToAddProduct": "Click the + button to add a product",
-  "reportPeriod": "Report Period",
+  "reportPeriod": "Report period",
   "monthlyOKB": "Monthly OKB",
-  "akbPlan": "AKB Plan",
-  "akbFact": "AKB Fact",
   "selectPeriod": "Select Period",
-  "apply": "Apply",
-  "location": "Location",
   "creatingLocation": "Detecting...",
   "locationNotFound": "Location not found",
   "createClient": "Create Client",
@@ -1491,11 +1381,8 @@
   "tables": "Tables",
   "sendPdfLabel": "Send PDF",
   "warehouse": "Warehouse",
-  "viewPanel": "View panel",
-  "menu": "Menu",
   "takePhotoTooltip": "Take photo",
   "changeShippingDateTooltip": "Change shipping date",
-  "manageClientImages": "Manage client images",
   "sendReportViaTelegram": "Send report via Telegram bot",
   "fullscreen": "Fullscreen",
   "updateCoordinates": "Update coordinates",
@@ -1511,9 +1398,6 @@
   "organizationLabel": "Organization",
   "codeLabel2": "Code",
   "regionsLoading": "Loading regions...",
-  "errorPrefix": "Error",
-  "noData": "No data",
-  "innLabel": "INN",
   "cyclingRegular": "Regular bicycle",
   "cyclingRoad": "Road bicycle",
   "cyclingMountain": "Mountain bicycle",
@@ -1545,8 +1429,7 @@
       }
     }
   },
-  "prices": "Prices",
-  "selectPriceType": "Select price type",
+  "selectPriceType": "Select Price Type",
   "selectPriceTypeHint": "Click the filter button above to select a price type from the filter panel",
   "productsCount": "Products count: {count}",
   "@productsCount": {
@@ -1558,18 +1441,8 @@
   },
   "categories": "Categories",
   "selectBrandFirst": "Select brand first",
-  "reports": "Reports",
   "reportsSection": "Reports section",
   "tasks": "Tasks",
-  "tradingPoints": "Trading points",
-  "regionsLoadError": "Error loading regions: {error}",
-  "@regionsLoadError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "locationError": "Error getting location: {error}",
   "@locationError": {
     "placeholders": {
@@ -1582,33 +1455,23 @@
   "pleaseSelectRegion": "Please select a region",
   "pleaseSelectTradePointType": "Please select a trade point type",
   "locationDataNotFound": "Location data not found",
-  "noInternetConnection": "No internet connection. Please connect to the internet",
   "all": "All",
   "closeEditMode": "Close edit mode",
-  "editFeatureComingSoon": "Edit feature coming soon",
-  "active": "Active",
-  "inactive": "Inactive",
   "activeClients": "Active clients",
   "activeClientsTooltip": "Clients with active orders today",
-  "cash": "Cash",
   "cashless": "Cashless",
-  "ordersTotal": "Orders total",
-  "fact": "Fact",
-  "visitedTradingPoints": "Visited t.p.",
+  "ordersTotal": "Total orders",
+  "visitedTradingPoints": "Visited trading points",
   "visitedTradingPointsTooltip": "Number of visited trading points",
   "territoryOKB": "Territory OKB",
-  "territoryOKBTooltip": "Coverage of customer base by territory",
-  "today": "Today",
+  "territoryOKBTooltip": "Territory client base coverage",
   "todayMainIndicators": "Today — main indicators",
   "last7Days": "Last 7 days",
   "last30Days": "Last 30 days",
-  "monthlyPlanFactForecast": "Monthly plan / Fact / Forecast",
+  "monthlyPlanFactForecast": "Monthly Plan / Fact / Forecast",
   "monthlyOkbAkb": "Monthly OKB/AKB",
-  "contracts": "Contracts",
-  "contractsNotFound": "Contracts not found",
-  "newContract": "New contract",
+  "contractsNotFound": "No contracts found",
   "contractsListRefreshed": "Contracts list refreshed",
-  "contractsCount": "Contracts count: {count}",
   "@contractsCount": {
     "placeholders": {
       "count": {
@@ -1616,7 +1479,6 @@
       }
     }
   },
-  "contractDetails": "Contract details",
   "contractAmount": "Contract amount",
   "contractDocument": "Contract document",
   "clientOrders": "{name}'s orders",
@@ -1627,7 +1489,6 @@
       }
     }
   },
-  "orderNumber": "Order № {number}",
   "@orderNumber": {
     "placeholders": {
       "number": {
@@ -1635,8 +1496,6 @@
       }
     }
   },
-  "orders": "Orders",
-  "filter": "Filter",
   "filterApplyError": "Error applying filter",
   "main": "Main",
   "contents": "Contents",
@@ -1648,25 +1507,12 @@
   "plannedVisits": "Planned visits",
   "visitEfficiency": "Visit efficiency",
   "lastVisits": "Last visits",
-  "dataLoading": "Data loading...",
+  "dataLoading": "Loading data...",
   "successful": "Successful",
   "orderPlaced": "Order placed",
   "rejected": "Rejected",
   "reportDataRefreshed": "Report data refreshed successfully",
-  "imagesUploadedCount": "{count} images uploaded successfully",
-  "@imagesUploadedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "clientLocationUpdated": "Client location updated successfully",
   "apiKeySaved": "API key saved successfully",
-  "errorOccurred": "An error occurred",
-  "unknownError": "Unknown error",
-  "imageLoadError": "Error loading image",
-  "dataLoadError": "Error loading data",
   "saveError": "Save error: {error}",
   "@saveError": {
     "placeholders": {
@@ -1718,7 +1564,6 @@
   "currentMonth": "Current month",
   "selectReportDatesHint": "Set start and end dates for the report",
   "offlineCannotRefresh": "Cannot refresh data in offline mode",
-  "manageClientImages": "Manage client images",
   "distanceRequirementMessage": "You need to meet the distance requirement to visit {name}.",
   "@distanceRequirementMessage": {
     "placeholders": {
@@ -1739,1046 +1584,13 @@
   "orderStatusInProcess": "In process",
   "orderStatusReturn": "Return",
   "orderStatusExpired": "Expired",
-  "loadingClientImages": "Loading client images...",
-  "clientDataLoadError": "Error loading client data",
-  "visitCompletedFor": "visit completed successfully for",
   "contractStatusActive": "Active",
   "contractStatusExpired": "Expired",
   "contractStatusCancelled": "Cancelled",
-  "contractStatusPending": "Pending",
+  "contractStatusPending": "Not approved",
   "contractStatusSuspended": "Suspended",
   "contractTabAll": "All",
   "appPreparing": "Preparing app...",
-  "permissionsChecking": "Checking permissions...",
-  "permissionsCheckTitle": "Permissions check",
-  "permissionsCheckDescription": "The following permissions are required for the app to work properly:",
-  "permissionFileStorage": "File storage",
-  "permissionFileStorageDesc": "Store data",
-  "permissionLocation": "Location",
-  "permissionLocationDesc": "Map and distance calculation",
-  "permissionCamera": "Camera",
-  "permissionCameraDesc": "Take photos",
-  "permissionMicrophone": "Microphone",
-  "permissionMicrophoneDesc": "Record audio",
-  "permissionNotifications": "Notifications",
-  "permissionNotificationsDesc": "Show messages",
-  "permissionAudio": "Music and audio",
-  "permissionAudioDesc": "Work with audio files",
-  "permissionPhotosVideos": "Photos and videos",
-  "permissionPhotosVideosDesc": "Work with media files",
-  "permissionsLimitedWarning": "Without permissions, the app will work in limited mode.",
-  "startButton": "Start",
-  "permissionStorageTitle": "File storage permission",
-  "permissionStorageDescAndroid13": "Select folder to store app data",
-  "permissionStorageDescOther": "Store and load app data",
-  "permissionStoragePurposeAndroid13": "Select folder to store photos, documents and data",
-  "permissionStoragePurposeOther": "Store photos, documents and data",
-  "permissionLocationTitle": "Location permission",
-  "permissionLocationDescription": "Sort trading points by distance",
-  "permissionLocationPurpose": "Show location on map and calculate distance",
-  "permissionLocationAlwaysTitle": "Always allow location permission",
-  "permissionLocationAlwaysDescription": "Detect location when app is in background",
-  "permissionLocationAlwaysPurpose": "Background service and notifications",
-  "permissionCameraTitle": "Camera permission",
-  "permissionCameraDescription": "Take photos and scan barcodes",
-  "permissionCameraPurpose": "Take photos of products and trading points",
-  "permissionMicrophoneTitle": "Microphone permission",
-  "permissionMicrophoneDescription": "Record audio and audio messages",
-  "permissionMicrophonePurpose": "Voice reminders and audio recordings",
-  "permissionNotificationTitle": "Notification permission",
-  "permissionNotificationDescription": "Show important messages",
-  "permissionNotificationPurpose": "Reminders, news and notifications",
-  "permissionAudioTitle": "Music and audio permission",
-  "permissionAudioDescription": "Work with audio files",
-  "permissionAudioPurpose": "Work with music, audio messages and voice files",
-  "permissionPhotosVideosTitle": "Photos and videos permission",
-  "permissionPhotosVideosDescription": "Work with media files",
-  "permissionPhotosVideosPurpose": "Work with photos, videos and media files",
-  "permissionRequired": "{permission} required",
-  "@permissionRequired": {
-    "placeholders": {
-      "permission": {
-        "type": "String"
-      }
-    }
-  },
-  "permissionRequiredSettings": "{description}. Please grant permission in app settings.",
-  "@permissionRequiredSettings": {
-    "placeholders": {
-      "description": {
-        "type": "String"
-      }
-    }
-  },
-  "laterButton": "Later",
-  "goToSettings": "Go to settings",
-  "permissionPurpose": "Purpose: {purpose}",
-  "@permissionPurpose": {
-    "placeholders": {
-      "purpose": {
-        "type": "String"
-      }
-    }
-  },
-  "allowPermissionQuestion": "Do you want to grant permission?",
-  "grantPermission": "Grant permission",
-  "checking": "Checking...",
-  "initializingSyncEngine": "Initializing sync engine...",
-  "dataSynchronization": "Data Synchronization",
-  "tablesSynced": "{synced} of {total} tables synced",
-  "@tablesSynced": {
-    "placeholders": {
-      "synced": {"type": "int"},
-      "total": {"type": "int"}
-    }
-  },
-  "lastSync": "Last sync: {time}",
-  "@lastSync": {
-    "placeholders": {
-      "time": {"type": "String"}
-    }
-  },
-  "syncing": "Syncing...",
-  "syncAllData": "Sync All Data",
-  "syncAllTablesInOrder": "This will sync all tables in dependency order",
-  "dataGroups": "Data Groups",
-  "backgroundAutoSync": "Background Auto-Sync",
-  "backgroundSyncDescription": "Keep your data fresh even when the app is closed. Requires internet connection.",
-  "syncInterval": "Sync Interval",
-  "customIntervalMinutes": "Custom Interval (Minutes)",
-  "customIntervalNote": "* Custom interval takes priority if set to 60 or more",
-  "clientBalanceCache": "Client Balance Cache",
-  "clientBalancesCached": "{count} client balances cached",
-  "@clientBalancesCached": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "balanceCacheDescription": "Client balance data is stored in local cache. You can clear the cache if the data is outdated.",
-  "clearing": "Clearing...",
-  "clearCache": "Clear Cache",
-  "balanceCacheCleared": "Balance cache cleared",
-  "clearBalanceCacheConfirm": "All client balance data will be deleted. It will be reloaded next time balance is viewed.",
-  "backgroundSyncEnabled": "Background sync enabled",
-  "backgroundSyncDisabled": "Background sync disabled",
-  "minimumIntervalIs60": "Minimum interval is 60 minutes",
-  "justNow": "just now",
-  "minutesAgo": "{minutes}m ago",
-  "@minutesAgo": {
-    "placeholders": {
-      "minutes": {"type": "int"}
-    }
-  },
-  "hoursAgo": "{hours}h ago",
-  "@hoursAgo": {
-    "placeholders": {
-      "hours": {"type": "int"}
-    }
-  },
-  "yesterday": "yesterday",
-  "daysAgo": "{days} days ago",
-  "@daysAgo": {
-    "placeholders": {
-      "days": {"type": "int"}
-    }
-  },
-  "weeksAgo": "{weeks} weeks ago",
-  "@weeksAgo": {
-    "placeholders": {
-      "weeks": {"type": "int"}
-    }
-  },
-  "unknownProduct": "Unknown product",
-  "errorOccurredTitle": "An error occurred",
-  "akbClientReport": "AKB clients report",
-  "akbClients": "AKB clients",
-  "akbPercentage": "AKB percentage",
-  "akbClientsList": "AKB clients list",
-  "details": "Details",
-  "today": "Today",
-  "yesterday": "Yesterday",
-  "daysAgoShort": "{days} days ago",
-  "@daysAgoShort": {
-    "placeholders": {
-      "days": {"type": "int"}
-    }
-  },
-
-  "locationPermissionNeeded": "Location permission required",
-  "locationPermissionRequestMessage": "Your location is needed to sort trading points by distance and display on the map. Do you allow?",
-  "later": "Later",
-  "grantPermission": "Grant permission",
-  "locationSettingsMessage": "Location permission is required for sorting by distance and map functions. Please grant location permission from app settings.",
-  "goToSettings": "Go to settings",
-  "enableLocationServicesMessage": "Location services must be enabled for sorting by distance and map functions. Please enable location services.",
-  "locationSettings": "Location settings",
-  
-  "reportDataRefreshed": "Report data refreshed successfully",
-  "dataRefreshError": "Error refreshing data",
-  "dateFromTo": "{start} to {end}",
-  "@dateFromTo": {
-    "placeholders": {
-      "start": {"type": "String"},
-      "end": {"type": "String"}
-    }
-  },
-  "monthlyOkbAkb": "Monthly OKB/AKB",
-  "monthlyOKB": "Monthly OKB",
-  "monthlyPlanFactForecast": "Monthly Plan / Fact / Forecast",
-  "todayMainIndicators": "Today — main indicators",
-  "territoryOKB": "Territory OKB",
-  "territoryOKBTooltip": "Territory client base coverage",
-  "visitedTradingPoints": "Visited trading points",
-  "visitedTradingPointsTooltip": "Number of visited trading points",
-  "activeClients": "Active clients",
-  "activeClientsTooltip": "Clients with active orders today",
-  "cashless": "Cashless",
-  "ordersTotal": "Total orders",
-  "akbByRegions": "AKB by regions",
-  "akbByProductCategories": "AKB by product categories",
-  "tradingPointAbbr": "t.p.",
-  "footerNoteText": "Data imported from Telegram report. You can change the text to switch to a new source — UI will be updated.",
-  "reportPeriod": "Report period",
-
-  "syncStepCheckingUser": "Checking user...",
-  "syncStepClearingData": "Clearing old data...",
-  "syncStepSyncingKpi": "Loading KPI data...",
-  "syncStepSyncingClients": "Loading clients list...",
-  "syncStepSyncingProducts": "Loading products...",
-  "syncStepSyncingPriceTypes": "Loading price types...",
-  "syncStepSyncingBusinessRegions": "Loading business regions...",
-  "syncStepSyncingUserWarehouses": "Loading user warehouses...",
-  "syncStepSyncingProductPrices": "Loading product prices...",
-  "syncStepSyncingProductBalances": "Loading product balances...",
-  "syncStepSyncingClientContracts": "Loading client contracts...",
-  "syncStepUpdatingClientContractStatus": "Updating client contract statuses...",
-  "syncStepSyncingContractTypes": "Loading contract types...",
-  "syncStepSyncingDistrictContracting": "Loading districts...",
-  "syncStepSyncingOrderStatuses": "Loading order statuses...",
-  "syncStepSyncingOrders": "Loading orders...",
-  "syncStepSyncingSalesReqPermissions": "Loading agent permissions...",
-  "syncStepSyncingPlannedRoutes": "Loading planned routes...",
-  "syncStepSyncingUserOrganizations": "Loading user organizations...",
-  "syncStepSyncingUserProjects": "Loading user projects...",
-  "syncStepSyncingPromotions": "Loading promotions...",
-  "syncStepSyncingMapTokens": "Loading map tokens...",
-  "syncStepSyncingReports": "Loading reports...",
-  "syncStepSyncingThumbnails": "Loading images...",
-  "syncStepCompleted": "Data updated!",
-  "syncStepError": "An error occurred",
-  "syncSuccessTitle": "Success!",
-  "syncUpdatingTitle": "Updating data...",
-  "syncSkippedRecent": "Skipped (recently synced)",
-  "syncBackgroundContinues": "Sync continues in background",
-  "paymentRequiredError": "Payment required. Please check your subscription.",
-  "authenticationError": "Authentication error. Please login again.",
-  "accessForbiddenError": "Access forbidden. You don't have permission.",
-  "serviceNotFoundError": "Service not found. Please contact support.",
-  "serverUnavailableError": "Server unavailable. Please try again later.",
-  "dataUpdateError": "Error updating data. Using cached data.",
-
-  "syncStatusErrors": "Errors",
-  "syncStatusSynced": "Synced",
-  "syncStatusPartial": "Partial",
-  "syncStatusNotSynced": "Not synced",
-  "tablesOfTotalSynced": "{synced} of {total} tables synced",
-  "@tablesOfTotalSynced": {
-    "placeholders": {
-      "synced": {"type": "int"},
-      "total": {"type": "int"}
-    }
-  },
-  "syncEntireGroup": "Sync Entire Group",
-  "tablesInThisGroup": "Tables in this group",
-  "justNow": "Just now",
-  "minutesAgo": "{minutes}m ago",
-  "@minutesAgo": {
-    "placeholders": {
-      "minutes": {"type": "int"}
-    }
-  },
-  "hoursAgo": "{hours}h ago",
-  "@hoursAgo": {
-    "placeholders": {
-      "hours": {"type": "int"}
-    }
-  },
-  "yesterdayText": "Yesterday",
-  "daysAgo": "{days} days ago",
-  "@daysAgo": {
-    "placeholders": {
-      "days": {"type": "int"}
-    }
-  },
-  "weeksAgo": "{weeks} weeks ago",
-  "@weeksAgo": {
-    "placeholders": {
-      "weeks": {"type": "int"}
-    }
-  },
-
-  "neverSynced": "Never synced",
-  "tableEmpty": "Table is empty",
-  "recordsCount": "{count} records",
-  "@recordsCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "lastSyncLabel": "Last sync: {time}",
-  "@lastSyncLabel": {
-    "placeholders": {
-      "time": {"type": "String"}
-    }
-  },
-  "syncTable": "Sync table",
-  "dependencies": "Dependencies",
-  "willCascadeTo": "Will cascade to",
-  "tableOnly": "Table only",
-  "withDependencies": "With dependencies",
-  "syncWithDependencies": "Sync with dependencies",
-  "syncTableOnly": "Sync table only",
-  "recommended": "Recommended",
-  "syncWarning": "May fail if dependencies not synced",
-
-  "tradingPointsLabel": "Trading points",
-  "tradingPointsNotAvailable": "Trading points not available",
-  "dateRangeLabel": "Date range",
-  "allDatesLabel": "All dates",
-  "clearLabel": "Clear",
-  "statusLabel": "Status",
-  "statusAll": "All",
-  "statusActive": "Active",
-  "statusInactive": "Inactive",
-  "statusExpired": "Expired",
-  "statusPending": "Pending",
-
-  "contractTabAll": "All",
-  "contractStatusActive": "Active",
-  "contractStatusExpired": "Expired",
-  "contractStatusSuspended": "Suspended",
-  "contractStatusPending": "Not approved",
-  "contractsNotFound": "No contracts found",
-  "contractsCount": "{count} contracts",
-  "@contractsCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "contractsListRefreshed": "Contracts list refreshed",
-  "filterApplyError": "Error applying filter",
-  "clientContractsCount": "{name} client's contracts ({count})",
-  "@clientContractsCount": {
-    "placeholders": {
-      "name": {"type": "String"},
-      "count": {"type": "int"}
-    }
-  },
-  "refreshError": "Refresh error: {error}",
-  "@refreshError": {
-    "placeholders": {
-      "error": {"type": "String"}
-    }
-  },
-
-  "dataTab": "Details",
-  "documentTab": "Document",
-  "clientLabel": "Client: {name}",
-  "@clientLabel": {
-    "placeholders": {
-      "name": {"type": "String"}
-    }
-  },
-  "startDateLabel": "Start date",
-  "endDateLabel": "End date",
-  "unknownDate": "Unknown",
-  "contractAmount": "Contract amount",
-  "statusAndType": "Status and type",
-  "typeLabel2": "Type",
-  "additionalInfo": "Additional information",
-  "certificateLimited": "Certificate limited",
-  "yesText": "Yes",
-  "noText": "No",
-  "referenceNumberLabel": "Reference number",
-  "certificateNumberLabel": "Certificate number",
-  "passportNumberLabel": "Passport number",
-  "districtCodeLabel": "District code",
-  "districtNameLabel": "District name",
-  "projectCodeLabel": "Project code",
-  "projectFieldLabel": "Project",
-  "selectProject": "Select project",
-  "projectRequired": "Project selection is required",
-  "projectInfoTooltip": "Contract number will be generated based on the selected project's numbering system",
-  "projectInfoSection": "Project information",
-  "editFeatureComingSoon": "Edit feature coming soon",
-  "contractDocument": "Contract document",
-  "creditLabel": "Credit",
-  "fullPaymentLabel": "100% payment",
-  "uzbekLanguage": "Uzbek",
-  "russianLanguage": "Russian",
-  "sendPdfLabel": "Send PDF",
-  "printFeatureComingSoon": "Print feature coming soon",
-  "print": "Print",
-  "pdfPreparing": "Preparing PDF...",
-  "tapToReveal": "Tap",
-
-  "warehousesTitle": "Warehouses",
-  "warehousesNotFound": "Warehouses not found",
-  "warehousesCount": "Warehouses count: {count}",
-  "@warehousesCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "warehouseDataLoadError": "Error loading warehouse data: {error}",
-  "@warehouseDataLoadError": {
-    "placeholders": {
-      "error": {"type": "String"}
-    }
-  },
-  "organizationLabel": "Organization",
-  "codeLabel2": "Code",
-  "createdLabel": "Created: {date}",
-  "@createdLabel": {
-    "placeholders": {
-      "date": {"type": "String"}
-    }
-  },
-  "updatedLabel": "Updated: {date}",
-  "@updatedLabel": {
-    "placeholders": {
-      "date": {"type": "String"}
-    }
-  },
-
-  "visitCompletedToday": "Visit completed today",
-  "visitExpectedToday": "Visit expected today",
-  "visitNotPlannedToday": "Visit not planned today",
-  "visitOrderLabel": "Visit order: {number}",
-  "@visitOrderLabel": {
-    "placeholders": {
-      "number": {"type": "int"}
-    }
-  },
-
-  "selectClientTitle": "Select client",
-  "clientsAvailable": "{count} clients available",
-  "@clientsAvailable": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "searchByNameCodeInn": "Name, code, INN, phone, type...",
-  "searchInCyrillicOrLatin": "Search in Cyrillic or Latin",
-  "foundCount": "{count} found",
-  "@foundCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "clientNotFound": "Client not found",
-  "tryDifferentSearch": "Try a different search term",
-
-  "selectDateRange": "Select date range",
-  "confirmButton": "Confirm",
-  "cancelButton": "Cancel",
-  "selectedPeriod": "Selected period",
-
-  "newContractTitle": "New contract",
-  "fillAllFields": "Fill in all fields",
-  "contractTypesLoadError": "Error loading contract types",
-  "pleaseSelectClient": "Please select a client",
-  "pleaseSelectContractType": "Please select a contract type",
-  "contractCreatedSuccessfully": "Contract created successfully",
-  "contractCreationError": "Error creating contract",
-  "documentInfoSection": "Document information",
-  "regionInfoSection": "Region information",
-  "referenceNumberField": "Reference number",
-  "enterNumberHint": "Enter number",
-  "termLabel": "Term",
-  "certificateNumberField": "Certificate number",
-  "certificateUnlimitedField": "Certificate unlimited",
-  "passportNumberField": "Passport number",
-  "xmlRequestLabel": "XML Request",
-  "xmlCopied": "XML copied",
-
-  "priceTypeLabel": "Price type",
-  "clientCodeLabel": "Client code",
-  "organizationCodeLabel": "Organization code",
-  "courierLabel": "Courier",
-  "vehicleLabel": "Vehicle",
-  "licensePlateLabel": "License plate",
-  "supervisorCommentLabel": "Supervisor comment",
-  "logistCommentLabel": "Logist comment",
-  "agentCommentLabel": "Agent comment",
-  "noProductsInOrder": "No products in order",
-  "productListEmpty": "Product list is empty",
-  "totalProductsLabel": "Total products",
-  "productNameLabel": "Product name",
-  "articleLabel": "Article",
-  "quantityLabel": "Quantity",
-  "priceLabel": "Price",
-  "amountLabel": "Amount",
-  "clientNameLabel": "Client name",
-  "orderNumberLabel": "Order number",
-  "orderDateLabel": "Order date",
-  "orderTotalLabel": "Order total",
-  "mainStatusLabel": "Main status",
-  "statusCodeLabel": "Status code",
-
-  "networkErrorMessage": "Network error. Check your internet connection.",
-  "serverTimeoutMessage": "Server connection timed out.",
-  "orderDetailsNotFound": "Order details not found.",
-  "orderDetailsLoadError": "Error loading order details.",
-  "orderDetailsTitle": "Order details",
-  "errorOccurredTitle": "An error occurred",
-  "unknownProduct": "Unknown product",
-  "main": "Main",
-  "contents": "Contents",
-
-  "all": "All",
-  "orderStatusDelivered": "Delivered",
-  "orderStatusInProcess": "In process",
-  "orderStatusReturn": "Return",
-  "orderStatusExpired": "Expired",
-  "clientOrders": "{name}'s orders",
-  "@clientOrders": {
-    "placeholders": {
-      "name": {"type": "String"}
-    }
-  },
-  "dataLoading": "Loading data...",
-  "dataLoadFailed": "Data loading failed: {error}",
-  "@dataLoadFailed": {
-    "placeholders": {
-      "error": {"type": "String"}
-    }
-  },
-  "categories": "Categories",
-  "brands": "Brands",
-
-  "fileStoragePermission": "File storage permission",
-  "fileStorageDescriptionAndroid13": "Select folder to save app data",
-  "fileStorageDescription": "To save and load app data",
-  "fileStoragePurposeAndroid13": "Select folder to save images, documents and data",
-  "fileStoragePurpose": "Save images, documents and data",
-  "locationPermissionTitle": "Location permission",
-  "locationPermissionDescription": "To sort trading points by distance",
-  "locationPermissionPurpose": "Show location on map and calculate distance",
-  "alwaysLocationPermissionTitle": "Always location permission",
-  "alwaysLocationPermissionDescription": "To detect location when app is in background",
-  "alwaysLocationPermissionPurpose": "Background service and notifications",
-  "cameraPermissionTitle": "Camera permission",
-  "cameraPermissionDescription": "To take photos and scan barcodes",
-  "cameraPermissionPurpose": "Take photos of products and trading points",
-  "microphonePermissionTitle": "Microphone permission",
-  "microphonePermissionDescription": "For voice recording and audio messages",
-  "microphonePermissionPurpose": "Voice notes and audio records",
-  "notificationPermissionTitle": "Notification permission",
-  "notificationPermissionDescription": "To show important messages",
-  "notificationPermissionPurpose": "Reminders, news and notifications",
-  "audioPermissionTitle": "Music and audio permission",
-  "audioPermissionDescription": "To work with audio files",
-  "audioPermissionPurpose": "Music, audio messages and voice files",
-  "photosAndVideosPermissionTitle": "Photos and videos permission",
-  "photosAndVideosPermissionDescription": "To work with media files",
-  "photosAndVideosPermissionPurpose": "Work with photos, videos and media files",
-  "permissionRequiredMessage": "{description}. Please grant permission in app settings.",
-  "@permissionRequiredMessage": {
-    "placeholders": {
-      "description": {"type": "String"}
-    }
-  },
-  "laterButton": "Later",
-  "goToSettingsButton": "Go to settings",
-  "grantPermissionButton": "Grant permission",
-  "checkingPermission": "Checking...",
-  "permissionCheckTitle": "Permission check",
-  "permissionCheckMessage": "The app needs the following permissions to work properly:",
-  "permissionFileStorage": "File storage",
-  "permissionLocation": "Location",
-  "permissionCamera": "Camera",
-  "permissionMicrophone": "Microphone",
-  "permissionNotifications": "Notifications",
-  "permissionSaveData": "Save data",
-  "permissionMapDistance": "Map and distance calculation",
-  "permissionTakePhotos": "Take photos",
-  "permissionRecordVoice": "Record voice",
-  "permissionShowMessages": "Show messages",
-  "permissionLimitedMode": "Without permissions the app will work in limited mode.",
-  "startButton": "Start",
-  "purposeLabel": "Purpose: {purpose}",
-  "@purposeLabel": {
-    "placeholders": {
-      "purpose": {"type": "String"}
-    }
-  },
-  "grantPermissionQuestion": "Do you want to grant permission?",
-
-  "serviceInitError": "Error initializing services",
-  "balanceServiceNotAvailable": "Balance service not available",
-  "clientInnNotAvailable": "Client INN not available",
-  "balanceLoadError": "Error loading balance",
-  "clientIsDebtor": "Client is debtor. Total debt: {amount} sum",
-  "@clientIsDebtor": {
-    "placeholders": {
-      "amount": {"type": "String"}
-    }
-  },
-  "clientHasOverpayment": "Client has overpaid. Overpayment: {amount} sum",
-  "@clientHasOverpayment": {
-    "placeholders": {
-      "amount": {"type": "String"}
-    }
-  },
-  "clientBalanceZero": "Client balance is zero.",
-  "clientBalance": "Client balance",
-  "errorOccurred": "Error occurred",
-  "balanceDataNotFound": "Balance data not found",
-  "updatedAtTime": "Updated: {time}",
-  "@updatedAtTime": {
-    "placeholders": {
-      "time": {"type": "String"}
-    }
-  },
-  "clientDebtorStatus": "Client is debtor",
-  "overpaymentStatus": "Overpayment",
-  "balanceZeroStatus": "Balance is zero",
-  "unpaidOrders": "{count} unpaid",
-  "@unpaidOrders": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "overdueOrders": "{count} overdue",
-  "@overdueOrders": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "tablesOfTotalSynced": "{synced} of {total} tables synced",
-  "@tablesOfTotalSynced": {
-    "placeholders": {
-      "synced": {"type": "int"},
-      "total": {"type": "int"}
-    }
-  },
-  "syncStatusErrors": "Errors",
-  "syncStatusSynced": "Synced",
-  "syncStatusPartial": "Partial",
-  "syncStatusNotSynced": "Not synced",
-  "justNow": "Just now",
-  "minutesAgo": "{minutes}m ago",
-  "@minutesAgo": {
-    "placeholders": {
-      "minutes": {"type": "int"}
-    }
-  },
-  "hoursAgo": "{hours}h ago",
-  "@hoursAgo": {
-    "placeholders": {
-      "hours": {"type": "int"}
-    }
-  },
-  "daysAgo": "{days} days ago",
-  "@daysAgo": {
-    "placeholders": {
-      "days": {"type": "int"}
-    }
-  },
-  "weeksAgo": "{weeks} weeks ago",
-  "@weeksAgo": {
-    "placeholders": {
-      "weeks": {"type": "int"}
-    }
-  },
-  "paymentRequiredError": "Payment required. Please check your subscription.",
-  "authenticationError": "Authentication error. Please login again.",
-  "accessForbiddenError": "Access forbidden. You don't have permission.",
-  "serviceNotFoundError": "Service not found. Please contact support.",
-  "serverUnavailableError": "Server unavailable. Please try again later.",
-  "dataUpdateError": "Error updating data. Using cached data.",
-  "syncSuccessTitle": "Success!",
-  "syncUpdatingTitle": "Updating data...",
-  "clientInnNotFound": "Client INN not found",
-  "balanceUpdated": "Updated",
-  "balanceIsZero": "Balance is zero",
-  "noBalanceData": "Balance data not found",
-  "balanceStatus": "Balance status",
-  "totalDebt": "Total debt",
-  "refreshError": "Refresh error",
-  "noDataAvailable": "No data available",
-  "paidLabel": "Paid",
-  "debtLabelChart": "Debt",
-  "noContractsFound": "No contracts found",
-  "paymentAmount": "Payment: {amount}",
-  "@paymentAmount": {
-    "placeholders": {
-      "amount": {"type": "String"}
-    }
-  },
-  "debtAmount": "Debt: {amount}",
-  "@debtAmount": {
-    "placeholders": {
-      "amount": {"type": "String"}
-    }
-  },
-  "contractDialog": "Contract",
-  "codeLabel": "Code: {code}",
-  "@codeLabel": {
-    "placeholders": {
-      "code": {"type": "String"}
-    }
-  },
-  "idLabel": "ID: {id}",
-  "@idLabel": {
-    "placeholders": {
-      "id": {"type": "String"}
-    }
-  },
-  "projectLabel": "Project: {project}",
-  "@projectLabel": {
-    "placeholders": {
-      "project": {"type": "String"}
-    }
-  },
-  "closeButton": "Close",
-  "noOrdersFound": "No orders found",
-  "countItems": "{count} items",
-  "@countItems": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "partialLabel": "Partial",
-  "unpaidLabel": "Unpaid",
-  "savingStatus": "Saving...",
-  "unsavedChangesStatus": "Unsaved changes",
-  "offlineStatus": "Offline",
-  "pendingSyncCount": "{count} pending sync",
-  "@pendingSyncCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "allSyncedStatus": "All synced",
-  "autoSaving": "Auto-saving...",
-  "savingStepData": "Saving step data...",
-  "visitProgress": "Visit Progress",
-  "mandatoryLabel": "Mandatory",
-  "optionalLabel": "Optional",
-  "currentLabel": "Current",
-  "completedLabel": "Completed",
-  "skippedLabel": "Skipped",
-  "notesLabel": "Notes: {notes}",
-  "@notesLabel": {
-    "placeholders": {
-      "notes": {"type": "String"}
-    }
-  },
-  "reasonLabel": "Reason: {reason}",
-  "@reasonLabel": {
-    "placeholders": {
-      "reason": {"type": "String"}
-    }
-  },
-  "skipStep": "Skip Step",
-  "completeStep": "Complete Step",
-  "previousStepsMustBeCompleted": "Previous steps must be completed",
-  "stepCompleted": "{stepName} completed",
-  "@stepCompleted": {
-    "placeholders": {
-      "stepName": {"type": "String"}
-    }
-  },
-  "confirmCompletion": "Confirm completion",
-  "enterNotesOptional": "Enter notes (optional)",
-  "stepSkip": "{stepName} skip",
-  "@stepSkip": {
-    "placeholders": {
-      "stepName": {"type": "String"}
-    }
-  },
-  "enterSkipReason": "Enter skip reason",
-  "reasonHint": "Reason",
-  "confirmSkip": "Confirm Skip",
-  "syncStatusIdle": "Waiting",
-  "syncStatusProducts": "Syncing products",
-  "syncStatusBalances": "Syncing balances",
-  "syncStatusOrders": "Syncing orders",
-  "syncStatusCompleted": "Sync completed",
-  "syncStatusError": "Sync error",
-  "syncInProgress": "Syncing...",
-  "syncStarting": "Starting sync...",
-  "weekdayMon": "Mo",
-  "weekdayTue": "Tu",
-  "weekdayWed": "We",
-  "weekdayThu": "Th",
-  "weekdayFri": "Fr",
-  "weekdaySat": "Sa",
-  "weekdaySun": "Su",
-  "copyLabel": "Copy",
-  "reloadLabel": "Reload",
-  "createContract": "Create contract",
-  "refreshContractTypesAndRegions": "Refresh contract types and regions",
-  "selectContractType": "Select contract type",
-  "contractTypesNotFound": "Contract types not found",
-  "loading": "Loading...",
-  "creating": "Creating...",
-  "orderStatusNew": "New",
-  "orderStatusConfirmed": "Confirmed",
-  "orderStatusDelivering": "In delivery",
-  "orderStatusDelivered": "Delivered",
-  "orderStatusReturnRequested": "Return requested",
-  "orderStatusCancelled": "Cancelled",
-  "orderStatusDeliveredUnpaid": "Delivered, unpaid",
-  "orderStatusDeliveredPartiallyPaid": "Delivered, partially paid",
-  "orderStatusExpired": "Expired",
-  "orderStatusUnknown": "Unknown",
-  "filterTooltip": "Filter",
-  "fullscreenTooltip": "Fullscreen",
-  "refusalReasonClientNotAvailable": "Client not available",
-  "refusalReasonNoTime": "No time",
-  "refusalReasonProductNotNeeded": "Product not needed",
-  "refusalReasonPriceNotSuitable": "Price not suitable",
-  "refusalReasonWorksWithOtherSupplier": "Works with other supplier",
-  "refusalReasonOther": "Other reason",
-  "apiKeyStatusConfigured": "configured",
-  "apiKeyStatusNotConfigured": "Not configured",
-  "visited": "Visited",
-  "plannedForToday": "Planned for today",
-  "additionalInformation": "Additional Information",
-  "locationInformation": "Location Information",
-  "businessInformation": "Business Information",
-  "apiKeyStatusNotRequired": "key not required",
-  "apiKeyStatusError": "error",
-  "fakturaFetchCompanyData": "Load",
-  "fakturaRefreshCompanyData": "Refresh",
-  "fakturaEnterInn": "Please enter TIN number",
-  "fakturaInvalidInnFormat": "Invalid TIN format. Must be 9 or 14 digits",
-  "fakturaCompanyDataLoaded": "Company data successfully loaded: {companyName}",
-  "@fakturaCompanyDataLoaded": {
-    "placeholders": {
-      "companyName": {
-        "type": "String"
-      }
-    }
-  },
-  "fakturaRegionNotFound": "Region not found: {regionName}. Please select manually",
-  "@fakturaRegionNotFound": {
-    "placeholders": {
-      "regionName": {
-        "type": "String"
-      }
-    }
-  },
-  "fakturaAuthError": "Authentication error",
-  "fakturaAuthErrorRetry": "Authentication error. Please try again",
-  "fakturaCompanyNotFound": "Company not found. Check TIN number",
-  "fakturaInvalidRequest": "Invalid request. Check TIN format",
-  "fakturaServerError": "Server error: {statusCode}",
-  "@fakturaServerError": {
-    "placeholders": {
-      "statusCode": {
-        "type": "String"
-      }
-    }
-  },
-  "fakturaInnEmpty": "TIN cannot be empty",
-  "fakturaTokenRefreshError": "Token refresh error",
-  "reportMenuTitle": "Reports menu",
-  "reportAlreadySent": "Report has already been sent to your Telegram group. Do you want to send it again?",
-  "reportSentSuccess": "Report sent",
-  "resendReport": "Resend",
-  "toggleHeaderShow": "Show header",
-  "toggleHeaderHide": "Hide header",
-  "periodNotSelected": "Period not selected",
-  "userDataNotFound": "User data not found",
-  "dataSyncing": "Syncing data...",
-  "reportsUpdated": "Reports updated",
-  "syncError": "Sync error: {error}",
-  "@syncError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "applyButton": "Apply",
-  "reportMainEvyap": "Main reports(for EVYAP)",
-  "reportMainEvyapDesc": "KPI indicators and main statistics",
-  "reportVisits": "Visits report",
-  "reportVisitsDesc": "Information about visits to clients",
-  "reportAkbClient": "AKB Client",
-  "reportAkbClientDesc": "Report on AKB clients",
-  "reportAkbSum": "AKB Sum",
-  "reportAkbSumDesc": "Financial report on AKB amounts",
-  "reportAkbProduct": "AKB Product",
-  "reportAkbProductDesc": "Report on AKB products",
-  "reportCategory": "Category reports",
-  "reportCategoryDesc": "Sales analysis by categories",
-  "reportMonthlyResults": "Monthly results",
-  "reportMonthlyResultsDesc": "Monthly sales results and trends",
-  "reportMonthlyKpi": "Monthly KPI (salary)",
-  "reportMonthlyKpiDesc": "Monthly KPI completion and salary report",
-  "reportsSection": "Reports section",
-  "akbAmount": "AKB amount",
-  "akbPlan": "AKB plan",
-  "akbProducts": "AKB products",
-  "productTypes": "Product types",
-  "categoriesCount": "Categories count",
-  "topSelling": "Top selling",
-  "monthlySales": "Monthly sales",
-  "monthlyGrowth": "Monthly growth",
-  "kpiCompletion": "KPI completion",
-  "salaryAmount": "Salary amount",
-  "scannerTitle": "Document Scanner",
-  "scannerSubtitle": "Scan certificate to auto-fill form",
-  "scannerTakePhoto": "Take Photo",
-  "scannerChoosePhoto": "Gallery",
-  "scannerProcessing": "Analyzing document...",
-  "scannerPleaseWait": "AI is extracting data from the image",
-  "scannerDataExtracted": "{count} fields extracted successfully",
-  "@scannerDataExtracted": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "scannerCameraError": "Failed to access camera. Please check permissions",
-  "scannerGalleryError": "Failed to access gallery. Please check permissions",
-  "scannerImageEmpty": "Selected image is empty or corrupted",
-  "scannerNetworkError": "Network error. Please check your internet connection",
-  "scannerAuthError": "AI service authentication failed. Please try again",
-  "scannerRateLimitError": "Too many requests. Please wait a moment",
-  "scannerNoDataExtracted": "Could not extract data from the document. Please try a clearer image",
-  "scannerParseError": "Failed to process AI response. Please try again",
-  "scannerUnknownError": "An unexpected error occurred. Please try again",
-  "scannerFormUpdated": "Form updated with scanned data",
-  "scannerVerifyingWithFaktura": "Verifying data with Faktura.uz...",
-  "scannerDataVerified": "Data verified and updated from Faktura.uz",
-  "scannerDataMismatch": "{count} fields updated from Faktura.uz",
-  "@scannerDataMismatch": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "fakturaNetworkError": "Network error while connecting to Faktura.uz",
-  "faqPageTitle": "Regulations",
-  "faqSupervisorSubtitle": "Supervisor duties",
-  "faqSalesRepSubtitle": "Sales representative regulations",
-  "faqRoleSupervisor": "Supervisor",
-  "faqRoleSalesRep": "Sales Representative",
-  "faqSectionsCount": "sections",
-  "faqSvGpsTitle": "GPS Monitoring",
-  "faqSvGpsMorningTitle": "Morning report (by 9:15)",
-  "faqSvGpsMorningContent": "Daily by 9:15 AM, the supervisor must send a report to the work group about the status of sales representatives' route departure.",
-  "faqSvGpsEveningTitle": "Evening report (by 18:00)",
-  "faqSvGpsEveningContent": "By 18:00 — the final GPS report is sent at the end of the work day.",
-  "faqSvSalesTitle": "Sales Report",
-  "faqSvSalesInterimTitle": "Interim report (by 13:00)",
-  "faqSvSalesInterimContent": "By 13:00 — an interim report is sent with the sum and number of collected orders.",
-  "faqSvSalesFinalTitle": "Final report (by 18:00)",
-  "faqSvSalesFinalContent": "By 18:00 — final report including: total sales for the day, number of orders, departure plan and forecast for the next day, returns report.",
-  "faqSvKpiTitle": "KPI and Planning",
-  "faqSvKpiMondayTitle": "Office day (Monday)",
-  "faqSvKpiMondayContent": "Every Monday is an office day.",
-  "faqSvKpiAnalysisTitle": "Analysis and tasks",
-  "faqSvKpiAnalysisContent": "Weekly results are summarized, KPI analysis is conducted, and tasks for the current week are set.",
-  "faqSvTravelTitle": "Travel Plans",
-  "faqSvTravelMonthlyTitle": "Monthly planning",
-  "faqSvTravelMonthlyContent": "Monthly, on the 30th-31st, supervisors send individual Travel Plans for the next month to the regional manager.",
-  "faqSvTimeTitle": "Time Tracking",
-  "faqSvTimeWeeklyTitle": "Weekly timesheet",
-  "faqSvTimeWeeklyContent": "The timesheet is compiled weekly (on Mondays) indicating the number of days worked by sales representatives.",
-  "faqSvTimeMonthlyTitle": "Monthly timesheet",
-  "faqSvTimeMonthlyContent": "The final monthly timesheet is provided on the last day of the calendar month.",
-  "faqSvSalaryTitle": "Salary and KPI",
-  "faqSvSalaryKpiTitle": "KPI summary",
-  "faqSvSalaryKpiContent": "Monthly, from the 1st to 3rd (depending on weekends), the supervisor must summarize KPI results for the entire month.",
-  "faqSvSalaryCalcTitle": "Salary calculation",
-  "faqSvSalaryCalcContent": "Prepare and submit salary calculations for EVYAP sales representatives based on achieved indicators.",
-  "faqTpGeneralTitle": "General Provisions",
-  "faqTpGeneralPurposeTitle": "Document purpose",
-  "faqTpGeneralPurposeContent": "This regulation establishes rules for organizing and performing duties by sales representatives. The goal is to ensure discipline, transparency and efficiency.",
-  "faqTpHoursTitle": "Working Hours and Route",
-  "faqTpHoursScheduleTitle": "Work schedule",
-  "faqTpHoursScheduleContent": "The work day starts at 9:00 and ends at 18:00.",
-  "faqTpHoursRouteTitle": "Route departure",
-  "faqTpHoursRouteContent": "The sales representative must leave for the route on time according to the approved schedule.",
-  "faqTpHoursDelayTitle": "Delays",
-  "faqTpHoursDelayContent": "Being more than 15 minutes late without a valid reason is recorded as a violation of labor discipline.",
-  "faqTpVisitsTitle": "Trade Point Visits",
-  "faqTpVisitsDailyTitle": "Daily visits",
-  "faqTpVisitsDailyContent": "Each sales representative must visit all trade points daily according to the route.",
-  "faqTpVisitsChangesTitle": "Route changes",
-  "faqTpVisitsChangesContent": "In case of route changes (client absence, point closure, etc.), notify the work chat with the reason.",
-  "faqTpVisitsPhotoTitle": "Photo/video report",
-  "faqTpVisitsPhotoContent": "For each point, a photo or video report must be provided (display, activity, order).",
-  "faqTpVideoTitle": "Video Reports (Telegram)",
-  "faqTpVideoMorningTitle": "Morning video report",
-  "faqTpVideoMorningContent": "At the start of the work day (by 9:30), the sales representative must send a video message to the Telegram chat.",
-  "faqTpVideoDuringTitle": "Reports during the day",
-  "faqTpVideoDuringContent": "During the day, sending short video messages from trade points is encouraged — demonstrating displays, new products or activities.",
-  "faqTpVideoEndTitle": "End of day video report",
-  "faqTpVideoEndContent": "At the end of the day, a brief video report with results is recommended.",
-  "faqTpReportingTitle": "Reporting",
-  "faqTpReportingRealTimeTitle": "Real-time submission",
-  "faqTpReportingRealTimeContent": "All photos, videos and comments on the route must be sent at the time of the visit.",
-  "faqTpReportingConsequenceTitle": "Non-compliance consequences",
-  "faqTpReportingConsequenceContent": "Failure to submit daily reports is considered as not going on the route or lack of activity.",
-  "faqTpResponsibilityTitle": "Responsibility",
-  "faqTpResponsibilityRulesTitle": "Disciplinary responsibility",
-  "faqTpResponsibilityRulesContent": "Non-compliance with these regulations entails disciplinary responsibility in accordance with company internal rules.",
-  "faqTpResponsibilityMeasuresTitle": "Penalty measures",
-  "faqTpResponsibilityMeasuresContent": "Responsibility measures: warning → reprimand → bonus deduction.",
-  "productImageLoading": "Loading image...",
-  "productImageError": "Failed to load image",
-  "productNoImage": "No image available",
-  "productImageSyncProgress": "Syncing images: {current}/{total}",
-  "@productImageSyncProgress": {
-    "placeholders": {
-      "current": {"type": "int"},
-      "total": {"type": "int"}
-    }
-  },
-  "productImageSyncComplete": "Image sync complete",
-  "productImageSyncFailed": "Image sync failed",
-  "productImageTapToView": "Tap to view full image",
-  "productImageCount": "{count} images",
-  "@productImageCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "productBasicInfo": "Basic Information",
-  "productPricingInfo": "Pricing Information",
-  "productStockInfo": "Stock Information",
-  "productAdditionalInfo": "Additional Information",
-  "productCode": "Product Code",
-  "productVendorCode": "Article",
-  "productBarcode": "Barcode",
-  "productCategory": "Category",
-  "productSeries": "Series",
-  "productPriceType": "Price Type",
-  "productPrice": "Price",
-  "productPriceValidFrom": "Valid From",
-  "productPriceValidTo": "Valid To",
-  "productWarehouse": "Warehouse",
-  "productStock": "Stock",
-  "productQuantity": "Total Quantity",
-  "productReserved": "Reserved",
-  "productAvailable": "Available",
-  "productUnit": "Unit",
-  "productWeight": "Weight",
-  "productCapacity": "Capacity",
-  "productBrand": "Brand",
-  "productProject": "Project Code",
-  "copiedToClipboard": "Copied to clipboard",
-  "productInfoCopied": "Product information copied",
   "permissionsChecking": "Checking permissions...",
   "permissionsCheckTitle": "Permissions Check",
   "permissionsCheckDescription": "The following permissions are required for the app to work properly:",
@@ -2851,11 +1663,682 @@
     }
   },
   "allowPermissionQuestion": "Would you like to grant permission?",
-  "later": "Later",
   "grantPermission": "Grant Permission",
   "checking": "Checking...",
-
-  "pullToRefresh": "Pull to refresh",
+  "initializingSyncEngine": "Initializing sync engine...",
+  "dataSynchronization": "Data Synchronization",
+  "tablesSynced": "{synced} of {total} tables synced",
+  "@tablesSynced": {
+    "placeholders": {
+      "synced": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@lastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncAllData": "Sync All Data",
+  "syncAllTablesInOrder": "This will sync all tables in dependency order",
+  "dataGroups": "Data Groups",
+  "backgroundAutoSync": "Background Auto-Sync",
+  "backgroundSyncDescription": "Keep your data fresh even when the app is closed. Requires internet connection.",
+  "syncInterval": "Sync Interval",
+  "customIntervalNote": "* Custom interval takes priority if set to 60 or more",
+  "clientBalanceCache": "Client Balance Cache",
+  "clientBalancesCached": "{count} client balances cached",
+  "@clientBalancesCached": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "balanceCacheDescription": "Client balance data is stored in local cache. You can clear the cache if the data is outdated.",
+  "clearing": "Clearing...",
+  "clearCache": "Clear Cache",
+  "backgroundSyncEnabled": "Background sync enabled",
+  "backgroundSyncDisabled": "Background sync disabled",
+  "minimumIntervalIs60": "Minimum interval is 60 minutes",
+  "justNow": "Just now",
+  "minutesAgo": "{minutes}m ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{hours}h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{days} days ago",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "weeksAgo": "{weeks} weeks ago",
+  "@weeksAgo": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "unknownProduct": "Unknown product",
+  "errorOccurredTitle": "An error occurred",
+  "akbClientReport": "AKB clients report",
+  "akbClients": "AKB clients",
+  "akbPercentage": "AKB percentage",
+  "akbClientsList": "AKB clients list",
+  "daysAgoShort": "{days} days ago",
+  "@daysAgoShort": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "locationPermissionNeeded": "Location permission required",
+  "locationPermissionRequestMessage": "Your location is needed to sort trading points by distance and display on the map. Do you allow?",
+  "later": "Later",
+  "locationSettingsMessage": "Location permission is required for sorting by distance and map functions. Please grant location permission from app settings.",
+  "enableLocationServicesMessage": "Location services must be enabled for sorting by distance and map functions. Please enable location services.",
+  "locationSettings": "Location settings",
+  "dataRefreshError": "Error refreshing data",
+  "dateFromTo": "{start} to {end}",
+  "@dateFromTo": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "akbByRegions": "AKB by regions",
+  "akbByProductCategories": "AKB by product categories",
+  "tradingPointAbbr": "t.p.",
+  "footerNoteText": "Data imported from Telegram report. You can change the text to switch to a new source — UI will be updated.",
+  "syncStepCheckingUser": "Checking user...",
+  "syncStepClearingData": "Clearing old data...",
+  "syncStepSyncingKpi": "Loading KPI data...",
+  "syncStepSyncingClients": "Loading clients list...",
+  "syncStepSyncingProducts": "Loading products...",
+  "syncStepSyncingPriceTypes": "Loading price types...",
+  "syncStepSyncingBusinessRegions": "Loading business regions...",
+  "syncStepSyncingUserWarehouses": "Loading user warehouses...",
+  "syncStepSyncingProductPrices": "Loading product prices...",
+  "syncStepSyncingProductBalances": "Loading product balances...",
+  "syncStepSyncingClientContracts": "Loading client contracts...",
+  "syncStepUpdatingClientContractStatus": "Updating client contract statuses...",
+  "syncStepSyncingContractTypes": "Loading contract types...",
+  "syncStepSyncingDistrictContracting": "Loading districts...",
+  "syncStepSyncingOrderStatuses": "Loading order statuses...",
+  "syncStepSyncingOrders": "Loading orders...",
+  "syncStepSyncingSalesReqPermissions": "Loading agent permissions...",
+  "syncStepSyncingPlannedRoutes": "Loading planned routes...",
+  "syncStepSyncingUserOrganizations": "Loading user organizations...",
+  "syncStepSyncingUserProjects": "Loading user projects...",
+  "syncStepSyncingPromotions": "Loading promotions...",
+  "syncStepSyncingMapTokens": "Loading map tokens...",
+  "syncStepSyncingReports": "Loading reports...",
+  "syncStepSyncingThumbnails": "Loading images...",
+  "syncStepCompleted": "Data updated!",
+  "syncStepError": "An error occurred",
+  "syncSuccessTitle": "Success!",
+  "syncUpdatingTitle": "Updating data...",
+  "syncSkippedRecent": "Skipped (recently synced)",
+  "syncBackgroundContinues": "Sync continues in background",
+  "paymentRequiredError": "Payment required. Please check your subscription.",
+  "authenticationError": "Authentication error. Please login again.",
+  "accessForbiddenError": "Access forbidden. You don't have permission.",
+  "serviceNotFoundError": "Service not found. Please contact support.",
+  "serverUnavailableError": "Server unavailable. Please try again later.",
+  "dataUpdateError": "Error updating data. Using cached data.",
+  "syncStatusErrors": "Errors",
+  "syncStatusSynced": "Synced",
+  "syncStatusPartial": "Partial",
+  "syncStatusNotSynced": "Not synced",
+  "tablesOfTotalSynced": "{synced} of {total} tables synced",
+  "@tablesOfTotalSynced": {
+    "placeholders": {
+      "synced": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tablesInThisGroup": "Tables in this group",
+  "yesterdayText": "Yesterday",
+  "neverSynced": "Never synced",
+  "tableEmpty": "Table is empty",
+  "recordsCount": "{count} records",
+  "@recordsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastSyncLabel": "Last sync: {time}",
+  "@lastSyncLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTable": "Sync table",
+  "dependencies": "Dependencies",
+  "willCascadeTo": "Will cascade to",
+  "tradingPointsLabel": "Trading points",
+  "tradingPointsNotAvailable": "Trading points not available",
+  "dateRangeLabel": "Date range",
+  "allDatesLabel": "All dates",
+  "clearLabel": "Clear",
+  "statusLabel": "Status",
+  "statusAll": "All",
+  "statusActive": "Active",
+  "statusInactive": "Inactive",
+  "statusExpired": "Expired",
+  "statusPending": "Pending",
+  "clientContractsCount": "{name} client's contracts ({count})",
+  "@clientContractsCount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refreshError": "Refresh error",
+  "@refreshError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "dataTab": "Details",
+  "documentTab": "Document",
+  "clientLabel": "Client: {name}",
+  "@clientLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "startDateLabel": "Start: {date}",
+  "endDateLabel": "End: {date}",
+  "unknownDate": "Unknown",
+  "statusAndType": "Status and type",
+  "typeLabel2": "Type",
+  "additionalInfo": "Additional information",
+  "certificateLimited": "Certificate limited",
+  "yesText": "Yes",
+  "noText": "No",
+  "referenceNumberLabel": "Reference number",
+  "certificateNumberLabel": "Certificate number",
+  "passportNumberLabel": "Passport number",
+  "districtCodeLabel": "District code",
+  "districtNameLabel": "District name",
+  "projectCodeLabel": "Project code",
+  "projectFieldLabel": "Project",
+  "selectProject": "Select project",
+  "projectRequired": "Project selection is required",
+  "projectInfoTooltip": "Contract number will be generated based on the selected project's numbering system",
+  "projectInfoSection": "Project information",
+  "creditLabel": "Credit",
+  "fullPaymentLabel": "100% payment",
+  "uzbekLanguage": "Uzbek",
+  "russianLanguage": "Russian",
+  "pdfPreparing": "Preparing PDF...",
+  "tapToReveal": "Tap",
+  "warehousesTitle": "Warehouses",
+  "warehousesNotFound": "Warehouses not found",
+  "warehousesCount": "Warehouses count: {count}",
+  "@warehousesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createdLabel": "Created: {date}",
+  "@createdLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "updatedLabel": "Updated: {date}",
+  "@updatedLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "visitCompletedToday": "Visit completed today",
+  "visitExpectedToday": "Visit expected today",
+  "visitNotPlannedToday": "Visit not planned today",
+  "visitOrderLabel": "Visit order: {number}",
+  "@visitOrderLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "selectClientTitle": "Select client",
+  "clientsAvailable": "{count} clients available",
+  "@clientsAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchByNameCodeInn": "Name, code, INN, phone, type...",
+  "searchInCyrillicOrLatin": "Search in Cyrillic or Latin",
+  "foundCount": "{count} found",
+  "@foundCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clientNotFound": "Client not found",
+  "tryDifferentSearch": "Try a different search term",
+  "confirmButton": "Confirm",
+  "cancelButton": "Cancel",
+  "newContractTitle": "New contract",
+  "fillAllFields": "Fill in all fields",
+  "contractTypesLoadError": "Error loading contract types",
+  "pleaseSelectClient": "Please select a client",
+  "pleaseSelectContractType": "Please select a contract type",
+  "contractCreatedSuccessfully": "Contract created successfully",
+  "contractCreationError": "Error creating contract",
+  "documentInfoSection": "Document information",
+  "regionInfoSection": "Region information",
+  "referenceNumberField": "Reference number",
+  "termLabel": "Term",
+  "certificateNumberField": "Certificate number",
+  "certificateUnlimitedField": "Certificate unlimited",
+  "passportNumberField": "Passport number",
+  "clientCodeLabel": "Client code",
+  "organizationCodeLabel": "Organization code",
+  "courierLabel": "Courier",
+  "vehicleLabel": "Vehicle",
+  "licensePlateLabel": "License plate",
+  "supervisorCommentLabel": "Supervisor comment",
+  "logistCommentLabel": "Logist comment",
+  "agentCommentLabel": "Agent comment",
+  "networkErrorMessage": "Network error. Check your internet connection.",
+  "serverTimeoutMessage": "Server connection timed out.",
+  "orderDetailsLoadError": "Error loading order details.",
+  "dataLoadFailed": "Data loading failed: {error}",
+  "@dataLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "brands": "Brands",
+  "fileStoragePermission": "File storage permission",
+  "fileStorageDescriptionAndroid13": "Select folder to save app data",
+  "fileStorageDescription": "To save and load app data",
+  "fileStoragePurposeAndroid13": "Select folder to save images, documents and data",
+  "fileStoragePurpose": "Save images, documents and data",
+  "locationPermissionTitle": "Location permission",
+  "locationPermissionDescription": "To sort trading points by distance",
+  "locationPermissionPurpose": "Show location on map and calculate distance",
+  "alwaysLocationPermissionTitle": "Always location permission",
+  "alwaysLocationPermissionDescription": "To detect location when app is in background",
+  "alwaysLocationPermissionPurpose": "Background service and notifications",
+  "cameraPermissionTitle": "Camera permission",
+  "cameraPermissionDescription": "To take photos and scan barcodes",
+  "cameraPermissionPurpose": "Take photos of products and trading points",
+  "microphonePermissionTitle": "Microphone permission",
+  "microphonePermissionDescription": "For voice recording and audio messages",
+  "microphonePermissionPurpose": "Voice notes and audio records",
+  "notificationPermissionTitle": "Notification permission",
+  "notificationPermissionDescription": "To show important messages",
+  "notificationPermissionPurpose": "Reminders, news and notifications",
+  "audioPermissionTitle": "Music and audio permission",
+  "audioPermissionDescription": "To work with audio files",
+  "audioPermissionPurpose": "Music, audio messages and voice files",
+  "photosAndVideosPermissionTitle": "Photos and videos permission",
+  "photosAndVideosPermissionDescription": "To work with media files",
+  "photosAndVideosPermissionPurpose": "Work with photos, videos and media files",
+  "permissionRequiredMessage": "{description}. Please grant permission in app settings.",
+  "@permissionRequiredMessage": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "goToSettingsButton": "Go to settings",
+  "grantPermissionButton": "Grant permission",
+  "checkingPermission": "Checking...",
+  "permissionCheckTitle": "Permission check",
+  "permissionCheckMessage": "The app needs the following permissions to work properly:",
+  "permissionSaveData": "Save data",
+  "permissionMapDistance": "Map and distance calculation",
+  "permissionTakePhotos": "Take photos",
+  "permissionRecordVoice": "Record voice",
+  "permissionShowMessages": "Show messages",
+  "permissionLimitedMode": "Without permissions the app will work in limited mode.",
+  "purposeLabel": "Purpose: {purpose}",
+  "@purposeLabel": {
+    "placeholders": {
+      "purpose": {
+        "type": "String"
+      }
+    }
+  },
+  "grantPermissionQuestion": "Do you want to grant permission?",
+  "serviceInitError": "Error initializing services",
+  "clientInnNotAvailable": "Client INN not available",
+  "@clientIsDebtor": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@clientHasOverpayment": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "clientBalanceZero": "Client balance is zero.",
+  "balanceDataNotFound": "Balance data not found",
+  "updatedAtTime": "Updated: {time}",
+  "@updatedAtTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "clientDebtorStatus": "Client is debtor",
+  "overpaymentStatus": "Overpayment",
+  "balanceZeroStatus": "Balance is zero",
+  "@unpaidOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@overdueOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "savingStatus": "Saving...",
+  "unsavedChangesStatus": "Unsaved changes",
+  "offlineStatus": "Offline",
+  "pendingSyncCount": "{count} pending sync",
+  "@pendingSyncCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "allSyncedStatus": "All synced",
+  "autoSaving": "Auto-saving...",
+  "savingStepData": "Saving step data...",
+  "mandatoryLabel": "Mandatory",
+  "optionalLabel": "Optional",
+  "currentLabel": "Current",
+  "completedLabel": "Completed",
+  "skippedLabel": "Skipped",
+  "notesLabel": "Notes: {notes}",
+  "@notesLabel": {
+    "placeholders": {
+      "notes": {
+        "type": "String"
+      }
+    }
+  },
+  "reasonLabel": "Reason: {reason}",
+  "@reasonLabel": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "reasonHint": "Reason",
+  "syncStarting": "Starting sync...",
+  "weekdayMon": "Mo",
+  "weekdayTue": "Tu",
+  "weekdayWed": "We",
+  "weekdayThu": "Th",
+  "weekdayFri": "Fr",
+  "weekdaySat": "Sa",
+  "weekdaySun": "Su",
+  "copyLabel": "Copy",
+  "reloadLabel": "Reload",
+  "refreshContractTypesAndRegions": "Refresh contract types and regions",
+  "orderStatusNew": "New",
+  "orderStatusConfirmed": "Confirmed",
+  "orderStatusDelivering": "In delivery",
+  "orderStatusReturnRequested": "Return requested",
+  "orderStatusCancelled": "Cancelled",
+  "orderStatusDeliveredUnpaid": "Delivered, unpaid",
+  "orderStatusDeliveredPartiallyPaid": "Delivered, partially paid",
+  "orderStatusUnknown": "Unknown",
+  "filterTooltip": "Filter",
+  "fullscreenTooltip": "Fullscreen",
+  "refusalReasonClientNotAvailable": "Client not available",
+  "refusalReasonNoTime": "No time",
+  "refusalReasonProductNotNeeded": "Product not needed",
+  "refusalReasonPriceNotSuitable": "Price not suitable",
+  "refusalReasonWorksWithOtherSupplier": "Works with other supplier",
+  "refusalReasonOther": "Other reason",
+  "apiKeyStatusConfigured": "configured",
+  "apiKeyStatusNotConfigured": "Not configured",
+  "visited": "Visited",
+  "plannedForToday": "Planned for today",
+  "additionalInformation": "Additional Information",
+  "locationInformation": "Location Information",
+  "businessInformation": "Business Information",
+  "apiKeyStatusNotRequired": "key not required",
+  "apiKeyStatusError": "error",
+  "fakturaFetchCompanyData": "Load",
+  "fakturaRefreshCompanyData": "Refresh",
+  "fakturaEnterInn": "Please enter TIN number",
+  "fakturaInvalidInnFormat": "Invalid TIN format. Must be 9 or 14 digits",
+  "fakturaCompanyDataLoaded": "Company data successfully loaded: {companyName}",
+  "@fakturaCompanyDataLoaded": {
+    "placeholders": {
+      "companyName": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaRegionNotFound": "Region not found: {regionName}. Please select manually",
+  "@fakturaRegionNotFound": {
+    "placeholders": {
+      "regionName": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaAuthError": "Authentication error",
+  "fakturaAuthErrorRetry": "Authentication error. Please try again",
+  "fakturaCompanyNotFound": "Company not found. Check TIN number",
+  "fakturaInvalidRequest": "Invalid request. Check TIN format",
+  "fakturaServerError": "Server error: {statusCode}",
+  "@fakturaServerError": {
+    "placeholders": {
+      "statusCode": {
+        "type": "String"
+      }
+    }
+  },
+  "fakturaInnEmpty": "TIN cannot be empty",
+  "fakturaTokenRefreshError": "Token refresh error",
+  "reportMenuTitle": "Reports menu",
+  "reportAlreadySent": "Report has already been sent to your Telegram group. Do you want to send it again?",
+  "reportSentSuccess": "Report sent",
+  "resendReport": "Resend",
+  "toggleHeaderShow": "Show header",
+  "toggleHeaderHide": "Hide header",
+  "periodNotSelected": "Period not selected",
+  "dataSyncing": "Syncing data...",
+  "reportsUpdated": "Reports updated",
+  "@syncError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "applyButton": "Apply",
+  "reportMainEvyap": "Main reports(for EVYAP)",
+  "reportMainEvyapDesc": "KPI indicators and main statistics",
+  "reportVisits": "Visits report",
+  "reportVisitsDesc": "Information about visits to clients",
+  "reportAkbClient": "AKB Client",
+  "reportAkbClientDesc": "Report on AKB clients",
+  "reportAkbSum": "AKB Sum",
+  "reportAkbSumDesc": "Financial report on AKB amounts",
+  "reportAkbProduct": "AKB Product",
+  "reportAkbProductDesc": "Report on AKB products",
+  "reportCategory": "Category reports",
+  "reportCategoryDesc": "Sales analysis by categories",
+  "reportMonthlyResults": "Monthly results",
+  "reportMonthlyResultsDesc": "Monthly sales results and trends",
+  "reportMonthlyKpi": "Monthly KPI (salary)",
+  "reportMonthlyKpiDesc": "Monthly KPI completion and salary report",
+  "akbAmount": "AKB amount",
+  "akbProducts": "AKB products",
+  "productTypes": "Product types",
+  "categoriesCount": "Categories count",
+  "topSelling": "Top selling",
+  "monthlySales": "Monthly sales",
+  "monthlyGrowth": "Monthly growth",
+  "kpiCompletion": "KPI completion",
+  "salaryAmount": "Salary amount",
+  "scannerTitle": "Document Scanner",
+  "scannerSubtitle": "Scan certificate to auto-fill form",
+  "scannerTakePhoto": "Take Photo",
+  "scannerChoosePhoto": "Gallery",
+  "scannerProcessing": "Analyzing document...",
+  "scannerPleaseWait": "AI is extracting data from the image",
+  "scannerDataExtracted": "{count} fields extracted successfully",
+  "@scannerDataExtracted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scannerCameraError": "Failed to access camera. Please check permissions",
+  "scannerGalleryError": "Failed to access gallery. Please check permissions",
+  "scannerImageEmpty": "Selected image is empty or corrupted",
+  "scannerNetworkError": "Network error. Please check your internet connection",
+  "scannerAuthError": "AI service authentication failed. Please try again",
+  "scannerRateLimitError": "Too many requests. Please wait a moment",
+  "scannerNoDataExtracted": "Could not extract data from the document. Please try a clearer image",
+  "scannerParseError": "Failed to process AI response. Please try again",
+  "scannerUnknownError": "An unexpected error occurred. Please try again",
+  "scannerFormUpdated": "Form updated with scanned data",
+  "scannerVerifyingWithFaktura": "Verifying data with Faktura.uz...",
+  "scannerDataVerified": "Data verified and updated from Faktura.uz",
+  "scannerDataMismatch": "{count} fields updated from Faktura.uz",
+  "@scannerDataMismatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productImageLoading": "Loading image...",
+  "productImageError": "Failed to load image",
+  "productNoImage": "No image available",
+  "productImageSyncProgress": "Syncing images: {current}/{total}",
+  "@productImageSyncProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "productImageSyncComplete": "Image sync complete",
+  "productImageSyncFailed": "Image sync failed",
+  "productImageTapToView": "Tap to view full image",
+  "productImageCount": "{count} images",
+  "@productImageCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productBasicInfo": "Basic Information",
+  "productPricingInfo": "Pricing Information",
+  "productStockInfo": "Stock Information",
+  "productAdditionalInfo": "Additional Information",
+  "productCode": "Product Code",
+  "productVendorCode": "Article",
+  "productBarcode": "Barcode",
+  "productCategory": "Category",
+  "productSeries": "Series",
+  "productPriceType": "Price Type",
+  "productPrice": "Price",
+  "productPriceValidFrom": "Valid From",
+  "productPriceValidTo": "Valid To",
+  "productWarehouse": "Warehouse",
+  "productStock": "Stock",
+  "productQuantity": "Total Quantity",
+  "productReserved": "Reserved",
+  "productAvailable": "Available",
+  "productUnit": "Unit",
+  "productWeight": "Weight",
+  "productCapacity": "Capacity",
+  "productBrand": "Brand",
+  "productProject": "Project Code",
+  "copiedToClipboard": "Copied to clipboard",
+  "productInfoCopied": "Product information copied",
   "checkingCache": "Checking cache...",
   "loadingFromDatabase": "Loading from database...",
   "syncingFromServer": "Syncing from server...",
@@ -2869,16 +2352,19 @@
   "syncFailed": "Sync failed. Please try again.",
   "noInternetForSync": "No internet connection. Please check your network.",
   "retrySync": "Retry",
-  "ordersCount": "{count} orders",
   "@ordersCount": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "lastUpdated": "Last updated: {time}",
   "@lastUpdated": {
     "placeholders": {
-      "time": {"type": "String"}
+      "time": {
+        "type": "String"
+      }
     }
   },
   "connectionRestored": "Connection restored",
@@ -2888,7 +2374,6 @@
   "bonus": "Bonus",
   "unitPrice": "Unit Price",
   "orderTotalMismatch": "Order total mismatch detected",
-  
   "accessControlTitle": "Access Verification",
   "accessControlChecking": "Verifying access...",
   "accessControlCheckingInternet": "Checking internet connection...",
@@ -2900,19 +2385,25 @@
   "accessExpiredDate": "Expired on: {date}",
   "@accessExpiredDate": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "accessValidUntil": "Valid until: {date}",
   "@accessValidUntil": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "accessDaysRemaining": "{days} days remaining",
   "@accessDaysRemaining": {
     "placeholders": {
-      "days": {"type": "int"}
+      "days": {
+        "type": "int"
+      }
     }
   },
   "accessTimeManipulation": "Time Manipulation Detected",
@@ -2934,7 +2425,9 @@
   "accessWarningExpiringSoonMessage": "Your access will expire in {days} days. Please contact support to renew.",
   "@accessWarningExpiringSoonMessage": {
     "placeholders": {
-      "days": {"type": "int"}
+      "days": {
+        "type": "int"
+      }
     }
   },
   "accessContinue": "Continue",
@@ -2943,22 +2436,18 @@
   "accessInternetRestored": "Internet connection restored. Verifying...",
   "accessCleaningData": "Cleaning up data...",
   "accessRevoking": "Revoking access...",
-
   "syncRequiredFirstTime": "Sync required for first login",
   "syncRecommended": "Data sync recommended",
   "goToSyncSettings": "Open sync settings to update data",
   "openSettings": "Open Settings",
-
   "initialSyncRequired": "Data Synchronization Required",
   "initialSyncMessage": "This is your first login. We need to download essential data to get started. This may take a few minutes.",
   "dataSyncRequired": "Data Synchronization Required",
   "dataSyncMessage": "Your local data needs to be updated. Would you like to synchronize now?",
   "startSync": "Start Sync",
   "syncLater": "Later",
-  "syncInProgress": "Synchronization in Progress",
   "syncCompleteMessage": "Data synchronization completed successfully!",
   "syncWillContinueBackground": "Sync will continue in the background",
-
   "geminiApiKeyNotFound": "Gemini API key not configured",
   "geminiNetworkError": "Network error occurred. Please check your connection",
   "geminiAuthError": "Authentication failed. Please check your API key in settings",
@@ -2970,57 +2459,76 @@
   "geminiApiKeyHint": "Enter your Gemini API key (starts with AIza)",
   "geminiApiKeyDescription": "Used for document scanning and AI features",
   "geminiApiKeyInvalid": "Invalid API key format. Key should start with 'AIza'",
-
   "syncOptimizedMode": "Optimized sync mode",
   "syncParallelProgress": "Syncing {count} tables in parallel...",
   "@syncParallelProgress": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncDeltaMode": "Incremental update",
   "syncSkippedUnchanged": "Skipped {count} unchanged records",
   "@syncSkippedUnchanged": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncInserted": "{count} new records added",
   "@syncInserted": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncUpdated": "{count} records updated",
   "@syncUpdated": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncDeleted": "{count} records removed",
   "@syncDeleted": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncLevelProgress": "Level {level}/{total}: {tables}",
   "@syncLevelProgress": {
     "placeholders": {
-      "level": {"type": "int"},
-      "total": {"type": "int"},
-      "tables": {"type": "String"}
+      "level": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "tables": {
+        "type": "String"
+      }
     }
   },
   "syncCacheSaved": "Saved {count} duplicate API calls",
   "@syncCacheSaved": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncOptimizedComplete": "Optimized sync completed in {seconds}s",
   "@syncOptimizedComplete": {
     "placeholders": {
-      "seconds": {"type": "String"}
+      "seconds": {
+        "type": "String"
+      }
     }
   },
   "serverConnectionFailed": "Server connection failed",
@@ -3033,22 +2541,32 @@
   "serverSwitchedTo": "Server switched to: {url}",
   "@serverSwitchedTo": {
     "placeholders": {
-      "url": {"type": "String"}
+      "url": {
+        "type": "String"
+      }
     }
   },
   "retryingPrimaryServer": "Retrying primary server...",
   "connectionAttempt": "Connection attempt {current}/{total}",
   "@connectionAttempt": {
     "placeholders": {
-      "current": {"type": "int"},
-      "total": {"type": "int"}
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "serverUrlInfo": "Server: {name} ({type})",
   "@serverUrlInfo": {
     "placeholders": {
-      "name": {"type": "String"},
-      "type": {"type": "String"}
+      "name": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
     }
   },
   "primaryServer": "Primary",
@@ -3066,7 +2584,6 @@
   "offlineAccessBlockedNote": "After first connection, you can use the app offline.",
   "offlineAccessNoLimit": "Offline Access Unavailable",
   "offlineAccessNoLimitMessage": "You need to connect to the internet at least once before using offline mode.",
-  "contactSupport": "Contact Support",
   "retryConnection": "Retry Connection",
   "connectToInternet": "Connect to Internet",
   "verifyingAccess": "Verifying access...",
@@ -3074,7 +2591,6 @@
   "verificationFailed": "Verification failed",
   "timeLimitUpdated": "Access period updated",
   "promoOrder": "Promo Order",
-
   "marketingDataRefreshing": "Marketing data is refreshing...",
   "announcements": "Announcements",
   "news": "News",
@@ -3084,19 +2600,25 @@
   "dataLoadingErrorWithMessage": "Error loading data: {error}",
   "@dataLoadingErrorWithMessage": {
     "placeholders": {
-      "error": {"type": "String"}
+      "error": {
+        "type": "String"
+      }
     }
   },
   "promotionsRefreshError": "Error refreshing promotions: {error}",
   "@promotionsRefreshError": {
     "placeholders": {
-      "error": {"type": "String"}
+      "error": {
+        "type": "String"
+      }
     }
   },
   "refreshErrorWithMessage": "Refresh error: {error}",
   "@refreshErrorWithMessage": {
     "placeholders": {
-      "error": {"type": "String"}
+      "error": {
+        "type": "String"
+      }
     }
   },
   "offlineModeShowingCachedData": "Offline mode - showing cached data",
@@ -3104,40 +2626,54 @@
   "promotionDescriptionFormat": "{type} promotion. {productCount} products, {bonusCount} bonuses.",
   "@promotionDescriptionFormat": {
     "placeholders": {
-      "type": {"type": "String"},
-      "productCount": {"type": "int"},
-      "bonusCount": {"type": "int"}
+      "type": {
+        "type": "String"
+      },
+      "productCount": {
+        "type": "int"
+      },
+      "bonusCount": {
+        "type": "int"
+      }
     }
   },
   "aboutPromotion": "About promotion",
   "promotionOfType": "{type} type promotion",
   "@promotionOfType": {
     "placeholders": {
-      "type": {"type": "String"}
+      "type": {
+        "type": "String"
+      }
     }
   },
   "participatingProductsCount": "Products participating in promotion: {count} SKU",
   "@participatingProductsCount": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "bonusProductsCount": "Products available as bonus: {count} SKU",
   "@bonusProductsCount": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
-  "startDateLabel": "Start: {date}",
   "@startDateLabel": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
-  "endDateLabel": "End: {date}",
   "@endDateLabel": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "bonuses": "Bonuses",
@@ -3159,7 +2695,6 @@
   "initialOrderSettingsDescription": "Please configure the following settings before creating your first order. These settings will be used as defaults for this order.",
   "selectOrganization": "Select Organization",
   "selectWarehouse": "Select Warehouse",
-  "selectPriceType": "Select Price Type",
   "organizationRequired": "Organization is required",
   "warehouseRequired": "Warehouse is required",
   "priceTypeRequired": "Price type is required",
@@ -3172,8 +2707,12 @@
   "userOutsideActiveWindow": "Access window: {start} – {end}",
   "@userOutsideActiveWindow": {
     "placeholders": {
-      "start": { "type": "String" },
-      "end": { "type": "String" }
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
     }
   },
   "licenseExpired": "Your organization's license has expired.",
@@ -3181,8 +2720,12 @@
   "licenseSeatExceeded": "All license seats are taken (you are #{rank} of {seatCount}).",
   "@licenseSeatExceeded": {
     "placeholders": {
-      "rank": { "type": "int" },
-      "seatCount": { "type": "int" }
+      "rank": {
+        "type": "int"
+      },
+      "seatCount": {
+        "type": "int"
+      }
     }
   },
   "clockTamperingDetected": "Device clock changed. Please reconnect to verify access.",
@@ -3191,30 +2734,53 @@
   "mobileUserBoundToOtherDevice": "Your account is already bound to another phone. Ask your administrator to release the old binding so you can sign in on this device.",
   "deviceBindingInvalid": "Your device session is no longer valid. Please sign in again.",
   "sessionRevoked": "Your session has been revoked. Please sign in again.",
-  "retry": "Retry",
   "oneCUserNotFound": "This account is not registered in the operations system. Contact your administrator.",
   "debugBackendUrl": "Backend: {url}",
   "@debugBackendUrl": {
     "placeholders": {
-      "url": { "type": "String" }
+      "url": {
+        "type": "String"
+      }
     }
   },
   "debugTestConnection": "Test connection",
   "debugConnectionOk": "OK · {ms}ms",
   "@debugConnectionOk": {
     "placeholders": {
-      "ms": { "type": "int" }
+      "ms": {
+        "type": "int"
+      }
     }
   },
   "debugConnectionFailed": "Failed: {reason}",
   "@debugConnectionFailed": {
     "placeholders": {
-      "reason": { "type": "String" }
+      "reason": {
+        "type": "String"
+      }
     }
   },
   "imageNotAvailable": "Image not available",
   "imageProcessing": "Image is being processed",
   "imageLoadFailed": "Could not load image",
   "imageLoadRetry": "Retry",
-  "projectImageEmpty": "No images yet"
+  "projectImageEmpty": "No images yet",
+  "knowledgeBaseTitle": "Knowledge Base",
+  "knowledgeBaseSubtitle": "Regulations, guides, and training",
+  "knowledgePinnedSection": "Pinned",
+  "knowledgeCategoriesSection": "Categories",
+  "knowledgeCategoryEmpty": "No documents in this category",
+  "knowledgeDocumentLoading": "Loading document…",
+  "knowledgeDocumentNotFound": "Document not found",
+  "knowledgeNoDocumentsAssigned": "No documents available yet",
+  "knowledgeSearchTitle": "Search",
+  "knowledgeSearchPlaceholder": "Search documents…",
+  "knowledgeSearchEmpty": "Nothing matched your query",
+  "knowledgeRetry": "Retry",
+  "knowledgeOfflineNotice": "You're offline. Showing cached content.",
+  "knowledgeTocTitle": "Table of contents",
+  "knowledgeOpenInBrowser": "Open in browser",
+  "knowledgeFilterAll": "All",
+  "knowledgePinnedBadge": "Pinned",
+  "knowledgeMandatoryBadge": "Mandatory"
 }

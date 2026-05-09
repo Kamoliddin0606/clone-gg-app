@@ -19,7 +19,6 @@ import 'package:gloria_marketing_flutter/src/core/services/permission_manager.da
 import 'package:gloria_marketing_flutter/src/core/services/permissions_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/client_image_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart'
@@ -41,7 +40,6 @@ import 'map_pages/map_detail_page_google.dart';
 import 'map_pages/map_detail_page_osm.dart';
 import 'map_pages/map_detail_page_yandex.dart';
 import 'visit_steps_page.dart';
-import 'client_images_page.dart';
 import 'create_client_page.dart';
 import '../widgets/client_balance_widget_v2.dart';
 import 'dart:ui';
@@ -139,27 +137,6 @@ String transliterateToLatin(String text) {
 // import '../../../../theme/theme_controller.dart';
 // import '../../../../theme/theme_toggle.dart';
 enum _ViewMode { list, grid }
-
-/// =============================================================================
-/// RASM O'LCHAMI TANLASH FUNKSIYALARI (ClientImage uchun)
-/// =============================================================================
-/// Client detail va to'liq ekran ko'rish uchun mos o'lchamli rasmlar:
-/// - Medium: Client detail sheet carousel uchun - optimal sifat va tezlik
-/// - Large/Original: To'liq ekran ko'rish uchun - eng yuqori sifat
-/// Uses new on-demand loading with CachedNetworkImage
-/// =============================================================================
-
-/// Medium rasm URL - Client detail sheet uchun
-/// O'rtacha sifat, detail ko'rinishi uchun optimal
-String? _getMediumImageUrl(ClientImage img) {
-  return selectClientImageUrl(img, ClientImageSize.medium);
-}
-
-/// Large/Original rasm URL - To'liq ekran ko'rish uchun
-/// Eng yuqori sifat, katta rasmlar uchun
-String? _getLargeImageUrl(ClientImage img) {
-  return selectClientImageUrl(img, ClientImageSize.large);
-}
 
 /// Image provider with on-demand caching
 ImageProvider? _clientImageProvider(String? url) {
@@ -271,9 +248,6 @@ class _TradingPointsPageState extends State<TradingPointsPage>
   late Connectivity _connectivity;
   bool _isOnline = true;
 
-  // Image service for client images
-  ClientImagesService? _clientImagesService;
-
   // PageStorage bucket for state persistence
   late final PageStorageBucket _storageBucket;
 
@@ -307,7 +281,6 @@ class _TradingPointsPageState extends State<TradingPointsPage>
     
     _loadFabPosition();
     _storageBucket = PageStorageBucket();
-    _initializeClientImagesService();
     _initializePermissions();
     _initializeLocationService();
     _initializePermissionsService();
@@ -315,24 +288,6 @@ class _TradingPointsPageState extends State<TradingPointsPage>
     _loadUserData();
     _restoreState();
     _loadDefaultMapProvider();
-  }
-
-  /// Initialize client images service
-  Future<void> _initializeClientImagesService() async {
-    try {
-      if (!sl.isRegistered<ClientImagesService>()) {
-        throw Exception('ClientImagesService is not registered');
-      }
-      _clientImagesService = sl<ClientImagesService>();
-      if (kDebugMode) {
-        print('ClientImagesService initialized successfully');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error initializing ClientImagesService: $e');
-      }
-      _clientImagesService = null;
-    }
   }
 
   /// Initialize permissions on page load
@@ -769,9 +724,6 @@ class _TradingPointsPageState extends State<TradingPointsPage>
       ); // Re-apply current filters including visit_today
       _applySorting(); // Apply initial sorting
       setState(() => _isLoading = false);
-      
-      // Fetch client images metadata for visible clients in background
-      _fetchClientImagesMetadataForVisibleClients();
     } catch (e) {
       setState(() => _isLoading = false);
       if (kDebugMode) {
@@ -786,91 +738,6 @@ class _TradingPointsPageState extends State<TradingPointsPage>
             backgroundColor: Colors.red,
           ),
         );
-      }
-    }
-  }
-
-  /// Fetch client images metadata for visible clients if not in cache
-  /// 
-  /// This method runs in background without blocking UI.
-  /// It checks first 20 visible clients and fetches metadata from API
-  /// only for clients that don't have metadata in local database.
-  Future<void> _fetchClientImagesMetadataForVisibleClients() async {
-    if (_clientImagesService == null) {
-      if (kDebugMode) {
-        print('ClientImagesService not available for batch metadata fetch');
-      }
-      return;
-    }
-
-    try {
-      // Get first 20 visible clients (or less if filtered list is smaller)
-      final visibleClients = _filteredTradingPoints
-          .take(20)
-          .map((tp) => tp.tradingPoint.id)
-          .toList();
-
-      if (visibleClients.isEmpty) return;
-
-      if (kDebugMode) {
-        print('Checking metadata for ${visibleClients.length} visible clients');
-      }
-
-      // Check which clients need metadata (don't have it in DB)
-      final clientsNeedingMetadata = <String>[];
-      for (final clientCode in visibleClients) {
-        final existing = await _clientImagesService!.getClientImages(clientCode);
-        if (existing.isEmpty) {
-          clientsNeedingMetadata.add(clientCode);
-        }
-      }
-
-      if (clientsNeedingMetadata.isEmpty) {
-        if (kDebugMode) {
-          print('All visible clients already have metadata cached');
-        }
-        return;
-      }
-
-      if (kDebugMode) {
-        print('Fetching metadata for ${clientsNeedingMetadata.length} clients from API');
-      }
-
-      // Fetch metadata from API for clients that need it
-      // Run in background without blocking UI
-      int successCount = 0;
-      int failCount = 0;
-      
-      for (final clientCode in clientsNeedingMetadata) {
-        try {
-          await _clientImagesService!.fetchAndSaveClientImages(clientCode);
-          successCount++;
-          
-          if (kDebugMode && successCount % 5 == 0) {
-            print('Fetched metadata for $successCount/${clientsNeedingMetadata.length} clients');
-          }
-        } catch (e) {
-          failCount++;
-          // Silent fail - continue with next client
-          if (kDebugMode) {
-            print('Failed to fetch metadata for $clientCode: $e');
-          }
-        }
-      }
-
-      if (kDebugMode) {
-        print('Batch metadata fetch complete: $successCount success, $failCount failed');
-      }
-
-      // Refresh UI to show new thumbnails if any metadata was fetched
-      if (mounted && successCount > 0) {
-        setState(() {
-          // UI will automatically reload images via ClientImageWidget
-        });
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error in batch metadata fetch: $e');
       }
     }
   }
@@ -1541,7 +1408,6 @@ class _TradingPointsPageState extends State<TradingPointsPage>
               onViewContracts: () => _viewContracts(tp),
               onRefusal: () => _showRefusalDialog(tp),
               permissions: tp.permissions,
-              clientImagesService: _clientImagesService,
             );
           },
         );
@@ -1552,18 +1418,6 @@ class _TradingPointsPageState extends State<TradingPointsPage>
   /// Handle double-tap on client card - opens details immediately (non-blocking)
   /// Images are loaded asynchronously inside the details sheet with shimmer placeholder
   void _handleDoubleTapFetchImages(TradingPointWithPermissions tp) {
-    // Ensure ClientImagesService is initialized for later use in details sheet
-    if (_clientImagesService == null) {
-      try {
-        if (sl.isRegistered<ClientImagesService>()) {
-          _clientImagesService = sl<ClientImagesService>();
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print('TradingPointsPage: ClientImagesService init warning: $e');
-        }
-      }
-    }
     // Open details immediately - no blocking, no waiting
     _openTpDetails(tp);
   }
@@ -3002,10 +2856,10 @@ class _DefaultAvatar extends StatelessWidget {
   }
 }
 
-/// Auto-scrolling Client Image Carousel Widget
-/// Displays client images with automatic scrolling every 2 seconds
-/// Supports manual scrolling by swiping/dragging
-class _AutoScrollClientImageCarousel extends StatefulWidget {
+/// Single client image (legacy auto-scroll carousel was retired together
+/// with the legacy image API on 2026-05-08). Image data is fetched on demand
+/// from `/api/mobile/v1/images/` via [ClientImageWidget].
+class _AutoScrollClientImageCarousel extends StatelessWidget {
   final String clientCode;
   final double height;
   final bool isVisited;
@@ -3017,345 +2871,23 @@ class _AutoScrollClientImageCarousel extends StatefulWidget {
   });
 
   @override
-  State<_AutoScrollClientImageCarousel> createState() =>
-      _AutoScrollClientImageCarouselState();
-}
-
-class _AutoScrollClientImageCarouselState
-    extends State<_AutoScrollClientImageCarousel> {
-  final PageController _pageController = PageController();
-  Timer? _autoScrollTimer;
-  int _currentPage = 0;
-  List<String> _imageUrls = []; // Medium o'lchamli rasmlar (carousel uchun)
-  List<String> _largeImageUrls =
-      []; // Large o'lchamli rasmlar (to'liq ekran uchun)
-  bool _isLoading = true;
-  bool _userIsScrolling = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadImageUrls();
-  }
-
-  @override
-  void dispose() {
-    _stopAutoScroll();
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  /// Load image URLs for the client from database
-  Future<void> _loadImageUrls() async {
-    try {
-      await sl.isReady<ClientImagesService>();
-      final clientImagesService = sl<ClientImagesService>();
-
-      final clientImages = await clientImagesService.getClientImages(
-        widget.clientCode,
-      );
-
-      if (mounted) {
-        setState(() {
-          // Client detail uchun MEDIUM o'lchamli rasmlarni yuklash
-          // Bu carousel ko'rinishida optimal sifat va tezlikni ta'minlaydi
-          _imageUrls = clientImages
-              .map((img) => _getMediumImageUrl(img))
-              .whereType<String>()
-              .where((u) => u.trim().isNotEmpty)
-              .toList();
-
-          // To'liq ekran ko'rish uchun LARGE o'lchamli rasmlarni yuklash
-          // Eng yuqori sifatli rasmlar
-          _largeImageUrls = clientImages
-              .map((img) => _getLargeImageUrl(img))
-              .whereType<String>()
-              .where((u) => u.trim().isNotEmpty)
-              .toList();
-
-          _isLoading = false;
-        });
-
-        // Start auto-scroll if we have multiple images
-        if (_imageUrls.length > 1) {
-          _startAutoScroll();
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error loading image URLs for client ${widget.clientCode}: $e');
-      }
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  /// Start automatic scrolling every 5 seconds for grid view
-  void _startAutoScroll() {
-    _stopAutoScroll(); // Ensure no duplicate timers
-
-    _autoScrollTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      if (!mounted || _userIsScrolling) return;
-
-      // Calculate next page index (loop back to start after last page)
-      final nextPage = (_currentPage + 1) % _imageUrls.length;
-
-      // Animate to next page
-      _pageController.animateToPage(
-        nextPage,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-
-      setState(() {
-        _currentPage = nextPage;
-      });
-    });
-  }
-
-  /// Stop automatic scrolling
-  void _stopAutoScroll() {
-    _autoScrollTimer?.cancel();
-    _autoScrollTimer = null;
-  }
-
-  /// Handle manual scroll start - pause auto-scroll
-  void _onScrollStart() {
-    setState(() {
-      _userIsScrolling = true;
-    });
-    _stopAutoScroll();
-  }
-
-  /// Handle manual scroll end - resume auto-scroll after 3 seconds
-  void _onScrollEnd() {
-    setState(() {
-      _userIsScrolling = false;
-    });
-
-    // Resume auto-scroll after 3 seconds of inactivity
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted && !_userIsScrolling && _imageUrls.length > 1) {
-        _startAutoScroll();
-      }
-    });
-  }
-
-  /// To'liq ekran rasm ko'rish sahifasini ochish
-  /// [initialIndex] - ochilishi kerak bo'lgan rasm indeksi
-  void _openFullScreenViewer(int initialIndex) {
-    // Auto-scroll ni to'xtatish
-    _stopAutoScroll();
-
-    // Agar large rasmlar bo'sh bo'lsa, medium rasmlardan foydalanish
-    final imagesToShow = _largeImageUrls.isNotEmpty
-        ? _largeImageUrls
-        : _imageUrls;
-
-    if (imagesToShow.isEmpty) return;
-
-    Navigator.of(context)
-        .push(
-          PageRouteBuilder(
-            opaque: false,
-            barrierColor: Colors.black87,
-            pageBuilder: (context, animation, secondaryAnimation) {
-              return _FullScreenImageViewer(
-                imageUrls: imagesToShow,
-                initialIndex: initialIndex,
-                clientName: null, // Mijoz nomini keyinroq qo'shish mumkin
-              );
-            },
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-          ),
-        )
-        .then((_) {
-          // Qaytib kelganda auto-scroll ni qayta boshlash
-          if (mounted && _imageUrls.length > 1) {
-            _startAutoScroll();
-          }
-        });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
-    // Show loading indicator while loading images
-    if (_isLoading) {
-      return Container(
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    // Show default icon if no images available
-    if (_imageUrls.isEmpty) {
-      return Container(
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: const Center(child: Icon(Icons.storefront, size: 40)),
-      );
-    }
-
-    // Show image carousel with auto-scroll
     return SizedBox(
-      height: widget.height,
-      child: Stack(
-        children: [
-          // PageView for swipeable carousel with manual scroll detection
-          NotificationListener<ScrollNotification>(
-            onNotification: (notification) {
-              if (notification is ScrollStartNotification) {
-                _onScrollStart();
-              } else if (notification is ScrollEndNotification) {
-                _onScrollEnd();
-                // Update current page when user stops scrolling
-                final page = _pageController.page?.round() ?? 0;
-                setState(() {
-                  _currentPage = page;
-                });
-              }
-              return false;
-            },
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: _imageUrls.length,
-              itemBuilder: (context, index) {
-                final provider = _clientImageProvider(_imageUrls[index]);
-                return GestureDetector(
-                  // Double-tap orqali to'liq ekran rasm ko'rish
-                  onDoubleTap: () => _openFullScreenViewer(index),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Client image with blur effect if visited
-                        if (provider == null)
-                          Container(
-                            color: cs.surfaceContainerHighest,
-                            child: const Icon(Icons.broken_image, size: 40),
-                          )
-                        else
-                          Image(
-                            image: provider,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: cs.surfaceContainerHighest,
-                                child: const Icon(Icons.broken_image, size: 40),
-                              );
-                            },
-                          ),
-                        // Overlay for visited state
-                        if (widget.isVisited)
-                          Container(color: Colors.black.withOpacity(0.22)),
-                        // Double-tap ko'rsatma (rasm bor bo'lganda)
-                        if (provider != null)
-                          Positioned(
-                            bottom: 8,
-                            right: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.fullscreen,
-                                    color: Colors.white70,
-                                    size: 14,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    '2x bosing',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+      height: height,
+      width: double.infinity,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ClientImageWidget(
+              clientCode: clientCode,
+              size: ClientImageSize.medium,
+              fit: BoxFit.cover,
             ),
-          ),
-
-          // Page indicator (bottom-center) - shows current position in carousel
-          if (_imageUrls.length > 1)
-            Positioned(
-              bottom: 8,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _imageUrls.length,
-                  (index) => Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _currentPage == index
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.4),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-          // Image counter (top-right) - shows "X / Total" format
-          if (_imageUrls.length > 1)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${_currentPage + 1} / ${_imageUrls.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-        ],
+            if (isVisited) Container(color: Colors.black.withOpacity(0.22)),
+          ],
+        ),
       ),
     );
   }
@@ -3439,41 +2971,6 @@ class _TradingPointGridTile extends StatelessWidget {
                   ),
                 ),
 
-                // Edit icon for client images (top-left corner)
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.edit,
-                        color: Colors.blue,
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ClientImagesPage(tradingPoint: tp),
-                          ),
-                        );
-                      },
-                      tooltip:
-                          AppLocalizations.of(context)?.manageClientImages ??
-                          'Manage client images',
-                      iconSize: 20,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
             // BODY: data in single column
@@ -3697,7 +3194,6 @@ class _TradingPointDetailsSheet extends StatefulWidget {
   final VoidCallback onViewContracts;
   final VoidCallback onRefusal;
   final SalesReqPermissions? permissions;
-  final ClientImagesService? clientImagesService;
 
   const _TradingPointDetailsSheet({
     required this.tradingPoint,
@@ -3709,7 +3205,6 @@ class _TradingPointDetailsSheet extends StatefulWidget {
     required this.onViewContracts,
     required this.onRefusal,
     this.permissions,
-    this.clientImagesService,
   });
 
   @override
@@ -3786,7 +3281,6 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
                 _ClientDetailsPage(
                   tradingPoint: widget.tradingPoint,
                   onCall: widget.onCall,
-                  clientImagesService: widget.clientImagesService,
                 ),
               ],
             ),
@@ -3801,12 +3295,10 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
 class _ClientDetailsPage extends StatefulWidget {
   final TradingPoint tradingPoint;
   final VoidCallback onCall;
-  final ClientImagesService? clientImagesService;
 
   const _ClientDetailsPage({
     required this.tradingPoint,
     required this.onCall,
-    this.clientImagesService,
   });
 
   @override
@@ -3816,89 +3308,12 @@ class _ClientDetailsPage extends StatefulWidget {
 class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   bool _locationPermissionGranted = false;
   MapProvider _defaultMapProvider = MapProvider.google;
-  List<ClientImage> _clientImages = [];
-  bool _isLoadingImages = true;
-  bool _isFetchingFromServer = false;
 
   @override
   void initState() {
     super.initState();
     _checkLocationPermission();
     _loadDefaultMapProvider();
-    _loadClientImagesWithLazyFetch();
-  }
-
-  /// Load client images from database with lazy server fetch
-  /// 1. First check local DB (fast)
-  /// 2. If empty, fetch from server in background (lazy)
-  /// 3. Update UI when ready
-  Future<void> _loadClientImagesWithLazyFetch() async {
-    try {
-      final clientImagesService = widget.clientImagesService;
-      if (clientImagesService == null) {
-        if (kDebugMode) {
-          print('ClientImagesService not available in ClientDetailsPage');
-        }
-        if (mounted) setState(() => _isLoadingImages = false);
-        return;
-      }
-
-      // Step 1: Quick DB lookup (non-blocking for UI)
-      final cachedImages = await clientImagesService.getClientImages(
-        widget.tradingPoint.id,
-      );
-
-      if (mounted) {
-        setState(() {
-          _clientImages = cachedImages;
-          _isLoadingImages = false;
-        });
-      }
-
-      // Step 2: If no cached images, lazy fetch from server
-      if (cachedImages.isEmpty && !_isFetchingFromServer) {
-        _lazyFetchFromServer(clientImagesService);
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error loading client images: $e');
-      }
-      if (mounted) setState(() => _isLoadingImages = false);
-    }
-  }
-
-  /// Lazy fetch images from server in background
-  /// Does not block UI - updates when complete
-  Future<void> _lazyFetchFromServer(ClientImagesService service) async {
-    if (_isFetchingFromServer) return;
-    
-    setState(() => _isFetchingFromServer = true);
-    
-    try {
-      if (kDebugMode) {
-        print('ClientDetailsPage: Lazy fetching images from server for ${widget.tradingPoint.id}');
-      }
-
-      await service.fetchAndSaveClientImages(widget.tradingPoint.id);
-
-      // Reload from DB after server fetch
-      if (mounted) {
-        final freshImages = await service.getClientImages(widget.tradingPoint.id);
-        setState(() {
-          _clientImages = freshImages;
-          _isFetchingFromServer = false;
-        });
-        
-        if (kDebugMode) {
-          print('ClientDetailsPage: Loaded ${freshImages.length} images from server');
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('ClientDetailsPage: Server fetch failed (non-critical): $e');
-      }
-      if (mounted) setState(() => _isFetchingFromServer = false);
-    }
   }
 
   /// Validates and returns a valid LatLng, with fallback for invalid coordinates
@@ -4523,43 +3938,9 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     );
   }
 
-  /// Build client images section with shimmer loading state
+  /// Build client images section. Image data is fetched on demand from
+  /// `/api/mobile/v1/images/` via [ClientImageWidget].
   Widget _buildClientImagesSection(ThemeData theme, ColorScheme cs, AppLocalizations l10n) {
-    // Show shimmer while loading
-    if (_isLoadingImages) {
-      return _ClientImagesShimmer();
-    }
-
-    // Show images if available
-    if (_clientImages.isNotEmpty) {
-      return _ClientImagesGallerySection(
-        clientImages: _clientImages,
-        tradingPoint: widget.tradingPoint,
-        isFetchingFromServer: _isFetchingFromServer,
-      );
-    }
-
-    // Show fetching indicator when loading from server
-    if (_isFetchingFromServer) {
-      return _ClientImagesFetchingIndicator();
-    }
-
-    // No images available - show empty state with option to fetch
-    return _ClientImagesEmptyState(
-      onFetch: widget.clientImagesService != null
-          ? () => _lazyFetchFromServer(widget.clientImagesService!)
-          : null,
-    );
-  }
-}
-
-/// Shimmer placeholder for client images while loading
-class _ClientImagesShimmer extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -4569,14 +3950,14 @@ class _ClientImagesShimmer extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
                 Icon(Icons.photo_library_outlined, size: 22, color: cs.primary),
                 const SizedBox(width: 12),
                 Text(
-                  AppLocalizations.of(context)?.manageClientImages ?? 'Client Images',
+                  l10n.manageClientImages,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -4585,180 +3966,13 @@ class _ClientImagesShimmer extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 3,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
-                    child: _ShimmerBox(width: 100, height: 100, borderRadius: 8),
-                  );
-                },
+              height: 200,
+              child: ClientImageWidget(
+                clientCode: widget.tradingPoint.id,
+                size: ClientImageSize.large,
+                fit: BoxFit.cover,
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Shimmer box widget for loading animation
-class _ShimmerBox extends StatefulWidget {
-  final double width;
-  final double height;
-  final double borderRadius;
-
-  const _ShimmerBox({
-    required this.width,
-    required this.height,
-    this.borderRadius = 4,
-  });
-
-  @override
-  State<_ShimmerBox> createState() => _ShimmerBoxState();
-}
-
-class _ShimmerBoxState extends State<_ShimmerBox>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat();
-    _animation = Tween<double>(begin: -1.0, end: 2.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            gradient: LinearGradient(
-              begin: Alignment(_animation.value - 1, 0),
-              end: Alignment(_animation.value, 0),
-              colors: isDark
-                  ? [
-                      cs.surfaceContainerHighest,
-                      cs.surfaceContainerHighest.withOpacity(0.5),
-                      cs.surfaceContainerHighest,
-                    ]
-                  : [
-                      cs.surfaceContainerHighest,
-                      cs.surface,
-                      cs.surfaceContainerHighest,
-                    ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Indicator shown when fetching images from server
-class _ClientImagesFetchingIndicator extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: cs.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              AppLocalizations.of(context)?.loadingClientImages ?? 'Loading images...',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Empty state when no images available
-class _ClientImagesEmptyState extends StatelessWidget {
-  final VoidCallback? onFetch;
-
-  const _ClientImagesEmptyState({this.onFetch});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(
-              Icons.photo_library_outlined,
-              size: 22,
-              color: cs.onSurfaceVariant,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                AppLocalizations.of(context)?.noImagesAvailable ?? 'No images available',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-            ),
-            if (onFetch != null)
-              TextButton.icon(
-                onPressed: onFetch,
-                icon: const Icon(Icons.refresh, size: 18),
-                label: Text(AppLocalizations.of(context)?.refresh ?? 'Refresh'),
-              ),
           ],
         ),
       ),
@@ -5365,40 +4579,11 @@ class _ActionsMapPage extends StatefulWidget {
 class _ActionsMapPageState extends State<_ActionsMapPage> {
   GoogleMapController? _mapController;
   bool _locationPermissionGranted = false;
-  List<ClientImage> _clientImages = [];
-  bool _isLoadingImages = true;
 
   @override
   void initState() {
     super.initState();
     _checkLocationPermission();
-    _loadClientImages();
-  }
-
-  /// Load client images from database
-  Future<void> _loadClientImages() async {
-    try {
-      // Get ClientImagesService from service locator
-      final clientImagesService = sl<ClientImagesService>();
-      final images = await clientImagesService.getClientImages(
-        widget.tradingPoint.id,
-      );
-      if (mounted) {
-        setState(() {
-          _clientImages = images;
-          _isLoadingImages = false;
-        });
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error loading client images in ActionsMapPage: $e');
-      }
-      if (mounted) {
-        setState(() {
-          _isLoadingImages = false;
-        });
-      }
-    }
   }
 
   /// Validates and returns a valid LatLng, with fallback for invalid coordinates
@@ -5490,8 +4675,6 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
             url: url,
             visited: widget.tradingPoint.isVisited,
             tradingPoint: widget.tradingPoint,
-            clientImages: _clientImages,
-            isLoadingImages: _isLoadingImages,
           ),
 
           // Actions below with marker rotation support
@@ -5563,333 +4746,43 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
   }
 }
 
-// Yordamchi: header image (blur/overlay tashrifda) with client images carousel
-class _HeaderImage extends StatefulWidget {
+/// Header image — single client image fetched on demand via the new
+/// `/api/mobile/v1/images/` backend. The legacy multi-image auto-scrolling
+/// carousel was retired together with the legacy image API on 2026-05-08.
+class _HeaderImage extends StatelessWidget {
   final String? url;
   final bool visited;
   final TradingPoint tradingPoint;
-  final List<ClientImage> clientImages;
-  final bool isLoadingImages;
+
   const _HeaderImage({
     required this.url,
     required this.visited,
     required this.tradingPoint,
-    required this.clientImages,
-    required this.isLoadingImages,
   });
-
-  @override
-  State<_HeaderImage> createState() => _HeaderImageState();
-}
-
-class _HeaderImageState extends State<_HeaderImage> {
-  final PageController _pageController = PageController();
-  Timer? _autoScrollTimer;
-  int _currentPage = 0;
-  bool _userIsScrolling = false;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.clientImages.length > 1) {
-      _startAutoScroll();
-    }
-  }
-
-  @override
-  void dispose() {
-    _stopAutoScroll();
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(_HeaderImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Restart auto-scroll if images changed
-    if (oldWidget.clientImages.length != widget.clientImages.length) {
-      _stopAutoScroll();
-      if (widget.clientImages.length > 1) {
-        _startAutoScroll();
-      }
-    }
-  }
-
-  /// Start automatic scrolling every 4 seconds for client detail header
-  void _startAutoScroll() {
-    _stopAutoScroll(); // Ensure no duplicate timers
-
-    _autoScrollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (!mounted || _userIsScrolling) return;
-
-      // Calculate next page index (loop back to start after last page)
-      final nextPage = (_currentPage + 1) % widget.clientImages.length;
-
-      // Animate to next page
-      _pageController.animateToPage(
-        nextPage,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-
-      setState(() {
-        _currentPage = nextPage;
-      });
-    });
-  }
-
-  /// Stop automatic scrolling
-  void _stopAutoScroll() {
-    _autoScrollTimer?.cancel();
-    _autoScrollTimer = null;
-  }
-
-  /// Handle manual scroll start - pause auto-scroll
-  void _onScrollStart() {
-    setState(() {
-      _userIsScrolling = true;
-    });
-    _stopAutoScroll();
-  }
-
-  /// Handle manual scroll end - resume auto-scroll after 3 seconds
-  void _onScrollEnd() {
-    setState(() {
-      _userIsScrolling = false;
-    });
-
-    // Resume auto-scroll after 3 seconds of inactivity
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted && !_userIsScrolling && widget.clientImages.length > 1) {
-        _startAutoScroll();
-      }
-    });
-  }
-
-  /// To'liq ekran rasm ko'rish sahifasini ochish
-  /// [initialIndex] - ochilishi kerak bo'lgan rasm indeksi
-  void _openFullScreenViewer(int initialIndex) {
-    // Auto-scroll ni to'xtatish
-    _stopAutoScroll();
-
-    // Large o'lchamli rasmlarni tayyorlash
-    final largeImageUrls = widget.clientImages
-        .map((img) => _getLargeImageUrl(img))
-        .whereType<String>()
-        .where((u) => u.trim().isNotEmpty)
-        .toList();
-
-    if (largeImageUrls.isEmpty) return;
-
-    Navigator.of(context)
-        .push(
-          PageRouteBuilder(
-            opaque: false,
-            barrierColor: Colors.black87,
-            pageBuilder: (context, animation, secondaryAnimation) {
-              return _FullScreenImageViewer(
-                imageUrls: largeImageUrls,
-                initialIndex: initialIndex,
-                clientName: widget.tradingPoint.name,
-              );
-            },
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-          ),
-        )
-        .then((_) {
-          // Qaytib kelganda auto-scroll ni qayta boshlash
-          if (mounted && widget.clientImages.length > 1) {
-            _startAutoScroll();
-          }
-        });
-  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final h = 250.0;
-
     return SizedBox(
-      height: h,
+      height: 250,
       child: Container(
         decoration: BoxDecoration(
           color: cs.primaryContainer,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: Stack(
-          children: [
-            // Client images carousel with auto-scroll
-            if (widget.clientImages.isNotEmpty) ...[
-              NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  if (notification is ScrollStartNotification) {
-                    _onScrollStart();
-                  } else if (notification is ScrollEndNotification) {
-                    _onScrollEnd();
-                    // Update current page when user stops scrolling
-                    final page = _pageController.page?.round() ?? 0;
-                    setState(() {
-                      _currentPage = page;
-                    });
-                  }
-                  return false;
-                },
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: widget.clientImages.length,
-                  itemBuilder: (context, index) {
-                    final image = widget.clientImages[index];
-                    // Header uchun MEDIUM o'lchamli rasmlarni ko'rsatish
-                    final imageUrl = _getMediumImageUrl(image);
-                    final provider = _clientImageProvider(imageUrl);
-                    return GestureDetector(
-                      // Double-tap orqali to'liq ekran rasm ko'rish
-                      onDoubleTap: () => _openFullScreenViewer(index),
-                      child: Container(
-                        margin: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          image: provider == null
-                              ? null
-                              : DecorationImage(
-                                  image: provider,
-                                  fit: BoxFit.cover,
-                                ),
-                        ),
-                        child: Stack(
-                          children: [
-                            if (image.isMain)
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.8),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    'Asosiy',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            // Double-tap ko'rsatma
-                            Positioned(
-                              bottom: 8,
-                              right: 8,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.fullscreen,
-                                      color: Colors.white70,
-                                      size: 14,
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      '2x bosing',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            // Rasm soni
-                            Positioned(
-                              bottom: 8,
-                              left: 8,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${index + 1} / ${widget.clientImages.length}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ClientImageWidget(
+                clientCode: tradingPoint.id,
+                size: ClientImageSize.large,
+                fit: BoxFit.cover,
               ),
-            ] else if (widget.isLoadingImages) ...[
-              const Center(child: CircularProgressIndicator()),
-            ] else ...[
-              // No images - show default with edit button
-              const Center(child: Icon(Icons.storefront, size: 48)),
+              if (visited) Container(color: Colors.black.withOpacity(0.22)),
             ],
-
-            // Edit button (always visible)
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ClientImagesPage(
-                          tradingPoint: TradingPointWithPermissions(
-                            tradingPoint: widget.tradingPoint,
-                            permissions: null, // We don't have permissions here
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  tooltip:
-                      AppLocalizations.of(context)?.manageClientImages ??
-                      'Mijoz rasmlarini boshqarish',
-                  iconSize: 20,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -6450,155 +5343,6 @@ class _CompactMapCard extends StatelessWidget {
                 ],
               ),
             ),
-    );
-  }
-}
-
-/// Client images gallery section with horizontal scrollable thumbnails
-class _ClientImagesGallerySection extends StatelessWidget {
-  final List<ClientImage> clientImages;
-  final TradingPoint tradingPoint;
-  final bool isFetchingFromServer;
-
-  const _ClientImagesGallerySection({
-    required this.clientImages,
-    required this.tradingPoint,
-    this.isFetchingFromServer = false,
-  });
-
-  void _openFullScreenViewer(BuildContext context, int initialIndex) {
-    final largeImageUrls = clientImages
-        .map((img) => _getLargeImageUrl(img))
-        .whereType<String>()
-        .where((u) => u.trim().isNotEmpty)
-        .toList();
-
-    if (largeImageUrls.isEmpty) return;
-
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.black87,
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return _FullScreenImageViewer(
-            imageUrls: largeImageUrls,
-            initialIndex: initialIndex,
-            clientName: tradingPoint.name,
-          );
-        },
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.photo_library_outlined, size: 22, color: cs.primary),
-                const SizedBox(width: 12),
-                Text(
-                  AppLocalizations.of(context)?.manageClientImages ?? 'Client Images',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${clientImages.length}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: clientImages.length,
-                itemBuilder: (context, index) {
-                  final image = clientImages[index];
-                  final imageUrl = _getMediumImageUrl(image);
-                  final provider = _clientImageProvider(imageUrl);
-
-                  return Padding(
-                    padding: EdgeInsets.only(right: index < clientImages.length - 1 ? 8 : 0),
-                    child: InkWell(
-                      onTap: () => _openFullScreenViewer(context, index),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        width: 100,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: cs.outlineVariant),
-                          image: provider != null
-                              ? DecorationImage(
-                                  image: provider,
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: Stack(
-                          children: [
-                            if (provider == null)
-                              Center(
-                                child: Icon(
-                                  Icons.broken_image_outlined,
-                                  color: cs.onSurfaceVariant,
-                                ),
-                              ),
-                            if (image.isMain)
-                              Positioned(
-                                top: 4,
-                                right: 4,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'Main',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

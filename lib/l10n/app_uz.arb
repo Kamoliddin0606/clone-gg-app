@@ -29,8 +29,8 @@
   "no": "Yo'q",
   "error": "Xatolik",
   "loading": "Yuklanmoqda...",
-  "noData": "Ma'lumotlar mavjud emas",
-  "retry": "Qayta urinib ko'ring",
+  "noData": "Ma'lumot yo'q",
+  "retry": "Qayta urinish",
   "search": "Qidirish",
   "filter": "Filtr",
   "dateRange": "Sana oralig'i",
@@ -38,7 +38,7 @@
   "clients": "Mijozlar",
   "status": "Status",
   "total": "Jami",
-  "quantity": "Miqdor",
+  "quantity": "Miqdori",
   "price": "Narx",
   "sum": "Summa",
   "currency": "UZS",
@@ -68,10 +68,10 @@
   "settingsSaved": "Sozlamalar muvaffaqiyatli saqlandi",
   "dataSync": "Ma'lumotlarni sinxronizatsiya qilish",
   "syncNow": "Hozir sinxronizatsiya qilish",
-  "lastSync": "Oxirgi sinxronizatsiya",
-  "syncing": "Sinxronizatsiya qilinmoqda...",
+  "lastSync": "Oxirgi sinxronizatsiya: {time}",
+  "syncing": "Sinxronlanmoqda...",
   "syncComplete": "Sinxronizatsiya tugadi",
-  "syncError": "Sinxronizatsiya xatoligi",
+  "syncError": "Sinxronizatsiya xatosi: {error}",
   "noInternet": "Internet mavjud emas",
   "offlineMode": "Offline rejim - keshlangan ma'lumotlar ko'rsatilmoqda",
   "onlineMode": "Online rejim",
@@ -80,9 +80,9 @@
   "sessionExpired": "Sessiya muddati tugagan",
   "permissionDenied": "Ruxsat berilmagan",
   "fileNotFound": "Fayl topilmadi",
-  "unknownError": "Noma'lum xatolik yuz berdi",
+  "unknownError": "Noma'lum xatolik",
   "tryAgain": "Iltimos, qayta urinib ko'ring",
-  "contactSupport": "Qo'llab-quvvatlash bilan bog'laning",
+  "contactSupport": "Qo'llab-quvvatlash bilan bog'lanish",
   "version": "Versiya",
   "about": "Haqida",
   "help": "Yordam",
@@ -109,7 +109,7 @@
   "ready": "Tayyor",
   "picking": "Tanlanmoqda",
   "packed": "Qadoqlangan",
-  "completed": "Bajarilgan",
+  "completed": "Bajarildi",
   "toPack": "Qadoqlash kerak",
   "inProgress": "Jarayonda",
   "lowStock": "Kam qoldiq",
@@ -155,11 +155,9 @@
   "visit": "Tashrif",
   "visitClient": "Tashrif buyurush",
   "createOrder": "Buyurtma yaratish",
-  "unplannedOrder": "Rejadan tashqari buyurtma",
+  "unplannedOrder": "Rejalashtirilmagan buyurtma",
   "viewContracts": "Shartnomalarni ko'rish",
-  "contracts": "Shartnomalar",
   "refusal": "Rad etish",
-  "orders": "Buyurtmalar",
   "route": "Marshrut",
   "refusalReason": "Rad etish sababi",
   "selectReason": "Rad etish sababini tanlang",
@@ -231,7 +229,7 @@
   "start": "Boshlash",
   "end": "Tugash",
   "beginning": "Boshlanish",
-  "finish": "Tugash",
+  "finish": "Yakunlash",
   "open": "Ochish",
   "closed": "Yopish",
   "available": "Mavjud",
@@ -240,12 +238,9 @@
   "disabled": "O'chirilgan",
   "on": "Yoqilgan",
   "off": "O'chirilgan",
-  "yes": "Ha",
-  "no": "Yo'q",
   "booleanTrue": "To'g'ri",
   "booleanFalse": "Noto'g'ri",
   "interfaceSettings": "Interfeys sozlamalari",
-  "selectLanguage": "Tilni tanlang",
   "languageChanged": "Til muvaffaqiyatli o'zgartirildi",
   "restartRequired": "Til o'zgarishlarini qo'llash uchun ilovani qayta ishga tushiring",
   "currentLanguage": "Joriy til",
@@ -256,7 +251,6 @@
   "languageChangeWarning": "Tilni o'zgartirish ilovani qayta ishga tushiradi",
   "success": "Muvaffaqiyat",
   "prices": "Narxlar",
-  "warehouses": "Skladlar",
   "businessRegions": "Biznes Regionlar",
   "permissions": "Ruxsatlar",
   "apply": "Qo'llash",
@@ -271,7 +265,6 @@
   "emergency": "Favqulodda",
   "notice": "E'tibor",
   "alert": "Signal",
-  "emergency": "Favqulodda",
   "agentPermissions": "Agent ruxsatlari",
   "userPermissionsAndVisitSteps": "Foydalanuvchi uchun berilgan ruxsatlar va tashrif bosqichlari",
   "dataValidation": "Ma'lumotlarni tekshirish",
@@ -282,47 +275,31 @@
   "skipTINDuplicateCheck": "INN takrorlanishini tekshirishni o'tkazib yuborish",
   "allowCreationWithoutTIN": "INN kiritmasdan yaratishga ruxsat",
   "allowCreatingPointOfSale": "Savdo nuqtasi yaratishga ruxsat",
-  "visit": "Tashrif",
   "strictSequence": "Qat'iy ketma-ketlik",
-  "unplannedOrder": "Rejalashtirilmagan buyurtma",
   "plannedRoute": "Rejalashtirilgan marshrut",
   "general": "Umumiy",
   "mandatoryExecution": "Majburiy bajarish",
   "optional": "Ixtiyoriy",
   "permissionsDataNotAvailable": "Ruxsatlar ma'lumotlari mavjud emas",
-  "permissions": "Ruxsatlar",
-  "permissionDenied": "Ruxsat berilmagan",
   "languageChangeError": "Tilni o'zgartirishda xatolik yuz berdi",
   "languageAutoDetected": "Til tizimdan avtomatik aniqlandi",
   "customers": "Mijozlar",
-  "reports": "Hisobotlar",
-  "marketing": "Marketing",
-  "cash": "Kassa",
   "debitCredit": "Debit-Kredit",
-  "warehouses": "Skladlar",
   "products": "Tovarlar",
-  "prices": "Narxlar",
-  "contracts": "Shartnomalar",
-  "orders": "Buyurtmalar",
   "dbView": "DB View",
   "darkMode": "Qorong'i rejim",
-  "settings": "Sozlamalar",
-  "logout": "Chiqish",
   "kpiDataUpdateError": "KPI ma'lumotlarini yangilashda xatolik",
   "onlineModeReturn": "Online rejimga qaytish",
   "onlineModeReturnConfirm": "Internet bilan va server bilan aloqa borligini tekshirib, online rejimga qaytishni xohlaysizmi?",
-  "no": "Yo'q",
-  "yes": "Ha",
   "serverUrlNotFound": "Server manzili topilmadi",
   "serverUrl": "Server manzili",
   "connectionError": "Aloqa yo'q",
   "menu": "Menyu",
   "offline": "Offline",
   "refresh": "Yangilash",
-  "ok": "OK",
   "okb": "OKB",
-  "akbPlan": "AKB Reja",
-  "akbFact": "AKB Fakt",
+  "akbPlan": "AKB rejasi",
+  "akbFact": "AKB fakt",
   "forecastPercentOfFact": "Bashorat % dan Fakt",
   "totalPlan": "Jami reja",
   "totalFact": "Jami fakt",
@@ -333,7 +310,6 @@
   "factVsRemaining": "Fakt vs Qolgan",
   "forecastTrend": "Bashorat tendensiyasi",
   "fromFactToForecast": "Faktdan bashoratga",
-  "fact": "Fakt",
   "remaining": "Qolgan",
   "onTrack": "Reja bo'yicha",
   "atRisk": "Xavf ostida",
@@ -344,22 +320,13 @@
   "akbGap": "AKB farqi",
   "forecastVsPlan": "Bashorat vs Reja",
   "todayPerformance": "Bugungi ishlash",
-  "forecast": "Bashorat",
   "planExecution": "Reja bajarilishi",
-  "plan": "Reja",
-  "fact": "Fakt",
-  "remaining": "Qolgan",
-  "createOrder": "Buyurtma yaratish",
-  "customers": "Mijozlar",
-  "products": "Tovarlar",
   "rememberMe": "Eslab qolish",
   "databaseView": "Ma'lumotlar bazasi ko'rinishi",
   "preferenceKey": "Sozlama kaliti",
   "value": "Qiymat",
   "id": "ID",
   "code": "Kod",
-  "username": "Foydalanuvchi nomi",
-  "password": "Parol",
   "name": "Ism",
   "role": "Rol",
   "warehouseCode": "Sklad kodi",
@@ -369,27 +336,13 @@
   "chatId": "Chat ID",
   "topicId": "Topic ID",
   "createdAt": "Yaratilgan",
-  "updatedAt": "Yangilangan",
-  "plan": "Reja",
-  "fact": "Fakt",
+  "updatedAt": "Yangilangan: {date} {time}",
   "totalPercent": "Jami %",
-  "forecast": "Bashorat",
   "forecastPercent": "Bashorat %",
-  "okb": "OKB",
-  "akbPlan": "AKB Reja",
-  "akbFact": "AKB Fakt",
   "akbPercent": "AKB %",
   "updateDate": "Yangilanish sanasi",
   "exit": "Chiqish",
   "confirmExit": "Haqiqatan ham chiqmoqchimisiz?",
-  "cancel": "Bekor qilish",
-  "retry": "Qayta urinib ko'ring",
-  "noData": "Ma'lumotlar yo'q",
-  "error": "Xatolik",
-  "loading": "Yuklanmoqda...",
-  "yes": "Ha",
-  "no": "Yo'q",
-  "ok": "OK",
   "contactPerson": "Aloqa",
   "lastVisitDate": "Oxirgi tashrif",
   "hasOrders": "Buyurtmalar mavjud",
@@ -411,24 +364,22 @@
   "notConfigured": "Sozlanmagan",
   "mapSettings": "Xarita sozlamalari",
   "defaultMapChanged": "Asosiy xarita muvaffaqiyatli o'zgartirildi",
-  "currentMapProvider": "Joriy xarita provayderi",
-  "availableMaps": "Mavjud xaritalar",
+  "currentMapProvider": "Current Map Provider",
+  "availableMaps": "Available Maps",
   "mapConfiguration": "Xarita konfiguratsiyasi",
   "visitProgress": "Tashrif jarayoni",
   "visitStepNumber": "Tashrif tartibi",
-  "completed": "Bajarildi",
   "skipped": "O'tkazib yuborildi",
   "current": "Joriy",
   "mandatory": "Majburiy",
-  "optional": "Ixtiyoriy",
   "completedAt": "Bajarilgan vaqti",
   "skippedAt": "O'tkazib yuborilgan vaqti",
   "notes": "Izoh",
   "reason": "Sabab",
   "previousStepsRequired": "Oldingi qadamlar bajarilishi kerak",
-  "completeStep": "Qadamni bajarish",
-  "skipStep": "Qadamni o'tkazib yuborish",
-  "confirmCompletion": "Bajarilganligini tasdiqlang",
+  "completeStep": "Bosqichni yakunlash",
+  "skipStep": "Bosqichni o'tkazish",
+  "confirmCompletion": "Yakunlashni tasdiqlang",
   "stepCompletedSuccessfully": "Qadam muvaffaqiyatli bajarildi",
   "stepSkippedSuccessfully": "Qadam muvaffaqiyatli o'tkazib yuborildi",
   "visitCompletedSuccessfully": "Tashrif muvaffaqiyatli yakunlandi!",
@@ -436,15 +387,13 @@
   "allRequiredStepsMustBeCompleted": "Barcha majburiy qadamlar bajarilishi kerak",
   "visitInfo": "Tashrif haqida ma'lumot",
   "client": "Mijoz",
-  "strictSequence": "Qat'iy ketma-ketlik",
   "totalSteps": "Jami qadamlar",
   "requiredSteps": "Majburiy qadamlar",
-  "retry": "Qayta urinib ko'ring",
   "unknownState": "Noma'lum holat",
   "cancelCompletion": "Bekor qilish",
-  "confirmSkip": "O'tkazib yuborishni tasdiqlash",
+  "confirmSkip": "O'tkazishni tasdiqlash",
   "enterNotesOptional": "Izoh kiriting (ixtiyoriy)",
-  "enterSkipReason": "O'tkazib yuborish sababini kiriting",
+  "enterSkipReason": "O'tkazish sababini kiriting",
   "stepCannotBeSkipped": "Bu qadamni o'tkazib bo'lmaydi",
   "allRequiredStepsCompleted": "Barcha majburiy qadamlar bajarildi",
   "soapRequest": "SOAP so'rov",
@@ -461,13 +410,12 @@
   "visitFinishErrorPrefix": "Tashrifni yakunlashda xatolik",
   "stepsCount": "bosqich",
   "visitFinishing": "Tashrif yakunlanmoqda...",
-  "orderNumber": "Buyurtma raqami",
+  "orderNumber": "Buyurtma № {number}",
   "dataSaveError": "Ma'lumotlarni saqlashda xatolik yuz berdi",
   "saveErrorPrefix": "Saqlashda xatolik",
   "dataLoadError": "Ma'lumotlarni yuklashda xatolik yuz berdi",
   "productsLoadError": "Mahsulotlarni yuklashda xatolik",
   "settingsUpdateError": "Sozlamalarni yangilashda xatolik",
-  "save": "Saqlash",
   "clearOrder": "Buyurtmani tozalash",
   "suggestedOrders": "Taklif qilingan buyurtmalar",
   "productSelectionError": "Mahsulot tanlash sahifasiga o'tishda xatolik yuz berdi",
@@ -478,13 +426,13 @@
   "dateChangeError": "Sana o'zgartirishda xatolik",
   "clearOrderConfirmTitle": "Buyurtmani tozalash",
   "clearOrderConfirmMessage": "Tanlangan barcha mahsulotlar va ular bilan bog'liq ma'lumotlar o'chiriladi. Sozlamalar tanlovlari saqlanib qolinadi. Davom etishni xohlaysizmi?",
-  "clientDataLoadError": "Mijozlar ma'lumotlarini yuklashda xatolik",
+  "clientDataLoadError": "Mijoz ma'lumotlarini yuklashda xatolik",
   "locationNotAvailable": "Joylashuv ma'lumotlari mavjud emas. Tashrifni amalga oshirib bo'lmaydi.",
-  "visitCompletedFor": "ga tashrif muvaffaqiyatli yakunlandi",
+  "visitCompletedFor": "uchun tashrif muvaffaqiyatli yakunlandi",
   "contractsPageError": "Shartnomalar sahifasiga o'tishda xatolik",
-  "loadingClientImages": "Mijoz rasmlarini yuklash...",
+  "loadingClientImages": "Mijoz rasmlari yuklanmoqda...",
   "clientImagesLoaded": "Mijoz rasmlari yuklandi",
-  "imageLoadError": "Rasm yuklashda xatolik",
+  "imageLoadError": "Rasmni yuklashda xatolik",
   "disableVisitTodayFilter": "Bugungi tashrif filtrini o'chirish",
   "showVisitTodayOnly": "Faqat bugungi tashrif mijozlarini ko'rsatish",
   "newClient": "Yangi mijoz",
@@ -492,12 +440,12 @@
   "tradingPointsNotFound": "Savdo nuqtalari topilmadi",
   "clientCount": "Mijozlar soni",
   "manageClientImages": "Mijoz rasmlarini boshqarish",
-  "ordersCount": "Buyurtmalar soni",
+  "ordersCount": "{count} ta buyurtma",
   "orderNumberPrefix": "Buyurtma №",
   "viewOrder": "Buyurtmani ko'rish",
   "clientOrdersFor": "mijozining buyurtmalari",
   "locationServicesDisabledSortingNotWork": "Joylashuv xizmatlari o'chirilgan. Masofa bo'yicha tartiblash ishlamaydi.",
-  "userDataNotFound": "Foydalanuvchi ma'lumotlari mavjud emas",
+  "userDataNotFound": "Foydalanuvchi ma'lumotlari topilmadi",
   "phoneNumberNotSpecified": "Telefon raqami ko'rsatilmagan",
   "phoneCallFailed": "Telefon qo'ng'irog'i amalga oshirilmadi",
   "connectedToInternet": "Internetga ulandi",
@@ -527,33 +475,32 @@
   "enterField": "kiriting",
   "imageServiceNotAvailable": "Rasm xizmati mavjud emas",
   "searchHint": "Qidirish...",
-  "pullToRefresh": "Pastga surib yangilash uchun urinib ko'ring!",
+  "pullToRefresh": "Yangilash uchun torting",
   "pullToRefreshOrSyncData": "Pastga surish ish bermasa sozlamalar menyusida joylashgan 'barcha ma'lumotlarni yangilash' amalini bajaring",
   "checkingDistance": "Masofa tekshirilmoqda...",
   "distanceRestrictionError": "Siz mijozdan juda uzoqdasiz. Tashrifni yakunlash uchun yaqinroq boring.",
   "cancelVisit": "Tashrifni bekor qilish",
   "cancelVisitConfirmation": "Haqiqatan ham bu tashrifni bekor qilmoqchimisiz? Barcha jarayon yo'qoladi.",
   "syncStatusIdle": "Kutilmoqda",
-  "syncStatusProducts": "Mahsulotlar yangilanmoqda",
-  "syncStatusBalances": "Balanslar yangilanmoqda",
-  "syncStatusOrders": "Buyurtmalar yangilanmoqda",
-  "syncStatusCompleted": "Yangilandi",
-  "syncStatusError": "Xatolik",
-  "syncInProgress": "Sinxronizatsiya...",
+  "syncStatusProducts": "Tovarlar sinxronlanmoqda",
+  "syncStatusBalances": "Qoldiqlar sinxronlanmoqda",
+  "syncStatusOrders": "Buyurtmalar sinxronlanmoqda",
+  "syncStatusCompleted": "Sinxronlash tugadi",
+  "syncStatusError": "Sinxronlash xatosi",
+  "syncInProgress": "Sinxronlanmoqda...",
   "syncErrorUserNotFound": "Foydalanuvchi kodi topilmadi",
   "syncAlreadyInProgress": "Sinxronizatsiya allaqachon davom etmoqda",
   "syncCompleted": "Ma'lumotlar muvaffaqiyatli yangilandi",
-  "syncError": "Sinxronizatsiyada xatolik yuz berdi",
   "clientBalance": "Mijoz balansi",
   "clientBalanceDetails": "Balans tafsilotlari",
-  "clientIsDebtor": "Mijoz qarzdor",
-  "clientHasOverpayment": "Ortiqcha to'lov",
+  "clientIsDebtor": "Mijoz qarzdor. Jami qarzdorlik: {amount} so'm",
+  "clientHasOverpayment": "Mijoz ortiqcha to'lov qilgan. Ortiqcha: {amount} so'm",
   "balanceIsZero": "Balans nolda",
   "totalDebt": "Jami qarzdorlik",
   "totalPayment": "Jami to'lov",
   "totalOrder": "Jami buyurtma",
-  "unpaidOrders": "To'lanmagan buyurtmalar",
-  "overdueOrders": "Muddati o'tgan buyurtmalar",
+  "unpaidOrders": "{count} ta to'lanmagan",
+  "overdueOrders": "{count} ta muddati o'tgan",
   "balanceStatus": "Balans holati",
   "contractsTab": "Shartnomalar",
   "ordersTab": "Buyurtmalar",
@@ -571,7 +518,7 @@
       }
     }
   },
-  "refreshAfterSeconds": "{seconds} soniyadan keyin yangilash",
+  "refreshAfterSeconds": "{seconds} soniyadan keyin yangilash mumkin",
   "@refreshAfterSeconds": {
     "placeholders": {
       "seconds": {
@@ -579,7 +526,7 @@
       }
     }
   },
-  "balanceUpdated": "Yangilangan: {date}",
+  "balanceUpdated": "Yangilangan",
   "@balanceUpdated": {
     "placeholders": {
       "date": {
@@ -601,8 +548,7 @@
   "balanceServiceNotAvailable": "Balans xizmati mavjud emas",
   "clientInnNotFound": "Mijoz INN raqami topilmadi",
   "statistics": "Statistika",
-  "contractsCount": "Shartnomalar soni",
-  "ordersCount": "Buyurtmalar soni",
+  "contractsCount": "{count} ta shartnoma",
   "contract": "Shartnoma",
   "order": "Buyurtma",
   "overpayment": "Ortiqcha to'lov",
@@ -616,7 +562,7 @@
   "excessLabel": "Ortiqcha",
   "ordersStatus": "Buyurtmalar holati",
   "clearBalanceCache": "Balans keshini tozalash",
-  "clearBalanceCacheConfirm": "Barcha keshlangan balans ma'lumotlarini tozalashni xohlaysizmi?",
+  "clearBalanceCacheConfirm": "Barcha mijozlar balans ma'lumotlari o'chiriladi. Keyingi safar balans ko'rilganda qayta yuklanadi.",
   "balanceCacheCleared": "Balans keshi tozalandi",
   "networkError": "Tarmoq xatosi. Internetni tekshiring.",
   "timeoutError": "So'rov vaqti tugadi. Qayta urinib ko'ring.",
@@ -635,7 +581,6 @@
   "overviewTabShort": "Umumiy",
   "contractsTabShort": "Shartnomalar",
   "ordersTabShort": "Buyurtmalar",
-  "updatedAt": "Yangilangan: {date} {time}",
   "@updatedAt": {
     "placeholders": {
       "date": {
@@ -690,9 +635,9 @@
       }
     }
   },
-  "noDataAvailable": "Ma'lumot yo'q",
-  "noContractsFound": "Shartnomalar yo'q",
-  "noOrdersFound": "Buyurtmalar yo'q",
+  "noDataAvailable": "Ma'lumot mavjud emas",
+  "noContractsFound": "Shartnomalar topilmadi",
+  "noOrdersFound": "Buyurtmalar topilmadi",
   "paidLabel": "To'langan",
   "debtLabelChart": "Qarzdorlik",
   "paymentLabel": "To'lov",
@@ -715,10 +660,10 @@
       }
     }
   },
-  "projectLabel": "Loyiha: {name}",
+  "projectLabel": "Loyiha: {project}",
   "@projectLabel": {
     "placeholders": {
-      "name": {
+      "project": {
         "type": "String"
       }
     }
@@ -740,7 +685,7 @@
       }
     }
   },
-  "debtAmount": "Qarz: {amount}",
+  "debtAmount": "Qarzdorlik: {amount}",
   "@debtAmount": {
     "placeholders": {
       "amount": {
@@ -791,7 +736,7 @@
   "regionInfo": "Hudud ma'lumotlari",
   "creatingContract": "Yaratilmoqda...",
   "serverTimeout": "Server bilan bog'lanishda vaqt tugadi",
-  "noInternetConnection": "Internet aloqasi yo'q",
+  "noInternetConnection": "Internet aloqasi yo'q. Iltimos, internetga ulaning",
   "createClientTitle": "Yangi mijoz",
   "createClientBasicInfo": "Asosiy ma'lumotlar",
   "createClientContactInfo": "Aloqa ma'lumotlari",
@@ -873,7 +818,7 @@
       }
     }
   },
-  "innLabel": "INN: {inn}",
+  "innLabel": "INN",
   "@innLabel": {
     "placeholders": {
       "inn": {
@@ -942,7 +887,6 @@
   },
   "waitingForLocation": "Joylashuv ma'lumotlari kutilmoqda...",
   "visitCompletedTitle": "Tashrif yakunlandi",
-  "visitCompletedSuccessfully": "Tashrif muvaffaqiyatli yakunlandi!",
   "stepsCompletedCount": "{count} ta bosqich bajarildi",
   "@stepsCompletedCount": {
     "placeholders": {
@@ -1007,7 +951,7 @@
       }
     }
   },
-  "errorOccurred": "Xatolik yuz berdi: {error}",
+  "errorOccurred": "Xatolik yuz berdi",
   "@errorOccurred": {
     "placeholders": {
       "error": {
@@ -1055,7 +999,6 @@
       }
     }
   },
-  "finish": "Yakunlash",
   "imageCapturedSuccessfully": "Rasm muvaffaqiyatli olingan",
   "imageCaptureError": "Rasm olishda xatolik: {error}",
   "@imageCaptureError": {
@@ -1065,7 +1008,7 @@
       }
     }
   },
-  "xmlRequestLabel": "XML Request",
+  "xmlRequestLabel": "XML so'rov",
   "xmlCopied": "XML nusxalandi",
   "enterNumberHint": "Raqamni kiriting",
   "balanceStatusTitle": "Balans holati",
@@ -1091,7 +1034,7 @@
   "updateCoordinatesNotImplemented": "Update coordinates - functionality to be implemented",
   "osmNotLoadedFallback": "OpenStreetMap yuklanmadi. Google Maps ishlatiladi.",
   "confirmLocationTitle": "Joylashuvni tasdiqlash",
-  "orderDetailsNotFound": "Buyurtma tafsilotlari topilmadi",
+  "orderDetailsNotFound": "Buyurtma tafsilotlari topilmadi.",
   "unknown": "Noma'lum",
   "locationPermissionDenied": "Joylashuv ruxsatnomasi berilmadi",
   "permissionCheckError": "Ruxsatnoma tekshirishda xatolik: {error}",
@@ -1184,14 +1127,6 @@
     }
   },
   "imageSetAsPrimary": "Rasm asosiy qilib belgilandi",
-  "imagesUploadedCount": "{count} ta rasm muvaffaqiyatli yuklandi",
-  "@imagesUploadedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "serverImagesLoadError": "Server rasmlarini yuklashda xatolik: {error}",
   "@serverImagesLoadError": {
     "placeholders": {
@@ -1210,15 +1145,6 @@
   },
   "cameraCaptureError": "Kameradan rasm olishda xatolik: {error}",
   "@cameraCaptureError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "imagesUploadedSuccessfully": "Rasmlar muvaffaqiyatli yuklandi",
-  "imagesUploadError": "Rasmlarni yuklashda xatolik: {error}",
-  "@imagesUploadError": {
     "placeholders": {
       "error": {
         "type": "String"
@@ -1274,8 +1200,8 @@
   "editFeatureComingSoon": "Tahrirlash funksiyasi tez orada qo'shiladi",
   "sendPdf": "PDF yuborish",
   "printFeatureComingSoon": "Print funksiyasi tez orada qo'shiladi",
-  "print": "Print",
-  "stepCompleted": "{stepName} completed",
+  "print": "Chop etish",
+  "stepCompleted": "{stepName} bajarildi",
   "@stepCompleted": {
     "placeholders": {
       "stepName": {
@@ -1283,7 +1209,7 @@
       }
     }
   },
-  "stepSkip": "{stepName} skip",
+  "stepSkip": "{stepName} o'tkazish",
   "@stepSkip": {
     "placeholders": {
       "stepName": {
@@ -1291,27 +1217,18 @@
       }
     }
   },
-  "syncWithDependencies": "Sync with dependencies",
-  "recommended": "Recommended",
-  "syncTableOnly": "Sync table only",
-  "syncWarning": "May fail if dependencies not synced",
-  "tableOnly": "Table only",
-  "withDependencies": "With dependencies",
-  "syncEntireGroup": "Sync Entire Group",
+  "syncWithDependencies": "Bog'liqliklar bilan sinxronlash",
+  "recommended": "Tavsiya etiladi",
+  "syncTableOnly": "Faqat jadvalni sinxronlash",
+  "syncWarning": "Bog'liqliklar sinxronlanmagan bo'lsa xato berishi mumkin",
+  "tableOnly": "Faqat jadval",
+  "withDependencies": "Bog'liqliklar bilan",
+  "syncEntireGroup": "Butun guruhni sinxronlash",
   "statusNew": "Yangi",
   "retail": "Retail",
   "continueAction": "Davom etish",
-  "send": "Yuborish",
-  "previousStepsMustBeCompleted": "Avvalgi bosqichlar bajarilishi kerak",
+  "previousStepsMustBeCompleted": "Oldingi bosqichlar bajarilishi kerak",
   "reload": "Qayta yuklash",
-  "refreshAfterSeconds": "{seconds} soniyadan keyin yangilash mumkin",
-  "@refreshAfterSeconds": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "imageDeleted": "Rasm o'chirildi",
   "imageDeleteError": "Rasm o'chirishda xatolik: {error}",
   "@imageDeleteError": {
@@ -1323,20 +1240,10 @@
   },
   "deleteImageTitle": "Rasmni o'chirish",
   "deleteImageConfirmation": "Haqiqatan ham bu rasmni o'chirmoqchimisiz?",
-  "delete": "O'chirish",
   "photoAfterTitle": "Фото ПОСЛЕ (Facing correction)",
   "photoBeforeTitle": "Фото ДО (Facing correction)",
-  "stepCompletedReadOnly": "Bu step yakunlangan. Faqat ko'rish rejimida.",
   "photosNotLoadedYet": "Rasmlar hali yuklanmagan",
   "timeUnknown": "Vaqt noma'lum",
-  "codeLabel": "Kod: {code}",
-  "@codeLabel": {
-    "placeholders": {
-      "code": {
-        "type": "String"
-      }
-    }
-  },
   "unitOfMeasure": "O'lchov birligi",
   "category": "Kategoriya",
   "brand": "Brend",
@@ -1344,8 +1251,6 @@
   "barcode": "Shtrix kod",
   "vendorCode": "Vendor kod",
   "warehouseInformation": "Ombor ma'lumotlari",
-  "quantity": "Miqdori",
-  "available": "Mavjud",
   "reserved": "Band qilingan",
   "physicalProperties": "Fizik xususiyatlar",
   "weight": "Og'irligi",
@@ -1374,14 +1279,6 @@
   "readOnlyMode": "Faqat ko'rish",
   "shelfAuditTitle": "Аудит полки (остатки)",
   "pageInDevelopment": "Sahifa hozirda ishlab chiqilmoqda",
-  "productNotFoundMessage": "Mahsulot ma'lumotlari topilmadi: {code}",
-  "@productNotFoundMessage": {
-    "placeholders": {
-      "code": {
-        "type": "String"
-      }
-    }
-  },
   "apiKeyLabel": "API Kaliti: {status}",
   "@apiKeyLabel": {
     "placeholders": {
@@ -1395,8 +1292,6 @@
   "apiKeyNotConfigured": "Sozlanmagan",
   "editInformation": "Malumotlarni tahrirlash",
   "editClientCoordinates": "Mijoz koordinatalarini tahrirlash",
-  "currentMapProvider": "Current Map Provider",
-  "availableMaps": "Available Maps",
   "clientPhotosTitle": "Mijoz rasmlari",
   "clientPhotosDescription": "Bu yerda {name} mijoziga tegishli rasmlar ko'rsatiladi",
   "@clientPhotosDescription": {
@@ -1420,7 +1315,6 @@
   "noImagesAvailable": "Rasmlar mavjud emas",
   "clickPlusToAddImage": "Yangi rasm qo'shish uchun + tugmasini bosing",
   "setAsMainImage": "Asosiy rasmga o'zgartirish",
-  "orderDetailsTitle": "Buyurtma tafsilotlari",
   "clientNameLabel": "Mijoz nomi",
   "orderNumberLabel": "Buyurtma raqami",
   "orderDateLabel": "Buyurtma sanasi",
@@ -1430,21 +1324,17 @@
   "totalProductsLabel": "Jami tovarlar",
   "productNameLabel": "Tovar nomi",
   "articleLabel": "Artikul",
-  "quantityLabel": "Soni",
-  "priceLabel": "Narx",
-  "amountLabel": "Summa",
+  "quantityLabel": "Miqdori",
+  "priceLabel": "Narxi",
+  "amountLabel": "Summasi",
   "priceTypeLabel": "Narx turi",
-  "noProductsInOrder": "Bu buyurtmada mahsulotlar mavjud emas",
-  "productListEmpty": "Mahsulotlar ro'yxati bo'sh",
+  "noProductsInOrder": "Buyurtmada tovarlar yo'q",
+  "productListEmpty": "Tovarlar ro'yxati bo'sh",
   "productsNotSelected": "Mahsulotlar tanlanmagan",
   "clickPlusToAddProduct": "Mahsulot qo'shish uchun + tugmasini bosing",
   "reportPeriod": "Hisobot davri",
   "monthlyOKB": "Oylik OKB",
-  "akbPlan": "AKB reja",
-  "akbFact": "AKB fakt",
   "selectPeriod": "Davrni tanlang",
-  "apply": "Qo'llash",
-  "location": "Joylashuv",
   "creatingLocation": "Aniqlanmoqda...",
   "locationNotFound": "Joylashuv topilmadi",
   "createClient": "Mijozni yaratish",
@@ -1488,11 +1378,8 @@
   "tables": "Jadvallar",
   "sendPdfLabel": "PDF yuborish",
   "warehouse": "Ombor",
-  "viewPanel": "Ko'rinish paneli",
-  "menu": "Menyu",
   "takePhotoTooltip": "Rasmga olish",
   "changeShippingDateTooltip": "Yetkazib berish sanasini o'zgartirish",
-  "manageClientImages": "Mijoz rasmlarini boshqarish",
   "sendReportViaTelegram": "Telegram bot orqali hisobot yuborish",
   "fullscreen": "To'liq ekran",
   "updateCoordinates": "Koordinatalarni yangilash",
@@ -1504,13 +1391,10 @@
   "every12Hours": "Har 12 soatda",
   "daily24h": "Kunlik (24 soat)",
   "weekly1Week": "Haftalik (1 hafta)",
-  "customIntervalMinutes": "Maxsus interval (daqiqalar)",
+  "customIntervalMinutes": "Maxsus oraliq (daqiqalar)",
   "organizationLabel": "Tashkilot",
   "codeLabel2": "Kod",
   "regionsLoading": "Hududlar yuklanmoqda...",
-  "noData": "Ma'lumot yo'q",
-  "errorPrefix": "Xatolik",
-  "innLabel": "INN",
   "cyclingRegular": "Oddiy velosiped",
   "cyclingRoad": "Yo'l velosipedi",
   "cyclingMountain": "Tog' velosipedi",
@@ -1542,7 +1426,6 @@
       }
     }
   },
-  "prices": "Narxlar",
   "selectPriceType": "Narx turini tanlang",
   "selectPriceTypeHint": "Filtr panelidan narx turini tanlash uchun yuqoridagi filtr tugmasini bosing",
   "productsCount": "Mahsulotlar soni: {count}",
@@ -1555,18 +1438,8 @@
   },
   "categories": "Kategoriyalar",
   "selectBrandFirst": "Avval brand tanlang",
-  "reports": "Hisobotlar",
   "reportsSection": "Hisobotlar bo'limi",
   "tasks": "Vazifalar",
-  "tradingPoints": "Savdo nuqtalari",
-  "regionsLoadError": "Hududlarni yuklashda xatolik: {error}",
-  "@regionsLoadError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "locationError": "Joylashuvni olishda xatolik: {error}",
   "@locationError": {
     "placeholders": {
@@ -1579,33 +1452,23 @@
   "pleaseSelectRegion": "Iltimos, hududni tanlang",
   "pleaseSelectTradePointType": "Iltimos, savdo nuqtasi turini tanlang",
   "locationDataNotFound": "Joylashuv ma'lumotlari topilmadi",
-  "noInternetConnection": "Internet aloqasi yo'q. Iltimos, internetga ulaning",
-  "all": "Barchasi",
+  "all": "Barcha",
   "closeEditMode": "Tahrirlash rejimini yopish",
-  "editFeatureComingSoon": "Tahrirlash funksiyasi tez orada qo'shiladi",
-  "active": "Faol",
-  "inactive": "Faol emas",
   "activeClients": "Faol mijozlar",
   "activeClientsTooltip": "Bugun faol buyurtmalari bo'lgan mijozlar",
-  "cash": "Naqd",
   "cashless": "Naqdsiz",
   "ordersTotal": "Buyurtmalar jami",
-  "fact": "Fakt",
   "visitedTradingPoints": "Tashrif buyurilgan s.n.",
   "visitedTradingPointsTooltip": "Tashrif buyurilgan savdo nuqtalari soni",
   "territoryOKB": "Hudud OKB",
   "territoryOKBTooltip": "Hudud bo'yicha mijozlar bazasini qamrab olish",
-  "today": "Bugun",
   "todayMainIndicators": "Bugun — asosiy ko'rsatkichlar",
   "last7Days": "Oxirgi 7 kun",
   "last30Days": "Oxirgi 30 kun",
   "monthlyPlanFactForecast": "Oylik reja / Fakt / Bashorat",
   "monthlyOkbAkb": "Oylik OKB/AKB",
-  "contracts": "Shartnomalar",
   "contractsNotFound": "Shartnomalar topilmadi",
-  "newContract": "Yangi shartnoma",
   "contractsListRefreshed": "Shartnomalar ro'yxati yangilandi",
-  "contractsCount": "Shartnomalar soni: {count}",
   "@contractsCount": {
     "placeholders": {
       "count": {
@@ -1613,10 +1476,9 @@
       }
     }
   },
-  "contractDetails": "Shartnoma tafsilotlari",
   "contractAmount": "Shartnoma summasi",
   "contractDocument": "Shartnoma hujjati",
-  "clientOrders": "{name} mijozining buyurtmalari",
+  "clientOrders": "{name} buyurtmalari",
   "@clientOrders": {
     "placeholders": {
       "name": {
@@ -1624,7 +1486,6 @@
       }
     }
   },
-  "orderNumber": "Buyurtma № {number}",
   "@orderNumber": {
     "placeholders": {
       "number": {
@@ -1632,9 +1493,7 @@
       }
     }
   },
-  "orders": "Buyurtmalar",
-  "filter": "Filtr",
-  "filterApplyError": "Filtr qo'llashda xatolik yuz berdi",
+  "filterApplyError": "Filtr qo'llashda xatolik",
   "main": "Asosiy",
   "contents": "Tarkibi",
   "mainReports": "Asosiy hisobotlar",
@@ -1650,20 +1509,7 @@
   "orderPlaced": "Buyurtma berildi",
   "rejected": "Rad etildi",
   "reportDataRefreshed": "Hisobot ma'lumotlari muvaffaqiyatli yangilandi",
-  "imagesUploadedCount": "{count} ta rasm muvaffaqiyatli yuklandi",
-  "@imagesUploadedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "clientLocationUpdated": "Mijoz joylashuvi muvaffaqiyatli yangilandi",
   "apiKeySaved": "API kaliti muvaffaqiyatli saqlandi",
-  "errorOccurred": "Xatolik yuz berdi",
-  "unknownError": "Noma'lum xatolik",
-  "imageLoadError": "Rasmni yuklashda xatolik",
-  "dataLoadError": "Ma'lumotlarni yuklashda xatolik yuz berdi",
   "saveError": "Saqlashda xatolik: {error}",
   "@saveError": {
     "placeholders": {
@@ -1680,7 +1526,7 @@
       }
     }
   },
-  "warehouseDataLoadError": "Skladlar ma'lumotlarini yuklashda xatolik: {error}",
+  "warehouseDataLoadError": "Sklad ma'lumotlarini yuklashda xatolik: {error}",
   "@warehouseDataLoadError": {
     "placeholders": {
       "error": {
@@ -1715,7 +1561,6 @@
   "currentMonth": "Joriy oy",
   "selectReportDatesHint": "Hisobot uchun boshlanish va tugash sanalarini belgilang",
   "offlineCannotRefresh": "Offline rejimda ma'lumotlarni yangilashning imkoni yo'q",
-  "manageClientImages": "Mijoz rasmlarini boshqarish",
   "distanceRequirementMessage": "{name} ga tashrif uchun masofa talabiga javob berishingiz kerak.",
   "@distanceRequirementMessage": {
     "placeholders": {
@@ -1735,10 +1580,7 @@
   "orderStatusDelivered": "Yetkazildi",
   "orderStatusInProcess": "Jarayonda",
   "orderStatusReturn": "Qaytarildi",
-  "orderStatusExpired": "Muddati o'tgan",
-  "loadingClientImages": "Mijoz rasmlari yuklanmoqda...",
-  "clientDataLoadError": "Mijoz ma'lumotlarini yuklashda xatolik",
-  "visitCompletedFor": "uchun tashrif muvaffaqiyatli yakunlandi",
+  "orderStatusExpired": "Muddati o'tdi",
   "contractStatusActive": "Amalda",
   "contractStatusExpired": "Muddati o'tgan",
   "contractStatusCancelled": "Bekor qilingan",
@@ -1833,7 +1675,6 @@
       }
     }
   },
-  "lastSync": "Oxirgi sinxronizatsiya: {time}",
   "@lastSync": {
     "placeholders": {
       "time": {
@@ -1841,14 +1682,12 @@
       }
     }
   },
-  "syncing": "Sinxronlanmoqda...",
   "syncAllData": "Barcha ma'lumotlarni sinxronlash",
   "syncAllTablesInOrder": "Bu barcha jadvallarni ketma-ketlikda sinxronlaydi",
   "dataGroups": "Ma'lumotlar guruhlari",
   "backgroundAutoSync": "Fonda avtomatik sinxronlash",
   "backgroundSyncDescription": "Ilova yopiq bo'lganda ham ma'lumotlaringizni yangi saqlaydi. Internet aloqasi kerak.",
   "syncInterval": "Sinxronlash oralig'i",
-  "customIntervalMinutes": "Maxsus oraliq (daqiqalar)",
   "customIntervalNote": "* Maxsus oraliq 60 yoki undan ko'p bo'lsa, ustuvorlikka ega",
   "clientBalanceCache": "Mijoz Balansi Keshi",
   "clientBalancesCached": "{count} ta mijoz balansi saqlangan",
@@ -1862,13 +1701,11 @@
   "balanceCacheDescription": "Mijozlar balans ma'lumotlari lokal keshda saqlanadi. Agar ma'lumotlar eskirgan bo'lsa, keshni tozalashingiz mumkin.",
   "clearing": "Tozalanmoqda...",
   "clearCache": "Keshni tozalash",
-  "balanceCacheCleared": "Balans keshi tozalandi",
-  "clearBalanceCacheConfirm": "Barcha mijozlar balans ma'lumotlari o'chiriladi. Keyingi safar balans ko'rilganda qayta yuklanadi.",
   "backgroundSyncEnabled": "Fonda sinxronlash yoqildi",
   "backgroundSyncDisabled": "Fonda sinxronlash o'chirildi",
   "minimumIntervalIs60": "Minimal oraliq 60 daqiqa",
-  "justNow": "hozirgina",
-  "minutesAgo": "{minutes}d oldin",
+  "justNow": "Hozirgina",
+  "minutesAgo": "{minutes} daqiqa oldin",
   "@minutesAgo": {
     "placeholders": {
       "minutes": {
@@ -1876,7 +1713,7 @@
       }
     }
   },
-  "hoursAgo": "{hours}s oldin",
+  "hoursAgo": "{hours} soat oldin",
   "@hoursAgo": {
     "placeholders": {
       "hours": {
@@ -1884,7 +1721,6 @@
       }
     }
   },
-  "yesterday": "kecha",
   "daysAgo": "{days} kun oldin",
   "@daysAgo": {
     "placeholders": {
@@ -1907,9 +1743,6 @@
   "akbClients": "AKB mijozlar",
   "akbPercentage": "AKB foizi",
   "akbClientsList": "AKB mijozlar ro'yxati",
-  "details": "Tafsilotlar",
-  "today": "Bugun",
-  "yesterday": "Kecha",
   "daysAgoShort": "{days} kun oldin",
   "@daysAgoShort": {
     "placeholders": {
@@ -1918,43 +1751,28 @@
       }
     }
   },
-
   "locationPermissionNeeded": "Joylashuv ruxsati kerak",
   "locationPermissionRequestMessage": "Savdo nuqtalarini masofaga ko'ra tartiblash va xaritada ko'rsatish uchun sizning joylashuvingiz kerak. Ruxsat berasizmi?",
   "later": "Keyinroq",
-  "grantPermission": "Ruxsat berish",
   "locationSettingsMessage": "Masofa bo'yicha tartiblash va xarita funksiyalari uchun joylashuv ruxsati zarur. Iltimos, ilova sozlamalaridan joylashuv ruxsatini bering.",
-  "goToSettings": "Sozlamalarga o'tish",
   "enableLocationServicesMessage": "Masofa bo'yicha tartiblash va xarita funksiyalari uchun joylashuv xizmatlari yoqilgan bo'lishi kerak. Iltimos, joylashuv xizmatlarini yoqing.",
   "locationSettings": "Joylashuv sozlamalari",
-  
-  "reportDataRefreshed": "Hisobot ma'lumotlari muvaffaqiyatli yangilandi",
   "dataRefreshError": "Ma'lumotlarni yangilashda xatolik",
   "dateFromTo": "{start} dan {end} gacha",
   "@dateFromTo": {
     "placeholders": {
-      "start": {"type": "String"},
-      "end": {"type": "String"}
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
     }
   },
-  "monthlyOkbAkb": "Oylik OKB/AKB",
-  "monthlyOKB": "Oylik OKB",
-  "monthlyPlanFactForecast": "Oylik reja / Fakt / Bashorat",
-  "todayMainIndicators": "Bugun — asosiy ko'rsatkichlar",
-  "territoryOKB": "Hudud OKB",
-  "territoryOKBTooltip": "Hudud bo'yicha mijozlar bazasini qamrab olish",
-  "visitedTradingPoints": "Tashrif buyurilgan s.n.",
-  "visitedTradingPointsTooltip": "Tashrif buyurilgan savdo nuqtalari soni",
-  "activeClients": "Faol mijozlar",
-  "activeClientsTooltip": "Bugun faol buyurtmalari bo'lgan mijozlar",
-  "cashless": "Naqdsiz",
-  "ordersTotal": "Buyurtmalar jami",
   "akbByRegions": "Hududlar bo'yicha AKB",
   "akbByProductCategories": "Tovar kategoriyalari bo'yicha AKB",
   "tradingPointAbbr": "t.t.",
   "footerNoteText": "Ma'lumotlar Telegram hisobotidan import qilingan. Yangi manbaga o'tish uchun matnni o'zgartirishingiz mumkin — UI yangilanadi.",
-  "reportPeriod": "Hisobot davri",
-
   "syncStepCheckingUser": "Foydalanuvchi tekshirilmoqda...",
   "syncStepClearingData": "Eski ma'lumotlar tozalanmoqda...",
   "syncStepSyncingKpi": "KPI ma'lumotlari yuklanmoqda...",
@@ -1981,52 +1799,53 @@
   "syncStepSyncingThumbnails": "Rasmlar yuklanmoqda...",
   "syncStepCompleted": "Ma'lumotlar yangilandi!",
   "syncStepError": "Xatolik yuz berdi",
-  "syncSuccessTitle": "Muvaffaqiyat!",
+  "syncSuccessTitle": "Muvaffaqiyatli!",
   "syncUpdatingTitle": "Ma'lumotlar yangilanmoqda...",
   "syncSkippedRecent": "O'tkazib yuborildi (yaqinda sinxronlangan)",
   "syncBackgroundContinues": "Sinxronlash fonda davom etmoqda",
-  "paymentRequiredError": "To'lov talab qilinadi. Obunangizni tekshiring.",
-  "authenticationError": "Autentifikatsiya xatosi. Qayta kiring.",
+  "paymentRequiredError": "To'lov talab qilinmoqda. Iltimos, obunangizni tekshiring.",
+  "authenticationError": "Autentifikatsiya xatosi. Iltimos, qayta kiring.",
   "accessForbiddenError": "Kirish taqiqlangan. Sizda ruxsat yo'q.",
-  "serviceNotFoundError": "Xizmat topilmadi. Qo'llab-quvvatlash bilan bog'laning.",
-  "serverUnavailableError": "Server mavjud emas. Keyinroq urinib ko'ring.",
-  "dataUpdateError": "Ma'lumotlarni yangilashda xatolik. Kesh ma'lumotlari ishlatilmoqda.",
+  "serviceNotFoundError": "Xizmat topilmadi. Iltimos, qo'llab-quvvatlashga murojaat qiling.",
+  "serverUnavailableError": "Server mavjud emas. Iltimos, keyinroq urinib ko'ring.",
+  "dataUpdateError": "Ma'lumotlarni yangilashda xatolik. Kesh ma'lumotlaridan foydalaniladi.",
   "syncStatusErrors": "Xatolar",
   "syncStatusSynced": "Sinxronlangan",
   "syncStatusPartial": "Qisman",
   "syncStatusNotSynced": "Sinxronlanmagan",
-  "tablesOfTotalSynced": "{total} dan {synced} ta jadval sinxronlangan",
+  "tablesOfTotalSynced": "{synced} / {total} jadval sinxronlangan",
   "@tablesOfTotalSynced": {
     "placeholders": {
-      "synced": {"type": "int"},
-      "total": {"type": "int"}
+      "synced": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
-  "syncEntireGroup": "Butun guruhni sinxronlash",
   "tablesInThisGroup": "Bu guruhdagi jadvallar",
   "neverSynced": "Hech qachon sinxronlanmagan",
   "tableEmpty": "Jadval bo'sh",
   "recordsCount": "{count} ta yozuv",
   "@recordsCount": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "lastSyncLabel": "Oxirgi sinxronlash: {time}",
   "@lastSyncLabel": {
     "placeholders": {
-      "time": {"type": "String"}
+      "time": {
+        "type": "String"
+      }
     }
   },
   "syncTable": "Jadvalni sinxronlash",
   "dependencies": "Bog'liqliklar",
   "willCascadeTo": "Quyidagilarga ta'sir qiladi",
-  "tableOnly": "Faqat jadval",
-  "withDependencies": "Bog'liqliklar bilan",
-  "syncWithDependencies": "Bog'liqliklar bilan sinxronlash",
-  "syncTableOnly": "Faqat jadvalni sinxronlash",
-  "recommended": "Tavsiya etiladi",
-  "syncWarning": "Bog'liqliklar sinxronlanmagan bo'lsa xato berishi mumkin",
   "tradingPointsLabel": "Savdo nuqtalari",
   "tradingPointsNotAvailable": "Savdo nuqtalari mavjud emas",
   "dateRangeLabel": "Sana oralig'i",
@@ -2038,26 +1857,23 @@
   "statusInactive": "Faol emas",
   "statusExpired": "Muddati tugagan",
   "statusPending": "Tasdiqlanmagan",
-  "contractsNotFound": "Shartnomalar topilmadi",
-  "contractsCount": "{count} ta shartnoma",
-  "@contractsCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "contractsListRefreshed": "Shartnomalar ro'yxati yangilandi",
-  "filterApplyError": "Filtr qo'llashda xatolik",
   "clientContractsCount": "{name} mijozning shartnomalari ({count})",
   "@clientContractsCount": {
     "placeholders": {
-      "name": {"type": "String"},
-      "count": {"type": "int"}
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
     }
   },
-  "refreshError": "Yangilash xatosi: {error}",
+  "refreshError": "Yangilashda xatolik",
   "@refreshError": {
     "placeholders": {
-      "error": {"type": "String"}
+      "error": {
+        "type": "String"
+      }
     }
   },
   "dataTab": "Ma'lumotlar",
@@ -2065,13 +1881,14 @@
   "clientLabel": "Mijoz: {name}",
   "@clientLabel": {
     "placeholders": {
-      "name": {"type": "String"}
+      "name": {
+        "type": "String"
+      }
     }
   },
-  "startDateLabel": "Boshlanish sanasi",
-  "endDateLabel": "Tugash sanasi",
+  "startDateLabel": "Boshlanish: {date}",
+  "endDateLabel": "Tugash: {date}",
   "unknownDate": "Noma'lum",
-  "contractAmount": "Shartnoma summasi",
   "statusAndType": "Status va turi",
   "typeLabel2": "Turi",
   "additionalInfo": "Qo'shimcha ma'lumotlar",
@@ -2089,15 +1906,10 @@
   "projectRequired": "Loyiha tanlash majburiy",
   "projectInfoTooltip": "Shartnoma raqami tanlangan loyihaning raqamlash tizimi asosida generatsiya qilinadi",
   "projectInfoSection": "Loyiha ma'lumotlari",
-  "editFeatureComingSoon": "Tahrirlash funksiyasi tez orada qo'shiladi",
-  "contractDocument": "Shartnoma hujjati",
   "creditLabel": "Kredit",
   "fullPaymentLabel": "100% to'lov",
   "uzbekLanguage": "O'zbekcha",
   "russianLanguage": "Ruscha",
-  "sendPdfLabel": "PDF yuborish",
-  "printFeatureComingSoon": "Print funksiyasi tez orada qo'shiladi",
-  "print": "Chop etish",
   "pdfPreparing": "PDF tayyorlanmoqda...",
   "tapToReveal": "Bosing",
   "warehousesTitle": "Skladlar",
@@ -2105,27 +1917,25 @@
   "warehousesCount": "Skladlar soni: {count}",
   "@warehousesCount": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
-  "warehouseDataLoadError": "Sklad ma'lumotlarini yuklashda xatolik: {error}",
-  "@warehouseDataLoadError": {
-    "placeholders": {
-      "error": {"type": "String"}
-    }
-  },
-  "organizationLabel": "Tashkilot",
-  "codeLabel2": "Kod",
   "createdLabel": "Yaratilgan: {date}",
   "@createdLabel": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "updatedLabel": "Yangilangan: {date}",
   "@updatedLabel": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "visitCompletedToday": "Bugun tashrif bajarildi",
@@ -2134,14 +1944,18 @@
   "visitOrderLabel": "Tashrif tartibi: {number}",
   "@visitOrderLabel": {
     "placeholders": {
-      "number": {"type": "int"}
+      "number": {
+        "type": "int"
+      }
     }
   },
   "selectClientTitle": "Mijozni tanlang",
   "clientsAvailable": "{count} ta mijoz mavjud",
   "@clientsAvailable": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "searchByNameCodeInn": "Nom, kod, INN, telefon, tur...",
@@ -2149,15 +1963,15 @@
   "foundCount": "{count} ta topildi",
   "@foundCount": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "clientNotFound": "Mijoz topilmadi",
   "tryDifferentSearch": "Boshqa so'z bilan qidirib ko'ring",
-  "selectDateRange": "Sana oralig'ini tanlang",
   "confirmButton": "Tasdiqlash",
   "cancelButton": "Bekor qilish",
-  "selectedPeriod": "Tanlangan davr",
   "newContractTitle": "Yangi shartnoma",
   "fillAllFields": "Barcha maydonlarni to'ldiring",
   "contractTypesLoadError": "Shartnoma turlarini yuklashda xatolik",
@@ -2168,14 +1982,10 @@
   "documentInfoSection": "Hujjatlar ma'lumotlari",
   "regionInfoSection": "Hudud ma'lumotlari",
   "referenceNumberField": "Ma'lumotnoma raqami",
-  "enterNumberHint": "Raqamni kiriting",
   "termLabel": "Muddati",
   "certificateNumberField": "Sertifikat raqami",
   "certificateUnlimitedField": "Sertifikat muddatsiz",
   "passportNumberField": "Pasport raqami",
-  "xmlRequestLabel": "XML so'rov",
-  "xmlCopied": "XML nusxalandi",
-  "priceTypeLabel": "Narx turi",
   "clientCodeLabel": "Mijoz kodi",
   "organizationCodeLabel": "Tashkilot kodi",
   "courierLabel": "Kuryer",
@@ -2184,42 +1994,17 @@
   "supervisorCommentLabel": "Supervisor izohi",
   "logistCommentLabel": "Logist izohi",
   "agentCommentLabel": "Agent izohi",
-  "noProductsInOrder": "Buyurtmada tovarlar yo'q",
-  "productListEmpty": "Tovarlar ro'yxati bo'sh",
-  "totalProductsLabel": "Jami tovarlar",
-  "productNameLabel": "Tovar nomi",
-  "articleLabel": "Artikul",
-  "quantityLabel": "Miqdori",
-  "priceLabel": "Narxi",
-  "amountLabel": "Summasi",
-  "clientNameLabel": "Mijoz nomi",
-  "orderNumberLabel": "Buyurtma raqami",
-  "orderDateLabel": "Buyurtma sanasi",
-  "orderTotalLabel": "Buyurtma summasi",
-  "mainStatusLabel": "Asosiy status",
-  "statusCodeLabel": "Status kodi",
   "networkErrorMessage": "Tarmoq xatosi. Internetni tekshiring.",
   "serverTimeoutMessage": "Server bilan aloqa vaqti tugadi.",
-  "orderDetailsNotFound": "Buyurtma tafsilotlari topilmadi.",
   "orderDetailsLoadError": "Buyurtma tafsilotlarini yuklashda xatolik.",
-  "orderDetailsTitle": "Buyurtma tafsilotlari",
-  "main": "Asosiy",
-  "contents": "Tarkibi",
-  "all": "Barcha",
-  "clientOrders": "{name} buyurtmalari",
-  "@clientOrders": {
-    "placeholders": {
-      "name": {"type": "String"}
-    }
-  },
-  "dataLoading": "Ma'lumotlar yuklanmoqda...",
   "dataLoadFailed": "Ma'lumotlarni yuklashda xatolik: {error}",
   "@dataLoadFailed": {
     "placeholders": {
-      "error": {"type": "String"}
+      "error": {
+        "type": "String"
+      }
     }
   },
-  "categories": "Kategoriyalar",
   "brands": "Brendlar",
   "yesterdayText": "Kecha",
   "fileStoragePermission": "Fayl saqlash ruxsati",
@@ -2251,7 +2036,9 @@
   "permissionRequiredMessage": "{description}. Iltimos, ilova sozlamalaridan ruxsat bering.",
   "@permissionRequiredMessage": {
     "placeholders": {
-      "description": {"type": "String"}
+      "description": {
+        "type": "String"
+      }
     }
   },
   "goToSettingsButton": "Sozlamalarga o'tish",
@@ -2268,161 +2055,69 @@
   "purposeLabel": "Maqsad: {purpose}",
   "@purposeLabel": {
     "placeholders": {
-      "purpose": {"type": "String"}
+      "purpose": {
+        "type": "String"
+      }
     }
   },
   "grantPermissionQuestion": "Ruxsat berishni xohlaysizmi?",
-
   "serviceInitError": "Xizmatlarni ishga tushirishda xatolik",
-  "balanceServiceNotAvailable": "Balans xizmati mavjud emas",
   "clientInnNotAvailable": "Mijoz INN raqami mavjud emas",
-  "balanceLoadError": "Balansni yuklashda xatolik",
-  "clientIsDebtor": "Mijoz qarzdor. Jami qarzdorlik: {amount} so'm",
   "@clientIsDebtor": {
     "placeholders": {
-      "amount": {"type": "String"}
+      "amount": {
+        "type": "String"
+      }
     }
   },
-  "clientHasOverpayment": "Mijoz ortiqcha to'lov qilgan. Ortiqcha: {amount} so'm",
   "@clientHasOverpayment": {
     "placeholders": {
-      "amount": {"type": "String"}
+      "amount": {
+        "type": "String"
+      }
     }
   },
   "clientBalanceZero": "Mijoz balansi nolda.",
-  "clientBalance": "Mijoz balansi",
-  "errorOccurred": "Xatolik yuz berdi",
   "balanceDataNotFound": "Balans ma'lumotlari topilmadi",
   "updatedAtTime": "Yangilangan: {time}",
   "@updatedAtTime": {
     "placeholders": {
-      "time": {"type": "String"}
+      "time": {
+        "type": "String"
+      }
     }
   },
   "clientDebtorStatus": "Mijoz qarzdor",
   "overpaymentStatus": "Ortiqcha to'lov",
   "balanceZeroStatus": "Balans nolda",
-  "unpaidOrders": "{count} ta to'lanmagan",
   "@unpaidOrders": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
-  "overdueOrders": "{count} ta muddati o'tgan",
   "@overdueOrders": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
-  "tablesOfTotalSynced": "{synced} / {total} jadval sinxronlangan",
-  "@tablesOfTotalSynced": {
-    "placeholders": {
-      "synced": {"type": "int"},
-      "total": {"type": "int"}
-    }
-  },
-  "syncStatusErrors": "Xatolar",
-  "syncStatusSynced": "Sinxronlangan",
-  "syncStatusPartial": "Qisman",
-  "syncStatusNotSynced": "Sinxronlanmagan",
-  "justNow": "Hozirgina",
-  "minutesAgo": "{minutes} daqiqa oldin",
-  "@minutesAgo": {
-    "placeholders": {
-      "minutes": {"type": "int"}
-    }
-  },
-  "hoursAgo": "{hours} soat oldin",
-  "@hoursAgo": {
-    "placeholders": {
-      "hours": {"type": "int"}
-    }
-  },
-  "daysAgo": "{days} kun oldin",
-  "@daysAgo": {
-    "placeholders": {
-      "days": {"type": "int"}
-    }
-  },
-  "weeksAgo": "{weeks} hafta oldin",
-  "@weeksAgo": {
-    "placeholders": {
-      "weeks": {"type": "int"}
-    }
-  },
-  "paymentRequiredError": "To'lov talab qilinmoqda. Iltimos, obunangizni tekshiring.",
-  "authenticationError": "Autentifikatsiya xatosi. Iltimos, qayta kiring.",
-  "accessForbiddenError": "Kirish taqiqlangan. Sizda ruxsat yo'q.",
-  "serviceNotFoundError": "Xizmat topilmadi. Iltimos, qo'llab-quvvatlashga murojaat qiling.",
-  "serverUnavailableError": "Server mavjud emas. Iltimos, keyinroq urinib ko'ring.",
-  "dataUpdateError": "Ma'lumotlarni yangilashda xatolik. Kesh ma'lumotlaridan foydalaniladi.",
-  "syncSuccessTitle": "Muvaffaqiyatli!",
-  "syncUpdatingTitle": "Ma'lumotlar yangilanmoqda...",
-  "clientInnNotFound": "Mijoz INN raqami topilmadi",
-  "balanceUpdated": "Yangilangan",
-  "balanceIsZero": "Balans nolda",
-  "noBalanceData": "Balans ma'lumotlari topilmadi",
-  "balanceStatus": "Balans holati",
-  "totalDebt": "Jami qarzdorlik",
-  "refreshError": "Yangilashda xatolik",
-  "noDataAvailable": "Ma'lumot mavjud emas",
-  "paidLabel": "To'langan",
-  "debtLabelChart": "Qarzdorlik",
-  "noContractsFound": "Shartnomalar topilmadi",
-  "paymentAmount": "To'lov: {amount}",
-  "@paymentAmount": {
-    "placeholders": {
-      "amount": {"type": "String"}
-    }
-  },
-  "debtAmount": "Qarzdorlik: {amount}",
-  "@debtAmount": {
-    "placeholders": {
-      "amount": {"type": "String"}
-    }
-  },
-  "contractDialog": "Shartnoma",
-  "codeLabel": "Kod: {code}",
-  "@codeLabel": {
-    "placeholders": {
-      "code": {"type": "String"}
-    }
-  },
-  "idLabel": "ID: {id}",
-  "@idLabel": {
-    "placeholders": {
-      "id": {"type": "String"}
-    }
-  },
-  "projectLabel": "Loyiha: {project}",
-  "@projectLabel": {
-    "placeholders": {
-      "project": {"type": "String"}
-    }
-  },
-  "closeButton": "Yopish",
-  "noOrdersFound": "Buyurtmalar topilmadi",
-  "countItems": "{count} ta",
-  "@countItems": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
-  "partialLabel": "Qisman",
-  "unpaidLabel": "To'lanmagan",
   "savingStatus": "Saqlanmoqda...",
   "unsavedChangesStatus": "Saqlanmagan o'zgarishlar",
   "offlineStatus": "Oflayn",
   "pendingSyncCount": "{count} sinxronlash kutilmoqda",
   "@pendingSyncCount": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "allSyncedStatus": "Hammasi sinxronlangan",
   "autoSaving": "Avtosaqlash...",
   "savingStepData": "Bosqich ma'lumotlari saqlanmoqda...",
-  "visitProgress": "Tashrif jarayoni",
   "mandatoryLabel": "Majburiy",
   "optionalLabel": "Ixtiyoriy",
   "currentLabel": "Joriy",
@@ -2431,42 +2126,20 @@
   "notesLabel": "Izohlar: {notes}",
   "@notesLabel": {
     "placeholders": {
-      "notes": {"type": "String"}
+      "notes": {
+        "type": "String"
+      }
     }
   },
   "reasonLabel": "Sabab: {reason}",
   "@reasonLabel": {
     "placeholders": {
-      "reason": {"type": "String"}
+      "reason": {
+        "type": "String"
+      }
     }
   },
-  "skipStep": "Bosqichni o'tkazish",
-  "completeStep": "Bosqichni yakunlash",
-  "previousStepsMustBeCompleted": "Oldingi bosqichlar bajarilishi kerak",
-  "stepCompleted": "{stepName} bajarildi",
-  "@stepCompleted": {
-    "placeholders": {
-      "stepName": {"type": "String"}
-    }
-  },
-  "confirmCompletion": "Yakunlashni tasdiqlang",
-  "enterNotesOptional": "Izoh kiriting (ixtiyoriy)",
-  "stepSkip": "{stepName} o'tkazish",
-  "@stepSkip": {
-    "placeholders": {
-      "stepName": {"type": "String"}
-    }
-  },
-  "enterSkipReason": "O'tkazish sababini kiriting",
   "reasonHint": "Sabab",
-  "confirmSkip": "O'tkazishni tasdiqlash",
-  "syncStatusIdle": "Kutilmoqda",
-  "syncStatusProducts": "Tovarlar sinxronlanmoqda",
-  "syncStatusBalances": "Qoldiqlar sinxronlanmoqda",
-  "syncStatusOrders": "Buyurtmalar sinxronlanmoqda",
-  "syncStatusCompleted": "Sinxronlash tugadi",
-  "syncStatusError": "Sinxronlash xatosi",
-  "syncInProgress": "Sinxronlanmoqda...",
   "syncStarting": "Sinxronlash boshlanmoqda...",
   "weekdayMon": "Du",
   "weekdayTue": "Se",
@@ -2477,21 +2150,14 @@
   "weekdaySun": "Ya",
   "copyLabel": "Nusxa olish",
   "reloadLabel": "Qayta yuklash",
-  "createContract": "Shartnoma yaratish",
   "refreshContractTypesAndRegions": "Shartnoma turi va hudud ma'lumotlarini yangilash",
-  "selectContractType": "Shartnoma turini tanlang",
-  "contractTypesNotFound": "Shartnoma turlari topilmadi",
-  "loading": "Yuklanmoqda...",
-  "creating": "Yaratilmoqda...",
   "orderStatusNew": "Yangi",
   "orderStatusConfirmed": "Tasdiqlangan",
   "orderStatusDelivering": "Yetkazish jarayonida",
-  "orderStatusDelivered": "Yetkazildi",
   "orderStatusReturnRequested": "Qaytarish so'raldi",
   "orderStatusCancelled": "Bekor qilindi",
   "orderStatusDeliveredUnpaid": "Yetkazildi, to'lanmadi",
   "orderStatusDeliveredPartiallyPaid": "Yetkazildi, qisman to'landi",
-  "orderStatusExpired": "Muddati o'tdi",
   "orderStatusUnknown": "Noma'lum",
   "filterTooltip": "Filtr",
   "fullscreenTooltip": "To'liq ekran",
@@ -2547,10 +2213,8 @@
   "toggleHeaderShow": "Headerni ko'rsatish",
   "toggleHeaderHide": "Headerni yashirish",
   "periodNotSelected": "Davr tanlanmadi",
-  "userDataNotFound": "Foydalanuvchi ma'lumotlari topilmadi",
   "dataSyncing": "Ma'lumotlar sinxronlanmoqda...",
   "reportsUpdated": "Hisobotlar yangilandi",
-  "syncError": "Sinxronizatsiya xatosi: {error}",
   "@syncError": {
     "placeholders": {
       "error": {
@@ -2575,9 +2239,7 @@
   "reportMonthlyResultsDesc": "Oylik savdo natijalari va tendensiyalar",
   "reportMonthlyKpi": "Oylik KPI (maosh)",
   "reportMonthlyKpiDesc": "Oylik KPI bajarilishi va maosh hisoboti",
-  "reportsSection": "Hisobotlar bo'limi",
   "akbAmount": "AKB summasi",
-  "akbPlan": "AKB rejasi",
   "akbProducts": "AKB mahsulotlar",
   "productTypes": "Mahsulot turlari",
   "categoriesCount": "Kategoriyalar soni",
@@ -2620,82 +2282,18 @@
       }
     }
   },
-  "faqPageTitle": "Nizom",
-  "faqSupervisorSubtitle": "Supervayzer vazifalari",
-  "faqSalesRepSubtitle": "Savdo vakili nizomi",
-  "faqRoleSupervisor": "Supervayzer",
-  "faqRoleSalesRep": "Savdo vakili",
-  "faqSectionsCount": "ta bo'lim",
-  "faqSvGpsTitle": "GPS-monitoring",
-  "faqSvGpsMorningTitle": "Ertalabki hisobot (9:15 gacha)",
-  "faqSvGpsMorningContent": "Har kuni ertalab soat 9:15 gacha supervayzer ish guruhiga savdo vakillarining marshrutga chiqish holati haqida hisobot yuborishi shart.",
-  "faqSvGpsEveningTitle": "Kechki hisobot (18:00 gacha)",
-  "faqSvGpsEveningContent": "Soat 18:00 gacha — ish kunining yakuniy GPS-hisoboti yuboriladi.",
-  "faqSvSalesTitle": "Sotuvlar hisoboti",
-  "faqSvSalesInterimTitle": "Oraliq hisobot (13:00 gacha)",
-  "faqSvSalesInterimContent": "Soat 13:00 gacha — yig'ilgan buyurtmalar summasi va soni bilan oraliq hisobot yuboriladi.",
-  "faqSvSalesFinalTitle": "Yakuniy hisobot (18:00 gacha)",
-  "faqSvSalesFinalContent": "Soat 18:00 gacha — yakuniy hisobot: kunlik sotuvlar summasi, buyurtmalar soni, ertangi rejalar va qaytarishlar.",
-  "faqSvKpiTitle": "KPI va rejalashtirish",
-  "faqSvKpiMondayTitle": "Ofis kuni (dushanba)",
-  "faqSvKpiMondayContent": "Har dushanba — ofis kuni.",
-  "faqSvKpiAnalysisTitle": "Tahlil va vazifalar",
-  "faqSvKpiAnalysisContent": "O'tgan hafta natijalari jamlanadi, KPI tahlili va joriy hafta uchun vazifalar belgilanadi.",
-  "faqSvTravelTitle": "Travel Plans",
-  "faqSvTravelMonthlyTitle": "Oylik rejalashtirish",
-  "faqSvTravelMonthlyContent": "Har oy 30-31 sanalarida supervayzerlar regional menejerga keyingi oy uchun shaxsiy Travel Plans yuboradilar.",
-  "faqSvTimeTitle": "Ish vaqti hisobi",
-  "faqSvTimeWeeklyTitle": "Haftalik tabel",
-  "faqSvTimeWeeklyContent": "Tabel haftalik asosda (dushanbada) tuziladi, savdo vakillarining ishlagan kunlari soni ko'rsatiladi.",
-  "faqSvTimeMonthlyTitle": "Oylik tabel",
-  "faqSvTimeMonthlyContent": "Oyning yakuniy tabeli kalendar oyining oxirgi kunida taqdim etiladi.",
-  "faqSvSalaryTitle": "Maosh va KPI",
-  "faqSvSalaryKpiTitle": "KPI natijalari",
-  "faqSvSalaryKpiContent": "Har oy 1-3 sanalarida supervayzer butun oy uchun KPI natijalarini jamlashi shart.",
-  "faqSvSalaryCalcTitle": "Maosh hisoblash",
-  "faqSvSalaryCalcContent": "Bajarilgan ko'rsatkichlar asosida EVYAP savdo vakillarining maosh hisobini tayyorlash va topshirish.",
-  "faqTpGeneralTitle": "Umumiy qoidalar",
-  "faqTpGeneralPurposeTitle": "Hujjat maqsadi",
-  "faqTpGeneralPurposeContent": "Ushbu nizom savdo vakillarining vazifalarini tashkil etish qoidalarini belgilaydi. Maqsad — intizom va samaradorlikni ta'minlash.",
-  "faqTpHoursTitle": "Ish vaqti va marshrut",
-  "faqTpHoursScheduleTitle": "Ish jadvali",
-  "faqTpHoursScheduleContent": "Ish kuni soat 9:00 da boshlanadi va 18:00 da tugaydi.",
-  "faqTpHoursRouteTitle": "Marshrutga chiqish",
-  "faqTpHoursRouteContent": "Savdo vakili tasdiqlangan jadvalga muvofiq o'z vaqtida marshrutga chiqishi shart.",
-  "faqTpHoursDelayTitle": "Kechikishlar",
-  "faqTpHoursDelayContent": "Uzrli sabablarsiz 15 daqiqadan ortiq kechikish mehnat intizomini buzish sifatida qayd etiladi.",
-  "faqTpVisitsTitle": "Savdo nuqtalariga tashrif",
-  "faqTpVisitsDailyTitle": "Kunlik tashriflar",
-  "faqTpVisitsDailyContent": "Har bir savdo vakili har kuni marshrutga muvofiq barcha savdo nuqtalarini ziyorat qilishi shart.",
-  "faqTpVisitsChangesTitle": "Marshrut o'zgarishlari",
-  "faqTpVisitsChangesContent": "Marshrut o'zgargan holda sababini ko'rsatib ish chatiga xabar berish kerak.",
-  "faqTpVisitsPhotoTitle": "Foto/video hisobot",
-  "faqTpVisitsPhotoContent": "Har bir nuqta bo'yicha foto yoki video hisobot taqdim etish kerak.",
-  "faqTpVideoTitle": "Video hisobotlar (Telegram)",
-  "faqTpVideoMorningTitle": "Ertalabki video hisobot",
-  "faqTpVideoMorningContent": "Ish kunining boshida (9:30 gacha) savdo vakili Telegram chatiga video xabar yuborishi shart.",
-  "faqTpVideoDuringTitle": "Kun davomida hisobotlar",
-  "faqTpVideoDuringContent": "Kun davomida savdo nuqtalaridan qisqa video xabarlar yuborish tavsiya etiladi.",
-  "faqTpVideoEndTitle": "Yakuniy video hisobot",
-  "faqTpVideoEndContent": "Kun oxirida natijalar bilan qisqa video hisobot tavsiya etiladi.",
-  "faqTpReportingTitle": "Hisobotlar",
-  "faqTpReportingRealTimeTitle": "Real vaqtda yuborish",
-  "faqTpReportingRealTimeContent": "Barcha foto, video va izohlar tashrif paytida yuborilishi kerak.",
-  "faqTpReportingConsequenceTitle": "Bajarmaslik oqibatlari",
-  "faqTpReportingConsequenceContent": "Kunlik hisobot bermasa marshrutga chiqmagan yoki faoliyat ko'rsatmagan deb hisoblanadi.",
-  "faqTpResponsibilityTitle": "Javobgarlik",
-  "faqTpResponsibilityRulesTitle": "Intizomiy javobgarlik",
-  "faqTpResponsibilityRulesContent": "Ushbu nizomga rioya qilmaslik kompaniyaning ichki qoidalariga muvofiq intizomiy javobgarlikka olib keladi.",
-  "faqTpResponsibilityMeasuresTitle": "Jazo choralari",
-  "faqTpResponsibilityMeasuresContent": "Javobgarlik choralari: ogohlantirish → hayfsan → mukofotni ushlab qolish.",
   "productImageLoading": "Rasm yuklanmoqda...",
   "productImageError": "Rasmni yuklab bo'lmadi",
   "productNoImage": "Rasm mavjud emas",
   "productImageSyncProgress": "Rasmlar sinxronlanmoqda: {current}/{total}",
   "@productImageSyncProgress": {
     "placeholders": {
-      "current": {"type": "int"},
-      "total": {"type": "int"}
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "productImageSyncComplete": "Rasmlar sinxronlandi",
@@ -2704,7 +2302,9 @@
   "productImageCount": "{count} ta rasm",
   "@productImageCount": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "productBasicInfo": "Asosiy ma'lumotlar",
@@ -2732,7 +2332,6 @@
   "productProject": "Loyiha kodi",
   "copiedToClipboard": "Nusxalandi",
   "productInfoCopied": "Mahsulot ma'lumotlari nusxalandi",
-  "pullToRefresh": "Yangilash uchun torting",
   "checkingCache": "Kesh tekshirilmoqda...",
   "loadingFromDatabase": "Bazadan yuklanmoqda...",
   "syncingFromServer": "Serverdan sinxronlanmoqda...",
@@ -2746,16 +2345,19 @@
   "syncFailed": "Sinxronlashda xatolik. Qaytadan urinib ko'ring.",
   "noInternetForSync": "Internet aloqasi yo'q. Tarmoqni tekshiring.",
   "retrySync": "Qaytadan",
-  "ordersCount": "{count} ta buyurtma",
   "@ordersCount": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "lastUpdated": "Yangilangan: {time}",
   "@lastUpdated": {
     "placeholders": {
-      "time": {"type": "String"}
+      "time": {
+        "type": "String"
+      }
     }
   },
   "connectionRestored": "Aloqa tiklandi",
@@ -2776,19 +2378,25 @@
   "accessExpiredDate": "Tugagan sana: {date}",
   "@accessExpiredDate": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "accessValidUntil": "Amal qilish muddati: {date}",
   "@accessValidUntil": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "accessDaysRemaining": "{days} kun qoldi",
   "@accessDaysRemaining": {
     "placeholders": {
-      "days": {"type": "int"}
+      "days": {
+        "type": "int"
+      }
     }
   },
   "accessTimeManipulation": "Vaqt o'zgartirilganligi aniqlandi",
@@ -2810,7 +2418,9 @@
   "accessWarningExpiringSoonMessage": "Kirish muddatingiz {days} kundan keyin tugaydi. Iltimos, uzaytirish uchun qo'llab-quvvatlash bilan bog'laning.",
   "@accessWarningExpiringSoonMessage": {
     "placeholders": {
-      "days": {"type": "int"}
+      "days": {
+        "type": "int"
+      }
     }
   },
   "accessContinue": "Davom etish",
@@ -2819,12 +2429,10 @@
   "accessInternetRestored": "Internet aloqasi tiklandi. Tekshirilmoqda...",
   "accessCleaningData": "Ma'lumotlar tozalanmoqda...",
   "accessRevoking": "Kirish bekor qilinmoqda...",
-
   "syncRequiredFirstTime": "Birinchi kirishda sinxronlash talab qilinadi",
   "syncRecommended": "Ma'lumotlarni sinxronlash tavsiya etiladi",
   "goToSyncSettings": "Ma'lumotlarni yangilash uchun sozlamalarni oching",
   "openSettings": "Sozlamalarni ochish",
-
   "geminiApiKeyNotFound": "Gemini API kaliti sozlanmagan",
   "geminiNetworkError": "Tarmoq xatosi yuz berdi. Ulanishni tekshiring",
   "geminiAuthError": "Autentifikatsiya xatosi. Sozlamalarda API kalitini tekshiring",
@@ -2836,57 +2444,76 @@
   "geminiApiKeyHint": "Gemini API kalitingizni kiriting (AIza bilan boshlanadi)",
   "geminiApiKeyDescription": "Hujjat skanerlash va AI funksiyalari uchun ishlatiladi",
   "geminiApiKeyInvalid": "Kalit formati noto'g'ri. Kalit 'AIza' bilan boshlanishi kerak",
-
   "syncOptimizedMode": "Optimallashtirilgan sinxronizatsiya rejimi",
   "syncParallelProgress": "{count} ta jadval parallel sinxronlanmoqda...",
   "@syncParallelProgress": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncDeltaMode": "Qo'shimcha yangilanish",
   "syncSkippedUnchanged": "{count} ta o'zgarishmagan yozuv o'tkazib yuborildi",
   "@syncSkippedUnchanged": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncInserted": "{count} ta yangi yozuv qo'shildi",
   "@syncInserted": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncUpdated": "{count} ta yozuv yangilandi",
   "@syncUpdated": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncDeleted": "{count} ta yozuv o'chirildi",
   "@syncDeleted": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncLevelProgress": "Daraja {level}/{total}: {tables}",
   "@syncLevelProgress": {
     "placeholders": {
-      "level": {"type": "int"},
-      "total": {"type": "int"},
-      "tables": {"type": "String"}
+      "level": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "tables": {
+        "type": "String"
+      }
     }
   },
   "syncCacheSaved": "{count} ta takroriy API so'rov tejaldi",
   "@syncCacheSaved": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "syncOptimizedComplete": "Optimallashtirilgan sinxronizatsiya {seconds}s da yakunlandi",
   "@syncOptimizedComplete": {
     "placeholders": {
-      "seconds": {"type": "String"}
+      "seconds": {
+        "type": "String"
+      }
     }
   },
   "serverConnectionFailed": "Serverga ulanishda xatolik",
@@ -2899,22 +2526,32 @@
   "serverSwitchedTo": "Server o'zgartirildi: {url}",
   "@serverSwitchedTo": {
     "placeholders": {
-      "url": {"type": "String"}
+      "url": {
+        "type": "String"
+      }
     }
   },
   "retryingPrimaryServer": "Asosiy serverga qayta ulanish...",
   "connectionAttempt": "Ulanish urinishi {current}/{total}",
   "@connectionAttempt": {
     "placeholders": {
-      "current": {"type": "int"},
-      "total": {"type": "int"}
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "serverUrlInfo": "Server: {name} ({type})",
   "@serverUrlInfo": {
     "placeholders": {
-      "name": {"type": "String"},
-      "type": {"type": "String"}
+      "name": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
     }
   },
   "primaryServer": "Asosiy",
@@ -2932,7 +2569,6 @@
   "offlineAccessBlockedNote": "Birinchi ulanishdan keyin ilovadan oflayn foydalanishingiz mumkin.",
   "offlineAccessNoLimit": "Oflayn rejim mavjud emas",
   "offlineAccessNoLimitMessage": "Oflayn rejimdan foydalanishdan oldin kamida bir marta internetga ulanish kerak.",
-  "contactSupport": "Qo'llab-quvvatlash bilan bog'lanish",
   "retryConnection": "Qayta ulanish",
   "connectToInternet": "Internetga ulaning",
   "verifyingAccess": "Kirish tekshirilmoqda...",
@@ -2940,7 +2576,6 @@
   "verificationFailed": "Tekshirish muvaffaqiyatsiz",
   "timeLimitUpdated": "Kirish muddati yangilandi",
   "promoOrder": "Promo buyurtma",
-
   "marketingDataRefreshing": "Marketing ma'lumotlari yangilanmoqda...",
   "announcements": "E'lonlar",
   "news": "Yangiliklar",
@@ -2957,8 +2592,6 @@
   "promotionOfType": "{type} turidagi aksiya",
   "participatingProductsCount": "Aksiyada qatnashuvchi mahsulotlar soni: {count} ta SKU",
   "bonusProductsCount": "Bonus sifatida berilishi mumkin bo'lgan mahsulotlar: {count} ta SKU",
-  "startDateLabel": "Boshlanish: {date}",
-  "endDateLabel": "Tugash: {date}",
   "bonuses": "Bonuslar",
   "productClass": "Klass",
   "salesChannel": "Mijoz kanali",
@@ -2978,7 +2611,6 @@
   "initialOrderSettingsDescription": "Iltimos, birinchi buyurtmani yaratishdan oldin quyidagi sozlamalarni sozlang. Bu sozlamalar ushbu buyurtma uchun standart sifatida ishlatiladi.",
   "selectOrganization": "Tashkilotni tanlang",
   "selectWarehouse": "Omborni tanlang",
-  "selectPriceType": "Narx turini tanlang",
   "organizationRequired": "Tashkilot majburiy",
   "warehouseRequired": "Ombor majburiy",
   "priceTypeRequired": "Narx turi majburiy",
@@ -2991,8 +2623,12 @@
   "userOutsideActiveWindow": "Ruxsat oynasi: {start} – {end}",
   "@userOutsideActiveWindow": {
     "placeholders": {
-      "start": { "type": "String" },
-      "end": { "type": "String" }
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
     }
   },
   "licenseExpired": "Tashkilot litsenziyasi muddati o'tgan.",
@@ -3000,8 +2636,12 @@
   "licenseSeatExceeded": "Litsenziya o'rinlari to'la (siz #{rank}/{seatCount}).",
   "@licenseSeatExceeded": {
     "placeholders": {
-      "rank": { "type": "int" },
-      "seatCount": { "type": "int" }
+      "rank": {
+        "type": "int"
+      },
+      "seatCount": {
+        "type": "int"
+      }
     }
   },
   "clockTamperingDetected": "Qurilma soati o'zgargan. Ruxsatni tekshirish uchun internetga ulaning.",
@@ -3010,30 +2650,53 @@
   "mobileUserBoundToOtherDevice": "Sizning hisobingiz boshqa telefonga biriktirilgan. Eski bog'lanishni olib tashlash uchun administratorga murojaat qiling.",
   "deviceBindingInvalid": "Qurilma sessiyasi endi yaroqsiz. Iltimos, qaytadan kiring.",
   "sessionRevoked": "Sessiyangiz to'xtatildi. Iltimos, qaytadan kiring.",
-  "retry": "Qayta urinish",
   "oneCUserNotFound": "Bu foydalanuvchi tizim hisobida ro'yxatdan o'tmagan. Administratorga murojaat qiling.",
   "debugBackendUrl": "Backend: {url}",
   "@debugBackendUrl": {
     "placeholders": {
-      "url": { "type": "String" }
+      "url": {
+        "type": "String"
+      }
     }
   },
   "debugTestConnection": "Aloqani tekshirish",
   "debugConnectionOk": "OK · {ms}ms",
   "@debugConnectionOk": {
     "placeholders": {
-      "ms": { "type": "int" }
+      "ms": {
+        "type": "int"
+      }
     }
   },
   "debugConnectionFailed": "Xato: {reason}",
   "@debugConnectionFailed": {
     "placeholders": {
-      "reason": { "type": "String" }
+      "reason": {
+        "type": "String"
+      }
     }
   },
   "imageNotAvailable": "Rasm mavjud emas",
   "imageProcessing": "Rasm tayyorlanmoqda",
   "imageLoadFailed": "Rasmni yuklab bo'lmadi",
   "imageLoadRetry": "Qayta urinish",
-  "projectImageEmpty": "Hali rasmlar yo'q"
+  "projectImageEmpty": "Hali rasmlar yo'q",
+  "knowledgeBaseTitle": "Bilimlar manbayi",
+  "knowledgeBaseSubtitle": "Reglament, qo'llanma va trening",
+  "knowledgePinnedSection": "Qadalganlar",
+  "knowledgeCategoriesSection": "Kategoriyalar",
+  "knowledgeCategoryEmpty": "Bu kategoriyada hujjatlar yo'q",
+  "knowledgeDocumentLoading": "Hujjat yuklanmoqda…",
+  "knowledgeDocumentNotFound": "Hujjat topilmadi",
+  "knowledgeNoDocumentsAssigned": "Hozircha hujjatlar yo'q",
+  "knowledgeSearchTitle": "Qidiruv",
+  "knowledgeSearchPlaceholder": "Hujjatlarni qidirish…",
+  "knowledgeSearchEmpty": "Hech nima topilmadi",
+  "knowledgeRetry": "Qayta urinish",
+  "knowledgeOfflineNotice": "Internet yo'q. Keshlangan kontent ko'rsatilmoqda.",
+  "knowledgeTocTitle": "Mundarija",
+  "knowledgeOpenInBrowser": "Brauzerda ochish",
+  "knowledgeFilterAll": "Hammasi",
+  "knowledgePinnedBadge": "Qadalgan",
+  "knowledgeMandatoryBadge": "Majburiy"
 }

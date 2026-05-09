@@ -17,10 +17,9 @@
 /// ============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
-import 'package:gloria_marketing_flutter/src/core/services/thumbnail_image_service.dart';
+import 'package:gloria_marketing_flutter/src/core/widgets/client_image_widget.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/client_balance_widget_v2.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -29,7 +28,6 @@ import 'package:url_launcher/url_launcher.dart';
 class ClientDetailSheet extends StatefulWidget {
   final TradingPoint tradingPoint;
   final SalesReqPermissions? permissions;
-  final ClientImagesService? clientImagesService;
   final VoidCallback? onVisit;
   final VoidCallback? onCreateOrder;
   final VoidCallback? onViewOrders;
@@ -41,7 +39,6 @@ class ClientDetailSheet extends StatefulWidget {
     super.key,
     required this.tradingPoint,
     this.permissions,
-    this.clientImagesService,
     this.onVisit,
     this.onCreateOrder,
     this.onViewOrders,
@@ -59,53 +56,6 @@ class _ClientDetailSheetState extends State<ClientDetailSheet> {
   bool _showAdditionalInfo = false;
   bool _showLocationInfo = false;
   bool _showBusinessInfo = false;
-
-  // Image gallery state
-  List<ClientImage> _clientImages = [];
-  bool _isLoadingImages = true;
-  int _currentImageIndex = 0;
-  final PageController _imagePageController = PageController();
-
-  @override
-  void initState() {
-    super.initState();
-    _loadClientImages();
-    _imagePageController.addListener(() {
-      final page = _imagePageController.page?.round() ?? 0;
-      if (page != _currentImageIndex) {
-        setState(() => _currentImageIndex = page);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _imagePageController.dispose();
-    super.dispose();
-  }
-
-  /// Load client images from service
-  Future<void> _loadClientImages() async {
-    if (widget.clientImagesService == null) {
-      setState(() => _isLoadingImages = false);
-      return;
-    }
-
-    try {
-      final images = await widget.clientImagesService!.getClientImages(
-        widget.tradingPoint.id,
-      );
-      if (mounted) {
-        setState(() {
-          _clientImages = images;
-          _isLoadingImages = false;
-        });
-      }
-    } catch (e) {
-      if (kDebugMode) print('Error loading client images: $e');
-      if (mounted) setState(() => _isLoadingImages = false);
-    }
-  }
 
   /// Make phone call
   Future<void> _makeCall(String? phone) async {
@@ -199,144 +149,16 @@ class _ClientDetailSheetState extends State<ClientDetailSheet> {
     );
   }
 
-  /// Build image gallery with swipeable pages
+  /// Build the primary client image (single image, fetched on demand from
+  /// `/api/mobile/v1/images/` via [ClientImageWidget]).
   Widget _buildImageGallery(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-
-    if (_isLoadingImages) {
-      return Container(
-        height: 240,
-        color: cs.surfaceContainerHighest,
-        child: Center(
-          child: CircularProgressIndicator(color: cs.primary),
-        ),
-      );
-    }
-
-    if (_clientImages.isEmpty) {
-      return Container(
-        height: 240,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              cs.primaryContainer.withOpacity(0.3),
-              cs.secondaryContainer.withOpacity(0.3),
-            ],
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.store_outlined,
-                size: 64,
-                color: cs.onSurfaceVariant.withOpacity(0.5),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                AppLocalizations.of(context)!.noImagesAvailable,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return SizedBox(
       height: 280,
-      child: Stack(
-        children: [
-          // Image PageView
-          PageView.builder(
-            controller: _imagePageController,
-            itemCount: _clientImages.length,
-            itemBuilder: (context, index) {
-              final image = _clientImages[index];
-              return Image.network(
-                image.imageUrl ?? '',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: cs.surfaceContainerHighest,
-                    child: Icon(
-                      Icons.broken_image_outlined,
-                      size: 64,
-                      color: cs.onSurfaceVariant,
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: cs.surfaceContainerHighest,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-
-          // Image counter overlay
-          if (_clientImages.length > 1)
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${_currentImageIndex + 1} / ${_clientImages.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-
-          // Page indicators
-          if (_clientImages.length > 1)
-            Positioned(
-              bottom: 16,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _clientImages.length,
-                  (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: index == _currentImageIndex ? 24 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: index == _currentImageIndex
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
+      width: double.infinity,
+      child: ClientImageWidget(
+        clientCode: widget.tradingPoint.id,
+        size: ClientImageSize.large,
+        fit: BoxFit.cover,
       ),
     );
   }

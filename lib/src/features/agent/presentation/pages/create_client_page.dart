@@ -5,7 +5,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
@@ -465,7 +464,6 @@ class _CreateClientPageState extends State<CreateClientPage>
 
     try {
       final prefs = sl<SharedPreferencesService>();
-      final soapService = sl<SoapApiService>();
 
       final userCode = prefs.getUserCode() ?? '';
 
@@ -473,7 +471,12 @@ class _CreateClientPageState extends State<CreateClientPage>
         throw Exception('Foydalanuvchi kodi topilmadi');
       }
 
-      final result = await soapService.setClient(
+      // Backend-first creation: the backend stages the row, calls 1C
+      // SOAP `setClient` synchronously, and either promotes the row
+      // (201 with `code_1c`) or returns a structured error (422
+      // `onec_business_error` / 502 `onec_transport_error` /
+      // `onec_no_endpoint_configured`). No SOAP call from mobile.
+      final tp = await sl<CustomerWriteRepository>().create(
         name: _nameController.text.trim(),
         signboard: _signboardController.text.trim(),
         inn: _innController.text.trim(),
@@ -488,66 +491,37 @@ class _CreateClientPageState extends State<CreateClientPage>
         responsiblePersonPhone: _responsiblePhoneController.text.trim().isEmpty
             ? _contactPhoneController.text.trim()
             : _responsiblePhoneController.text.trim(),
-        longitude: _longitude!,
         latitude: _latitude!,
+        longitude: _longitude!,
         codeUser: userCode,
         codeRegion: _selectedRegion!.code,
         director: _directorController.text.trim(),
         mfo: _mfoController.text.trim(),
         bankAccount: _bankAccountController.text.trim(),
-        channelCode: _selectedChannel?.name, // Send channel NAME
-        clientClass: _selectedClientClass?.classCode, // Send class NAME
+        salesChannel: _selectedChannel?.name ?? '',
+        clientClass: _selectedClientClass?.classCode ?? '',
       );
 
-      if (result['success'] == true) {
-        // V2 dual-write: mirror the brand-new customer into the V2
-        // backend using the `code_1c` SOAP just assigned. Failure
-        // here is logged but does NOT roll back SOAP — the runbook
-        // explicitly notes V2 PATCH is idempotent, so the next
-        // SOAP→V2 sync (or a manual retry from the edit screen)
-        // brings them back in lockstep. We surface a warning so the
-        // user knows V2 is still catching up.
-        final code1c = (result['clientCode'] as String?) ?? '';
-        bool v2Synced = true;
-        if (code1c.isNotEmpty) {
-          try {
-            // V2 receives only what it needs (the runbook's "kerakli
-            // malumotlar" subset): `code_1c` as the canonical link
-            // key plus name / inn / phone / address / coords. SOAP
-            // already stored the full record including classifier
-            // and bank fields; V2 stays slim by design.
-            await sl<CustomerWriteRepository>().create(
-              code1c: code1c,
-              name: _nameController.text.trim(),
-              inn: _innController.text.trim(),
-              phone: _contactPhoneController.text.trim(),
-              address: _addressController.text.trim(),
-              latitude: _latitude,
-              longitude: _longitude,
-            );
-          } catch (e) {
-            v2Synced = false;
-            if (kDebugMode) {
-              print(
-                'CreateClientPage: V2 create FAILED for '
-                'code_1c="$code1c": $e — SOAP record stays, retry from '
-                'edit screen',
-              );
-            }
-          }
-        }
-        // Show success message
-        if (mounted) {
-          _showSuccessDialog(
-            code1c.isEmpty ? null : code1c,
-            v2Synced
-                ? (result['message'] as String?)
-                : '${result['message'] ?? ''} '
-                    '(V2 sinxronlash kutilmoqda)',
-          );
-        }
-      } else {
-        throw Exception(result['message'] ?? 'Noma\'lum xatolik');
+      if (mounted) {
+        // Success dialog shows the 1C code (downstream value) when
+        // available; the backend `code` is the new local identifier
+        // and is propagated via the returned [TradingPoint].
+        _showSuccessDialog(
+          tp.code1c.isEmpty ? null : tp.code1c,
+          null,
+        );
+      }
+    } on CustomerWriteException catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_localizedCreateError(context, e)),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -563,6 +537,38 @@ class _CreateClientPageState extends State<CreateClientPage>
           ),
         );
       }
+    }
+  }
+
+  /// Translate a typed [CustomerWriteException] into a user-facing
+  /// message. The 422 `onec_business_error` surfaces 1C's own message
+  /// verbatim (usually Russian, e.g. "Контрагент с таким ИНН уже
+  /// существует") so the user can correct the form and retry.
+  String _localizedCreateError(
+    BuildContext context,
+    CustomerWriteException e,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    switch (e.code) {
+      case 'onec_business_error':
+        final details = e.details;
+        final onecMessage = details?['onec_message']?.toString() ?? '';
+        final fallback = e.message.isEmpty
+            ? '1C rejected the customer.'
+            : e.message;
+        final detail = onecMessage.isEmpty ? fallback : onecMessage;
+        return l10n?.customerCreate_err_oneCBusiness(detail) ??
+            '1C rejected this customer: $detail';
+      case 'onec_transport_error':
+        return l10n?.customerCreate_err_oneCTransport ??
+            'Could not reach 1C. Try again.';
+      case 'onec_no_endpoint_configured':
+        return l10n?.customerCreate_err_oneCNoEndpoint ??
+            '1C integration is not configured. Contact admin.';
+      default:
+        final base =
+            l10n?.errorOccurredPrefix ?? 'Xatolik';
+        return '$base: ${e.message.isEmpty ? e.code : e.message}';
     }
   }
 

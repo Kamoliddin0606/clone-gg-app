@@ -2845,5 +2845,11 @@
   "coordinatesSave_err_generic": "Не удалось сохранить координаты: {detail}",
   "@coordinatesSave_err_generic": {
     "placeholders": { "detail": { "type": "String" } }
-  }
+  },
+  "customerCreate_err_oneCBusiness": "1С отклонил этого клиента: {message}",
+  "@customerCreate_err_oneCBusiness": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+  "customerCreate_err_oneCTransport": "Не удалось связаться с 1С. Попробуйте снова.",
+  "customerCreate_err_oneCNoEndpoint": "Интеграция с 1С не настроена. Обратитесь к администратору."
 }

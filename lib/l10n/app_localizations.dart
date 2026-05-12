@@ -10374,6 +10374,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save location: {detail}'**
   String coordinatesSave_err_generic(String detail);
+
+  /// No description provided for @customerCreate_err_oneCBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'1C rejected this customer: {message}'**
+  String customerCreate_err_oneCBusiness(String message);
+
+  /// No description provided for @customerCreate_err_oneCTransport.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach 1C. Try again.'**
+  String get customerCreate_err_oneCTransport;
+
+  /// No description provided for @customerCreate_err_oneCNoEndpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'1C integration is not configured. Contact admin.'**
+  String get customerCreate_err_oneCNoEndpoint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

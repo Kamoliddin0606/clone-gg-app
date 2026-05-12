@@ -42,6 +42,7 @@ import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/aut
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_photo_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_read_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_write_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/bloc/customer_write_cubit.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
@@ -412,6 +413,26 @@ Future<void> setupServiceLocator() async {
         dio: customerWriteDio,
         tokenService: sl<TokenService>(),
         prefs: sl<SharedPreferencesService>(),
+      ),
+    );
+  }
+
+  // Customer read API (`GET /api/mobile/v2/customers/`). Replaces the
+  // legacy SOAP `getClients` pull. Dedicated Dio for the same reason
+  // as the write repository above — the shared sl<Dio>() carries the
+  // SOAP Accept-header interceptor that breaks V2 JSON.
+  if (!sl.isRegistered<CustomerReadRepository>()) {
+    final customerReadDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+    attachRestLogger(customerReadDio, 'CUSTOMER');
+
+    sl.registerLazySingleton<CustomerReadRepository>(
+      () => CustomerReadRepository(
+        dio: customerReadDio,
+        tokenService: sl<TokenService>(),
       ),
     );
   }

@@ -37,6 +37,22 @@ class TradingPoint {
   final String? tradingPointTypeCode;
   final String? clientClass;
 
+  // Backend-first inversion: backend allocates a stable `code` (e.g.
+  // `C-AB12CD34`) and `id` now mirrors that value. `code1c` is exposed
+  // separately because the 1C SOAP code is no longer the local
+  // identifier — it is a downstream value that may be empty during the
+  // brief `pending_1c` window. `customerUuid` carries the backend UUID
+  // needed by the photo flows (`/api/mobile/v2/customers/{uuid}/photos/`).
+  final String code;
+  final String code1c;
+  final String customerUuid;
+  final String customerStatus;
+  final String addressDelivery;
+  final String director;
+  final String mfo;
+  final String bankAccount;
+  final String salesChannel;
+
   const TradingPoint({
     required this.id,
     required this.name,
@@ -69,6 +85,15 @@ class TradingPoint {
     this.channelCode,
     this.tradingPointTypeCode,
     this.clientClass,
+    this.code = '',
+    this.code1c = '',
+    this.customerUuid = '',
+    this.customerStatus = '',
+    this.addressDelivery = '',
+    this.director = '',
+    this.mfo = '',
+    this.bankAccount = '',
+    this.salesChannel = '',
   });
 
   factory TradingPoint.fromJson(Map<String, dynamic> json) {
@@ -124,6 +149,86 @@ class TradingPoint {
       channelCode: json['channelCode']?.toString(),
       tradingPointTypeCode: json['tradingPointTypeCode']?.toString(),
       clientClass: json['clientClass']?.toString(),
+      code: json['code']?.toString() ?? '',
+      code1c: json['code1c']?.toString() ?? '',
+      customerUuid: json['customerUuid']?.toString() ?? '',
+      customerStatus: json['customerStatus']?.toString() ?? '',
+      addressDelivery: json['addressDelivery']?.toString() ?? '',
+      director: json['director']?.toString() ?? '',
+      mfo: json['mfo']?.toString() ?? '',
+      bankAccount: json['bankAccount']?.toString() ?? '',
+      salesChannel: json['salesChannel']?.toString() ?? '',
+    );
+  }
+
+  /// Parses the V2 `GET /api/mobile/v2/customers/{}/` row shape
+  /// (snake_case DRF serializer output). Distinct from [fromJson]
+  /// which parses the SOAP-derived local-cache shape.
+  ///
+  /// Local identifier (`id`) is the backend-allocated `code`
+  /// (`C-XXXXXXXX`) — stable across the brief `pending_1c` window
+  /// before `code_1c` is populated. The PATCH endpoints accept either
+  /// the backend UUID or the `code` as `{customer_id}`.
+  factory TradingPoint.fromBackendJson(Map<String, dynamic> json) {
+    double parseDouble(Object? value) {
+      if (value == null) return 0.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? 0.0;
+      return 0.0;
+    }
+
+    String readString(String key) {
+      final value = json[key];
+      return value is String ? value : (value?.toString() ?? '');
+    }
+
+    final code = readString('code');
+    final code1c = readString('code_1c');
+    final uuid = readString('id');
+    final localId = code.isNotEmpty
+        ? code
+        : (code1c.isNotEmpty ? code1c : uuid);
+
+    return TradingPoint(
+      id: localId,
+      name: readString('name'),
+      address: readString('address'),
+      phone: readString('phone'),
+      ownerName: '',
+      contactPerson: readString('contact_person'),
+      inn: readString('inn'),
+      status: json['is_active'] == false ? 'inactive' : 'active',
+      lastVisitDate: '',
+      hasOrders: false,
+      hasContracts: false,
+      isVisited: false,
+      hasContract: false,
+      latitude: parseDouble(json['latitude']),
+      longitude: parseDouble(json['longitude']),
+      region: '',
+      district: '',
+      signboard: readString('signboard'),
+      referencePoint: readString('reference_point'),
+      responsiblePerson: '',
+      responsiblePersonPhone: readString('responsible_person_phone'),
+      tradePointType: readString('trade_point_type'),
+      creditLimit: 0.0,
+      accumulatedCredit: 0.0,
+      codeRegion: readString('code_region'),
+      code: code,
+      code1c: code1c,
+      customerUuid: uuid,
+      customerStatus: readString('status'),
+      addressDelivery: readString('address_delivery'),
+      director: readString('director'),
+      mfo: readString('mfo'),
+      bankAccount: readString('bank_account'),
+      salesChannel: readString('sales_channel'),
+      clientClass: readString('client_class').isEmpty
+          ? null
+          : readString('client_class'),
     );
   }
 
@@ -160,6 +265,15 @@ class TradingPoint {
       'channelCode': channelCode,
       'tradingPointTypeCode': tradingPointTypeCode,
       'clientClass': clientClass,
+      'code': code,
+      'code1c': code1c,
+      'customerUuid': customerUuid,
+      'customerStatus': customerStatus,
+      'addressDelivery': addressDelivery,
+      'director': director,
+      'mfo': mfo,
+      'bankAccount': bankAccount,
+      'salesChannel': salesChannel,
     };
   }
 
@@ -195,6 +309,15 @@ class TradingPoint {
     String? channelCode,
     String? tradingPointTypeCode,
     String? clientClass,
+    String? code,
+    String? code1c,
+    String? customerUuid,
+    String? customerStatus,
+    String? addressDelivery,
+    String? director,
+    String? mfo,
+    String? bankAccount,
+    String? salesChannel,
   }) {
     return TradingPoint(
       id: id ?? this.id,
@@ -228,6 +351,15 @@ class TradingPoint {
       channelCode: channelCode ?? this.channelCode,
       tradingPointTypeCode: tradingPointTypeCode ?? this.tradingPointTypeCode,
       clientClass: clientClass ?? this.clientClass,
+      code: code ?? this.code,
+      code1c: code1c ?? this.code1c,
+      customerUuid: customerUuid ?? this.customerUuid,
+      customerStatus: customerStatus ?? this.customerStatus,
+      addressDelivery: addressDelivery ?? this.addressDelivery,
+      director: director ?? this.director,
+      mfo: mfo ?? this.mfo,
+      bankAccount: bankAccount ?? this.bankAccount,
+      salesChannel: salesChannel ?? this.salesChannel,
     );
   }
 

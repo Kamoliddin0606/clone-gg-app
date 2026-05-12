@@ -783,34 +783,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
     }
   }
 
-  /// Formats the total value with millions abbreviation for large amounts
-  /// If value >= 100,000, displays as X.X mln UZS, otherwise uses standard UZS format
-  /// Handles edge cases like negative values or NaN
-  String _formatTotalValue(double value) {
-    try {
-      // Handle invalid values
-      if (value.isNaN || value.isInfinite) {
-        return '0 UZS';
-      }
-
-      // For values >= 100,000, format as millions
-      if (value >= 100000) {
-        final millions = value / 1000000;
-        // Round to 1 decimal place
-        final roundedMillions = (millions * 10).round() / 10;
-        return '${roundedMillions.toStringAsFixed(1)} mln UZS';
-      } else {
-        // Use standard currency formatting for smaller values
-        return uzsFormat.format(value);
-      }
-    } catch (e) {
-      debugPrint('ProductSelectionPage: Error formatting total value: $e');
-      // Fallback to standard formatting
-      return uzsFormat.format(value);
-    }
-  }
-
-  /// Show quantity input dialog for manual quantity entry
+/// Show quantity input dialog for manual quantity entry
   void _showQuantityInputDialog(String productCode) {
     final stock = _getProductStock(productCode);
     final currentQuantity = _getProductQuantity(productCode);
@@ -1005,30 +978,36 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
                 visible: _isSummaryVisible,
                 child: SlideTransition(
                   position: _summaryAnimation,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildSummaryItem(
-                        theme,
-                        AppLocalizations.of(context)?.productsLabel ??
-                            'Mahsulotlar',
-                        '$_totalItems ta',
-                      ),
-                      _buildSummaryItem(
+                      _buildPrimarySummaryItem(
                         theme,
                         AppLocalizations.of(context)?.totalValueLabel ??
                             'Jami qiymat',
                         _totalValue,
                       ),
-                      _buildSummaryItem(
-                        theme,
-                        AppLocalizations.of(context)?.weight ?? 'Og\'irlik',
-                        '${_totalWeight.toStringAsFixed(2)} kg',
-                      ),
-                      _buildSummaryItem(
-                        theme,
-                        AppLocalizations.of(context)?.volume ?? 'Hajm',
-                        '${_totalVolume.toStringAsFixed(2)} m³',
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildSummaryItem(
+                            theme,
+                            AppLocalizations.of(context)?.productsLabel ??
+                                'Mahsulotlar',
+                            '$_totalItems ta',
+                          ),
+                          _buildSummaryItem(
+                            theme,
+                            AppLocalizations.of(context)?.weight ?? 'Og\'irlik',
+                            '${_totalWeight.toStringAsFixed(2)} kg',
+                          ),
+                          _buildSummaryItem(
+                            theme,
+                            AppLocalizations.of(context)?.volume ?? 'Hajm',
+                            '${_totalVolume.toStringAsFixed(2)} m³',
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1062,17 +1041,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
 
   /// Build summary item with formatted display
   Widget _buildSummaryItem(ThemeData theme, String label, dynamic value) {
-    String displayValue;
-    String? tooltipMessage;
-
-    if (label == 'Jami qiymat' && value is double) {
-      displayValue = _formatTotalValue(value);
-      tooltipMessage = uzsFormat.format(value);
-    } else {
-      displayValue = value.toString();
-    }
-
-    final column = Column(
+    return Column(
       children: [
         Text(
           label,
@@ -1082,7 +1051,7 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
         ),
         const SizedBox(height: 4),
         Text(
-          displayValue,
+          value.toString(),
           style: theme.textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.primary,
@@ -1090,16 +1059,47 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
         ),
       ],
     );
+  }
 
-    if (tooltipMessage != null) {
-      return Tooltip(
-        message: tooltipMessage,
-        preferBelow: false, // Show tooltip above the widget
-        child: column,
-      );
-    } else {
-      return column;
-    }
+  /// Build the primary (emphasized) summary item — used for the order total.
+  /// Renders the label and value larger and bolder than the secondary metrics
+  /// below it, so the order sum stands out at a glance. The value uses the
+  /// full grouped UZS format (no millions abbreviation) and is wrapped in a
+  /// FittedBox so very large amounts scale down to fit the available width.
+  Widget _buildPrimarySummaryItem(ThemeData theme, String label, double value) {
+    final formatted = uzsFormat.format(value);
+    return Tooltip(
+      message: formatted,
+      preferBelow: false,
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
+              child: Text(
+                formatted,
+                maxLines: 1,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Build view mode toggle with animation
@@ -1270,14 +1270,23 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product name and article
-                  Text(
-                    product.productName,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  // Product name and article — Flexible so long names
+                  // shrink (with ellipsis) within the row's available height
+                  // instead of overflowing. Long-press shows the full name.
+                  Flexible(
+                    child: Tooltip(
+                      message: product.productName,
+                      waitDuration: const Duration(milliseconds: 500),
+                      triggerMode: TooltipTriggerMode.longPress,
+                      child: Text(
+                        product.productName,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(

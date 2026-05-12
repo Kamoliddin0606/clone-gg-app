@@ -2839,5 +2839,11 @@
   "coordinatesSave_err_generic": "Joylashuvni saqlab bo'lmadi: {detail}",
   "@coordinatesSave_err_generic": {
     "placeholders": { "detail": { "type": "String" } }
-  }
+  },
+  "customerCreate_err_oneCBusiness": "1C bu mijozni qabul qilmadi: {message}",
+  "@customerCreate_err_oneCBusiness": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+  "customerCreate_err_oneCTransport": "1C bilan bog'lanib bo'lmadi. Qayta urinib ko'ring.",
+  "customerCreate_err_oneCNoEndpoint": "1C integratsiyasi sozlanmagan. Administratorga murojaat qiling."
 }

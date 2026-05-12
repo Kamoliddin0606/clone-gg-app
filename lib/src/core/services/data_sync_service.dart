@@ -691,6 +691,11 @@ class DataSyncService {
   }
 
   Future<List<TradingPoint>> _syncClients(String userCode, String password) async {
+    // Customer reads go through SOAP `getClients` because 1C performs
+    // server-side business-region scoping by userCode. The V2 endpoint
+    // (`CustomerReadRepository`) returns org-wide rows without region
+    // filtering and is preserved as dormant code for future migration
+    // once backend supports per-user business-region scoping.
     final clients = await _apiService.getClients(
       userCode: userCode,
       password: password,
@@ -698,13 +703,13 @@ class DataSyncService {
     if (kDebugMode) {
       print('Mijozlar ma\'lumotlari yuklandi: ${clients.length} ta mijoz');
     }
-    
+
     // Use incremental sync for better performance
     final stats = await _dbService.saveClientsIncremental(clients);
     if (kDebugMode) {
       print('[DeltaSync] Clients: +${stats['inserted']}, ~${stats['updated']}, -${stats['deleted']} (${stats['duration_ms']}ms)');
     }
-    
+
     return clients;
   }
 

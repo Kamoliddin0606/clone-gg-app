@@ -5480,4 +5480,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String coordinatesSave_err_generic(String detail) {
     return 'Не удалось сохранить координаты: $detail';
   }
+
+  @override
+  String customerCreate_err_oneCBusiness(String message) {
+    return '1С отклонил этого клиента: $message';
+  }
+
+  @override
+  String get customerCreate_err_oneCTransport => 'Не удалось связаться с 1С. Попробуйте снова.';
+
+  @override
+  String get customerCreate_err_oneCNoEndpoint => 'Интеграция с 1С не настроена. Обратитесь к администратору.';
 }

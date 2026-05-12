@@ -71,17 +71,18 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('CustomerWriteRepository.create', () {
-    test('POSTs with client_uuid + idempotency_key + bearer + 6-decimal '
-        'coords', () async {
+    test('POSTs the full 22-field SOAP payload + client_uuid + '
+        'idempotency_key + bearer + 6-decimal coords', () async {
       final adapter = _StubAdapter();
       final repo = await _buildRepo(adapter);
       adapter.enqueueJson(201, <String, dynamic>{
         'id': 'cust-1',
         'code': 'C-001',
         'code_1c': '00-001',
+        'status': 'active',
         'name': 'Mahalla',
         'inn': '123',
-        'phone': '+998',
+        'phone': '+998901234567',
         'address': 'Toshkent',
         'latitude': '41.311081',
         'longitude': '69.240562',
@@ -89,13 +90,15 @@ void main() {
       });
 
       final row = await repo.create(
-        code1c: '00-001',
         name: 'Mahalla',
-        inn: '123',
-        phone: '+998',
+        tradePointType: 'Grocery store',
+        contactPersonPhone: '+998901234567',
         address: 'Toshkent',
         latitude: 41.311081,
         longitude: 69.240562,
+        codeUser: 'U-AGENT-042',
+        codeRegion: 'TASH',
+        inn: '123',
       );
 
       expect(adapter.requests.length, 1);
@@ -106,13 +109,20 @@ void main() {
       expect(req.headers['Content-Type'], contains('application/json'));
 
       final body = req.data as Map<String, dynamic>;
-      // `code_1c` MUST be present so V2 links the new record to the
-      // SOAP-created customer (mobile↔backend exchange key).
-      expect(body['code_1c'], '00-001');
+      // Backend-first inversion: mobile no longer sends `code_1c` —
+      // backend allocates it after SOAP setClient.
+      expect(body.containsKey('code_1c'), isFalse);
       expect(body['name'], 'Mahalla');
       expect(body['inn'], '123');
-      expect(body['phone'], '+998');
+      expect(body['trade_point_type'], 'Grocery store');
+      expect(body['contact_person_phone'], '+998901234567');
       expect(body['address'], 'Toshkent');
+      // address_delivery falls back to address when blank.
+      expect(body['address_delivery'], 'Toshkent');
+      // responsible_person_phone falls back to contact_person_phone.
+      expect(body['responsible_person_phone'], '+998901234567');
+      expect(body['code_user'], 'U-AGENT-042');
+      expect(body['code_region'], 'TASH');
       // Six-decimal string serialisation.
       expect(body['latitude'], '41.311081');
       expect(body['longitude'], '69.240562');
@@ -120,50 +130,108 @@ void main() {
       expect((body['client_uuid'] as String).length, 36);
       expect((body['idempotency_key'] as String).length, 36);
 
-      // Local catalog identifies customers by `code_1c`, NOT the
-      // backend UUID — see _parseRow doc-comment.
-      expect(row.id, '00-001');
+      // Local catalog now identifies customers by backend `code`.
+      expect(row.id, 'C-001');
+      expect(row.code, 'C-001');
+      expect(row.code1c, '00-001');
       expect(row.name, 'Mahalla');
     });
 
-    test('parses code_1c into TradingPoint.id and falls back through '
-        'code → uuid when missing', () async {
+    test('parses code into TradingPoint.id and falls back through '
+        'code_1c → uuid when missing', () async {
       final adapter = _StubAdapter();
       final repo = await _buildRepo(adapter);
-      // code_1c missing → fall back to `code`.
+      // `code` missing → fall back to `code_1c`.
       adapter.enqueueJson(201, <String, dynamic>{
         'id': 'uuid-1',
-        'code': 'C-777',
-        'name': 'NoCode1c',
+        'code': '',
+        'code_1c': '00-FALLBACK',
+        'name': 'NoCode',
         'is_active': true,
       });
-      final fallback =
-          await repo.create(code1c: '00-FALLBACK', name: 'NoCode1c');
-      expect(fallback.id, 'C-777');
+      final fallback = await repo.create(
+        name: 'NoCode',
+        tradePointType: 'Grocery store',
+        contactPersonPhone: '+998901234567',
+        address: 'Toshkent',
+        latitude: 41.0,
+        longitude: 69.0,
+        codeUser: 'U-1',
+        codeRegion: 'TASH',
+      );
+      expect(fallback.id, '00-FALLBACK');
     });
 
-    test('maps invalid_coordinates 400 to typed exception', () async {
+    test('maps onec_business_error 422 to typed exception with '
+        'onec_message in details', () async {
       final adapter = _StubAdapter();
       final repo = await _buildRepo(adapter);
-      adapter.enqueueJson(400, <String, dynamic>{
+      adapter.enqueueJson(422, <String, dynamic>{
         'error': <String, dynamic>{
-          'code': 'invalid_coordinates',
-          'message': 'Latitude/longitude out of range.',
-          'details': null,
+          'code': 'onec_business_error',
+          'message': '1C rejected the customer.',
+          'details': <String, dynamic>{
+            'onec_code': '0',
+            'onec_message': 'Контрагент с таким ИНН уже существует',
+          },
         },
         'request_id': 'r-1',
       });
 
       Object? caught;
       try {
-        await repo.create(code1c: '00-ERR', name: 'X');
+        await repo.create(
+          name: 'X',
+          tradePointType: 'Grocery store',
+          contactPersonPhone: '+998901234567',
+          address: 'Toshkent',
+          latitude: 41.0,
+          longitude: 69.0,
+          codeUser: 'U-1',
+          codeRegion: 'TASH',
+        );
       } catch (e) {
         caught = e;
       }
       expect(caught, isA<CustomerWriteException>());
       final ex = caught as CustomerWriteException;
-      expect(ex.code, 'invalid_coordinates');
-      expect(ex.statusCode, 400);
+      expect(ex.code, 'onec_business_error');
+      expect(ex.statusCode, 422);
+      expect(ex.details?['onec_message'],
+          'Контрагент с таким ИНН уже существует');
+    });
+
+    test('maps onec_transport_error 502 to typed exception', () async {
+      final adapter = _StubAdapter();
+      final repo = await _buildRepo(adapter);
+      adapter.enqueueJson(502, <String, dynamic>{
+        'error': <String, dynamic>{
+          'code': 'onec_transport_error',
+          'message': 'Upstream 1C base returned an error.',
+          'details': <String, dynamic>{},
+        },
+        'request_id': 'r-2',
+      });
+
+      Object? caught;
+      try {
+        await repo.create(
+          name: 'X',
+          tradePointType: 'Grocery store',
+          contactPersonPhone: '+998901234567',
+          address: 'Toshkent',
+          latitude: 41.0,
+          longitude: 69.0,
+          codeUser: 'U-1',
+          codeRegion: 'TASH',
+        );
+      } catch (e) {
+        caught = e;
+      }
+      expect(caught, isA<CustomerWriteException>());
+      final ex = caught as CustomerWriteException;
+      expect(ex.code, 'onec_transport_error');
+      expect(ex.statusCode, 502);
     });
   });
 

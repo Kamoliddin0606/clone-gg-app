@@ -57,27 +57,46 @@ class CustomerWriteRepository {
 
   /// `POST /api/mobile/v2/customers/`
   ///
+  /// Backend-first creation: the backend stages a `pending_1c` row,
+  /// synchronously calls 1C SOAP `setClient`, then either promotes
+  /// the row to `status="active"` with `code_1c` populated (returns
+  /// 201) or soft-deletes the row and returns a structured error.
+  ///
+  /// Mobile sends the full 22-field SOAP payload; the backend owns
+  /// the 1C handoff. The response carries the backend-allocated
+  /// `code` (e.g. `C-AB12CD34`) which becomes the mobile identifier
+  /// going forward — `code_1c` is exposed separately because it now
+  /// originates downstream and may briefly be empty.
+  ///
   /// Reuses the persisted `(client_uuid, idempotency_key)` pair so a
   /// retry after app restart sends the same key — backend de-dups on
   /// 5xx / network / timeout. On 4xx the key is rotated immediately
-  /// because the payload itself was rejected.
-  ///
-  /// [code1c] is the canonical mobile↔backend exchange key assigned
-  /// by 1C at SOAP `setClient` time and passed through unmodified.
-  /// The V2 record is keyed by this value so subsequent
-  /// `PATCH /api/mobile/v2/customers/{code_1c}/...` calls (profile
-  /// edit, coordinates) reach the same row. The user never sees or
-  /// edits this value — it is a server-assigned constant.
+  /// because the payload itself was rejected; the backend deletes the
+  /// idempotency record on any 1C failure (422 / 502), so the same
+  /// `(client_uuid, idempotency_key)` is free to be replayed after
+  /// the user corrects the form.
   ///
   /// Gate: `customers.add_customer`.
   Future<TradingPoint> create({
-    required String code1c,
     required String name,
+    required String tradePointType,
+    required String contactPersonPhone,
+    required String address,
+    required double latitude,
+    required double longitude,
+    required String codeUser,
+    required String codeRegion,
+    String signboard = '',
     String inn = '',
-    String phone = '',
-    String address = '',
-    double? latitude,
-    double? longitude,
+    String contactPerson = '',
+    String addressDelivery = '',
+    String referencePoint = '',
+    String responsiblePersonPhone = '',
+    String director = '',
+    String mfo = '',
+    String bankAccount = '',
+    String salesChannel = '',
+    String clientClass = '',
   }) async {
     final url = '${TokenService.v2BaseUrl}$_basePath/';
     final clientUuid = await _resolveCachedUuid(action: 'create_client_uuid');
@@ -85,13 +104,28 @@ class CustomerWriteRepository {
         await _resolveCachedUuid(action: 'create_idempotency');
 
     final body = <String, dynamic>{
-      'code_1c': code1c,
       'name': name,
+      'signboard': signboard,
       'inn': inn,
-      'phone': phone,
+      'trade_point_type': tradePointType,
+      'contact_person': contactPerson,
+      'contact_person_phone': contactPersonPhone,
       'address': address,
-      if (latitude != null) 'latitude': _formatCoord(latitude),
-      if (longitude != null) 'longitude': _formatCoord(longitude),
+      'address_delivery':
+          addressDelivery.isEmpty ? address : addressDelivery,
+      'reference_point': referencePoint,
+      'responsible_person_phone': responsiblePersonPhone.isEmpty
+          ? contactPersonPhone
+          : responsiblePersonPhone,
+      'latitude': _formatCoord(latitude),
+      'longitude': _formatCoord(longitude),
+      'code_user': codeUser,
+      'code_region': codeRegion,
+      'director': director,
+      'mfo': mfo,
+      'bank_account': bankAccount,
+      'sales_channel': salesChannel,
+      'client_class': clientClass,
       'client_uuid': clientUuid,
       'idempotency_key': idempotencyKey,
     };
@@ -405,72 +439,19 @@ class CustomerWriteRepository {
 
   /// Parse a single `MobileCustomer` row into a [TradingPoint].
   ///
-  /// **Important**: the local catalog identifies a customer by its
-  /// 1C `code_1c` (mobile ↔ backend data-exchange key), NOT the
-  /// backend's UUID `id`. The V2 response carries both fields; we
-  /// populate [TradingPoint.id] with `code_1c` so the rest of the
-  /// app (list rendering, highlight-new-client, SOAP local cache)
-  /// stays coherent. The UUID is dropped — V2 endpoints continue to
-  /// accept `code_1c` as the `{customer_id}` path parameter.
-  ///
-  /// Backend-only fields (e.g. `coordinates_updated_at`) are
-  /// dropped here; UI flows that need them should read the raw
-  /// response.
+  /// Backend-first inversion: the backend allocates a stable `code`
+  /// (e.g. `C-AB12CD34`) and 1C's `code_1c` is now a downstream value
+  /// that may briefly be empty during the `pending_1c` window before
+  /// the SOAP promotion completes. `TradingPoint.id` therefore tracks
+  /// `code` (backend identifier) and `code_1c` is exposed separately
+  /// via [TradingPoint.code1c] for the success-dialog display and any
+  /// legacy SOAP integrations.
   TradingPoint? _parseRow(dynamic raw) {
-    if (raw is! Map<String, dynamic>) return null;
-
-    String readString(String key) {
-      final value = raw[key];
-      return value is String ? value : (value?.toString() ?? '');
+    if (raw is! Map<String, dynamic>) {
+      return null;
     }
-
-    // Prefer `code_1c` (canonical mobile ↔ backend exchange key);
-    // fall back to `code` (display code), then `id` (UUID) only as a
-    // last resort so we never emit an empty-id row.
-    final code1c = readString('code_1c');
-    final code = readString('code');
-    final uuid = readString('id');
-    final localId = code1c.isNotEmpty
-        ? code1c
-        : (code.isNotEmpty ? code : uuid);
-    if (localId.isEmpty) return null;
-
-    double parseDouble(Object? value) {
-      if (value == null) return 0.0;
-      if (value is double) return value;
-      if (value is int) return value.toDouble();
-      if (value is num) return value.toDouble();
-      if (value is String) return double.tryParse(value) ?? 0.0;
-      return 0.0;
-    }
-
-    return TradingPoint(
-      id: localId,
-      name: readString('name'),
-      address: readString('address'),
-      phone: readString('phone'),
-      ownerName: '',
-      contactPerson: '',
-      inn: readString('inn'),
-      status: raw['is_active'] == false ? 'inactive' : 'active',
-      lastVisitDate: '',
-      hasOrders: false,
-      hasContracts: false,
-      isVisited: false,
-      hasContract: false,
-      latitude: parseDouble(raw['latitude']),
-      longitude: parseDouble(raw['longitude']),
-      region: '',
-      district: '',
-      signboard: '',
-      referencePoint: '',
-      responsiblePerson: '',
-      responsiblePersonPhone: '',
-      tradePointType: '',
-      creditLimit: 0.0,
-      accumulatedCredit: 0.0,
-      codeRegion: '',
-    );
+    final parsed = TradingPoint.fromBackendJson(raw);
+    return parsed.id.isEmpty ? null : parsed;
   }
 
   // --- Idempotency / client UUID persistence -------------------------------

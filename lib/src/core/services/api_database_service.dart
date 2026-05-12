@@ -57,7 +57,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 39, // v39: drop sales_req_permissions.allow_creating_point_of_sale (replaced by V2 codename customers.add_customer)
+      version: 40, // v40: clients.code_1c column added; backend-first customer reads via V2 list endpoint require a fresh cache (one-shot wipe in _onUpgrade)
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -1752,6 +1752,30 @@ class ApiDatabaseService {
             'ApiDatabaseService: sales_req_permissions.allow_creating_point_of_sale dropped (version 39)');
       }
     }
+
+    if (oldVersion < 40) {
+      // Backend-first customer reads via `GET /api/mobile/v2/customers/`
+      // ship `code` (backend identifier, `C-XXXXXXXX`) as the primary
+      // key and `code_1c` as a separate downstream value. The legacy
+      // SOAP-derived rows used `code_1c` as the local `code` column;
+      // we add a dedicated `code_1c` column and one-shot wipe the
+      // table so the next sync refills with the V2 shape.
+      try {
+        await db.execute(
+          "ALTER TABLE clients ADD COLUMN code_1c TEXT NOT NULL DEFAULT ''",
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          print(
+              'ApiDatabaseService: skip ADD code_1c (likely already present): $e');
+        }
+      }
+      await db.delete('clients');
+      if (kDebugMode) {
+        print(
+            'ApiDatabaseService: clients table wiped + code_1c column added (version 40)');
+      }
+    }
   }
 
   Future<void> _createTables(Database db) async {
@@ -1850,6 +1874,7 @@ class ApiDatabaseService {
       CREATE TABLE clients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         code TEXT UNIQUE NOT NULL,
+        code_1c TEXT NOT NULL DEFAULT '',
         name TEXT NOT NULL,
         address TEXT NOT NULL,
         phone TEXT,
@@ -2864,6 +2889,7 @@ class ApiDatabaseService {
     for (final client in uniqueClients.values) {
       batch.insert('clients', {
         'code': client.id,
+        'code_1c': client.code1c,
         'name': client.name,
         'address': client.address,
         'phone': client.phone,
@@ -2946,6 +2972,7 @@ class ApiDatabaseService {
       final client = uniqueClients[code]!;
       batch.insert('clients', {
         'code': client.id,
+        'code_1c': client.code1c,
         'name': client.name,
         'address': client.address,
         'phone': client.phone,
@@ -2982,6 +3009,7 @@ class ApiDatabaseService {
       batch.update(
         'clients',
         {
+          'code_1c': client.code1c,
           'name': client.name,
           'address': client.address,
           'phone': client.phone,
@@ -3105,6 +3133,8 @@ class ApiDatabaseService {
               row['code'] as String,
             ),
             codeRegion: row['code_region'] as String? ?? '',
+            code: row['code'] as String,
+            code1c: row['code_1c'] as String? ?? '',
           ),
         )
         .toList();
@@ -8203,6 +8233,7 @@ class ApiDatabaseService {
           CREATE TABLE clients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             code TEXT UNIQUE NOT NULL,
+            code_1c TEXT NOT NULL DEFAULT '',
             name TEXT NOT NULL,
             address TEXT NOT NULL,
             phone TEXT,

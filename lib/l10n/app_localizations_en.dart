@@ -5480,4 +5480,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String coordinatesSave_err_generic(String detail) {
     return 'Could not save location: $detail';
   }
+
+  @override
+  String customerCreate_err_oneCBusiness(String message) {
+    return '1C rejected this customer: $message';
+  }
+
+  @override
+  String get customerCreate_err_oneCTransport => 'Could not reach 1C. Try again.';
+
+  @override
+  String get customerCreate_err_oneCNoEndpoint => '1C integration is not configured. Contact admin.';
 }

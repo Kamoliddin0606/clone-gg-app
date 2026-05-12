@@ -46,18 +46,32 @@ class _FakeRepo implements CustomerWriteRepository {
 
   @override
   Future<TradingPoint> create({
-    required String code1c,
     required String name,
+    required String tradePointType,
+    required String contactPersonPhone,
+    required String address,
+    required double latitude,
+    required double longitude,
+    required String codeUser,
+    required String codeRegion,
+    String signboard = '',
     String inn = '',
-    String phone = '',
-    String address = '',
-    double? latitude,
-    double? longitude,
+    String contactPerson = '',
+    String addressDelivery = '',
+    String referencePoint = '',
+    String responsiblePersonPhone = '',
+    String director = '',
+    String mfo = '',
+    String bankAccount = '',
+    String salesChannel = '',
+    String clientClass = '',
   }) async {
     lastAction = 'create';
     lastArgs = <String, dynamic>{
-      'code1c': code1c,
       'name': name,
+      'tradePointType': tradePointType,
+      'codeUser': codeUser,
+      'codeRegion': codeRegion,
       'inn': inn,
     };
     if (throwError != null) throw throwError!;
@@ -120,7 +134,16 @@ void main() {
       final states = <CustomerWriteState>[];
       final sub = cubit.stream.listen(states.add);
 
-      await cubit.create(code1c: '00-NEW-1', name: 'Mahalla');
+      await cubit.create(
+        name: 'Mahalla',
+        tradePointType: 'Grocery store',
+        contactPersonPhone: '+998901234567',
+        address: 'Toshkent',
+        latitude: 41.0,
+        longitude: 69.0,
+        codeUser: 'U-1',
+        codeRegion: 'TASH',
+      );
       await Future<void>.delayed(Duration.zero);
       await sub.cancel();
 
@@ -173,7 +196,16 @@ void main() {
 
     test('unknown errors collapse to unknown_error', () async {
       repo.throwError = Exception('boom');
-      await cubit.create(code1c: '00-X', name: 'X');
+      await cubit.create(
+        name: 'X',
+        tradePointType: 'Grocery store',
+        contactPersonPhone: '+998901234567',
+        address: 'Toshkent',
+        latitude: 41.0,
+        longitude: 69.0,
+        codeUser: 'U-1',
+        codeRegion: 'TASH',
+      );
 
       expect(cubit.state.status, CustomerWriteStatus.error);
       expect(cubit.state.errorCode, 'unknown_error');
@@ -186,10 +218,28 @@ void main() {
       final slowRepo = _SlowRepo(completer.future);
       final slowCubit = CustomerWriteCubit(repo: slowRepo);
 
-      final first = slowCubit.create(code1c: '00-A', name: 'A');
+      final first = slowCubit.create(
+        name: 'A',
+        tradePointType: 'Grocery store',
+        contactPersonPhone: '+998901234567',
+        address: 'Toshkent',
+        latitude: 41.0,
+        longitude: 69.0,
+        codeUser: 'U-1',
+        codeRegion: 'TASH',
+      );
       // Yield so the cubit emits submitting before the second call.
       await Future<void>.delayed(Duration.zero);
-      await slowCubit.create(code1c: '00-B', name: 'B');
+      await slowCubit.create(
+        name: 'B',
+        tradePointType: 'Grocery store',
+        contactPersonPhone: '+998901234567',
+        address: 'Toshkent',
+        latitude: 41.0,
+        longitude: 69.0,
+        codeUser: 'U-1',
+        codeRegion: 'TASH',
+      );
 
       expect(slowCubit.state.status, CustomerWriteStatus.error);
       expect(slowCubit.state.errorCode, 'in_flight');
@@ -207,13 +257,25 @@ class _SlowRepo implements CustomerWriteRepository {
 
   @override
   Future<TradingPoint> create({
-    required String code1c,
     required String name,
+    required String tradePointType,
+    required String contactPersonPhone,
+    required String address,
+    required double latitude,
+    required double longitude,
+    required String codeUser,
+    required String codeRegion,
+    String signboard = '',
     String inn = '',
-    String phone = '',
-    String address = '',
-    double? latitude,
-    double? longitude,
+    String contactPerson = '',
+    String addressDelivery = '',
+    String referencePoint = '',
+    String responsiblePersonPhone = '',
+    String director = '',
+    String mfo = '',
+    String bankAccount = '',
+    String salesChannel = '',
+    String clientClass = '',
   }) =>
       _result;
 

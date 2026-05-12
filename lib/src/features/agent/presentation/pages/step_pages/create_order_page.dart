@@ -717,34 +717,7 @@ class _CreateOrderPageState extends State<CreateOrderPage>
     }
   }
 
-  /// Formats the total value with millions abbreviation for large amounts
-  /// If value >= 100,000, displays as X.X mln UZS, otherwise uses standard UZS format
-  /// Handles edge cases like negative values or NaN
-  String _formatTotalValue(double value) {
-    try {
-      // Handle invalid values
-      if (value.isNaN || value.isInfinite) {
-        return '0 UZS';
-      }
-
-      // For values >= 100,000, format as millions
-      if (value >= 100000) {
-        final millions = value / 1000000;
-        // Round to 1 decimal place
-        final roundedMillions = (millions * 10).round() / 10;
-        return '${roundedMillions.toStringAsFixed(1)} mln UZS';
-      } else {
-        // Use standard currency formatting for smaller values
-        return uzsFormat.format(value);
-      }
-    } catch (e) {
-      debugPrint('CreateOrderPage: Error formatting total value: $e');
-      // Fallback to standard formatting
-      return uzsFormat.format(value);
-    }
-  }
-
-  /// Load products with prices based on selected price type and warehouse
+/// Load products with prices based on selected price type and warehouse
   Future<void> _loadProducts() async {
     if (_selectedPriceType == null || _selectedWarehouse == null) {
       debugPrint(
@@ -1218,7 +1191,7 @@ class _CreateOrderPageState extends State<CreateOrderPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.stepName),
+            Text(l10n?.createOrder ?? widget.stepName),
             // Save status indicator
             if (_isAutoSaveEnabled)
               Text(
@@ -2271,32 +2244,37 @@ class _CreateOrderPageState extends State<CreateOrderPage>
                 visible: _isSummaryVisible,
                 child: SlideTransition(
                   position: _summaryAnimation,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildSummaryItem(
-                        theme,
-                        l10n?.productsLabel ?? 'Mahsulotlar',
-                        '$_totalItems ta',
-                        context,
-                      ),
-                      _buildSummaryItem(
+                      _buildPrimarySummaryItem(
                         theme,
                         l10n?.totalValueLabel ?? 'Jami qiymat',
                         _totalValue,
-                        context,
                       ),
-                      _buildSummaryItem(
-                        theme,
-                        l10n?.weight ?? 'Og\'irlik',
-                        '${_totalWeight.toStringAsFixed(2)} kg',
-                        context,
-                      ),
-                      _buildSummaryItem(
-                        theme,
-                        l10n?.volume ?? 'Hajm',
-                        '${_totalVolume.toStringAsFixed(2)} m³',
-                        context,
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildSummaryItem(
+                            theme,
+                            l10n?.productsLabel ?? 'Mahsulotlar',
+                            '$_totalItems ta',
+                            context,
+                          ),
+                          _buildSummaryItem(
+                            theme,
+                            l10n?.weight ?? 'Og\'irlik',
+                            '${_totalWeight.toStringAsFixed(2)} kg',
+                            context,
+                          ),
+                          _buildSummaryItem(
+                            theme,
+                            l10n?.volume ?? 'Hajm',
+                            '${_totalVolume.toStringAsFixed(2)} m³',
+                            context,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -2332,20 +2310,7 @@ class _CreateOrderPageState extends State<CreateOrderPage>
     dynamic value,
     BuildContext context,
   ) {
-    final l10n = AppLocalizations.of(context);
-    String displayValue;
-    String? tooltipMessage;
-
-    if ((label == (l10n?.totalValueLabel ?? 'Jami qiymat') ||
-            label == 'Jami qiymat') &&
-        value is double) {
-      displayValue = _formatTotalValue(value);
-      tooltipMessage = uzsFormat.format(value);
-    } else {
-      displayValue = value.toString();
-    }
-
-    final column = Column(
+    return Column(
       children: [
         Text(
           label,
@@ -2355,7 +2320,7 @@ class _CreateOrderPageState extends State<CreateOrderPage>
         ),
         const SizedBox(height: 4),
         Text(
-          displayValue,
+          value.toString(),
           style: theme.textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.primary,
@@ -2363,21 +2328,47 @@ class _CreateOrderPageState extends State<CreateOrderPage>
         ),
       ],
     );
+  }
 
-    if (tooltipMessage != null) {
-      debugPrint(
-        'CreateOrderPage: Creating tooltip for $label with message: $tooltipMessage',
-      );
-      return Tooltip(
-        message: tooltipMessage,
-        preferBelow: false, // Show tooltip above the widget
-        onTriggered: () =>
-            debugPrint('CreateOrderPage: Tooltip triggered for $label'),
-        child: column,
-      );
-    } else {
-      return column;
-    }
+  /// Build the primary (emphasized) summary item — used for the order total.
+  /// Renders the label and value larger and bolder than the secondary metrics
+  /// below it, so the order sum stands out at a glance. The value uses the
+  /// full grouped UZS format (no millions abbreviation) and is wrapped in a
+  /// FittedBox so very large amounts scale down to fit the available width.
+  Widget _buildPrimarySummaryItem(ThemeData theme, String label, double value) {
+    final formatted = uzsFormat.format(value);
+    return Tooltip(
+      message: formatted,
+      preferBelow: false,
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
+              child: Text(
+                formatted,
+                maxLines: 1,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Navigate to product selection page

@@ -25,13 +25,25 @@ class CustomerWriteCubit extends Cubit<CustomerWriteState> {
   // ---------------------------------------------------------------------------
 
   Future<void> create({
-    required String code1c,
     required String name,
+    required String tradePointType,
+    required String contactPersonPhone,
+    required String address,
+    required double latitude,
+    required double longitude,
+    required String codeUser,
+    required String codeRegion,
+    String signboard = '',
     String inn = '',
-    String phone = '',
-    String address = '',
-    double? latitude,
-    double? longitude,
+    String contactPerson = '',
+    String addressDelivery = '',
+    String referencePoint = '',
+    String responsiblePersonPhone = '',
+    String director = '',
+    String mfo = '',
+    String bankAccount = '',
+    String salesChannel = '',
+    String clientClass = '',
   }) async {
     if (state.isSubmitting) {
       _emitInFlight();
@@ -45,13 +57,25 @@ class CustomerWriteCubit extends Cubit<CustomerWriteState> {
     ));
     try {
       final row = await _repo.create(
-        code1c: code1c,
         name: name,
-        inn: inn,
-        phone: phone,
+        tradePointType: tradePointType,
+        contactPersonPhone: contactPersonPhone,
         address: address,
         latitude: latitude,
         longitude: longitude,
+        codeUser: codeUser,
+        codeRegion: codeRegion,
+        signboard: signboard,
+        inn: inn,
+        contactPerson: contactPerson,
+        addressDelivery: addressDelivery,
+        referencePoint: referencePoint,
+        responsiblePersonPhone: responsiblePersonPhone,
+        director: director,
+        mfo: mfo,
+        bankAccount: bankAccount,
+        salesChannel: salesChannel,
+        clientClass: clientClass,
       );
       emit(state.copyWith(
         status: CustomerWriteStatus.success,

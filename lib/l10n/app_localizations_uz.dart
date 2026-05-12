@@ -5480,4 +5480,15 @@ class AppLocalizationsUz extends AppLocalizations {
   String coordinatesSave_err_generic(String detail) {
     return 'Joylashuvni saqlab bo\'lmadi: $detail';
   }
+
+  @override
+  String customerCreate_err_oneCBusiness(String message) {
+    return '1C bu mijozni qabul qilmadi: $message';
+  }
+
+  @override
+  String get customerCreate_err_oneCTransport => '1C bilan bog\'lanib bo\'lmadi. Qayta urinib ko\'ring.';
+
+  @override
+  String get customerCreate_err_oneCNoEndpoint => '1C integratsiyasi sozlanmagan. Administratorga murojaat qiling.';
 }

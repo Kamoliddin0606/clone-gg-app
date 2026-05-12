@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/backend_permission_store.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/permission_codenames.dart';
 import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart';
+import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
@@ -11,6 +14,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_re
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_toggle.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings/data_sync_tab.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/backend_permissions_section.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -25,6 +29,15 @@ class _SettingsPageState extends State<SettingsPage>
   late TabController _tabController;
   int _initialTabIndex = 0;
 
+  /// Monotonic counter driven by [DataSyncOrchestrator] notifications.
+  /// Stamped into every tab's [ValueKey] so each completed sync forces
+  /// Flutter to throw away the children's State objects and rebuild
+  /// them from scratch — effectively a "full reload" of the settings
+  /// surface without losing the [TabController] state or the user's
+  /// current tab selection.
+  int _reloadCounter = 0;
+  DataSyncOrchestrator? _orchestrator;
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +46,13 @@ class _SettingsPageState extends State<SettingsPage>
       vsync: this,
       initialIndex: _initialTabIndex,
     ); // Changed from 3 to 4
+    _orchestrator = sl<DataSyncOrchestrator>();
+    _orchestrator!.addListener(_onSyncEvent);
+  }
+
+  void _onSyncEvent() {
+    if (!mounted) return;
+    setState(() => _reloadCounter++);
   }
 
   @override
@@ -51,6 +71,7 @@ class _SettingsPageState extends State<SettingsPage>
 
   @override
   void dispose() {
+    _orchestrator?.removeListener(_onSyncEvent);
     _tabController.dispose();
     super.dispose();
   }
@@ -92,15 +113,22 @@ class _SettingsPageState extends State<SettingsPage>
             ),
           ),
 
-          // Tab Bar View
+          // Tab Bar View — every tab is keyed by `_reloadCounter` so
+          // a sync notification from the orchestrator forces Flutter
+          // to discard the current State objects and rebuild each
+          // tab from scratch. UserProfileSection, the AppBar and the
+          // TabController stay alive (live above this widget), so the
+          // user keeps their tab selection across the reload.
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                const PermissionsTab(),
-                const MapsTab(),
-                const DataSyncTab(), // NEW TAB CONTENT
-                InterfaceSettingsTab(),
+                PermissionsTab(key: ValueKey('perm-$_reloadCounter')),
+                MapsTab(key: ValueKey('maps-$_reloadCounter')),
+                DataSyncTab(key: ValueKey('sync-$_reloadCounter')),
+                InterfaceSettingsTab(
+                  key: ValueKey('iface-$_reloadCounter'),
+                ),
               ],
             ),
           ),
@@ -412,11 +440,29 @@ class _PermissionsTabState extends State<PermissionsTab> {
   SalesReqPermissions? _permissions;
   bool _isLoading = true;
   String? _errorMessage;
+  late final BackendPermissionStore _backendStore;
 
   @override
   void initState() {
     super.initState();
+    // Sync-driven refresh is handled by `_SettingsPageState` which
+    // rotates this tab's [ValueKey] on every `DataSyncOrchestrator`
+    // notification. That recreates this State object and re-runs
+    // initState, so a per-tab listener here would just double the
+    // work.
+    _backendStore = sl<BackendPermissionStore>();
+    _backendStore.addListener(_onBackendStoreChanged);
     _loadPermissions();
+  }
+
+  @override
+  void dispose() {
+    _backendStore.removeListener(_onBackendStoreChanged);
+    super.dispose();
+  }
+
+  void _onBackendStoreChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadPermissions() async {
@@ -566,6 +612,13 @@ class _PermissionsTabState extends State<PermissionsTab> {
   }
 
   bool _getPermissionValue(String key) {
+    // V2 codename-backed row (`customers.add_customer`) — value comes
+    // from `BackendPermissionStore`, not from SOAP `_permissions`. We
+    // check this before the SOAP null-guard so the row stays accurate
+    // even while SOAP permissions are still loading.
+    if (key == 'allowCreatingPointOfSale') {
+      return _backendStore.has(PermissionCodenames.customerAdd);
+    }
     if (_permissions == null) return false;
 
     switch (key) {
@@ -573,8 +626,6 @@ class _PermissionsTabState extends State<PermissionsTab> {
         return _permissions!.skipTINduplicateCheck;
       case 'allowCreationWithoutTIN':
         return _permissions!.allowCreationWithoutTIN;
-      case 'allowCreatingPointOfSale':
-        return _permissions!.allowCreatingPointOfSale;
       case 'visit':
         return _permissions!.visit;
       case 'strictSequence':
@@ -742,6 +793,13 @@ class _PermissionsTabState extends State<PermissionsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // V2 Backend permissions section — rendered at the top so
+          // the user sees the codename-based gate state (FAB / edit
+          // icon / coordinates icon / photo icons) immediately. The
+          // legacy SOAP-derived permissions cards continue below.
+          const BackendPermissionsSection(),
+          const SizedBox(height: 24),
+
           // Permissions Overview
           Card(
             elevation: 4,

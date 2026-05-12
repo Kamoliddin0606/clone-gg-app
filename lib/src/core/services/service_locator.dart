@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 
+import 'package:gloria_marketing_flutter/src/core/auth/backend_permission_store.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/network/url_failover_service.dart';
@@ -39,10 +41,15 @@ import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/a
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_photo_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_write_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/bloc/customer_write_cubit.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_data_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/photo_storage_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_draft_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_creation_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/customer_photo_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/bloc/customer_photo_cubit.dart';
 
 import 'package:gloria_marketing_flutter/src/features/knowledge/data/repositories/knowledge_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/knowledge/data/services/knowledge_api_service.dart';
@@ -64,6 +71,54 @@ Future<void> setupServiceLocator() async {
     );
   }
   await sl.isReady<SharedPreferencesService>();
+
+  // BackendPermissionStore — backend-sourced codename cache, distinct
+  // from the SOAP `sales_req_permissions` row. Registered eagerly so
+  // [TokenService] can sync into it during login/refresh.
+  if (!sl.isRegistered<BackendPermissionStore>()) {
+    sl.registerLazySingleton<BackendPermissionStore>(
+      () => BackendPermissionStore(prefs: sl<SharedPreferencesService>()),
+    );
+  }
+  // Cold-start bootstrap: if a cached `gates` envelope exists from
+  // a prior login, push its permissions list (with the explicit
+  // `provided` flag) into the store. Without this the store stays
+  // empty until the next token refresh and the optimistic-empty
+  // fallback over-grants codenames the backend never actually
+  // returned for this user.
+  try {
+    final cachedGates = sl<SharedPreferencesService>().getCachedGates();
+    if (cachedGates != null) {
+      if (kDebugMode) {
+        // Cold-start view of what the last login / refresh left in
+        // the cached gates envelope — useful for diagnosing
+        // "buttons show but server denies" with no fresh login in
+        // the session. Source endpoint was the auth API the user
+        // hit on their previous app run.
+        debugPrint(
+          '[GATES-FLOW] ❄️  COLD-START BOOTSTRAP from cached gates\n'
+          '  source endpoint (last login) : POST /api/auth/token/[/refresh/]\n'
+          '  cached permissions           : ${cachedGates.permissions}\n'
+          '  permissions count            : ${cachedGates.permissions.length}\n'
+          '  permissionsProvided          : ${cachedGates.permissionsProvided}\n'
+          '  organization_id              : ${cachedGates.organizationId}\n'
+          '  bypass (superuser)           : ${cachedGates.bypass}',
+        );
+      }
+      await sl<BackendPermissionStore>().replaceFromLogin(
+        cachedGates.permissions,
+        provided: cachedGates.permissionsProvided,
+      );
+    } else if (kDebugMode) {
+      debugPrint(
+        '[GATES-FLOW] ❄️  COLD-START BOOTSTRAP → no cached gates '
+        '(first launch or post-logout); optimistic-empty fallback '
+        'remains active until next login',
+      );
+    }
+  } catch (_) {
+    // Bootstrap is best-effort; never block service-locator setup.
+  }
 
   // 2) ServerService (ASYNC singleton) — prefs’ga tayanadi
   if (!sl.isRegistered<ServerService>()) {
@@ -288,12 +343,81 @@ Future<void> setupServiceLocator() async {
   // Image stack (lib/src/core/services/images/) — single repository
   // talking to /api/mobile/v1/images/. Legacy image host fully
   // decommissioned 2026-05-08; uploads happen via the web admin panel.
+  //
+  // Dedicated Dio instance: the shared sl<Dio>() carries SoapApiService's
+  // global interceptor that overwrites Accept with
+  // `application/soap+xml, text/xml, application/xml`, which makes the
+  // V2 JSON endpoint return HTTP 406. Same pattern as TokenService.
   if (!sl.isRegistered<NewBackendImageRepository>()) {
+    final imageDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+    attachRestLogger(imageDio, 'IMG');
+
     sl.registerLazySingleton<NewBackendImageRepository>(
       () => NewBackendImageRepository(
-        dio: sl<Dio>(),
+        dio: imageDio,
         tokenService: sl<TokenService>(),
       ),
+    );
+  }
+
+  // Customer photo write API (`/api/mobile/v2/customers/{id}/photos/`).
+  // Repository owns the typed Dio + idempotency cache; service wraps
+  // it with polling + cap-aware errors; cubit is a per-customer
+  // factory so multiple gallery pages can coexist (deep-link, etc.).
+  // Dedicated Dio for the same reason as the image repo above.
+  if (!sl.isRegistered<CustomerPhotoRepository>()) {
+    final customerPhotoDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+    attachRestLogger(customerPhotoDio, 'PHOTO');
+
+    sl.registerLazySingleton<CustomerPhotoRepository>(
+      () => CustomerPhotoRepository(
+        dio: customerPhotoDio,
+        tokenService: sl<TokenService>(),
+        prefs: sl<SharedPreferencesService>(),
+      ),
+    );
+  }
+  if (!sl.isRegistered<CustomerPhotoCubit>()) {
+    sl.registerFactoryParam<CustomerPhotoCubit, String, void>(
+      (customerId, _) => CustomerPhotoCubit(
+        customerId: customerId,
+        service: CustomerPhotoService(repo: sl<CustomerPhotoRepository>()),
+      ),
+    );
+  }
+
+  // Customer write API (`/api/mobile/v2/customers/` create / PATCH).
+  // Dedicated Dio for the same reason as the photo repository above:
+  // the shared sl<Dio>() carries SoapApiService's interceptor that
+  // overwrites Accept with `application/soap+xml`, which makes the
+  // V2 JSON endpoint return HTTP 406.
+  if (!sl.isRegistered<CustomerWriteRepository>()) {
+    final customerWriteDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+    attachRestLogger(customerWriteDio, 'CUSTOMER');
+
+    sl.registerLazySingleton<CustomerWriteRepository>(
+      () => CustomerWriteRepository(
+        dio: customerWriteDio,
+        tokenService: sl<TokenService>(),
+        prefs: sl<SharedPreferencesService>(),
+      ),
+    );
+  }
+  if (!sl.isRegistered<CustomerWriteCubit>()) {
+    sl.registerFactory<CustomerWriteCubit>(
+      () => CustomerWriteCubit(repo: sl<CustomerWriteRepository>()),
     );
   }
   // Helper that surfaces the agent's primary organisation id from the

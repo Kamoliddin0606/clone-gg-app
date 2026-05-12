@@ -1225,6 +1225,7 @@
     }
   },
   "syncWithDependencies": "Синхронизировать с зависимостями",
+  "editLocationTitle": "Изменить местоположение",
   "recommended": "Рекомендуется",
   "syncTableOnly": "Синхронизировать только таблицу",
   "syncWarning": "Может не удаться, если зависимости не синхронизированы",
@@ -2704,5 +2705,145 @@
   "knowledgeOpenInBrowser": "Открыть в браузере",
   "knowledgeFilterAll": "Все",
   "knowledgePinnedBadge": "Закреплён",
-  "knowledgeMandatoryBadge": "Обязательно"
+  "knowledgeMandatoryBadge": "Обязательно",
+  "customerPhotos_title": "Фотографии клиента",
+  "customerPhotos_addAction": "Добавить фото",
+  "customerPhotos_replaceAction": "Заменить",
+  "customerPhotos_deleteAction": "Удалить",
+  "customerPhotos_setPrimary": "Сделать основной",
+  "customerPhotos_reprocess": "Переобработать",
+  "customerPhotos_capBadge": "Загружено {current}/{max}",
+  "@customerPhotos_capBadge": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "customerPhotos_capExceeded": "Лимит исчерпан ({current}/{max})",
+  "@customerPhotos_capExceeded": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "customerPhotos_emptyState": "Фото пока нет",
+  "customerPhotos_uploading": "Загрузка…",
+  "customerPhotos_processing": "Обработка…",
+  "customerPhotos_failed": "Ошибка",
+  "customerPhotos_failedBannerTitle": "{count} фото с ошибкой",
+  "@customerPhotos_failedBannerTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "customerPhotos_reprocessNotSupported": "Переобработка невозможна — удалите и загрузите заново",
+  "customerPhotos_err_tooLarge": "Файл больше 15 МБ",
+  "customerPhotos_err_invalidFormat": "Формат не поддерживается: JPEG, PNG, WebP, HEIC",
+  "customerPhotos_err_dimensionsTooSmall": "Размер меньше 200×200",
+  "customerPhotos_err_dimensionsTooLarge": "Размер больше 8000×8000",
+  "customerPhotos_err_notFound": "Фото не найдено",
+  "customerPhotos_err_permissionDenied": "Нет доступа",
+  "customerPhotos_err_unknown": "Произошла ошибка",
+  "customerPhotos_err_endpointNotImplemented": "Сервис фотографий клиентов ещё не доступен на сервере. Свяжитесь с командой разработки.",
+  "customerPhotos_pickCamera": "Камера",
+  "customerPhotos_pickGallery": "Галерея",
+  "customerPhotos_editAlt": "Описание",
+  "customerPhotos_save": "Сохранить",
+  "customerPhotos_confirmDeleteTitle": "Удалить фото?",
+  "customerPhotos_confirmDeleteBody": "Действие нельзя отменить.",
+  "customerPhotos_primaryBadge": "Основная",
+
+  "customerEdit_title": "Редактировать клиента",
+  "customerCreate_title": "Новый клиент",
+  "customerEdit_field_name": "Название",
+  "customerEdit_field_inn": "ИНН",
+  "customerEdit_field_phone": "Телефон",
+  "customerEdit_field_address": "Адрес",
+  "customerEdit_save": "Сохранить",
+  "customerEdit_cancel": "Отмена",
+  "customerEdit_nameRequired": "Название обязательно",
+
+  "customerCoordinates_title": "Изменить местоположение",
+  "customerCoordinates_useGps": "Использовать текущее местоположение",
+  "customerCoordinates_save": "Сохранить",
+  "customerCoordinates_field_latitude": "Широта (lat)",
+  "customerCoordinates_field_longitude": "Долгота (lng)",
+  "customerCoordinates_invalid": "Неверные координаты (lat: -90..90, lng: -180..180)",
+  "customerCoordinates_gpsUnavailable": "Не удалось получить GPS-координаты",
+
+  "customerEditTooltip": "Редактировать данные клиента",
+  "customerCoordinatesEditTooltip": "Изменить местоположение",
+  "customerPhotosEditTooltip": "Фотографии клиента",
+  "customerCreateTooltip": "Добавить нового клиента",
+
+  "customer_err_crossOrg": "Этот клиент принадлежит другой организации",
+  "customer_err_permissionDenied": "Нет доступа",
+  "customer_err_notFound": "Клиент не найден",
+  "customer_err_idempotencyConflict": "Повторная отправка не удалась. Попробуйте ещё раз.",
+  "customer_err_invalidCoordinates": "Неверные координаты (lat: -90..90, lng: -180..180)",
+  "customer_err_network": "Сетевая ошибка. Проверьте подключение.",
+  "customer_err_unknown": "Произошла ошибка",
+
+  "backendPermissions_sectionTitle": "Разрешения с бэкенда",
+  "backendPermissions_sectionSubtitle": "Кодовые имена, полученные с сервера в поле JWT `gates.permissions`",
+  "backendPermissions_categoryCustomers": "Профиль клиента",
+  "backendPermissions_categoryPhotos": "Фотографии клиента",
+  "backendPermissions_optimisticBadge": "Оптимистичный режим (сервер ещё не передаёт поле)",
+  "backendPermissions_grantedBadge": "{granted}/{total} выдано",
+  "@backendPermissions_grantedBadge": {
+    "placeholders": {
+      "granted": { "type": "int" },
+      "total":   { "type": "int" }
+    }
+  },
+  "backendPermissions_granted": "Выдано",
+  "backendPermissions_denied": "Нет доступа",
+  "backendPermissions_label_customerAdd": "Добавить нового клиента",
+  "backendPermissions_label_customerChange": "Редактировать профиль клиента",
+  "backendPermissions_label_customerChangeCoordinates": "Изменить местоположение клиента",
+  "backendPermissions_label_customerAddPhoto": "Загрузить фото клиента",
+  "backendPermissions_label_customerChangePhoto": "Изменить метаданные фото",
+  "backendPermissions_label_customerDeletePhoto": "Удалить фото клиента",
+  "backendPermissions_label_customerReplacePhoto": "Заменить фото клиента",
+
+  "backendPermissionsSync_title": "Разрешения с бэкенда",
+  "backendPermissionsSync_subtitle": "Синхронизируется из `gates.permissions` при каждом логине / обновлении токена",
+  "backendPermissionsSync_neverSynced": "Ещё не синхронизировано — войдите снова",
+  "backendPermissionsSync_status_ok": "Успешно синхронизировано",
+  "backendPermissionsSync_status_failed": "Ошибка синхронизации",
+  "backendPermissionsSync_lastSync": "Последняя синхронизация: {when}",
+  "@backendPermissionsSync_lastSync": {
+    "placeholders": { "when": { "type": "String" } }
+  },
+  "backendPermissionsSync_countLine": "Выдано {granted} из {total} разрешений",
+  "@backendPermissionsSync_countLine": {
+    "placeholders": {
+      "granted": { "type": "int" },
+      "total":   { "type": "int" }
+    }
+  },
+  "backendPermissionsSync_errorLine": "Последняя ошибка: {code}",
+  "@backendPermissionsSync_errorLine": {
+    "placeholders": { "code": { "type": "String" } }
+  },
+
+  "customerPhotoPreview_emptyTitle": "Фотографий пока нет",
+  "customerPhotoPreview_emptyHintAdd": "Нажмите, чтобы добавить первое фото",
+  "customerPhotoPreview_emptyHintReadOnly": "Для этого клиента фото не загружены",
+  "customerPhotoPreview_editTooltip": "Управление фото",
+  "customerPhotoPreview_addTooltip": "Добавить фото",
+
+  "customerEditBanner_title": "Редактировать данные клиента",
+  "customerEditBanner_body": "Название, ИНН, телефон и адрес обновляются здесь. Координаты — через кнопку карты, фото — через галерею. Поля классификатора (регион / канал / тип / класс) приходят из 1C и недоступны для редактирования на мобильном.",
+
+  "coordinatesSave_err_permission_perCustomer": "Вы не назначены агентом этого клиента, поэтому не можете изменить его координаты. Обратитесь к администратору — пусть назначит вас сотрудником данного клиента.",
+  "coordinatesSave_err_crossOrg": "Этот клиент принадлежит другой организации.",
+  "coordinatesSave_err_notFound": "Клиент не найден на сервере.",
+  "coordinatesSave_err_invalidCoords": "Неверные координаты (lat: -90..90, lng: -180..180).",
+  "coordinatesSave_err_network": "Сетевая ошибка. Проверьте подключение и попробуйте ещё раз.",
+  "coordinatesSave_err_serverError": "Серверная ошибка (500). Свяжитесь с командой разработки — бэкенд бросает ValidationError.",
+  "coordinatesSave_err_generic": "Не удалось сохранить координаты: {detail}",
+  "@coordinatesSave_err_generic": {
+    "placeholders": { "detail": { "type": "String" } }
+  }
 }

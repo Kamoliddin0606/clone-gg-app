@@ -1218,6 +1218,7 @@
     }
   },
   "syncWithDependencies": "Bog'liqliklar bilan sinxronlash",
+  "editLocationTitle": "Joylashuvni tahrirlash",
   "recommended": "Tavsiya etiladi",
   "syncTableOnly": "Faqat jadvalni sinxronlash",
   "syncWarning": "Bog'liqliklar sinxronlanmagan bo'lsa xato berishi mumkin",
@@ -2698,5 +2699,145 @@
   "knowledgeOpenInBrowser": "Brauzerda ochish",
   "knowledgeFilterAll": "Hammasi",
   "knowledgePinnedBadge": "Qadalgan",
-  "knowledgeMandatoryBadge": "Majburiy"
+  "knowledgeMandatoryBadge": "Majburiy",
+  "customerPhotos_title": "Mijoz rasmlari",
+  "customerPhotos_addAction": "Rasm qo'shish",
+  "customerPhotos_replaceAction": "Almashtirish",
+  "customerPhotos_deleteAction": "O'chirish",
+  "customerPhotos_setPrimary": "Asosiy qilish",
+  "customerPhotos_reprocess": "Qayta ishlash",
+  "customerPhotos_capBadge": "{current}/{max} yuklandi",
+  "@customerPhotos_capBadge": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "customerPhotos_capExceeded": "Chegara to'lgan ({current}/{max})",
+  "@customerPhotos_capExceeded": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "customerPhotos_emptyState": "Hali rasm yo'q",
+  "customerPhotos_uploading": "Yuklanmoqda…",
+  "customerPhotos_processing": "Qayta ishlanmoqda…",
+  "customerPhotos_failed": "Xato",
+  "customerPhotos_failedBannerTitle": "{count} ta rasm xato",
+  "@customerPhotos_failedBannerTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "customerPhotos_reprocessNotSupported": "Qayta ishlash mumkin emas — o'chirib qayta yuklang",
+  "customerPhotos_err_tooLarge": "Fayl 15 MB dan katta",
+  "customerPhotos_err_invalidFormat": "Format qo'llab-quvvatlanmaydi: JPEG, PNG, WebP, HEIC",
+  "customerPhotos_err_dimensionsTooSmall": "O'lcham 200×200 dan kichik",
+  "customerPhotos_err_dimensionsTooLarge": "O'lcham 8000×8000 dan katta",
+  "customerPhotos_err_notFound": "Rasm topilmadi",
+  "customerPhotos_err_permissionDenied": "Ruxsat yo'q",
+  "customerPhotos_err_unknown": "Xatolik yuz berdi",
+  "customerPhotos_err_endpointNotImplemented": "Mijoz rasmlari servisi serverda hali yo'q. Dasturchilar jamoasi bilan bog'laning.",
+  "customerPhotos_pickCamera": "Kamera",
+  "customerPhotos_pickGallery": "Galereya",
+  "customerPhotos_editAlt": "Tavsif",
+  "customerPhotos_save": "Saqlash",
+  "customerPhotos_confirmDeleteTitle": "Rasmni o'chirishni tasdiqlang",
+  "customerPhotos_confirmDeleteBody": "Bu amalni qaytarib bo'lmaydi.",
+  "customerPhotos_primaryBadge": "Asosiy",
+
+  "customerEdit_title": "Mijozni tahrirlash",
+  "customerCreate_title": "Yangi mijoz",
+  "customerEdit_field_name": "Nomi",
+  "customerEdit_field_inn": "INN",
+  "customerEdit_field_phone": "Telefon",
+  "customerEdit_field_address": "Manzil",
+  "customerEdit_save": "Saqlash",
+  "customerEdit_cancel": "Bekor qilish",
+  "customerEdit_nameRequired": "Nomi kiritilishi shart",
+
+  "customerCoordinates_title": "Joylashuvni tahrirlash",
+  "customerCoordinates_useGps": "Joriy joylashuvni olish",
+  "customerCoordinates_save": "Saqlash",
+  "customerCoordinates_field_latitude": "Kenglik (lat)",
+  "customerCoordinates_field_longitude": "Uzunlik (lng)",
+  "customerCoordinates_invalid": "Kordinata noto'g'ri (lat: -90..90, lng: -180..180)",
+  "customerCoordinates_gpsUnavailable": "GPS koordinatasini olib bo'lmadi",
+
+  "customerEditTooltip": "Mijoz ma'lumotini tahrirlash",
+  "customerCoordinatesEditTooltip": "Joylashuvni tahrirlash",
+  "customerPhotosEditTooltip": "Mijoz rasmlari",
+  "customerCreateTooltip": "Yangi mijoz qo'shish",
+
+  "customer_err_crossOrg": "Ushbu mijoz boshqa tashkilotga tegishli",
+  "customer_err_permissionDenied": "Ruxsat yo'q",
+  "customer_err_notFound": "Mijoz topilmadi",
+  "customer_err_idempotencyConflict": "Qayta yuborishda xatolik. Yana urinib ko'ring.",
+  "customer_err_invalidCoordinates": "Kordinata noto'g'ri (lat: -90..90, lng: -180..180)",
+  "customer_err_network": "Tarmoq xatosi. Internet ulanishingizni tekshiring.",
+  "customer_err_unknown": "Xatolik yuz berdi",
+
+  "backendPermissions_sectionTitle": "Backend ruxsatlari",
+  "backendPermissions_sectionSubtitle": "Server JWT'sining `gates.permissions` maydonidan kelgan codename'lar",
+  "backendPermissions_categoryCustomers": "Mijoz ma'lumotlari",
+  "backendPermissions_categoryPhotos": "Mijoz rasmlari",
+  "backendPermissions_optimisticBadge": "Optimistik holat (server hali maydonni jo'natmagan)",
+  "backendPermissions_grantedBadge": "{granted}/{total} berilgan",
+  "@backendPermissions_grantedBadge": {
+    "placeholders": {
+      "granted": { "type": "int" },
+      "total":   { "type": "int" }
+    }
+  },
+  "backendPermissions_granted": "Berilgan",
+  "backendPermissions_denied": "Berilmagan",
+  "backendPermissions_label_customerAdd": "Yangi mijoz qo'shish",
+  "backendPermissions_label_customerChange": "Mijoz ma'lumotini tahrirlash",
+  "backendPermissions_label_customerChangeCoordinates": "Mijoz joylashuvini tahrirlash",
+  "backendPermissions_label_customerAddPhoto": "Mijoz rasmini yuklash",
+  "backendPermissions_label_customerChangePhoto": "Rasm ma'lumotini tahrirlash",
+  "backendPermissions_label_customerDeletePhoto": "Mijoz rasmini o'chirish",
+  "backendPermissions_label_customerReplacePhoto": "Mijoz rasmini almashtirish",
+
+  "backendPermissionsSync_title": "Backend ruxsatlari",
+  "backendPermissionsSync_subtitle": "Har bir login / token yangilashda `gates.permissions` dan sinxron qilinadi",
+  "backendPermissionsSync_neverSynced": "Hali sinxronlanmagan — yangilash uchun qayta kiring",
+  "backendPermissionsSync_status_ok": "Muvaffaqiyatli sinxronlandi",
+  "backendPermissionsSync_status_failed": "Sinxronlashda xato",
+  "backendPermissionsSync_lastSync": "So'nggi sinxron: {when}",
+  "@backendPermissionsSync_lastSync": {
+    "placeholders": { "when": { "type": "String" } }
+  },
+  "backendPermissionsSync_countLine": "{granted} ta / {total} ta ruxsat berilgan",
+  "@backendPermissionsSync_countLine": {
+    "placeholders": {
+      "granted": { "type": "int" },
+      "total":   { "type": "int" }
+    }
+  },
+  "backendPermissionsSync_errorLine": "So'nggi xato: {code}",
+  "@backendPermissionsSync_errorLine": {
+    "placeholders": { "code": { "type": "String" } }
+  },
+
+  "customerPhotoPreview_emptyTitle": "Hali rasm yo'q",
+  "customerPhotoPreview_emptyHintAdd": "Birinchi rasmni qo'shish uchun bosing",
+  "customerPhotoPreview_emptyHintReadOnly": "Ushbu mijoz uchun rasm yuklanmagan",
+  "customerPhotoPreview_editTooltip": "Rasmlarni boshqarish",
+  "customerPhotoPreview_addTooltip": "Rasm qo'shish",
+
+  "customerEditBanner_title": "Mijoz ma'lumotini tahrirlash",
+  "customerEditBanner_body": "Nom, INN, telefon va manzil shu yerda yangilanadi. Koordinatalar — xarita tugmasi orqali, rasmlar — galereya orqali. Klassifikator maydonlari (hudud / kanal / tur / klass) 1C dan keladi va mobile'da o'zgarmaydi.",
+
+  "coordinatesSave_err_permission_perCustomer": "Siz ushbu mijozga agent sifatida biriktirilmagansiz, shuning uchun uning joylashuvini o'zgartira olmaysiz. Administratorga murojaat qiling — sizni ushbu mijozga STAFF sifatida qo'shsin.",
+  "coordinatesSave_err_crossOrg": "Ushbu mijoz boshqa tashkilotga tegishli.",
+  "coordinatesSave_err_notFound": "Mijoz serverda topilmadi.",
+  "coordinatesSave_err_invalidCoords": "Koordinatalar noto'g'ri (lat: -90..90, lng: -180..180).",
+  "coordinatesSave_err_network": "Tarmoq xatosi. Internet ulanishini tekshiring va qayta urinib ko'ring.",
+  "coordinatesSave_err_serverError": "Server xatosi (500). Dasturchi jamoasiga murojaat qiling — backend ValidationError chiqarmoqda.",
+  "coordinatesSave_err_generic": "Joylashuvni saqlab bo'lmadi: {detail}",
+  "@coordinatesSave_err_generic": {
+    "placeholders": { "detail": { "type": "String" } }
+  }
 }

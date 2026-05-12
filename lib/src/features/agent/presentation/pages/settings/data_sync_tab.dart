@@ -7,6 +7,7 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
 import 'package:gloria_marketing_flutter/src/core/utils/sync_helpers.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/backend_permissions_sync_card.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/group_sync_card.dart';
 
 /// Tab page for data synchronization in Settings.
@@ -611,6 +612,16 @@ class _DataSyncTabState extends State<DataSyncTab>
                     ],
                   ),
                 ),
+              ),
+
+              // Backend (V2) permissions sync — distinct item that
+              // does not flow through the orchestrator (it syncs
+              // implicitly on login / token refresh). Surfaces the
+              // last sync time, granted count, and any failure event
+              // so the user has a single place to confirm the
+              // codename gate state.
+              const SliverToBoxAdapter(
+                child: BackendPermissionsSyncCard(),
               ),
 
               // Group cards list

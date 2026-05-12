@@ -87,20 +87,39 @@ class NewBackendImageRepository {
     CancelToken? cancelToken,
   }) async {
     final wireType = _targetTypeOnSend[targetType];
-    if (wireType == null) return UnifiedImagePage.empty;
+    if (wireType == null) {
+      if (kDebugMode) {
+        debugPrint(
+          '[IMG-DIAG] Repo: unknown targetType="$targetType" → fail-closed (UnifiedImagePage.empty)',
+        );
+      }
+      return UnifiedImagePage.empty;
+    }
     if (cursor == null) {
       // First-page guards — we only reach the wire when we have a
       // resolvable code + org pair.
       if (targetCode1c.isEmpty || targetOrganizationId.isEmpty) {
+        if (kDebugMode) {
+          debugPrint(
+            '[IMG-DIAG] Repo: fail-closed BEFORE wire — '
+            'targetType=$targetType '
+            'code="$targetCode1c"(len=${targetCode1c.length}) '
+            'orgId="$targetOrganizationId"(len=${targetOrganizationId.length}) '
+            '→ no HTTP request will be sent',
+          );
+        }
         return UnifiedImagePage.empty;
       }
     }
 
     final token = await _tokenService.ensureValidV2Token();
     if (token == null || token.isEmpty) {
-      // No bearer — same fail-closed strategy as 4xx. The auth flow
-      // will surface the missing-credentials state through its own
-      // channel; image rendering stays silent.
+      if (kDebugMode) {
+        debugPrint(
+          '[IMG-DIAG] Repo: no V2 token — fail-closed before wire '
+          '(targetType=$targetType code="$targetCode1c") → check login state',
+        );
+      }
       return UnifiedImagePage.empty;
     }
 
@@ -119,6 +138,14 @@ class NewBackendImageRepository {
             if (primaryOnly) _qpIsPrimary: 'true',
           }
         : null;
+
+    if (kDebugMode) {
+      debugPrint(
+        '[IMG-DIAG] Repo HTTP GET → $url '
+        'query=$query '
+        'tokenLen=${token.length}',
+      );
+    }
 
     try {
       final response = await _dio.get<Map<String, dynamic>>(
@@ -150,23 +177,36 @@ class NewBackendImageRepository {
 
       final next = body['next'];
       final nextCursor = (next is String && next.isNotEmpty) ? next : null;
+      if (kDebugMode) {
+        debugPrint(
+          '[IMG-DIAG] Repo HTTP ← status=${response.statusCode} '
+          'targetType=$targetType code="$targetCode1c" '
+          'rawResultsCount=${(results is List) ? results.length : -1} '
+          'parsedImagesCount=${images.length} '
+          'hasNext=${nextCursor != null}',
+        );
+      }
       return UnifiedImagePage(images: images, nextCursor: nextCursor);
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) rethrow;
       final status = e.response?.statusCode;
       if (status != null && status >= 400 && status < 500) {
-        // Data / permission / auth-refresh problem — surface a
-        // breadcrumb so ops can spot data corruption, but don't
-        // crash the UI. Treat as "no images found".
         if (kDebugMode) {
           debugPrint(
-            'NewBackendImageRepository: 4xx on '
-            '$targetType code_1c=$targetCode1c '
-            'org=$targetOrganizationId status=$status — '
-            'returning empty page.',
+            '[IMG-DIAG] Repo HTTP 4xx ← status=$status '
+            'targetType=$targetType code="$targetCode1c" '
+            'orgId="$targetOrganizationId" '
+            'body=${e.response?.data} → returning empty page',
           );
         }
         return UnifiedImagePage.empty;
+      }
+      if (kDebugMode) {
+        debugPrint(
+          '[IMG-DIAG] Repo HTTP error (5xx/network): '
+          'targetType=$targetType code="$targetCode1c" '
+          'status=$status type=${e.type} message=${e.message}',
+        );
       }
       rethrow;
     }

@@ -4747,6 +4747,12 @@ abstract class AppLocalizations {
   /// **'Sync with dependencies'**
   String get syncWithDependencies;
 
+  /// No description provided for @editLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit location'**
+  String get editLocationTitle;
+
   /// No description provided for @recommended.
   ///
   /// In en, this message translates to:
@@ -9810,6 +9816,564 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mandatory'**
   String get knowledgeMandatoryBadge;
+
+  /// No description provided for @customerPhotos_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer photos'**
+  String get customerPhotos_title;
+
+  /// No description provided for @customerPhotos_addAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get customerPhotos_addAction;
+
+  /// No description provided for @customerPhotos_replaceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get customerPhotos_replaceAction;
+
+  /// No description provided for @customerPhotos_deleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get customerPhotos_deleteAction;
+
+  /// No description provided for @customerPhotos_setPrimary.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as primary'**
+  String get customerPhotos_setPrimary;
+
+  /// No description provided for @customerPhotos_reprocess.
+  ///
+  /// In en, this message translates to:
+  /// **'Reprocess'**
+  String get customerPhotos_reprocess;
+
+  /// No description provided for @customerPhotos_capBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'{current}/{max} uploaded'**
+  String customerPhotos_capBadge(int current, int max);
+
+  /// No description provided for @customerPhotos_capExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit reached ({current}/{max})'**
+  String customerPhotos_capExceeded(int current, int max);
+
+  /// No description provided for @customerPhotos_emptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos yet'**
+  String get customerPhotos_emptyState;
+
+  /// No description provided for @customerPhotos_uploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading…'**
+  String get customerPhotos_uploading;
+
+  /// No description provided for @customerPhotos_processing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing…'**
+  String get customerPhotos_processing;
+
+  /// No description provided for @customerPhotos_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get customerPhotos_failed;
+
+  /// No description provided for @customerPhotos_failedBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} photos failed'**
+  String customerPhotos_failedBannerTitle(int count);
+
+  /// No description provided for @customerPhotos_reprocessNotSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Reprocessing not supported — delete and re-upload'**
+  String get customerPhotos_reprocessNotSupported;
+
+  /// No description provided for @customerPhotos_err_tooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'File is larger than 15 MB'**
+  String get customerPhotos_err_tooLarge;
+
+  /// No description provided for @customerPhotos_err_invalidFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format not supported: JPEG, PNG, WebP, HEIC'**
+  String get customerPhotos_err_invalidFormat;
+
+  /// No description provided for @customerPhotos_err_dimensionsTooSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Dimensions smaller than 200×200'**
+  String get customerPhotos_err_dimensionsTooSmall;
+
+  /// No description provided for @customerPhotos_err_dimensionsTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Dimensions larger than 8000×8000'**
+  String get customerPhotos_err_dimensionsTooLarge;
+
+  /// No description provided for @customerPhotos_err_notFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo not found'**
+  String get customerPhotos_err_notFound;
+
+  /// No description provided for @customerPhotos_err_permissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'No permission'**
+  String get customerPhotos_err_permissionDenied;
+
+  /// No description provided for @customerPhotos_err_unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get customerPhotos_err_unknown;
+
+  /// No description provided for @customerPhotos_err_endpointNotImplemented.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer photo service is not yet available on the server. Contact the development team.'**
+  String get customerPhotos_err_endpointNotImplemented;
+
+  /// No description provided for @customerPhotos_pickCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get customerPhotos_pickCamera;
+
+  /// No description provided for @customerPhotos_pickGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get customerPhotos_pickGallery;
+
+  /// No description provided for @customerPhotos_editAlt.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get customerPhotos_editAlt;
+
+  /// No description provided for @customerPhotos_save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get customerPhotos_save;
+
+  /// No description provided for @customerPhotos_confirmDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this photo?'**
+  String get customerPhotos_confirmDeleteTitle;
+
+  /// No description provided for @customerPhotos_confirmDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This action cannot be undone.'**
+  String get customerPhotos_confirmDeleteBody;
+
+  /// No description provided for @customerPhotos_primaryBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary'**
+  String get customerPhotos_primaryBadge;
+
+  /// No description provided for @customerEdit_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit customer'**
+  String get customerEdit_title;
+
+  /// No description provided for @customerCreate_title.
+  ///
+  /// In en, this message translates to:
+  /// **'New customer'**
+  String get customerCreate_title;
+
+  /// No description provided for @customerEdit_field_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get customerEdit_field_name;
+
+  /// No description provided for @customerEdit_field_inn.
+  ///
+  /// In en, this message translates to:
+  /// **'INN'**
+  String get customerEdit_field_inn;
+
+  /// No description provided for @customerEdit_field_phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get customerEdit_field_phone;
+
+  /// No description provided for @customerEdit_field_address.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get customerEdit_field_address;
+
+  /// No description provided for @customerEdit_save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get customerEdit_save;
+
+  /// No description provided for @customerEdit_cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get customerEdit_cancel;
+
+  /// No description provided for @customerEdit_nameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get customerEdit_nameRequired;
+
+  /// No description provided for @customerCoordinates_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit location'**
+  String get customerCoordinates_title;
+
+  /// No description provided for @customerCoordinates_useGps.
+  ///
+  /// In en, this message translates to:
+  /// **'Use current location'**
+  String get customerCoordinates_useGps;
+
+  /// No description provided for @customerCoordinates_save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get customerCoordinates_save;
+
+  /// No description provided for @customerCoordinates_field_latitude.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude'**
+  String get customerCoordinates_field_latitude;
+
+  /// No description provided for @customerCoordinates_field_longitude.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude'**
+  String get customerCoordinates_field_longitude;
+
+  /// No description provided for @customerCoordinates_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid coordinates (lat: -90..90, lng: -180..180)'**
+  String get customerCoordinates_invalid;
+
+  /// No description provided for @customerCoordinates_gpsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read GPS position'**
+  String get customerCoordinates_gpsUnavailable;
+
+  /// No description provided for @customerEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit customer profile'**
+  String get customerEditTooltip;
+
+  /// No description provided for @customerCoordinatesEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit location'**
+  String get customerCoordinatesEditTooltip;
+
+  /// No description provided for @customerPhotosEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer photos'**
+  String get customerPhotosEditTooltip;
+
+  /// No description provided for @customerCreateTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new customer'**
+  String get customerCreateTooltip;
+
+  /// No description provided for @customer_err_crossOrg.
+  ///
+  /// In en, this message translates to:
+  /// **'This customer belongs to another organization'**
+  String get customer_err_crossOrg;
+
+  /// No description provided for @customer_err_permissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'No permission'**
+  String get customer_err_permissionDenied;
+
+  /// No description provided for @customer_err_notFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer not found'**
+  String get customer_err_notFound;
+
+  /// No description provided for @customer_err_idempotencyConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry failed. Please try again.'**
+  String get customer_err_idempotencyConflict;
+
+  /// No description provided for @customer_err_invalidCoordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid coordinates (lat: -90..90, lng: -180..180)'**
+  String get customer_err_invalidCoordinates;
+
+  /// No description provided for @customer_err_network.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Please check your connection.'**
+  String get customer_err_network;
+
+  /// No description provided for @customer_err_unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get customer_err_unknown;
+
+  /// No description provided for @backendPermissions_sectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend permissions'**
+  String get backendPermissions_sectionTitle;
+
+  /// No description provided for @backendPermissions_sectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Codenames received from the server in the JWT `gates.permissions` field'**
+  String get backendPermissions_sectionSubtitle;
+
+  /// No description provided for @backendPermissions_categoryCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer profile'**
+  String get backendPermissions_categoryCustomers;
+
+  /// No description provided for @backendPermissions_categoryPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer photos'**
+  String get backendPermissions_categoryPhotos;
+
+  /// No description provided for @backendPermissions_optimisticBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimistic (server has not yet shipped the field)'**
+  String get backendPermissions_optimisticBadge;
+
+  /// No description provided for @backendPermissions_grantedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'{granted}/{total} granted'**
+  String backendPermissions_grantedBadge(int granted, int total);
+
+  /// No description provided for @backendPermissions_granted.
+  ///
+  /// In en, this message translates to:
+  /// **'Granted'**
+  String get backendPermissions_granted;
+
+  /// No description provided for @backendPermissions_denied.
+  ///
+  /// In en, this message translates to:
+  /// **'Denied'**
+  String get backendPermissions_denied;
+
+  /// No description provided for @backendPermissions_label_customerAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new customer'**
+  String get backendPermissions_label_customerAdd;
+
+  /// No description provided for @backendPermissions_label_customerChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit customer profile'**
+  String get backendPermissions_label_customerChange;
+
+  /// No description provided for @backendPermissions_label_customerChangeCoordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit customer location'**
+  String get backendPermissions_label_customerChangeCoordinates;
+
+  /// No description provided for @backendPermissions_label_customerAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload customer photo'**
+  String get backendPermissions_label_customerAddPhoto;
+
+  /// No description provided for @backendPermissions_label_customerChangePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit photo metadata'**
+  String get backendPermissions_label_customerChangePhoto;
+
+  /// No description provided for @backendPermissions_label_customerDeletePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete customer photo'**
+  String get backendPermissions_label_customerDeletePhoto;
+
+  /// No description provided for @backendPermissions_label_customerReplacePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace customer photo'**
+  String get backendPermissions_label_customerReplacePhoto;
+
+  /// No description provided for @backendPermissionsSync_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend permissions'**
+  String get backendPermissionsSync_title;
+
+  /// No description provided for @backendPermissionsSync_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced from `gates.permissions` on every login / token refresh'**
+  String get backendPermissionsSync_subtitle;
+
+  /// No description provided for @backendPermissionsSync_neverSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet synced — log in to refresh'**
+  String get backendPermissionsSync_neverSynced;
+
+  /// No description provided for @backendPermissionsSync_status_ok.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced successfully'**
+  String get backendPermissionsSync_status_ok;
+
+  /// No description provided for @backendPermissionsSync_status_failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get backendPermissionsSync_status_failed;
+
+  /// No description provided for @backendPermissionsSync_lastSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync: {when}'**
+  String backendPermissionsSync_lastSync(String when);
+
+  /// No description provided for @backendPermissionsSync_countLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{granted} of {total} permission(s) granted'**
+  String backendPermissionsSync_countLine(int granted, int total);
+
+  /// No description provided for @backendPermissionsSync_errorLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Last error: {code}'**
+  String backendPermissionsSync_errorLine(String code);
+
+  /// No description provided for @customerPhotoPreview_emptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos yet'**
+  String get customerPhotoPreview_emptyTitle;
+
+  /// No description provided for @customerPhotoPreview_emptyHintAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to add the first photo'**
+  String get customerPhotoPreview_emptyHintAdd;
+
+  /// No description provided for @customerPhotoPreview_emptyHintReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos uploaded for this customer'**
+  String get customerPhotoPreview_emptyHintReadOnly;
+
+  /// No description provided for @customerPhotoPreview_editTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage photos'**
+  String get customerPhotoPreview_editTooltip;
+
+  /// No description provided for @customerPhotoPreview_addTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get customerPhotoPreview_addTooltip;
+
+  /// No description provided for @customerEditBanner_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit customer info'**
+  String get customerEditBanner_title;
+
+  /// No description provided for @customerEditBanner_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, INN, phone and address are updated here. Coordinates change via the map button, photos via the gallery. Classifier fields (region / channel / type / class) come from 1C and stay read-only on mobile.'**
+  String get customerEditBanner_body;
+
+  /// No description provided for @coordinatesSave_err_permission_perCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'You are not assigned as the agent for this customer, so you can not move its pin. Contact the supervisor to be added as staff for this customer.'**
+  String get coordinatesSave_err_permission_perCustomer;
+
+  /// No description provided for @coordinatesSave_err_crossOrg.
+  ///
+  /// In en, this message translates to:
+  /// **'This customer belongs to another organization.'**
+  String get coordinatesSave_err_crossOrg;
+
+  /// No description provided for @coordinatesSave_err_notFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer not found on the server.'**
+  String get coordinatesSave_err_notFound;
+
+  /// No description provided for @coordinatesSave_err_invalidCoords.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid coordinates (lat: -90..90, lng: -180..180).'**
+  String get coordinatesSave_err_invalidCoords;
+
+  /// No description provided for @coordinatesSave_err_network.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Check your connection and try again.'**
+  String get coordinatesSave_err_network;
+
+  /// No description provided for @coordinatesSave_err_serverError.
+  ///
+  /// In en, this message translates to:
+  /// **'Server error (500). Contact the dev team — backend is raising a ValidationError.'**
+  String get coordinatesSave_err_serverError;
+
+  /// No description provided for @coordinatesSave_err_generic.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save location: {detail}'**
+  String coordinatesSave_err_generic(String detail);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

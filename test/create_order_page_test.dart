@@ -46,7 +46,6 @@ void main() {
       userCode: 'USER001',
       skipTINduplicateCheck: false,
       allowCreationWithoutTIN: false,
-      allowCreatingPointOfSale: false,
       visit: true,
       strictSequence: false,
       unplannedOrder: true,

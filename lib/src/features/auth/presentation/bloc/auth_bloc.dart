@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/backend_permission_store.dart';
 import 'package:gloria_marketing_flutter/src/core/exceptions/auth_exceptions.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -257,6 +258,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         await sl<TokenService>().clearV2Tokens();
         await _prefs.clearCachedGates();
         await _prefs.clearCachedDeviceBinding();
+        if (sl.isRegistered<BackendPermissionStore>()) {
+          await sl<BackendPermissionStore>().clear();
+        }
       } catch (e) {
         if (kDebugMode) {
           print('AuthBloc: Error clearing V2 caches (non-critical): $e');

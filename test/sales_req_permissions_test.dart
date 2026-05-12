@@ -27,7 +27,6 @@ void main() {
             user_code TEXT UNIQUE NOT NULL,
             skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
             allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
-            allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
             visit INTEGER NOT NULL DEFAULT 0,
             strict_sequence INTEGER NOT NULL DEFAULT 0,
             unplanned_order INTEGER NOT NULL DEFAULT 0,
@@ -73,7 +72,6 @@ void main() {
         userCode: 'TEST001',
         skipTINduplicateCheck: true,
         allowCreationWithoutTIN: false,
-        allowCreatingPointOfSale: true,
         visit: true,
         strictSequence: false,
         unplannedOrder: true,
@@ -106,7 +104,6 @@ void main() {
       expect(retrieved!.userCode, equals('TEST001'));
       expect(retrieved.skipTINduplicateCheck, isTrue);
       expect(retrieved.allowCreationWithoutTIN, isFalse);
-      expect(retrieved.allowCreatingPointOfSale, isTrue);
       expect(retrieved.visit, isTrue);
       expect(retrieved.strictSequence, isFalse);
       expect(retrieved.unplannedOrder, isTrue);
@@ -128,7 +125,6 @@ void main() {
         userCode: 'TEST001',
         skipTINduplicateCheck: true,
         allowCreationWithoutTIN: false,
-        allowCreatingPointOfSale: true,
         visit: true,
         strictSequence: false,
         unplannedOrder: true,
@@ -143,7 +139,6 @@ void main() {
         userCode: 'TEST002',
         skipTINduplicateCheck: false,
         allowCreationWithoutTIN: true,
-        allowCreatingPointOfSale: false,
         visit: false,
         strictSequence: true,
         unplannedOrder: false,
@@ -167,7 +162,6 @@ void main() {
         userCode: 'TEST001',
         skipTINduplicateCheck: true,
         allowCreationWithoutTIN: false,
-        allowCreatingPointOfSale: true,
         visit: true,
         strictSequence: false,
         unplannedOrder: true,
@@ -197,7 +191,6 @@ void main() {
         userCode: 'TEST001',
         skipTINduplicateCheck: true,
         allowCreationWithoutTIN: false,
-        allowCreatingPointOfSale: true,
         visit: true,
         strictSequence: false,
         unplannedOrder: true,

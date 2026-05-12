@@ -57,7 +57,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 38, // v38: knowledge_assignments.target_staff_id column + index
+      version: 39, // v39: drop sales_req_permissions.allow_creating_point_of_sale (replaced by V2 codename customers.add_customer)
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -873,7 +873,6 @@ class ApiDatabaseService {
           user_code TEXT UNIQUE NOT NULL,
           skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
           allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
-          allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
           visit INTEGER NOT NULL DEFAULT 0,
           strict_sequence INTEGER NOT NULL DEFAULT 0,
           unplanned_order INTEGER NOT NULL DEFAULT 0,
@@ -1109,7 +1108,6 @@ class ApiDatabaseService {
           user_code TEXT UNIQUE NOT NULL,
           skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
           allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
-          allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
           visit INTEGER NOT NULL DEFAULT 0,
           strict_sequence INTEGER NOT NULL DEFAULT 0,
           unplanned_order INTEGER NOT NULL DEFAULT 0,
@@ -1725,6 +1723,33 @@ class ApiDatabaseService {
       if (kDebugMode) {
         print(
             'ApiDatabaseService: knowledge_assignments.target_staff_id ready (version 38)');
+      }
+    }
+
+    if (oldVersion < 39) {
+      // Customer-creation permission moved to V2 codename
+      // `customers.add_customer` (BackendPermissionStore). SOAP-derived
+      // `allow_creating_point_of_sale` is no longer read or written, so
+      // we drop the column to keep the schema honest.
+      //
+      // ALTER TABLE … DROP COLUMN is wrapped in try/catch for two
+      // reasons: (a) fresh installs hit `_onCreate` directly and the
+      // column never existed, so the DROP would raise "no such column";
+      // (b) very old SQLite without DROP COLUMN support would also
+      // raise — harmless because the stale column is unreferenced.
+      try {
+        await db.execute(
+          'ALTER TABLE sales_req_permissions DROP COLUMN allow_creating_point_of_sale',
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          print(
+              'ApiDatabaseService: skip DROP allow_creating_point_of_sale (likely already absent): $e');
+        }
+      }
+      if (kDebugMode) {
+        print(
+            'ApiDatabaseService: sales_req_permissions.allow_creating_point_of_sale dropped (version 39)');
       }
     }
   }
@@ -2356,7 +2381,6 @@ class ApiDatabaseService {
         user_code TEXT UNIQUE NOT NULL,
         skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
         allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
-        allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
         visit INTEGER NOT NULL DEFAULT 0,
         strict_sequence INTEGER NOT NULL DEFAULT 0,
         unplanned_order INTEGER NOT NULL DEFAULT 0,
@@ -4786,12 +4810,10 @@ class ApiDatabaseService {
         '''
         SELECT
           c.*,
-          COALESCE(ci.image_thumbnail_url, ci.image_sm_url, ci.image_md_url, ci.image_url, ci.image) as photo_url,
           srp.id as permissions_id,
           srp.user_code,
           srp.skip_tin_duplicate_check,
           srp.allow_creation_without_tin,
-          srp.allow_creating_point_of_sale,
           srp.visit,
           srp.strict_sequence,
           srp.unplanned_order,
@@ -4804,24 +4826,6 @@ class ApiDatabaseService {
           pr.week_day as planned_week_day
         FROM clients c
         LEFT JOIN sales_req_permissions srp ON srp.user_code = ?
-        LEFT JOIN (
-          SELECT
-            ci1.client_code,
-            ci1.image,
-            ci1.image_url,
-            ci1.image_sm_url,
-            ci1.image_md_url,
-            ci1.image_thumbnail_url
-          FROM client_images ci1
-          WHERE ci1.id = (
-            SELECT ci2.id
-            FROM client_images ci2
-            WHERE ci2.client_code = ci1.client_code
-            ORDER BY ci2.is_main DESC, ci2.updated_at DESC, ci2.id DESC
-            LIMIT 1
-          )
-          GROUP BY ci1.client_code
-        ) ci ON ci.client_code = c.code
         LEFT JOIN (
           SELECT
             pr1.code_client,
@@ -7607,6 +7611,47 @@ class ApiDatabaseService {
     }
   }
 
+  /// Local-cache mirror of the V2 `PATCH /api/mobile/v2/customers/
+  /// {code_1c}/` response. Updates only the fields the V2 endpoint
+  /// owns (name / inn / phone / address); other columns are
+  /// untouched so coordinates / classifiers / 1C codes stay
+  /// authoritative until the next SOAP sync.
+  ///
+  /// `null` arguments leave the column alone (matches PATCH
+  /// semantics on the server side).
+  Future<void> updateClientProfile({
+    required String clientCode,
+    String? name,
+    String? inn,
+    String? phone,
+    String? address,
+  }) async {
+    final db = await database;
+    final values = <String, dynamic>{
+      'updated_at': DateTime.now().toIso8601String(),
+      if (name != null) 'name': name,
+      if (inn != null) 'inn': inn,
+      if (phone != null) 'phone': phone,
+      if (address != null) 'address': address,
+    };
+    if (values.length == 1) {
+      // Only the timestamp would change — no-op.
+      return;
+    }
+    await db.update(
+      'clients',
+      values,
+      where: 'code = ?',
+      whereArgs: [clientCode],
+    );
+    if (kDebugMode) {
+      print(
+        'Updated profile for client $clientCode: '
+        'fields=${values.keys.where((k) => k != "updated_at").join(",")}',
+      );
+    }
+  }
+
   /// Ensure sales req permissions table exists (for migration issues)
   Future<void> ensureSalesReqPermissionsTableExists() async {
     final db = await database;
@@ -7624,7 +7669,6 @@ class ApiDatabaseService {
           user_code TEXT UNIQUE NOT NULL,
           skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
           allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
-          allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
           visit INTEGER NOT NULL DEFAULT 0,
           strict_sequence INTEGER NOT NULL DEFAULT 0,
           unplanned_order INTEGER NOT NULL DEFAULT 0,
@@ -8666,7 +8710,6 @@ class ApiDatabaseService {
             user_code TEXT UNIQUE NOT NULL,
             skip_tin_duplicate_check INTEGER NOT NULL DEFAULT 0,
             allow_creation_without_tin INTEGER NOT NULL DEFAULT 0,
-            allow_creating_point_of_sale INTEGER NOT NULL DEFAULT 0,
             visit INTEGER NOT NULL DEFAULT 0,
             strict_sequence INTEGER NOT NULL DEFAULT 0,
             unplanned_order INTEGER NOT NULL DEFAULT 0,

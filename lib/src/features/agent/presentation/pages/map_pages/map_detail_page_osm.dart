@@ -13,6 +13,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
     as model;
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/backend_permission_store.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/permission_codenames.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/coordinates_save_error_text.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
@@ -43,7 +46,18 @@ const String kUserAgent = 'uz.gg.gloria_marketing';
 class MapDetailPageOsm extends StatefulWidget {
   final model.TradingPoint tradingPoint;
 
-  const MapDetailPageOsm({super.key, required this.tradingPoint});
+  /// When `true`, the page auto-toggles edit mode after the first frame
+  /// so callers (e.g. the "edit_location" entry button on the trading
+  /// points list) land directly in the editing flow. Permission checks
+  /// still run; if the agent lacks `editClientCoordinates`, the page
+  /// stays in read-only mode.
+  final bool initialEditMode;
+
+  const MapDetailPageOsm({
+    super.key,
+    required this.tradingPoint,
+    this.initialEditMode = false,
+  });
 
   @override
   State<MapDetailPageOsm> createState() => _MapDetailPageOsmState();
@@ -98,10 +112,26 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
     super.initState();
     _osmController = osm.MapController();
     _initializeThemeController();
-    _initializeServices();
-    _checkLocationPermission();
     _initializeMapData();
     _initializeCameraState();
+    // Sequenced bootstrap: services first (so `_prefs` is ready
+    // before `_toggleEditLocationMode` reads it), then permissions,
+    // then auto-enter edit mode if the caller requested it. Without
+    // this ordering, deep-linking into the page with
+    // `initialEditMode: true` triggers a `LateInitializationError`
+    // because the post-frame callback fires before
+    // `_initializeServices` has assigned `_prefs`.
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    await _initializeServices();
+    if (!mounted) return;
+    await _checkLocationPermission();
+    if (!mounted) return;
+    if (widget.initialEditMode) {
+      await _toggleEditLocationMode();
+    }
   }
 
   @override
@@ -742,25 +772,15 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
   /// Checks user permissions before allowing location editing
   Future<void> _toggleEditLocationMode() async {
     try {
-      // Check user permissions for editing client coordinates
-      final userCode = _prefs.getUserCode();
-      if (userCode == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)?.userDataNotFound ??
-                  'Foydalanuvchi ma\'lumotlari topilmadi',
-            ),
-          ),
-        );
-        return;
-      }
-
-      // Get user permissions from data sync service
-      final permissions = await _dataSyncService.getCachedSalesReqPermissions(
-        userCode,
-      );
-      if (permissions == null || !permissions.editClientCoordinates) {
+      // Check the V2 backend codename instead of the legacy SOAP
+      // `SalesReqPermissions.editClientCoordinates` flag — the
+      // staff-permissions runbook moved this gate to
+      // `customers.change_customer_coordinates` and the SOAP row no
+      // longer carries the authoritative answer (the codename store
+      // owns it now). Reading the SOAP boolean here gave a false
+      // "no permission" message even when the codename was granted.
+      final store = sl<BackendPermissionStore>();
+      if (!store.has(PermissionCodenames.customerChangeCoordinates)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1152,12 +1172,13 @@ class _MapDetailPageOsmState extends State<MapDetailPageOsm> {
       if (kDebugMode) {
         print('Error saving new location: $e');
       }
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final msg = l10n != null
+          ? coordinatesSaveErrorText(l10n, e)
+          : 'Xatolik: $e';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
-          ),
-        ),
+        SnackBar(content: Text(msg)),
       );
     }
   }

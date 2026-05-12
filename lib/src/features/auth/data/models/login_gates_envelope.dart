@@ -46,6 +46,19 @@ class LoginGatesEnvelope {
   /// Stage 2 once the strict mobile flow ships.
   final DeviceBinding? device;
 
+  /// Dotted-codename permissions the user holds. Empty when the
+  /// backend hasn't shipped the exposure yet — see
+  /// [PermissionCheck.has] for the optimistic / pessimistic gate.
+  final List<String> permissions;
+
+  /// Whether the backend explicitly returned the `permissions` field
+  /// (even as an empty array) vs. omitting it entirely. Distinguishes
+  /// "rollout in progress, server doesn't ship the field yet" from
+  /// "the user genuinely has no codenames". The mobile permission
+  /// store reads this to decide whether to fall back to the
+  /// optimistic-empty grant for empty payloads.
+  final bool permissionsProvided;
+
   const LoginGatesEnvelope({
     required this.accessToken,
     required this.refreshToken,
@@ -55,6 +68,8 @@ class LoginGatesEnvelope {
     required this.serverTime,
     required this.bypass,
     this.device,
+    this.permissions = const <String>[],
+    this.permissionsProvided = false,
   });
 
   /// Tolerates missing optional fields by defaulting to `null`/`false`.
@@ -90,6 +105,15 @@ class LoginGatesEnvelope {
         ? DeviceBinding.fromJson(deviceRaw)
         : null;
 
+    final permissionsRaw = gates[_Keys.permissions];
+    // `permissionsProvided` is true whenever the server explicitly
+    // included the field (List), regardless of how many entries it
+    // holds. Missing / non-List → false (rollout window).
+    final bool permissionsProvided = permissionsRaw is List;
+    final List<String> permissions = permissionsRaw is List
+        ? permissionsRaw.whereType<String>().toList(growable: false)
+        : const <String>[];
+
     return LoginGatesEnvelope(
       accessToken: access,
       refreshToken: refresh,
@@ -99,6 +123,8 @@ class LoginGatesEnvelope {
       serverTime: serverTime,
       bypass: gates[_Keys.bypass] as bool? ?? false,
       device: device,
+      permissions: permissions,
+      permissionsProvided: permissionsProvided,
     );
   }
 
@@ -112,6 +138,7 @@ class LoginGatesEnvelope {
         _Keys.organizationId: organizationId,
         _Keys.serverTime: serverTime.toUtc().toIso8601String(),
         _Keys.bypass: bypass,
+        _Keys.permissions: permissions,
       },
     };
     if (device != null) {
@@ -145,6 +172,8 @@ class LoginGatesEnvelope {
     DateTime? serverTime,
     bool? bypass,
     DeviceBinding? device,
+    List<String>? permissions,
+    bool? permissionsProvided,
   }) {
     return LoginGatesEnvelope(
       accessToken: accessToken ?? this.accessToken,
@@ -155,6 +184,9 @@ class LoginGatesEnvelope {
       serverTime: serverTime ?? this.serverTime,
       bypass: bypass ?? this.bypass,
       device: device ?? this.device,
+      permissions: permissions ?? this.permissions,
+      permissionsProvided:
+          permissionsProvided ?? this.permissionsProvided,
     );
   }
 
@@ -169,7 +201,8 @@ class LoginGatesEnvelope {
         other.organizationId == organizationId &&
         other.serverTime == serverTime &&
         other.bypass == bypass &&
-        other.device == device;
+        other.device == device &&
+        _listEq(other.permissions, permissions);
   }
 
   @override
@@ -182,7 +215,17 @@ class LoginGatesEnvelope {
         serverTime,
         bypass,
         device,
+        Object.hashAll(permissions),
       );
+
+  static bool _listEq(List<String> a, List<String> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 
   static DateTime? _parseUtc(Object? value) {
     if (value is! String || value.isEmpty) return null;
@@ -206,4 +249,5 @@ class _Keys {
   static const String organizationId = 'organization_id';
   static const String serverTime = 'server_time';
   static const String bypass = 'bypass';
+  static const String permissions = 'permissions';
 }

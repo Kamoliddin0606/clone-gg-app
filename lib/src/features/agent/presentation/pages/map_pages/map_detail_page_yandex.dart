@@ -12,6 +12,9 @@ import 'package:yandex_maps_mapkit/mapkit_factory.dart' as mkf;
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart'
     as model;
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/backend_permission_store.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/permission_codenames.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/coordinates_save_error_text.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
@@ -33,7 +36,18 @@ const double kRouteZoom = 16.0;
 class MapDetailPageYandex extends StatefulWidget {
   final model.TradingPoint tradingPoint;
 
-  const MapDetailPageYandex({super.key, required this.tradingPoint});
+  /// When `true`, the page auto-toggles edit mode after the first frame
+  /// so callers (e.g. the "edit_location" entry button on the trading
+  /// points list) land directly in the editing flow. Permission checks
+  /// still run; if the agent lacks `editClientCoordinates`, the page
+  /// stays in read-only mode.
+  final bool initialEditMode;
+
+  const MapDetailPageYandex({
+    super.key,
+    required this.tradingPoint,
+    this.initialEditMode = false,
+  });
 
   @override
   State<MapDetailPageYandex> createState() => _MapDetailPageYandexState();
@@ -76,11 +90,25 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
   void initState() {
     super.initState();
     _initializeThemeController();
-    _initializeServices();
-    _checkLocationPermission();
     _initializeMapData();
     _initializeCameraState();
     mkf.mapkit.onStart();
+    // Sequenced bootstrap so `_prefs` is initialised before
+    // `_toggleEditLocationMode` reads it on deep-link edit entry —
+    // see the OSM map page for the same pattern + rationale.
+    _bootstrap();
+  }
+
+  /// Sequence the async init steps so `_prefs` is non-null by the
+  /// time deep-link edit mode tries to read user permissions.
+  Future<void> _bootstrap() async {
+    await _initializeServices();
+    if (!mounted) return;
+    await _checkLocationPermission();
+    if (!mounted) return;
+    if (widget.initialEditMode) {
+      await _toggleEditLocationMode();
+    }
   }
 
   @override
@@ -527,25 +555,12 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
   /// Checks user permissions before allowing location editing
   Future<void> _toggleEditLocationMode() async {
     try {
-      // Check user permissions for editing client coordinates
-      final userCode = _prefs.getUserCode();
-      if (userCode == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)?.userDataNotFound ??
-                  'Foydalanuvchi ma\'lumotlari topilmadi',
-            ),
-          ),
-        );
-        return;
-      }
-
-      // Get user permissions from data sync service
-      final permissions = await _dataSyncService.getCachedSalesReqPermissions(
-        userCode,
-      );
-      if (permissions == null || !permissions.editClientCoordinates) {
+      // V2 backend codename — staff-permissions runbook moved this
+      // gate off the legacy SOAP `SalesReqPermissions.editClient
+      // Coordinates` flag. The SOAP row is no longer authoritative
+      // for write surfaces; the codename store is.
+      final store = sl<BackendPermissionStore>();
+      if (!store.has(PermissionCodenames.customerChangeCoordinates)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -774,12 +789,13 @@ class _MapDetailPageYandexState extends State<MapDetailPageYandex> {
       if (kDebugMode) {
         print('Error saving new location: $e');
       }
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final msg = l10n != null
+          ? coordinatesSaveErrorText(l10n, e)
+          : 'Xatolik: $e';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
-          ),
-        ),
+        SnackBar(content: Text(msg)),
       );
     }
   }

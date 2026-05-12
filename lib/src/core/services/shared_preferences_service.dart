@@ -540,6 +540,14 @@ class SharedPreferencesService {
 
   /// Read the previously cached envelope. Returns `null` when the cache
   /// is empty, missing, or fails to decode.
+  ///
+  /// Logs the cached `gates.permissions` content on every HIT so the
+  /// team can quickly see — without forcing a fresh login — what V2
+  /// codenames the server actually returned for this session. This
+  /// is the single source of truth for the
+  /// `customers.change_customer_*` / `..._photo` gates the mobile UI
+  /// uses; reading from here is exactly what `BackendPermissionStore`
+  /// would do.
   LoginGatesEnvelope? getCachedGates() {
     final raw = _preferences.getString(_cachedGatesJsonKey);
     final env = LoginGatesEnvelope.tryDecode(raw);
@@ -547,8 +555,13 @@ class SharedPreferencesService {
       if (env == null) {
         print('[GATES-FLOW] 📂 getCachedGates → MISS');
       } else {
-        print('[GATES-FLOW] 📂 getCachedGates → HIT '
-            '(bypass=${env.bypass}, license_valid_to=${env.licenseValidTo})');
+        print(
+          '[GATES-FLOW] 📂 getCachedGates → HIT '
+          '(bypass=${env.bypass}, license_valid_to=${env.licenseValidTo}, '
+          'permissionsProvided=${env.permissionsProvided}, '
+          'permissions=${env.permissions}, '
+          'orgId=${env.organizationId})',
+        );
       }
     }
     return env;

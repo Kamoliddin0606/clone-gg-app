@@ -2476,6 +2476,9 @@ class AppLocalizationsUz extends AppLocalizations {
   String get syncWithDependencies => 'Bog\'liqliklar bilan sinxronlash';
 
   @override
+  String get editLocationTitle => 'Joylashuvni tahrirlash';
+
+  @override
   String get recommended => 'Tavsiya etiladi';
 
   @override
@@ -5182,4 +5185,299 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get knowledgeMandatoryBadge => 'Majburiy';
+
+  @override
+  String get customerPhotos_title => 'Mijoz rasmlari';
+
+  @override
+  String get customerPhotos_addAction => 'Rasm qo\'shish';
+
+  @override
+  String get customerPhotos_replaceAction => 'Almashtirish';
+
+  @override
+  String get customerPhotos_deleteAction => 'O\'chirish';
+
+  @override
+  String get customerPhotos_setPrimary => 'Asosiy qilish';
+
+  @override
+  String get customerPhotos_reprocess => 'Qayta ishlash';
+
+  @override
+  String customerPhotos_capBadge(int current, int max) {
+    return '$current/$max yuklandi';
+  }
+
+  @override
+  String customerPhotos_capExceeded(int current, int max) {
+    return 'Chegara to\'lgan ($current/$max)';
+  }
+
+  @override
+  String get customerPhotos_emptyState => 'Hali rasm yo\'q';
+
+  @override
+  String get customerPhotos_uploading => 'Yuklanmoqda…';
+
+  @override
+  String get customerPhotos_processing => 'Qayta ishlanmoqda…';
+
+  @override
+  String get customerPhotos_failed => 'Xato';
+
+  @override
+  String customerPhotos_failedBannerTitle(int count) {
+    return '$count ta rasm xato';
+  }
+
+  @override
+  String get customerPhotos_reprocessNotSupported => 'Qayta ishlash mumkin emas — o\'chirib qayta yuklang';
+
+  @override
+  String get customerPhotos_err_tooLarge => 'Fayl 15 MB dan katta';
+
+  @override
+  String get customerPhotos_err_invalidFormat => 'Format qo\'llab-quvvatlanmaydi: JPEG, PNG, WebP, HEIC';
+
+  @override
+  String get customerPhotos_err_dimensionsTooSmall => 'O\'lcham 200×200 dan kichik';
+
+  @override
+  String get customerPhotos_err_dimensionsTooLarge => 'O\'lcham 8000×8000 dan katta';
+
+  @override
+  String get customerPhotos_err_notFound => 'Rasm topilmadi';
+
+  @override
+  String get customerPhotos_err_permissionDenied => 'Ruxsat yo\'q';
+
+  @override
+  String get customerPhotos_err_unknown => 'Xatolik yuz berdi';
+
+  @override
+  String get customerPhotos_err_endpointNotImplemented => 'Mijoz rasmlari servisi serverda hali yo\'q. Dasturchilar jamoasi bilan bog\'laning.';
+
+  @override
+  String get customerPhotos_pickCamera => 'Kamera';
+
+  @override
+  String get customerPhotos_pickGallery => 'Galereya';
+
+  @override
+  String get customerPhotos_editAlt => 'Tavsif';
+
+  @override
+  String get customerPhotos_save => 'Saqlash';
+
+  @override
+  String get customerPhotos_confirmDeleteTitle => 'Rasmni o\'chirishni tasdiqlang';
+
+  @override
+  String get customerPhotos_confirmDeleteBody => 'Bu amalni qaytarib bo\'lmaydi.';
+
+  @override
+  String get customerPhotos_primaryBadge => 'Asosiy';
+
+  @override
+  String get customerEdit_title => 'Mijozni tahrirlash';
+
+  @override
+  String get customerCreate_title => 'Yangi mijoz';
+
+  @override
+  String get customerEdit_field_name => 'Nomi';
+
+  @override
+  String get customerEdit_field_inn => 'INN';
+
+  @override
+  String get customerEdit_field_phone => 'Telefon';
+
+  @override
+  String get customerEdit_field_address => 'Manzil';
+
+  @override
+  String get customerEdit_save => 'Saqlash';
+
+  @override
+  String get customerEdit_cancel => 'Bekor qilish';
+
+  @override
+  String get customerEdit_nameRequired => 'Nomi kiritilishi shart';
+
+  @override
+  String get customerCoordinates_title => 'Joylashuvni tahrirlash';
+
+  @override
+  String get customerCoordinates_useGps => 'Joriy joylashuvni olish';
+
+  @override
+  String get customerCoordinates_save => 'Saqlash';
+
+  @override
+  String get customerCoordinates_field_latitude => 'Kenglik (lat)';
+
+  @override
+  String get customerCoordinates_field_longitude => 'Uzunlik (lng)';
+
+  @override
+  String get customerCoordinates_invalid => 'Kordinata noto\'g\'ri (lat: -90..90, lng: -180..180)';
+
+  @override
+  String get customerCoordinates_gpsUnavailable => 'GPS koordinatasini olib bo\'lmadi';
+
+  @override
+  String get customerEditTooltip => 'Mijoz ma\'lumotini tahrirlash';
+
+  @override
+  String get customerCoordinatesEditTooltip => 'Joylashuvni tahrirlash';
+
+  @override
+  String get customerPhotosEditTooltip => 'Mijoz rasmlari';
+
+  @override
+  String get customerCreateTooltip => 'Yangi mijoz qo\'shish';
+
+  @override
+  String get customer_err_crossOrg => 'Ushbu mijoz boshqa tashkilotga tegishli';
+
+  @override
+  String get customer_err_permissionDenied => 'Ruxsat yo\'q';
+
+  @override
+  String get customer_err_notFound => 'Mijoz topilmadi';
+
+  @override
+  String get customer_err_idempotencyConflict => 'Qayta yuborishda xatolik. Yana urinib ko\'ring.';
+
+  @override
+  String get customer_err_invalidCoordinates => 'Kordinata noto\'g\'ri (lat: -90..90, lng: -180..180)';
+
+  @override
+  String get customer_err_network => 'Tarmoq xatosi. Internet ulanishingizni tekshiring.';
+
+  @override
+  String get customer_err_unknown => 'Xatolik yuz berdi';
+
+  @override
+  String get backendPermissions_sectionTitle => 'Backend ruxsatlari';
+
+  @override
+  String get backendPermissions_sectionSubtitle => 'Server JWT\'sining `gates.permissions` maydonidan kelgan codename\'lar';
+
+  @override
+  String get backendPermissions_categoryCustomers => 'Mijoz ma\'lumotlari';
+
+  @override
+  String get backendPermissions_categoryPhotos => 'Mijoz rasmlari';
+
+  @override
+  String get backendPermissions_optimisticBadge => 'Optimistik holat (server hali maydonni jo\'natmagan)';
+
+  @override
+  String backendPermissions_grantedBadge(int granted, int total) {
+    return '$granted/$total berilgan';
+  }
+
+  @override
+  String get backendPermissions_granted => 'Berilgan';
+
+  @override
+  String get backendPermissions_denied => 'Berilmagan';
+
+  @override
+  String get backendPermissions_label_customerAdd => 'Yangi mijoz qo\'shish';
+
+  @override
+  String get backendPermissions_label_customerChange => 'Mijoz ma\'lumotini tahrirlash';
+
+  @override
+  String get backendPermissions_label_customerChangeCoordinates => 'Mijoz joylashuvini tahrirlash';
+
+  @override
+  String get backendPermissions_label_customerAddPhoto => 'Mijoz rasmini yuklash';
+
+  @override
+  String get backendPermissions_label_customerChangePhoto => 'Rasm ma\'lumotini tahrirlash';
+
+  @override
+  String get backendPermissions_label_customerDeletePhoto => 'Mijoz rasmini o\'chirish';
+
+  @override
+  String get backendPermissions_label_customerReplacePhoto => 'Mijoz rasmini almashtirish';
+
+  @override
+  String get backendPermissionsSync_title => 'Backend ruxsatlari';
+
+  @override
+  String get backendPermissionsSync_subtitle => 'Har bir login / token yangilashda `gates.permissions` dan sinxron qilinadi';
+
+  @override
+  String get backendPermissionsSync_neverSynced => 'Hali sinxronlanmagan — yangilash uchun qayta kiring';
+
+  @override
+  String get backendPermissionsSync_status_ok => 'Muvaffaqiyatli sinxronlandi';
+
+  @override
+  String get backendPermissionsSync_status_failed => 'Sinxronlashda xato';
+
+  @override
+  String backendPermissionsSync_lastSync(String when) {
+    return 'So\'nggi sinxron: $when';
+  }
+
+  @override
+  String backendPermissionsSync_countLine(int granted, int total) {
+    return '$granted ta / $total ta ruxsat berilgan';
+  }
+
+  @override
+  String backendPermissionsSync_errorLine(String code) {
+    return 'So\'nggi xato: $code';
+  }
+
+  @override
+  String get customerPhotoPreview_emptyTitle => 'Hali rasm yo\'q';
+
+  @override
+  String get customerPhotoPreview_emptyHintAdd => 'Birinchi rasmni qo\'shish uchun bosing';
+
+  @override
+  String get customerPhotoPreview_emptyHintReadOnly => 'Ushbu mijoz uchun rasm yuklanmagan';
+
+  @override
+  String get customerPhotoPreview_editTooltip => 'Rasmlarni boshqarish';
+
+  @override
+  String get customerPhotoPreview_addTooltip => 'Rasm qo\'shish';
+
+  @override
+  String get customerEditBanner_title => 'Mijoz ma\'lumotini tahrirlash';
+
+  @override
+  String get customerEditBanner_body => 'Nom, INN, telefon va manzil shu yerda yangilanadi. Koordinatalar — xarita tugmasi orqali, rasmlar — galereya orqali. Klassifikator maydonlari (hudud / kanal / tur / klass) 1C dan keladi va mobile\'da o\'zgarmaydi.';
+
+  @override
+  String get coordinatesSave_err_permission_perCustomer => 'Siz ushbu mijozga agent sifatida biriktirilmagansiz, shuning uchun uning joylashuvini o\'zgartira olmaysiz. Administratorga murojaat qiling — sizni ushbu mijozga STAFF sifatida qo\'shsin.';
+
+  @override
+  String get coordinatesSave_err_crossOrg => 'Ushbu mijoz boshqa tashkilotga tegishli.';
+
+  @override
+  String get coordinatesSave_err_notFound => 'Mijoz serverda topilmadi.';
+
+  @override
+  String get coordinatesSave_err_invalidCoords => 'Koordinatalar noto\'g\'ri (lat: -90..90, lng: -180..180).';
+
+  @override
+  String get coordinatesSave_err_network => 'Tarmoq xatosi. Internet ulanishini tekshiring va qayta urinib ko\'ring.';
+
+  @override
+  String get coordinatesSave_err_serverError => 'Server xatosi (500). Dasturchi jamoasiga murojaat qiling — backend ValidationError chiqarmoqda.';
+
+  @override
+  String coordinatesSave_err_generic(String detail) {
+    return 'Joylashuvni saqlab bo\'lmadi: $detail';
+  }
 }

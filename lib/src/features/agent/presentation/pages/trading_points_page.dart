@@ -13,6 +13,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_with_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/backend_permission_store.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/permission_codenames.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
@@ -31,10 +33,13 @@ import 'package:gloria_marketing_flutter/src/core/maps/managers/marker_manager.d
     as marker_manager;
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import '../widgets/customer_coordinate_editor_launcher.dart';
+import '../widgets/customer_photo_preview.dart';
 import '../widgets/trading_points_filters_panel.dart';
 import '../widgets/visit_indicators.dart';
 import 'orders_page.dart';
 import 'contracts_page.dart';
+import 'customer_photos_page.dart';
 import '../widgets/yandex_map_builder.dart';
 import 'map_pages/map_detail_page_google.dart';
 import 'map_pages/map_detail_page_osm.dart';
@@ -149,30 +154,6 @@ ImageProvider? _clientImageProvider(String? url) {
   return FileImage(File(u));
 }
 
-/// Safely retrieves the best available photo URL for a trading point
-/// Prioritizes server image URL from database over other image sources
-/// This function handles dynamic property access safely to avoid runtime errors
-/// Returns the first non-empty, valid URL found or null if none exist
-String? _safePhotoUrl(dynamic tp) {
-  try {
-    final u = (tp as dynamic).photoUrl;
-    if (u is String && u.trim().isNotEmpty) return u;
-  } catch (_) {}
-  try {
-    final u = (tp as dynamic).imageUrl;
-    if (u is String && u.trim().isNotEmpty) return u;
-  } catch (_) {}
-  try {
-    final u = (tp as dynamic).avatar;
-    if (u is String && u.trim().isNotEmpty) return u;
-  } catch (_) {}
-  try {
-    final u = (tp as dynamic).logo;
-    if (u is String && u.trim().isNotEmpty) return u;
-  } catch (_) {}
-  return null; // yo‘q bo‘lsa — default avatar ishlatiladi
-}
-
 /// Trading Points Page - Displays list of clients with integrated client image support
 ///
 /// This page retrieves client data along with client image URLs from the database
@@ -250,9 +231,6 @@ class _TradingPointsPageState extends State<TradingPointsPage>
 
   // PageStorage bucket for state persistence
   late final PageStorageBucket _storageBucket;
-
-  // Client creation permission
-  bool _canCreateClient = false;
 
   // Newly created client code for highlighting
   String? _newlyCreatedClientCode;
@@ -342,27 +320,6 @@ class _TradingPointsPageState extends State<TradingPointsPage>
         dataSyncService: dataSyncService,
         prefs: prefs,
       );
-
-      // Load client creation permission
-      final permissions = await _permissionsService?.getPermissions();
-      if (kDebugMode) {
-        print('DEBUG FAB: permissions object: $permissions');
-        print('DEBUG FAB: mounted: $mounted');
-        if (permissions != null) {
-          print(
-            'DEBUG FAB: allowCreatingPointOfSale value: ${permissions.allowCreatingPointOfSale}',
-          );
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _canCreateClient = permissions?.allowCreatingPointOfSale ?? false;
-        });
-        if (kDebugMode) {
-          print('DEBUG FAB: _canCreateClient set to: $_canCreateClient');
-        }
-      }
 
       if (kDebugMode) {
         print('PermissionsService initialized successfully');
@@ -1672,6 +1629,8 @@ class _TradingPointsPageState extends State<TradingPointsPage>
                                         });
                                       },
                                       isNewClient: isNewClient,
+                                      onCustomerUpdated:
+                                          _onCustomerEditedFromSheet,
                                     );
                                   },
                                 ),
@@ -1722,6 +1681,8 @@ class _TradingPointsPageState extends State<TradingPointsPage>
                                       onOpenDetails: () => _openTpDetails(tp),
                                       locationService: _locationService,
                                       permissions: tp.permissions,
+                                      onCustomerUpdated:
+                                          _onCustomerEditedFromSheet,
                                     );
                                   },
                                 ),
@@ -1742,8 +1703,10 @@ class _TradingPointsPageState extends State<TradingPointsPage>
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           ),
         ),
-        // Draggable FAB overlay with smooth drag
-        if (_fabPositionLoaded)
+        // Draggable FAB overlay with smooth drag — only rendered when
+        // the user holds `customers.add_customer`. Hidden (not greyed
+        // out) for read-only agents.
+        if (_fabPositionLoaded && _canAddCustomer())
           Positioned(
             left: _fabPosition.dx == 0 ? null : _fabPosition.dx,
             top: _fabPosition.dy == 0 ? null : _fabPosition.dy,
@@ -1770,7 +1733,7 @@ class _TradingPointsPageState extends State<TradingPointsPage>
                   return Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: _isFabDragging ? null : _navigateToCreateClient,
+                      onTap: _isFabDragging ? null : _openCreateCustomerSheet,
                       customBorder: const CircleBorder(),
                       splashColor: theme.colorScheme.primary.withOpacity(0.5),
                       highlightColor: theme.colorScheme.primary.withOpacity(0.2),
@@ -1846,43 +1809,54 @@ class _TradingPointsPageState extends State<TradingPointsPage>
     );
   }
 
-  /// Navigate to create client page
-  Future<void> _navigateToCreateClient() async {
+  /// Codename gate for the FAB. Backed by [BackendPermissionStore]
+  /// (optimistic-empty during rollout — see store doc).
+  bool _canAddCustomer() =>
+      sl<BackendPermissionStore>().has(PermissionCodenames.customerAdd);
+
+  /// Refresh handler invoked after a successful customer edit or
+  /// coordinates change from one of the new sheets. Re-fetches the
+  /// trading-points list so the cards re-render with the new values.
+  Future<void> _onCustomerEditedFromSheet() async {
+    await _loadTradingPoints();
+  }
+
+  /// FAB tap handler: opens the legacy create-client page wrapped
+  /// with a V2 dual-write step (SOAP creates the customer and assigns
+  /// `code_1c`; then we mirror the new row into V2 so the codename-
+  /// gated edit / coordinates / photo surfaces work immediately for
+  /// it). On success refreshes the list and highlights the new row.
+  ///
+  /// `CreateClientPage` returns the SOAP `clientCode` (= `code_1c`)
+  /// as a String via `Navigator.pop`; we use that to drive the V2
+  /// `POST /api/mobile/v2/customers/` with the same name / inn /
+  /// phone / address / lat / lng so the two servers stay in sync.
+  Future<void> _openCreateCustomerSheet() async {
     final result = await Navigator.push<String?>(
       context,
       MaterialPageRoute(builder: (_) => const CreateClientPage()),
     );
-
-    // If a new client was created, reload data and highlight the new client
-    if (result != null && result.isNotEmpty) {
-      setState(() {
-        _newlyCreatedClientCode = result;
-      });
-
-      // Reload trading points to include the new client
-      await _loadTradingPoints();
-
-      // Show success message
+    if (result == null || result.isEmpty || !mounted) return;
+    setState(() {
+      _newlyCreatedClientCode = result;
+    });
+    await _loadTradingPoints();
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.clientCreatedSuccessfully),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+    Future.delayed(const Duration(seconds: 10), () {
       if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.clientCreatedSuccessfully),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        setState(() {
+          _newlyCreatedClientCode = null;
+        });
       }
-
-      // Clear highlight after some time
-      Future.delayed(const Duration(seconds: 10), () {
-        if (mounted) {
-          setState(() {
-            _newlyCreatedClientCode = null;
-          });
-        }
-      });
-    }
+    });
   }
 }
 
@@ -2017,6 +1991,11 @@ class TradingPointCard extends StatelessWidget {
   final SalesReqPermissions? permissions;
   final MapProvider mapProvider;
   final bool isNewClient;
+  /// Invoked after a successful customer profile or coordinates edit
+  /// from one of the new V2 backend sheets. Parent page re-fetches the
+  /// trading-points list on this callback so the card re-renders with
+  /// the latest values.
+  final VoidCallback? onCustomerUpdated;
   const TradingPointCard({
     super.key,
     required this.tradingPoint,
@@ -2035,6 +2014,7 @@ class TradingPointCard extends StatelessWidget {
     this.permissions,
     required this.mapProvider,
     this.isNewClient = false,
+    this.onCustomerUpdated,
   });
 
   @override
@@ -2379,7 +2359,103 @@ class TradingPointCard extends StatelessWidget {
           ),
         ),
       ),
+      // Customer profile edit — visible only when the user holds
+      // `customers.change_customer`. Hides entirely (does NOT grey
+      // out) when missing, matching the customer-photos UX.
+      if (_canChangeCustomer())
+        OutlinedButton.icon(
+          onPressed: () => _openCustomerEditSheet(context),
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: Text(l10n.customerEditTooltip),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      // Customer coordinates edit — separate gate from profile edit
+      // so the codename audit trail can distinguish a name fix from
+      // a location move.
+      if (_canChangeCustomerCoordinates())
+        OutlinedButton.icon(
+          onPressed: () => _openCoordinatesEditSheet(context),
+          icon: const Icon(Icons.location_on_outlined, size: 18),
+          label: Text(l10n.customerCoordinatesEditTooltip),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      // Customer photo gallery — visible only when the user has at
+      // least one of the four customer-photo codenames. Read-only
+      // agents see the gallery with no action buttons.
+      if (_hasAnyCustomerPhotoPermission())
+        OutlinedButton.icon(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CustomerPhotosPage(
+                  customerId: tradingPoint.id,
+                  customerName: tradingPoint.name,
+                ),
+              ),
+            );
+          },
+          icon: const Icon(Icons.image_outlined, size: 18),
+          label: Text(l10n.customerPhotos_title),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
     ];
+  }
+
+  bool _hasAnyCustomerPhotoPermission() {
+    final store = sl<BackendPermissionStore>();
+    return store.hasAny(PermissionCodenames.customerPhotoAny);
+  }
+
+  bool _canChangeCustomer() =>
+      sl<BackendPermissionStore>().has(PermissionCodenames.customerChange);
+
+  bool _canChangeCustomerCoordinates() => sl<BackendPermissionStore>()
+      .has(PermissionCodenames.customerChangeCoordinates);
+
+  /// Opens the create-client page in edit mode for this customer
+  /// (V2 PATCH on save). Replaces the lightweight bottom-sheet so
+  /// the form, validators, and look-and-feel match the create flow
+  /// the user is already familiar with.
+  Future<void> _openCustomerEditSheet(BuildContext context) async {
+    final updated = await Navigator.push<TradingPoint?>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            CreateClientPage(editingTradingPoint: tradingPoint),
+      ),
+    );
+    if (updated != null) {
+      onCustomerUpdated?.call();
+    }
+  }
+
+  /// Opens the existing pan-to-edit map page in edit mode. SOAP +
+  /// V2 dual-write happens inside
+  /// `DataSyncService.updateClientCoordinates` (called by the map
+  /// page's own save handler), so this site only has to launch the
+  /// page and refresh the list when the user returns.
+  Future<void> _openCoordinatesEditSheet(BuildContext context) async {
+    await openCustomerCoordinatesEditor(
+      context,
+      tradingPoint: tradingPoint,
+    );
+    onCustomerUpdated?.call();
   }
 
   /// Builds the distance display widget for list view items.
@@ -2615,26 +2691,10 @@ class TradingPointGridCard extends StatelessWidget {
     this.permissions,
   });
 
-  /// Returns the best available photo URL for the trading point
-  /// Prioritizes server image URL from database (newly added feature) over other image sources
-  /// This ensures client images from the media server are used when available
-  String? _photo(TradingPoint t) {
-    final candidates = <String?>[
-      (t as dynamic).photoUrl as String?,
-      (t as dynamic).imageUrl as String?,
-      (t as dynamic).avatarUrl as String?,
-    ];
-    for (final s in candidates) {
-      if (s != null && s.trim().isNotEmpty) return s;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final url = _photo(tradingPoint);
 
     return Card(
       elevation: 0,
@@ -2650,24 +2710,20 @@ class TradingPointGridCard extends StatelessWidget {
               children: [
                 AspectRatio(
                   aspectRatio: 16 / 10,
-                  child: url == null
-                      ? Container(
-                          color: cs.surfaceContainerHighest,
-                          child: const Icon(Icons.storefront, size: 40),
-                        )
-                      : ImageFiltered(
-                          imageFilter: tradingPoint.isVisited
-                              ? ImageFilter.blur(sigmaX: 3, sigmaY: 3)
-                              : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                          child: Image(
-                            image: _clientImageProvider(url)!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: cs.surfaceContainerHighest,
-                              child: const Icon(Icons.storefront, size: 40),
-                            ),
-                          ),
-                        ),
+                  child: ImageFiltered(
+                    imageFilter: tradingPoint.isVisited
+                        ? ImageFilter.blur(sigmaX: 3, sigmaY: 3)
+                        : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                    child: ClientImageWidget(
+                      clientCode: tradingPoint.id,
+                      size: ClientImageSize.medium,
+                      fit: BoxFit.cover,
+                      errorWidget: Container(
+                        color: cs.surfaceContainerHighest,
+                        child: const Icon(Icons.storefront, size: 40),
+                      ),
+                    ),
+                  ),
                 ),
                 if (tradingPoint.isVisited)
                   Container(
@@ -2904,6 +2960,9 @@ class _TradingPointGridTile extends StatelessWidget {
   final VoidCallback onOpenDetails;
   final LocationService? locationService;
   final SalesReqPermissions? permissions;
+  /// Invoked after a successful customer profile or coordinates edit
+  /// from one of the V2 backend sheets — parent re-fetches the list.
+  final VoidCallback? onCustomerUpdated;
   const _TradingPointGridTile({
     required this.tp,
     required this.onCall,
@@ -2914,13 +2973,58 @@ class _TradingPointGridTile extends StatelessWidget {
     required this.onOpenDetails,
     this.locationService,
     this.permissions,
+    this.onCustomerUpdated,
   });
+
+  bool _canChangeCustomer() =>
+      sl<BackendPermissionStore>().has(PermissionCodenames.customerChange);
+
+  bool _canChangeCoordinates() => sl<BackendPermissionStore>()
+      .has(PermissionCodenames.customerChangeCoordinates);
+
+  bool _canViewPhotos() => sl<BackendPermissionStore>()
+      .hasAny(PermissionCodenames.customerPhotoAny);
+
+  /// Grid-tile edit entry — delegates to [CreateClientPage] in edit
+  /// mode so list and grid stay visually consistent.
+  Future<void> _openEdit(BuildContext context) async {
+    final updated = await Navigator.push<TradingPoint?>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            CreateClientPage(editingTradingPoint: tp.tradingPoint),
+      ),
+    );
+    if (updated != null) onCustomerUpdated?.call();
+  }
+
+  /// Grid-tile variant of the coordinate editor entry-point —
+  /// delegates to the shared launcher so the map provider preference
+  /// is resolved in a single place.
+  Future<void> _openCoordinates(BuildContext context) async {
+    await openCustomerCoordinatesEditor(
+      context,
+      tradingPoint: tp.tradingPoint,
+    );
+    onCustomerUpdated?.call();
+  }
+
+  void _openPhotos(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CustomerPhotosPage(
+          customerId: tp.tradingPoint.id,
+          customerName: tp.tradingPoint.name,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final url = _safePhotoUrl(tp);
     return Card(
       // onTap: onOpenDetails,
       // borderRadius: BorderRadius.circular(16),
@@ -3016,6 +3120,10 @@ class _TradingPointGridTile extends StatelessWidget {
             ),
             // const Spacer(),
             const SizedBox(height: 6),
+            // Backend-codename-gated action row. Compact IconButtons
+            // because the grid tile is tight on space — same gate
+            // semantics as the list-mode [TradingPointCard].
+            _buildCustomerActionsRow(context),
             // // ACTIONS
             // Padding(
             //   padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -3031,6 +3139,49 @@ class _TradingPointGridTile extends StatelessWidget {
             // ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Compact horizontal row of staff-permission gated IconButtons.
+  /// Returns [SizedBox.shrink] when the user holds none of the three
+  /// codenames so the tile stays as tight as it was before this
+  /// rework.
+  Widget _buildCustomerActionsRow(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final canEdit = _canChangeCustomer();
+    final canCoord = _canChangeCoordinates();
+    final canPhoto = _canViewPhotos();
+    if (!canEdit && !canCoord && !canPhoto) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (canEdit)
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: l10n.customerEditTooltip,
+              icon: const Icon(Icons.edit_outlined, size: 20),
+              onPressed: () => _openEdit(context),
+            ),
+          if (canCoord)
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: l10n.customerCoordinatesEditTooltip,
+              icon: const Icon(Icons.location_on_outlined, size: 20),
+              onPressed: () => _openCoordinates(context),
+            ),
+          if (canPhoto)
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: l10n.customerPhotosEditTooltip,
+              icon: const Icon(Icons.image_outlined, size: 20),
+              onPressed: () => _openPhotos(context),
+            ),
+        ],
       ),
     );
   }
@@ -3236,7 +3387,6 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final url = _safePhotoUrl(widget.tradingPoint);
 
     return Material(
       color: cs.surface,
@@ -3314,6 +3464,133 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     super.initState();
     _checkLocationPermission();
     _loadDefaultMapProvider();
+    _diagnoseOpenDetail();
+  }
+
+  /// Dumps the customer's identifying fields + current backend codename
+  /// gates to the debug console the moment the detail page opens.
+  /// Helps the team match what the UI shows (rasm yo'q / edit yo'q)
+  /// against what the v2 read endpoints actually receive.
+  void _diagnoseOpenDetail() {
+    if (!kDebugMode) return;
+    final store = sl<BackendPermissionStore>();
+    final canChange =
+        store.has(PermissionCodenames.customerChange);
+    final canCoord = store.has(
+      PermissionCodenames.customerChangeCoordinates,
+    );
+    final canPhotos =
+        store.hasAny(PermissionCodenames.customerPhotoAny);
+    debugPrint(
+      '[CUSTOMER-DETAIL] 🔍 open detail\n'
+      '  tradingPoint.id (sent as code_1c) = "${widget.tradingPoint.id}"\n'
+      '  name                              = "${widget.tradingPoint.name}"\n'
+      '  inn                               = "${widget.tradingPoint.inn}"\n'
+      '  lat/lng                           = ${widget.tradingPoint.latitude}, ${widget.tradingPoint.longitude}\n'
+      '  gates: change_customer            = $canChange\n'
+      '  gates: change_customer_coords     = $canCoord\n'
+      '  gates: customerPhotoAny           = $canPhotos\n'
+      '  store granted set                 = ${store.all}',
+    );
+  }
+
+  /// Backend-codename-gated edit / coordinates / photos shortcut row,
+  /// rendered just below the client name. Returns [SizedBox.shrink]
+  /// when the user holds none of the three so read-only agents see no
+  /// gap. Mirrors the same gates the list/grid cards use.
+  Widget _buildBackendActionRow(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    final store = sl<BackendPermissionStore>();
+    final canEdit = store.has(PermissionCodenames.customerChange);
+    final canCoord =
+        store.has(PermissionCodenames.customerChangeCoordinates);
+    final canPhoto =
+        store.hasAny(PermissionCodenames.customerPhotoAny);
+    if (!canEdit && !canCoord && !canPhoto) {
+      return const SizedBox.shrink();
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        if (canEdit)
+          OutlinedButton.icon(
+            onPressed: () async {
+              final updated = await Navigator.push<TradingPoint?>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CreateClientPage(
+                    editingTradingPoint: widget.tradingPoint,
+                  ),
+                ),
+              );
+              if (updated != null && mounted) setState(() {});
+            },
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            label: Text(l10n.customerEditTooltip),
+          ),
+        if (canCoord)
+          OutlinedButton.icon(
+            onPressed: () async {
+              await openCustomerCoordinatesEditor(
+                context,
+                tradingPoint: widget.tradingPoint,
+              );
+              if (mounted) setState(() {});
+            },
+            icon: const Icon(Icons.location_on_outlined, size: 18),
+            label: Text(l10n.customerCoordinatesEditTooltip),
+          ),
+        if (canPhoto)
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CustomerPhotosPage(
+                    customerId: widget.tradingPoint.id,
+                    customerName: widget.tradingPoint.name,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.image_outlined, size: 18),
+            label: Text(l10n.customerPhotosEditTooltip),
+          ),
+      ],
+    );
+  }
+
+  /// Opens the matching map detail page in edit mode for [tradingPoint].
+  /// Permission gating happens inside the destination page; this method
+  /// simply hands off to the right map provider so the entry-button
+  /// stays provider-agnostic.
+  Future<void> _openCoordinateEditor(
+    MapProvider provider,
+    TradingPoint tradingPoint,
+  ) async {
+    Widget builder(_) {
+      switch (provider) {
+        case MapProvider.google:
+          return MapDetailPageGoogle(
+            tradingPoint: tradingPoint,
+            initialEditMode: true,
+          );
+        case MapProvider.yandex:
+          return MapDetailPageYandex(
+            tradingPoint: tradingPoint,
+            initialEditMode: true,
+          );
+        case MapProvider.openStreetMap:
+          return MapDetailPageOsm(
+            tradingPoint: tradingPoint,
+            initialEditMode: true,
+          );
+      }
+    }
+    await Navigator.of(context).push(MaterialPageRoute(builder: builder));
   }
 
   /// Validates and returns a valid LatLng, with fallback for invalid coordinates
@@ -3489,20 +3766,12 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.edit_location, color: Colors.orange),
-                  onPressed: () {
-                    // TODO: Open page to update client coordinates and send to server
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          AppLocalizations.of(
-                                context,
-                              )?.updateCoordinatesNotImplemented ??
-                              'Update coordinates - functionality to be implemented',
-                        ),
-                      ),
-                    );
-                  },
-                  tooltip: 'Update coordinates',
+                  onPressed: () => _openCoordinateEditor(
+                    MapProvider.google,
+                    widget.tradingPoint,
+                  ),
+                  tooltip: AppLocalizations.of(context)?.editLocationTitle ??
+                      'Edit location',
                   iconSize: 24,
                 ),
               ),
@@ -3597,20 +3866,12 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.edit_location, color: Colors.orange),
-                  onPressed: () {
-                    // TODO: Open page to update client coordinates and send to server
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          AppLocalizations.of(
-                                context,
-                              )?.updateCoordinatesNotImplemented ??
-                              'Update coordinates - functionality to be implemented',
-                        ),
-                      ),
-                    );
-                  },
-                  tooltip: 'Update coordinates',
+                  onPressed: () => _openCoordinateEditor(
+                    MapProvider.yandex,
+                    widget.tradingPoint,
+                  ),
+                  tooltip: AppLocalizations.of(context)?.editLocationTitle ??
+                      'Edit location',
                   iconSize: 24,
                 ),
               ),
@@ -3743,20 +4004,12 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.edit_location, color: Colors.orange),
-                    onPressed: () {
-                      // TODO: Open page to update client coordinates and send to server
-                      final l10n = AppLocalizations.of(context)!;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.updateCoordinatesNotImplemented),
-                        ),
-                      );
-                    },
-                    tooltip:
-                        AppLocalizations.of(
-                          context,
-                        )?.updateCoordinatesNotImplemented ??
-                        'Update coordinates',
+                    onPressed: () => _openCoordinateEditor(
+                      MapProvider.openStreetMap,
+                      widget.tradingPoint,
+                    ),
+                    tooltip: AppLocalizations.of(context)?.editLocationTitle ??
+                      'Edit location',
                     iconSize: 24,
                   ),
                 ),
@@ -3822,7 +4075,16 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+
+          // Backend-codename-gated action row — same set the list/grid
+          // cards expose, surfaced here so a user who opens the detail
+          // sheet from anywhere has direct access to edit / location /
+          // photos without going back. Hidden entirely when the user
+          // holds none of the three codenames (read-only agent).
+          _buildBackendActionRow(context, l10n),
+
+          const SizedBox(height: 12),
 
           // Business Information Section (Collapsible)
           _ModernCollapsibleSection(
@@ -3938,9 +4200,22 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     );
   }
 
-  /// Build client images section. Image data is fetched on demand from
-  /// `/api/mobile/v1/images/` via [ClientImageWidget].
+  /// Build client images section. Reads / writes against the V2
+  /// customer-photo endpoints (`/api/mobile/v2/customers/{code_1c}/
+  /// photos/`) via [CustomerPhotoPreview]. The legacy V1 read pipeline
+  /// is no longer consulted from this surface — the cutover moved the
+  /// gallery + edit overlay to V2 in lockstep with the new codename
+  /// gates.
+  ///
+  /// Visibility is gated by the four photo codenames the
+  /// `BackendPermissionStore` owns. A user holding none sees no
+  /// section at all (read-only agent with no photos for the customer
+  /// would otherwise stare at an empty placeholder).
   Widget _buildClientImagesSection(ThemeData theme, ColorScheme cs, AppLocalizations l10n) {
+    final store = sl<BackendPermissionStore>();
+    if (!store.hasAny(PermissionCodenames.customerPhotoAny)) {
+      return const SizedBox.shrink();
+    }
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -3956,22 +4231,20 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               children: [
                 Icon(Icons.photo_library_outlined, size: 22, color: cs.primary),
                 const SizedBox(width: 12),
-                Text(
-                  l10n.manageClientImages,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    l10n.manageClientImages,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 200,
-              child: ClientImageWidget(
-                clientCode: widget.tradingPoint.id,
-                size: ClientImageSize.large,
-                fit: BoxFit.cover,
-              ),
+            CustomerPhotoPreview(
+              customerId: widget.tradingPoint.id,
+              customerName: widget.tradingPoint.name,
             ),
           ],
         ),
@@ -4665,14 +4938,12 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final url = _safePhotoUrl(widget.tradingPoint);
 
     return SingleChildScrollView(
       child: Column(
         children: [
           // Header image with client images carousel
           _HeaderImage(
-            url: url,
             visited: widget.tradingPoint.isVisited,
             tradingPoint: widget.tradingPoint,
           ),
@@ -4750,12 +5021,10 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
 /// `/api/mobile/v1/images/` backend. The legacy multi-image auto-scrolling
 /// carousel was retired together with the legacy image API on 2026-05-08.
 class _HeaderImage extends StatelessWidget {
-  final String? url;
   final bool visited;
   final TradingPoint tradingPoint;
 
   const _HeaderImage({
-    required this.url,
     required this.visited,
     required this.tradingPoint,
   });

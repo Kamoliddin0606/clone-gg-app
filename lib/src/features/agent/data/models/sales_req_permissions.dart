@@ -3,7 +3,6 @@ class SalesReqPermissions {
   final String userCode;
   final bool skipTINduplicateCheck;
   final bool allowCreationWithoutTIN;
-  final bool allowCreatingPointOfSale;
   final bool visit;
   final bool strictSequence;
   final bool unplannedOrder;
@@ -20,7 +19,6 @@ class SalesReqPermissions {
     required this.userCode,
     required this.skipTINduplicateCheck,
     required this.allowCreationWithoutTIN,
-    required this.allowCreatingPointOfSale,
     required this.visit,
     required this.strictSequence,
     required this.unplannedOrder,
@@ -39,7 +37,6 @@ class SalesReqPermissions {
       userCode: map['user_code'] as String,
       skipTINduplicateCheck: (map['skip_tin_duplicate_check'] as int?) == 1,
       allowCreationWithoutTIN: (map['allow_creation_without_tin'] as int?) == 1,
-      allowCreatingPointOfSale: (map['allow_creating_point_of_sale'] as int?) == 1,
       visit: (map['visit'] as int?) == 1,
       strictSequence: (map['strict_sequence'] as int?) == 1,
       unplannedOrder: (map['unplanned_order'] as int?) == 1,
@@ -59,7 +56,6 @@ class SalesReqPermissions {
       'user_code': userCode,
       'skip_tin_duplicate_check': skipTINduplicateCheck ? 1 : 0,
       'allow_creation_without_tin': allowCreationWithoutTIN ? 1 : 0,
-      'allow_creating_point_of_sale': allowCreatingPointOfSale ? 1 : 0,
       'visit': visit ? 1 : 0,
       'strict_sequence': strictSequence ? 1 : 0,
       'unplanned_order': unplannedOrder ? 1 : 0,
@@ -77,7 +73,6 @@ class SalesReqPermissions {
     String? userCode,
     bool? skipTINduplicateCheck,
     bool? allowCreationWithoutTIN,
-    bool? allowCreatingPointOfSale,
     bool? visit,
     bool? strictSequence,
     bool? unplannedOrder,
@@ -94,7 +89,6 @@ class SalesReqPermissions {
       userCode: userCode ?? this.userCode,
       skipTINduplicateCheck: skipTINduplicateCheck ?? this.skipTINduplicateCheck,
       allowCreationWithoutTIN: allowCreationWithoutTIN ?? this.allowCreationWithoutTIN,
-      allowCreatingPointOfSale: allowCreatingPointOfSale ?? this.allowCreatingPointOfSale,
       visit: visit ?? this.visit,
       strictSequence: strictSequence ?? this.strictSequence,
       unplannedOrder: unplannedOrder ?? this.unplannedOrder,

@@ -2476,6 +2476,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncWithDependencies => 'Синхронизировать с зависимостями';
 
   @override
+  String get editLocationTitle => 'Изменить местоположение';
+
+  @override
   String get recommended => 'Рекомендуется';
 
   @override
@@ -5182,4 +5185,299 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get knowledgeMandatoryBadge => 'Обязательно';
+
+  @override
+  String get customerPhotos_title => 'Фотографии клиента';
+
+  @override
+  String get customerPhotos_addAction => 'Добавить фото';
+
+  @override
+  String get customerPhotos_replaceAction => 'Заменить';
+
+  @override
+  String get customerPhotos_deleteAction => 'Удалить';
+
+  @override
+  String get customerPhotos_setPrimary => 'Сделать основной';
+
+  @override
+  String get customerPhotos_reprocess => 'Переобработать';
+
+  @override
+  String customerPhotos_capBadge(int current, int max) {
+    return 'Загружено $current/$max';
+  }
+
+  @override
+  String customerPhotos_capExceeded(int current, int max) {
+    return 'Лимит исчерпан ($current/$max)';
+  }
+
+  @override
+  String get customerPhotos_emptyState => 'Фото пока нет';
+
+  @override
+  String get customerPhotos_uploading => 'Загрузка…';
+
+  @override
+  String get customerPhotos_processing => 'Обработка…';
+
+  @override
+  String get customerPhotos_failed => 'Ошибка';
+
+  @override
+  String customerPhotos_failedBannerTitle(int count) {
+    return '$count фото с ошибкой';
+  }
+
+  @override
+  String get customerPhotos_reprocessNotSupported => 'Переобработка невозможна — удалите и загрузите заново';
+
+  @override
+  String get customerPhotos_err_tooLarge => 'Файл больше 15 МБ';
+
+  @override
+  String get customerPhotos_err_invalidFormat => 'Формат не поддерживается: JPEG, PNG, WebP, HEIC';
+
+  @override
+  String get customerPhotos_err_dimensionsTooSmall => 'Размер меньше 200×200';
+
+  @override
+  String get customerPhotos_err_dimensionsTooLarge => 'Размер больше 8000×8000';
+
+  @override
+  String get customerPhotos_err_notFound => 'Фото не найдено';
+
+  @override
+  String get customerPhotos_err_permissionDenied => 'Нет доступа';
+
+  @override
+  String get customerPhotos_err_unknown => 'Произошла ошибка';
+
+  @override
+  String get customerPhotos_err_endpointNotImplemented => 'Сервис фотографий клиентов ещё не доступен на сервере. Свяжитесь с командой разработки.';
+
+  @override
+  String get customerPhotos_pickCamera => 'Камера';
+
+  @override
+  String get customerPhotos_pickGallery => 'Галерея';
+
+  @override
+  String get customerPhotos_editAlt => 'Описание';
+
+  @override
+  String get customerPhotos_save => 'Сохранить';
+
+  @override
+  String get customerPhotos_confirmDeleteTitle => 'Удалить фото?';
+
+  @override
+  String get customerPhotos_confirmDeleteBody => 'Действие нельзя отменить.';
+
+  @override
+  String get customerPhotos_primaryBadge => 'Основная';
+
+  @override
+  String get customerEdit_title => 'Редактировать клиента';
+
+  @override
+  String get customerCreate_title => 'Новый клиент';
+
+  @override
+  String get customerEdit_field_name => 'Название';
+
+  @override
+  String get customerEdit_field_inn => 'ИНН';
+
+  @override
+  String get customerEdit_field_phone => 'Телефон';
+
+  @override
+  String get customerEdit_field_address => 'Адрес';
+
+  @override
+  String get customerEdit_save => 'Сохранить';
+
+  @override
+  String get customerEdit_cancel => 'Отмена';
+
+  @override
+  String get customerEdit_nameRequired => 'Название обязательно';
+
+  @override
+  String get customerCoordinates_title => 'Изменить местоположение';
+
+  @override
+  String get customerCoordinates_useGps => 'Использовать текущее местоположение';
+
+  @override
+  String get customerCoordinates_save => 'Сохранить';
+
+  @override
+  String get customerCoordinates_field_latitude => 'Широта (lat)';
+
+  @override
+  String get customerCoordinates_field_longitude => 'Долгота (lng)';
+
+  @override
+  String get customerCoordinates_invalid => 'Неверные координаты (lat: -90..90, lng: -180..180)';
+
+  @override
+  String get customerCoordinates_gpsUnavailable => 'Не удалось получить GPS-координаты';
+
+  @override
+  String get customerEditTooltip => 'Редактировать данные клиента';
+
+  @override
+  String get customerCoordinatesEditTooltip => 'Изменить местоположение';
+
+  @override
+  String get customerPhotosEditTooltip => 'Фотографии клиента';
+
+  @override
+  String get customerCreateTooltip => 'Добавить нового клиента';
+
+  @override
+  String get customer_err_crossOrg => 'Этот клиент принадлежит другой организации';
+
+  @override
+  String get customer_err_permissionDenied => 'Нет доступа';
+
+  @override
+  String get customer_err_notFound => 'Клиент не найден';
+
+  @override
+  String get customer_err_idempotencyConflict => 'Повторная отправка не удалась. Попробуйте ещё раз.';
+
+  @override
+  String get customer_err_invalidCoordinates => 'Неверные координаты (lat: -90..90, lng: -180..180)';
+
+  @override
+  String get customer_err_network => 'Сетевая ошибка. Проверьте подключение.';
+
+  @override
+  String get customer_err_unknown => 'Произошла ошибка';
+
+  @override
+  String get backendPermissions_sectionTitle => 'Разрешения с бэкенда';
+
+  @override
+  String get backendPermissions_sectionSubtitle => 'Кодовые имена, полученные с сервера в поле JWT `gates.permissions`';
+
+  @override
+  String get backendPermissions_categoryCustomers => 'Профиль клиента';
+
+  @override
+  String get backendPermissions_categoryPhotos => 'Фотографии клиента';
+
+  @override
+  String get backendPermissions_optimisticBadge => 'Оптимистичный режим (сервер ещё не передаёт поле)';
+
+  @override
+  String backendPermissions_grantedBadge(int granted, int total) {
+    return '$granted/$total выдано';
+  }
+
+  @override
+  String get backendPermissions_granted => 'Выдано';
+
+  @override
+  String get backendPermissions_denied => 'Нет доступа';
+
+  @override
+  String get backendPermissions_label_customerAdd => 'Добавить нового клиента';
+
+  @override
+  String get backendPermissions_label_customerChange => 'Редактировать профиль клиента';
+
+  @override
+  String get backendPermissions_label_customerChangeCoordinates => 'Изменить местоположение клиента';
+
+  @override
+  String get backendPermissions_label_customerAddPhoto => 'Загрузить фото клиента';
+
+  @override
+  String get backendPermissions_label_customerChangePhoto => 'Изменить метаданные фото';
+
+  @override
+  String get backendPermissions_label_customerDeletePhoto => 'Удалить фото клиента';
+
+  @override
+  String get backendPermissions_label_customerReplacePhoto => 'Заменить фото клиента';
+
+  @override
+  String get backendPermissionsSync_title => 'Разрешения с бэкенда';
+
+  @override
+  String get backendPermissionsSync_subtitle => 'Синхронизируется из `gates.permissions` при каждом логине / обновлении токена';
+
+  @override
+  String get backendPermissionsSync_neverSynced => 'Ещё не синхронизировано — войдите снова';
+
+  @override
+  String get backendPermissionsSync_status_ok => 'Успешно синхронизировано';
+
+  @override
+  String get backendPermissionsSync_status_failed => 'Ошибка синхронизации';
+
+  @override
+  String backendPermissionsSync_lastSync(String when) {
+    return 'Последняя синхронизация: $when';
+  }
+
+  @override
+  String backendPermissionsSync_countLine(int granted, int total) {
+    return 'Выдано $granted из $total разрешений';
+  }
+
+  @override
+  String backendPermissionsSync_errorLine(String code) {
+    return 'Последняя ошибка: $code';
+  }
+
+  @override
+  String get customerPhotoPreview_emptyTitle => 'Фотографий пока нет';
+
+  @override
+  String get customerPhotoPreview_emptyHintAdd => 'Нажмите, чтобы добавить первое фото';
+
+  @override
+  String get customerPhotoPreview_emptyHintReadOnly => 'Для этого клиента фото не загружены';
+
+  @override
+  String get customerPhotoPreview_editTooltip => 'Управление фото';
+
+  @override
+  String get customerPhotoPreview_addTooltip => 'Добавить фото';
+
+  @override
+  String get customerEditBanner_title => 'Редактировать данные клиента';
+
+  @override
+  String get customerEditBanner_body => 'Название, ИНН, телефон и адрес обновляются здесь. Координаты — через кнопку карты, фото — через галерею. Поля классификатора (регион / канал / тип / класс) приходят из 1C и недоступны для редактирования на мобильном.';
+
+  @override
+  String get coordinatesSave_err_permission_perCustomer => 'Вы не назначены агентом этого клиента, поэтому не можете изменить его координаты. Обратитесь к администратору — пусть назначит вас сотрудником данного клиента.';
+
+  @override
+  String get coordinatesSave_err_crossOrg => 'Этот клиент принадлежит другой организации.';
+
+  @override
+  String get coordinatesSave_err_notFound => 'Клиент не найден на сервере.';
+
+  @override
+  String get coordinatesSave_err_invalidCoords => 'Неверные координаты (lat: -90..90, lng: -180..180).';
+
+  @override
+  String get coordinatesSave_err_network => 'Сетевая ошибка. Проверьте подключение и попробуйте ещё раз.';
+
+  @override
+  String get coordinatesSave_err_serverError => 'Серверная ошибка (500). Свяжитесь с командой разработки — бэкенд бросает ValidationError.';
+
+  @override
+  String coordinatesSave_err_generic(String detail) {
+    return 'Не удалось сохранить координаты: $detail';
+  }
 }

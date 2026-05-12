@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/backend_permission_store.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_failure.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_device_payload.dart';
@@ -1007,8 +1009,20 @@ class TokenService {
             final envelope = LoginGatesEnvelope.fromJson(data);
             await _prefsService.setCachedGates(envelope);
             await _prefsService.setCachedDeviceBinding(envelope.device);
+            _logPermissionsFromEnvelope(
+              source: 'POST $url',
+              data: data,
+              envelope: envelope,
+            );
+            await _syncBackendPermissions(
+              envelope.permissions,
+              provided: envelope.permissionsProvided,
+            );
           } catch (_) {
-            // Backend may not return gates yet — non-fatal.
+            // Backend may not return gates yet — non-fatal. Still
+            // record the failure so the "Backend ruxsatlari" sync
+            // card in the settings tab reflects it.
+            await _recordBackendPermissionsFailure('parse_error');
           }
           _lastV2LoginFailure = null;
           if (kDebugMode) {
@@ -1068,6 +1082,101 @@ class TokenService {
   /// SharedPreferences directly.
   LoginGatesEnvelope? getCachedGates() => _prefsService.getCachedGates();
 
+  /// Sync the backend-sourced permission codenames after every login /
+  /// refresh. Tolerant of the store not being registered yet (defensive
+  /// during unit tests / staged rollout): a failure here must never
+  /// take the auth pipeline down.
+  Future<void> _syncBackendPermissions(
+    List<String> permissions, {
+    required bool provided,
+  }) async {
+    try {
+      if (GetIt.I.isRegistered<BackendPermissionStore>()) {
+        await GetIt.I<BackendPermissionStore>()
+            .replaceFromLogin(permissions, provided: provided);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+          '[GATES-FLOW] ⚠️  BackendPermissionStore sync failed: $e',
+        );
+      }
+      await _recordBackendPermissionsFailure('store_write_error');
+    }
+  }
+
+  /// Curated debug dump of the V2 permission payload returned by the
+  /// auth endpoints. Shows exactly which API supplied the codenames
+  /// and what the server actually sent — used to diagnose mismatches
+  /// between mobile gates and backend RBAC (e.g. 403 on PATCH after
+  /// mobile thought the user held the codename).
+  ///
+  /// Logs three layers:
+  /// 1. Source endpoint (e.g. `POST .../api/auth/token/`).
+  /// 2. Raw `gates.permissions` field as returned (or "missing").
+  /// 3. Parsed envelope fields the mobile will use
+  ///    (`permissions`, `permissionsProvided`, `organizationId`, etc.).
+  ///
+  /// Backend reference:
+  /// - Endpoint handler: `api/auth/token/` and `.../refresh/` views in
+  ///   the `auth` Django app. They embed `gates` into the response
+  ///   alongside the JWT `access` / `refresh` strings.
+  /// - `gates.permissions` is computed server-side from the user's
+  ///   Django auth permissions (`User.user_permissions` +
+  ///   `Group.permissions` joined), filtered to the `customers.*`
+  ///   namespace by the staff-permissions runbook. The list is a
+  ///   flat array of dotted codenames; absence of the field means
+  ///   the server has not yet shipped the staff-permissions feature
+  ///   (rollout window) — see backend runbook §"Login gates".
+  void _logPermissionsFromEnvelope({
+    required String source,
+    required Map<String, dynamic> data,
+    required LoginGatesEnvelope envelope,
+  }) {
+    if (!kDebugMode) return;
+    final gatesRaw = data['gates'];
+    final permissionsRaw = gatesRaw is Map<String, dynamic>
+        ? gatesRaw['permissions']
+        : null;
+    final permissionsType = permissionsRaw == null
+        ? 'MISSING'
+        : '${permissionsRaw.runtimeType}';
+    debugPrint(
+      '═══════════════════════════════════════════════════════════════\n'
+      '[GATES-FLOW] 🔑 V2 PERMISSIONS RESPONSE\n'
+      '  source                : $source\n'
+      '  raw gates.permissions : $permissionsRaw\n'
+      '  raw type              : $permissionsType\n'
+      '  parsed permissions    : ${envelope.permissions}\n'
+      '  permissions count     : ${envelope.permissions.length}\n'
+      '  permissionsProvided   : ${envelope.permissionsProvided}\n'
+      '  organization_id       : ${envelope.organizationId}\n'
+      '  bypass (superuser)    : ${envelope.bypass}\n'
+      '  user_active_end       : ${envelope.userActiveEnd}\n'
+      '  license_valid_to      : ${envelope.licenseValidTo}\n'
+      '  server_time           : ${envelope.serverTime}\n'
+      '  ──── backend source ────\n'
+      '  Django view: `api/auth/token/` (and `.../refresh/`)\n'
+      '  Permissions: User.user_permissions ∪ Group.permissions\n'
+      '                filtered to `customers.*` codenames\n'
+      '═══════════════════════════════════════════════════════════════',
+    );
+  }
+
+  /// Mirror of [_syncBackendPermissions] for the failure path —
+  /// surfaces a "failed" event in the sync card without overwriting
+  /// the last-known granted set. Used when the envelope itself was
+  /// unparseable (backend rollout still in flight, transient corruption).
+  Future<void> _recordBackendPermissionsFailure(String code) async {
+    try {
+      if (GetIt.I.isRegistered<BackendPermissionStore>()) {
+        await GetIt.I<BackendPermissionStore>().recordFailure(code);
+      }
+    } catch (_) {
+      // Telemetry path only — never throw further up the auth stack.
+    }
+  }
+
   /// Map a Dio failure to an [AuthFailure]. HTTP error envelopes carry
   /// `error.code`; pure transport failures fall through to [NetworkFailure].
   AuthFailure _mapDioToFailure(DioException e) {
@@ -1124,8 +1233,19 @@ class TokenService {
             final envelope = LoginGatesEnvelope.fromJson(data);
             await _prefsService.setCachedGates(envelope);
             await _prefsService.setCachedDeviceBinding(envelope.device);
+            _logPermissionsFromEnvelope(
+              source: 'POST $url (refresh)',
+              data: data,
+              envelope: envelope,
+            );
+            await _syncBackendPermissions(
+              envelope.permissions,
+              provided: envelope.permissionsProvided,
+            );
           } catch (_) {
-            // Skip silently when payload omits gates.
+            // Skip silently when payload omits gates — but reflect
+            // the missed refresh in the permissions sync card.
+            await _recordBackendPermissionsFailure('parse_error');
           }
           _lastV2RefreshFailure = null;
           if (kDebugMode) {

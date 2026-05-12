@@ -2476,6 +2476,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncWithDependencies => 'Sync with dependencies';
 
   @override
+  String get editLocationTitle => 'Edit location';
+
+  @override
   String get recommended => 'Recommended';
 
   @override
@@ -5182,4 +5185,299 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeMandatoryBadge => 'Mandatory';
+
+  @override
+  String get customerPhotos_title => 'Customer photos';
+
+  @override
+  String get customerPhotos_addAction => 'Add photo';
+
+  @override
+  String get customerPhotos_replaceAction => 'Replace';
+
+  @override
+  String get customerPhotos_deleteAction => 'Delete';
+
+  @override
+  String get customerPhotos_setPrimary => 'Set as primary';
+
+  @override
+  String get customerPhotos_reprocess => 'Reprocess';
+
+  @override
+  String customerPhotos_capBadge(int current, int max) {
+    return '$current/$max uploaded';
+  }
+
+  @override
+  String customerPhotos_capExceeded(int current, int max) {
+    return 'Limit reached ($current/$max)';
+  }
+
+  @override
+  String get customerPhotos_emptyState => 'No photos yet';
+
+  @override
+  String get customerPhotos_uploading => 'Uploading…';
+
+  @override
+  String get customerPhotos_processing => 'Processing…';
+
+  @override
+  String get customerPhotos_failed => 'Failed';
+
+  @override
+  String customerPhotos_failedBannerTitle(int count) {
+    return '$count photos failed';
+  }
+
+  @override
+  String get customerPhotos_reprocessNotSupported => 'Reprocessing not supported — delete and re-upload';
+
+  @override
+  String get customerPhotos_err_tooLarge => 'File is larger than 15 MB';
+
+  @override
+  String get customerPhotos_err_invalidFormat => 'Format not supported: JPEG, PNG, WebP, HEIC';
+
+  @override
+  String get customerPhotos_err_dimensionsTooSmall => 'Dimensions smaller than 200×200';
+
+  @override
+  String get customerPhotos_err_dimensionsTooLarge => 'Dimensions larger than 8000×8000';
+
+  @override
+  String get customerPhotos_err_notFound => 'Photo not found';
+
+  @override
+  String get customerPhotos_err_permissionDenied => 'No permission';
+
+  @override
+  String get customerPhotos_err_unknown => 'Something went wrong';
+
+  @override
+  String get customerPhotos_err_endpointNotImplemented => 'Customer photo service is not yet available on the server. Contact the development team.';
+
+  @override
+  String get customerPhotos_pickCamera => 'Camera';
+
+  @override
+  String get customerPhotos_pickGallery => 'Gallery';
+
+  @override
+  String get customerPhotos_editAlt => 'Description';
+
+  @override
+  String get customerPhotos_save => 'Save';
+
+  @override
+  String get customerPhotos_confirmDeleteTitle => 'Delete this photo?';
+
+  @override
+  String get customerPhotos_confirmDeleteBody => 'This action cannot be undone.';
+
+  @override
+  String get customerPhotos_primaryBadge => 'Primary';
+
+  @override
+  String get customerEdit_title => 'Edit customer';
+
+  @override
+  String get customerCreate_title => 'New customer';
+
+  @override
+  String get customerEdit_field_name => 'Name';
+
+  @override
+  String get customerEdit_field_inn => 'INN';
+
+  @override
+  String get customerEdit_field_phone => 'Phone';
+
+  @override
+  String get customerEdit_field_address => 'Address';
+
+  @override
+  String get customerEdit_save => 'Save';
+
+  @override
+  String get customerEdit_cancel => 'Cancel';
+
+  @override
+  String get customerEdit_nameRequired => 'Name is required';
+
+  @override
+  String get customerCoordinates_title => 'Edit location';
+
+  @override
+  String get customerCoordinates_useGps => 'Use current location';
+
+  @override
+  String get customerCoordinates_save => 'Save';
+
+  @override
+  String get customerCoordinates_field_latitude => 'Latitude';
+
+  @override
+  String get customerCoordinates_field_longitude => 'Longitude';
+
+  @override
+  String get customerCoordinates_invalid => 'Invalid coordinates (lat: -90..90, lng: -180..180)';
+
+  @override
+  String get customerCoordinates_gpsUnavailable => 'Could not read GPS position';
+
+  @override
+  String get customerEditTooltip => 'Edit customer profile';
+
+  @override
+  String get customerCoordinatesEditTooltip => 'Edit location';
+
+  @override
+  String get customerPhotosEditTooltip => 'Customer photos';
+
+  @override
+  String get customerCreateTooltip => 'Add new customer';
+
+  @override
+  String get customer_err_crossOrg => 'This customer belongs to another organization';
+
+  @override
+  String get customer_err_permissionDenied => 'No permission';
+
+  @override
+  String get customer_err_notFound => 'Customer not found';
+
+  @override
+  String get customer_err_idempotencyConflict => 'Retry failed. Please try again.';
+
+  @override
+  String get customer_err_invalidCoordinates => 'Invalid coordinates (lat: -90..90, lng: -180..180)';
+
+  @override
+  String get customer_err_network => 'Network error. Please check your connection.';
+
+  @override
+  String get customer_err_unknown => 'Something went wrong';
+
+  @override
+  String get backendPermissions_sectionTitle => 'Backend permissions';
+
+  @override
+  String get backendPermissions_sectionSubtitle => 'Codenames received from the server in the JWT `gates.permissions` field';
+
+  @override
+  String get backendPermissions_categoryCustomers => 'Customer profile';
+
+  @override
+  String get backendPermissions_categoryPhotos => 'Customer photos';
+
+  @override
+  String get backendPermissions_optimisticBadge => 'Optimistic (server has not yet shipped the field)';
+
+  @override
+  String backendPermissions_grantedBadge(int granted, int total) {
+    return '$granted/$total granted';
+  }
+
+  @override
+  String get backendPermissions_granted => 'Granted';
+
+  @override
+  String get backendPermissions_denied => 'Denied';
+
+  @override
+  String get backendPermissions_label_customerAdd => 'Add new customer';
+
+  @override
+  String get backendPermissions_label_customerChange => 'Edit customer profile';
+
+  @override
+  String get backendPermissions_label_customerChangeCoordinates => 'Edit customer location';
+
+  @override
+  String get backendPermissions_label_customerAddPhoto => 'Upload customer photo';
+
+  @override
+  String get backendPermissions_label_customerChangePhoto => 'Edit photo metadata';
+
+  @override
+  String get backendPermissions_label_customerDeletePhoto => 'Delete customer photo';
+
+  @override
+  String get backendPermissions_label_customerReplacePhoto => 'Replace customer photo';
+
+  @override
+  String get backendPermissionsSync_title => 'Backend permissions';
+
+  @override
+  String get backendPermissionsSync_subtitle => 'Synced from `gates.permissions` on every login / token refresh';
+
+  @override
+  String get backendPermissionsSync_neverSynced => 'Not yet synced — log in to refresh';
+
+  @override
+  String get backendPermissionsSync_status_ok => 'Synced successfully';
+
+  @override
+  String get backendPermissionsSync_status_failed => 'Sync failed';
+
+  @override
+  String backendPermissionsSync_lastSync(String when) {
+    return 'Last sync: $when';
+  }
+
+  @override
+  String backendPermissionsSync_countLine(int granted, int total) {
+    return '$granted of $total permission(s) granted';
+  }
+
+  @override
+  String backendPermissionsSync_errorLine(String code) {
+    return 'Last error: $code';
+  }
+
+  @override
+  String get customerPhotoPreview_emptyTitle => 'No photos yet';
+
+  @override
+  String get customerPhotoPreview_emptyHintAdd => 'Tap to add the first photo';
+
+  @override
+  String get customerPhotoPreview_emptyHintReadOnly => 'No photos uploaded for this customer';
+
+  @override
+  String get customerPhotoPreview_editTooltip => 'Manage photos';
+
+  @override
+  String get customerPhotoPreview_addTooltip => 'Add photo';
+
+  @override
+  String get customerEditBanner_title => 'Edit customer info';
+
+  @override
+  String get customerEditBanner_body => 'Name, INN, phone and address are updated here. Coordinates change via the map button, photos via the gallery. Classifier fields (region / channel / type / class) come from 1C and stay read-only on mobile.';
+
+  @override
+  String get coordinatesSave_err_permission_perCustomer => 'You are not assigned as the agent for this customer, so you can not move its pin. Contact the supervisor to be added as staff for this customer.';
+
+  @override
+  String get coordinatesSave_err_crossOrg => 'This customer belongs to another organization.';
+
+  @override
+  String get coordinatesSave_err_notFound => 'Customer not found on the server.';
+
+  @override
+  String get coordinatesSave_err_invalidCoords => 'Invalid coordinates (lat: -90..90, lng: -180..180).';
+
+  @override
+  String get coordinatesSave_err_network => 'Network error. Check your connection and try again.';
+
+  @override
+  String get coordinatesSave_err_serverError => 'Server error (500). Contact the dev team — backend is raising a ValidationError.';
+
+  @override
+  String coordinatesSave_err_generic(String detail) {
+    return 'Could not save location: $detail';
+  }
 }

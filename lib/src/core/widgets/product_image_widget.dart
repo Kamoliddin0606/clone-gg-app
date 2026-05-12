@@ -139,7 +139,7 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
   Future<void> _loadImage() async {
     if (widget.productCode.isEmpty) {
       if (kDebugMode) {
-        debugPrint('ProductImageWidget: empty productCode');
+        debugPrint('[IMG-DIAG] ProductImageWidget: empty productCode → fail-closed');
       }
       if (!mounted) return;
       setState(() {
@@ -147,6 +147,17 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
         _hasError = true;
       });
       return;
+    }
+
+    final orgId = _resolveOrgId();
+    if (kDebugMode) {
+      debugPrint(
+        '[IMG-DIAG] ProductImageWidget._loadImage: '
+        'code="${widget.productCode}" '
+        'orgIdResolved="$orgId" '
+        'orgIdLength=${orgId.length} '
+        'orgFromContext=${sl.isRegistered<AgentOrganizationContext>() ? sl<AgentOrganizationContext>().primaryOrganizationId : "<context-not-registered>"}',
+      );
     }
 
     setState(() {
@@ -161,9 +172,26 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
       final image = await _repo.primaryForTarget(
         targetType: ImageTargetType.product,
         targetCode1c: widget.productCode,
-        targetOrganizationId: _resolveOrgId(),
+        targetOrganizationId: orgId,
         cancelToken: _cancelToken,
       );
+
+      if (kDebugMode) {
+        if (image == null) {
+          debugPrint(
+            '[IMG-DIAG] ProductImageWidget result: code="${widget.productCode}" '
+            '→ NULL (no primary image returned)',
+          );
+        } else {
+          debugPrint(
+            '[IMG-DIAG] ProductImageWidget result: code="${widget.productCode}" '
+            '→ id=${image.id} '
+            'hasUrl=${image.hasUrl} '
+            'small=${image.smallUrl?.substring(0, image.smallUrl!.length > 60 ? 60 : image.smallUrl!.length)} '
+            'medium=${image.mediumUrl?.substring(0, image.mediumUrl!.length > 60 ? 60 : image.mediumUrl!.length)}',
+          );
+        }
+      }
 
       if (!mounted) return;
       setState(() {
@@ -177,7 +205,7 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
     } catch (e) {
       if (e is DioException && CancelToken.isCancel(e)) return;
       if (kDebugMode) {
-        debugPrint('ProductImageWidget: error loading image: $e');
+        debugPrint('[IMG-DIAG] ProductImageWidget EXCEPTION code="${widget.productCode}": $e');
       }
       if (!mounted) return;
       setState(() {

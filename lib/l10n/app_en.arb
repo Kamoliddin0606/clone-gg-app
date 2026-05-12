@@ -1221,6 +1221,7 @@
     }
   },
   "syncWithDependencies": "Sync with dependencies",
+  "editLocationTitle": "Edit location",
   "recommended": "Recommended",
   "syncTableOnly": "Sync table only",
   "syncWarning": "May fail if dependencies not synced",
@@ -2782,5 +2783,145 @@
   "knowledgeOpenInBrowser": "Open in browser",
   "knowledgeFilterAll": "All",
   "knowledgePinnedBadge": "Pinned",
-  "knowledgeMandatoryBadge": "Mandatory"
+  "knowledgeMandatoryBadge": "Mandatory",
+  "customerPhotos_title": "Customer photos",
+  "customerPhotos_addAction": "Add photo",
+  "customerPhotos_replaceAction": "Replace",
+  "customerPhotos_deleteAction": "Delete",
+  "customerPhotos_setPrimary": "Set as primary",
+  "customerPhotos_reprocess": "Reprocess",
+  "customerPhotos_capBadge": "{current}/{max} uploaded",
+  "@customerPhotos_capBadge": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "customerPhotos_capExceeded": "Limit reached ({current}/{max})",
+  "@customerPhotos_capExceeded": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "customerPhotos_emptyState": "No photos yet",
+  "customerPhotos_uploading": "Uploading…",
+  "customerPhotos_processing": "Processing…",
+  "customerPhotos_failed": "Failed",
+  "customerPhotos_failedBannerTitle": "{count} photos failed",
+  "@customerPhotos_failedBannerTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "customerPhotos_reprocessNotSupported": "Reprocessing not supported — delete and re-upload",
+  "customerPhotos_err_tooLarge": "File is larger than 15 MB",
+  "customerPhotos_err_invalidFormat": "Format not supported: JPEG, PNG, WebP, HEIC",
+  "customerPhotos_err_dimensionsTooSmall": "Dimensions smaller than 200×200",
+  "customerPhotos_err_dimensionsTooLarge": "Dimensions larger than 8000×8000",
+  "customerPhotos_err_notFound": "Photo not found",
+  "customerPhotos_err_permissionDenied": "No permission",
+  "customerPhotos_err_unknown": "Something went wrong",
+  "customerPhotos_err_endpointNotImplemented": "Customer photo service is not yet available on the server. Contact the development team.",
+  "customerPhotos_pickCamera": "Camera",
+  "customerPhotos_pickGallery": "Gallery",
+  "customerPhotos_editAlt": "Description",
+  "customerPhotos_save": "Save",
+  "customerPhotos_confirmDeleteTitle": "Delete this photo?",
+  "customerPhotos_confirmDeleteBody": "This action cannot be undone.",
+  "customerPhotos_primaryBadge": "Primary",
+
+  "customerEdit_title": "Edit customer",
+  "customerCreate_title": "New customer",
+  "customerEdit_field_name": "Name",
+  "customerEdit_field_inn": "INN",
+  "customerEdit_field_phone": "Phone",
+  "customerEdit_field_address": "Address",
+  "customerEdit_save": "Save",
+  "customerEdit_cancel": "Cancel",
+  "customerEdit_nameRequired": "Name is required",
+
+  "customerCoordinates_title": "Edit location",
+  "customerCoordinates_useGps": "Use current location",
+  "customerCoordinates_save": "Save",
+  "customerCoordinates_field_latitude": "Latitude",
+  "customerCoordinates_field_longitude": "Longitude",
+  "customerCoordinates_invalid": "Invalid coordinates (lat: -90..90, lng: -180..180)",
+  "customerCoordinates_gpsUnavailable": "Could not read GPS position",
+
+  "customerEditTooltip": "Edit customer profile",
+  "customerCoordinatesEditTooltip": "Edit location",
+  "customerPhotosEditTooltip": "Customer photos",
+  "customerCreateTooltip": "Add new customer",
+
+  "customer_err_crossOrg": "This customer belongs to another organization",
+  "customer_err_permissionDenied": "No permission",
+  "customer_err_notFound": "Customer not found",
+  "customer_err_idempotencyConflict": "Retry failed. Please try again.",
+  "customer_err_invalidCoordinates": "Invalid coordinates (lat: -90..90, lng: -180..180)",
+  "customer_err_network": "Network error. Please check your connection.",
+  "customer_err_unknown": "Something went wrong",
+
+  "backendPermissions_sectionTitle": "Backend permissions",
+  "backendPermissions_sectionSubtitle": "Codenames received from the server in the JWT `gates.permissions` field",
+  "backendPermissions_categoryCustomers": "Customer profile",
+  "backendPermissions_categoryPhotos": "Customer photos",
+  "backendPermissions_optimisticBadge": "Optimistic (server has not yet shipped the field)",
+  "backendPermissions_grantedBadge": "{granted}/{total} granted",
+  "@backendPermissions_grantedBadge": {
+    "placeholders": {
+      "granted": { "type": "int" },
+      "total":   { "type": "int" }
+    }
+  },
+  "backendPermissions_granted": "Granted",
+  "backendPermissions_denied": "Denied",
+  "backendPermissions_label_customerAdd": "Add new customer",
+  "backendPermissions_label_customerChange": "Edit customer profile",
+  "backendPermissions_label_customerChangeCoordinates": "Edit customer location",
+  "backendPermissions_label_customerAddPhoto": "Upload customer photo",
+  "backendPermissions_label_customerChangePhoto": "Edit photo metadata",
+  "backendPermissions_label_customerDeletePhoto": "Delete customer photo",
+  "backendPermissions_label_customerReplacePhoto": "Replace customer photo",
+
+  "backendPermissionsSync_title": "Backend permissions",
+  "backendPermissionsSync_subtitle": "Synced from `gates.permissions` on every login / token refresh",
+  "backendPermissionsSync_neverSynced": "Not yet synced — log in to refresh",
+  "backendPermissionsSync_status_ok": "Synced successfully",
+  "backendPermissionsSync_status_failed": "Sync failed",
+  "backendPermissionsSync_lastSync": "Last sync: {when}",
+  "@backendPermissionsSync_lastSync": {
+    "placeholders": { "when": { "type": "String" } }
+  },
+  "backendPermissionsSync_countLine": "{granted} of {total} permission(s) granted",
+  "@backendPermissionsSync_countLine": {
+    "placeholders": {
+      "granted": { "type": "int" },
+      "total":   { "type": "int" }
+    }
+  },
+  "backendPermissionsSync_errorLine": "Last error: {code}",
+  "@backendPermissionsSync_errorLine": {
+    "placeholders": { "code": { "type": "String" } }
+  },
+
+  "customerPhotoPreview_emptyTitle": "No photos yet",
+  "customerPhotoPreview_emptyHintAdd": "Tap to add the first photo",
+  "customerPhotoPreview_emptyHintReadOnly": "No photos uploaded for this customer",
+  "customerPhotoPreview_editTooltip": "Manage photos",
+  "customerPhotoPreview_addTooltip": "Add photo",
+
+  "customerEditBanner_title": "Edit customer info",
+  "customerEditBanner_body": "Name, INN, phone and address are updated here. Coordinates change via the map button, photos via the gallery. Classifier fields (region / channel / type / class) come from 1C and stay read-only on mobile.",
+
+  "coordinatesSave_err_permission_perCustomer": "You are not assigned as the agent for this customer, so you can not move its pin. Contact the supervisor to be added as staff for this customer.",
+  "coordinatesSave_err_crossOrg": "This customer belongs to another organization.",
+  "coordinatesSave_err_notFound": "Customer not found on the server.",
+  "coordinatesSave_err_invalidCoords": "Invalid coordinates (lat: -90..90, lng: -180..180).",
+  "coordinatesSave_err_network": "Network error. Check your connection and try again.",
+  "coordinatesSave_err_serverError": "Server error (500). Contact the dev team — backend is raising a ValidationError.",
+  "coordinatesSave_err_generic": "Could not save location: {detail}",
+  "@coordinatesSave_err_generic": {
+    "placeholders": { "detail": { "type": "String" } }
+  }
 }

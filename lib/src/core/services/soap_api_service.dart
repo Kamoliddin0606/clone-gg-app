@@ -1314,6 +1314,20 @@ class SoapApiService {
     }
   }
 
+  /// Escapes XML-significant characters in user-entered values so they
+  /// can be safely interpolated into a SOAP envelope. Without this, a
+  /// `&`, `<`, `>`, `"` or `'` in a field like Name/Address breaks the
+  /// envelope and 1C responds with "неизвестный параметр".
+  String _xmlEscape(String? s) {
+    if (s == null) return '';
+    return s
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&apos;');
+  }
+
   /// Helper method to format DateTime to YYYYMMDDHHmmss string format
   /// This method converts a DateTime object to a string in the format required by the server API
   /// Format: YYYYMMDDHHmmss (e.g., "20251203142530" for December 3, 2025 14:25:30)
@@ -1562,12 +1576,6 @@ class SoapApiService {
             'm:AllowCreationWithoutTIN',
           )?.toLowerCase() ==
           'true';
-      final allowCreatingPointOfSale =
-          _getElementText(
-            returnElement,
-            'm:AllowCreatingPointOfSale',
-          )?.toLowerCase() ==
-          'true';
       final visit =
           _getElementText(returnElement, 'm:Visit')?.toLowerCase() == 'true';
       final strictSequence =
@@ -1621,7 +1629,6 @@ class SoapApiService {
             'userCode': userCode,
             'skipTINduplicateCheck': skipTINduplicateCheck,
             'allowCreationWithoutTIN': allowCreationWithoutTIN,
-            'allowCreatingPointOfSale': allowCreatingPointOfSale,
             'visit': visit,
             'strictSequence': strictSequence,
             'unplannedOrder': unplannedOrder,
@@ -1638,7 +1645,6 @@ class SoapApiService {
           'userCode': userCode,
           'skipTINduplicateCheck': skipTINduplicateCheck,
           'allowCreationWithoutTIN': allowCreationWithoutTIN,
-          'allowCreatingPointOfSale': allowCreatingPointOfSale,
           'visit': visit,
           'strictSequence': strictSequence,
           'unplannedOrder': unplannedOrder,
@@ -2857,38 +2863,37 @@ class SoapApiService {
    <soap:Header/>
    <soap:Body>
       <sam:SetClient>
-         <sam:Name>$name</sam:Name>
-         <sam:Signboard>$signboard</sam:Signboard>
-         <sam:INN>$inn</sam:INN>
-         <sam:TradePointType>$tradePointType</sam:TradePointType>
-         <sam:ContactPerson>$contactPerson</sam:ContactPerson>
-         <sam:ContactPersonPhone>$contactPersonPhone</sam:ContactPersonPhone>
-         <sam:Adress>$address</sam:Adress>
-         <sam:AdressDelivery>$addressDelivery</sam:AdressDelivery>
-         <sam:ReferencePoint>$referencePoint</sam:ReferencePoint>
-         <sam:ResponsiblePersonPhone>$responsiblePersonPhone</sam:ResponsiblePersonPhone>
+         <sam:Name>${_xmlEscape(name)}</sam:Name>
+         <sam:Signboard>${_xmlEscape(signboard)}</sam:Signboard>
+         <sam:INN>${_xmlEscape(inn)}</sam:INN>
+         <sam:TradePointType>${_xmlEscape(tradePointType)}</sam:TradePointType>
+         <sam:ContactPerson>${_xmlEscape(contactPerson)}</sam:ContactPerson>
+         <sam:ContactPersonPhone>${_xmlEscape(contactPersonPhone)}</sam:ContactPersonPhone>
+         <sam:Adress>${_xmlEscape(address)}</sam:Adress>
+         <sam:AdressDelivery>${_xmlEscape(addressDelivery)}</sam:AdressDelivery>
+         <sam:ReferencePoint>${_xmlEscape(referencePoint)}</sam:ReferencePoint>
+         <sam:ResponsiblePersonPhone>${_xmlEscape(responsiblePersonPhone)}</sam:ResponsiblePersonPhone>
          <sam:Longitude>$longitude</sam:Longitude>
          <sam:Latitude>$latitude</sam:Latitude>
-         <sam:CodeUser>$codeUser</sam:CodeUser>
-         <sam:CodeRegion>$codeRegion</sam:CodeRegion>
-         <sam:Director>${director ?? ''}</sam:Director>
-         <sam:MFO>${mfo ?? ''}</sam:MFO>
-         <sam:BankAccount>${bankAccount ?? ''}</sam:BankAccount>
-         <sam:SalesChannel>${channelCode ?? ''}</sam:SalesChannel>
-         <sam:Class>${clientClass ?? ''}</sam:Class>
+         <sam:CodeUser>${_xmlEscape(codeUser)}</sam:CodeUser>
+         <sam:CodeRegion>${_xmlEscape(codeRegion)}</sam:CodeRegion>
+         <sam:Director>${_xmlEscape(director)}</sam:Director>
+         <sam:MFO>${_xmlEscape(mfo)}</sam:MFO>
+         <sam:BankAccount>${_xmlEscape(bankAccount)}</sam:BankAccount>
+         <sam:SalesChannel>${_xmlEscape(channelCode)}</sam:SalesChannel>
+         <sam:Class>${_xmlEscape(clientClass)}</sam:Class>
       </sam:SetClient>
    </soap:Body>
 </soap:Envelope>
 ''';
 
-    // Suppressed: SOAP envelope dump is too large for the terminal.
-    // if (kDebugMode) {
-    //   print('═══════════════════════════════════════════════════════════════');
-    //   print('SOAP REQUEST - SetClient');
-    //   print('═══════════════════════════════════════════════════════════════');
-    //   print(soapEnvelope);
-    //   print('═══════════════════════════════════════════════════════════════');
-    // }
+    if (kDebugMode) {
+      print('═══════════════════════════════════════════════════════════════');
+      print('SOAP REQUEST - SetClient');
+      print('═══════════════════════════════════════════════════════════════');
+      print(soapEnvelope);
+      print('═══════════════════════════════════════════════════════════════');
+    }
 
     try {
       final response = await _dio.post(
@@ -2905,15 +2910,14 @@ class SoapApiService {
 
       final responseData = response.data?.toString() ?? '';
 
-      // Suppressed: SOAP response body is too large for the terminal.
-      // if (kDebugMode) {
-      //   print('═══════════════════════════════════════════════════════════════');
-      //   print('SOAP RESPONSE - SetClient');
-      //   print('Status Code: ${response.statusCode}');
-      //   print('═══════════════════════════════════════════════════════════════');
-      //   print(responseData);
-      //   print('═══════════════════════════════════════════════════════════════');
-      // }
+      if (kDebugMode) {
+        print('═══════════════════════════════════════════════════════════════');
+        print('SOAP RESPONSE - SetClient');
+        print('Status Code: ${response.statusCode}');
+        print('═══════════════════════════════════════════════════════════════');
+        print(responseData);
+        print('═══════════════════════════════════════════════════════════════');
+      }
 
       if (responseData.contains('Fault') || response.statusCode != 200) {
         String? faultMsg;

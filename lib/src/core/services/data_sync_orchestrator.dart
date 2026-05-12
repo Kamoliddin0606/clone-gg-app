@@ -48,7 +48,7 @@ import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart'
 ///   print('Syncing ${progress.tableName}...');
 /// }
 /// ```
-class DataSyncOrchestrator {
+class DataSyncOrchestrator with ChangeNotifier {
   final DataSyncService _dataSyncService;
   final SharedPreferencesService _prefs;
 
@@ -671,7 +671,13 @@ class DataSyncOrchestrator {
     }
   }
 
-  /// Save metadata for a specific table
+  /// Save metadata for a specific table and notify listeners.
+  ///
+  /// Every status / record-count change for a synced table flows
+  /// through here. After persisting, `notifyListeners()` fires so any
+  /// widget that subscribed (Settings → Permissions tab, Settings →
+  /// Data Sync tab) can rebuild and pull fresh data without the user
+  /// having to leave + reopen the page.
   Future<void> _saveMetadata(String tableId) async {
     try {
       final metadata = _metadataCache[tableId];
@@ -684,6 +690,10 @@ class DataSyncOrchestrator {
       if (kDebugMode) {
         print('Error saving metadata for $tableId: $e');
       }
+    } finally {
+      // Always notify even on error so error-state widgets refresh
+      // their banners. Cheap — listeners run only when mounted.
+      notifyListeners();
     }
   }
 
@@ -756,12 +766,14 @@ class DataSyncOrchestrator {
   }
 
   /// Clean up resources
+  @override
   void dispose() {
     for (final controller in _activeControllers.values) {
       controller.close();
     }
     _activeControllers.clear();
     _syncingTables.clear();
+    super.dispose();
   }
 }
 

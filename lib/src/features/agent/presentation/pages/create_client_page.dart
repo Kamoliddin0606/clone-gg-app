@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
@@ -8,6 +9,8 @@ import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_write_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
@@ -24,7 +27,22 @@ import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets
 /// Page for creating a new client (trading point)
 /// Beautiful, user-friendly form with all required fields
 class CreateClientPage extends StatefulWidget {
-  const CreateClientPage({super.key});
+  /// When non-null, the page renders in **edit** mode: fields are
+  /// pre-filled from this row, the title shows "Edit customer", and
+  /// submit dispatches a V2 `PATCH /api/mobile/v2/customers/{code_1c}/`
+  /// instead of the legacy SOAP `setClient` create.
+  ///
+  /// SOAP has no dedicated update endpoint for the client profile
+  /// (only `setClient` for create and `setClientLocation` for
+  /// coordinates), so profile edits land on V2 + local DB only and
+  /// the next SOAP sync brings the diff down. Coordinates edits
+  /// still go through the map page where dual-write is wired in
+  /// `DataSyncService.updateClientCoordinates`.
+  final TradingPoint? editingTradingPoint;
+
+  const CreateClientPage({super.key, this.editingTradingPoint});
+
+  bool get isEditMode => editingTradingPoint != null;
 
   @override
   State<CreateClientPage> createState() => _CreateClientPageState();
@@ -100,7 +118,25 @@ class _CreateClientPageState extends State<CreateClientPage>
     _loadRegions();
     _loadTradePointTypes();
     _loadSalesClassifiers();
-    _getCurrentLocation();
+
+    // Edit mode prefills from the passed [TradingPoint] and skips the
+    // GPS auto-fill (the customer already has known coordinates).
+    final editing = widget.editingTradingPoint;
+    if (editing != null) {
+      _nameController.text = editing.name;
+      _signboardController.text = editing.signboard;
+      _innController.text = editing.inn;
+      _contactPersonController.text = editing.contactPerson;
+      _contactPhoneController.text = editing.phone;
+      _addressController.text = editing.address;
+      _addressDeliveryController.text = editing.address;
+      _referencePointController.text = editing.referencePoint;
+      _responsiblePhoneController.text = editing.responsiblePersonPhone;
+      _latitude = editing.latitude == 0 ? null : editing.latitude;
+      _longitude = editing.longitude == 0 ? null : editing.longitude;
+    } else {
+      _getCurrentLocation();
+    }
   }
 
   @override
@@ -333,6 +369,16 @@ class _CreateClientPageState extends State<CreateClientPage>
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Edit mode: V2 PATCH only mutates name / inn / phone / address.
+    // The classifier dropdowns (region / channel / type / class) and
+    // coordinates are immutable from this surface — coordinates have
+    // their own dedicated map page; classifiers come from 1C and are
+    // not edited from mobile.
+    if (widget.isEditMode) {
+      await _submitEditForm();
+      return;
+    }
+
     if (_selectedRegion == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -454,11 +500,50 @@ class _CreateClientPageState extends State<CreateClientPage>
       );
 
       if (result['success'] == true) {
+        // V2 dual-write: mirror the brand-new customer into the V2
+        // backend using the `code_1c` SOAP just assigned. Failure
+        // here is logged but does NOT roll back SOAP — the runbook
+        // explicitly notes V2 PATCH is idempotent, so the next
+        // SOAP→V2 sync (or a manual retry from the edit screen)
+        // brings them back in lockstep. We surface a warning so the
+        // user knows V2 is still catching up.
+        final code1c = (result['clientCode'] as String?) ?? '';
+        bool v2Synced = true;
+        if (code1c.isNotEmpty) {
+          try {
+            // V2 receives only what it needs (the runbook's "kerakli
+            // malumotlar" subset): `code_1c` as the canonical link
+            // key plus name / inn / phone / address / coords. SOAP
+            // already stored the full record including classifier
+            // and bank fields; V2 stays slim by design.
+            await sl<CustomerWriteRepository>().create(
+              code1c: code1c,
+              name: _nameController.text.trim(),
+              inn: _innController.text.trim(),
+              phone: _contactPhoneController.text.trim(),
+              address: _addressController.text.trim(),
+              latitude: _latitude,
+              longitude: _longitude,
+            );
+          } catch (e) {
+            v2Synced = false;
+            if (kDebugMode) {
+              print(
+                'CreateClientPage: V2 create FAILED for '
+                'code_1c="$code1c": $e — SOAP record stays, retry from '
+                'edit screen',
+              );
+            }
+          }
+        }
         // Show success message
         if (mounted) {
           _showSuccessDialog(
-            result['clientCode'],
-            result['message'],
+            code1c.isEmpty ? null : code1c,
+            v2Synced
+                ? (result['message'] as String?)
+                : '${result['message'] ?? ''} '
+                    '(V2 sinxronlash kutilmoqda)',
           );
         }
       } else {
@@ -469,6 +554,95 @@ class _CreateClientPageState extends State<CreateClientPage>
         setState(() {
           _isSubmitting = false;
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Edit-mode submit handler.
+  ///
+  /// V2-only path: dispatches a single
+  /// `PATCH /api/mobile/v2/customers/{code_1c}/` with the four
+  /// mutable fields. SOAP has no profile-edit endpoint (`setClient`
+  /// is create-only and `setClientLocation` covers coordinates) so
+  /// the dual-write contract for this surface reduces to V2 + local
+  /// cache; the next SOAP sync brings the change down from 1C if the
+  /// backend forwards it. The runbook flags this asymmetry — see
+  /// `staff-permissions/mobile.md` §"Backend contract".
+  ///
+  /// On success returns the updated `TradingPoint` row to the caller
+  /// so the parent (trading-points list or detail sheet) can refresh
+  /// without a full data sync.
+  Future<void> _submitEditForm() async {
+    final editing = widget.editingTradingPoint!;
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity == ConnectivityResult.none) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.noInternetConnection ??
+                'Internet aloqasi yo\'q. Iltimos, internetga ulaning',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final repo = sl<CustomerWriteRepository>();
+      final updated = await repo.updateProfile(
+        customerId: editing.id, // code_1c — mobile↔backend exchange key
+        name: _nameController.text.trim(),
+        inn: _innController.text.trim(),
+        phone: _contactPhoneController.text.trim(),
+        address: _addressController.text.trim(),
+      );
+
+      // Best-effort local cache refresh so the trading-points list
+      // re-renders with the new name / phone / address even before
+      // the next SOAP sync. Failures here are non-fatal — the server
+      // already accepted the change.
+      try {
+        await sl<ApiDatabaseService>().updateClientProfile(
+          clientCode: editing.id,
+          name: updated.name,
+          inn: updated.inn,
+          phone: updated.phone,
+          address: updated.address,
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          print('CreateClientPage(edit): local cache update failed: $e');
+        }
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.clientLocationUpdated ??
+                'Saqlandi',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pop(updated);
+    } catch (e) {
+      if (kDebugMode) {
+        print('CreateClientPage(edit): submit failed: $e');
+      }
+      if (mounted) {
+        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -982,7 +1156,11 @@ class _CreateClientPageState extends State<CreateClientPage>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(l10n.createClientTitle),
+        title: Text(
+          widget.isEditMode
+              ? (l10n.customerEdit_title)
+              : l10n.createClientTitle,
+        ),
         centerTitle: false,
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -1006,21 +1184,34 @@ class _CreateClientPageState extends State<CreateClientPage>
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Warning banner about territory
-                _buildTerritoryWarningBanner(colorScheme, l10n),
-                const SizedBox(height: 16),
+                // CREATE-ONLY blocks: territory warning, GPS location
+                // card, AI scanner, classifier dropdowns, bank info.
+                // None of these map to V2 PATCH on edit — the four
+                // mutable fields (name / inn / phone / address) are
+                // the only ones the backend accepts on update, and
+                // showing dropdowns that the user can not change
+                // would confuse the UX.
+                if (!widget.isEditMode) ...[
+                  _buildTerritoryWarningBanner(colorScheme, l10n),
+                  const SizedBox(height: 16),
+                  _buildLocationCard(theme, colorScheme),
+                  const SizedBox(height: 16),
+                  DocumentScannerWidget(
+                    scannerService: sl<GeminiDocumentScannerService>(),
+                    onScanStarted: _clearFormForScan,
+                    onDataExtracted: _handleScannedData,
+                  ),
+                  const SizedBox(height: 20),
+                ],
 
-                // Header card with location
-                _buildLocationCard(theme, colorScheme),
-                const SizedBox(height: 16),
-
-                // AI Document Scanner
-                DocumentScannerWidget(
-                  scannerService: sl<GeminiDocumentScannerService>(),
-                  onScanStarted: _clearFormForScan,
-                  onDataExtracted: _handleScannedData,
-                ),
-                const SizedBox(height: 20),
+                // Edit-mode info banner: tells the user explicitly
+                // which fields they can change here vs which require
+                // a separate flow (coordinates → map page, photos →
+                // gallery, classifier / bank / signboard → 1C only).
+                if (widget.isEditMode) ...[
+                  _buildEditModeBanner(theme, colorScheme, l10n),
+                  const SizedBox(height: 20),
+                ],
 
                 // Basic info section
                 _buildSectionHeader(
@@ -1037,24 +1228,28 @@ class _CreateClientPageState extends State<CreateClientPage>
                   isRequired: true,
                   textCapitalization: TextCapitalization.words,
                 ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: _signboardController,
-                  label: l10n.createClientSignboard,
-                  hint: l10n.createClientSignboardHint,
-                  icon: Icons.signpost,
-                  textCapitalization: TextCapitalization.words,
-                ),
+                if (!widget.isEditMode) ...[
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _signboardController,
+                    label: l10n.createClientSignboard,
+                    hint: l10n.createClientSignboardHint,
+                    icon: Icons.signpost,
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 _buildInnFieldWithFetchButton(colorScheme, l10n),
-                const SizedBox(height: 12),
-                _buildSalesChannelSelector(theme, colorScheme),
-                const SizedBox(height: 12),
-                _buildTradePointTypeSelector(theme, colorScheme),
-                const SizedBox(height: 12),
-                _buildClientClassSelector(theme, colorScheme),
-                const SizedBox(height: 12),
-                _buildRegionSelector(theme, colorScheme),
+                if (!widget.isEditMode) ...[
+                  const SizedBox(height: 12),
+                  _buildSalesChannelSelector(theme, colorScheme),
+                  const SizedBox(height: 12),
+                  _buildTradePointTypeSelector(theme, colorScheme),
+                  const SizedBox(height: 12),
+                  _buildClientClassSelector(theme, colorScheme),
+                  const SizedBox(height: 12),
+                  _buildRegionSelector(theme, colorScheme),
+                ],
 
                 const SizedBox(height: 24),
 
@@ -1064,15 +1259,17 @@ class _CreateClientPageState extends State<CreateClientPage>
                   l10n.createClientContactInfo,
                   Icons.contact_phone,
                 ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: _contactPersonController,
-                  label: l10n.createClientContactPerson,
-                  hint: l10n.createClientContactPersonHint,
-                  icon: Icons.person,
-                  isRequired: true,
-                  textCapitalization: TextCapitalization.words,
-                ),
+                if (!widget.isEditMode) ...[
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _contactPersonController,
+                    label: l10n.createClientContactPerson,
+                    hint: l10n.createClientContactPersonHint,
+                    icon: Icons.person,
+                    isRequired: true,
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 _buildPhoneField(
                   controller: _contactPhoneController,
@@ -1081,14 +1278,16 @@ class _CreateClientPageState extends State<CreateClientPage>
                   icon: Icons.phone,
                   isRequired: true,
                 ),
-                const SizedBox(height: 12),
-                _buildPhoneField(
-                  controller: _responsiblePhoneController,
-                  label: l10n.createClientResponsiblePhone,
-                  hint: l10n.createClientResponsiblePhoneHint,
-                  icon: Icons.phone_android,
-                  isRequired: false,
-                ),
+                if (!widget.isEditMode) ...[
+                  const SizedBox(height: 12),
+                  _buildPhoneField(
+                    controller: _responsiblePhoneController,
+                    label: l10n.createClientResponsiblePhone,
+                    hint: l10n.createClientResponsiblePhoneHint,
+                    icon: Icons.phone_android,
+                    isRequired: false,
+                  ),
+                ],
 
                 const SizedBox(height: 24),
 
@@ -1109,61 +1308,64 @@ class _CreateClientPageState extends State<CreateClientPage>
                   textCapitalization: TextCapitalization.sentences,
                 ),
                 if (_addressAutoFilled) _buildAutoFillHelperText(l10n),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: _addressDeliveryController,
-                  label: l10n.createClientDeliveryAddress,
-                  hint: l10n.createClientDeliveryAddressHint,
-                  icon: Icons.local_shipping,
-                  maxLines: 2,
-                  textCapitalization: TextCapitalization.sentences,
-                ),
-                if (_addressAutoFilled) _buildAutoFillHelperText(l10n),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: _referencePointController,
-                  label: l10n.createClientLandmark,
-                  hint: l10n.createClientLandmarkHint,
-                  icon: Icons.place,
-                  textCapitalization: TextCapitalization.sentences,
-                ),
+                if (!widget.isEditMode) ...[
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _addressDeliveryController,
+                    label: l10n.createClientDeliveryAddress,
+                    hint: l10n.createClientDeliveryAddressHint,
+                    icon: Icons.local_shipping,
+                    maxLines: 2,
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                  if (_addressAutoFilled) _buildAutoFillHelperText(l10n),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _referencePointController,
+                    label: l10n.createClientLandmark,
+                    hint: l10n.createClientLandmarkHint,
+                    icon: Icons.place,
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Bank details section (optional)
-                _buildSectionHeader(
-                  theme,
-                  l10n.createClientBankInfo,
-                  Icons.account_balance,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: _directorController,
-                  label: l10n.createClientDirector,
-                  hint: l10n.createClientDirectorHint,
-                  icon: Icons.person_outline,
-                  textCapitalization: TextCapitalization.words,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: _mfoController,
-                  label: l10n.createClientMfo,
-                  hint: l10n.createClientMfoHint,
-                  icon: Icons.account_balance_wallet,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  maxLength: 5,
-                ),
-                const SizedBox(height: 12),
-                _buildTextField(
-                  controller: _bankAccountController,
-                  label: l10n.createClientBankAccount,
-                  hint: l10n.createClientBankAccountHint,
-                  icon: Icons.credit_card,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  maxLength: 20,
-                ),
+                  // Bank details section (create-only — V2 PATCH
+                  // does not accept director / mfo / bank account).
+                  _buildSectionHeader(
+                    theme,
+                    l10n.createClientBankInfo,
+                    Icons.account_balance,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _directorController,
+                    label: l10n.createClientDirector,
+                    hint: l10n.createClientDirectorHint,
+                    icon: Icons.person_outline,
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _mfoController,
+                    label: l10n.createClientMfo,
+                    hint: l10n.createClientMfoHint,
+                    icon: Icons.account_balance_wallet,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    maxLength: 5,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _bankAccountController,
+                    label: l10n.createClientBankAccount,
+                    hint: l10n.createClientBankAccountHint,
+                    icon: Icons.credit_card,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    maxLength: 20,
+                  ),
+                ],
 
                 const SizedBox(height: 32),
 
@@ -1175,6 +1377,53 @@ class _CreateClientPageState extends State<CreateClientPage>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Banner shown at the top of the page in edit mode. Sets
+  /// expectations for the user about what can / can not be changed
+  /// from this screen so they do not look for missing dropdowns
+  /// (region / channel / type / class) or the location picker.
+  Widget _buildEditModeBanner(
+    ThemeData theme,
+    ColorScheme cs,
+    AppLocalizations l10n,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.primaryContainer.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.primary.withOpacity(0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.edit_outlined, color: cs.primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.customerEditBanner_title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: cs.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.customerEditBanner_body,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onPrimaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1919,11 +2168,15 @@ class _CreateClientPageState extends State<CreateClientPage>
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.add_business),
+                  Icon(widget.isEditMode
+                      ? Icons.save_outlined
+                      : Icons.add_business),
                   const SizedBox(width: 12),
                   Builder(
                     builder: (ctx) => Text(
-                      AppLocalizations.of(ctx)!.createClient,
+                      widget.isEditMode
+                          ? AppLocalizations.of(ctx)!.customerEdit_save
+                          : AppLocalizations.of(ctx)!.createClient,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onPrimary,

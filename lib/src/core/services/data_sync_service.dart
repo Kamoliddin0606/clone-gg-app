@@ -33,6 +33,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.da
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_write_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
@@ -1963,7 +1964,6 @@ class DataSyncService {
         userCode: userCodeValue as String,
         skipTINduplicateCheck: permissions['permissions']['skipTINduplicateCheck'] as bool? ?? false,
         allowCreationWithoutTIN: permissions['permissions']['allowCreationWithoutTIN'] as bool? ?? false,
-        allowCreatingPointOfSale: permissions['permissions']['allowCreatingPointOfSale'] as bool? ?? false,
         visit: permissions['permissions']['visit'] as bool? ?? false,
         strictSequence: permissions['permissions']['strictSequence'] as bool? ?? false,
         unplannedOrder: permissions['permissions']['unplannedOrder'] as bool? ?? false,
@@ -2152,7 +2152,16 @@ class DataSyncService {
         print('DataSyncService: Updating client coordinates for client: $clientCode, lat: $latitude, lng: $longitude');
       }
 
-      // Call API to update coordinates on server
+      // Coordinates have an explicit endpoint on BOTH servers
+      // (`setClientLocation` for SOAP/1C and
+      // `PATCH /customers/{code_1c}/coordinates/` for V2). Both must
+      // receive the change so the two read paths stay coherent. The
+      // contract: SOAP first (1C is still the source of truth for
+      // legacy reports) → V2 mirror → local cache. Any failure
+      // aborts the whole flow so the UI surfaces a clear error
+      // rather than leaving the two servers diverged.
+      //
+      // STEP 1: SOAP `setClientLocation`.
       await _apiService.updateClientCoordinates(
         userCode: userCode,
         clientCode: clientCode,
@@ -2160,15 +2169,76 @@ class DataSyncService {
         longitude: longitude,
       );
 
-      // Update local database
+      // STEP 2: V2 mirror — same lat/lng keyed by `code_1c`.
+      // V2 PATCH is idempotent, so a retry after a transient failure
+      // is safe.
+      await _writeCoordinatesToV2(
+        clientCode: clientCode,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      // STEP 3: local cache mirror so the trading-points list
+      // re-renders the new pin without waiting for the next sync.
       await _dbService.updateClientCoordinates(clientCode, latitude, longitude);
 
       if (kDebugMode) {
-        print('DataSyncService: Client coordinates updated successfully');
+        print('DataSyncService: Client coordinates updated successfully (SOAP + V2 + local)');
       }
     } catch (e) {
       if (kDebugMode) {
         print('DataSyncService: Error updating client coordinates: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// V2 customer-coordinates write.
+  ///
+  /// V2 receives only what it needs — `latitude` / `longitude` as
+  /// six-decimal strings keyed by `code_1c` in the URL path. The V2
+  /// backend then propagates the change to 1C internally; mobile
+  /// must NOT also call SOAP `setClientLocation` (that would risk
+  /// two servers drifting on partial failure).
+  ///
+  /// Rethrows on any error so the caller surfaces a clear message
+  /// to the user. V2 PATCH is idempotent, so a retry after a
+  /// transient failure is safe.
+  Future<void> _writeCoordinatesToV2({
+    required String clientCode,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      // Resolve lazily — keeps DataSyncService usable in unit tests
+      // that do not register the V2 repository.
+      if (!sl.isRegistered<CustomerWriteRepository>()) {
+        if (kDebugMode) {
+          print(
+            'DataSyncService: CustomerWriteRepository not registered — '
+            'skipping V2 coordinates dual-write (unit-test path)',
+          );
+        }
+        return;
+      }
+      final repo = sl<CustomerWriteRepository>();
+      await repo.updateCoordinates(
+        customerId: clientCode, // code_1c — mobile↔backend exchange key
+        latitude: latitude,
+        longitude: longitude,
+      );
+      if (kDebugMode) {
+        print(
+          'DataSyncService: V2 coordinates dual-write OK for '
+          'code_1c="$clientCode"',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print(
+          'DataSyncService: V2 coordinates dual-write FAILED for '
+          'code_1c="$clientCode": $e',
+        );
       }
       rethrow;
     }

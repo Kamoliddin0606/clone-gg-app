@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'package:gloria_marketing_flutter/src/features/notifications/data/db/notification_db_dao.dart';
+
 // Top-level function for unzipping in background isolate
 List<int> unzipDatabase(List<int> bytes) {
   final archive = ZipDecoder().decodeBytes(bytes);
@@ -19,7 +21,8 @@ List<int> unzipDatabase(List<int> bytes) {
 class DatabaseHelper {
   static const _dbName = "GloriyaMarketing.db";
   static const _zipAssetName = "GloriyaMarketing.zip";
-  static const _dbVersion = 4;
+  // v5: notification center tables (notifications, pending_read_marks).
+  static const _dbVersion = 5;
 
   Database? _database;
 
@@ -134,6 +137,9 @@ class DatabaseHelper {
       'base_url': 'http://kit.gloriya.uz:5443/EVYAP_UT/EVYAP_UT.1cws',
     });
 
+    // Notification center tables — owned by the notifications feature.
+    await NotificationDbDao.createTables(db);
+
     if (kDebugMode) {
       print("Empty database created with basic schema.");
     }
@@ -166,6 +172,10 @@ class DatabaseHelper {
       await db.execute('ALTER TABLE users ADD COLUMN telegram_id TEXT');
       await db.execute('ALTER TABLE users ADD COLUMN chat_id TEXT');
       await db.execute('ALTER TABLE users ADD COLUMN topic_id TEXT');
+    }
+    if (oldVersion < 5) {
+      // Notification center tables — see passport-mobile.md §4.
+      await NotificationDbDao.createTables(db);
     }
   }
 

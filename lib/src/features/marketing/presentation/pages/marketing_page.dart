@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/marketing/presentation/pages/promotions_page.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/presentation/pages/notification_list_page.dart';
 
 class MarketingPage extends StatefulWidget {
   const MarketingPage({super.key});
@@ -69,7 +70,10 @@ class _MarketingPageState extends State<MarketingPage>
           controller: _tabController,
           children: [
             const PromotionsPage(),
-            Center(child: Text(l10n.announcementsPage)),
+            // Announcements tab is now the notification feed — system
+            // announcements, debt alerts, etc. all surface here.
+            // See docs/notifications/passport-mobile.md.
+            const NotificationListView(),
             Center(child: Text(l10n.newsPage)),
             Center(child: Text(l10n.pricesPage)),
           ],

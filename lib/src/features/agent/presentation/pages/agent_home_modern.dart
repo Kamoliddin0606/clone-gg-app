@@ -13,6 +13,7 @@ import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dar
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:equatable/equatable.dart';
@@ -1021,6 +1022,10 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
                     onPressed: widget.onRefresh,
                     icon: const Icon(Icons.refresh),
                   ),
+                  // Notification bell — see passport-mobile.md §5.1.
+                  // Tap → notification list. Long-press → mark all read.
+                  // Badge fed by local-DB unread count.
+                  const NotificationBell(),
                   // Offline indicator - shows when app is in offline mode
 
                   IconButton(

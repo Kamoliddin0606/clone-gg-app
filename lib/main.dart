@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:gloria_marketing_flutter/firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +18,11 @@ import 'package:gloria_marketing_flutter/src/core/services/health_check_service.
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_dialog.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/fcm_token_service.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/push_handler_service.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/presentation/widgets/in_app_banner.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/services/notification_tap_router.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_schemes.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
@@ -24,17 +32,8 @@ import 'package:gloria_marketing_flutter/src/core/services/background_location/b
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:async';
-import 'dart:math' show sin, cos, sqrt, asin, pi;
 
 import 'package:yandex_maps_mapkit/init.dart' as ymk_init;
-
-// YandexMap widget and MapWindow APIs
-import 'package:yandex_maps_mapkit/yandex_map.dart';
-
-// MapKit core APIs (MapKit, MapInputListener, UserLocationLayer, LocationManager, Point, CameraPosition, etc.)
-import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
-
-import 'package:yandex_maps_mapkit/mapkit_factory.dart' as mkf;
 
 void main() async {
   // Ensure that Flutter bindings are initialized.
@@ -50,11 +49,68 @@ void main() async {
   // Wait for async services to be ready
   await sl.allReady();
 
-  // TODO: Initialize Firebase
-  // await Firebase.initializeApp();
+  // Firebase init — best-effort. If google-services.json /
+  // GoogleService-Info.plist are missing the call throws; we log and
+  // continue so the rest of the app still boots. Notification flow
+  // simply stays inert until the config lands. The check for
+  // `Firebase.apps.isNotEmpty` protects against duplicate init via
+  // workmanager isolates.
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+    // Background handler must be registered before runApp so the
+    // isolate spawned by FCM finds it. Top-level function lives in
+    // push_handler_service.dart.
+    FirebaseMessaging.onBackgroundMessage(firebaseBackgroundMessageHandler);
+    if (kDebugMode) {
+      debugPrint('[Main] Firebase initialised');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint(
+        '[Main] Firebase initialise SKIPPED ($e). '
+        'Notifications will stay offline until '
+        'google-services.json / GoogleService-Info.plist is provisioned.',
+      );
+    }
+  }
 
   // Initialize Database
   await sl<DatabaseHelper>().database;
+
+  // Hydrate the notification cache from sqflite so the bell badge
+  // shows the correct count before the first sync. Best-effort.
+  try {
+    await sl<NotificationRepository>().bootstrap();
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Notification cache bootstrap skipped: $e');
+    }
+  }
+
+  // Wire FCM listeners (foreground / background / terminated tap).
+  // Token registration is gated on login (see AuthBloc); permission
+  // prompts fire only on first interaction with the bell (§2.4).
+  try {
+    final pushHandler = sl<PushHandlerService>();
+    pushHandler.onTap = NotificationTapRouter.handleRemoteMessage;
+    await pushHandler.init();
+    if (kDebugMode) {
+      final tokenService = sl<TokenService>();
+      // If the user is already signed in (warm start), refresh the
+      // FCM token registration silently.
+      if (tokenService.hasValidV2Token()) {
+        unawaited(sl<FcmTokenService>().registerOnLogin());
+      }
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Push handler setup skipped: $e');
+    }
+  }
 
   // Initialize Gemini API key
   // In production, this should be fetched from server
@@ -403,6 +459,14 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 locale: localeProvider.locale,
                 onGenerateRoute: AppRouter.generateRoute,
                 initialRoute: widget.initialRoute,
+                // Wrap every page in the in-app banner host so foreground
+                // pushes (FCM onMessage) can draw a transient banner via
+                // the global overlay. Tap routes through the deep-link
+                // router; the banner sets `onForegroundBanner` once the
+                // overlay is available.
+                builder: (context, child) {
+                  return _BannerHostBridge(child: child ?? const SizedBox());
+                },
                 // Default Navigator.defaultGenerateInitialRoutes initialRoute'ni
                 // '/' bo'yicha bo'laklab har bir prefix uchun route push qiladi.
                 // loginRoute = '/' bo'lgani uchun '/main-agent' bilan ishga
@@ -420,5 +484,56 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         },
       ),
     );
+  }
+}
+
+/// Glue between [MaterialApp.builder] and the [InAppBannerHost]. The
+/// host needs a [BuildContext] under the navigator so it can read the
+/// root overlay; we register the foreground-banner callback on the
+/// PushHandlerService once the host is mounted and tear it down on
+/// dispose.
+class _BannerHostBridge extends StatefulWidget {
+  final Widget child;
+
+  const _BannerHostBridge({required this.child});
+
+  @override
+  State<_BannerHostBridge> createState() => _BannerHostBridgeState();
+}
+
+class _BannerHostBridgeState extends State<_BannerHostBridge> {
+  @override
+  Widget build(BuildContext context) {
+    return InAppBannerHost(
+      onTap: (deepLink, notificationId) {
+        NotificationTapRouter.handleDeepLink(
+          context,
+          deepLink: deepLink,
+          notificationId: notificationId,
+        );
+      },
+      child: Builder(
+        builder: (ctx) {
+          _wireForegroundCallback(ctx);
+          return widget.child;
+        },
+      ),
+    );
+  }
+
+  void _wireForegroundCallback(BuildContext ctx) {
+    try {
+      final pushHandler = sl<PushHandlerService>();
+      pushHandler.onForegroundBanner = (message) {
+        final controller = InAppBannerController.maybeOf(ctx);
+        if (controller != null) {
+          controller.show(message);
+        }
+      };
+    } catch (_) {
+      // PushHandlerService may not be registered yet during early
+      // boot — the next rebuild after service-locator setup will
+      // attach the callback.
+    }
   }
 }

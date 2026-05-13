@@ -57,6 +57,12 @@ import 'package:gloria_marketing_flutter/src/features/knowledge/data/services/kn
 import 'package:gloria_marketing_flutter/src/features/knowledge/data/services/knowledge_db_dao.dart';
 import 'package:gloria_marketing_flutter/src/features/knowledge/data/services/knowledge_sync_service.dart';
 
+import 'package:gloria_marketing_flutter/src/features/notifications/data/db/notification_db_dao.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/fcm_token_service.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_api_service.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/push_handler_service.dart';
+
 import '../network/server_service.dart';
 
 final sl = GetIt.instance;
@@ -530,6 +536,58 @@ Future<void> setupServiceLocator() async {
         sl<KnowledgeSyncService>(),
         sl<KnowledgeDbDao>(),
         sl<AgentOrganizationContext>(),
+      ),
+    );
+  }
+
+  // Notification Center — see docs/notifications/passport-mobile.md.
+  // The repository owns a behavior-subject stream of unread counts, so
+  // it MUST be a singleton (cubit subscribes on every screen build).
+  // The API client uses a dedicated Dio instance for the same reason as
+  // CustomerPhotoRepository: the shared sl<Dio>() carries SoapApiService's
+  // interceptor that overwrites Accept with `application/soap+xml`,
+  // which would make the V2 JSON endpoint return 406.
+  if (!sl.isRegistered<NotificationDbDao>()) {
+    sl.registerLazySingleton<NotificationDbDao>(
+      () => NotificationDbDao(sl<DatabaseHelper>()),
+    );
+  }
+  if (!sl.isRegistered<NotificationApiService>()) {
+    final notifDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+    attachRestLogger(notifDio, 'NOTIF');
+    sl.registerLazySingleton<NotificationApiService>(
+      () => NotificationApiService(
+        dio: notifDio,
+        tokenService: sl<TokenService>(),
+      ),
+    );
+  }
+  if (!sl.isRegistered<NotificationRepository>()) {
+    sl.registerLazySingleton<NotificationRepository>(
+      () => NotificationRepository(
+        api: sl<NotificationApiService>(),
+        dao: sl<NotificationDbDao>(),
+        uuidService: sl<LocalUuidService>(),
+      ),
+    );
+  }
+  if (!sl.isRegistered<FcmTokenService>()) {
+    sl.registerLazySingleton<FcmTokenService>(
+      () => FcmTokenService(
+        api: sl<NotificationApiService>(),
+        prefs: sl<SharedPreferencesService>(),
+        uuidService: sl<LocalUuidService>(),
+      ),
+    );
+  }
+  if (!sl.isRegistered<PushHandlerService>()) {
+    sl.registerLazySingleton<PushHandlerService>(
+      () => PushHandlerService(
+        repo: sl<NotificationRepository>(),
       ),
     );
   }

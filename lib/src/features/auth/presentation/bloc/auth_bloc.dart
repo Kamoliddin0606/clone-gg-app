@@ -14,6 +14,8 @@ import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/login_device_payload_builder.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_failure.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_device_payload.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/fcm_token_service.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -110,6 +112,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // joylashuvni kuzatishni boshlash
       // =========================================================================
       await _startBackgroundLocationTracking();
+
+      // =========================================================================
+      // Notification Center — register the device's FCM token and pull
+      // the first batch of notifications. Best-effort: failures here
+      // never block login. See docs/notifications/passport-mobile.md §2.
+      // =========================================================================
+      await _initNotificationCenter();
 
       emit(AuthSuccess(user: user));
     } catch (e) {
@@ -268,6 +277,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
 
       // =========================================================================
+      // 2.5 Notification Center — revoke FCM token + wipe local cache
+      // before clearing user data so the API call still carries auth.
+      // =========================================================================
+      await _teardownNotificationCenter();
+
+      // =========================================================================
       // 3. User ma'lumotlarini tozalash
       // =========================================================================
       // Clear user code from preferences
@@ -298,6 +313,60 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// has a single place to revisit. Does NOT make any network calls.
   // ignore: unused_element
   Future<void> _obtainRestApiTokens(String username, String password) async {
+  }
+
+  /// Login-success hook: register the FCM token with the backend and
+  /// pull the first batch of notifications + flush any read marks the
+  /// previous session left queued.
+  ///
+  /// Every step is wrapped in try/catch — Phase 1 keeps login working
+  /// even if the Firebase config is missing or the user denied
+  /// notification permission.
+  Future<void> _initNotificationCenter() async {
+    try {
+      if (sl.isRegistered<FcmTokenService>()) {
+        await sl<FcmTokenService>().registerOnLogin();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AuthBloc: FCM register skipped: $e');
+      }
+    }
+    try {
+      if (sl.isRegistered<NotificationRepository>()) {
+        // syncIncremental swallows its own errors — safe to await without
+        // gating on connectivity.
+        await sl<NotificationRepository>().syncIncremental(force: true);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AuthBloc: Notification sync skipped: $e');
+      }
+    }
+  }
+
+  /// Logout-side counterpart of [_initNotificationCenter] — revoke the
+  /// FCM token and wipe the local cache so the next user does not see
+  /// the previous user's notifications.
+  Future<void> _teardownNotificationCenter() async {
+    try {
+      if (sl.isRegistered<FcmTokenService>()) {
+        await sl<FcmTokenService>().revokeOnLogout();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AuthBloc: FCM revoke skipped: $e');
+      }
+    }
+    try {
+      if (sl.isRegistered<NotificationRepository>()) {
+        await sl<NotificationRepository>().clearForLogout();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('AuthBloc: Notification cache clear skipped: $e');
+      }
+    }
   }
 
   /// Fallback non-localized message used in the legacy `state.message`

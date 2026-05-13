@@ -3,6 +3,10 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Firebase plugin — wires google-services.json into the build. Required
+    // for firebase_messaging on Android. Drop `android/app/google-services.json`
+    // from the Firebase console before the first `flutter build apk`.
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -13,6 +17,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // Required by flutter_local_notifications — pulls modern java.time
+        // APIs into the minSdk=26 build. Companion dependency below.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -41,4 +48,10 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Companion to `isCoreLibraryDesugaringEnabled = true` above.
+    // Version pinned to the latest stable AGP-compatible release.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

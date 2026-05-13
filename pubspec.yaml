@@ -34,6 +34,13 @@ dependencies:
   firebase_core: ^4.1.1
   firebase_crashlytics: ^5.0.2
   firebase_storage: ^13.0.2
+  # Notification Center — see docs/notifications/passport-mobile.md.
+  # FCM handles delivery (Android directly, iOS via APNs). The local
+  # notifications plugin surfaces the system tray banner when a push
+  # arrives in the foreground (FCM does not draw the OS banner in that
+  # state).
+  firebase_messaging: ^16.0.0
+  flutter_local_notifications: ^19.0.0
 
   # Maps & Permissions
   google_maps_flutter: ^2.6.0

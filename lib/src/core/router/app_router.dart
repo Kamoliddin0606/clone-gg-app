@@ -25,6 +25,8 @@ import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pag
 import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pages/knowledge_category_page.dart';
 import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pages/knowledge_document_page.dart';
 import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pages/knowledge_search_page.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/presentation/pages/notification_list_page.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/presentation/pages/notification_detail_page.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -56,6 +58,9 @@ class AppRouter {
   static const String knowledgeCategoryRoute = '/knowledge/category';
   static const String knowledgeDocumentRoute = '/knowledge/document';
   static const String knowledgeSearchRoute = '/knowledge/search';
+  // Notification center — see docs/notifications/passport-mobile.md.
+  static const String notificationListRoute = '/notifications';
+  static const String notificationDetailRoute = '/notifications/detail';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -194,6 +199,21 @@ class AppRouter {
       case knowledgeSearchRoute:
         return MaterialPageRoute(
           builder: (_) => const KnowledgeSearchPage(),
+        );
+      case notificationListRoute:
+        return MaterialPageRoute(builder: (_) => const NotificationListPage());
+      case notificationDetailRoute:
+        final args = settings.arguments;
+        final id = args is Map ? args['id'] as String? : null;
+        if (id == null || id.isEmpty) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(child: Text('Notification id is required')),
+            ),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => NotificationDetailPage(id: id),
         );
       default:
         return MaterialPageRoute(

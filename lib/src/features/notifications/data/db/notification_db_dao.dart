@@ -131,6 +131,42 @@ class NotificationDbDao {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
+  /// Most recent unread rows of a given [type] — feeds the Android
+  /// InboxStyle summary notification (Phase 2 stretch — grouping).
+  /// Snoozed and read rows are excluded so the summary shows only
+  /// what the user would actually see in the list.
+  Future<List<AppNotification>> recentUnreadByType(
+    String type, {
+    int limit = 5,
+    DateTime? now,
+  }) async {
+    final db = await _db;
+    final cutoff = (now ?? DateTime.now()).toUtc().toIso8601String();
+    final rows = await db.query(
+      notificationsTable,
+      where: 'type = ? AND read_at IS NULL '
+          'AND (snooze_until IS NULL OR snooze_until <= ?)',
+      whereArgs: [type, cutoff],
+      orderBy: 'created_at DESC',
+      limit: limit,
+    );
+    return rows.map(AppNotification.fromDbRow).toList();
+  }
+
+  /// Count of unread + non-snoozed rows of a given [type] — used as the
+  /// "N new" prefix on the Android group summary.
+  Future<int> unreadCountByType(String type, {DateTime? now}) async {
+    final db = await _db;
+    final cutoff = (now ?? DateTime.now()).toUtc().toIso8601String();
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) FROM $notificationsTable '
+      'WHERE type = ? AND read_at IS NULL '
+      'AND (snooze_until IS NULL OR snooze_until <= ?)',
+      [type, cutoff],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
   /// Most recent `last_synced_at` across all rows — used as the `since`
   /// cursor for the next pull. Returns `null` when the cache is empty.
   Future<DateTime?> lastSyncedAt() async {

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/db/notification_db_dao.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/push_handler_service.dart';
@@ -28,9 +29,10 @@ void main() {
     prefsService = NotificationPreferencesService(prefs: prefs);
     await prefsService.bootstrap();
     service = PushHandlerService(
-      // Filter logic never calls into the repo — pass a throwing stub
-      // so any accidental use surfaces as a test failure.
+      // Filter logic never calls into the repo or DAO — pass throwing
+      // stubs so any accidental use surfaces as a test failure.
       repo: _UnusedRepo(),
+      dao: _UnusedDao(),
       preferences: prefsService,
       // Bypass the real Firebase / system tray plugins — both crash in
       // unit tests because their platform channels are absent.
@@ -96,6 +98,17 @@ class _UnusedRepo extends Fake implements NotificationRepository {
   @override
   noSuchMethod(Invocation invocation) {
     fail('PushHandlerService filter must not touch the repo — '
+        'attempted: ${invocation.memberName}');
+  }
+}
+
+/// Same idea for the DAO — the foreground filter path (these tests)
+/// never queries the database; the grouping summary path does, but
+/// that's covered by separate tests under notification_grouping_test.
+class _UnusedDao extends Fake implements NotificationDbDao {
+  @override
+  noSuchMethod(Invocation invocation) {
+    fail('PushHandlerService filter must not touch the DAO — '
         'attempted: ${invocation.memberName}');
   }
 }

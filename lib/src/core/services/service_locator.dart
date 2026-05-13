@@ -600,6 +600,7 @@ Future<void> setupServiceLocator() async {
     sl.registerLazySingleton<PushHandlerService>(
       () => PushHandlerService(
         repo: sl<NotificationRepository>(),
+        dao: sl<NotificationDbDao>(),
         preferences: sl<NotificationPreferencesService>(),
       ),
     );

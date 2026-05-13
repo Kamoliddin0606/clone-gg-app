@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/db/notification_db_dao.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/models/notification_preferences.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_preferences_service.dart';
@@ -40,6 +41,7 @@ class PushHandlerService {
       'Default channel used when the notification type is unknown.';
 
   final NotificationRepository _repo;
+  final NotificationDbDao _dao;
   final NotificationPreferencesService _preferences;
   final FirebaseMessaging _messaging;
   final FlutterLocalNotificationsPlugin _localNotifications;
@@ -60,10 +62,12 @@ class PushHandlerService {
 
   PushHandlerService({
     required NotificationRepository repo,
+    required NotificationDbDao dao,
     required NotificationPreferencesService preferences,
     FirebaseMessaging? messaging,
     FlutterLocalNotificationsPlugin? localNotifications,
   })  : _repo = repo,
+        _dao = dao,
         _preferences = preferences,
         _messaging = messaging ?? FirebaseMessaging.instance,
         _localNotifications =
@@ -255,13 +259,15 @@ class PushHandlerService {
     final priority = _readPriority(message);
     final level = _preferences.value.soundFor(priority);
     final isUrgent = priority == 'urgent';
+    final isKnownType = type != null && NotificationTypes.all.contains(type);
     final channelId =
-        type != null && NotificationTypes.all.contains(type)
-            ? _channelIdFor(type, level)
-            : _defaultAndroidChannelId;
-    final channelName = type != null && NotificationTypes.all.contains(type)
-        ? _channelNameFor(type)
-        : _defaultAndroidChannelName;
+        isKnownType ? _channelIdFor(type, level) : _defaultAndroidChannelId;
+    final channelName =
+        isKnownType ? _channelNameFor(type) : _defaultAndroidChannelName;
+    // Phase 2 stretch — grouping. Same key for all notifications of
+    // the same type so iOS collapses them in the lock screen + Android
+    // can attach a group summary below.
+    final groupKey = groupKeyFor(type);
 
     await _localNotifications.show(
       _stableTrayId(id),
@@ -282,10 +288,13 @@ class PushHandlerService {
           category: isUrgent ? AndroidNotificationCategory.alarm : null,
           playSound: level == NotificationSoundLevel.sound,
           enableVibration: level != NotificationSoundLevel.silent,
+          groupKey: groupKey,
         ),
         iOS: DarwinNotificationDetails(
           presentBadge: true,
           presentSound: level == NotificationSoundLevel.sound,
+          // Phase 2 stretch — iOS auto-groups by thread identifier.
+          threadIdentifier: groupKey,
           // Phase 2c: urgent → critical interruption. iOS silently
           // downgrades to `timeSensitive` (or active) when the app
           // does NOT hold the `com.apple.developer.usernotifications.
@@ -298,6 +307,117 @@ class PushHandlerService {
       ),
       payload: id,
     );
+
+    // Android-only: refresh the group summary card after every push
+    // so the InboxStyle preview reflects the latest N rows. iOS draws
+    // its own stack via `threadIdentifier` — no summary needed.
+    if (isKnownType) {
+      await _refreshAndroidGroupSummary(type, channelId, channelName);
+    }
+  }
+
+  /// Drop or refresh the Android group summary for [type]. The summary
+  /// is a separate notification with `setAsGroupSummary: true`; Android
+  /// renders it as the parent card grouping all messages with the same
+  /// [groupKey]. We use a stable per-type id so successive pushes
+  /// replace rather than stack.
+  Future<void> _refreshAndroidGroupSummary(
+    String type,
+    String channelId,
+    String channelName,
+  ) async {
+    try {
+      final lines = await _dao.recentUnreadByType(type, limit: 5);
+      final count = await _dao.unreadCountByType(type);
+      // Single notification doesn't need a summary card.
+      if (lines.length <= 1) {
+        await _localNotifications.cancel(summaryIdFor(type));
+        return;
+      }
+      final groupKey = groupKeyFor(type);
+      final preview = lines
+          .map((n) => n.title.isEmpty
+              ? n.body
+              : '${n.title} — ${n.body}')
+          .map(_oneLine)
+          .toList(growable: false);
+      final summaryTitle = summaryTitleFor(type, count);
+
+      await _localNotifications.show(
+        summaryIdFor(type),
+        summaryTitle,
+        // Body is hidden behind the InboxStyle on Android — provide
+        // the most recent line for accessibility / older OS versions.
+        preview.isEmpty ? '' : preview.first,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelId,
+            channelName,
+            channelDescription: _channelDescriptionFor(type),
+            groupKey: groupKey,
+            setAsGroupSummary: true,
+            styleInformation: InboxStyleInformation(
+              preview,
+              summaryText: '$count ta yangi',
+            ),
+            // Summary should never make noise — the row notifications
+            // already alerted the user.
+            importance: Importance.low,
+            priority: Priority.low,
+            playSound: false,
+            enableVibration: false,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[PUSH] group summary refresh failed (non-critical): $e');
+      }
+    }
+  }
+
+  /// Single-source-of-truth for the (group key, thread identifier)
+  /// shared by all notifications of the same type. Public so unit
+  /// tests can pin the wire format.
+  @visibleForTesting
+  static String groupKeyFor(String? type) {
+    if (type == null || type.isEmpty) return 'selup_default';
+    return 'selup_$type';
+  }
+
+  /// Stable Android notification id for the group summary card.
+  /// Negative bit so it cannot collide with row hashes (those use the
+  /// notification UUID hashCode masked to 31 bits non-negative).
+  @visibleForTesting
+  static int summaryIdFor(String type) =>
+      0x40000000 | (type.hashCode & 0x3fffffff);
+
+  /// Localised "N new TYPE" title for the group summary card.
+  @visibleForTesting
+  static String summaryTitleFor(String type, int count) {
+    final label = _summaryLabelFor(type);
+    return '$count ta yangi $label';
+  }
+
+  static String _summaryLabelFor(String type) {
+    switch (type) {
+      case NotificationTypes.debtAlert:
+        return 'qarz ogohlantirishi';
+      case NotificationTypes.orderNew:
+        return 'buyurtma';
+      case NotificationTypes.stockLotExpiring:
+        return 'lot tugashi';
+      case NotificationTypes.systemAnnouncement:
+        return 'e\'lon';
+      default:
+        return 'bildirishnoma';
+    }
+  }
+
+  static String _oneLine(String input) {
+    final trimmed = input.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (trimmed.length <= 80) return trimmed;
+    return '${trimmed.substring(0, 77)}...';
   }
 
   void _handleLocalNotificationTap(NotificationResponse response) {

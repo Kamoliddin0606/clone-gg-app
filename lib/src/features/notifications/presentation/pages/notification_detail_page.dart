@@ -8,6 +8,8 @@ import 'package:gloria_marketing_flutter/src/features/notifications/data/reposit
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/bloc/notification_detail_cubit.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/services/notification_tap_router.dart';
 
+/// Full-screen detail with its own Scaffold + AppBar. Used by the
+/// route push (phone deep link, terminated-push tap).
 class NotificationDetailPage extends StatelessWidget {
   final String id;
 
@@ -17,13 +19,34 @@ class NotificationDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<NotificationDetailCubit>(
       create: (_) => NotificationDetailCubit(sl<NotificationRepository>(), id),
-      child: const _Body(),
+      child: const _DetailScaffold(),
     );
   }
 }
 
-class _Body extends StatelessWidget {
-  const _Body();
+/// Embedded detail body — no Scaffold/AppBar. Used by the tablet
+/// master-detail layout (Phase 2d) where the list page hosts the
+/// AppBar and the right pane just shows content.
+class NotificationDetailView extends StatelessWidget {
+  final String id;
+
+  const NotificationDetailView({super.key, required this.id});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<NotificationDetailCubit>(
+      // ValueKey on id forces a fresh cubit when the user selects a
+      // different row in the master pane — the existing cubit would
+      // otherwise stay bound to the previous id.
+      key: ValueKey('detail-$id'),
+      create: (_) => NotificationDetailCubit(sl<NotificationRepository>(), id),
+      child: const _DetailBody(),
+    );
+  }
+}
+
+class _DetailScaffold extends StatelessWidget {
+  const _DetailScaffold();
 
   @override
   Widget build(BuildContext context) {
@@ -31,25 +54,34 @@ class _Body extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Bildirishnoma'),
       ),
-      body: BlocBuilder<NotificationDetailCubit, NotificationDetailState>(
-        builder: (context, state) {
-          if (state.loading && state.notification == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state.notification == null) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Bu bildirishnoma topilmadi yoki muddati o\'tgan.',
-                  textAlign: TextAlign.center,
-                ),
+      body: const _DetailBody(),
+    );
+  }
+}
+
+class _DetailBody extends StatelessWidget {
+  const _DetailBody();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<NotificationDetailCubit, NotificationDetailState>(
+      builder: (context, state) {
+        if (state.loading && state.notification == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state.notification == null) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                'Bu bildirishnoma topilmadi yoki muddati o\'tgan.',
+                textAlign: TextAlign.center,
               ),
-            );
-          }
-          return _DetailView(notification: state.notification!);
-        },
-      ),
+            ),
+          );
+        }
+        return _DetailView(notification: state.notification!);
+      },
     );
   }
 }

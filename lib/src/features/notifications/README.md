@@ -91,10 +91,39 @@ asosida thin payload yuborishi shart (passport §3.4).
 - `lib/src/features/auth/presentation/bloc/auth_bloc.dart` — login/logout hooklar.
 - `lib/src/features/agent/presentation/pages/agent_home_modern.dart` — `NotificationBell` joylashtirildi.
 
-## Ochiq qolgan ishlar (Phase 2)
+## Phase 2 — joriy holat
 
-- iOS critical-alert (`urgent` priority) — Apple entitlement kerak.
-- Android channel per type (sound/vibration profile).
-- Notification preferences ekrani (Settings ichida — type bo'yicha on/off).
-- Snooze + mark-unread (long-press notification row'da).
-- Tablet master-detail UI.
+| Sub-phase | Tarkibi | Holati |
+| --- | --- | --- |
+| 2a | Notification preferences (type on/off, DND, sound per priority) + Android channel per type | ✅ |
+| 2b | Snooze (1h / 4h / 08:00 ertaga) + mark-as-unread (long-press menyu) | ✅ |
+| 2c | iOS critical alert (`urgent` → `InterruptionLevel.critical`) + Android `Importance.max` urgent uchun | ⚠️ kod tayyor, lekin iOS'da Apple entitlement kerak |
+| 2d | Tablet master-detail (≥ 720dp width) | ✅ |
+
+### Phase 2c — iOS critical alert entitlement
+
+Kod `priority == 'urgent'` push'larda `InterruptionLevel.critical`'ni
+ishlatadi. iOS uni quyidagi shartlardan biriga ko'ra silent ravishda
+downgrade qiladi:
+
+- App `com.apple.developer.usernotifications.critical-alerts`
+  entitlement'ga ega emas → `timeSensitive` ga downgrade.
+- App entitlement'ga ega, lekin foydalanuvchi rad etgan → `active`.
+
+**To enable real critical alerts** (lock-screen orqali tovush DND
+da):
+
+1. Apple Developer Portal'da `com.apple.developer.usernotifications.critical-alerts`
+   entitlement uchun ariza topshiring. Apple ~3-5 ish kuni javob beradi
+   (legitimacy review).
+2. Apple javobi kelgach `ios/Runner/Runner.entitlements` fayliga shu
+   kalitni qo'shing:
+   ```xml
+   <key>com.apple.developer.usernotifications.critical-alerts</key>
+   <true/>
+   ```
+3. Xcode → Runner → Signing & Capabilities → provisioning profile'ni
+   yangilang.
+
+Entitlement yo'q paytda kod ham xato bermaydi, ham crash qilmaydi —
+faqat critical sound o'rniga oddiy alert chiqadi.

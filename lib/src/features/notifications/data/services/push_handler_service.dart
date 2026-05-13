@@ -254,6 +254,7 @@ class PushHandlerService {
     final type = _readType(message);
     final priority = _readPriority(message);
     final level = _preferences.value.soundFor(priority);
+    final isUrgent = priority == 'urgent';
     final channelId =
         type != null && NotificationTypes.all.contains(type)
             ? _channelIdFor(type, level)
@@ -271,14 +272,28 @@ class PushHandlerService {
           channelId,
           channelName,
           channelDescription: _channelDescriptionFor(type ?? ''),
-          importance: _importanceFor(level),
-          priority: _trayPriorityFor(level),
+          // Phase 2c: urgent priority forces MAX importance so the
+          // heads-up banner bypasses DND on Android. The user's
+          // sound-level pref still controls whether audio plays.
+          importance: isUrgent ? Importance.max : _importanceFor(level),
+          priority: isUrgent ? Priority.max : _trayPriorityFor(level),
+          // `alarm` category lets the OS bypass Do-Not-Disturb on
+          // Android 12+ when the user has whitelisted the app.
+          category: isUrgent ? AndroidNotificationCategory.alarm : null,
           playSound: level == NotificationSoundLevel.sound,
           enableVibration: level != NotificationSoundLevel.silent,
         ),
         iOS: DarwinNotificationDetails(
           presentBadge: true,
           presentSound: level == NotificationSoundLevel.sound,
+          // Phase 2c: urgent → critical interruption. iOS silently
+          // downgrades to `timeSensitive` (or active) when the app
+          // does NOT hold the `com.apple.developer.usernotifications.
+          // critical-alerts` entitlement, so this is safe to ship
+          // before Apple has approved the entitlement request.
+          interruptionLevel: isUrgent
+              ? InterruptionLevel.critical
+              : InterruptionLevel.active,
         ),
       ),
       payload: id,

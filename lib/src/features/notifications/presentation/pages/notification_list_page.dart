@@ -7,7 +7,13 @@ import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart'
 import 'package:gloria_marketing_flutter/src/features/notifications/data/models/app_notification.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/bloc/notification_list_cubit.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/presentation/pages/notification_detail_page.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/services/notification_tap_router.dart';
+
+/// Tablet breakpoint — anything ≥ this is treated as a wide layout and
+/// gets the Phase 2d master-detail split. Matches Material's "expanded"
+/// window class (https://m3.material.io/foundations/layout/applying-layout).
+const double _tabletBreakpoint = 720;
 
 /// Long-press bottom-sheet options on a notification row (Phase 2b).
 enum _RowAction { markUnread, snooze1h, snooze4h, snoozeTomorrow }
@@ -53,6 +59,12 @@ class _Body extends StatefulWidget {
 class _BodyState extends State<_Body> {
   late final ScrollController _scroll;
 
+  /// Tablet-only — id of the row showing in the right pane. `null`
+  /// means the empty-state placeholder is rendered. Reset whenever the
+  /// list re-syncs and the previously selected row is no longer
+  /// visible (e.g. it got snoozed or expired).
+  String? _selectedId;
+
   @override
   void initState() {
     super.initState();
@@ -74,54 +86,33 @@ class _BodyState extends State<_Body> {
     super.dispose();
   }
 
+  /// Tablet-mode row tap: keep the selection in this widget and let
+  /// the right pane render the detail. Deep links still take priority
+  /// — they're cross-feature jumps (e.g. customer page) that don't
+  /// belong inside the notifications screen.
+  void _selectRow(AppNotification item) {
+    if (item.deepLink != null && item.deepLink!.isNotEmpty) {
+      NotificationTapRouter.handleDeepLink(
+        context,
+        deepLink: item.deepLink,
+        notificationId: item.id,
+      );
+      return;
+    }
+    setState(() => _selectedId = item.id);
+    // Mark-read fires inside the detail cubit (NotificationDetailView
+    // → NotificationDetailCubit.load), so we don't need to call it
+    // here.
+  }
+
   @override
   Widget build(BuildContext context) {
-    final list = BlocBuilder<NotificationListCubit, NotificationListState>(
-      builder: (context, state) {
-        if (state.loading && state.items.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (state.items.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: () =>
-                context.read<NotificationListCubit>().refresh(),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
-                SizedBox(height: 120),
-                Center(child: Icon(Icons.inbox_outlined, size: 64)),
-                SizedBox(height: 12),
-                Center(child: Text('Bildirishnomalar yo\'q')),
-              ],
-            ),
-          );
-        }
-        return RefreshIndicator(
-          onRefresh: () => context.read<NotificationListCubit>().refresh(),
-          child: ListView.separated(
-            controller: _scroll,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: state.items.length + (state.hasMore ? 1 : 0),
-            separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (context, i) {
-              if (i >= state.items.length) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              final item = state.items[i];
-              return _Row(item: item);
-            },
-          ),
-        );
-      },
-    );
+    final list = _buildList(onSelect: widget.embedded ? null : _selectRow);
 
     if (widget.embedded) {
-      // Host (e.g. marketing tab) supplies the AppBar. Surface the
-      // "mark all read" affordance via an inline header so the action
-      // stays reachable.
+      // Marketing tab — single-pane regardless of screen size; the
+      // tab is already a sub-region of a larger screen, splitting it
+      // again wastes horizontal space.
       return Column(
         children: [
           BlocBuilder<NotificationListCubit, NotificationListState>(
@@ -147,6 +138,10 @@ class _BodyState extends State<_Body> {
         ],
       );
     }
+
+    // Full-screen variant — decide phone vs tablet at runtime so the
+    // same widget tree works in foldables / orientation changes.
+    final isTablet = MediaQuery.of(context).size.width >= _tabletBreakpoint;
 
     return Scaffold(
       appBar: AppBar(
@@ -175,7 +170,112 @@ class _BodyState extends State<_Body> {
           ),
         ],
       ),
-      body: list,
+      body: isTablet ? _buildSplitView(list) : list,
+    );
+  }
+
+  /// Inner list — extracted so it can be reused in both single-pane
+  /// and split-pane layouts. [onSelect] is called instead of the
+  /// row's default route-push when non-null (tablet mode).
+  Widget _buildList({void Function(AppNotification)? onSelect}) {
+    return BlocBuilder<NotificationListCubit, NotificationListState>(
+      builder: (context, state) {
+        if (state.loading && state.items.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state.items.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: () =>
+                context.read<NotificationListCubit>().refresh(),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 120),
+                Center(child: Icon(Icons.inbox_outlined, size: 64)),
+                SizedBox(height: 12),
+                Center(child: Text('Bildirishnomalar yo\'q')),
+              ],
+            ),
+          );
+        }
+        // If the previously-selected row disappeared from the list
+        // (snoozed, expired, evicted), drop the selection so the
+        // right pane shows the empty state.
+        if (_selectedId != null &&
+            !state.items.any((n) => n.id == _selectedId)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _selectedId = null);
+          });
+        }
+        return RefreshIndicator(
+          onRefresh: () => context.read<NotificationListCubit>().refresh(),
+          child: ListView.separated(
+            controller: _scroll,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: state.items.length + (state.hasMore ? 1 : 0),
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (context, i) {
+              if (i >= state.items.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final item = state.items[i];
+              return _Row(
+                item: item,
+                isSelected: onSelect != null && item.id == _selectedId,
+                onTap: onSelect,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSplitView(Widget list) {
+    final theme = Theme.of(context);
+    final id = _selectedId;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: 360,
+          child: Material(
+            color: theme.colorScheme.surface,
+            child: list,
+          ),
+        ),
+        const VerticalDivider(width: 1),
+        Expanded(
+          child: id == null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.mail_outline,
+                          size: 64,
+                          color: theme.colorScheme.outline,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Tafsilotlarni ko\'rish uchun chap tomondan bildirishnoma tanlang.',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : NotificationDetailView(id: id),
+        ),
+      ],
     );
   }
 }
@@ -183,13 +283,30 @@ class _BodyState extends State<_Body> {
 class _Row extends StatelessWidget {
   final AppNotification item;
 
-  const _Row({required this.item});
+  /// True when this row is the currently-active selection in the
+  /// tablet split layout. Renders a tinted background so the user can
+  /// tell which row the right pane is showing.
+  final bool isSelected;
+
+  /// Tablet mode hook — if provided, called instead of the default
+  /// route push. Phone single-pane mode passes `null` so the existing
+  /// navigator-based behaviour stays.
+  final void Function(AppNotification item)? onTap;
+
+  const _Row({
+    required this.item,
+    this.isSelected = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final formatter = DateFormat('dd.MM HH:mm');
     return ListTile(
+      selected: isSelected,
+      selectedTileColor:
+          theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
       leading: CircleAvatar(
         backgroundColor:
             theme.colorScheme.primary.withValues(alpha: item.isUnread ? 1 : 0.4),
@@ -231,6 +348,12 @@ class _Row extends StatelessWidget {
         ],
       ),
       onTap: () {
+        // Tablet split mode — defer to the host so it can render the
+        // detail in the right pane without pushing a new route.
+        if (onTap != null) {
+          onTap!(item);
+          return;
+        }
         // Mark-read auto-fires inside the detail cubit (passport §5.3).
         // Deep-link routes still funnel through the detail screen by
         // default — only the detail screen can decide whether to bounce

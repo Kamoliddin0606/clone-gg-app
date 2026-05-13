@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/models/notification_preferences.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/widgets/in_app_banner.dart';
 
 /// One-stop wiring for the three FCM delivery states (passport §3):
@@ -22,13 +24,23 @@ import 'package:gloria_marketing_flutter/src/features/notifications/presentation
 /// The handler is intentionally thin: every push payload carries only
 /// `notification_id` + metadata (passport §3.4). The repository fetches
 /// the full row when needed.
+///
+/// **Phase 2** wiring:
+///   * Client-side filter — pushes whose `type` the user disabled, OR
+///     that arrive inside the DND window, are still persisted to the
+///     local cache but the foreground banner is suppressed.
+///   * Per-type Android channels — `selup_debt_alert`, `selup_order_new`,
+///     etc. let the OS Settings app expose granular sound/vibration
+///     control. Channel importance is derived from priority +
+///     [NotificationPreferences.soundFor].
 class PushHandlerService {
-  static const _androidChannelId = 'selup_default';
-  static const _androidChannelName = 'SelUp notifications';
-  static const _androidChannelDescription =
-      'Default notification channel for SelUp app push messages';
+  static const _defaultAndroidChannelId = 'selup_default';
+  static const _defaultAndroidChannelName = 'Boshqa bildirishnomalar';
+  static const _defaultAndroidChannelDescription =
+      'Default channel used when the notification type is unknown.';
 
   final NotificationRepository _repo;
+  final NotificationPreferencesService _preferences;
   final FirebaseMessaging _messaging;
   final FlutterLocalNotificationsPlugin _localNotifications;
 
@@ -43,13 +55,16 @@ class PushHandlerService {
 
   StreamSubscription<RemoteMessage>? _foregroundSub;
   StreamSubscription<RemoteMessage>? _openedAppSub;
+  StreamSubscription<NotificationPreferences>? _prefsSub;
   bool _initialized = false;
 
   PushHandlerService({
     required NotificationRepository repo,
+    required NotificationPreferencesService preferences,
     FirebaseMessaging? messaging,
     FlutterLocalNotificationsPlugin? localNotifications,
   })  : _repo = repo,
+        _preferences = preferences,
         _messaging = messaging ?? FirebaseMessaging.instance,
         _localNotifications =
             localNotifications ?? FlutterLocalNotificationsPlugin();
@@ -74,6 +89,15 @@ class PushHandlerService {
     _openedAppSub =
         FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenedApp);
 
+    // Re-sync Android channels every time the user updates the
+    // sound/vibration profile, so the OS Settings panel always shows
+    // the current behaviour. Channel `setImportance` cannot be lowered
+    // once created (Android limitation) — fresh per-priority subchannel
+    // ids are used so importance changes propagate.
+    _prefsSub = _preferences.stream.listen((_) {
+      _syncAndroidChannels();
+    });
+
     // Process the message that launched the app from terminated state.
     final initial = await _messaging.getInitialMessage();
     if (initial != null) {
@@ -87,8 +111,10 @@ class PushHandlerService {
   Future<void> dispose() async {
     await _foregroundSub?.cancel();
     await _openedAppSub?.cancel();
+    await _prefsSub?.cancel();
     _foregroundSub = null;
     _openedAppSub = null;
+    _prefsSub = null;
     _initialized = false;
   }
 
@@ -98,11 +124,15 @@ class PushHandlerService {
 
   Future<void> _handleForeground(RemoteMessage message) async {
     final id = _readNotificationId(message);
+    final type = _readType(message);
     if (kDebugMode) {
-      debugPrint('[PUSH] foreground id=$id data=${message.data}');
+      debugPrint('[PUSH] foreground id=$id type=$type data=${message.data}');
     }
     // Refresh the full record from the backend so the list, banner,
     // and detail screens all see the same canonical content.
+    // The row lands in the cache REGARDLESS of preferences — the user
+    // can still find it later in the list. Only the visual interrupt
+    // is gated.
     if (id != null) {
       try {
         await _repo.fetchAndCache(id);
@@ -110,6 +140,15 @@ class PushHandlerService {
         if (kDebugMode) debugPrint('[PUSH] foreground fetchAndCache: $e');
       }
     }
+
+    if (!shouldShowForeground(type: type)) {
+      if (kDebugMode) {
+        debugPrint(
+            '[PUSH] foreground suppressed (type=$type, dnd=${_preferences.value.isInDnd()})');
+      }
+      return;
+    }
+
     if (onForegroundBanner != null) {
       onForegroundBanner!(message);
     } else {
@@ -134,6 +173,16 @@ class PushHandlerService {
     onTap?.call(message);
   }
 
+  /// Public for unit tests + the marketing tab's manual preview. Pure
+  /// function over the in-memory preferences snapshot.
+  @visibleForTesting
+  bool shouldShowForeground({String? type, DateTime? now}) {
+    final prefs = _preferences.value;
+    if (type != null && !prefs.isTypeEnabled(type)) return false;
+    if (prefs.isInDnd(now)) return false;
+    return true;
+  }
+
   // ---------------------------------------------------------------------------
   // Local notifications (foreground fallback)
   // ---------------------------------------------------------------------------
@@ -150,20 +199,50 @@ class PushHandlerService {
       const InitializationSettings(android: androidInit, iOS: iosInit),
       onDidReceiveNotificationResponse: _handleLocalNotificationTap,
     );
+    await _syncAndroidChannels();
+  }
 
-    // Pre-create the default Android channel so the OS settings panel
-    // shows a friendly name immediately, not "Miscellaneous".
+  /// Create one Android channel per (type, priority) bucket. Channel
+  /// ids stay stable for the same (type, soundLevel) pair so the OS
+  /// settings remain meaningful across rebuilds; when the user changes
+  /// the sound level we create a new channel id (Android forbids
+  /// lowering channel importance after creation).
+  Future<void> _syncAndroidChannels() async {
     final androidPlugin =
         _localNotifications.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
-    await androidPlugin?.createNotificationChannel(
+    if (androidPlugin == null) return;
+
+    // Always keep the default fallback for unknown server types.
+    await androidPlugin.createNotificationChannel(
       const AndroidNotificationChannel(
-        _androidChannelId,
-        _androidChannelName,
-        description: _androidChannelDescription,
+        _defaultAndroidChannelId,
+        _defaultAndroidChannelName,
+        description: _defaultAndroidChannelDescription,
         importance: Importance.high,
       ),
     );
+
+    final prefs = _preferences.value;
+    for (final type in NotificationTypes.all) {
+      // Same channel shape for both priorities the type typically uses
+      // — agents only see urgent/high for debts and normal for
+      // announcements. We register one channel per type using the
+      // sound level chosen for `high` priority, which is the dominant
+      // bucket. Per-priority differentiation can be split later.
+      final level = prefs.soundFor('high');
+      final id = _channelIdFor(type, level);
+      await androidPlugin.createNotificationChannel(
+        AndroidNotificationChannel(
+          id,
+          _channelNameFor(type),
+          description: _channelDescriptionFor(type),
+          importance: _importanceFor(level),
+          enableVibration: level != NotificationSoundLevel.silent,
+          playSound: level == NotificationSoundLevel.sound,
+        ),
+      );
+    }
   }
 
   Future<void> _showSystemTray(RemoteMessage message) async {
@@ -172,19 +251,35 @@ class PushHandlerService {
     final body = notification?.body ?? message.data['body'] as String? ?? '';
     if (title.isEmpty && body.isEmpty) return;
     final id = _readNotificationId(message);
+    final type = _readType(message);
+    final priority = _readPriority(message);
+    final level = _preferences.value.soundFor(priority);
+    final channelId =
+        type != null && NotificationTypes.all.contains(type)
+            ? _channelIdFor(type, level)
+            : _defaultAndroidChannelId;
+    final channelName = type != null && NotificationTypes.all.contains(type)
+        ? _channelNameFor(type)
+        : _defaultAndroidChannelName;
+
     await _localNotifications.show(
       _stableTrayId(id),
       title,
       body,
       NotificationDetails(
-        android: const AndroidNotificationDetails(
-          _androidChannelId,
-          _androidChannelName,
-          channelDescription: _androidChannelDescription,
-          importance: Importance.high,
-          priority: Priority.high,
+        android: AndroidNotificationDetails(
+          channelId,
+          channelName,
+          channelDescription: _channelDescriptionFor(type ?? ''),
+          importance: _importanceFor(level),
+          priority: _trayPriorityFor(level),
+          playSound: level == NotificationSoundLevel.sound,
+          enableVibration: level != NotificationSoundLevel.silent,
         ),
-        iOS: const DarwinNotificationDetails(presentBadge: true),
+        iOS: DarwinNotificationDetails(
+          presentBadge: true,
+          presentSound: level == NotificationSoundLevel.sound,
+        ),
       ),
       payload: id,
     );
@@ -198,13 +293,84 @@ class PushHandlerService {
   }
 
   // ---------------------------------------------------------------------------
-  // Helpers
+  // Channel helpers
+  // ---------------------------------------------------------------------------
+
+  String _channelIdFor(String type, NotificationSoundLevel level) =>
+      'selup_${type}_${level.name}';
+
+  String _channelNameFor(String type) {
+    switch (type) {
+      case NotificationTypes.debtAlert:
+        return 'Qarz ogohlantirishlari';
+      case NotificationTypes.orderNew:
+        return 'Yangi buyurtmalar';
+      case NotificationTypes.stockLotExpiring:
+        return 'Lot tugashi';
+      case NotificationTypes.systemAnnouncement:
+        return 'Tizim e\'lonlari';
+      default:
+        return 'Bildirishnomalar';
+    }
+  }
+
+  String _channelDescriptionFor(String type) {
+    switch (type) {
+      case NotificationTypes.debtAlert:
+        return 'Mijoz qarzlari bo\'yicha ogohlantirishlar.';
+      case NotificationTypes.orderNew:
+        return 'Yangi buyurtma kelganida bildirishnoma.';
+      case NotificationTypes.stockLotExpiring:
+        return 'Ombor lot muddati tugashi haqida bildirishnoma.';
+      case NotificationTypes.systemAnnouncement:
+        return 'Tizim va boshqaruv e\'lonlari.';
+      default:
+        return 'Boshqa bildirishnoma turlari.';
+    }
+  }
+
+  Importance _importanceFor(NotificationSoundLevel level) {
+    switch (level) {
+      case NotificationSoundLevel.silent:
+        return Importance.low;
+      case NotificationSoundLevel.vibrate:
+        return Importance.defaultImportance;
+      case NotificationSoundLevel.sound:
+        return Importance.high;
+    }
+  }
+
+  Priority _trayPriorityFor(NotificationSoundLevel level) {
+    switch (level) {
+      case NotificationSoundLevel.silent:
+        return Priority.low;
+      case NotificationSoundLevel.vibrate:
+        return Priority.defaultPriority;
+      case NotificationSoundLevel.sound:
+        return Priority.high;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Message inspection
   // ---------------------------------------------------------------------------
 
   String? _readNotificationId(RemoteMessage message) {
     final raw = message.data['notification_id'];
     if (raw is String && raw.isNotEmpty) return raw;
     return null;
+  }
+
+  String? _readType(RemoteMessage message) {
+    final raw = message.data['type'];
+    if (raw is String && raw.isNotEmpty) return raw;
+    return null;
+  }
+
+  String _readPriority(RemoteMessage message) {
+    final raw = message.data['priority'];
+    if (raw is String && raw.isNotEmpty) return raw;
+    return 'normal';
   }
 
   /// Hash the notification UUID into a stable 31-bit int so repeated

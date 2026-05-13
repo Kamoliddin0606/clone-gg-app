@@ -27,6 +27,7 @@ import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pag
 import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pages/knowledge_search_page.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/pages/notification_list_page.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/pages/notification_detail_page.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/presentation/pages/notification_preferences_page.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -61,6 +62,7 @@ class AppRouter {
   // Notification center — see docs/notifications/passport-mobile.md.
   static const String notificationListRoute = '/notifications';
   static const String notificationDetailRoute = '/notifications/detail';
+  static const String notificationPreferencesRoute = '/notifications/preferences';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -214,6 +216,10 @@ class AppRouter {
         }
         return MaterialPageRoute(
           builder: (_) => NotificationDetailPage(id: id),
+        );
+      case notificationPreferencesRoute:
+        return MaterialPageRoute(
+          builder: (_) => const NotificationPreferencesPage(),
         );
       default:
         return MaterialPageRoute(

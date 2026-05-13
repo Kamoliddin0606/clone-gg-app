@@ -61,6 +61,7 @@ import 'package:gloria_marketing_flutter/src/features/notifications/data/db/noti
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/fcm_token_service.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_api_service.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/push_handler_service.dart';
 
 import '../network/server_service.dart';
@@ -584,10 +585,22 @@ Future<void> setupServiceLocator() async {
       ),
     );
   }
+  // Reactive client-side preference store (Phase 2 §1). Must be ready
+  // BEFORE PushHandlerService so the filter sees a hydrated snapshot
+  // on the very first foreground push. Bootstrap in main() after the
+  // service-locator setup returns.
+  if (!sl.isRegistered<NotificationPreferencesService>()) {
+    sl.registerLazySingleton<NotificationPreferencesService>(
+      () => NotificationPreferencesService(
+        prefs: sl<SharedPreferencesService>(),
+      ),
+    );
+  }
   if (!sl.isRegistered<PushHandlerService>()) {
     sl.registerLazySingleton<PushHandlerService>(
       () => PushHandlerService(
         repo: sl<NotificationRepository>(),
+        preferences: sl<NotificationPreferencesService>(),
       ),
     );
   }

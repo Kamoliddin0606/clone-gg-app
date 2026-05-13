@@ -20,6 +20,7 @@ import 'package:gloria_marketing_flutter/src/core/widgets/permission_dialog.dart
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/fcm_token_service.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/push_handler_service.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/widgets/in_app_banner.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/services/notification_tap_router.dart';
@@ -88,6 +89,17 @@ void main() async {
   } catch (e) {
     if (kDebugMode) {
       debugPrint('[Main] Notification cache bootstrap skipped: $e');
+    }
+  }
+
+  // Load notification preferences (per-type on/off, DND, sound levels)
+  // BEFORE the push handler initialises Android channels — the channel
+  // shape is derived from the preference snapshot.
+  try {
+    await sl<NotificationPreferencesService>().bootstrap();
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Notification preferences bootstrap skipped: $e');
     }
   }
 

@@ -162,6 +162,14 @@ class _BodyState extends State<_Body> {
               );
             },
           ),
+          IconButton(
+            tooltip: 'Sozlamalar',
+            onPressed: () => Navigator.pushNamed(
+              context,
+              AppRouter.notificationPreferencesRoute,
+            ),
+            icon: const Icon(Icons.settings_outlined),
+          ),
         ],
       ),
       body: list,

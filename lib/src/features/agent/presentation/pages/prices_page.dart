@@ -1195,30 +1195,20 @@ class ProductCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        product.productName,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
+                      Tooltip(
+                        message: product.productName,
+                        waitDuration: const Duration(milliseconds: 500),
+                        triggerMode: TooltipTriggerMode.longPress,
+                        child: Text(
+                          product.productName,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
-                      // Row(
-                      //   children: [
-                      //     Icon(Icons.tag_outlined, size: 16, color: cs.onSurfaceVariant),
-                      //     const SizedBox(width: 6),
-                      //     Expanded(
-                      //       child: Text(
-                      //         'Kod: ${product.productCode}',
-                      //         style: theme.textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      //         maxLines: 1,
-                      //         overflow: TextOverflow.ellipsis,
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Icon(
@@ -1228,13 +1218,19 @@ class ProductCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
-                              'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: cs.onSurfaceVariant,
+                            child: Tooltip(
+                              message:
+                                  'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
+                              waitDuration: const Duration(milliseconds: 500),
+                              triggerMode: TooltipTriggerMode.longPress,
+                              child: Text(
+                                'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -1249,58 +1245,82 @@ class ProductCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
-                              'Qoldiq: ${formatNumber(product.stock)}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: cs.onSurfaceVariant,
+                            child: Tooltip(
+                              message:
+                                  'Qoldiq: ${formatNumber(product.stock)}',
+                              waitDuration: const Duration(milliseconds: 500),
+                              triggerMode: TooltipTriggerMode.longPress,
+                              child: Text(
+                                'Qoldiq: ${formatNumber(product.stock)}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        'Narx turi: ${product.priceTypeName}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
+                      Tooltip(
+                        message: 'Narx turi: ${product.priceTypeName}',
+                        waitDuration: const Duration(milliseconds: 500),
+                        triggerMode: TooltipTriggerMode.longPress,
+                        child: Text(
+                          'Narx turi: ${product.priceTypeName}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                Text(
-                  '${formatNumber(product.price)} ${product.currency}',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: cs.primary,
-                  ),
-                ),
               ],
             ),
-            if (product.warehouseCode.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Sklad: ${product.warehouseName.isNotEmpty ? product.warehouseName : product.warehouseCode}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onPrimaryContainer,
-                    fontWeight: FontWeight.w600,
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '${formatNumber(product.price)} ${product.currency}',
+                      maxLines: 1,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: cs.primary,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                if (product.warehouseCode.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Sklad: ${product.warehouseName.isNotEmpty ? product.warehouseName : product.warehouseCode}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
@@ -1362,13 +1382,18 @@ class ProductGridTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    product.productName,
-                    maxLines: 4,
-                    softWrap: true,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+                  Tooltip(
+                    message: product.productName,
+                    waitDuration: const Duration(milliseconds: 500),
+                    triggerMode: TooltipTriggerMode.longPress,
+                    child: Text(
+                      product.productName,
+                      maxLines: 4,
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1394,13 +1419,19 @@ class ProductGridTile extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Text(
-                          'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: cs.onSurfaceVariant,
+                        child: Tooltip(
+                          message:
+                              'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
+                          waitDuration: const Duration(milliseconds: 500),
+                          triggerMode: TooltipTriggerMode.longPress,
+                          child: Text(
+                            'Artikul: ${product.vendorCode.isNotEmpty ? product.vendorCode : 'Noma\'lum'}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -1416,13 +1447,18 @@ class ProductGridTile extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Text(
-                          'Qoldiq: ${formatNumber(product.stock)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: cs.onSurfaceVariant,
+                        child: Tooltip(
+                          message: 'Qoldiq: ${formatNumber(product.stock)}',
+                          waitDuration: const Duration(milliseconds: 500),
+                          triggerMode: TooltipTriggerMode.longPress,
+                          child: Text(
+                            'Qoldiq: ${formatNumber(product.stock)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

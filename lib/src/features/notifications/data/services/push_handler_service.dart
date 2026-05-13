@@ -9,6 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart'
 import 'package:gloria_marketing_flutter/src/features/notifications/data/db/notification_db_dao.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/models/notification_preferences.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_actions.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/widgets/in_app_banner.dart';
 
@@ -194,14 +195,40 @@ class PushHandlerService {
   Future<void> _bootstrapLocalNotifications() async {
     const androidInit =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosInit = DarwinInitializationSettings(
+    // iOS: register the action category up front so the row
+    // notifications can reference its id via `categoryIdentifier`. The
+    // buttons appear when the user long-presses (or pulls down) the
+    // notification.
+    final iosInit = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
+      notificationCategories: [
+        DarwinNotificationCategory(
+          darwinNotificationCategoryId,
+          actions: [
+            DarwinNotificationAction.plain(
+              NotificationActionIds.markRead,
+              'O\'qildi',
+              options: {
+                DarwinNotificationActionOption.foreground,
+              },
+            ),
+            DarwinNotificationAction.plain(
+              NotificationActionIds.snooze1h,
+              '1 soatga uxlatish',
+            ),
+          ],
+        ),
+      ],
     );
     await _localNotifications.initialize(
-      const InitializationSettings(android: androidInit, iOS: iosInit),
+      InitializationSettings(android: androidInit, iOS: iosInit),
       onDidReceiveNotificationResponse: _handleLocalNotificationTap,
+      // Top-level entry-point so the OS can invoke it from the
+      // background isolate when the app is terminated.
+      onDidReceiveBackgroundNotificationResponse:
+          notificationBackgroundActionEntryPoint,
     );
     await _syncAndroidChannels();
   }
@@ -289,12 +316,33 @@ class PushHandlerService {
           playSound: level == NotificationSoundLevel.sound,
           enableVibration: level != NotificationSoundLevel.silent,
           groupKey: groupKey,
+          // Inline action buttons — see notification_actions.dart.
+          // showsUserInterface: false keeps "mark read" / "snooze"
+          // background; the app does not need to launch.
+          actions: const [
+            AndroidNotificationAction(
+              NotificationActionIds.markRead,
+              'O\'qildi',
+              showsUserInterface: false,
+              cancelNotification: true,
+            ),
+            AndroidNotificationAction(
+              NotificationActionIds.snooze1h,
+              '1 soat uxlatish',
+              showsUserInterface: false,
+              cancelNotification: true,
+            ),
+          ],
         ),
         iOS: DarwinNotificationDetails(
           presentBadge: true,
           presentSound: level == NotificationSoundLevel.sound,
           // Phase 2 stretch — iOS auto-groups by thread identifier.
           threadIdentifier: groupKey,
+          // Inline action buttons live on the category registered in
+          // `_bootstrapLocalNotifications` — referenced by id here so
+          // the OS knows which buttons to surface.
+          categoryIdentifier: darwinNotificationCategoryId,
           // Phase 2c: urgent → critical interruption. iOS silently
           // downgrades to `timeSensitive` (or active) when the app
           // does NOT hold the `com.apple.developer.usernotifications.
@@ -422,9 +470,38 @@ class PushHandlerService {
 
   void _handleLocalNotificationTap(NotificationResponse response) {
     final id = response.payload;
+    final actionId = response.actionId;
+
+    // Inline action (e.g. "Mark read" / "Snooze") tapped — apply via
+    // the shared dispatcher and refresh the repo streams so the UI
+    // catches up without a roundtrip through Navigator.
+    if (NotificationActionIds.isKnown(actionId)) {
+      // ignore: discarded_futures
+      _applyForegroundAction(actionId!, id);
+      return;
+    }
+
+    // Body tap (or unknown action) — open the app on the right route.
     if (id == null || id.isEmpty) return;
     final synthetic = RemoteMessage(data: {'notification_id': id});
     onTap?.call(synthetic);
+  }
+
+  Future<void> _applyForegroundAction(
+    String actionId,
+    String? notificationId,
+  ) async {
+    final ok = await dispatchNotificationAction(
+      actionId: actionId,
+      notificationId: notificationId,
+    );
+    if (!ok) return;
+    // Re-publish the repo streams so the badge + list reflect the new
+    // state immediately. syncIncremental flushes the read queue we
+    // just enqueued.
+    try {
+      await _repo.syncIncremental();
+    } catch (_) {/* best-effort */}
   }
 
   // ---------------------------------------------------------------------------
@@ -515,6 +592,30 @@ class PushHandlerService {
       return DateTime.now().millisecondsSinceEpoch.remainder(0x7fffffff);
     }
     return id.hashCode & 0x7fffffff;
+  }
+}
+
+/// Top-level entry-point for inline notification actions tapped while
+/// the app is terminated or backgrounded. `flutter_local_notifications`
+/// spawns a fresh isolate, so this function must be a top-level (not
+/// a closure / instance method) and must initialise everything it
+/// needs from scratch.
+///
+/// The dispatcher in [notification_actions.dart] opens [DatabaseHelper]
+/// lazily — sqflite tolerates cross-isolate access to the same db file.
+@pragma('vm:entry-point')
+Future<void> notificationBackgroundActionEntryPoint(
+  NotificationResponse response,
+) async {
+  try {
+    await dispatchNotificationAction(
+      actionId: response.actionId,
+      notificationId: response.payload,
+    );
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[NOTIF-ACTION] background entry-point error: $e');
+    }
   }
 }
 

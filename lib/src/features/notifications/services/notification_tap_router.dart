@@ -70,7 +70,13 @@ class NotificationTapRouter {
     navigator.pushNamed(AppRouter.notificationListRoute);
   }
 
-  static _ResolvedRoute? _parse(String? raw) {
+  /// Exposed for tests — pure function on the raw deep-link string.
+  /// Returns the route name + arguments, or `null` for unrecognised
+  /// schemes (caller falls back to notification detail / list).
+  @visibleForTesting
+  static ResolvedDeepLink? parseForTest(String? raw) => _parse(raw);
+
+  static ResolvedDeepLink? _parse(String? raw) {
     if (raw == null || raw.isEmpty) return null;
     final uri = Uri.tryParse(raw);
     if (uri == null) return null;
@@ -88,7 +94,7 @@ class NotificationTapRouter {
           // routes yet — surface them via the trading-points page
           // until a dedicated `/customers/:id` route lands. The
           // notification detail page acts as the safe fallback.
-          return _ResolvedRoute(
+          return ResolvedDeepLink(
             route: AppRouter.tradingPointsRoute,
             arguments: {
               'customer_id': segments[1],
@@ -98,7 +104,7 @@ class NotificationTapRouter {
         }
         break;
       case 'orders':
-        return _ResolvedRoute(
+        return ResolvedDeepLink(
           route: AppRouter.ordersRoute,
           arguments: segments.length >= 2 ? {'order_id': segments[1]} : null,
         );
@@ -107,7 +113,7 @@ class NotificationTapRouter {
         break;
       case 'announcements':
         if (segments.length >= 2) {
-          return _ResolvedRoute(
+          return ResolvedDeepLink(
             route: AppRouter.notificationDetailRoute,
             arguments: {'id': segments[1]},
           );
@@ -118,9 +124,12 @@ class NotificationTapRouter {
   }
 }
 
-class _ResolvedRoute {
+/// Parsed `selup://` deep link — maps onto the app's named routes.
+/// Exposed (no leading underscore) so deep-link parsing can be unit
+/// tested without spinning up a navigator.
+class ResolvedDeepLink {
   final String route;
   final Object? arguments;
 
-  const _ResolvedRoute({required this.route, this.arguments});
+  const ResolvedDeepLink({required this.route, this.arguments});
 }

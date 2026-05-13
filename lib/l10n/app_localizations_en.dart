@@ -5491,4 +5491,150 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customerCreate_err_oneCNoEndpoint => '1C integration is not configured. Contact admin.';
+
+  @override
+  String get notif_title => 'Notification';
+
+  @override
+  String get notif_listTitle => 'Notifications';
+
+  @override
+  String get notif_settings => 'Settings';
+
+  @override
+  String get notif_markAllReadTooltip => 'Mark all as read';
+
+  @override
+  String get notif_markAllReadButton => 'Mark all read';
+
+  @override
+  String get notif_emptyTitle => 'No notifications';
+
+  @override
+  String get notif_untitled => '(Untitled)';
+
+  @override
+  String get notif_detailNotFound => 'This notification was not found or has expired.';
+
+  @override
+  String get notif_tabletPlaceholder => 'Pick a notification on the left to see details.';
+
+  @override
+  String get notif_bellSemantics => 'Notifications';
+
+  @override
+  String notif_bellSemanticsWithUnread(int count) {
+    return 'Notifications ($count unread)';
+  }
+
+  @override
+  String get notif_markAllReadDialogTitle => 'Mark all as read';
+
+  @override
+  String get notif_markAllReadDialogBody => 'Mark every unread notification as read?';
+
+  @override
+  String get notif_markAllReadConfirm => 'Yes, mark all';
+
+  @override
+  String get notif_rowMarkUnread => 'Mark as unread';
+
+  @override
+  String get notif_rowSnooze1h => 'Snooze 1 hour';
+
+  @override
+  String get notif_rowSnooze4h => 'Snooze 4 hours';
+
+  @override
+  String get notif_rowSnoozeTomorrow => 'Until tomorrow morning';
+
+  @override
+  String get notif_type_debtAlert => 'Debt alerts';
+
+  @override
+  String get notif_type_orderNew => 'New orders';
+
+  @override
+  String get notif_type_stockLotExpiring => 'Lot expiring';
+
+  @override
+  String get notif_type_systemAnnouncement => 'System announcements';
+
+  @override
+  String get notif_typeShort_debtAlert => 'Debt';
+
+  @override
+  String get notif_typeShort_orderNew => 'Order';
+
+  @override
+  String get notif_typeShort_stockLotExpiring => 'Lot';
+
+  @override
+  String get notif_typeShort_systemAnnouncement => 'Announcement';
+
+  @override
+  String get notif_typeDesc_debtAlert => 'Notifications about customer debt';
+
+  @override
+  String get notif_typeDesc_orderNew => 'Alerts for new orders';
+
+  @override
+  String get notif_typeDesc_stockLotExpiring => 'Warehouse lot expiry warnings';
+
+  @override
+  String get notif_typeDesc_systemAnnouncement => 'System and management updates';
+
+  @override
+  String get notif_priority_urgent => 'Urgent';
+
+  @override
+  String get notif_priority_high => 'High';
+
+  @override
+  String get notif_priority_normal => 'Normal';
+
+  @override
+  String get notif_priority_low => 'Low';
+
+  @override
+  String get notif_action_openCustomer => 'Open customer';
+
+  @override
+  String get notif_action_openOrder => 'Open order';
+
+  @override
+  String get notif_action_openGeneric => 'Open';
+
+  @override
+  String get notif_prefsTitle => 'Notification preferences';
+
+  @override
+  String get notif_prefsSection_types => 'Notification types';
+
+  @override
+  String get notif_prefsSection_dnd => 'Do not disturb (DND)';
+
+  @override
+  String get notif_prefsSection_sound => 'Sound and vibration';
+
+  @override
+  String get notif_dnd_toggleTitle => 'Do not disturb';
+
+  @override
+  String get notif_dnd_hint => 'The banner stays hidden during the chosen window';
+
+  @override
+  String get notif_dnd_startLabel => 'Start';
+
+  @override
+  String get notif_dnd_endLabel => 'End';
+
+  @override
+  String get notif_sound_silent => 'Silent';
+
+  @override
+  String get notif_sound_vibrate => 'Vibrate';
+
+  @override
+  String get notif_sound_sound => 'Sound';
 }

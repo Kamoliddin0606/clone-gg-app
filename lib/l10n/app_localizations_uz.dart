@@ -5491,4 +5491,150 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get customerCreate_err_oneCNoEndpoint => '1C integratsiyasi sozlanmagan. Administratorga murojaat qiling.';
+
+  @override
+  String get notif_title => 'Bildirishnoma';
+
+  @override
+  String get notif_listTitle => 'Bildirishnomalar';
+
+  @override
+  String get notif_settings => 'Sozlamalar';
+
+  @override
+  String get notif_markAllReadTooltip => 'Hammasini o\'qilgan deb belgilash';
+
+  @override
+  String get notif_markAllReadButton => 'Hammasini o\'qilgan';
+
+  @override
+  String get notif_emptyTitle => 'Bildirishnomalar yo\'q';
+
+  @override
+  String get notif_untitled => '(Sarlavhasiz)';
+
+  @override
+  String get notif_detailNotFound => 'Bu bildirishnoma topilmadi yoki muddati o\'tgan.';
+
+  @override
+  String get notif_tabletPlaceholder => 'Tafsilotlarni ko\'rish uchun chap tomondan bildirishnoma tanlang.';
+
+  @override
+  String get notif_bellSemantics => 'Bildirishnomalar';
+
+  @override
+  String notif_bellSemanticsWithUnread(int count) {
+    return 'Bildirishnomalar ($count o\'qilmagan)';
+  }
+
+  @override
+  String get notif_markAllReadDialogTitle => 'Hammasini o\'qilgan deb belgilash';
+
+  @override
+  String get notif_markAllReadDialogBody => 'Barcha o\'qilmagan bildirishnomalarni o\'qilgan deb belgilashni xohlaysizmi?';
+
+  @override
+  String get notif_markAllReadConfirm => 'Ha, belgilash';
+
+  @override
+  String get notif_rowMarkUnread => 'O\'qilmagan deb belgilash';
+
+  @override
+  String get notif_rowSnooze1h => '1 soatga uxlatish';
+
+  @override
+  String get notif_rowSnooze4h => '4 soatga uxlatish';
+
+  @override
+  String get notif_rowSnoozeTomorrow => 'Ertaga ertalabgacha uxlatish';
+
+  @override
+  String get notif_type_debtAlert => 'Qarz ogohlantirishlari';
+
+  @override
+  String get notif_type_orderNew => 'Yangi buyurtmalar';
+
+  @override
+  String get notif_type_stockLotExpiring => 'Lot tugashi';
+
+  @override
+  String get notif_type_systemAnnouncement => 'Tizim e\'lonlari';
+
+  @override
+  String get notif_typeShort_debtAlert => 'Qarz';
+
+  @override
+  String get notif_typeShort_orderNew => 'Buyurtma';
+
+  @override
+  String get notif_typeShort_stockLotExpiring => 'Lot tugaydi';
+
+  @override
+  String get notif_typeShort_systemAnnouncement => 'E\'lon';
+
+  @override
+  String get notif_typeDesc_debtAlert => 'Mijoz qarzlari haqida bildirishnomalar';
+
+  @override
+  String get notif_typeDesc_orderNew => 'Yangi buyurtma haqida ogohlantirish';
+
+  @override
+  String get notif_typeDesc_stockLotExpiring => 'Ombor lotining muddati tugashi';
+
+  @override
+  String get notif_typeDesc_systemAnnouncement => 'Tizim va boshqaruv yangiliklari';
+
+  @override
+  String get notif_priority_urgent => 'Shoshilinch';
+
+  @override
+  String get notif_priority_high => 'Yuqori';
+
+  @override
+  String get notif_priority_normal => 'Oddiy';
+
+  @override
+  String get notif_priority_low => 'Past';
+
+  @override
+  String get notif_action_openCustomer => 'Mijozni ochish';
+
+  @override
+  String get notif_action_openOrder => 'Buyurtmani ochish';
+
+  @override
+  String get notif_action_openGeneric => 'Ochish';
+
+  @override
+  String get notif_prefsTitle => 'Bildirishnoma sozlamalari';
+
+  @override
+  String get notif_prefsSection_types => 'Bildirishnoma turlari';
+
+  @override
+  String get notif_prefsSection_dnd => 'Bezovta qilmang (DND)';
+
+  @override
+  String get notif_prefsSection_sound => 'Tovush va tebranish';
+
+  @override
+  String get notif_dnd_toggleTitle => 'Bezovta qilmang';
+
+  @override
+  String get notif_dnd_hint => 'Belgilangan vaqt ichida banner ko\'rsatilmaydi';
+
+  @override
+  String get notif_dnd_startLabel => 'Boshlanish';
+
+  @override
+  String get notif_dnd_endLabel => 'Tugash';
+
+  @override
+  String get notif_sound_silent => 'Jim';
+
+  @override
+  String get notif_sound_vibrate => 'Tebranish';
+
+  @override
+  String get notif_sound_sound => 'Tovush';
 }

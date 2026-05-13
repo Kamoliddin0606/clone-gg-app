@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/models/app_notification.dart';
@@ -109,6 +110,8 @@ class _BodyState extends State<_Body> {
   Widget build(BuildContext context) {
     final list = _buildList(onSelect: widget.embedded ? null : _selectRow);
 
+    final l10n = AppLocalizations.of(context)!;
+
     if (widget.embedded) {
       // Marketing tab — single-pane regardless of screen size; the
       // tab is already a sub-region of a larger screen, splitting it
@@ -128,7 +131,7 @@ class _BodyState extends State<_Body> {
                     onPressed: () =>
                         context.read<NotificationListCubit>().markAllRead(),
                     icon: const Icon(Icons.done_all, size: 18),
-                    label: const Text('Hammasini o\'qilgan'),
+                    label: Text(l10n.notif_markAllReadButton),
                   ),
                 ),
               );
@@ -145,14 +148,14 @@ class _BodyState extends State<_Body> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bildirishnomalar'),
+        title: Text(l10n.notif_listTitle),
         actions: [
           BlocBuilder<NotificationListCubit, NotificationListState>(
             buildWhen: (a, b) => a.items != b.items,
             builder: (context, state) {
               final hasUnread = state.items.any((n) => n.isUnread);
               return IconButton(
-                tooltip: 'Hammasini o\'qilgan deb belgilash',
+                tooltip: l10n.notif_markAllReadTooltip,
                 onPressed: hasUnread
                     ? () => context.read<NotificationListCubit>().markAllRead()
                     : null,
@@ -161,7 +164,7 @@ class _BodyState extends State<_Body> {
             },
           ),
           IconButton(
-            tooltip: 'Sozlamalar',
+            tooltip: l10n.notif_settings,
             onPressed: () => Navigator.pushNamed(
               context,
               AppRouter.notificationPreferencesRoute,
@@ -184,16 +187,17 @@ class _BodyState extends State<_Body> {
           return const Center(child: CircularProgressIndicator());
         }
         if (state.items.isEmpty) {
+          final l10n = AppLocalizations.of(context)!;
           return RefreshIndicator(
             onRefresh: () =>
                 context.read<NotificationListCubit>().refresh(),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
-                SizedBox(height: 120),
-                Center(child: Icon(Icons.inbox_outlined, size: 64)),
-                SizedBox(height: 12),
-                Center(child: Text('Bildirishnomalar yo\'q')),
+              children: [
+                const SizedBox(height: 120),
+                const Center(child: Icon(Icons.inbox_outlined, size: 64)),
+                const SizedBox(height: 12),
+                Center(child: Text(l10n.notif_emptyTitle)),
               ],
             ),
           );
@@ -236,6 +240,7 @@ class _BodyState extends State<_Body> {
 
   Widget _buildSplitView(Widget list) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final id = _selectedId;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -263,7 +268,7 @@ class _BodyState extends State<_Body> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Tafsilotlarni ko\'rish uchun chap tomondan bildirishnoma tanlang.',
+                          l10n.notif_tabletPlaceholder,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.outline,
@@ -302,6 +307,7 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final formatter = DateFormat('dd.MM HH:mm');
     return ListTile(
       selected: isSelected,
@@ -313,7 +319,7 @@ class _Row extends StatelessWidget {
         child: Icon(_iconForType(item.type), color: Colors.white, size: 20),
       ),
       title: Text(
-        item.title.isEmpty ? '(Sarlavhasiz)' : item.title,
+        item.title.isEmpty ? l10n.notif_untitled : item.title,
         style: TextStyle(
           fontWeight: item.isUnread ? FontWeight.w600 : FontWeight.normal,
         ),
@@ -381,6 +387,7 @@ class _Row extends StatelessWidget {
     AppNotification item,
   ) async {
     final cubit = context.read<NotificationListCubit>();
+    final l10n = AppLocalizations.of(context)!;
     final action = await showModalBottomSheet<_RowAction>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -390,22 +397,22 @@ class _Row extends StatelessWidget {
             if (!item.isUnread)
               ListTile(
                 leading: const Icon(Icons.mark_email_unread_outlined),
-                title: const Text('O\'qilmagan deb belgilash'),
+                title: Text(l10n.notif_rowMarkUnread),
                 onTap: () => Navigator.pop(ctx, _RowAction.markUnread),
               ),
             ListTile(
               leading: const Icon(Icons.snooze),
-              title: const Text('1 soatga uxlatish'),
+              title: Text(l10n.notif_rowSnooze1h),
               onTap: () => Navigator.pop(ctx, _RowAction.snooze1h),
             ),
             ListTile(
               leading: const Icon(Icons.snooze),
-              title: const Text('4 soatga uxlatish'),
+              title: Text(l10n.notif_rowSnooze4h),
               onTap: () => Navigator.pop(ctx, _RowAction.snooze4h),
             ),
             ListTile(
               leading: const Icon(Icons.bedtime_outlined),
-              title: const Text('Ertaga ertalabgacha uxlatish'),
+              title: Text(l10n.notif_rowSnoozeTomorrow),
               onTap: () => Navigator.pop(ctx, _RowAction.snoozeTomorrow),
             ),
           ],

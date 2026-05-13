@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+
 /// Renders a transient "Notification arrived" banner at the top of the
 /// current scaffold when a push lands in the foreground.
 ///
@@ -31,9 +33,13 @@ class InAppBannerHostState extends State<InAppBannerHost> {
 
   void show(RemoteMessage message) {
     _dismiss();
+    // Localised fallback when neither the FCM payload nor the data
+    // map provides a title — keeps the banner readable in tests and
+    // for legacy server templates that ship body-only messages.
+    final l10n = AppLocalizations.of(context);
     final title = message.notification?.title ??
         message.data['title'] as String? ??
-        'Bildirishnoma';
+        (l10n?.notif_title ?? 'Notification');
     final body =
         message.notification?.body ?? message.data['body'] as String? ?? '';
     final deepLink = message.data['deep_link'] as String?;

@@ -5491,4 +5491,150 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get customerCreate_err_oneCNoEndpoint => 'Интеграция с 1С не настроена. Обратитесь к администратору.';
+
+  @override
+  String get notif_title => 'Уведомление';
+
+  @override
+  String get notif_listTitle => 'Уведомления';
+
+  @override
+  String get notif_settings => 'Настройки';
+
+  @override
+  String get notif_markAllReadTooltip => 'Отметить все прочитанными';
+
+  @override
+  String get notif_markAllReadButton => 'Прочитать все';
+
+  @override
+  String get notif_emptyTitle => 'Уведомлений нет';
+
+  @override
+  String get notif_untitled => '(Без заголовка)';
+
+  @override
+  String get notif_detailNotFound => 'Это уведомление не найдено или истёк срок.';
+
+  @override
+  String get notif_tabletPlaceholder => 'Выберите уведомление слева, чтобы увидеть детали.';
+
+  @override
+  String get notif_bellSemantics => 'Уведомления';
+
+  @override
+  String notif_bellSemanticsWithUnread(int count) {
+    return 'Уведомления ($count непрочитанных)';
+  }
+
+  @override
+  String get notif_markAllReadDialogTitle => 'Отметить все прочитанными';
+
+  @override
+  String get notif_markAllReadDialogBody => 'Отметить все непрочитанные уведомления как прочитанные?';
+
+  @override
+  String get notif_markAllReadConfirm => 'Да, отметить';
+
+  @override
+  String get notif_rowMarkUnread => 'Отметить непрочитанным';
+
+  @override
+  String get notif_rowSnooze1h => 'Отложить на 1 час';
+
+  @override
+  String get notif_rowSnooze4h => 'Отложить на 4 часа';
+
+  @override
+  String get notif_rowSnoozeTomorrow => 'До утра следующего дня';
+
+  @override
+  String get notif_type_debtAlert => 'Предупреждения о задолженности';
+
+  @override
+  String get notif_type_orderNew => 'Новые заказы';
+
+  @override
+  String get notif_type_stockLotExpiring => 'Срок партии';
+
+  @override
+  String get notif_type_systemAnnouncement => 'Системные объявления';
+
+  @override
+  String get notif_typeShort_debtAlert => 'Долг';
+
+  @override
+  String get notif_typeShort_orderNew => 'Заказ';
+
+  @override
+  String get notif_typeShort_stockLotExpiring => 'Партия';
+
+  @override
+  String get notif_typeShort_systemAnnouncement => 'Объявление';
+
+  @override
+  String get notif_typeDesc_debtAlert => 'Уведомления о задолженности клиентов';
+
+  @override
+  String get notif_typeDesc_orderNew => 'Оповещение о новых заказах';
+
+  @override
+  String get notif_typeDesc_stockLotExpiring => 'Истекает срок партии на складе';
+
+  @override
+  String get notif_typeDesc_systemAnnouncement => 'Системные и управленческие новости';
+
+  @override
+  String get notif_priority_urgent => 'Срочно';
+
+  @override
+  String get notif_priority_high => 'Высокий';
+
+  @override
+  String get notif_priority_normal => 'Обычный';
+
+  @override
+  String get notif_priority_low => 'Низкий';
+
+  @override
+  String get notif_action_openCustomer => 'Открыть клиента';
+
+  @override
+  String get notif_action_openOrder => 'Открыть заказ';
+
+  @override
+  String get notif_action_openGeneric => 'Открыть';
+
+  @override
+  String get notif_prefsTitle => 'Настройки уведомлений';
+
+  @override
+  String get notif_prefsSection_types => 'Типы уведомлений';
+
+  @override
+  String get notif_prefsSection_dnd => 'Не беспокоить (DND)';
+
+  @override
+  String get notif_prefsSection_sound => 'Звук и вибрация';
+
+  @override
+  String get notif_dnd_toggleTitle => 'Не беспокоить';
+
+  @override
+  String get notif_dnd_hint => 'В заданное время баннер не показывается';
+
+  @override
+  String get notif_dnd_startLabel => 'Начало';
+
+  @override
+  String get notif_dnd_endLabel => 'Конец';
+
+  @override
+  String get notif_sound_silent => 'Тихо';
+
+  @override
+  String get notif_sound_vibrate => 'Вибрация';
+
+  @override
+  String get notif_sound_sound => 'Звук';
 }

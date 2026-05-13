@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/models/notification_preferences.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_preferences_service.dart';
@@ -16,9 +17,10 @@ class NotificationPreferencesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = sl<NotificationPreferencesService>();
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bildirishnoma sozlamalari'),
+        title: Text(l10n.notif_prefsTitle),
       ),
       body: StreamBuilder<NotificationPreferences>(
         stream: service.stream,
@@ -28,7 +30,7 @@ class NotificationPreferencesPage extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
-              _SectionHeader('Bildirishnoma turlari'),
+              _SectionHeader(l10n.notif_prefsSection_types),
               ...NotificationTypes.all.map(
                 (type) => _TypeToggleTile(
                   type: type,
@@ -38,13 +40,13 @@ class NotificationPreferencesPage extends StatelessWidget {
                 ),
               ),
               const Divider(height: 32),
-              _SectionHeader('Bezovta qilmang (DND)'),
+              _SectionHeader(l10n.notif_prefsSection_dnd),
               _DndTile(
                 prefs: prefs,
                 onChanged: (next) => service.update(next),
               ),
               const Divider(height: 32),
-              _SectionHeader('Tovush va tebranish'),
+              _SectionHeader(l10n.notif_prefsSection_sound),
               for (final priority in const ['urgent', 'high', 'normal', 'low'])
                 _SoundLevelTile(
                   priority: priority,
@@ -94,40 +96,41 @@ class _TypeToggleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
-      title: Text(_labelFor(type)),
-      subtitle: Text(_descriptionFor(type)),
+      title: Text(_labelFor(l10n, type)),
+      subtitle: Text(_descriptionFor(l10n, type)),
       value: enabled,
       onChanged: onChanged,
       secondary: Icon(_iconFor(type)),
     );
   }
 
-  String _labelFor(String type) {
+  String _labelFor(AppLocalizations l10n, String type) {
     switch (type) {
       case NotificationTypes.debtAlert:
-        return 'Qarz ogohlantirishlari';
+        return l10n.notif_type_debtAlert;
       case NotificationTypes.orderNew:
-        return 'Yangi buyurtmalar';
+        return l10n.notif_type_orderNew;
       case NotificationTypes.stockLotExpiring:
-        return 'Lot tugashi';
+        return l10n.notif_type_stockLotExpiring;
       case NotificationTypes.systemAnnouncement:
-        return 'Tizim e\'lonlari';
+        return l10n.notif_type_systemAnnouncement;
       default:
         return type;
     }
   }
 
-  String _descriptionFor(String type) {
+  String _descriptionFor(AppLocalizations l10n, String type) {
     switch (type) {
       case NotificationTypes.debtAlert:
-        return 'Mijoz qarzlari haqida bildirishnomalar';
+        return l10n.notif_typeDesc_debtAlert;
       case NotificationTypes.orderNew:
-        return 'Yangi buyurtma haqida ogohlantirish';
+        return l10n.notif_typeDesc_orderNew;
       case NotificationTypes.stockLotExpiring:
-        return 'Ombor lotining muddati tugashi';
+        return l10n.notif_typeDesc_stockLotExpiring;
       case NotificationTypes.systemAnnouncement:
-        return 'Tizim va boshqaruv yangiliklari';
+        return l10n.notif_typeDesc_systemAnnouncement;
       default:
         return '';
     }
@@ -158,15 +161,16 @@ class _DndTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SwitchListTile(
-          title: const Text('Bezovta qilmang'),
+          title: Text(l10n.notif_dnd_toggleTitle),
           subtitle: Text(
             prefs.isDndEnabled
                 ? '${_fmt(prefs.dndStart!)} – ${_fmt(prefs.dndEnd!)}'
-                : 'Belgilangan vaqt ichida banner ko\'rsatilmaydi',
+                : l10n.notif_dnd_hint,
           ),
           value: prefs.isDndEnabled,
           onChanged: (v) {
@@ -188,7 +192,7 @@ class _DndTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: _TimeButton(
-                    label: 'Boshlanish',
+                    label: l10n.notif_dnd_startLabel,
                     value: prefs.dndStart!,
                     onChanged: (t) => onChanged(prefs.copyWith(dndStart: t)),
                   ),
@@ -200,7 +204,7 @@ class _DndTile extends StatelessWidget {
                 ),
                 Expanded(
                   child: _TimeButton(
-                    label: 'Tugash',
+                    label: l10n.notif_dnd_endLabel,
                     value: prefs.dndEnd!,
                     onChanged: (t) => onChanged(prefs.copyWith(dndEnd: t)),
                   ),
@@ -264,9 +268,10 @@ class _SoundLevelTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ListTile(
       leading: Icon(_iconFor(priority)),
-      title: Text(_labelFor(priority)),
+      title: Text(_labelFor(l10n, priority)),
       trailing: DropdownButton<NotificationSoundLevel>(
         value: level,
         underline: const SizedBox.shrink(),
@@ -274,7 +279,7 @@ class _SoundLevelTile extends StatelessWidget {
             .map(
               (l) => DropdownMenuItem<NotificationSoundLevel>(
                 value: l,
-                child: Text(_levelLabel(l)),
+                child: Text(_levelLabel(l10n, l)),
               ),
             )
             .toList(),
@@ -285,17 +290,17 @@ class _SoundLevelTile extends StatelessWidget {
     );
   }
 
-  String _labelFor(String priority) {
+  String _labelFor(AppLocalizations l10n, String priority) {
     switch (priority) {
       case 'urgent':
-        return 'Shoshilinch';
+        return l10n.notif_priority_urgent;
       case 'high':
-        return 'Yuqori';
+        return l10n.notif_priority_high;
       case 'low':
-        return 'Past';
+        return l10n.notif_priority_low;
       case 'normal':
       default:
-        return 'Oddiy';
+        return l10n.notif_priority_normal;
     }
   }
 
@@ -313,14 +318,14 @@ class _SoundLevelTile extends StatelessWidget {
     }
   }
 
-  String _levelLabel(NotificationSoundLevel l) {
+  String _levelLabel(AppLocalizations l10n, NotificationSoundLevel l) {
     switch (l) {
       case NotificationSoundLevel.silent:
-        return 'Jim';
+        return l10n.notif_sound_silent;
       case NotificationSoundLevel.vibrate:
-        return 'Tebranish';
+        return l10n.notif_sound_vibrate;
       case NotificationSoundLevel.sound:
-        return 'Tovush';
+        return l10n.notif_sound_sound;
     }
   }
 }

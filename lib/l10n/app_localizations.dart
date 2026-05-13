@@ -10392,6 +10392,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'1C integration is not configured. Contact admin.'**
   String get customerCreate_err_oneCNoEndpoint;
+
+  /// No description provided for @notif_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification'**
+  String get notif_title;
+
+  /// No description provided for @notif_listTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notif_listTitle;
+
+  /// No description provided for @notif_settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get notif_settings;
+
+  /// No description provided for @notif_markAllReadTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get notif_markAllReadTooltip;
+
+  /// No description provided for @notif_markAllReadButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get notif_markAllReadButton;
+
+  /// No description provided for @notif_emptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications'**
+  String get notif_emptyTitle;
+
+  /// No description provided for @notif_untitled.
+  ///
+  /// In en, this message translates to:
+  /// **'(Untitled)'**
+  String get notif_untitled;
+
+  /// No description provided for @notif_detailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This notification was not found or has expired.'**
+  String get notif_detailNotFound;
+
+  /// No description provided for @notif_tabletPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a notification on the left to see details.'**
+  String get notif_tabletPlaceholder;
+
+  /// No description provided for @notif_bellSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notif_bellSemantics;
+
+  /// No description provided for @notif_bellSemanticsWithUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications ({count} unread)'**
+  String notif_bellSemanticsWithUnread(int count);
+
+  /// No description provided for @notif_markAllReadDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get notif_markAllReadDialogTitle;
+
+  /// No description provided for @notif_markAllReadDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark every unread notification as read?'**
+  String get notif_markAllReadDialogBody;
+
+  /// No description provided for @notif_markAllReadConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, mark all'**
+  String get notif_markAllReadConfirm;
+
+  /// No description provided for @notif_rowMarkUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as unread'**
+  String get notif_rowMarkUnread;
+
+  /// No description provided for @notif_rowSnooze1h.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze 1 hour'**
+  String get notif_rowSnooze1h;
+
+  /// No description provided for @notif_rowSnooze4h.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze 4 hours'**
+  String get notif_rowSnooze4h;
+
+  /// No description provided for @notif_rowSnoozeTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Until tomorrow morning'**
+  String get notif_rowSnoozeTomorrow;
+
+  /// No description provided for @notif_type_debtAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt alerts'**
+  String get notif_type_debtAlert;
+
+  /// No description provided for @notif_type_orderNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New orders'**
+  String get notif_type_orderNew;
+
+  /// No description provided for @notif_type_stockLotExpiring.
+  ///
+  /// In en, this message translates to:
+  /// **'Lot expiring'**
+  String get notif_type_stockLotExpiring;
+
+  /// No description provided for @notif_type_systemAnnouncement.
+  ///
+  /// In en, this message translates to:
+  /// **'System announcements'**
+  String get notif_type_systemAnnouncement;
+
+  /// No description provided for @notif_typeShort_debtAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get notif_typeShort_debtAlert;
+
+  /// No description provided for @notif_typeShort_orderNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get notif_typeShort_orderNew;
+
+  /// No description provided for @notif_typeShort_stockLotExpiring.
+  ///
+  /// In en, this message translates to:
+  /// **'Lot'**
+  String get notif_typeShort_stockLotExpiring;
+
+  /// No description provided for @notif_typeShort_systemAnnouncement.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcement'**
+  String get notif_typeShort_systemAnnouncement;
+
+  /// No description provided for @notif_typeDesc_debtAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications about customer debt'**
+  String get notif_typeDesc_debtAlert;
+
+  /// No description provided for @notif_typeDesc_orderNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts for new orders'**
+  String get notif_typeDesc_orderNew;
+
+  /// No description provided for @notif_typeDesc_stockLotExpiring.
+  ///
+  /// In en, this message translates to:
+  /// **'Warehouse lot expiry warnings'**
+  String get notif_typeDesc_stockLotExpiring;
+
+  /// No description provided for @notif_typeDesc_systemAnnouncement.
+  ///
+  /// In en, this message translates to:
+  /// **'System and management updates'**
+  String get notif_typeDesc_systemAnnouncement;
+
+  /// No description provided for @notif_priority_urgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get notif_priority_urgent;
+
+  /// No description provided for @notif_priority_high.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get notif_priority_high;
+
+  /// No description provided for @notif_priority_normal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get notif_priority_normal;
+
+  /// No description provided for @notif_priority_low.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get notif_priority_low;
+
+  /// No description provided for @notif_action_openCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Open customer'**
+  String get notif_action_openCustomer;
+
+  /// No description provided for @notif_action_openOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open order'**
+  String get notif_action_openOrder;
+
+  /// No description provided for @notif_action_openGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get notif_action_openGeneric;
+
+  /// No description provided for @notif_prefsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification preferences'**
+  String get notif_prefsTitle;
+
+  /// No description provided for @notif_prefsSection_types.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification types'**
+  String get notif_prefsSection_types;
+
+  /// No description provided for @notif_prefsSection_dnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not disturb (DND)'**
+  String get notif_prefsSection_dnd;
+
+  /// No description provided for @notif_prefsSection_sound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound and vibration'**
+  String get notif_prefsSection_sound;
+
+  /// No description provided for @notif_dnd_toggleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not disturb'**
+  String get notif_dnd_toggleTitle;
+
+  /// No description provided for @notif_dnd_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'The banner stays hidden during the chosen window'**
+  String get notif_dnd_hint;
+
+  /// No description provided for @notif_dnd_startLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get notif_dnd_startLabel;
+
+  /// No description provided for @notif_dnd_endLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get notif_dnd_endLabel;
+
+  /// No description provided for @notif_sound_silent.
+  ///
+  /// In en, this message translates to:
+  /// **'Silent'**
+  String get notif_sound_silent;
+
+  /// No description provided for @notif_sound_vibrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibrate'**
+  String get notif_sound_vibrate;
+
+  /// No description provided for @notif_sound_sound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get notif_sound_sound;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

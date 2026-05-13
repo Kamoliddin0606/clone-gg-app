@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/models/app_notification.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
@@ -50,9 +51,10 @@ class _DetailScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bildirishnoma'),
+        title: Text(l10n.notif_title),
       ),
       body: const _DetailBody(),
     );
@@ -70,11 +72,12 @@ class _DetailBody extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (state.notification == null) {
-          return const Center(
+          final l10n = AppLocalizations.of(context)!;
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Text(
-                'Bu bildirishnoma topilmadi yoki muddati o\'tgan.',
+                l10n.notif_detailNotFound,
                 textAlign: TextAlign.center,
               ),
             ),
@@ -94,6 +97,7 @@ class _DetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final formatter = DateFormat('dd MMMM y, HH:mm');
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -101,12 +105,12 @@ class _DetailView extends StatelessWidget {
         Row(
           children: [
             _Chip(
-              label: _priorityLabel(notification.priority),
+              label: _priorityLabel(l10n, notification.priority),
               color: _priorityColor(theme, notification.priority),
             ),
             const SizedBox(width: 8),
             _Chip(
-              label: _typeLabel(notification.type),
+              label: _typeLabel(l10n, notification.type),
               color: theme.colorScheme.primaryContainer,
               textColor: theme.colorScheme.onPrimaryContainer,
             ),
@@ -128,17 +132,17 @@ class _DetailView extends StatelessWidget {
     );
   }
 
-  String _priorityLabel(String priority) {
+  String _priorityLabel(AppLocalizations l10n, String priority) {
     switch (priority) {
       case 'urgent':
-        return 'Shoshilinch';
+        return l10n.notif_priority_urgent;
       case 'high':
-        return 'Yuqori';
+        return l10n.notif_priority_high;
       case 'low':
-        return 'Past';
+        return l10n.notif_priority_low;
       case 'normal':
       default:
-        return 'Oddiy';
+        return l10n.notif_priority_normal;
     }
   }
 
@@ -156,16 +160,16 @@ class _DetailView extends StatelessWidget {
     }
   }
 
-  String _typeLabel(String type) {
+  String _typeLabel(AppLocalizations l10n, String type) {
     switch (type) {
       case 'debt_alert':
-        return 'Qarz';
+        return l10n.notif_typeShort_debtAlert;
       case 'order_new':
-        return 'Buyurtma';
+        return l10n.notif_typeShort_orderNew;
       case 'stock_lot_expiring':
-        return 'Lot tugaydi';
+        return l10n.notif_typeShort_stockLotExpiring;
       case 'system_announcement':
-        return 'E\'lon';
+        return l10n.notif_typeShort_systemAnnouncement;
       default:
         return type;
     }
@@ -206,19 +210,20 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     String label;
     IconData icon;
     switch (notification.type) {
       case 'debt_alert':
-        label = 'Mijozni ochish';
+        label = l10n.notif_action_openCustomer;
         icon = Icons.person;
         break;
       case 'order_new':
-        label = 'Buyurtmani ochish';
+        label = l10n.notif_action_openOrder;
         icon = Icons.receipt_long;
         break;
       default:
-        label = 'Ochish';
+        label = l10n.notif_action_openGeneric;
         icon = Icons.open_in_new;
     }
     return SizedBox(

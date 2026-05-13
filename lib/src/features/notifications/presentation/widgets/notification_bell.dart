@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
@@ -36,10 +37,13 @@ class _Bell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return BlocBuilder<UnreadCountCubit, int>(
       builder: (context, count) {
         return Semantics(
-          label: count > 0 ? 'Bildirishnomalar ($count o\'qilmagan)' : 'Bildirishnomalar',
+          label: count > 0
+              ? l10n.notif_bellSemanticsWithUnread(count)
+              : l10n.notif_bellSemantics,
           button: true,
           child: InkWell(
             customBorder: const CircleBorder(),
@@ -103,20 +107,20 @@ class _Bell extends StatelessWidget {
   Future<void> _confirmMarkAll(BuildContext context) async {
     final cubit = context.read<UnreadCountCubit>();
     if (cubit.state == 0) return;
+    final l10n = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hammasini o\'qilgan deb belgilash'),
-        content: const Text(
-            'Barcha o\'qilmagan bildirishnomalarni o\'qilgan deb belgilashni xohlaysizmi?'),
+        title: Text(l10n.notif_markAllReadDialogTitle),
+        content: Text(l10n.notif_markAllReadDialogBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Bekor qilish'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Ha, belgilash'),
+            child: Text(l10n.notif_markAllReadConfirm),
           ),
         ],
       ),

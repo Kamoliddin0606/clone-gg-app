@@ -118,9 +118,16 @@ class NotificationApiService {
   /// in the offline queue.
   Future<DateTime> markRead(String id) async {
     final url = '${TokenService.v2BaseUrl}$_basePath/$id/read/';
+    if (kDebugMode) {
+      debugPrint('[NOTIF-API] → POST /$id/read/');
+    }
     try {
       final response = await _dio.post<dynamic>(
         url,
+        // Explicit empty JSON body — some DRF configurations reject
+        // POSTs without a body when Content-Type=application/json.
+        // The endpoint doesn't take any fields per passport §8.4.
+        data: const <String, dynamic>{},
         options: Options(
           headers: <String, String>{
             ...await _authHeaders(),
@@ -129,6 +136,11 @@ class NotificationApiService {
           validateStatus: (s) => s != null && s < 400,
         ),
       );
+      if (kDebugMode) {
+        debugPrint(
+            '[NOTIF-API] ← POST /$id/read/ status=${response.statusCode}'
+            ' body=${response.data}');
+      }
       final data = response.data;
       if (data is Map<String, dynamic>) {
         final readAt = data['read_at'];
@@ -138,6 +150,13 @@ class NotificationApiService {
       }
       return DateTime.now().toUtc();
     } on DioException catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+            '[NOTIF-API] ✗ POST /$id/read/ failed type=${e.type}'
+            ' status=${e.response?.statusCode}'
+            ' body=${e.response?.data}'
+            ' message=${e.message}');
+      }
       throw _toException(e);
     }
   }
@@ -151,6 +170,10 @@ class NotificationApiService {
   }) async {
     if (ids.isEmpty) return 0;
     final url = '${TokenService.v2BaseUrl}$_basePath/bulk-read/';
+    if (kDebugMode) {
+      debugPrint(
+          '[NOTIF-API] → POST /bulk-read/ ids=${ids.length} idem=$idempotencyKey');
+    }
     try {
       final response = await _dio.post<dynamic>(
         url,
@@ -167,6 +190,11 @@ class NotificationApiService {
           validateStatus: (s) => s != null && s < 400,
         ),
       );
+      if (kDebugMode) {
+        debugPrint(
+            '[NOTIF-API] ← POST /bulk-read/ status=${response.statusCode}'
+            ' body=${response.data}');
+      }
       final data = response.data;
       if (data is Map<String, dynamic>) {
         final marked = data['marked_count'];
@@ -175,6 +203,12 @@ class NotificationApiService {
       }
       return ids.length;
     } on DioException catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+            '[NOTIF-API] ✗ POST /bulk-read/ failed type=${e.type}'
+            ' status=${e.response?.statusCode}'
+            ' body=${e.response?.data}');
+      }
       throw _toException(e);
     }
   }

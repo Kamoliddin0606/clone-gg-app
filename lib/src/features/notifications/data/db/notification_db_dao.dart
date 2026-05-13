@@ -185,16 +185,19 @@ class NotificationDbDao {
   // Writes
   // ---------------------------------------------------------------------------
 
-  /// Upsert a single row. If the model leaves [snoozeUntil] null AND a
-  /// row with the same id already has a snooze stamp, the existing
-  /// stamp is preserved — server pushes never erase a user's snooze.
-  /// To explicitly clear a snooze, pass `clearSnooze: true` via
-  /// [copyWith] (the call site fills `snoozeUntil` with `null` and
-  /// flips `clearSnooze`, but at the DAO boundary an explicit zero
-  /// stamp is unrepresentable; use [unsnooze] to drop it).
+  /// Upsert a single row, preserving client-managed state that the
+  /// server doesn't know about:
+  ///   * `snooze_until` — never reset by a server push.
+  ///   * `read_at` — never reset when local has a stamp and the
+  ///     server returns null (mark-read may not have propagated yet,
+  ///     or the device went offline before the API call). Keeps the
+  ///     EARLIER of the two non-null stamps so the immutable read
+  ///     history survives.
+  ///
+  /// Use [unsnooze] / [markUnread] for explicit clears.
   Future<void> upsert(AppNotification notification) async {
     final db = await _db;
-    final row = await _mergeSnooze(db, notification);
+    final row = await _mergeLocalState(db, notification);
     await db.insert(
       notificationsTable,
       row.toDbRow(),
@@ -204,39 +207,39 @@ class NotificationDbDao {
 
   Future<void> upsertAll(Iterable<AppNotification> notifications) async {
     final db = await _db;
-    // Batch the snooze lookup so a 50-row sync stays at 2 queries
-    // instead of 51 (N+1).
-    final needsMerge = notifications
-        .where((n) => n.snoozeUntil == null)
-        .map((n) => n.id)
-        .toList();
-    final snoozeByid = <String, DateTime>{};
-    if (needsMerge.isNotEmpty) {
-      final placeholders = List.filled(needsMerge.length, '?').join(',');
+    // Batch the lookup so a 50-row sync stays at 2 queries instead of
+    // 51 (N+1). We grab BOTH snooze_until and read_at for every id —
+    // the same merge rules apply to both columns.
+    final ids = notifications.map((n) => n.id).toList(growable: false);
+    final existingById = <String, _ExistingState>{};
+    if (ids.isNotEmpty) {
+      final placeholders = List.filled(ids.length, '?').join(',');
       final rows = await db.query(
         notificationsTable,
-        columns: ['id', 'snooze_until'],
+        columns: ['id', 'snooze_until', 'read_at'],
         where: 'id IN ($placeholders)',
-        whereArgs: needsMerge,
+        whereArgs: ids,
       );
       for (final r in rows) {
-        final raw = r['snooze_until'];
-        if (raw is String && raw.isNotEmpty) {
-          final parsed = DateTime.tryParse(raw);
-          if (parsed != null) snoozeByid[r['id'] as String] = parsed;
-        }
+        existingById[r['id'] as String] = _ExistingState(
+          snoozeUntil: _parseColumn(r['snooze_until']),
+          readAt: _parseColumn(r['read_at']),
+        );
       }
     }
 
     final batch = db.batch();
     for (final n in notifications) {
-      final preserved = n.snoozeUntil ?? snoozeByid[n.id];
-      final toWrite = preserved == null
+      final existing = existingById[n.id];
+      final merged = existing == null
           ? n
-          : n.copyWith(snoozeUntil: preserved);
+          : n.copyWith(
+              snoozeUntil: n.snoozeUntil ?? existing.snoozeUntil,
+              readAt: _earlierReadAt(n.readAt, existing.readAt),
+            );
       batch.insert(
         notificationsTable,
-        toWrite.toDbRow(),
+        merged.toDbRow(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     }
@@ -280,26 +283,50 @@ class NotificationDbDao {
     );
   }
 
-  /// Helper for the single-row [upsert]: preserve any existing
-  /// `snooze_until` when the incoming model has none.
-  Future<AppNotification> _mergeSnooze(
+  /// Helper for the single-row [upsert]: preserve client-managed
+  /// columns (`snooze_until`, `read_at`) when the incoming model
+  /// would otherwise erase them. Mirrors the batch logic inside
+  /// [upsertAll].
+  Future<AppNotification> _mergeLocalState(
     Database db,
     AppNotification notification,
   ) async {
-    if (notification.snoozeUntil != null) return notification;
+    // Skip the round-trip if there's nothing to merge.
+    if (notification.snoozeUntil != null && notification.readAt != null) {
+      return notification;
+    }
     final existing = await db.query(
       notificationsTable,
-      columns: ['snooze_until'],
+      columns: ['snooze_until', 'read_at'],
       where: 'id = ?',
       whereArgs: [notification.id],
       limit: 1,
     );
     if (existing.isEmpty) return notification;
-    final raw = existing.first['snooze_until'];
-    if (raw is! String || raw.isEmpty) return notification;
-    final parsed = DateTime.tryParse(raw);
-    if (parsed == null) return notification;
-    return notification.copyWith(snoozeUntil: parsed);
+    final existingSnooze = _parseColumn(existing.first['snooze_until']);
+    final existingReadAt = _parseColumn(existing.first['read_at']);
+    return notification.copyWith(
+      snoozeUntil: notification.snoozeUntil ?? existingSnooze,
+      readAt: _earlierReadAt(notification.readAt, existingReadAt),
+    );
+  }
+
+  /// Parse an ISO-8601 column into a UTC [DateTime], tolerant of nulls
+  /// and malformed values (returns `null` rather than throwing).
+  static DateTime? _parseColumn(Object? raw) {
+    if (raw is! String || raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  /// Pick the EARLIER of two `read_at` timestamps. Once a notification
+  /// has been read, the read history is immutable — if a sync brings
+  /// back a later timestamp (e.g. server-side mark-read happened
+  /// after the local optimistic mark), the first time wins. Either
+  /// argument may be null; null is treated as "never read".
+  static DateTime? _earlierReadAt(DateTime? a, DateTime? b) {
+    if (a == null) return b;
+    if (b == null) return a;
+    return a.isBefore(b) ? a : b;
   }
 
   Future<void> markRead(String id, DateTime readAt) async {
@@ -397,4 +424,14 @@ class NotificationDbDao {
     batch.delete(pendingReadTable);
     await batch.commit(noResult: true);
   }
+}
+
+/// Internal struct — client-managed columns we need to preserve when
+/// the server pushes a fresh row over an existing one. Only used by
+/// the batch merge inside [NotificationDbDao.upsertAll].
+class _ExistingState {
+  final DateTime? snoozeUntil;
+  final DateTime? readAt;
+
+  const _ExistingState({required this.snoozeUntil, required this.readAt});
 }

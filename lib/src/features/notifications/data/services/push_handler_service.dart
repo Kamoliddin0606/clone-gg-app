@@ -133,11 +133,21 @@ class PushHandlerService {
     if (kDebugMode) {
       debugPrint('[PUSH] foreground id=$id type=$type data=${message.data}');
     }
-    // Refresh the full record from the backend so the list, banner,
-    // and detail screens all see the same canonical content.
-    // The row lands in the cache REGARDLESS of preferences — the user
-    // can still find it later in the list. Only the visual interrupt
-    // is gated.
+    // 1) Always persist a stub FIRST so the badge + list update
+    //    immediately, even if the network leg below fails. Without
+    //    this, a backend that returns 404/timeout on the detail
+    //    endpoint would leave the push effectively invisible — the
+    //    OS notification might draw, but our in-app state stays
+    //    empty.
+    if (id != null) {
+      try {
+        await _repo.recordBackgroundPush(message);
+      } catch (e) {
+        if (kDebugMode) debugPrint('[PUSH] foreground stub failed: $e');
+      }
+    }
+    // 2) Then refresh from the backend so the list, banner, and
+    //    detail screens all see the canonical content.
     if (id != null) {
       try {
         await _repo.fetchAndCache(id);
@@ -173,6 +183,14 @@ class PushHandlerService {
         await _repo.fetchAndCache(id);
       } catch (e) {
         if (kDebugMode) debugPrint('[PUSH] opened-app fetchAndCache: $e');
+      }
+      // Tapping the OS notification (terminated / background tap) is
+      // the same intent as tapping the row in-app — mark it read so
+      // the badge drops and the backend learns. Idempotent.
+      try {
+        await _repo.markRead(id);
+      } catch (e) {
+        if (kDebugMode) debugPrint('[PUSH] opened-app markRead: $e');
       }
     }
     onTap?.call(message);

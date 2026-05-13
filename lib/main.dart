@@ -110,13 +110,15 @@ void main() async {
     final pushHandler = sl<PushHandlerService>();
     pushHandler.onTap = NotificationTapRouter.handleRemoteMessage;
     await pushHandler.init();
-    if (kDebugMode) {
-      final tokenService = sl<TokenService>();
-      // If the user is already signed in (warm start), refresh the
-      // FCM token registration silently.
-      if (tokenService.hasValidV2Token()) {
-        unawaited(sl<FcmTokenService>().registerOnLogin());
-      }
+    // Warm-start re-register: if the user is already signed in (cold
+    // start of an already-authenticated install), make sure the FCM
+    // token on the backend stays fresh. Runs in release builds too —
+    // without it, a token rotation that happens while the app is
+    // closed never reaches the server. Best-effort; failure is
+    // logged inside FcmTokenService.
+    final tokenService = sl<TokenService>();
+    if (tokenService.hasValidV2Token()) {
+      unawaited(sl<FcmTokenService>().registerOnLogin());
     }
   } catch (e) {
     if (kDebugMode) {

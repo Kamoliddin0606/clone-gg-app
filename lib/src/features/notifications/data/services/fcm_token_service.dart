@@ -60,6 +60,22 @@ class FcmTokenService {
   String? get lastFcmTokenSent =>
       _prefs.preferences.getString(_lastFcmTokenKey);
 
+  /// Live FCM token from the plugin. Slightly different from
+  /// [lastFcmTokenSent] — that one reflects what was last pushed to
+  /// the backend, while this one is what the OS currently considers
+  /// valid (they diverge during a rotation we haven't synced yet).
+  /// Used by the Settings "Copy FCM token" diagnostic.
+  Future<String?> fetchCurrentToken() async {
+    try {
+      return await _messaging.getToken();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[FCM] fetchCurrentToken failed: $e');
+      }
+      return null;
+    }
+  }
+
   /// Register the current FCM token with the backend. Idempotent: safe
   /// to call on every login / app boot once authenticated.
   ///
@@ -83,6 +99,17 @@ class FcmTokenService {
         return null;
       }
 
+      // Diagnostics — full token to debug log so it can be pasted into
+      // Firebase Console "Test on device". Debug-only (release builds
+      // skip the log) because the token is sensitive: anyone with it
+      // can push to this device until rotation.
+      if (kDebugMode) {
+        debugPrint('[FCM] getToken() (len=${fcmToken.length}):');
+        debugPrint('[FCM] >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+        debugPrint(fcmToken);
+        debugPrint('[FCM] <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
+      }
+
       // Skip if the same token was already pushed AND we have a stored
       // device row id. Otherwise force a fresh register (eg. server
       // reset, app reinstall).
@@ -92,7 +119,8 @@ class FcmTokenService {
           storedRowId != null &&
           storedRowId.isNotEmpty) {
         if (kDebugMode) {
-          debugPrint('[FCM] token unchanged, skipping re-register');
+          debugPrint(
+              '[FCM] token unchanged, skipping re-register (row=$storedRowId)');
         }
         _attachRefreshListener();
         return storedRowId;

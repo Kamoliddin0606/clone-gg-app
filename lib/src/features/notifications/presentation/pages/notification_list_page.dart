@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -354,16 +356,26 @@ class _Row extends StatelessWidget {
         ],
       ),
       onTap: () {
+        // Tapping a row IS the user signalling intent to read it —
+        // fire mark-read now (fire-and-forget) so the badge updates
+        // and the server learns even if we navigate away to a deep
+        // link instead of opening the detail screen. Idempotent: the
+        // DAO guards on `read_at IS NULL`, and the detail cubit's
+        // own markRead becomes a no-op for already-read rows.
+        if (item.isUnread) {
+          unawaited(context.read<NotificationListCubit>().markRead(item.id));
+        }
+
         // Tablet split mode — defer to the host so it can render the
         // detail in the right pane without pushing a new route.
         if (onTap != null) {
           onTap!(item);
           return;
         }
-        // Mark-read auto-fires inside the detail cubit (passport §5.3).
-        // Deep-link routes still funnel through the detail screen by
-        // default — only the detail screen can decide whether to bounce
-        // the user further (e.g. tap "Open customer" CTA).
+        // Deep-link routes funnel through the existing tap router so
+        // the user lands on the customer / order / lot screen they
+        // care about. mark-read above ensures the row is read
+        // regardless of where the user lands.
         if (item.deepLink != null && item.deepLink!.isNotEmpty) {
           NotificationTapRouter.handleDeepLink(
             context,

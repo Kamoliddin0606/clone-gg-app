@@ -160,7 +160,11 @@ class NotificationRepository {
     await _publish();
 
     try {
-      await _api.markRead(id);
+      final serverReadAt = await _api.markRead(id);
+      if (kDebugMode) {
+        debugPrint(
+            '[NOTIF] markRead($id) → server confirmed (read_at=$serverReadAt)');
+      }
     } catch (e) {
       await _dao.enqueueReadMark(id, now);
       if (kDebugMode) {
@@ -225,22 +229,44 @@ class NotificationRepository {
   }
 
   /// Drain the offline queue via the bulk endpoint. Safe to call on
-  /// every sync tick.
-  Future<void> flushPendingReads() async {
+  /// every sync tick. Returns the number of ids actually flushed
+  /// (0 if the queue was empty or the call failed).
+  Future<int> flushPendingReads() async {
     final ids = await _dao.pendingReadIds();
-    if (ids.isEmpty) return;
+    if (ids.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('[NOTIF] flushPendingReads: queue empty, nothing to do');
+      }
+      return 0;
+    }
+    if (kDebugMode) {
+      debugPrint('[NOTIF] flushPendingReads: draining ${ids.length} id(s)');
+    }
     try {
-      await _api.bulkMarkRead(
+      final marked = await _api.bulkMarkRead(
         ids: ids,
         clientUuid: await _uuidService.getOrCreateLocalUuid(),
         idempotencyKey: _uuid.v4(),
       );
       await _dao.dequeueReadMarks(ids);
+      if (kDebugMode) {
+        debugPrint('[NOTIF] flushPendingReads: drained $marked id(s)');
+      }
+      return marked;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[NOTIF] flushPendingReads kept ${ids.length}: $e');
       }
+      return 0;
     }
+  }
+
+  /// Live view of the offline read-mark queue size. The Settings
+  /// Diagnostika section surfaces this so users + support can tell
+  /// when mark-read calls are not reaching the backend.
+  Future<int> pendingReadCount() async {
+    final ids = await _dao.pendingReadIds();
+    return ids.length;
   }
 
   // ---------------------------------------------------------------------------

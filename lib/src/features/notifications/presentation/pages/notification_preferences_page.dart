@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/models/notification_preferences.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/notifications/data/services/fcm_token_service.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_preferences_service.dart';
 
 /// Phase 2 §1 — Notification preferences screen.
@@ -55,10 +58,189 @@ class NotificationPreferencesPage extends StatelessWidget {
                     prefs.withSoundForPriority(priority, level),
                   ),
                 ),
+              const Divider(height: 32),
+              const _SectionHeader('Diagnostika'),
+              const _FcmTokenTile(),
+              const _PendingReadsTile(),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+/// Phase 2 diagnostic — surface the offline mark-read queue. A
+/// non-zero count means at least one `markRead` HTTP call failed and
+/// the id is waiting for the next bulk-read flush. Useful when the
+/// backend isn't recording reads even though the row looks read
+/// locally.
+class _PendingReadsTile extends StatefulWidget {
+  const _PendingReadsTile();
+
+  @override
+  State<_PendingReadsTile> createState() => _PendingReadsTileState();
+}
+
+class _PendingReadsTileState extends State<_PendingReadsTile> {
+  int? _count;
+  bool _flushing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final count = await sl<NotificationRepository>().pendingReadCount();
+    if (!mounted) return;
+    setState(() => _count = count);
+  }
+
+  Future<void> _flush() async {
+    if (_flushing) return;
+    setState(() => _flushing = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final flushed = await sl<NotificationRepository>().flushPendingReads();
+    if (!mounted) return;
+    setState(() => _flushing = false);
+    await _refresh();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(flushed > 0
+            ? '$flushed ta o\'qilgan belgisi jo\'natildi'
+            : 'Jo\'natish muvaffaqiyatsiz — internet yoki backend muammosi'),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = _count;
+    return ListTile(
+      leading: const Icon(Icons.sync_problem_outlined),
+      title: const Text('Yuborilmagan "o\'qildi" belgilari'),
+      subtitle: Text(
+        count == null
+            ? 'Yuklanmoqda…'
+            : count == 0
+                ? 'Hammasi backend\'ga yetkazilgan'
+                : '$count ta belgisi jo\'natishni kutmoqda',
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'Yangilash',
+            onPressed: _flushing ? null : _refresh,
+            icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            tooltip: 'Hoziroq jo\'natish',
+            onPressed: (count == null || count == 0 || _flushing) ? null : _flush,
+            icon: _flushing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.send_outlined),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Phase 2 diagnostic — copy the device's current FCM token to the
+/// clipboard. Useful for backend-side troubleshooting: paste the
+/// token into Firebase Console → Cloud Messaging → "Test on device"
+/// to verify the FCM↔device path independent of the backend.
+class _FcmTokenTile extends StatefulWidget {
+  const _FcmTokenTile();
+
+  @override
+  State<_FcmTokenTile> createState() => _FcmTokenTileState();
+}
+
+class _FcmTokenTileState extends State<_FcmTokenTile> {
+  String? _token;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    setState(() => _loading = true);
+    final token = await sl<FcmTokenService>().fetchCurrentToken();
+    if (!mounted) return;
+    setState(() {
+      _token = token;
+      _loading = false;
+    });
+  }
+
+  String _preview(String token) {
+    if (token.length <= 24) return token;
+    return '${token.substring(0, 12)}…${token.substring(token.length - 8)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          leading: const Icon(Icons.vpn_key_outlined),
+          title: const Text('FCM token'),
+          subtitle: _loading
+              ? const Text('Yuklanmoqda…')
+              : Text(
+                  _token == null
+                      ? 'Token mavjud emas (ruxsat berilmagan bo\'lishi mumkin)'
+                      : _preview(_token!),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                  ),
+                ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'Yangilash',
+                onPressed: _loading ? null : _fetch,
+                icon: const Icon(Icons.refresh),
+              ),
+              IconButton(
+                tooltip: 'Nusxalash',
+                onPressed: _token == null
+                    ? null
+                    : () async {
+                        // Capture the messenger BEFORE the async gap
+                        // so we never touch a stale context after
+                        // the clipboard call returns.
+                        final messenger = ScaffoldMessenger.of(context);
+                        await Clipboard.setData(ClipboardData(text: _token!));
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('FCM token nusxalandi'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                icon: const Icon(Icons.copy_outlined),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

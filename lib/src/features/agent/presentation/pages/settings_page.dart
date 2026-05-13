@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
@@ -38,6 +40,13 @@ class _SettingsPageState extends State<SettingsPage>
   int _reloadCounter = 0;
   DataSyncOrchestrator? _orchestrator;
 
+  // Sync emits notifyListeners() many times per operation (start / progress /
+  // done for each table, plus refreshRecordCounts). Coalesce those into a
+  // single tab rebuild once the burst has settled, so the user sees one
+  // reload at the end instead of dozens mid-sync.
+  Timer? _reloadDebounce;
+  static const Duration _reloadDebounceDuration = Duration(milliseconds: 700);
+
   @override
   void initState() {
     super.initState();
@@ -52,7 +61,11 @@ class _SettingsPageState extends State<SettingsPage>
 
   void _onSyncEvent() {
     if (!mounted) return;
-    setState(() => _reloadCounter++);
+    _reloadDebounce?.cancel();
+    _reloadDebounce = Timer(_reloadDebounceDuration, () {
+      if (!mounted) return;
+      setState(() => _reloadCounter++);
+    });
   }
 
   @override
@@ -71,6 +84,7 @@ class _SettingsPageState extends State<SettingsPage>
 
   @override
   void dispose() {
+    _reloadDebounce?.cancel();
     _orchestrator?.removeListener(_onSyncEvent);
     _tabController.dispose();
     super.dispose();

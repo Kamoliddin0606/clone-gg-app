@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "722694864687",
+    "project_id": "selup-c49e1",
+    "storage_bucket": "selup-c49e1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:722694864687:android:2f3497d90df42ab2346bda",
+        "android_client_info": {
+          "package_name": "com.maxsoft.selup"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJG9J6fwGcLIG5hkwUtTS2Omc6m_-lop8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

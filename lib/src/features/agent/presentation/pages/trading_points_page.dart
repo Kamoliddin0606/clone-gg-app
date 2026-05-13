@@ -219,6 +219,12 @@ class _TradingPointsPageState extends State<TradingPointsPage>
       []; // Available trade point types for filtering
   bool _showVisitTodayOnly = false; // Visit today filter state
 
+  // Panel animation duration — longer when triggered by scroll so the
+  // filter and view-toolbar panels close gently rather than snapping shut.
+  Duration _panelsAnimDuration = const Duration(milliseconds: 300);
+  static const Duration _panelsManualDuration = Duration(milliseconds: 300);
+  static const Duration _panelsScrollCloseDuration = Duration(milliseconds: 700);
+
   // Map provider settings
   MapProvider _defaultMapProvider = MapProvider.openStreetMap; // Default map provider (OSM when no user selection)
 
@@ -759,7 +765,24 @@ class _TradingPointsPageState extends State<TradingPointsPage>
 
   void _toggleFilters() {
     setState(() {
+      _panelsAnimDuration = _panelsManualDuration;
       _showFilters = !_showFilters;
+    });
+  }
+
+  void _setViewBar(bool show) {
+    setState(() {
+      _panelsAnimDuration = _panelsManualDuration;
+      _showViewBar = show;
+    });
+  }
+
+  void _onScrollCloseAll() {
+    if (!_showFilters && !_showViewBar) return;
+    setState(() {
+      _panelsAnimDuration = _panelsScrollCloseDuration;
+      _showFilters = false;
+      _showViewBar = false;
     });
   }
 
@@ -1522,14 +1545,15 @@ class _TradingPointsPageState extends State<TradingPointsPage>
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
+                  duration: _panelsAnimDuration,
+                  switchInCurve: Curves.easeInOutCubic,
+                  switchOutCurve: Curves.easeInOutCubic,
                   child: _showViewBar
                       ? _ViewToolbar(
                           count: _filteredTradingPoints.length,
                           mode: _viewMode,
                           onModeChanged: (m) => setState(() => _viewMode = m),
-                          onCollapse: () =>
-                              setState(() => _showViewBar = false),
+                          onCollapse: () => _setViewBar(false),
                         )
                       : Align(
                           alignment: Alignment.centerRight,
@@ -1537,8 +1561,7 @@ class _TradingPointsPageState extends State<TradingPointsPage>
                             tooltip:
                                 AppLocalizations.of(context)?.viewPanel ??
                                 'View panel',
-                            onPressed: () =>
-                                setState(() => _showViewBar = true),
+                            onPressed: () => _setViewBar(true),
                             icon: const Icon(
                               Icons.tune,
                             ), // biriktirilgan namunadagi kabi "tune" tugma
@@ -1549,8 +1572,8 @@ class _TradingPointsPageState extends State<TradingPointsPage>
 
               // Filters panel
               AnimatedSize(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+                duration: _panelsAnimDuration,
+                curve: Curves.easeInOutCubic,
                 child: _showFilters
                     ? Padding(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -1573,9 +1596,7 @@ class _TradingPointsPageState extends State<TradingPointsPage>
                     : (_viewMode == _ViewMode.list
                           ? NotificationListener<ScrollStartNotification>(
                               onNotification: (notification) {
-                                if (_showFilters) {
-                                  setState(() => _showFilters = false);
-                                }
+                                _onScrollCloseAll();
                                 return false;
                               },
                               child: RefreshIndicator(
@@ -1638,9 +1659,7 @@ class _TradingPointsPageState extends State<TradingPointsPage>
                             )
                           : NotificationListener<ScrollStartNotification>(
                               onNotification: (notification) {
-                                if (_showFilters) {
-                                  setState(() => _showFilters = false);
-                                }
+                                _onScrollCloseAll();
                                 return false;
                               },
                               child: RefreshIndicator(

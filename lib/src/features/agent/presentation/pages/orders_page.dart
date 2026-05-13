@@ -67,17 +67,37 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
 
   ScrollController _scrollController = ScrollController();
 
+  // Panel animation duration — longer when triggered by scroll so the
+  // filter / status / tune panels close gently rather than snapping shut.
+  Duration _panelsAnimDuration = const Duration(milliseconds: 300);
+  static const Duration _panelsManualDuration = Duration(milliseconds: 300);
+  static const Duration _panelsScrollCloseDuration = Duration(milliseconds: 700);
+  double _lastScrollOffset = 0;
+  static const double _scrollCloseThreshold = 12.0;
+
   @override
   void initState() {
     super.initState();
     _search.addListener(_applyAllFilters);
-    _scrollController.addListener(() {
-      if (_showFilters) {
-        setState(() => _showFilters = false);
-      }
-    });
+    _scrollController.addListener(_onScroll);
     _initConnectivity();
     _loadOrderStatusesAndOrders();
+  }
+
+  void _onScroll() {
+    if (!_showFilters && !_showStatusFilter && !_showTuneRow) {
+      _lastScrollOffset = _scrollController.offset;
+      return;
+    }
+    final delta = (_scrollController.offset - _lastScrollOffset).abs();
+    if (delta < _scrollCloseThreshold) return;
+    _lastScrollOffset = _scrollController.offset;
+    setState(() {
+      _panelsAnimDuration = _panelsScrollCloseDuration;
+      _showFilters = false;
+      _showStatusFilter = false;
+      _showTuneRow = false;
+    });
   }
 
   @override
@@ -420,15 +440,24 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   }
 
   void _toggleFilters() {
-    setState(() => _showFilters = !_showFilters);
+    setState(() {
+      _panelsAnimDuration = _panelsManualDuration;
+      _showFilters = !_showFilters;
+    });
   }
 
   void _toggleTune() {
-    setState(() => _showTuneRow = !_showTuneRow);
+    setState(() {
+      _panelsAnimDuration = _panelsManualDuration;
+      _showTuneRow = !_showTuneRow;
+    });
   }
 
   void _toggleStatusFilter() {
-    setState(() => _showStatusFilter = !_showStatusFilter);
+    setState(() {
+      _panelsAnimDuration = _panelsManualDuration;
+      _showStatusFilter = !_showStatusFilter;
+    });
   }
 
   void _switchToList() {
@@ -1084,69 +1113,71 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
             children: [
               // Status multi-select chips (collapsible)
               ClipRect(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  height: _showStatusFilter ? null : 0,
-                  color: cs.surface,
+                child: AnimatedSize(
+                  duration: _panelsAnimDuration,
+                  curve: Curves.easeInOutCubic,
+                  alignment: Alignment.topCenter,
                   child: _showStatusFilter
-                      ? Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      l10n.status,
-                                      style: theme.textTheme.labelMedium
-                                          ?.copyWith(
-                                            color: cs.onSurfaceVariant,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.keyboard_arrow_up_rounded,
-                                      color: cs.onSurfaceVariant,
-                                      size: 20,
-                                    ),
-                                    onPressed: _toggleStatusFilter,
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                              child: Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  FilterChip(
-                                    label: Text(l10n.all),
-                                    selected: _filters.statuses.isEmpty,
-                                    onSelected: (_) => _toggleStatus(null),
-                                  ),
-                                  for (final s in _orderStatuses)
-                                    if (s.id != null)
-                                      FilterChip(
-                                        label: Text(
-                                          statusText(s.message, context),
-                                        ),
-                                        selected: _filters.statuses.contains(
-                                          s.id,
-                                        ),
-                                        onSelected: (_) => _toggleStatus(s.id),
+                      ? Container(
+                          color: cs.surface,
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        l10n.status,
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(
+                                              color: cs.onSurfaceVariant,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                       ),
-                                ],
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.keyboard_arrow_up_rounded,
+                                        color: cs.onSurfaceVariant,
+                                        size: 20,
+                                      ),
+                                      onPressed: _toggleStatusFilter,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                              Container(
+                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    FilterChip(
+                                      label: Text(l10n.all),
+                                      selected: _filters.statuses.isEmpty,
+                                      onSelected: (_) => _toggleStatus(null),
+                                    ),
+                                    for (final s in _orderStatuses)
+                                      if (s.id != null)
+                                        FilterChip(
+                                          label: Text(
+                                            statusText(s.message, context),
+                                          ),
+                                          selected: _filters.statuses.contains(
+                                            s.id,
+                                          ),
+                                          onSelected: (_) => _toggleStatus(s.id),
+                                        ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         )
-                      : null,
+                      : const SizedBox.shrink(),
                 ),
               ),
               // Collapsed state indicator
@@ -1269,8 +1300,8 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
               ),
               // Modern Tune row
               AnimatedSize(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
+                duration: _panelsAnimDuration,
+                curve: Curves.easeInOutCubic,
                 child: _showTuneRow
                     ? Container(
                         color: cs.surface,
@@ -1351,8 +1382,8 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
               ),
               // Filters panel
               AnimatedSize(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+                duration: _panelsAnimDuration,
+                curve: Curves.easeInOutCubic,
                 child: _showFilters
                     ? Padding(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),

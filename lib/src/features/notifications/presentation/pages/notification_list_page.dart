@@ -9,6 +9,9 @@ import 'package:gloria_marketing_flutter/src/features/notifications/data/reposit
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/bloc/notification_list_cubit.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/services/notification_tap_router.dart';
 
+/// Long-press bottom-sheet options on a notification row (Phase 2b).
+enum _RowAction { markUnread, snooze1h, snooze4h, snoozeTomorrow }
+
 /// Full-screen page version with its own Scaffold + AppBar.
 /// Used by the bell tap (route `notificationListRoute`).
 class NotificationListPage extends StatelessWidget {
@@ -246,7 +249,69 @@ class _Row extends StatelessWidget {
           );
         }
       },
+      onLongPress: () => _showRowActions(context, item),
     );
+  }
+
+  Future<void> _showRowActions(
+    BuildContext context,
+    AppNotification item,
+  ) async {
+    final cubit = context.read<NotificationListCubit>();
+    final action = await showModalBottomSheet<_RowAction>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!item.isUnread)
+              ListTile(
+                leading: const Icon(Icons.mark_email_unread_outlined),
+                title: const Text('O\'qilmagan deb belgilash'),
+                onTap: () => Navigator.pop(ctx, _RowAction.markUnread),
+              ),
+            ListTile(
+              leading: const Icon(Icons.snooze),
+              title: const Text('1 soatga uxlatish'),
+              onTap: () => Navigator.pop(ctx, _RowAction.snooze1h),
+            ),
+            ListTile(
+              leading: const Icon(Icons.snooze),
+              title: const Text('4 soatga uxlatish'),
+              onTap: () => Navigator.pop(ctx, _RowAction.snooze4h),
+            ),
+            ListTile(
+              leading: const Icon(Icons.bedtime_outlined),
+              title: const Text('Ertaga ertalabgacha uxlatish'),
+              onTap: () => Navigator.pop(ctx, _RowAction.snoozeTomorrow),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (action == null) return;
+    switch (action) {
+      case _RowAction.markUnread:
+        await cubit.markUnread(item.id);
+        break;
+      case _RowAction.snooze1h:
+        await cubit.snooze(item.id, const Duration(hours: 1));
+        break;
+      case _RowAction.snooze4h:
+        await cubit.snooze(item.id, const Duration(hours: 4));
+        break;
+      case _RowAction.snoozeTomorrow:
+        await cubit.snooze(item.id, _untilTomorrowMorning());
+        break;
+    }
+  }
+
+  /// Returns the [Duration] from now until 08:00 the next day (local).
+  Duration _untilTomorrowMorning() {
+    final now = DateTime.now();
+    final tomorrow8 = DateTime(now.year, now.month, now.day + 1, 8);
+    return tomorrow8.difference(now);
   }
 
   IconData _iconForType(String type) {

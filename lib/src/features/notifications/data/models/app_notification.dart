@@ -50,6 +50,12 @@ class AppNotification extends Equatable {
   /// re-fetched.
   final DateTime? lastSyncedAt;
 
+  /// Phase 2b — when set, hide this row from the list + unread badge
+  /// until this UTC moment. The row reappears automatically on the
+  /// next read after the timestamp elapses (DAO filters by it).
+  /// Purely client-side; the backend has no `snooze` endpoint.
+  final DateTime? snoozeUntil;
+
   const AppNotification({
     required this.id,
     required this.type,
@@ -62,11 +68,18 @@ class AppNotification extends Equatable {
     this.readAt,
     this.expiresAt,
     this.lastSyncedAt,
+    this.snoozeUntil,
   });
 
   bool get isUnread => readAt == null;
   bool get isExpired =>
       expiresAt != null && expiresAt!.isBefore(DateTime.now());
+
+  /// True when [snoozeUntil] is set and still in the future.
+  bool isSnoozed([DateTime? now]) {
+    if (snoozeUntil == null) return false;
+    return snoozeUntil!.isAfter(now ?? DateTime.now());
+  }
 
   AppNotification copyWith({
     String? type,
@@ -80,6 +93,8 @@ class AppNotification extends Equatable {
     bool clearReadAt = false,
     DateTime? expiresAt,
     DateTime? lastSyncedAt,
+    DateTime? snoozeUntil,
+    bool clearSnooze = false,
   }) {
     return AppNotification(
       id: id,
@@ -93,6 +108,7 @@ class AppNotification extends Equatable {
       readAt: clearReadAt ? null : (readAt ?? this.readAt),
       expiresAt: expiresAt ?? this.expiresAt,
       lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      snoozeUntil: clearSnooze ? null : (snoozeUntil ?? this.snoozeUntil),
     );
   }
 
@@ -148,6 +164,7 @@ class AppNotification extends Equatable {
       'last_synced_at': (lastSyncedAt ?? DateTime.now().toUtc())
           .toUtc()
           .toIso8601String(),
+      'snooze_until': snoozeUntil?.toUtc().toIso8601String(),
     };
   }
 
@@ -181,6 +198,7 @@ class AppNotification extends Equatable {
       readAt: parse(row['read_at']),
       expiresAt: parse(row['expires_at']),
       lastSyncedAt: parse(row['last_synced_at']),
+      snoozeUntil: parse(row['snooze_until']),
     );
   }
 
@@ -197,5 +215,6 @@ class AppNotification extends Equatable {
         readAt,
         expiresAt,
         lastSyncedAt,
+        snoozeUntil,
       ];
 }

@@ -169,6 +169,32 @@ class NotificationRepository {
     }
   }
 
+  /// Phase 2b — local-only "Mark as unread". The backend has no
+  /// `unread` endpoint (passport §8); this flips the cached row's
+  /// `read_at` back to NULL so the badge re-counts it and the list
+  /// shows the unread dot.
+  Future<void> markUnread(String id) async {
+    await _dao.markUnread(id);
+    await _publish();
+  }
+
+  /// Phase 2b — snooze a notification for [duration]. The row is
+  /// hidden from list + badge until the timer elapses; once
+  /// `snooze_until <= now`, the next [_publish] will re-include it.
+  Future<void> snooze(String id, Duration duration) async {
+    final until = DateTime.now().toUtc().add(duration);
+    await _dao.snooze(id, until);
+    await _publish();
+  }
+
+  /// Clear any active snooze. Used when the user explicitly taps the
+  /// row to read it (open the detail screen) — they obviously want to
+  /// see it now.
+  Future<void> unsnooze(String id) async {
+    await _dao.unsnooze(id);
+    await _publish();
+  }
+
   /// Mark every unread notification as read locally and flush ids to
   /// the server in one bulk call.
   Future<void> markAllRead() async {

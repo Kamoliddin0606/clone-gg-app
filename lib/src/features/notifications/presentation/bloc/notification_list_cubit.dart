@@ -77,6 +77,14 @@ class NotificationListCubit extends Cubit<NotificationListState> {
   Future<void> markRead(String id) => _repo.markRead(id);
   Future<void> markAllRead() => _repo.markAllRead();
 
+  /// Phase 2b — flip a row back to unread + re-publish.
+  Future<void> markUnread(String id) => _repo.markUnread(id);
+
+  /// Phase 2b — hide a row for [duration]. Row reappears in the list
+  /// + badge count the next time [_publish] fires after the deadline.
+  Future<void> snooze(String id, Duration duration) =>
+      _repo.snooze(id, duration);
+
   @override
   Future<void> close() async {
     await _sub?.cancel();

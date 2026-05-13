@@ -21,8 +21,8 @@ List<int> unzipDatabase(List<int> bytes) {
 class DatabaseHelper {
   static const _dbName = "GloriyaMarketing.db";
   static const _zipAssetName = "GloriyaMarketing.zip";
-  // v5: notification center tables (notifications, pending_read_marks).
-  static const _dbVersion = 5;
+  // v6: notifications.snooze_until column for Phase 2b snooze feature.
+  static const _dbVersion = 6;
 
   Database? _database;
 
@@ -176,6 +176,11 @@ class DatabaseHelper {
     if (oldVersion < 5) {
       // Notification center tables — see passport-mobile.md §4.
       await NotificationDbDao.createTables(db);
+    }
+    if (oldVersion < 6) {
+      // Phase 2b: snooze support. Column is nullable so existing rows
+      // come through as "never snoozed".
+      await NotificationDbDao.addSnoozeColumn(db);
     }
   }
 

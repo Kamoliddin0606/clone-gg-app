@@ -446,6 +446,33 @@ class MockSharedPreferencesService extends _i1.Mock
           as _i5.Future<void>);
 
   @override
+  _i5.Future<void> setActiveProjectId(String? value) =>
+      (super.noSuchMethod(
+            Invocation.method(#setActiveProjectId, [value]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> setActiveProjectSource(String? value) =>
+      (super.noSuchMethod(
+            Invocation.method(#setActiveProjectSource, [value]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> clearActiveProjectMeta() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearActiveProjectMeta, []),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
   _i5.Future<void> clearCachedGates() =>
       (super.noSuchMethod(
             Invocation.method(#clearCachedGates, []),

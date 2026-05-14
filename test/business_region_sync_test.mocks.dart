@@ -518,6 +518,33 @@ class MockSharedPreferencesService extends _i1.Mock
           as _i8.Future<void>);
 
   @override
+  _i8.Future<void> setActiveProjectId(String? value) =>
+      (super.noSuchMethod(
+            Invocation.method(#setActiveProjectId, [value]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> setActiveProjectSource(String? value) =>
+      (super.noSuchMethod(
+            Invocation.method(#setActiveProjectSource, [value]),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> clearActiveProjectMeta() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearActiveProjectMeta, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
   _i8.Future<void> clearCachedGates() =>
       (super.noSuchMethod(
             Invocation.method(#clearCachedGates, []),
@@ -2627,6 +2654,27 @@ class MockApiDatabaseService extends _i1.Mock
           as _i8.Future<void>);
 
   @override
+  _i8.Future<void> updateClientProfile({
+    required String? clientCode,
+    String? name,
+    String? inn,
+    String? phone,
+    String? address,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateClientProfile, [], {
+              #clientCode: clientCode,
+              #name: name,
+              #inn: inn,
+              #phone: phone,
+              #address: address,
+            }),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
   _i8.Future<void> ensureSalesReqPermissionsTableExists() =>
       (super.noSuchMethod(
             Invocation.method(#ensureSalesReqPermissionsTableExists, []),
@@ -2817,6 +2865,15 @@ class MockApiDatabaseService extends _i1.Mock
   _i8.Future<void> ensureUserOrganizationsTableExists() =>
       (super.noSuchMethod(
             Invocation.method(#ensureUserOrganizationsTableExists, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> clearCustomerCacheForProjectSwitch() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearCustomerCacheForProjectSwitch, []),
             returnValue: _i8.Future<void>.value(),
             returnValueForMissingStub: _i8.Future<void>.value(),
           )

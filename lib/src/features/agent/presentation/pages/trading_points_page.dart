@@ -3134,49 +3134,49 @@ class _TradingPointGridTile extends StatelessWidget {
 
               ],
             ),
-            // BODY: data in single column
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildScrollableText(
-                    tp.tradingPoint.name,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+            // BODY: data in single column. Wrapped in Expanded so the
+            // tile honors its bounded grid-cell height and shrinks the
+            // body area instead of overflowing when the image + actions
+            // row leave little room.
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        tp.tradingPoint.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 4),
-                  // _line(Icons.place_outlined, tp.address),
-                  // const SizedBox(height: 2),
-                  // _line(Icons.badge_outlined, 'INN: ${tp.inn}'),
-
-                  // NEW:
-                  _lineMultiline(
-                    context,
-                    Icons.place_outlined,
-                    tp.tradingPoint.address,
-                    maxLines: 2,
-                    scrollable: true,
-                  ), // CHANGED
-                  const SizedBox(height: 2),
-                  _lineMultiline(
-                    context,
-                    Icons.badge_outlined,
-                    'INN: ${tp.tradingPoint.inn}',
-                    maxLines: 2,
-                  ), // CHANGED
-                  // Add distance display
-                  // if (locationService != null) ...[
-                  //   const SizedBox(height: 2),
-                  //   _buildDistanceDisplay(context, tp, locationService!),
-                  // ],
-                ],
+                    const SizedBox(height: 4),
+                    Flexible(
+                      child: _lineMultiline(
+                        context,
+                        Icons.place_outlined,
+                        tp.tradingPoint.address,
+                        maxLines: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Flexible(
+                      child: _lineMultiline(
+                        context,
+                        Icons.badge_outlined,
+                        'INN: ${tp.tradingPoint.inn}',
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            // const Spacer(),
-            const SizedBox(height: 6),
             // Backend-codename-gated action row. Compact IconButtons
             // because the grid tile is tight on space — same gate
             // semantics as the list-mode [TradingPointCard].
@@ -3366,25 +3366,6 @@ class _TradingPointGridTile extends StatelessWidget {
           color: Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScrollableText(
-    String text, {
-    TextStyle? style,
-    int maxLines = 3,
-  }) {
-    return SizedBox(
-      height: maxLines * 20.0, // Approximate height for maxLines
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Text(
-          text,
-          style: style,
-          maxLines: maxLines,
-          softWrap: true, // Enable word wrapping for vertical scroll
         ),
       ),
     );

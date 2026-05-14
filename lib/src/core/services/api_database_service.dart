@@ -57,7 +57,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 40, // v40: clients.code_1c column added; backend-first customer reads via V2 list endpoint require a fresh cache (one-shot wipe in _onUpgrade)
+      version: 41, // v41: user_projects.id_uuid + id_1c added for customer_scope=project header (X-Project-Id) resolution
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -113,6 +113,8 @@ class ApiDatabaseService {
         code TEXT NOT NULL,
         name TEXT NOT NULL,
         user_code TEXT NOT NULL,
+        id_uuid TEXT,
+        id_1c TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         UNIQUE(code, user_code)
@@ -1774,6 +1776,28 @@ class ApiDatabaseService {
       if (kDebugMode) {
         print(
             'ApiDatabaseService: clients table wiped + code_1c column added (version 40)');
+      }
+    }
+
+    if (oldVersion < 41) {
+      // customer_scope=project rollout: `user_projects` needs `id_uuid`
+      // (V2 backend UUID) and `id_1c` (1C ref) so the mobile can send
+      // `X-Project-Id` on `/api/mobile/v2/customers/...` calls.
+      for (final column in const ['id_uuid', 'id_1c']) {
+        try {
+          await db.execute(
+            'ALTER TABLE user_projects ADD COLUMN $column TEXT',
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            print(
+                'ApiDatabaseService: skip ADD $column on user_projects (likely already present): $e');
+          }
+        }
+      }
+      if (kDebugMode) {
+        print(
+            'ApiDatabaseService: user_projects extended with id_uuid + id_1c (version 41)');
       }
     }
   }
@@ -8942,6 +8966,8 @@ class ApiDatabaseService {
             code TEXT NOT NULL,
             name TEXT NOT NULL,
             user_code TEXT NOT NULL,
+            id_uuid TEXT,
+            id_1c TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             UNIQUE(code, user_code)
@@ -9149,6 +9175,32 @@ class ApiDatabaseService {
     }
   }
 
+  /// Wipes locally-cached customer data so a `customer_scope=project`
+  /// project switch does not leak the previous project's rows.
+  ///
+  /// Used by `ProjectContext.setActiveProject` — see
+  /// `lib/src/core/services/project_context.dart`.
+  ///
+  /// Safe to call on org-scope tenants too (no-op effect: list re-fetch
+  /// brings the same rows back).
+  Future<void> clearCustomerCacheForProjectSwitch() async {
+    try {
+      final db = await database;
+      await db.delete('clients');
+      await db.delete('client_images');
+      await db.delete('client_contracts');
+      if (kDebugMode) {
+        print(
+            'ApiDatabaseService: cleared customer caches for project switch');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print(
+            'ApiDatabaseService: failed to clear customer caches on project switch: $e');
+      }
+    }
+  }
+
   /// Проверка и создание таблицы user_projects (для миграции)
   /// user_projects jadvali mavjudligini tekshirish va yaratish (migratsiya uchun)
   /// Ensure user_projects table exists (for migration issues)
@@ -9211,6 +9263,8 @@ class ApiDatabaseService {
           'code': project.code,
           'name': project.name,
           'user_code': userCode,
+          'id_uuid': project.idUuid,
+          'id_1c': project.id1c,
           'created_at': now,
           'updated_at': now,
         }, conflictAlgorithm: ConflictAlgorithm.replace);

@@ -19,6 +19,7 @@ import 'package:gloria_marketing_flutter/src/core/services/faktura_company_servi
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
 import 'package:gloria_marketing_flutter/src/core/models/faktura_company_details.dart';
 import 'package:gloria_marketing_flutter/src/core/models/scanned_document_data.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/customer_scope_error_handler.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/document_scanner_widget.dart';
 import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/uzbek_phone_formatter.dart';
@@ -516,12 +517,17 @@ class _CreateClientPageState extends State<CreateClientPage>
         setState(() {
           _isSubmitting = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizedCreateError(context, e)),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (CustomerScopeErrorHandler.handles(e.code)) {
+          await CustomerScopeErrorHandler.handle(context, e.code,
+              details: e.details);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_localizedCreateError(context, e)),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -649,14 +655,20 @@ class _CreateClientPageState extends State<CreateClientPage>
       }
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+        if (e is CustomerWriteException &&
+            CustomerScopeErrorHandler.handles(e.code)) {
+          await CustomerScopeErrorHandler.handle(context, e.code,
+              details: e.details);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${AppLocalizations.of(context)?.errorOccurredPrefix ?? 'Xatolik'}: $e',
+              ),
+              backgroundColor: Colors.red,
             ),
-            backgroundColor: Colors.red,
-          ),
-        );
+          );
+        }
       }
     }
   }

@@ -12,6 +12,36 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appTitle => 'Gloria Marketing';
 
   @override
+  String get customerProjectRequired => 'Выберите проект';
+
+  @override
+  String get customerScopeMismatchToast => 'Конфигурация исправлена. Повторная попытка...';
+
+  @override
+  String get customerCodeDuplicateToast => 'Клиент уже существует';
+
+  @override
+  String get customerCodeDuplicateToastProject => 'Клиент уже существует в этом проекте';
+
+  @override
+  String get customerNotFoundToast => 'Клиент не найден';
+
+  @override
+  String get activeProjectLabel => 'Активный проект';
+
+  @override
+  String get changeProjectAction => 'Изменить';
+
+  @override
+  String get projectPickerTitle => 'Выбор проекта';
+
+  @override
+  String get projectListEmpty => 'Проекты не найдены';
+
+  @override
+  String get customerListRefreshing => 'Список клиентов обновляется...';
+
+  @override
   String get login => 'Войти';
 
   @override

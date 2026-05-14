@@ -28,6 +28,15 @@ class UserProject {
   /// Display name of the project
   final String name;
 
+  /// V2 backend Project.id (UUID). Preferred value for `X-Project-Id`.
+  /// Null until the backend exposes the field on `GetProjectsUser` or a
+  /// dedicated `/api/mobile/v2/projects/` endpoint.
+  final String? idUuid;
+
+  /// 1C numeric ref (`00-0001`-style). Accepted by the backend as a
+  /// fallback for `X-Project-Id` when [idUuid] is unavailable.
+  final String? id1c;
+
   /// Время создания записи локально
   /// Yozuv lokal yaratilgan vaqti
   /// Timestamp when this record was created locally
@@ -43,6 +52,8 @@ class UserProject {
     required this.userCode,
     required this.code,
     required this.name,
+    this.idUuid,
+    this.id1c,
     this.createdAt,
     this.updatedAt,
   });
@@ -56,6 +67,8 @@ class UserProject {
       userCode: map['user_code'] as String,
       code: map['code'] as String,
       name: map['name'] as String,
+      idUuid: map['id_uuid'] as String?,
+      id1c: map['id_1c'] as String?,
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'] as String)
           : null,
@@ -74,6 +87,8 @@ class UserProject {
       'user_code': userCode,
       'code': code,
       'name': name,
+      'id_uuid': idUuid,
+      'id_1c': id1c,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
@@ -87,6 +102,8 @@ class UserProject {
     String? userCode,
     String? code,
     String? name,
+    String? idUuid,
+    String? id1c,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -95,9 +112,20 @@ class UserProject {
       userCode: userCode ?? this.userCode,
       code: code ?? this.code,
       name: name ?? this.name,
+      idUuid: idUuid ?? this.idUuid,
+      id1c: id1c ?? this.id1c,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  /// Returns the best identifier to send in `X-Project-Id` header.
+  /// Preference order: UUID → 1C ref → SOAP `code` (last-resort).
+  String? get headerValue {
+    if (idUuid != null && idUuid!.isNotEmpty) return idUuid;
+    if (id1c != null && id1c!.isNotEmpty) return id1c;
+    if (code.isNotEmpty) return code;
+    return null;
   }
 
   @override

@@ -2,6 +2,16 @@ import 'dart:convert';
 
 import 'device_binding.dart';
 
+/// Per-organization customer pool scoping. Controls whether mobile must
+/// send `X-Project-Id` on `/api/mobile/v2/customers/...` calls.
+enum CustomerScope {
+  /// All projects of the tenant share one customer pool. No header is sent.
+  organization,
+
+  /// Each project owns its own customer pool. `X-Project-Id` is required.
+  project,
+}
+
 /// Envelope for `POST /api/auth/token/` (and `/refresh/`) responses.
 ///
 /// Bundles the JWT access + refresh pair with the backend's `gates` block
@@ -59,6 +69,19 @@ class LoginGatesEnvelope {
   /// optimistic-empty grant for empty payloads.
   final bool permissionsProvided;
 
+  /// Customer pool scoping for the tenant. Drives whether `X-Project-Id`
+  /// is required on `/api/mobile/v2/customers/...` calls.
+  final CustomerScope customerScope;
+
+  /// Backend-suggested default project (UUID) for `customer_scope=project`
+  /// tenants. May be `null` — in that case the user picks from a list.
+  final String? primaryProjectId;
+
+  /// `true` when the server explicitly returned `customer_scope` in the
+  /// gates block (even with value `organization`). Distinguishes a rolled-
+  /// out tenant from an old session where the field was absent.
+  final bool customerScopeProvided;
+
   const LoginGatesEnvelope({
     required this.accessToken,
     required this.refreshToken,
@@ -70,6 +93,9 @@ class LoginGatesEnvelope {
     this.device,
     this.permissions = const <String>[],
     this.permissionsProvided = false,
+    this.customerScope = CustomerScope.organization,
+    this.primaryProjectId,
+    this.customerScopeProvided = false,
   });
 
   /// Tolerates missing optional fields by defaulting to `null`/`false`.
@@ -114,6 +140,16 @@ class LoginGatesEnvelope {
         ? permissionsRaw.whereType<String>().toList(growable: false)
         : const <String>[];
 
+    final scopeRaw = gates[_Keys.customerScope];
+    final bool customerScopeProvided = scopeRaw is String && scopeRaw.isNotEmpty;
+    final CustomerScope customerScope =
+        scopeRaw == 'project' ? CustomerScope.project : CustomerScope.organization;
+    final primaryProjectRaw = gates[_Keys.primaryProjectId];
+    final String? primaryProjectId =
+        primaryProjectRaw is String && primaryProjectRaw.isNotEmpty
+            ? primaryProjectRaw
+            : null;
+
     return LoginGatesEnvelope(
       accessToken: access,
       refreshToken: refresh,
@@ -125,21 +161,30 @@ class LoginGatesEnvelope {
       device: device,
       permissions: permissions,
       permissionsProvided: permissionsProvided,
+      customerScope: customerScope,
+      primaryProjectId: primaryProjectId,
+      customerScopeProvided: customerScopeProvided,
     );
   }
 
   Map<String, dynamic> toJson() {
+    final gates = <String, dynamic>{
+      _Keys.userActiveEnd: userActiveEnd?.toUtc().toIso8601String(),
+      _Keys.licenseValidTo: licenseValidTo?.toUtc().toIso8601String(),
+      _Keys.organizationId: organizationId,
+      _Keys.serverTime: serverTime.toUtc().toIso8601String(),
+      _Keys.bypass: bypass,
+      _Keys.permissions: permissions,
+    };
+    if (customerScopeProvided) {
+      gates[_Keys.customerScope] =
+          customerScope == CustomerScope.project ? 'project' : 'organization';
+      gates[_Keys.primaryProjectId] = primaryProjectId;
+    }
     final map = <String, dynamic>{
       _Keys.access: accessToken,
       _Keys.refresh: refreshToken,
-      _Keys.gates: <String, dynamic>{
-        _Keys.userActiveEnd: userActiveEnd?.toUtc().toIso8601String(),
-        _Keys.licenseValidTo: licenseValidTo?.toUtc().toIso8601String(),
-        _Keys.organizationId: organizationId,
-        _Keys.serverTime: serverTime.toUtc().toIso8601String(),
-        _Keys.bypass: bypass,
-        _Keys.permissions: permissions,
-      },
+      _Keys.gates: gates,
     };
     if (device != null) {
       map[_Keys.device] = device!.toJson();
@@ -174,6 +219,9 @@ class LoginGatesEnvelope {
     DeviceBinding? device,
     List<String>? permissions,
     bool? permissionsProvided,
+    CustomerScope? customerScope,
+    String? primaryProjectId,
+    bool? customerScopeProvided,
   }) {
     return LoginGatesEnvelope(
       accessToken: accessToken ?? this.accessToken,
@@ -187,6 +235,10 @@ class LoginGatesEnvelope {
       permissions: permissions ?? this.permissions,
       permissionsProvided:
           permissionsProvided ?? this.permissionsProvided,
+      customerScope: customerScope ?? this.customerScope,
+      primaryProjectId: primaryProjectId ?? this.primaryProjectId,
+      customerScopeProvided:
+          customerScopeProvided ?? this.customerScopeProvided,
     );
   }
 
@@ -202,6 +254,9 @@ class LoginGatesEnvelope {
         other.serverTime == serverTime &&
         other.bypass == bypass &&
         other.device == device &&
+        other.customerScope == customerScope &&
+        other.primaryProjectId == primaryProjectId &&
+        other.customerScopeProvided == customerScopeProvided &&
         _listEq(other.permissions, permissions);
   }
 
@@ -216,6 +271,8 @@ class LoginGatesEnvelope {
         bypass,
         device,
         Object.hashAll(permissions),
+        customerScope,
+        primaryProjectId,
       );
 
   static bool _listEq(List<String> a, List<String> b) {
@@ -250,4 +307,6 @@ class _Keys {
   static const String serverTime = 'server_time';
   static const String bypass = 'bypass';
   static const String permissions = 'permissions';
+  static const String customerScope = 'customer_scope';
+  static const String primaryProjectId = 'primary_project_id';
 }

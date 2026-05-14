@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/agent_home_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/trading_points_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/project_picker_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/map_detail_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/map_pages/map_detail_page_osm.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/map_pages/map_detail_page_yandex.dart';
@@ -63,6 +64,9 @@ class AppRouter {
   static const String notificationListRoute = '/notifications';
   static const String notificationDetailRoute = '/notifications/detail';
   static const String notificationPreferencesRoute = '/notifications/preferences';
+  // Active project picker for `customer_scope=project` tenants.
+  // See ProjectContext + mobile-customer-scope.md backend handoff.
+  static const String projectPickerRoute = '/project-picker';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -220,6 +224,13 @@ class AppRouter {
       case notificationPreferencesRoute:
         return MaterialPageRoute(
           builder: (_) => const NotificationPreferencesPage(),
+        );
+      case projectPickerRoute:
+        final args = settings.arguments as Map<String, dynamic>?;
+        final mandatory = args?['mandatory'] == true;
+        return MaterialPageRoute(
+          builder: (_) => ProjectPickerPage(mandatory: mandatory),
+          fullscreenDialog: mandatory,
         );
       default:
         return MaterialPageRoute(

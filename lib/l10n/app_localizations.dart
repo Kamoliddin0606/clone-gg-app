@@ -103,6 +103,66 @@ abstract class AppLocalizations {
   /// **'Gloria Marketing'**
   String get appTitle;
 
+  /// No description provided for @customerProjectRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a project'**
+  String get customerProjectRequired;
+
+  /// No description provided for @customerScopeMismatchToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration fixed. Retrying...'**
+  String get customerScopeMismatchToast;
+
+  /// No description provided for @customerCodeDuplicateToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer already exists'**
+  String get customerCodeDuplicateToast;
+
+  /// No description provided for @customerCodeDuplicateToastProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer already exists in this project'**
+  String get customerCodeDuplicateToastProject;
+
+  /// No description provided for @customerNotFoundToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer not found'**
+  String get customerNotFoundToast;
+
+  /// No description provided for @activeProjectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Active project'**
+  String get activeProjectLabel;
+
+  /// No description provided for @changeProjectAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get changeProjectAction;
+
+  /// No description provided for @projectPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select project'**
+  String get projectPickerTitle;
+
+  /// No description provided for @projectListEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects found'**
+  String get projectListEmpty;
+
+  /// No description provided for @customerListRefreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing customer list...'**
+  String get customerListRefreshing;
+
   /// No description provided for @login.
   ///
   /// In en, this message translates to:

@@ -13,6 +13,7 @@ import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/token_service.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../bloc/customer_photo_cubit.dart';
+import '../widgets/customer_scope_error_handler.dart';
 import '../bloc/customer_photo_state.dart';
 
 /// Per-customer photo gallery page.
@@ -67,12 +68,19 @@ class _CustomerPhotosView extends StatelessWidget {
     return BlocConsumer<CustomerPhotoCubit, CustomerPhotoState>(
       listenWhen: (prev, curr) =>
           prev.errorCode != curr.errorCode && curr.errorCode != null,
-      listener: (context, state) {
-        final messenger = ScaffoldMessenger.of(context);
-        messenger
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(_errorText(l10n, state))));
-        context.read<CustomerPhotoCubit>().clearError();
+      listener: (context, state) async {
+        final code = state.errorCode ?? '';
+        if (CustomerScopeErrorHandler.handles(code)) {
+          await CustomerScopeErrorHandler.handle(context, code);
+        } else {
+          final messenger = ScaffoldMessenger.of(context);
+          messenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(_errorText(l10n, state))));
+        }
+        if (context.mounted) {
+          context.read<CustomerPhotoCubit>().clearError();
+        }
       },
       builder: (context, state) {
         return Scaffold(

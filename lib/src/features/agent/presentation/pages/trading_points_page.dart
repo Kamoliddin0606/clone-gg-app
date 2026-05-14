@@ -15,6 +15,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/business
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/core/auth/backend_permission_store.dart';
 import 'package:gloria_marketing_flutter/src/core/auth/permission_codenames.dart';
+import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/permission_manager.dart';
@@ -246,6 +247,8 @@ class _TradingPointsPageState extends State<TradingPointsPage>
   bool _isFabDragging = false;
   bool _fabPositionLoaded = false;
 
+  StreamSubscription<Object?>? _projectStreamSub;
+
   @override
   void initState() {
     super.initState();
@@ -272,6 +275,17 @@ class _TradingPointsPageState extends State<TradingPointsPage>
     _loadUserData();
     _restoreState();
     _loadDefaultMapProvider();
+
+    // Reload customer list when the active project changes
+    // (`customer_scope=project` tenants). Cache invalidation happens
+    // inside `ProjectContext.setActiveProject` — we just trigger the
+    // next fetch.
+    _projectStreamSub =
+        sl<ProjectContext>().activeProjectStream.listen((_) {
+      if (mounted) {
+        _loadUserData();
+      }
+    });
   }
 
   /// Initialize permissions on page load
@@ -538,6 +552,7 @@ class _TradingPointsPageState extends State<TradingPointsPage>
     }
     _permissionsService?.dispose();
     _mapCacheService?.dispose();
+    _projectStreamSub?.cancel();
     super.dispose();
   }
 

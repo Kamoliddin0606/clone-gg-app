@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/services/images/unified_image.dart';
+import '../../../../core/services/project_context.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/shared_preferences_service.dart';
 import '../../../../core/services/token_service.dart';
@@ -45,6 +46,7 @@ class CustomerPhotoRepository {
   final Dio _dio;
   final TokenService _tokenService;
   final SharedPreferencesService _prefs;
+  final ProjectContext _projectContext;
 
   /// In-memory ETag cache: key is the canonical request URL (incl.
   /// query params for list); value is the last-seen ETag header.
@@ -58,9 +60,18 @@ class CustomerPhotoRepository {
     Dio? dio,
     TokenService? tokenService,
     SharedPreferencesService? prefs,
+    ProjectContext? projectContext,
   })  : _dio = dio ?? sl<Dio>(),
         _tokenService = tokenService ?? sl<TokenService>(),
-        _prefs = prefs ?? sl<SharedPreferencesService>();
+        _prefs = prefs ?? sl<SharedPreferencesService>(),
+        _projectContext = projectContext ?? sl<ProjectContext>();
+
+  /// Clears the in-memory ETag + body cache. Invoked by `ProjectContext`
+  /// after a project switch so the next list call hits the wire.
+  void clearAllEtagCache() {
+    _etagByUrl.clear();
+    _bodyByUrl.clear();
+  }
 
   // ---------------------------------------------------------------------------
   // Endpoints
@@ -462,10 +473,29 @@ class CustomerPhotoRepository {
 
   Future<Map<String, String>> _authHeaders() async {
     final token = await _tokenService.ensureValidV2Token();
-    return <String, String>{
+    final headers = <String, String>{
       if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
       'Accept': 'application/json',
     };
+    if (_projectContext.requiresProjectHeader) {
+      final projectHeader = _projectContext.activeProjectHeaderValue;
+      if (projectHeader == null || projectHeader.isEmpty) {
+        throw const CustomerPhotoException(
+          code: 'customer_project_required',
+          message: 'Active project is not selected.',
+          statusCode: 400,
+        );
+      }
+      headers['X-Project-Id'] = projectHeader;
+    }
+    return headers;
+  }
+
+  /// Partition label so idempotency keys do not leak across projects
+  /// under `customer_scope=project`. Org-scope tenants share `org`.
+  String _idemPartition() {
+    final value = _projectContext.activeProjectHeaderValue;
+    return (value == null || value.isEmpty) ? 'org' : value;
   }
 
   String _cacheKey(String url, Map<String, dynamic> query) {
@@ -578,7 +608,8 @@ class CustomerPhotoRepository {
     required String action,
   }) async {
     final prefs = _prefs.preferences;
-    final storageKey = '$_idemPrefix${customerId}_$action';
+    final storageKey =
+        '$_idemPrefix${_idemPartition()}_${customerId}_$action';
     final raw = prefs.getString(storageKey);
     if (raw != null) {
       try {
@@ -658,6 +689,12 @@ class CustomerPhotoRepository {
           final details = error['details'] is Map<String, dynamic>
               ? error['details'] as Map<String, dynamic>
               : null;
+          // The backend says we sent the header to an org-scope tenant —
+          // refresh gates so the next request stops sending it.
+          if (status == 400 && code == 'customer_project_not_allowed') {
+            // ignore: discarded_futures
+            _tokenService.refreshAccessV2();
+          }
           return CustomerPhotoException(
             code: code,
             message: message,

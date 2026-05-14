@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/auth/backend_permission_store.dart';
+import '../../../../core/services/project_context.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/shared_preferences_service.dart';
 import '../../../../core/services/token_service.dart';
@@ -42,14 +43,17 @@ class CustomerWriteRepository {
   final Dio _dio;
   final TokenService _tokenService;
   final SharedPreferencesService _prefs;
+  final ProjectContext _projectContext;
 
   CustomerWriteRepository({
     Dio? dio,
     TokenService? tokenService,
     SharedPreferencesService? prefs,
+    ProjectContext? projectContext,
   })  : _dio = dio ?? sl<Dio>(),
         _tokenService = tokenService ?? sl<TokenService>(),
-        _prefs = prefs ?? sl<SharedPreferencesService>();
+        _prefs = prefs ?? sl<SharedPreferencesService>(),
+        _projectContext = projectContext ?? sl<ProjectContext>();
 
   // ---------------------------------------------------------------------------
   // Endpoints
@@ -425,10 +429,25 @@ class CustomerWriteRepository {
 
   Future<Map<String, String>> _authHeaders() async {
     final token = await _tokenService.ensureValidV2Token();
-    return <String, String>{
+    final headers = <String, String>{
       if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
       'Accept': 'application/json',
     };
+    // customer_scope=project tenants MUST send the active project id.
+    // The header is omitted for organization-scope tenants; sending it
+    // there returns 400 `customer_project_not_allowed`.
+    if (_projectContext.requiresProjectHeader) {
+      final projectHeader = _projectContext.activeProjectHeaderValue;
+      if (projectHeader == null || projectHeader.isEmpty) {
+        throw const CustomerWriteException(
+          code: 'customer_project_required',
+          message: 'Active project is not selected for project-scoped tenant.',
+          statusCode: 400,
+        );
+      }
+      headers['X-Project-Id'] = projectHeader;
+    }
+    return headers;
   }
 
   /// Format a `double` lat/lng as a six-decimal string. Matches the
@@ -458,7 +477,7 @@ class CustomerWriteRepository {
 
   Future<String> _resolveCachedUuid({required String action}) async {
     final prefs = _prefs.preferences;
-    final storageKey = '$_idemPrefix$action';
+    final storageKey = '$_idemPrefix${_idemPartition()}_$action';
     final raw = prefs.getString(storageKey);
     if (raw != null) {
       try {
@@ -499,8 +518,16 @@ class CustomerWriteRepository {
   }
 
   Future<void> _clearCachedUuid(String action) async {
-    final storageKey = '$_idemPrefix$action';
+    final storageKey = '$_idemPrefix${_idemPartition()}_$action';
     await _prefs.preferences.remove(storageKey);
+  }
+
+  /// Partition label so idempotency keys do not leak across projects
+  /// under `customer_scope=project`. Org-scope tenants share the `org`
+  /// partition (unchanged behaviour).
+  String _idemPartition() {
+    final value = _projectContext.activeProjectHeaderValue;
+    return (value == null || value.isEmpty) ? 'org' : value;
   }
 
   // --- Error envelope decoding ---------------------------------------------
@@ -529,6 +556,14 @@ class CustomerWriteRepository {
           // error, but the next render reflects reality.
           if (status == 403 && code == 'permission_denied') {
             _handlePermissionDenied();
+          }
+          // `customer_project_not_allowed` (400) — the client sent a
+          // project header to an organization-scope tenant. Refresh
+          // gates so the next call doesn't repeat the mistake; the
+          // ProjectContext will then return `requiresProjectHeader=false`.
+          if (status == 400 && code == 'customer_project_not_allowed') {
+            // ignore: discarded_futures
+            _refreshV2GatesQuietly();
           }
           return CustomerWriteException(
             code: code,

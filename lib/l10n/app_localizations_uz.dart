@@ -12,6 +12,36 @@ class AppLocalizationsUz extends AppLocalizations {
   String get appTitle => 'Gloria Marketing';
 
   @override
+  String get customerProjectRequired => 'Loyihani tanlang';
+
+  @override
+  String get customerScopeMismatchToast => 'Sozlama tuzatildi. Qayta urinilmoqda...';
+
+  @override
+  String get customerCodeDuplicateToast => 'Mijoz allaqachon mavjud';
+
+  @override
+  String get customerCodeDuplicateToastProject => 'Mijoz ushbu loyihada allaqachon mavjud';
+
+  @override
+  String get customerNotFoundToast => 'Mijoz topilmadi';
+
+  @override
+  String get activeProjectLabel => 'Faol loyiha';
+
+  @override
+  String get changeProjectAction => 'O\'zgartirish';
+
+  @override
+  String get projectPickerTitle => 'Loyihani tanlang';
+
+  @override
+  String get projectListEmpty => 'Loyihalar topilmadi';
+
+  @override
+  String get customerListRefreshing => 'Mijozlar ro\'yxati yangilanmoqda...';
+
+  @override
   String get login => 'Kirish';
 
   @override

@@ -15,6 +15,7 @@ class UserModel extends UserEntity {
     required super.telegramID,
     required super.chatID,
     required super.topicID,
+    super.primaryProjectId,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +36,7 @@ class UserModel extends UserEntity {
       telegramID: json['telegramID'] ?? '',
       chatID: json['chatID'] ?? '',
       topicID: json['topicID'] ?? '',
+      primaryProjectId: json['primaryProjectId'] as String?,
     );
   }
 
@@ -110,6 +112,27 @@ class UserModel extends UserEntity {
       'telegramID': telegramID,
       'chatID': chatID,
       'topicID': topicID,
+      if (primaryProjectId != null) 'primaryProjectId': primaryProjectId,
     };
+  }
+
+  /// Returns a copy with [primaryProjectId] overwritten — used after V2
+  /// login to enrich the SOAP-derived user with the backend's gates.
+  UserModel withPrimaryProjectId(String? value) {
+    return UserModel(
+      id: id,
+      username: username,
+      fullName: fullName,
+      role: role,
+      code: code,
+      name: name,
+      warehouseCode: warehouseCode,
+      codeProject: codeProject,
+      baseUrl: baseUrl,
+      telegramID: telegramID,
+      chatID: chatID,
+      topicID: topicID,
+      primaryProjectId: value,
+    );
   }
 }

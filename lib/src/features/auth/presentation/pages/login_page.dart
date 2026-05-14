@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
+import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
@@ -405,13 +406,33 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       await prefs.setSyncNeeded(true);
       await prefs.setIsFirstTimeSync(dbUser == null);
 
+      // Initialise active project tracking for customer_scope=project
+      // tenants. Org-scope tenants get a no-op.
+      try {
+        await sl<ProjectContext>().bootstrap(state.user);
+      } catch (e) {
+        if (kDebugMode) print('ProjectContext bootstrap failed: $e');
+      }
+
       // Show success message and navigate
       if (mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)?.loginSuccessful ?? 'Login Successful!')));
 
-        _navigateToHomePage(state.user.role);
+        // Project-scope tenant with no active project? Force picker first.
+        final projectContext = sl<ProjectContext>();
+        if (projectContext.requiresProjectHeader &&
+            (projectContext.activeProjectHeaderValue == null ||
+                projectContext.activeProjectHeaderValue!.isEmpty)) {
+          await Navigator.of(context).pushNamed(
+            AppRouter.projectPickerRoute,
+            arguments: <String, dynamic>{'mandatory': true},
+          );
+        }
+        if (mounted) {
+          _navigateToHomePage(state.user.role);
+        }
       }
     } catch (e) {
       if (mounted) {

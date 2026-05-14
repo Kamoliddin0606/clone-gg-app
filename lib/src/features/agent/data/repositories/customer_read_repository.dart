@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/services/project_context.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/token_service.dart';
 import '../models/trading_point.dart';
@@ -18,12 +19,15 @@ class CustomerReadRepository {
 
   final Dio _dio;
   final TokenService _tokenService;
+  final ProjectContext _projectContext;
 
   CustomerReadRepository({
     Dio? dio,
     TokenService? tokenService,
+    ProjectContext? projectContext,
   })  : _dio = dio ?? sl<Dio>(),
-        _tokenService = tokenService ?? sl<TokenService>();
+        _tokenService = tokenService ?? sl<TokenService>(),
+        _projectContext = projectContext ?? sl<ProjectContext>();
 
   /// Paginates through every active customer the caller can see and
   /// returns the flattened list. Loops `GET /customers/?cursor=…`
@@ -104,9 +108,34 @@ class CustomerReadRepository {
 
   Future<Map<String, String>> _authHeaders() async {
     final token = await _tokenService.ensureValidV2Token();
-    return <String, String>{
+    final headers = <String, String>{
       if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
       'Accept': 'application/json',
     };
+    if (_projectContext.requiresProjectHeader) {
+      final projectHeader = _projectContext.activeProjectHeaderValue;
+      if (projectHeader == null || projectHeader.isEmpty) {
+        // List endpoint should NEVER call without project context for
+        // a project-scope tenant. The caller is expected to surface a
+        // picker — short-circuit with a DioException-shaped throw so
+        // standard error envelopes still flow through.
+        throw DioException(
+          requestOptions: RequestOptions(path: _basePath),
+          type: DioExceptionType.badResponse,
+          response: Response(
+            requestOptions: RequestOptions(path: _basePath),
+            statusCode: 400,
+            data: <String, dynamic>{
+              'error': <String, dynamic>{
+                'code': 'customer_project_required',
+                'message': 'Active project is not selected.',
+              },
+            },
+          ),
+        );
+      }
+      headers['X-Project-Id'] = projectHeader;
+    }
+    return headers;
   }
 }

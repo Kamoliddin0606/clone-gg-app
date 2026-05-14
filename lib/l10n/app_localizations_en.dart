@@ -12,6 +12,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Gloria Marketing';
 
   @override
+  String get customerProjectRequired => 'Select a project';
+
+  @override
+  String get customerScopeMismatchToast => 'Configuration fixed. Retrying...';
+
+  @override
+  String get customerCodeDuplicateToast => 'Customer already exists';
+
+  @override
+  String get customerCodeDuplicateToastProject => 'Customer already exists in this project';
+
+  @override
+  String get customerNotFoundToast => 'Customer not found';
+
+  @override
+  String get activeProjectLabel => 'Active project';
+
+  @override
+  String get changeProjectAction => 'Change';
+
+  @override
+  String get projectPickerTitle => 'Select project';
+
+  @override
+  String get projectListEmpty => 'No projects found';
+
+  @override
+  String get customerListRefreshing => 'Refreshing customer list...';
+
+  @override
   String get login => 'Login';
 
   @override

@@ -567,6 +567,34 @@ class SharedPreferencesService {
     return env;
   }
 
+  // ─────────────────────────────────────────────────────────────────────
+  // Active project tracking for `customer_scope=project` tenants.
+  // Owned by `ProjectContext` — see core/services/project_context.dart.
+  // ─────────────────────────────────────────────────────────────────────
+  static const String _activeProjectIdKey = 'active_project_id';
+  static const String _activeProjectSourceKey = 'active_project_source';
+
+  Future<void> setActiveProjectId(String value) async {
+    await _preferences.setString(_activeProjectIdKey, value);
+  }
+
+  String? getActiveProjectId() {
+    return _preferences.getString(_activeProjectIdKey);
+  }
+
+  Future<void> setActiveProjectSource(String value) async {
+    await _preferences.setString(_activeProjectSourceKey, value);
+  }
+
+  String? getActiveProjectSource() {
+    return _preferences.getString(_activeProjectSourceKey);
+  }
+
+  Future<void> clearActiveProjectMeta() async {
+    await _preferences.remove(_activeProjectIdKey);
+    await _preferences.remove(_activeProjectSourceKey);
+  }
+
   /// Clear the cached gates — used on logout, refresh-revocation, or
   /// when the backend explicitly tells the mobile app the session is no
   /// longer valid.

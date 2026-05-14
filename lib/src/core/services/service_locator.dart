@@ -9,6 +9,7 @@ import 'package:gloria_marketing_flutter/src/core/network/url_failover_service.d
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/reports_sync_service.dart';
@@ -172,6 +173,17 @@ Future<void> setupServiceLocator() async {
   }
   if (!sl.isRegistered<ApiDatabaseService>()) {
     sl.registerLazySingleton<ApiDatabaseService>(() => ApiDatabaseService());
+  }
+
+  // ProjectContext — single source of truth for `customer_scope=project`
+  // active project tracking. Reads cached gates and SQLite-cached projects
+  // to expose the `X-Project-Id` header value used by the three customer
+  // repositories.
+  if (!sl.isRegistered<ProjectContext>()) {
+    sl.registerLazySingleton<ProjectContext>(() => ProjectContext(
+          sl<SharedPreferencesService>(),
+          sl<ApiDatabaseService>(),
+        ));
   }
   // TokenService - REST API token management with dedicated Dio instance
   // IMPORTANT: TokenService needs a SEPARATE Dio instance without other service interceptors

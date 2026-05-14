@@ -3083,6 +3083,65 @@ class ApiDatabaseService {
     };
   }
 
+  /// Insert or replace a single client row without touching others.
+  ///
+  /// Used right after `CustomerWriteRepository.create` so the freshly
+  /// created customer becomes visible on the next cache read — the
+  /// `clients` table is read-through for the trading-points list page,
+  /// and a server-side resync would otherwise be needed before the new
+  /// row shows up. Conflict resolves on the `code` UNIQUE index.
+  ///
+  /// **Key alignment**: mobile reads currently come via SOAP
+  /// `getClients`, which writes the 1C `<m:Code>` (`00-XXXXXXXX`) into
+  /// `clients.code`. The V2 create endpoint returns the backend
+  /// `code` (`C-XXXXXXXX`) AND `code_1c` (`00-XXXXXXXX`); to stay
+  /// addressable by the same identifier the SOAP sync uses — and so
+  /// the highlight flow (`_newlyCreatedClientCode == tp.id`) keeps
+  /// matching when SOAP is unreachable — we store the 1C code in the
+  /// local `code` column. Fallback to backend code only if `code_1c`
+  /// is somehow empty (the create flow already short-circuits on that
+  /// case, so this is purely defensive).
+  Future<void> upsertSingleClient(TradingPoint client) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    final localCode =
+        client.code1c.isNotEmpty ? client.code1c : client.id;
+    await db.insert(
+      'clients',
+      {
+        'code': localCode,
+        'code_1c': client.code1c,
+        'name': client.name,
+        'address': client.address,
+        'phone': client.phone,
+        'inn': client.inn,
+        'contact_person': client.contactPerson,
+        'latitude': client.latitude,
+        'longitude': client.longitude,
+        'region': client.region,
+        'district': client.district,
+        'status': client.status,
+        'last_visit_date': client.lastVisitDate,
+        'has_orders': client.hasOrders ? 1 : 0,
+        'has_contracts': client.hasContracts ? 1 : 0,
+        'is_visited': client.isVisited ? 1 : 0,
+        'has_contract': client.hasContract ? 1 : 0,
+        'owner_name': client.ownerName,
+        'signboard': client.signboard,
+        'reference_point': client.referencePoint,
+        'responsible_person': client.responsiblePerson,
+        'responsible_person_phone': client.responsiblePersonPhone,
+        'trade_point_type': client.tradePointType,
+        'credit_limit': client.creditLimit,
+        'accumulated_credit': client.accumulatedCredit,
+        'code_region': client.codeRegion,
+        'created_at': now,
+        'updated_at': now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<List<TradingPoint>> getClients() async {
     final db = await database;
     final result = await db.query('clients', orderBy: 'name ASC');

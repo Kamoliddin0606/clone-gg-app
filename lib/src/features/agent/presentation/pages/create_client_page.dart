@@ -503,6 +503,18 @@ class _CreateClientPageState extends State<CreateClientPage>
         clientClass: _selectedClientClass?.classCode ?? '',
       );
 
+      // Write the newly created row into the local `clients` cache
+      // immediately so the trading-points list (which reads through
+      // local SQL) can surface and highlight it before — and even
+      // independent of — the next SOAP `getClients` resync.
+      try {
+        await sl<ApiDatabaseService>().upsertSingleClient(tp);
+      } catch (e) {
+        if (kDebugMode) {
+          print('Failed to cache newly created client locally: $e');
+        }
+      }
+
       if (mounted) {
         // Success dialog shows the 1C code (downstream value) when
         // available; the backend `code` is the new local identifier

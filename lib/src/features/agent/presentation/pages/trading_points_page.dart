@@ -631,7 +631,7 @@ class _TradingPointsPageState extends State<TradingPointsPage>
     }
   }
 
-  Future<void> _loadTradingPoints() async {
+  Future<void> _loadTradingPoints({bool forceRefresh = false}) async {
     if (userCode.isEmpty || password.isEmpty) return;
 
     setState(() => _isLoading = true);
@@ -639,9 +639,17 @@ class _TradingPointsPageState extends State<TradingPointsPage>
       final repository = sl<AgentRepository>();
       final dbService = sl<ApiDatabaseService>();
 
-      // Load clients and business regions in parallel for better performance
+      // `forceRefresh: true` is used after create so the SOAP
+      // `getClients` round-trip pulls the freshly promoted row down
+      // (the local optimistic insert in `_submitForm` already covered
+      // the offline-friendly path; this just keeps the cache aligned
+      // with everything else 1C may have changed in the meantime).
       final results = await Future.wait([
-        repository.getClients(userCode: userCode, password: password),
+        repository.getClients(
+          userCode: userCode,
+          password: password,
+          forceRefresh: forceRefresh,
+        ),
         repository.getCachedBusinessRegions(),
       ]);
 
@@ -729,7 +737,18 @@ class _TradingPointsPageState extends State<TradingPointsPage>
         _filteredTradingPoints = List.from(_allTradingPoints);
       } else {
         final qLatin = transliterateToLatin(query).toLowerCase();
+        // Highlight pass-through: a just-created customer should remain
+        // visible for the full highlight window regardless of search /
+        // type / region / visit-today filters. Without this, applying
+        // any active filter while `_newlyCreatedClientCode` is set
+        // would hide the row the green highlight is supposed to point
+        // at — and `_moveNewClientToTop` would silently no-op because
+        // the row isn't in `_filteredTradingPoints` at all.
+        final newCode = _newlyCreatedClientCode;
         _filteredTradingPoints = _allTradingPoints.where((tp) {
+          if (newCode != null && tp.tradingPoint.id == newCode) {
+            return true;
+          }
           // Search filter
           final regionName =
               _regionNames[tp.tradingPoint.codeRegion]?.toLowerCase() ?? '';
@@ -1874,14 +1893,18 @@ class _TradingPointsPageState extends State<TradingPointsPage>
     setState(() {
       _newlyCreatedClientCode = result;
     });
-    await _loadTradingPoints();
+    // `forceRefresh: true` reissues the SOAP `getClients` round-trip
+    // so the cache is aligned with 1C's view; the row itself is
+    // already in local SQL via the create-flow optimistic insert, so
+    // the highlight survives even if SOAP is temporarily unreachable.
+    await _loadTradingPoints(forceRefresh: true);
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(l10n.clientCreatedSuccessfully),
         backgroundColor: Colors.green,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 10),
       ),
     );
     Future.delayed(const Duration(seconds: 10), () {

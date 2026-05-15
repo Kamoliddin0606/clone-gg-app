@@ -22,7 +22,8 @@ import 'package:gloria_marketing_flutter/src/core/services/permission_manager.da
 import 'package:gloria_marketing_flutter/src/core/services/permissions_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
-import 'package:gloria_marketing_flutter/src/core/widgets/client_image_widget.dart';
+import 'package:gloria_marketing_flutter/src/core/services/images/unified_image.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/customer_primary_thumbnail.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart'
     hide MapType;
@@ -48,6 +49,10 @@ import 'map_pages/map_detail_page_yandex.dart';
 import 'visit_steps_page.dart';
 import 'create_client_page.dart';
 import '../widgets/client_balance_widget_v2.dart';
+import '../widgets/balance_status_indicator.dart';
+import '../widgets/balance_status_theme.dart';
+import '../../services/customer_balance_status.dart';
+import '../../services/customer_balance_status_cache.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'dart:io';
@@ -2090,13 +2095,41 @@ class TradingPointCard extends StatelessWidget {
         ? Colors.green.shade400
         : Colors.transparent;
 
-    return Card(
+    // Customer-balance status overlay (M12 rebuilt). Subscribes to the
+    // shared cache so a debt/limit change re-tints the card without a
+    // page rebuild. New-client highlight wins over the balance tint —
+    // a freshly created customer rarely has a cached balance and the
+    // green pop is more important onboarding signal.
+    final balanceCache = sl.isRegistered<CustomerBalanceStatusCache>()
+        ? sl<CustomerBalanceStatusCache>()
+        : null;
+
+    return ListenableBuilder(
+      listenable: balanceCache ?? ValueNotifier<int>(0),
+      builder: (context, _) {
+        final status = balanceCache?.statusFor(tradingPoint.inn) ??
+            CustomerBalanceStatus.unknown;
+        final tint = isNewClient
+            ? null
+            : BalanceStatusTheme.cardTintFor(status, cs);
+        final tintedBorder = isNewClient
+            ? null
+            : BalanceStatusTheme.borderTintFor(status, cs);
+        final effectiveCardColor = tint != null
+            ? Color.alphaBlend(tint, cardColor)
+            : cardColor;
+        final effectiveBorderColor = tintedBorder ?? borderColor;
+        final double effectiveBorderWidth = tintedBorder != null
+            ? 1.5
+            : (isNewClient ? 2.0 : 0.0);
+
+        return Card(
       elevation: isNewClient ? 2 : 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: borderColor, width: isNewClient ? 2 : 0),
+        side: BorderSide(color: effectiveBorderColor, width: effectiveBorderWidth),
       ),
-      color: cardColor,
+      color: effectiveCardColor,
       child: GestureDetector(
         onTap: () {
           final newExpanded = !(expanded ?? false);
@@ -2133,7 +2166,11 @@ class TradingPointCard extends StatelessWidget {
                     maxLines: 3,
                   ),
                 ),
-                const SizedBox(width: 8),
+                BalanceStatusIndicator(
+                  inn: tradingPoint.inn,
+                  customerName: tradingPoint.name,
+                ),
+                const SizedBox(width: 4),
                 VisitIndicators(
                   visitToday: tradingPoint.visitToday,
                   isVisited: tradingPoint.isVisited,
@@ -2242,6 +2279,8 @@ class TradingPointCard extends StatelessWidget {
       ),
     ),
   );
+      },
+    );
   }
 
   Widget _line(
@@ -2771,11 +2810,11 @@ class TradingPointGridCard extends StatelessWidget {
                     imageFilter: tradingPoint.isVisited
                         ? ImageFilter.blur(sigmaX: 3, sigmaY: 3)
                         : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                    child: ClientImageWidget(
-                      clientCode: tradingPoint.id,
-                      size: ClientImageSize.medium,
+                    child: CustomerPrimaryThumbnail(
+                      customerId: tradingPoint.id,
+                      size: UnifiedImageSize.medium,
                       fit: BoxFit.cover,
-                      errorWidget: Container(
+                      errorBuilder: (_) => Container(
                         color: cs.surfaceContainerHighest,
                         child: const Icon(Icons.storefront, size: 40),
                       ),
@@ -2903,15 +2942,14 @@ class _AvatarLeading extends StatelessWidget {
       child: SizedBox(
         width: 56,
         height: 56,
-        child: ClientImageWidget(
-          clientCode: tp.id,
-          size: ClientImageSize.thumbnail,
+        child: CustomerPrimaryThumbnail(
+          customerId: tp.id,
+          size: UnifiedImageSize.thumbnail,
           width: 56,
           height: 56,
           fit: BoxFit.cover,
-          borderRadius: BorderRadius.zero,
           showShimmer: false,
-          errorWidget: _DefaultAvatar(name: tp.name),
+          errorBuilder: (_) => _DefaultAvatar(name: tp.name),
         ),
       ),
     );
@@ -2993,10 +3031,14 @@ class _AutoScrollClientImageCarousel extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            ClientImageWidget(
-              clientCode: clientCode,
-              size: ClientImageSize.medium,
+            CustomerPrimaryThumbnail(
+              customerId: clientCode,
+              size: UnifiedImageSize.medium,
               fit: BoxFit.cover,
+              errorBuilder: (ctx) => Container(
+                color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                child: const Icon(Icons.storefront, size: 40),
+              ),
             ),
             if (isVisited) Container(color: Colors.black.withOpacity(0.22)),
           ],
@@ -3082,13 +3124,34 @@ class _TradingPointGridTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Card(
+    final balanceCache = sl.isRegistered<CustomerBalanceStatusCache>()
+        ? sl<CustomerBalanceStatusCache>()
+        : null;
+    return ListenableBuilder(
+      listenable: balanceCache ?? ValueNotifier<int>(0),
+      builder: (context, _) {
+        final status = balanceCache?.statusFor(tp.tradingPoint.inn) ??
+            CustomerBalanceStatus.unknown;
+        final tint = BalanceStatusTheme.cardTintFor(status, cs);
+        // Compose tint over the M3 surface; null means no tint.
+        final cardColor = tint != null
+            ? Color.alphaBlend(tint, cs.surface)
+            : null;
+        final tintedBorder = BalanceStatusTheme.borderTintFor(status, cs);
+
+        return Card(
       // onTap: onOpenDetails,
       // borderRadius: BorderRadius.circular(16),
       elevation: 6, // CHANGED: nice shadow
       shadowColor: Colors.black.withOpacity(.15), // CHANGED: soft shadow
       surfaceTintColor: Colors.transparent, // CHANGED: disable M3 tint
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: tintedBorder != null
+            ? BorderSide(color: tintedBorder, width: 1.5)
+            : BorderSide.none,
+      ),
       clipBehavior: Clip.antiAlias,
 
       child: InkWell(
@@ -3145,15 +3208,24 @@ class _TradingPointGridTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(
-                      child: Text(
-                        tp.tradingPoint.name,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            tp.tradingPoint.name,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        BalanceStatusIndicator(
+                          inn: tp.tradingPoint.inn,
+                          customerName: tp.tradingPoint.name,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Flexible(
@@ -3197,6 +3269,8 @@ class _TradingPointGridTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+      },
     );
   }
 
@@ -4103,15 +4177,31 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
           ),
           const SizedBox(height: 16),
 
-          // Client Name Header with modern typography
-          Text(
-            widget.tradingPoint.name,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          // Client Name Header with modern typography + balance status
+          // indicator (M12 rebuilt). The pulsing dot reflects the
+          // customer's debt vs project limit; tapping it opens the
+          // BalanceStatusDetailsSheet.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.tradingPoint.name,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              BalanceStatusIndicator(
+                inn: widget.tradingPoint.inn,
+                customerName: widget.tradingPoint.name,
+                size: 12,
+              ),
+            ],
           ),
           const SizedBox(height: 12),
 
@@ -5082,10 +5172,18 @@ class _HeaderImage extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              ClientImageWidget(
-                clientCode: tradingPoint.id,
-                size: ClientImageSize.large,
+              CustomerPrimaryThumbnail(
+                customerId: tradingPoint.id,
+                size: UnifiedImageSize.large,
                 fit: BoxFit.cover,
+                errorBuilder: (ctx) => Container(
+                  color: Theme.of(ctx).colorScheme.primaryContainer,
+                  child: Icon(
+                    Icons.storefront,
+                    size: 48,
+                    color: Theme.of(ctx).colorScheme.onPrimaryContainer,
+                  ),
+                ),
               ),
               if (visited) Container(color: Colors.black.withOpacity(0.22)),
             ],

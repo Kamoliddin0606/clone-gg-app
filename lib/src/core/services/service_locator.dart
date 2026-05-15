@@ -26,6 +26,8 @@ import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/tracking
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/device_registration_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/rest_logging.dart';
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/order_balance_gate.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status_cache.dart';
 import 'package:gloria_marketing_flutter/src/core/services/local_uuid_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/login_device_payload_builder.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
@@ -50,7 +52,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/services/visit_step_
 import 'package:gloria_marketing_flutter/src/features/agent/services/photo_storage_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_draft_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_creation_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/customer_photo_change_notifier.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/customer_photo_service.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/customer_primary_photo_cache.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/bloc/customer_photo_cubit.dart';
 
 import 'package:gloria_marketing_flutter/src/features/knowledge/data/repositories/knowledge_repository.dart';
@@ -313,6 +317,30 @@ Future<void> setupServiceLocator() async {
     ));
   }
 
+  // OrderBalanceGate — visit "create order" step entry guard +
+  // pre-submit recheck for offline-collected orders. See
+  // docs/customer-balance-mobile.md M8/M9/M11.
+  if (!sl.isRegistered<OrderBalanceGate>()) {
+    sl.registerLazySingleton<OrderBalanceGate>(() => OrderBalanceGate(
+          balanceService: sl<ClientBalanceService>(),
+          connectivity: sl<ConnectivityMonitorService>(),
+          projectContext: sl<ProjectContext>(),
+        ));
+  }
+
+  // CustomerBalanceStatusCache — shared in-memory map of
+  // `inn → CustomerBalanceStatusEntry` consumed by trading-points list/grid,
+  // client detail sheet and visit-step "create order" tile to render the
+  // tint + indicator. See docs/customer-balance-mobile.md M12 (rebuilt).
+  if (!sl.isRegistered<CustomerBalanceStatusCache>()) {
+    sl.registerLazySingleton<CustomerBalanceStatusCache>(
+      () => CustomerBalanceStatusCache(
+        dbService: sl<ApiDatabaseService>(),
+        projectContext: sl<ProjectContext>(),
+      ),
+    );
+  }
+
   // Faktura.uz Services - Tashkilot ma'lumotlarini olish uchun
   // https://api.faktura.uz API'dan kompaniya ma'lumotlarini INN orqali oladi
   if (!sl.isRegistered<FakturaAuthService>()) {
@@ -411,6 +439,26 @@ Future<void> setupServiceLocator() async {
         customerId: customerId,
         service: CustomerPhotoService(repo: sl<CustomerPhotoRepository>()),
       ),
+    );
+  }
+
+  // Global pub/sub for "this customer's photos changed" events.
+  // Emitted by CustomerPhotoCubit after every successful mutation;
+  // subscribed by CustomerPrimaryThumbnail (trading-point grid /
+  // avatar) and CustomerPhotoPreview (detail-sheet carousel) so
+  // surfaces outside the gallery refresh immediately on edits.
+  if (!sl.isRegistered<CustomerPhotoChangeNotifier>()) {
+    sl.registerLazySingleton<CustomerPhotoChangeNotifier>(
+      () => CustomerPhotoChangeNotifier(),
+    );
+  }
+
+  // In-memory de-duped cache for `primary photo per customer`
+  // lookups. Backs CustomerPrimaryThumbnail in long grids/lists so
+  // 50–100 mounting tiles collapse to a single GET per customer.
+  if (!sl.isRegistered<CustomerPrimaryPhotoCache>()) {
+    sl.registerLazySingleton<CustomerPrimaryPhotoCache>(
+      () => CustomerPrimaryPhotoCache(repo: sl<CustomerPhotoRepository>()),
     );
   }
 

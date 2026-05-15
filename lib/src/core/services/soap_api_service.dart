@@ -1478,11 +1478,7 @@ class SoapApiService {
             (row) {
               final shippingDateStr = _getElementText(row, 'm:shippingDate');
               final shippingDate = _parseDate(shippingDateStr);
-              
-              if (kDebugMode) {
-                print('Order ${_getElementText(row, 'm:NumOrder')}: shippingDate raw = "$shippingDateStr", parsed = $shippingDate');
-              }
-              
+
               return Order(
                 numOrder: _getElementText(row, 'm:NumOrder') ?? '',
                 dateOrder: DateTime.parse(

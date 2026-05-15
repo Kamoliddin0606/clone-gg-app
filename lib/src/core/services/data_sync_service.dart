@@ -4,6 +4,7 @@ import 'package:workmanager/workmanager.dart';
 import 'package:dio/dio.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
@@ -34,6 +35,8 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_st
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_write_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/order_balance_gate.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/planned_route.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_organization.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
@@ -2357,7 +2360,59 @@ class DataSyncService {
       print('Foydalanuvchi loyihalari yuklandi: ${projects.length} ta loyiha');
     }
     await _dbService.saveUserProjects(userCode, projects);
+
+    // Customer-balance debt-limit gate (Passport §3): pull per-project debt
+    // limits from the backend right after the SOAP project list is saved so
+    // the offline gate has a fresh local copy. Failure here must NOT abort
+    // the project sync — the gate falls back to "no limit" if the field is
+    // null, which is the same semantic as Passport.
+    try {
+      await _syncProjectsConfig();
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: projects/config sync failed: $e');
+      }
+    }
     return projects;
+  }
+
+  /// Fetch per-project debt-limit configuration from the backend and update
+  /// the local `user_projects` rows. Endpoint contract:
+  /// see [docs/customer-balance-passport.md] §3.
+  Future<void> _syncProjectsConfig() async {
+    final restApi = sl<ApiService>();
+    final response = await restApi.get('/api/mobile/v2/projects/config/');
+    final entries = response.data;
+    if (entries is! List) {
+      if (kDebugMode) {
+        print('DataSyncService: projects/config returned non-list payload: ${entries.runtimeType}');
+      }
+      return;
+    }
+
+    for (final entry in entries) {
+      if (entry is! Map) continue;
+      final code = entry['code']?.toString();
+      if (code == null || code.isEmpty) continue;
+
+      final rawLimit = entry['debt_limit'];
+      final double? debtLimit = rawLimit == null
+          ? null
+          : (rawLimit is num
+              ? rawLimit.toDouble()
+              : double.tryParse(rawLimit.toString()));
+      final debtLimitCurrency = entry['debt_limit_currency']?.toString();
+
+      await _dbService.updateUserProjectDebtLimit(
+        code: code,
+        debtLimit: debtLimit,
+        debtLimitCurrency: debtLimitCurrency,
+      );
+    }
+
+    if (kDebugMode) {
+      print('DataSyncService: projects/config synced (${entries.length} entries)');
+    }
   }
 
   /// Получить кешированные проекты / Keshlangan loyihalarni olish
@@ -2469,6 +2524,39 @@ class DataSyncService {
             print('DataSyncService: Syncing create order ${order.id}');
           }
 
+          // Defense-in-depth: an offline-collected order was gated locally
+          // when it was created, but state may have changed (debt may have
+          // grown, the project's debt limit may have been tightened). Per
+          // Customer Balance Passport §5 we re-ask the backend with
+          // force_refresh=true and refuse to ship if it now reports
+          // blocked = true.
+          final tp = await _tradingPointForOrder(order);
+          if (tp != null) {
+            final gate = await sl<OrderBalanceGate>().check(tp, forceFresh: true);
+            if (gate.blocked) {
+              await _dbService.updateCreateOrderSyncStatus(
+                order.id!,
+                false,
+                syncError: 'debt_limit_exceeded',
+              );
+              syncResults.add({
+                'orderId': order.id,
+                'success': false,
+                'error': 'debt_limit_exceeded',
+                'balance': gate.balance,
+                'limit': gate.limit,
+              });
+              if (kDebugMode) {
+                print(
+                    'DataSyncService: Order ${order.id} blocked by gate (balance=${gate.balance}, limit=${gate.limit})');
+              }
+              continue;
+            }
+          } else if (kDebugMode) {
+            print(
+                'DataSyncService: skipping debt gate — no client row for ${order.codeClient}');
+          }
+
           // Send order to server
           final result = await _apiService.setOrder(order: order);
 
@@ -2559,6 +2647,60 @@ class DataSyncService {
 
   Future<KnowledgeDocument> fetchKnowledgeDocumentDetail(String id) =>
       _knowledgeSyncService.fetchDocumentDetail(id);
+
+  /// Build the minimum [TradingPoint] needed by [OrderBalanceGate] from a
+  /// stored [CreateOrder]. Returns `null` when the client row was deleted
+  /// between the time the order was drafted and the time the flush runs —
+  /// in that case the gate is skipped and the regular SOAP flow proceeds
+  /// (it would 404 server-side, surfacing the issue normally).
+  Future<TradingPoint?> _tradingPointForOrder(CreateOrder order) async {
+    try {
+      final db = await _dbService.database;
+      final rows = await db.query(
+        'clients',
+        columns: ['code', 'code_1c', 'inn', 'name'],
+        where: 'code = ?',
+        whereArgs: [order.codeClient],
+        limit: 1,
+      );
+      if (rows.isEmpty) return null;
+      final row = rows.first;
+      return TradingPoint(
+        id: row['code'] as String,
+        name: row['name'] as String? ?? '',
+        address: '',
+        phone: '',
+        ownerName: '',
+        contactPerson: '',
+        inn: row['inn'] as String? ?? '',
+        status: 'active',
+        lastVisitDate: '',
+        hasOrders: false,
+        hasContracts: false,
+        isVisited: false,
+        hasContract: false,
+        latitude: 0,
+        longitude: 0,
+        region: '',
+        district: '',
+        signboard: '',
+        referencePoint: '',
+        responsiblePerson: '',
+        responsiblePersonPhone: '',
+        tradePointType: '',
+        creditLimit: 0,
+        accumulatedCredit: 0,
+        codeRegion: '',
+        code: row['code'] as String,
+        code1c: row['code_1c'] as String? ?? '',
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('DataSyncService: _tradingPointForOrder failed: $e');
+      }
+      return null;
+    }
+  }
 }
 
 /// Conflict resolution strategies

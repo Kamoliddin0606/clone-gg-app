@@ -5667,4 +5667,53 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get notif_sound_sound => 'Tovush';
+
+  @override
+  String get debtBlockedTitle => 'Buyurtma berib bo\'lmaydi';
+
+  @override
+  String debtBlockedBodyOnline(String balance, String limit, String currency) =>
+      'Mijoz balansi $balance $currency loyiha qarz limitidan ($limit $currency) oshib ketgan.';
+
+  @override
+  String debtBlockedBodyOffline(String balance, String limit, String age) =>
+      'Internetsiz tekshirildi (oxirgi balans $age oldin): $balance / limit $limit.';
+
+  @override
+  String get debtBlockedNoCachedBalance =>
+      'Balans hech qachon yuklanmagan, internetga ulanib qayta urinib ko\'ring.';
+
+  @override
+  String get debtBlockedStaleWarning =>
+      'Saqlangan balans 24 soatdan eskirgan.';
+
+  @override
+  String get orderBlockedByDebtBadge => 'Qarz limiti oshib ketgan';
+
+  @override
+  String get retrySyncButton => 'Qayta yuborish';
+
+  @override
+  String get balanceStatusHeadlineOverLimit => 'Qarz limiti oshib ketgan';
+
+  @override
+  String get balanceStatusHeadlineUnderLimit => 'Mijozda qarz bor';
+
+  @override
+  String get balanceStatusHeadlineOk => 'Qarz yo\'q';
+
+  @override
+  String get balanceStatusHeadlineUnknown => 'Balans hali yuklanmagan';
+
+  @override
+  String get balanceStatusBalanceLabel => 'Balans';
+
+  @override
+  String get balanceStatusLimitLabel => 'Loyiha limiti';
+
+  @override
+  String get balanceStatusLimitNone => 'Limit belgilanmagan';
+
+  @override
+  String get balanceStatusLastUpdatedLabel => 'Yangilangan';
 }

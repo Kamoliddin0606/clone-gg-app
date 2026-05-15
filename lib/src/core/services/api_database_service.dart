@@ -57,7 +57,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 41, // v41: user_projects.id_uuid + id_1c added for customer_scope=project header (X-Project-Id) resolution
+      version: 42, // v42: customer balance debt-limit fields (debt_limit, currency, blocked, source...) on client_balances + user_projects
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -115,6 +115,8 @@ class ApiDatabaseService {
         user_code TEXT NOT NULL,
         id_uuid TEXT,
         id_1c TEXT,
+        debt_limit REAL,
+        debt_limit_currency TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         UNIQUE(code, user_code)
@@ -1800,6 +1802,59 @@ class ApiDatabaseService {
             'ApiDatabaseService: user_projects extended with id_uuid + id_1c (version 41)');
       }
     }
+
+    // =========================================================================
+    // Version 42: Customer balance proxy + debt-limit gate
+    // - client_balances: debt_limit, debt_limit_currency, currency, blocked,
+    //   block_reason, source, last_error
+    // - user_projects: debt_limit, debt_limit_currency
+    // See docs/customer-balance-passport.md §2.2 / §3.
+    // =========================================================================
+    if (oldVersion < 42) {
+      const balanceColumns = <String, String>{
+        'debt_limit': 'REAL',
+        'debt_limit_currency': 'TEXT',
+        'currency': 'TEXT',
+        'blocked': 'INTEGER',
+        'block_reason': 'TEXT',
+        'source': 'TEXT',
+        'last_error': 'TEXT',
+      };
+      for (final entry in balanceColumns.entries) {
+        try {
+          await db.execute(
+            'ALTER TABLE client_balances ADD COLUMN ${entry.key} ${entry.value}',
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            print(
+                'ApiDatabaseService: skip ADD ${entry.key} on client_balances (likely already present): $e');
+          }
+        }
+      }
+
+      const projectColumns = <String, String>{
+        'debt_limit': 'REAL',
+        'debt_limit_currency': 'TEXT',
+      };
+      for (final entry in projectColumns.entries) {
+        try {
+          await db.execute(
+            'ALTER TABLE user_projects ADD COLUMN ${entry.key} ${entry.value}',
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            print(
+                'ApiDatabaseService: skip ADD ${entry.key} on user_projects (likely already present): $e');
+          }
+        }
+      }
+
+      if (kDebugMode) {
+        print(
+            'ApiDatabaseService: customer balance debt-limit columns added (version 42)');
+      }
+    }
   }
 
   Future<void> _createTables(Database db) async {
@@ -2597,6 +2652,13 @@ class ApiDatabaseService {
         project_name TEXT,
         last_updated TEXT NOT NULL,
         server_data_updated_at TEXT,
+        debt_limit REAL,
+        debt_limit_currency TEXT,
+        currency TEXT,
+        blocked INTEGER,
+        block_reason TEXT,
+        source TEXT,
+        last_error TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         FOREIGN KEY (client_code) REFERENCES clients (code) ON DELETE CASCADE
@@ -9324,6 +9386,8 @@ class ApiDatabaseService {
           'user_code': userCode,
           'id_uuid': project.idUuid,
           'id_1c': project.id1c,
+          'debt_limit': project.debtLimit,
+          'debt_limit_currency': project.debtLimitCurrency,
           'created_at': now,
           'updated_at': now,
         }, conflictAlgorithm: ConflictAlgorithm.replace);
@@ -9408,6 +9472,31 @@ class ApiDatabaseService {
       {'name': project.name, 'updated_at': now},
       where: 'code = ? AND user_code = ?',
       whereArgs: [code, project.userCode],
+    );
+  }
+
+  /// Update only the debt limit fields of a project (matched by `code`).
+  /// Called after `/api/mobile/v2/projects/config/` returns per-project limits.
+  /// See Customer Balance Passport §3.
+  Future<void> updateUserProjectDebtLimit({
+    required String code,
+    required double? debtLimit,
+    required String? debtLimitCurrency,
+  }) async {
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.update(
+      'user_projects',
+      {
+        'debt_limit': debtLimit,
+        'debt_limit_currency': debtLimitCurrency,
+        'updated_at': now,
+      },
+      where: 'code = ?',
+      whereArgs: [code],
     );
   }
 

@@ -17,8 +17,8 @@ import 'package:intl/intl.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_balance.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
-import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/client_balance_details_page.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 
@@ -43,9 +43,6 @@ class ClientBalanceWidget extends StatefulWidget {
 class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
   /// Client balance service instance
   ClientBalanceService? _balanceService;
-  
-  /// Server service - loyiha nomini olish uchun
-  ServerService? _serverService;
 
   /// Joriy balans ma'lumotlari
   ClientBalance? _balance;
@@ -80,10 +77,7 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
       if (sl.isRegistered<ClientBalanceService>()) {
         _balanceService = sl<ClientBalanceService>();
       }
-      if (sl.isRegistered<ServerService>()) {
-        _serverService = sl<ServerService>();
-      }
-      
+
       // Dastlabki balansni yuklash
       await _loadBalance();
     } catch (e) {
@@ -136,11 +130,23 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
 
       // API'dan yangilash (agar cooldown tugagan bo'lsa)
       if (_balanceService!.canRefresh(inn)) {
-        final projectName = _getProjectName();
+        final projectCode = _resolveProjectCode();
+        if (projectCode == null) {
+          // No active project — fall back to whatever the DB has cached.
+          final dbBalance = await _balanceService!.getClientBalanceFromDb(inn);
+          if (mounted) {
+            setState(() {
+              _balance = dbBalance;
+              _isLoading = false;
+            });
+          }
+          return;
+        }
+
         final newBalance = await _balanceService!.fetchClientBalance(
+          code1c: widget.tradingPoint.code1c,
+          projectCode: projectCode,
           inn: inn,
-          clientCode: widget.tradingPoint.id, // Mijoz kodi - clients table bilan bog'lanish
-          projectName: projectName,
         );
 
         if (mounted && newBalance != null) {
@@ -176,10 +182,13 @@ class _ClientBalanceWidgetState extends State<ClientBalanceWidget> {
     }
   }
 
-  /// Loyiha nomini olish
-  String _getProjectName() {
-    final serverName = _serverService?.getCurrentServerName();
-    return _balanceService?.getProjectNameForServer(serverName) ?? 'Evyap_-';
+  /// Active project code from [ProjectContext]. The new REST balance proxy
+  /// (`/api/mobile/v2/customers/balance/`, Passport §2) needs `project_code`
+  /// = `UserProject.code`. Returns `null` when no project is active so the
+  /// caller can degrade gracefully without firing a request that would 400.
+  String? _resolveProjectCode() {
+    if (!sl.isRegistered<ProjectContext>()) return null;
+    return sl<ProjectContext>().activeProject?.code;
   }
 
   /// Countdown timerni boshlash

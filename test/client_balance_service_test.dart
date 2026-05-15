@@ -558,6 +558,85 @@ void main() {
       expect(balance.totalPaymentAmount, 0.0);
     });
 
+    test('Passport §2.1 fixture parses with new optional fields', () {
+      // Verbatim sample from docs/customer-balance-passport.md §2.1.
+      // Catches regressions in field naming or type coercion when the
+      // backend ships the customer-balance proxy.
+      final json = <String, dynamic>{
+        'inn': '308976156',
+        'client_code': 'C-00012345',
+        'project_name': 'EVYAP',
+        // Decimal-as-string per Passport §2.2; ClientBalance.fromJson must
+        // accept either num or string.
+        'balance': '-2250',
+        'currency': 'UZS',
+        'debt_limit': '5000000.00',
+        'debt_limit_currency': 'UZS',
+        'server_data_updated_at': '2026-05-14T00:00:00',
+        'last_updated': '2026-05-14T07:12:31+05:00',
+        'blocked': false,
+        'block_reason': null,
+        'source': 'fresh',
+        'last_error': null,
+        'contract_balances': [
+          {
+            'project_name': 'Проект  ТМ "AVON"',
+            'region': 'Ташкент',
+            'tax_id': '308976156',
+            'customer_name':
+                '"FAMILY-HONEST-TRADE" Масъулияти чекланган жамият',
+            'contract_code':
+                'Договор № 6060001/24 от 15 февраля 2024 г.',
+            'payment_amount': 5356620,
+            'debt_amount': -2250,
+            'contract_id': '7034593',
+          }
+        ],
+        'order_balances': <Map<String, dynamic>>[],
+      };
+
+      final balance = ClientBalance.fromJson(json);
+
+      expect(balance.inn, '308976156');
+      expect(balance.clientCode, 'C-00012345');
+      expect(balance.balance, -2250);
+      expect(balance.currency, 'UZS');
+      expect(balance.debtLimit, 5000000.0);
+      expect(balance.debtLimitCurrency, 'UZS');
+      expect(balance.blocked, false);
+      expect(balance.blockReason, isNull);
+      expect(balance.source, 'fresh');
+      expect(balance.lastError, isNull);
+      expect(balance.contractBalances, hasLength(1));
+      expect(balance.contractBalances.first.contractId, '7034593');
+      expect(balance.serverDataUpdatedAt, isNotNull);
+    });
+
+    test('blocked=true with debt_limit_exceeded reason round-trips', () {
+      final balance = ClientBalance.fromJson(<String, dynamic>{
+        'inn': '111',
+        'balance': '6000000',
+        'debt_limit': '5000000',
+        'debt_limit_currency': 'UZS',
+        'currency': 'UZS',
+        'blocked': true,
+        'block_reason': 'debt_limit_exceeded',
+        'source': 'cache',
+        'last_updated': '2026-05-14T07:12:31+05:00',
+        'project_name': 'EVYAP',
+        'contract_balances': <Map<String, dynamic>>[],
+        'order_balances': <Map<String, dynamic>>[],
+      });
+
+      expect(balance.blocked, true);
+      expect(balance.blockReason, 'debt_limit_exceeded');
+      expect(balance.source, 'cache');
+      // copyWith preserves the new fields.
+      final clone = balance.copyWith();
+      expect(clone.blocked, true);
+      expect(clone.debtLimit, 5000000.0);
+    });
+
     test('ClientBalanceState transitions should be consistent', () {
       // Initial -> Loading -> Success
       var state = ClientBalanceState.initial();

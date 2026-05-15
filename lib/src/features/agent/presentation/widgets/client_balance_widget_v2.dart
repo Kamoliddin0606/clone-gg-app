@@ -18,7 +18,6 @@ import 'package:intl/intl.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
-import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/bloc/client_balance_cubit.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/bloc/client_balance_state.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/client_balance_details_page.dart';
@@ -48,8 +47,8 @@ class ClientBalanceWidgetV2 extends StatelessWidget {
     return BlocProvider(
       create: (context) => ClientBalanceCubit(
         balanceService: sl<ClientBalanceService>(),
-        serverService: sl.isRegistered<ServerService>() ? sl<ServerService>() : null,
         inn: tradingPoint.inn,
+        code1c: tradingPoint.code1c,
         clientCode: tradingPoint.id,
       ),
       child: _ClientBalanceContent(tradingPoint: tradingPoint),

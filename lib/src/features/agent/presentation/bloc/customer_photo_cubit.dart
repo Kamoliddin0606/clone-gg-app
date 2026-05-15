@@ -5,7 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/services/images/unified_image.dart';
+import '../../../../core/services/service_locator.dart';
 import '../../data/repositories/customer_photo_repository.dart';
+import '../../services/customer_photo_change_notifier.dart';
 import '../../services/customer_photo_service.dart';
 import 'customer_photo_state.dart';
 
@@ -66,6 +68,7 @@ class CustomerPhotoCubit extends Cubit<CustomerPhotoState> {
         order: state.photos.length,
       );
       await load();
+      _notifyChanged();
     } catch (e) {
       _emitError(e, keepPhotos: true);
     }
@@ -80,6 +83,7 @@ class CustomerPhotoCubit extends Cubit<CustomerPhotoState> {
     try {
       await _service.addMany(customerId: customerId, images: images);
       await load();
+      _notifyChanged();
     } catch (e) {
       _emitError(e, keepPhotos: true);
     }
@@ -108,6 +112,7 @@ class CustomerPhotoCubit extends Cubit<CustomerPhotoState> {
         isPrimary: isPrimary,
       );
       await load();
+      _notifyChanged();
     } catch (e) {
       _emitError(e, keepPhotos: true);
     }
@@ -115,6 +120,27 @@ class CustomerPhotoCubit extends Cubit<CustomerPhotoState> {
 
   Future<void> setPrimary(String photoId) =>
       patch(photoId, isPrimary: true);
+
+  /// Optimistic variant of [setPrimary] — flips the local `isPrimary`
+  /// flags before the PATCH round-trip completes, then enqueues the
+  /// real PATCH which (on success) reloads the list and reconciles
+  /// any drift with the server's truth.
+  Future<void> setPrimaryOptimistic(String photoId) {
+    final updated = state.photos.map((p) {
+      if (p.id == photoId) {
+        return p.isPrimary ? p : p.copyWith(isPrimary: true);
+      }
+      return p.isPrimary ? p.copyWith(isPrimary: false) : p;
+    }).toList()
+      ..sort((a, b) {
+        final pa = a.isPrimary ? 0 : 1;
+        final pb = b.isPrimary ? 0 : 1;
+        if (pa != pb) return pa - pb;
+        return a.order.compareTo(b.order);
+      });
+    emit(state.copyWith(photos: updated));
+    return setPrimary(photoId);
+  }
 
   Future<void> replace(String photoId, File image) =>
       _enqueue(() => _replace(photoId, image));
@@ -128,6 +154,7 @@ class CustomerPhotoCubit extends Cubit<CustomerPhotoState> {
         image: image,
       );
       await load();
+      _notifyChanged();
     } catch (e) {
       _emitError(e, keepPhotos: true);
     }
@@ -140,6 +167,7 @@ class CustomerPhotoCubit extends Cubit<CustomerPhotoState> {
     try {
       await _service.delete(customerId: customerId, photoId: photoId);
       await load();
+      _notifyChanged();
     } catch (e) {
       _emitError(e, keepPhotos: true);
     }
@@ -152,8 +180,15 @@ class CustomerPhotoCubit extends Cubit<CustomerPhotoState> {
     try {
       await _service.reprocess(customerId: customerId, photoId: photoId);
       await load();
+      _notifyChanged();
     } catch (e) {
       _emitError(e, keepPhotos: true);
+    }
+  }
+
+  void _notifyChanged() {
+    if (sl.isRegistered<CustomerPhotoChangeNotifier>()) {
+      sl<CustomerPhotoChangeNotifier>().notifyChanged(customerId);
     }
   }
 

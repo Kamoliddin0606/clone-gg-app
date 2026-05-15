@@ -172,25 +172,23 @@ class AppStartGuard {
 
   /// Print every SharedPreferences key + value (masked for sensitive
   /// fields) so on-device debugging can confirm what is persisted.
+  /// Debug-only: skipped in release to avoid blocking the main isolate
+  /// at cold-start (the dump iterates ~90+ keys synchronously).
   void _dumpPrefsForDiagnostics() {
+    if (!kDebugMode) return;
     try {
       final raw = _prefs.preferences;
       final keys = raw.getKeys().toList()..sort();
-      // ignore: avoid_print
-      print('═══════════════════════════════════════════════════════════════');
-      // ignore: avoid_print
-      print('[Prefs] dump (${keys.length} keys)');
+      debugPrint('═══════════════════════════════════════════════════════════════');
+      debugPrint('[Prefs] dump (${keys.length} keys)');
       for (final k in keys) {
         final v = raw.get(k);
         final shown = _maskIfSensitive(k, v);
-        // ignore: avoid_print
-        print('  $k = $shown');
+        debugPrint('  $k = $shown');
       }
-      // ignore: avoid_print
-      print('═══════════════════════════════════════════════════════════════');
+      debugPrint('═══════════════════════════════════════════════════════════════');
     } catch (e) {
-      // ignore: avoid_print
-      print('[Prefs] dump error: $e');
+      debugPrint('[Prefs] dump error: $e');
     }
   }
 

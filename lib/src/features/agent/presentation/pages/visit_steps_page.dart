@@ -13,6 +13,12 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_da
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_finish_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/post_order_sync_manager.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/order_balance_gate.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status_cache.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/debt_blocked_dialog.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/balance_status_indicator.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/balance_status_theme.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/post_order_sync_notification.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/photo_facing_before_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/step_pages/shelf_audit_page.dart';
@@ -3256,17 +3262,59 @@ class _VisitStepCardState extends State<_VisitStepCard> {
       }
     }
 
-    return InkWell(
-      onTap: () => _navigateToStepDetail(context, step),
-      child: Card(
+    // Customer-balance gate (M12 rebuilt). The "create order" step is the
+    // only one that can be blocked by debt; for every other step we keep
+    // the standard appearance. When over-limit we tint the card red,
+    // override the status icon with a block glyph and route taps to the
+    // dialog instead of the order page. Read-only steps (already
+    // completed) still allow viewing the saved order.
+    final isCreateOrderStep =
+        step.stepName.toLowerCase() == 'создать заказ';
+    final isReadOnlyView = status == VisitStepStatus.completed;
+    final balanceCache = sl.isRegistered<CustomerBalanceStatusCache>()
+        ? sl<CustomerBalanceStatusCache>()
+        : null;
+
+    return ListenableBuilder(
+      listenable: balanceCache ?? ValueNotifier<int>(0),
+      builder: (context, _) {
+        final tpInn = widget.tradingPoint.tradingPoint.inn;
+        final balanceStatus = balanceCache?.statusFor(tpInn) ??
+            CustomerBalanceStatus.unknown;
+        final isBlockedByDebt = isCreateOrderStep &&
+            !isReadOnlyView &&
+            balanceStatus == CustomerBalanceStatus.debtOverLimit;
+
+        Color effectiveCardColor = cardColor;
+        Color effectiveBorderColor = borderColor;
+        IconData effectiveStatusIcon = statusIcon;
+
+        if (isBlockedByDebt) {
+          final tint = BalanceStatusTheme.cardTintFor(
+            balanceStatus,
+            theme.colorScheme,
+          );
+          if (tint != null) {
+            effectiveCardColor =
+                Color.alphaBlend(tint, theme.colorScheme.surface);
+          }
+          effectiveBorderColor = theme.colorScheme.error;
+          effectiveStatusIcon = Icons.block;
+        }
+
+        return InkWell(
+          onTap: isBlockedByDebt
+              ? () => _showDebtBlockedFromTile(context, balanceCache, tpInn)
+              : () => _navigateToStepDetail(context, step),
+          child: Card(
         elevation: widget.isCurrentStep ? 4 : 1,
         margin: const EdgeInsets.only(bottom: 12),
-        color: cardColor,
+        color: effectiveCardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: borderColor,
-            width: widget.isCurrentStep ? 2 : 1,
+            color: effectiveBorderColor,
+            width: widget.isCurrentStep || isBlockedByDebt ? 2 : 1,
           ),
         ),
         child: Padding(
@@ -3277,18 +3325,33 @@ class _VisitStepCardState extends State<_VisitStepCard> {
               // Step Header
               Row(
                 children: [
-                  Icon(statusIcon, color: borderColor, size: 24),
+                  Icon(effectiveStatusIcon, color: effectiveBorderColor, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          step.stepName,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurface,
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                step.stepName,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                            // Pulsing balance status indicator only on the
+                            // "create order" step — for every other step the
+                            // customer's debt is irrelevant.
+                            if (isCreateOrderStep)
+                              BalanceStatusIndicator(
+                                inn: tpInn,
+                                customerName:
+                                    widget.tradingPoint.tradingPoint.name,
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 2),
                         Row(
@@ -3506,6 +3569,43 @@ class _VisitStepCardState extends State<_VisitStepCard> {
         ),
       ),
     );
+        },
+      );
+  }
+
+  /// Render the [DebtBlockedDialog] from the visit-step tile when the user
+  /// taps a debt-blocked "create order" step. The cache entry is fed into a
+  /// synthetic [BalanceGateResult] so the dialog gets the same shape it
+  /// would receive from a live [OrderBalanceGate.check] — keeping a single
+  /// UI surface for the "blocked" message.
+  Future<void> _showDebtBlockedFromTile(
+    BuildContext context,
+    CustomerBalanceStatusCache? cache,
+    String inn,
+  ) async {
+    final entry = cache?.entryFor(inn);
+    if (entry == null) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => DebtBlockedDialog(
+        gateResult: BalanceGateResult(
+          blocked: true,
+          balance: entry.balance,
+          limit: entry.limit,
+          currency: entry.currency,
+          fetchedAt: entry.lastUpdated,
+          externalUpdatedAt: null,
+          isStale: entry.lastUpdated == null
+              ? false
+              : DateTime.now().difference(entry.lastUpdated!) >
+                  const Duration(hours: 24),
+          isOffline: false,
+          source: 'cache',
+          reason: 'debt_limit_exceeded',
+        ),
+        customerName: widget.tradingPoint.tradingPoint.name,
+      ),
+    );
   }
 
   void _showSkipDialog(BuildContext context) {
@@ -3641,6 +3741,26 @@ class _VisitStepCardState extends State<_VisitStepCard> {
         );
         break;
       case 'создать заказ':
+        // Customer Balance Gate (Mobile prompt M9). For an editable visit
+        // step we must consult the gate first; if the customer is blocked
+        // by the project debt-limit we show a dialog and do not push
+        // CreateOrderPage. Read-only navigations (already-completed steps)
+        // skip the check — viewing a saved order should not be blocked.
+        if (!readOnly) {
+          final tp = widget.tradingPoint.tradingPoint;
+          final gate = await sl<OrderBalanceGate>().check(tp);
+          if (!mounted) return;
+          if (gate.blocked) {
+            await showDialog<void>(
+              context: context,
+              builder: (_) => DebtBlockedDialog(
+                gateResult: gate,
+                customerName: tp.name,
+              ),
+            );
+            return;
+          }
+        }
         page = CreateOrderPage(
           tradingPoint: widget.tradingPoint,
           visitId: widget.visitId,

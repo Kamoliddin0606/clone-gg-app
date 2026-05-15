@@ -9,7 +9,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
-import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 
 import 'client_balance_state.dart';
 
@@ -24,29 +25,29 @@ import 'client_balance_state.dart';
 class ClientBalanceCubit extends Cubit<ClientBalanceState> {
   /// Client balance service - API va DB operatsiyalari
   final ClientBalanceService _balanceService;
-  
-  /// Server service - loyiha nomini olish uchun
-  final ServerService? _serverService;
-  
-  /// Joriy mijoz INN raqami
+
+  /// Joriy mijoz INN raqami (cooldown va kesh kaliti uchun)
   final String inn;
-  
+
   /// Joriy mijoz kodi (clients table bilan bog'lanish)
   final String? clientCode;
-  
+
+  /// 1C customer code — backend balance proxy uchun (`code_1c`).
+  /// `TradingPoint.code1c` qiymati. Bo'sh bo'lsa REST so'rov yuborilmaydi.
+  final String code1c;
+
   /// Countdown timer
   Timer? _countdownTimer;
-  
+
   /// Auto-refresh timer (ixtiyoriy)
   Timer? _autoRefreshTimer;
 
   ClientBalanceCubit({
     required ClientBalanceService balanceService,
-    ServerService? serverService,
     required this.inn,
+    required this.code1c,
     this.clientCode,
   })  : _balanceService = balanceService,
-        _serverService = serverService,
         super(ClientBalanceState.initial()) {
     // Dastlabki yuklanish
     _initialize();
@@ -111,16 +112,30 @@ class ClientBalanceCubit extends Cubit<ClientBalanceState> {
     }
 
     try {
-      final projectName = _getProjectName();
-      
+      final projectCode = _resolveProjectCode();
+      if (projectCode == null) {
+        emit(state.toError(
+          'Faol loyiha tanlanmagan',
+          type: ClientBalanceErrorType.notFound,
+        ));
+        return;
+      }
+      if (code1c.isEmpty) {
+        emit(state.toError(
+          'Mijoz 1C kodi mavjud emas',
+          type: ClientBalanceErrorType.notFound,
+        ));
+        return;
+      }
+
       if (kDebugMode) {
-        print('ClientBalanceCubit: Fetching balance for INN $inn, Project: $projectName');
+        print('ClientBalanceCubit: Fetching balance for code_1c=$code1c project_code=$projectCode');
       }
 
       final balance = await _balanceService.fetchClientBalance(
+        code1c: code1c,
+        projectCode: projectCode,
         inn: inn,
-        clientCode: clientCode,
-        projectName: projectName,
         forceRefresh: forceRefresh,
       );
 
@@ -200,12 +215,12 @@ class ClientBalanceCubit extends Cubit<ClientBalanceState> {
     emit(ClientBalanceState.initial());
   }
 
-  /// ============================================================================
-  /// Loyiha nomini olish
-  /// ============================================================================
-  String _getProjectName() {
-    final serverName = _serverService?.getCurrentServerName();
-    return _balanceService.getProjectNameForServer(serverName);
+  /// Active project code from [ProjectContext]. The REST balance proxy
+  /// (Passport §2) requires `project_code` = `UserProject.code` — without an
+  /// active project we cannot fetch.
+  String? _resolveProjectCode() {
+    if (!sl.isRegistered<ProjectContext>()) return null;
+    return sl<ProjectContext>().activeProject?.code;
   }
 
   /// ============================================================================

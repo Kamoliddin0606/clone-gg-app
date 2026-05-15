@@ -5667,4 +5667,53 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notif_sound_sound => 'Звук';
+
+  @override
+  String get debtBlockedTitle => 'Невозможно создать заказ';
+
+  @override
+  String debtBlockedBodyOnline(String balance, String limit, String currency) =>
+      'Баланс клиента $balance $currency превышает лимит долга проекта ($limit $currency).';
+
+  @override
+  String debtBlockedBodyOffline(String balance, String limit, String age) =>
+      'Проверено офлайн (последний баланс $age назад): $balance / лимит $limit.';
+
+  @override
+  String get debtBlockedNoCachedBalance =>
+      'Баланс ещё не загружен. Подключитесь к интернету и повторите попытку.';
+
+  @override
+  String get debtBlockedStaleWarning =>
+      'Сохранённый баланс старше 24 часов.';
+
+  @override
+  String get orderBlockedByDebtBadge => 'Превышен лимит долга';
+
+  @override
+  String get retrySyncButton => 'Повторить';
+
+  @override
+  String get balanceStatusHeadlineOverLimit => 'Превышен лимит долга';
+
+  @override
+  String get balanceStatusHeadlineUnderLimit => 'У клиента есть долг';
+
+  @override
+  String get balanceStatusHeadlineOk => 'Долг отсутствует';
+
+  @override
+  String get balanceStatusHeadlineUnknown => 'Баланс ещё не загружен';
+
+  @override
+  String get balanceStatusBalanceLabel => 'Баланс';
+
+  @override
+  String get balanceStatusLimitLabel => 'Лимит проекта';
+
+  @override
+  String get balanceStatusLimitNone => 'Лимит не задан';
+
+  @override
+  String get balanceStatusLastUpdatedLabel => 'Обновлено';
 }

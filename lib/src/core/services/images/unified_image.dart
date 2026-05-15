@@ -113,6 +113,43 @@ class UnifiedImage extends Equatable {
   /// True when the BlurHash placeholder string is present.
   bool get hasBlurhash => blurhash.isNotEmpty;
 
+  /// Returns a copy of this image with the given fields replaced.
+  /// Used by [CustomerPhotoCubit.setPrimaryOptimistic] to flip
+  /// `isPrimary` locally before the PATCH round-trip completes.
+  UnifiedImage copyWith({
+    String? id,
+    String? targetType,
+    String? targetId,
+    String? targetOrganizationId,
+    String? targetCode1c,
+    String? smallUrl,
+    String? mediumUrl,
+    String? largeUrl,
+    String? blurhash,
+    int? width,
+    int? height,
+    bool? isPrimary,
+    String? alt,
+    int? order,
+  }) {
+    return UnifiedImage(
+      id: id ?? this.id,
+      targetType: targetType ?? this.targetType,
+      targetId: targetId ?? this.targetId,
+      targetOrganizationId: targetOrganizationId ?? this.targetOrganizationId,
+      targetCode1c: targetCode1c ?? this.targetCode1c,
+      smallUrl: smallUrl ?? this.smallUrl,
+      mediumUrl: mediumUrl ?? this.mediumUrl,
+      largeUrl: largeUrl ?? this.largeUrl,
+      blurhash: blurhash ?? this.blurhash,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      isPrimary: isPrimary ?? this.isPrimary,
+      alt: alt ?? this.alt,
+      order: order ?? this.order,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

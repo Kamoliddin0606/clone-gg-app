@@ -79,112 +79,15 @@ void main() async {
     }
   }
 
-  // Initialize Database
+  // Initialize Database — required by AppStartGuard's downstream callers
+  // and by the very first route, so this stays eager.
   await sl<DatabaseHelper>().database;
-
-  // Hydrate the notification cache from sqflite so the bell badge
-  // shows the correct count before the first sync. Best-effort.
-  try {
-    await sl<NotificationRepository>().bootstrap();
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Notification cache bootstrap skipped: $e');
-    }
-  }
-
-  // Load notification preferences (per-type on/off, DND, sound levels)
-  // BEFORE the push handler initialises Android channels — the channel
-  // shape is derived from the preference snapshot.
-  try {
-    await sl<NotificationPreferencesService>().bootstrap();
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Notification preferences bootstrap skipped: $e');
-    }
-  }
-
-  // Wire FCM listeners (foreground / background / terminated tap).
-  // Token registration is gated on login (see AuthBloc); permission
-  // prompts fire only on first interaction with the bell (§2.4).
-  try {
-    final pushHandler = sl<PushHandlerService>();
-    pushHandler.onTap = NotificationTapRouter.handleRemoteMessage;
-    await pushHandler.init();
-    // Warm-start re-register: if the user is already signed in (cold
-    // start of an already-authenticated install), make sure the FCM
-    // token on the backend stays fresh. Runs in release builds too —
-    // without it, a token rotation that happens while the app is
-    // closed never reaches the server. Best-effort; failure is
-    // logged inside FcmTokenService.
-    final tokenService = sl<TokenService>();
-    if (tokenService.hasValidV2Token()) {
-      unawaited(sl<FcmTokenService>().registerOnLogin());
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Push handler setup skipped: $e');
-    }
-  }
-
-  // Initialize Gemini API key
-  // In production, this should be fetched from server
-  try {
-    final apiKeyService = sl<ApiKeyService>();
-    
-    // Check if Gemini API key exists, if not - set default
-    final hasGeminiKey = await apiKeyService.hasApiKey(ApiKeyService.geminiApiKey);
-    
-    if (!hasGeminiKey) {
-      // Use default key for development
-      // TODO: Replace with server-provided key in production
-      const defaultGeminiKey = 'AIzaSyDeIApWRmFwNOr5pQVvs_xwba0woIS3xYE';
-      await apiKeyService.storeApiKey(ApiKeyService.geminiApiKey, defaultGeminiKey);
-      
-      if (kDebugMode) {
-        debugPrint('[Main] Gemini API key initialized with default');
-      }
-    } else {
-      if (kDebugMode) {
-        debugPrint('[Main] Gemini API key already configured');
-      }
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Error initializing Gemini API key: $e');
-    }
-  }
-
-  // Initialize connectivity monitor (still needed by AppStartGuard and UI).
-  try {
-    final connectivityMonitor = sl<ConnectivityMonitorService>();
-    await connectivityMonitor.initialize();
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Error initializing connectivity monitor: $e');
-    }
-  }
-
-  // Debug-only: log the resolved V2 backend URL and fire a single liveness
-  // probe so engineers see misconfigured `--dart-define` values immediately.
-  // Release builds skip both — no extra request, no log noise.
-  if (kDebugMode) {
-    debugPrint('[CONFIG] V2_BASE_URL=${TokenService.v2BaseUrl}');
-    // Fire-and-forget; we don't want to block the boot sequence on it.
-    // ignore: unawaited_futures
-    sl<HealthCheckService>().pingV2().then((result) {
-      if (result.ok) {
-        debugPrint(
-          '[HEALTH] V2 backend reachable in ${result.latency?.inMilliseconds}ms',
-        );
-      } else {
-        debugPrint('[HEALTH] V2 backend UNREACHABLE: ${result.errorMessage}');
-      }
-    });
-  }
 
   // Determine the initial route via the new AppStartGuard. The legacy
   // AppAccessControl/TimeVerification flow has been replaced — see
   // `app_start_guard.dart` for the decision tree.
+  // Note: AppStartGuard._isOnline() calls Connectivity().checkConnectivity()
+  // directly, so it does not depend on ConnectivityMonitorService.initialize().
   String initialRouteName = AppRouter.loginRoute;
   try {
     final guard = sl<AppStartGuard>();
@@ -203,40 +106,137 @@ void main() async {
     }
   }
 
-  // Initialize Permission Manager (lazy singleton, no need for isReady)
-  // PermissionManager is ready when accessed
+  // Render the first frame ASAP. Everything that does not influence the
+  // initial route (notification cache, FCM wiring, MapKit, background
+  // location, WorkManager re-register, debug health-check) is deferred
+  // to a fire-and-forget bootstrap that runs after runApp().
+  runApp(App(initialRoute: initialRouteName));
 
-  // Initialize critical permissions on app start
+  unawaited(_runDeferredBootstrap());
+}
+
+/// Non-critical startup work moved off the cold-start critical path.
+/// Each block keeps its own try/catch so a failure in one stage does
+/// not block the others. Order is preserved from the original `main()`
+/// so any implicit dependencies (e.g. PushHandler reading notification
+/// preferences) still see the same sequencing.
+Future<void> _runDeferredBootstrap() async {
+  // Hydrate the notification cache from sqflite so the bell badge
+  // shows the correct count. Best-effort.
+  try {
+    await sl<NotificationRepository>().bootstrap();
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Notification cache bootstrap skipped: $e');
+    }
+  }
+
+  // Load notification preferences BEFORE the push handler initialises
+  // Android channels — the channel shape is derived from the preference
+  // snapshot.
+  try {
+    await sl<NotificationPreferencesService>().bootstrap();
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Notification preferences bootstrap skipped: $e');
+    }
+  }
+
+  // Wire FCM listeners (foreground / background / terminated tap).
+  try {
+    final pushHandler = sl<PushHandlerService>();
+    pushHandler.onTap = NotificationTapRouter.handleRemoteMessage;
+    await pushHandler.init();
+    final tokenService = sl<TokenService>();
+    if (tokenService.hasValidV2Token()) {
+      unawaited(sl<FcmTokenService>().registerOnLogin());
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Push handler setup skipped: $e');
+    }
+  }
+
+  // Initialize Gemini API key (default for development).
+  try {
+    final apiKeyService = sl<ApiKeyService>();
+    final hasGeminiKey = await apiKeyService.hasApiKey(ApiKeyService.geminiApiKey);
+    if (!hasGeminiKey) {
+      // TODO: Replace with server-provided key in production
+      const defaultGeminiKey = 'AIzaSyDeIApWRmFwNOr5pQVvs_xwba0woIS3xYE';
+      await apiKeyService.storeApiKey(ApiKeyService.geminiApiKey, defaultGeminiKey);
+      if (kDebugMode) {
+        debugPrint('[Main] Gemini API key initialized with default');
+      }
+    } else {
+      if (kDebugMode) {
+        debugPrint('[Main] Gemini API key already configured');
+      }
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Error initializing Gemini API key: $e');
+    }
+  }
+
+  // Initialize connectivity monitor for UI listeners (AppStartGuard
+  // already used hasConnection() directly; this powers the live stream).
+  try {
+    final connectivityMonitor = sl<ConnectivityMonitorService>();
+    await connectivityMonitor.initialize();
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Error initializing connectivity monitor: $e');
+    }
+  }
+
+  // Debug-only: log resolved V2 URL and fire a single liveness probe.
+  if (kDebugMode) {
+    debugPrint('[CONFIG] V2_BASE_URL=${TokenService.v2BaseUrl}');
+    sl<HealthCheckService>().pingV2().then((result) {
+      if (result.ok) {
+        debugPrint(
+          '[HEALTH] V2 backend reachable in ${result.latency?.inMilliseconds}ms',
+        );
+      } else {
+        debugPrint('[HEALTH] V2 backend UNREACHABLE: ${result.errorMessage}');
+      }
+    });
+  }
+
+  // Check (don't request) location permission status on app start.
   try {
     final permissionManager = sl<PermissionManager>();
-    // Check location permission status on app start (doesn't request, just checks)
     await permissionManager.checkLocationPermission();
-
-    // Also check location services status
     final serviceEnabled = await permissionManager.isLocationServiceEnabled();
     if (!serviceEnabled && kDebugMode) {
       debugPrint('Location services are disabled on app start');
     }
-  } catch (e) {
-    // Permission check failed, continue without it
-    // App will handle permissions when needed
+  } catch (_) {
+    // App will handle permissions on demand.
   }
-  final apiKey = await _ApiKeyProvider().resolveApiKey();
-  if (kDebugMode) {
-    debugPrint('Your API key: $apiKey');
-  }
-  await ymk_init.initMapkit(apiKey: apiKey);
 
-  // =========================================================================
-  // Background Location Tracking Service - fonda joylashuvni kuzatish
-  // =========================================================================
-  // Bu service ilova aktiv bo'lmasa ham ishlaydi va serverga location yuboradi.
-  // LocationUpdateInterval serverdan olingan vaqt oralig'ida ishlaydi.
+  // Resolve Yandex MapKit API key and initialize MapKit. The login and
+  // main-agent landing screens do not embed maps, so this can run after
+  // the first frame without affecting initial UI.
+  try {
+    final apiKey = await _ApiKeyProvider().resolveApiKey();
+    if (kDebugMode) {
+      debugPrint('Your API key: $apiKey');
+    }
+    await ymk_init.initMapkit(apiKey: apiKey);
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] MapKit init error: $e');
+    }
+  }
+
+  // Background location tracking — startTracking() is idempotent
+  // (returns early if _isTrackingActive), so the AppLifecycleState
+  // resume callback in _AppState cannot create a duplicate timer.
   try {
     final backgroundLocationService = sl<BackgroundLocationTrackingService>();
     await backgroundLocationService.initialize();
-    
-    // Agar user tizimga kirgan bo'lsa, tracking'ni boshlash
     final prefs = sl<SharedPreferencesService>();
     final userCode = prefs.getUserCode();
     if (userCode != null && userCode.isNotEmpty) {
@@ -245,24 +245,18 @@ void main() async {
         debugPrint('BackgroundLocationTracking: Started for user $userCode');
         debugPrint('BackgroundLocationTracking: Interval: ${backgroundLocationService.currentIntervalSeconds}s');
       }
-    } else {
-      if (kDebugMode) {
-        debugPrint('BackgroundLocationTracking: User not logged in, tracking not started');
-      }
+    } else if (kDebugMode) {
+      debugPrint('BackgroundLocationTracking: User not logged in, tracking not started');
     }
   } catch (e, stackTrace) {
     if (kDebugMode) {
       debugPrint('BackgroundLocationTracking: Initialization error: $e');
       debugPrint('BackgroundLocationTracking: Stack trace: $stackTrace');
     }
-    // Xato bo'lsa ham ilova ishlashni davom ettiradi
   }
 
-  // =========================================================================
-  // Background Data Sync - avto sinxronizatsiya
-  // =========================================================================
-  // Agar foydalanuvchi avval background sync'ni yoqgan bo'lsa,
-  // ilova qayta ishga tushganda WorkManager task'ni qayta ro'yxatga olish
+  // Background data sync — re-register WorkManager task if the user
+  // previously enabled it.
   try {
     final prefs = sl<SharedPreferencesService>();
     if (prefs.isBgSyncEnabled()) {
@@ -279,8 +273,6 @@ void main() async {
       debugPrint('BackgroundDataSync: Error re-registering: $e');
     }
   }
-
-  runApp(App(initialRoute: initialRouteName));
 }
 
 class _ApiKeyProvider {

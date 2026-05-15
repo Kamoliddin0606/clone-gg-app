@@ -326,6 +326,29 @@ class ClientBalance {
   /// Project name (used in API request)
   final String projectName;
 
+  /// Project debt limit returned by backend (null = no limit).
+  /// See Customer Balance Passport §2.2.
+  final double? debtLimit;
+
+  /// Currency for [debtLimit]. Default `"UZS"`.
+  final String? debtLimitCurrency;
+
+  /// Balance currency. Default `"UZS"`.
+  final String? currency;
+
+  /// Backend's authoritative block decision.
+  /// `(debtLimit != null) AND (balance > debtLimit)`.
+  final bool? blocked;
+
+  /// Reason when [blocked] is true. Currently only `"debt_limit_exceeded"`.
+  final String? blockReason;
+
+  /// Cache freshness from backend: `"fresh"` | `"cache"` | `"stale"`.
+  final String? source;
+
+  /// Short SOAP error description when [source] == "stale".
+  final String? lastError;
+
   const ClientBalance({
     required this.inn,
     this.clientCode,
@@ -335,6 +358,13 @@ class ClientBalance {
     required this.lastUpdated,
     this.serverDataUpdatedAt,
     required this.projectName,
+    this.debtLimit,
+    this.debtLimitCurrency,
+    this.currency,
+    this.blocked,
+    this.blockReason,
+    this.source,
+    this.lastError,
   });
 
   /// Create empty balance (no data received yet)
@@ -370,7 +400,7 @@ class ClientBalance {
     return ClientBalance(
       inn: json['inn']?.toString() ?? '',
       clientCode: json['client_code']?.toString(),
-      balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
+      balance: _parseDouble(json['balance']) ?? 0.0,
       contractBalances: (json['contract_balances'] as List<dynamic>?)
               ?.map((e) => ClientBalanceByContract.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -384,7 +414,22 @@ class ClientBalance {
           : DateTime.now(),
       serverDataUpdatedAt: parseServerDataUpdatedAt(),
       projectName: json['project_name']?.toString() ?? '',
+      debtLimit: _parseDouble(json['debt_limit']),
+      debtLimitCurrency: json['debt_limit_currency']?.toString(),
+      currency: json['currency']?.toString(),
+      blocked: json['blocked'] is bool ? json['blocked'] as bool : null,
+      blockReason: json['block_reason']?.toString(),
+      source: json['source']?.toString(),
+      lastError: json['last_error']?.toString(),
     );
+  }
+
+  /// Parse a value that may arrive as `num` (DB) or Decimal-string (REST).
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 
   /// Convert to JSON (for writing to database)
@@ -398,6 +443,13 @@ class ClientBalance {
       'last_updated': lastUpdated.toIso8601String(),
       'server_data_updated_at': serverDataUpdatedAt?.toIso8601String(),
       'project_name': projectName,
+      'debt_limit': debtLimit,
+      'debt_limit_currency': debtLimitCurrency,
+      'currency': currency,
+      'blocked': blocked,
+      'block_reason': blockReason,
+      'source': source,
+      'last_error': lastError,
     };
   }
 
@@ -478,6 +530,13 @@ class ClientBalance {
     DateTime? lastUpdated,
     DateTime? serverDataUpdatedAt,
     String? projectName,
+    double? debtLimit,
+    String? debtLimitCurrency,
+    String? currency,
+    bool? blocked,
+    String? blockReason,
+    String? source,
+    String? lastError,
   }) {
     return ClientBalance(
       inn: inn ?? this.inn,
@@ -488,6 +547,13 @@ class ClientBalance {
       lastUpdated: lastUpdated ?? this.lastUpdated,
       serverDataUpdatedAt: serverDataUpdatedAt ?? this.serverDataUpdatedAt,
       projectName: projectName ?? this.projectName,
+      debtLimit: debtLimit ?? this.debtLimit,
+      debtLimitCurrency: debtLimitCurrency ?? this.debtLimitCurrency,
+      currency: currency ?? this.currency,
+      blocked: blocked ?? this.blocked,
+      blockReason: blockReason ?? this.blockReason,
+      source: source ?? this.source,
+      lastError: lastError ?? this.lastError,
     );
   }
 

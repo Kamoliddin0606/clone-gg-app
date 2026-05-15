@@ -37,6 +37,14 @@ class UserProject {
   /// fallback for `X-Project-Id` when [idUuid] is unavailable.
   final String? id1c;
 
+  /// Project debt limit (synced from `/api/mobile/v2/projects/config/`).
+  /// Null = no limit configured. See Customer Balance Passport §3.
+  /// Used by [OrderBalanceGate] in offline mode to make a local block decision.
+  final double? debtLimit;
+
+  /// Currency for [debtLimit]. Default `"UZS"`.
+  final String? debtLimitCurrency;
+
   /// Время создания записи локально
   /// Yozuv lokal yaratilgan vaqti
   /// Timestamp when this record was created locally
@@ -54,6 +62,8 @@ class UserProject {
     required this.name,
     this.idUuid,
     this.id1c,
+    this.debtLimit,
+    this.debtLimitCurrency,
     this.createdAt,
     this.updatedAt,
   });
@@ -69,6 +79,8 @@ class UserProject {
       name: map['name'] as String,
       idUuid: map['id_uuid'] as String?,
       id1c: map['id_1c'] as String?,
+      debtLimit: (map['debt_limit'] as num?)?.toDouble(),
+      debtLimitCurrency: map['debt_limit_currency'] as String?,
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'] as String)
           : null,
@@ -89,6 +101,8 @@ class UserProject {
       'name': name,
       'id_uuid': idUuid,
       'id_1c': id1c,
+      'debt_limit': debtLimit,
+      'debt_limit_currency': debtLimitCurrency,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
@@ -104,6 +118,8 @@ class UserProject {
     String? name,
     String? idUuid,
     String? id1c,
+    double? debtLimit,
+    String? debtLimitCurrency,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -114,6 +130,8 @@ class UserProject {
       name: name ?? this.name,
       idUuid: idUuid ?? this.idUuid,
       id1c: id1c ?? this.id1c,
+      debtLimit: debtLimit ?? this.debtLimit,
+      debtLimitCurrency: debtLimitCurrency ?? this.debtLimitCurrency,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

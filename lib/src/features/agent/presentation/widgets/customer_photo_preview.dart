@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,29 +12,33 @@ import '../../../../core/services/images/image_cache_manager.dart';
 import '../../../../core/services/images/unified_image.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../data/repositories/customer_photo_repository.dart';
+import '../../services/customer_photo_change_notifier.dart';
+import '../pages/customer_photo_fullscreen_page.dart';
 import '../pages/customer_photos_page.dart';
 
-/// V2-only customer photo preview rendered on the client detail
-/// sheet. Replaces the legacy [ClientImageWidget] surface there.
+/// V2 customer-photo carousel rendered on the client detail sheet.
+/// Replaces the legacy V1 `ClientImageWidget` surface and the
+/// previous single-image preview.
 ///
-/// Responsibilities:
-/// - Read the first / primary photo from
-///   `GET /api/mobile/v2/customers/{code_1c}/photos/`.
-/// - Surface a permission-gated **edit overlay** in the top-right
-///   corner (visible when the user holds any of the four photo
-///   codenames).
-/// - When the customer has no photos yet, render a clear empty
-///   placeholder + an **Add** affordance for users with
-///   `customers.add_customer_photo`.
-/// - Tap on the preview always opens the full V2 gallery
-///   ([CustomerPhotosPage]), where add / replace / delete / set-primary
-///   are implemented.
-///
-/// The legacy V1 `/api/mobile/v1/images/` endpoint is NOT consulted
-/// from here — this surface is the V2 cutover for the customer-photo
-/// flow on mobile.
+/// Behaviour:
+/// - Loads `GET /api/mobile/v2/customers/{customerId}/photos/?ordering=-is_primary,order`
+///   so the primary photo is always the first page.
+/// - Auto-rotates every 4 s with a 6 s pause window after any user
+///   pointer event (touch / swipe). Auto-rotate is suppressed when
+///   the OS reports `MediaQuery.disableAnimations`.
+/// - Manual swipe via [PageView] is always available.
+/// - Double-tap opens [CustomerPhotoFullscreenPage] (Hero animated).
+/// - Top-right edit button opens the V2 [CustomerPhotosPage] for
+///   add / replace / delete / set-primary actions; on return the
+///   carousel re-loads. Listens to [CustomerPhotoChangeNotifier]
+///   for cross-screen edits as well.
+/// - Single-photo: renders a static image with no PageView, dots,
+///   or auto-timer (saves a frame, avoids the swipe affordance hint).
+/// - Empty state: shows the centre add CTA when the user has the
+///   `customers.add_customer_photo` permission, otherwise a quiet
+///   read-only placeholder.
 class CustomerPhotoPreview extends StatefulWidget {
-  /// Backend exchange key: `code_1c` of the customer (NOT a UUID).
+  /// Backend exchange key — `tradingPoint.id` (the backend `code`).
   final String customerId;
 
   /// Display name — passed through to [CustomerPhotosPage] for its
@@ -57,23 +63,43 @@ class CustomerPhotoPreview extends StatefulWidget {
 class _CustomerPhotoPreviewState extends State<CustomerPhotoPreview> {
   late final CustomerPhotoRepository _repo;
   late final BackendPermissionStore _permStore;
+  StreamSubscription<String>? _changeSub;
 
-  UnifiedImage? _photo;
+  late final PageController _pageController;
+  Timer? _autoTimer;
+  DateTime _lastInteractionAt = DateTime.fromMillisecondsSinceEpoch(0);
+
+  List<UnifiedImage> _photos = const <UnifiedImage>[];
+  int _currentIndex = 0;
   bool _isLoading = true;
-  Object? _error;
+
+  static const Duration _autoRotateInterval = Duration(seconds: 4);
+  static const Duration _interactionPause = Duration(seconds: 6);
 
   @override
   void initState() {
     super.initState();
     _repo = sl<CustomerPhotoRepository>();
     _permStore = sl<BackendPermissionStore>();
+    _pageController = PageController();
     _permStore.addListener(_onPermissionsChanged);
+    if (sl.isRegistered<CustomerPhotoChangeNotifier>()) {
+      _changeSub = sl<CustomerPhotoChangeNotifier>()
+          .stream
+          .where((id) => id == widget.customerId)
+          .listen((_) {
+        if (mounted) _load();
+      });
+    }
     _load();
   }
 
   @override
   void dispose() {
+    _autoTimer?.cancel();
+    _changeSub?.cancel();
     _permStore.removeListener(_onPermissionsChanged);
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -84,39 +110,81 @@ class _CustomerPhotoPreviewState extends State<CustomerPhotoPreview> {
   Future<void> _load() async {
     setState(() {
       _isLoading = true;
-      _error = null;
     });
     try {
-      // Prefer the customer's primary photo so the preview matches
-      // what `is_primary=true` users expect from the legacy UX.
-      // `ordering=-is_primary,order` keeps a primary row first when
-      // one exists; fall back to the first row otherwise.
       final photos = await _repo.list(
         widget.customerId,
         ordering: '-is_primary,order',
       );
       if (!mounted) return;
       setState(() {
-        _photo = photos.isEmpty
-            ? null
-            : (photos.firstWhere(
-                (p) => p.isPrimary,
-                orElse: () => photos.first,
-              ));
+        _photos = photos;
+        _currentIndex = 0;
         _isLoading = false;
       });
+      _restartAutoTimer();
+      _precacheNeighbours();
     } catch (e) {
       if (kDebugMode) {
         debugPrint(
-          '[PHOTO-PREVIEW] ✗ load failed for code_1c="${widget.customerId}": $e',
+          '[PHOTO-PREVIEW] ✗ load failed for "${widget.customerId}": $e',
         );
       }
       if (!mounted) return;
       setState(() {
-        _error = e;
         _isLoading = false;
+        _photos = const [];
       });
+      _autoTimer?.cancel();
     }
+  }
+
+  void _restartAutoTimer() {
+    _autoTimer?.cancel();
+    if (_photos.length < 2) return;
+    if (MediaQuery.of(context).disableAnimations) return;
+    _autoTimer = Timer.periodic(_autoRotateInterval, (_) {
+      if (!mounted || !_pageController.hasClients) return;
+      if (_photos.length < 2) return;
+      if (DateTime.now().difference(_lastInteractionAt) < _interactionPause) {
+        return;
+      }
+      final next = (_currentIndex + 1) % _photos.length;
+      _pageController.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _markInteraction() {
+    _lastInteractionAt = DateTime.now();
+  }
+
+  void _precacheNeighbours() {
+    if (_photos.isEmpty) return;
+    final indices = <int>{
+      _currentIndex,
+      if (_photos.length > 1) (_currentIndex + 1) % _photos.length,
+      if (_photos.length > 1)
+        (_currentIndex - 1 + _photos.length) % _photos.length,
+    };
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final i in indices) {
+        final url = _photos[i].urlForSize(UnifiedImageSize.medium) ??
+            _photos[i].urlForSize(UnifiedImageSize.large);
+        if (url == null) continue;
+        precacheImage(
+          CachedNetworkImageProvider(
+            url,
+            cacheManager: ImageCacheManager.instance,
+          ),
+          context,
+        );
+      }
+    });
   }
 
   bool get _canViewGallery =>
@@ -141,8 +209,24 @@ class _CustomerPhotoPreviewState extends State<CustomerPhotoPreview> {
         ),
       ),
     );
-    // Refresh on return — the gallery may have added / replaced /
-    // deleted; the preview should reflect the new primary state.
+    if (mounted) _load();
+  }
+
+  Future<void> _openFullscreen() async {
+    if (_photos.isEmpty) return;
+    _autoTimer?.cancel();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CustomerPhotoFullscreenPage(
+          photos: _photos,
+          initialIndex: _currentIndex,
+          customerId: widget.customerId,
+          customerName: widget.customerName,
+          heroTagPrefix: 'customer-photo-${widget.customerId}',
+        ),
+      ),
+    );
     if (mounted) _load();
   }
 
@@ -155,79 +239,162 @@ class _CustomerPhotoPreviewState extends State<CustomerPhotoPreview> {
 
     return SizedBox(
       height: widget.height,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _canViewGallery ? _openGallery : null,
-          borderRadius: radius,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ClipRRect(
-                borderRadius: radius,
-                child: _buildPreviewLayer(theme, cs, l10n),
-              ),
-              if (_photo != null && _canEditPhotos)
-                _PositionedOverlayButton(
-                  alignment: Alignment.topRight,
-                  icon: Icons.edit,
-                  tooltip: l10n.customerPhotoPreview_editTooltip,
-                  onPressed: _openGallery,
-                ),
-              if (_photo == null && !_isLoading && _canAddPhoto)
-                _PositionedOverlayButton(
-                  alignment: Alignment.center,
-                  icon: Icons.add_a_photo,
-                  tooltip: l10n.customerPhotoPreview_addTooltip,
-                  onPressed: _openGallery,
-                  expanded: true,
-                ),
-            ],
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: radius,
+            child: _buildContent(theme, cs, l10n),
           ),
-        ),
+          if (_photos.length > 1)
+            Positioned(
+              bottom: 8,
+              left: 0,
+              right: 0,
+              child: _PageDots(count: _photos.length, current: _currentIndex),
+            ),
+          if (_photos.isNotEmpty && _canEditPhotos)
+            _PositionedOverlayButton(
+              alignment: Alignment.topRight,
+              icon: Icons.edit,
+              tooltip: l10n.customerPhotoPreview_editTooltip,
+              onPressed: _openGallery,
+            ),
+          if (_photos.isEmpty && !_isLoading && _canAddPhoto)
+            _PositionedOverlayButton(
+              alignment: Alignment.center,
+              icon: Icons.add_a_photo,
+              tooltip: l10n.customerPhotoPreview_addTooltip,
+              onPressed: _openGallery,
+              expanded: true,
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildPreviewLayer(
+  Widget _buildContent(
     ThemeData theme,
     ColorScheme cs,
     AppLocalizations l10n,
   ) {
     if (_isLoading) {
-      return _ShimmerPlaceholder(color: cs.surfaceVariant);
+      return _ShimmerPlaceholder(color: cs.surfaceContainerHighest);
     }
-    if (_error != null && _photo == null) {
-      // Treat error like empty — the V2 endpoint legitimately returns
-      // 404 / 401 if the customer is unknown or the user lost access.
-      return _EmptyState(
-        l10n: l10n,
-        cs: cs,
-        canAdd: _canAddPhoto,
-      );
-    }
-    final photo = _photo;
-    if (photo == null) {
+    if (_photos.isEmpty) {
       return _EmptyState(l10n: l10n, cs: cs, canAdd: _canAddPhoto);
     }
+    if (_photos.length == 1) {
+      return _PhotoFrame(
+        photo: _photos.first,
+        cs: cs,
+        heroTagPrefix: 'customer-photo-${widget.customerId}',
+        onDoubleTap: _canViewGallery ? _openFullscreen : null,
+      );
+    }
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) => _markInteraction(),
+      child: PageView.builder(
+        controller: _pageController,
+        itemCount: _photos.length,
+        onPageChanged: (i) {
+          setState(() => _currentIndex = i);
+          _markInteraction();
+          _precacheNeighbours();
+        },
+        itemBuilder: (context, i) => _PhotoFrame(
+          photo: _photos[i],
+          cs: cs,
+          heroTagPrefix: 'customer-photo-${widget.customerId}',
+          onDoubleTap: _canViewGallery ? _openFullscreen : null,
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoFrame extends StatelessWidget {
+  final UnifiedImage photo;
+  final ColorScheme cs;
+  final String heroTagPrefix;
+  final VoidCallback? onDoubleTap;
+
+  const _PhotoFrame({
+    required this.photo,
+    required this.cs,
+    required this.heroTagPrefix,
+    required this.onDoubleTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final url = photo.urlForSize(UnifiedImageSize.large) ??
         photo.urlForSize(UnifiedImageSize.medium);
+    Widget image;
     if (url == null) {
-      // Photo row exists but the variants haven't been processed yet.
-      return photo.blurhash.isNotEmpty
+      image = photo.hasBlurhash
           ? BlurHash(hash: photo.blurhash)
-          : Container(color: cs.surfaceVariant);
+          : Container(color: cs.surfaceContainerHighest);
+    } else {
+      image = CachedNetworkImage(
+        cacheManager: ImageCacheManager.instance,
+        imageUrl: url,
+        fit: BoxFit.cover,
+        placeholder: (_, _) => photo.hasBlurhash
+            ? BlurHash(hash: photo.blurhash)
+            : Container(color: cs.surfaceContainerHighest),
+        errorWidget: (_, _, _) => Container(
+          color: cs.surfaceContainerHighest,
+          child: Icon(Icons.broken_image, color: cs.onSurfaceVariant),
+        ),
+      );
     }
-    return CachedNetworkImage(
-      cacheManager: ImageCacheManager.instance,
-      imageUrl: url,
-      fit: BoxFit.cover,
-      placeholder: (_, _) => photo.blurhash.isNotEmpty
-          ? BlurHash(hash: photo.blurhash)
-          : Container(color: cs.surfaceVariant),
-      errorWidget: (_, _, _) => Container(
-        color: cs.surfaceVariant,
-        child: Icon(Icons.broken_image, color: cs.onSurfaceVariant),
+
+    final hero = Hero(
+      tag: '$heroTagPrefix-${photo.id}',
+      child: image,
+    );
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onDoubleTap: onDoubleTap,
+      child: hero,
+    );
+  }
+}
+
+class _PageDots extends StatelessWidget {
+  final int count;
+  final int current;
+
+  const _PageDots({required this.count, required this.current});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black38,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(count, (i) {
+            final active = i == current;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: active ? 8 : 6,
+              height: active ? 8 : 6,
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: active ? Colors.white : Colors.white54,
+                shape: BoxShape.circle,
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -267,7 +434,7 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      color: cs.surfaceVariant.withOpacity(0.35),
+      color: cs.surfaceContainerHighest.withValues(alpha: 0.35),
       child: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -340,8 +507,6 @@ class _PositionedOverlayButton extends StatelessWidget {
         ),
       ),
     );
-    // The Stack puts the centre overlay using Positioned.fill; the
-    // edge overlay uses an 8 px gap from the requested corner.
     if (alignment == Alignment.center) {
       return Positioned.fill(child: Center(child: button));
     }

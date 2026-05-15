@@ -5667,4 +5667,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notif_sound_sound => 'Sound';
+
+  @override
+  String get debtBlockedTitle => 'Order cannot be created';
+
+  @override
+  String debtBlockedBodyOnline(String balance, String limit, String currency) =>
+      'Customer balance $balance $currency exceeds the project debt limit ($limit $currency).';
+
+  @override
+  String debtBlockedBodyOffline(String balance, String limit, String age) =>
+      'Checked offline (last balance $age ago): $balance / limit $limit.';
+
+  @override
+  String get debtBlockedNoCachedBalance =>
+      'Balance has not been loaded yet. Connect to the internet and try again.';
+
+  @override
+  String get debtBlockedStaleWarning =>
+      'The cached balance is more than 24 hours old.';
+
+  @override
+  String get orderBlockedByDebtBadge => 'Debt limit exceeded';
+
+  @override
+  String get retrySyncButton => 'Retry';
+
+  @override
+  String get balanceStatusHeadlineOverLimit => 'Debt limit exceeded';
+
+  @override
+  String get balanceStatusHeadlineUnderLimit => 'Customer has debt';
+
+  @override
+  String get balanceStatusHeadlineOk => 'No outstanding debt';
+
+  @override
+  String get balanceStatusHeadlineUnknown => 'Balance not loaded yet';
+
+  @override
+  String get balanceStatusBalanceLabel => 'Balance';
+
+  @override
+  String get balanceStatusLimitLabel => 'Project limit';
+
+  @override
+  String get balanceStatusLimitNone => 'No limit set';
+
+  @override
+  String get balanceStatusLastUpdatedLabel => 'Last updated';
 }

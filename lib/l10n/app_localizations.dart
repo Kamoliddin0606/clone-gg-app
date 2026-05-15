@@ -10740,6 +10740,67 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sound'**
   String get notif_sound_sound;
+
+  // ---------------------------------------------------------------------------
+  // Customer balance / debt-limit gate
+  // See docs/customer-balance-mobile.md M13.
+  // ---------------------------------------------------------------------------
+
+  /// Title of the dialog shown when an order cannot be created because the
+  /// customer is over the project debt limit.
+  String get debtBlockedTitle;
+
+  /// Body of the dialog when the gate fired with a fresh online check.
+  /// Placeholders: customer balance, debt limit, ISO currency code.
+  String debtBlockedBodyOnline(String balance, String limit, String currency);
+
+  /// Body of the dialog when the gate fired with cached / offline data.
+  /// Placeholders: balance, limit, age (e.g. "3h ago").
+  String debtBlockedBodyOffline(String balance, String limit, String age);
+
+  /// Shown when no cached balance is available offline.
+  String get debtBlockedNoCachedBalance;
+
+  /// Extra warning shown when the cached balance is older than 24h.
+  String get debtBlockedStaleWarning;
+
+  /// Badge text on the orders list for an order that the backend rejected
+  /// because of an exceeded debt limit during the pre-submit recheck.
+  String get orderBlockedByDebtBadge;
+
+  /// Action label on a blocked order to retry sending it after the customer
+  /// has paid down the debt.
+  String get retrySyncButton;
+
+  // ---------------------------------------------------------------------------
+  // Customer balance status indicator + details sheet (M12 rebuilt).
+  // ---------------------------------------------------------------------------
+
+  /// Bottom-sheet headline when the customer's balance is over the project
+  /// debt limit (red status).
+  String get balanceStatusHeadlineOverLimit;
+
+  /// Headline when the customer has debt but is still within the limit
+  /// (amber status).
+  String get balanceStatusHeadlineUnderLimit;
+
+  /// Headline when the customer has no debt (or has overpaid).
+  String get balanceStatusHeadlineOk;
+
+  /// Headline when no balance has been cached yet for the customer.
+  String get balanceStatusHeadlineUnknown;
+
+  /// Label for the "balance" key in the details sheet.
+  String get balanceStatusBalanceLabel;
+
+  /// Label for the "limit" key in the details sheet.
+  String get balanceStatusLimitLabel;
+
+  /// Value shown when the active project has no debt limit configured.
+  String get balanceStatusLimitNone;
+
+  /// Label for the "last updated" timestamp key.
+  String get balanceStatusLastUpdatedLabel;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

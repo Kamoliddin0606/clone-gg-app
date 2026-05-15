@@ -600,18 +600,13 @@ class _OrdersPageState extends State<OrdersPage> with TickerProviderStateMixin {
   /// Convert Order list to OrderModel list for presentation
   List<OrderModel> _convertOrdersToOrderModels(List<Order> orders) {
     if (kDebugMode) {
-      print('Converting ${orders.length} orders to OrderModels');
       final withShipping = orders.where((o) => o.shippingDate != null).length;
-      print('Orders with shippingDate: $withShipping');
+      debugPrint('[Orders] converting ${orders.length} (withShipping=$withShipping)');
     }
-    
+
     return orders
         .map(
           (order) {
-            if (kDebugMode && order.shippingDate != null) {
-              print('Order ${order.numOrder}: shippingDate = ${order.shippingDate}');
-            }
-            
             return OrderModel(
               id: order.id,
               numOrder: order.numOrder,

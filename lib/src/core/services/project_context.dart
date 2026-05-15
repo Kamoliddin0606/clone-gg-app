@@ -81,18 +81,18 @@ class ProjectContext extends ChangeNotifier {
   /// that may have flipped scope on the admin side). Reconciles the cached
   /// gates with the currently-stored active project:
   ///
-  ///   * Scope=organization → clears any stale active project to avoid
-  ///     accidentally sending a header on the next call.
-  ///   * Scope=project and `primary_project_id` is set → auto-resolves
-  ///     a [UserProject] from the local DB if absent.
-  ///   * Scope=project and no project resolved → emits a `null` so
-  ///     orchestrators know to force the picker.
+  ///   * Scope=project and cached/primary project resolves → activate it.
+  ///   * Scope=project and nothing resolves → emit `null` so orchestrators
+  ///     know to force the picker.
+  ///   * Scope=organization → still pick an active project (cached → first
+  ///     available row in `user_projects`). The `X-Project-Id` header is
+  ///     still suppressed via [requiresProjectHeader], but downstream
+  ///     consumers (`ClientBalanceCubit`, `OrderBalanceGate`, the new
+  ///     Settings → Loyihalar tab) need a non-null project to operate.
   Future<void> bootstrap(UserEntity user) async {
     _user = user;
-    if (!requiresProjectHeader) {
-      await _clearInternal();
-      return;
-    }
+
+    // Step 1: try the cached selection regardless of scope.
     final cachedId = _readActiveProjectId();
     if (cachedId != null && cachedId.isNotEmpty) {
       final project = await _resolveProjectByAnyId(user.code, cachedId);
@@ -103,17 +103,66 @@ class ProjectContext extends ChangeNotifier {
         return;
       }
     }
-    // Fall through to gates.primary_project_id (UUID).
-    final primaryId = user.primaryProjectId ??
-        _prefs.getCachedGates()?.primaryProjectId;
-    if (primaryId != null && primaryId.isNotEmpty) {
-      final project = await _resolveProjectByAnyId(user.code, primaryId);
-      if (project != null) {
-        await setActiveProject(project, source: ActiveProjectSource.primary);
+
+    if (requiresProjectHeader) {
+      // Project-scope: fall through to gates.primary_project_id (UUID).
+      final primaryId =
+          user.primaryProjectId ?? _prefs.getCachedGates()?.primaryProjectId;
+      if (primaryId != null && primaryId.isNotEmpty) {
+        final project = await _resolveProjectByAnyId(user.code, primaryId);
+        if (project != null) {
+          await setActiveProject(project, source: ActiveProjectSource.primary);
+          return;
+        }
+      }
+      // Last resort for project-scope too: auto-pick the first row in
+      // `user_projects` that carries a header value. Without this the
+      // device sits with `_activeProject = null` and every customer
+      // endpoint throws `customer_project_required` — leaving the user
+      // stuck unless they hand-pick a project. Selecting a sensible
+      // default and letting them change it later from
+      // Settings → Loyihalar matches the org-scope behaviour below.
+      try {
+        final projects = await _db.getUserProjects(user.code);
+        for (final candidate in projects) {
+          final header = candidate.headerValue;
+          if (header != null && header.isNotEmpty) {
+            await setActiveProject(candidate,
+                source: ActiveProjectSource.fallback);
+            return;
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('ProjectContext: project-scope fallback pick failed: $e');
+        }
+      }
+      // Nothing resolved — orchestrator should open the picker.
+      _activeProject = null;
+      _streamController.add(null);
+      notifyListeners();
+      return;
+    }
+
+    // Step 2 (org-scope): auto-pick the first row in `user_projects`. This
+    // is the user's default working project on a tenant that does not
+    // expose a picker. Persisted via `setActiveProject` so the selection
+    // survives restarts and can be changed from Settings → Loyihalar.
+    try {
+      final projects = await _db.getUserProjects(user.code);
+      if (projects.isNotEmpty) {
+        await setActiveProject(projects.first,
+            source: ActiveProjectSource.fallback);
         return;
       }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ProjectContext: org-scope auto-pick failed: $e');
+      }
     }
-    // Nothing resolved — the orchestrator should open the picker.
+
+    // Nothing in `user_projects` yet (sync hasn't run). Org-scope is
+    // allowed to operate without a project; downstream code handles null.
     _activeProject = null;
     _streamController.add(null);
     notifyListeners();

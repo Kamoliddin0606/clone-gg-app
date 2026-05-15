@@ -301,6 +301,11 @@
   "kpiDataUpdateError": "Ошибка обновления данных KPI",
   "onlineModeReturn": "Вернуться в онлайн режим",
   "onlineModeReturnConfirm": "Хотите проверить подключение к интернету и серверу и вернуться в онлайн режим?",
+  "switchToOfflineTitle": "Перейти в офлайн режим?",
+  "switchToOfflineBody": "Нет подключения к интернету или сервер не отвечает. Продолжить работу с локально кэшированными данными?",
+  "switchedToOnline": "Переключено в онлайн режим",
+  "switchedToOffline": "Переключено в офлайн режим",
+  "serverUnreachable": "Сервер недоступен",
   "serverUrlNotFound": "URL сервера не найден",
   "serverUrl": "URL сервера",
   "connectionError": "Ошибка подключения",
@@ -2913,5 +2918,71 @@
   "notif_dnd_endLabel": "Конец",
   "notif_sound_silent": "Тихо",
   "notif_sound_vibrate": "Вибрация",
-  "notif_sound_sound": "Звук"
+  "notif_sound_sound": "Звук",
+
+  "projectDebtLimits_sectionTitle": "Проекты и дебетовые лимиты",
+  "projectDebtLimits_sectionSubtitle": "Назначенные вам проекты и их лимиты задолженности",
+  "projectDebtLimits_offlineNotice": "Устройство офлайн — данные показаны из локального кэша",
+  "projectDebtLimits_errorNotice": "Не удалось обновить лимиты с сервера",
+  "projectDebtLimits_emptyState": "На вас пока не назначены проекты",
+  "projectDebtLimits_lastUpdatedLabel": "Обновлено",
+  "projectDebtLimits_neverUpdated": "Ещё не обновлялось",
+  "projectDebtLimits_refreshTooltip": "Обновить лимиты",
+  "projectDebtLimits_noLimit": "Лимит не задан",
+  "projectDebtLimits_limitUnavailable": "Лимит недоступен",
+  "projectDebtLimits_loadingError": "Ошибка загрузки: {message}",
+  "@projectDebtLimits_loadingError": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+  "projectDebtLimits_refreshing": "Обновление…",
+  "projectDebtLimits_refreshSuccess": "Лимиты обновлены",
+  "projectDebtLimits_countBadge": "Проектов: {count}",
+  "@projectDebtLimits_countBadge": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "projectDebtLimits_userCodeMissing": "Код пользователя не найден",
+  "projectDebtLimits_limitLabel": "Лимит долга",
+
+  "projectsTab_title": "Проекты",
+  "projectsTab_sectionTitle": "Активный проект и переключение",
+  "projectsTab_pickerSubtitle": "Выберите другой проект из списка ниже для переключения",
+  "projectsTab_activeLabel": "Активный проект",
+  "projectsTab_scopeOrganization": "Уровень организации",
+  "projectsTab_scopeProject": "Уровень проекта",
+  "projectsTab_switchedSnackbar": "Активный проект: {name}",
+  "@projectsTab_switchedSnackbar": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "projectsTab_empty": "На вас не назначены проекты",
+  "projectsTab_loadError": "Не удалось загрузить проекты: {message}",
+  "@projectsTab_loadError": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+
+  "timeAgoJustNow": "только что",
+  "timeAgoMinutes": "{minutes} мин назад",
+  "timeAgoHours": "{hours} ч назад",
+  "timeAgoDays": "{days} дн назад",
+
+  "balanceStatusBalanceLabel": "Долг",
+  "balanceStatusLimitLabel": "Лимит",
+  "balanceStatusLimitNone": "Без лимита",
+  "balanceStatusLastUpdatedLabel": "Обновлено",
+  "balanceStatusRefreshButton": "Обновить",
+  "balanceStatusHeadlineOverLimit": "Долг превысил лимит",
+  "balanceStatusHeadlineUnderLimit": "Долг в пределах лимита",
+  "balanceStatusHeadlineOk": "Без долга",
+  "balanceStatusHeadlineUnknown": "Статус неизвестен",
+  "balanceStatusIndicatorSemantic": "Статус долга клиента",
+
+  "debtBlockedTitle": "Заказ заблокирован",
+  "debtBlockedNoCachedBalance": "Баланс клиента недоступен в офлайн-режиме. Подключитесь к сети и обновите.",
+  "debtBlockedBodyOnline": "Долг клиента составляет {balance} {currency}, что превышает лимит {limit} {currency}.",
+  "debtBlockedBodyOffline": "Последний известный долг {balance} (лимит {limit}), обновлён {age}.",
+  "debtBlockedStaleWarning": "Данные о балансе могут быть устаревшими.",
+
+  "pendingBlockedOrdersTitle": "Заказы, заблокированные из-за долга",
+  "orderBlockedByDebtBadge": "Заблокировано лимитом долга",
+  "pendingBlockedOrdersCreatedAt": "Создан: {date}",
+  "retrySyncButton": "Повторить"
 }

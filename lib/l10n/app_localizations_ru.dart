@@ -916,6 +916,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onlineModeReturnConfirm => 'Хотите проверить подключение к интернету и серверу и вернуться в онлайн режим?';
 
   @override
+  String get switchToOfflineTitle => 'Перейти в офлайн режим?';
+
+  @override
+  String get switchToOfflineBody => 'Нет подключения к интернету или сервер не отвечает. Продолжить работу с локально кэшированными данными?';
+
+  @override
+  String get switchedToOnline => 'Переключено в онлайн режим';
+
+  @override
+  String get switchedToOffline => 'Переключено в офлайн режим';
+
+  @override
+  String get serverUnreachable => 'Сервер недоступен';
+
+  @override
   String get serverUrlNotFound => 'URL сервера не найден';
 
   @override
@@ -5669,51 +5684,166 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notif_sound_sound => 'Звук';
 
   @override
-  String get debtBlockedTitle => 'Невозможно создать заказ';
+  String get projectDebtLimits_sectionTitle => 'Проекты и дебетовые лимиты';
 
   @override
-  String debtBlockedBodyOnline(String balance, String limit, String currency) =>
-      'Баланс клиента $balance $currency превышает лимит долга проекта ($limit $currency).';
+  String get projectDebtLimits_sectionSubtitle => 'Назначенные вам проекты и их лимиты задолженности';
 
   @override
-  String debtBlockedBodyOffline(String balance, String limit, String age) =>
-      'Проверено офлайн (последний баланс $age назад): $balance / лимит $limit.';
+  String get projectDebtLimits_offlineNotice => 'Устройство офлайн — данные показаны из локального кэша';
 
   @override
-  String get debtBlockedNoCachedBalance =>
-      'Баланс ещё не загружен. Подключитесь к интернету и повторите попытку.';
+  String get projectDebtLimits_errorNotice => 'Не удалось обновить лимиты с сервера';
 
   @override
-  String get debtBlockedStaleWarning =>
-      'Сохранённый баланс старше 24 часов.';
+  String get projectDebtLimits_emptyState => 'На вас пока не назначены проекты';
 
   @override
-  String get orderBlockedByDebtBadge => 'Превышен лимит долга';
+  String get projectDebtLimits_lastUpdatedLabel => 'Обновлено';
 
   @override
-  String get retrySyncButton => 'Повторить';
+  String get projectDebtLimits_neverUpdated => 'Ещё не обновлялось';
 
   @override
-  String get balanceStatusHeadlineOverLimit => 'Превышен лимит долга';
+  String get projectDebtLimits_refreshTooltip => 'Обновить лимиты';
 
   @override
-  String get balanceStatusHeadlineUnderLimit => 'У клиента есть долг';
+  String get projectDebtLimits_noLimit => 'Лимит не задан';
 
   @override
-  String get balanceStatusHeadlineOk => 'Долг отсутствует';
+  String get projectDebtLimits_limitUnavailable => 'Лимит недоступен';
 
   @override
-  String get balanceStatusHeadlineUnknown => 'Баланс ещё не загружен';
+  String projectDebtLimits_loadingError(String message) {
+    return 'Ошибка загрузки: $message';
+  }
 
   @override
-  String get balanceStatusBalanceLabel => 'Баланс';
+  String get projectDebtLimits_refreshing => 'Обновление…';
 
   @override
-  String get balanceStatusLimitLabel => 'Лимит проекта';
+  String get projectDebtLimits_refreshSuccess => 'Лимиты обновлены';
 
   @override
-  String get balanceStatusLimitNone => 'Лимит не задан';
+  String projectDebtLimits_countBadge(int count) {
+    return 'Проектов: $count';
+  }
+
+  @override
+  String get projectDebtLimits_userCodeMissing => 'Код пользователя не найден';
+
+  @override
+  String get projectDebtLimits_limitLabel => 'Лимит долга';
+
+  @override
+  String get projectsTab_title => 'Проекты';
+
+  @override
+  String get projectsTab_sectionTitle => 'Активный проект и переключение';
+
+  @override
+  String get projectsTab_pickerSubtitle => 'Выберите другой проект из списка ниже для переключения';
+
+  @override
+  String get projectsTab_activeLabel => 'Активный проект';
+
+  @override
+  String get projectsTab_scopeOrganization => 'Уровень организации';
+
+  @override
+  String get projectsTab_scopeProject => 'Уровень проекта';
+
+  @override
+  String projectsTab_switchedSnackbar(String name) {
+    return 'Активный проект: $name';
+  }
+
+  @override
+  String get projectsTab_empty => 'На вас не назначены проекты';
+
+  @override
+  String projectsTab_loadError(String message) {
+    return 'Не удалось загрузить проекты: $message';
+  }
+
+  @override
+  String get timeAgoJustNow => 'только что';
+
+  @override
+  String timeAgoMinutes(int minutes) {
+    return '$minutes мин назад';
+  }
+
+  @override
+  String timeAgoHours(int hours) {
+    return '$hours ч назад';
+  }
+
+  @override
+  String timeAgoDays(int days) {
+    return '$days дн назад';
+  }
+
+  @override
+  String get balanceStatusBalanceLabel => 'Долг';
+
+  @override
+  String get balanceStatusLimitLabel => 'Лимит';
+
+  @override
+  String get balanceStatusLimitNone => 'Без лимита';
 
   @override
   String get balanceStatusLastUpdatedLabel => 'Обновлено';
+
+  @override
+  String get balanceStatusRefreshButton => 'Обновить';
+
+  @override
+  String get balanceStatusHeadlineOverLimit => 'Долг превысил лимит';
+
+  @override
+  String get balanceStatusHeadlineUnderLimit => 'Долг в пределах лимита';
+
+  @override
+  String get balanceStatusHeadlineOk => 'Без долга';
+
+  @override
+  String get balanceStatusHeadlineUnknown => 'Статус неизвестен';
+
+  @override
+  String get balanceStatusIndicatorSemantic => 'Статус долга клиента';
+
+  @override
+  String get debtBlockedTitle => 'Заказ заблокирован';
+
+  @override
+  String get debtBlockedNoCachedBalance => 'Баланс клиента недоступен в офлайн-режиме. Подключитесь к сети и обновите.';
+
+  @override
+  String debtBlockedBodyOnline(String balance, String limit, String currency) {
+    return 'Долг клиента составляет $balance $currency, что превышает лимит $limit $currency.';
+  }
+
+  @override
+  String debtBlockedBodyOffline(String balance, String limit, String age) {
+    return 'Последний известный долг $balance (лимит $limit), обновлён $age.';
+  }
+
+  @override
+  String get debtBlockedStaleWarning => 'Данные о балансе могут быть устаревшими.';
+
+  @override
+  String get pendingBlockedOrdersTitle => 'Заказы, заблокированные из-за долга';
+
+  @override
+  String get orderBlockedByDebtBadge => 'Заблокировано лимитом долга';
+
+  @override
+  String pendingBlockedOrdersCreatedAt(String date) {
+    return 'Создан: $date';
+  }
+
+  @override
+  String get retrySyncButton => 'Повторить';
 }

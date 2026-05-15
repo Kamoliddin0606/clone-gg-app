@@ -311,6 +311,11 @@
   "kpiDataUpdateError": "KPI ma'lumotlarini yangilashda xatolik",
   "onlineModeReturn": "Online rejimga qaytish",
   "onlineModeReturnConfirm": "Internet bilan va server bilan aloqa borligini tekshirib, online rejimga qaytishni xohlaysizmi?",
+  "switchToOfflineTitle": "Offline rejimga o'tasizmi?",
+  "switchToOfflineBody": "Internet aloqasi yo'q yoki server javob bermayapti. Lokal kesh ma'lumotlar bilan ishlashda davom etasizmi?",
+  "switchedToOnline": "Online rejimga o'tildi",
+  "switchedToOffline": "Offline rejimga o'tildi",
+  "serverUnreachable": "Server bilan aloqa o'rnatib bo'lmadi",
   "serverUrlNotFound": "Server manzili topilmadi",
   "serverUrl": "Server manzili",
   "connectionError": "Aloqa yo'q",
@@ -2917,5 +2922,71 @@
   "notif_dnd_endLabel": "Tugash",
   "notif_sound_silent": "Jim",
   "notif_sound_vibrate": "Tebranish",
-  "notif_sound_sound": "Tovush"
+  "notif_sound_sound": "Tovush",
+
+  "projectDebtLimits_sectionTitle": "Loyihalar va debit limitlar",
+  "projectDebtLimits_sectionSubtitle": "Sizga biriktirilgan loyihalar va ularga qo'yilgan qarz limitlari ro'yxati",
+  "projectDebtLimits_offlineNotice": "Qurilma oflayn — ko'rsatilayotgan ma'lumotlar lokal nusxadan olingan",
+  "projectDebtLimits_errorNotice": "Limitlarni serverdan yangilab bo'lmadi",
+  "projectDebtLimits_emptyState": "Sizga hali loyihalar biriktirilmagan",
+  "projectDebtLimits_lastUpdatedLabel": "Oxirgi yangilanish",
+  "projectDebtLimits_neverUpdated": "Hali yangilanmagan",
+  "projectDebtLimits_refreshTooltip": "Limitlarni yangilash",
+  "projectDebtLimits_noLimit": "Limit belgilanmagan",
+  "projectDebtLimits_limitUnavailable": "Limit olinmadi",
+  "projectDebtLimits_loadingError": "Yuklashda xatolik: {message}",
+  "@projectDebtLimits_loadingError": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+  "projectDebtLimits_refreshing": "Yangilanmoqda…",
+  "projectDebtLimits_refreshSuccess": "Limitlar yangilandi",
+  "projectDebtLimits_countBadge": "{count} ta loyiha",
+  "@projectDebtLimits_countBadge": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "projectDebtLimits_userCodeMissing": "Foydalanuvchi kodi topilmadi",
+  "projectDebtLimits_limitLabel": "Qarz limiti",
+
+  "projectsTab_title": "Loyihalar",
+  "projectsTab_sectionTitle": "Faol loyiha va boshqalar",
+  "projectsTab_pickerSubtitle": "Pastdagi ro'yxatdan boshqa loyihaga o'tishingiz mumkin",
+  "projectsTab_activeLabel": "Faol loyiha",
+  "projectsTab_scopeOrganization": "Tashkilot ko'lami",
+  "projectsTab_scopeProject": "Loyiha ko'lami",
+  "projectsTab_switchedSnackbar": "Faol loyiha: {name}",
+  "@projectsTab_switchedSnackbar": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "projectsTab_empty": "Sizga loyihalar biriktirilmagan",
+  "projectsTab_loadError": "Loyihalarni yuklashda xatolik: {message}",
+  "@projectsTab_loadError": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+
+  "timeAgoJustNow": "hozir",
+  "timeAgoMinutes": "{minutes} daqiqa oldin",
+  "timeAgoHours": "{hours} soat oldin",
+  "timeAgoDays": "{days} kun oldin",
+
+  "balanceStatusBalanceLabel": "Qarz",
+  "balanceStatusLimitLabel": "Cheklov",
+  "balanceStatusLimitNone": "Cheklov yo'q",
+  "balanceStatusLastUpdatedLabel": "So'nggi yangilanish",
+  "balanceStatusRefreshButton": "Yangilash",
+  "balanceStatusHeadlineOverLimit": "Qarz cheklovdan oshgan",
+  "balanceStatusHeadlineUnderLimit": "Qarz cheklov ichida",
+  "balanceStatusHeadlineOk": "Qarz yo'q",
+  "balanceStatusHeadlineUnknown": "Holat noma'lum",
+  "balanceStatusIndicatorSemantic": "Mijoz qarz holati",
+
+  "debtBlockedTitle": "Buyurtma to'sildi",
+  "debtBlockedNoCachedBalance": "Mijoz balansi oflayn rejimda mavjud emas. Tarmoqqa ulanib yangilang.",
+  "debtBlockedBodyOnline": "Mijoz qarzi {balance} {currency}, bu {limit} {currency} cheklovidan oshgan.",
+  "debtBlockedBodyOffline": "So'nggi ma'lum qarz {balance} (cheklov {limit}), {age} yangilangan.",
+  "debtBlockedStaleWarning": "Balans ma'lumotlari eski bo'lishi mumkin.",
+
+  "pendingBlockedOrdersTitle": "Qarz tufayli to'silgan buyurtmalar",
+  "orderBlockedByDebtBadge": "Qarz cheklovi bilan to'silgan",
+  "pendingBlockedOrdersCreatedAt": "Yaratilgan: {date}",
+  "retrySyncButton": "Qayta urinish"
 }

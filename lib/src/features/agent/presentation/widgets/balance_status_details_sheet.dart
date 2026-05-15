@@ -1,7 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/util/format_time_ago.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status_cache.dart';
 
@@ -11,22 +16,103 @@ import 'balance_status_theme.dart';
 /// numeric balance, the project debt limit and the age of the cached
 /// snapshot so the agent understands *why* a customer is yellow / red.
 ///
-/// Read-only — no actions. The actual block / unblock decision lives on the
-/// "create order" visit step, which surfaces the same data via
-/// [DebtBlockedDialog]. Keeping this sheet informational avoids duplicating
-/// the gate logic in the UI.
-class BalanceStatusDetailsSheet extends StatelessWidget {
+/// Has one optional action — **Refresh** — which calls
+/// [ClientBalanceService.fetchClientBalance] with `forceRefresh: true`.
+/// On success the [CustomerBalanceStatusCache] receives a push update via
+/// `onBalanceUpdated`, this sheet's [ListenableBuilder] picks it up and
+/// re-renders with the fresh data. The button is hidden when [code1c] is
+/// empty (older callers that don't pass it yet).
+///
+/// Sheet stays informational — no override action. The block / unblock
+/// decision still lives on the visit-step "create order" tile via
+/// [DebtBlockedDialog].
+class BalanceStatusDetailsSheet extends StatefulWidget {
   final String customerName;
   final CustomerBalanceStatusEntry entry;
+
+  /// INN — used to read the live entry from the cache after a refresh.
+  /// Defaults to empty for back-compat; the live-update path requires it.
+  final String inn;
+
+  /// `TradingPoint.code1c` — required to fire the REST refresh. When empty
+  /// the Refresh button is hidden.
+  final String code1c;
 
   const BalanceStatusDetailsSheet({
     super.key,
     required this.customerName,
     required this.entry,
+    this.inn = '',
+    this.code1c = '',
   });
 
   @override
+  State<BalanceStatusDetailsSheet> createState() =>
+      _BalanceStatusDetailsSheetState();
+}
+
+class _BalanceStatusDetailsSheetState extends State<BalanceStatusDetailsSheet> {
+  bool _refreshing = false;
+  CustomerBalanceStatusCache? _cache;
+
+  @override
+  void initState() {
+    super.initState();
+    if (sl.isRegistered<CustomerBalanceStatusCache>()) {
+      _cache = sl<CustomerBalanceStatusCache>();
+    }
+  }
+
+  Future<void> _refresh() async {
+    if (widget.code1c.isEmpty) return;
+    if (!sl.isRegistered<ClientBalanceService>()) return;
+    final projectCode = sl.isRegistered<ProjectContext>()
+        ? (sl<ProjectContext>().activeProject?.code ?? '')
+        : '';
+    if (projectCode.isEmpty) return;
+    setState(() => _refreshing = true);
+    try {
+      await sl<ClientBalanceService>().fetchClientBalance(
+        code1c: widget.code1c,
+        projectCode: projectCode,
+        inn: widget.inn.isEmpty ? null : widget.inn,
+        forceRefresh: true,
+      );
+      // Cache push is automatic via ClientBalanceService.saveClientBalance
+      // → CustomerBalanceStatusCache.onBalanceUpdated. Our ListenableBuilder
+      // will re-render on the next frame.
+    } catch (e) {
+      // Service now rethrows transport / parsing errors (previously
+      // swallowed). The bottom-sheet UX is read-only — log only; the
+      // ListenableBuilder keeps showing the previously-cached row.
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('BalanceStatusDetailsSheet: refresh failed: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _refreshing = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _cache ?? ValueNotifier<int>(0),
+      builder: (context, _) {
+        // Prefer the live cache entry (post-refresh) when available;
+        // fall back to the snapshot the caller passed in.
+        final liveEntry = (widget.inn.isNotEmpty)
+            ? _cache?.entryFor(widget.inn)
+            : null;
+        final entry = liveEntry ?? widget.entry;
+        return _buildSheet(context, entry);
+      },
+    );
+  }
+
+  Widget _buildSheet(BuildContext context, CustomerBalanceStatusEntry entry) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final l10n = AppLocalizations.of(context)!;
@@ -36,6 +122,7 @@ class BalanceStatusDetailsSheet extends StatelessWidget {
     final balanceText = _formatNumber(entry.balance);
     final limitText =
         entry.limit != null ? _formatNumber(entry.limit!) : '—';
+    final canRefresh = widget.code1c.isNotEmpty;
 
     return SafeArea(
       child: Padding(
@@ -57,7 +144,7 @@ class BalanceStatusDetailsSheet extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    customerName,
+                    widget.customerName,
                     style: theme.textTheme.titleMedium,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -65,7 +152,7 @@ class BalanceStatusDetailsSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            _statusHeadline(context, l10n),
+            _statusHeadline(context, l10n, entry),
             const SizedBox(height: 16),
             _kvRow(
               context,
@@ -86,7 +173,24 @@ class BalanceStatusDetailsSheet extends StatelessWidget {
               _kvRow(
                 context,
                 l10n.balanceStatusLastUpdatedLabel,
-                _formatAge(entry.lastUpdated!),
+                formatTimeAgo(entry.lastUpdated!, l10n),
+              ),
+            ],
+            if (canRefresh) ...[
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: _refreshing ? null : _refresh,
+                  icon: _refreshing
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh, size: 18),
+                  label: Text(l10n.balanceStatusRefreshButton),
+                ),
               ),
             ],
           ],
@@ -95,7 +199,11 @@ class BalanceStatusDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _statusHeadline(BuildContext context, AppLocalizations l10n) {
+  Widget _statusHeadline(
+    BuildContext context,
+    AppLocalizations l10n,
+    CustomerBalanceStatusEntry entry,
+  ) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final color =
@@ -162,13 +270,5 @@ class BalanceStatusDetailsSheet extends StatelessWidget {
 
   static String _formatNumber(double value) {
     return NumberFormat.decimalPattern().format(value);
-  }
-
-  static String _formatAge(DateTime fetchedAt) {
-    final delta = DateTime.now().difference(fetchedAt);
-    if (delta.inMinutes < 1) return 'just now';
-    if (delta.inMinutes < 60) return '${delta.inMinutes}m ago';
-    if (delta.inHours < 24) return '${delta.inHours}h ago';
-    return '${delta.inDays}d ago';
   }
 }

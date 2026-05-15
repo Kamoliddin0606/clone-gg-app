@@ -6,6 +6,7 @@
 /// ============================================================================
 
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
@@ -226,33 +227,93 @@ class ClientBalanceCubit extends Cubit<ClientBalanceState> {
   /// ============================================================================
   /// Xatolik turini aniqlash
   /// ============================================================================
+  /// Maps a thrown error to a [ClientBalanceErrorType]. Prefers the
+  /// structured `error.code` envelope from the backend (Passport §2.5)
+  /// over status-code heuristics, then falls back to string matching for
+  /// transport errors.
   ClientBalanceErrorType _classifyError(dynamic error) {
+    if (error is DioException) {
+      final response = error.response;
+      // Try the structured envelope first (Passport §2.5).
+      final body = response?.data;
+      if (body is Map) {
+        final errMap = body['error'];
+        final code = errMap is Map ? errMap['code']?.toString() : null;
+        switch (code) {
+          case 'not_configured':
+            return ClientBalanceErrorType.notConfigured;
+          case 'upstream_unavailable':
+            return ClientBalanceErrorType.upstreamUnavailable;
+          case 'forbidden':
+            return ClientBalanceErrorType.forbidden;
+          case 'not_found':
+          case 'customer_project_required':
+            return ClientBalanceErrorType.notFound;
+          case 'validation':
+            return ClientBalanceErrorType.invalidData;
+        }
+      }
+      // Fall back to status code.
+      switch (response?.statusCode) {
+        case 502:
+          return ClientBalanceErrorType.upstreamUnavailable;
+        case 503:
+          return ClientBalanceErrorType.notConfigured;
+        case 403:
+          return ClientBalanceErrorType.forbidden;
+        case 404:
+          return ClientBalanceErrorType.notFound;
+        case 400:
+          return ClientBalanceErrorType.invalidData;
+        case 500:
+        case 504:
+          return ClientBalanceErrorType.server;
+      }
+      // Transport-layer DioException types.
+      switch (error.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.receiveTimeout:
+        case DioExceptionType.sendTimeout:
+          return ClientBalanceErrorType.timeout;
+        case DioExceptionType.connectionError:
+          return ClientBalanceErrorType.network;
+        default:
+          break;
+      }
+    }
+
     final errorStr = error.toString().toLowerCase();
-    
-    if (errorStr.contains('socketexception') || 
+
+    if (errorStr.contains('socketexception') ||
         errorStr.contains('connection refused') ||
         errorStr.contains('network')) {
       return ClientBalanceErrorType.network;
     }
-    
+
     if (errorStr.contains('timeout') || errorStr.contains('timed out')) {
       return ClientBalanceErrorType.timeout;
     }
-    
-    if (errorStr.contains('500') || 
-        errorStr.contains('502') || 
-        errorStr.contains('503')) {
+
+    if (errorStr.contains('500')) {
       return ClientBalanceErrorType.server;
     }
-    
+    if (errorStr.contains('502')) {
+      return ClientBalanceErrorType.upstreamUnavailable;
+    }
+    if (errorStr.contains('503')) {
+      return ClientBalanceErrorType.notConfigured;
+    }
+    if (errorStr.contains('403')) {
+      return ClientBalanceErrorType.forbidden;
+    }
     if (errorStr.contains('404') || errorStr.contains('not found')) {
       return ClientBalanceErrorType.notFound;
     }
-    
+
     if (errorStr.contains('parse') || errorStr.contains('format')) {
       return ClientBalanceErrorType.invalidData;
     }
-    
+
     return ClientBalanceErrorType.unknown;
   }
 

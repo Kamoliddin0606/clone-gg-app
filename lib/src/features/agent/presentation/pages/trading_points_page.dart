@@ -2169,6 +2169,7 @@ class TradingPointCard extends StatelessWidget {
                 BalanceStatusIndicator(
                   inn: tradingPoint.inn,
                   customerName: tradingPoint.name,
+                  code1c: tradingPoint.code1c,
                 ),
                 const SizedBox(width: 4),
                 VisitIndicators(
@@ -2359,11 +2360,24 @@ class TradingPointCard extends StatelessWidget {
       );
     }
 
+    // Customer-balance gate (M12 P1.4). Block "visit" / "unplanned order"
+    // entry points before the visit even starts when the customer is over
+    // the project debt limit. The visit-step tile inside the visit flow
+    // also gates "create order" — this is defence-in-depth at the entry
+    // point so the agent sees the block immediately on the customer card.
+    final balanceCache = sl.isRegistered<CustomerBalanceStatusCache>()
+        ? sl<CustomerBalanceStatusCache>()
+        : null;
+    final balanceStatus = balanceCache?.statusFor(tradingPoint.inn) ??
+        CustomerBalanceStatus.unknown;
+    final isDebtBlocked =
+        balanceStatus == CustomerBalanceStatus.debtOverLimit;
+
     return [
       // Visit button - only enabled if user has visit permission and meets distance requirements
       if (permissions?.visit == true && tradingPoint.visitToday == true)
         FilledButton.icon(
-          onPressed: onInformVisit,
+          onPressed: isDebtBlocked ? null : onInformVisit,
           icon: const Icon(Icons.storefront, size: 18),
           label: Text(l10n.visitClient),
           style: FilledButton.styleFrom(
@@ -2379,7 +2393,7 @@ class TradingPointCard extends StatelessWidget {
           permissions?.unplannedOrder == true &&
           tradingPoint.visitToday == false)
         FilledButton.tonalIcon(
-          onPressed: onCreateOrder,
+          onPressed: isDebtBlocked ? null : onCreateOrder,
           icon: const Icon(Icons.shopping_cart, size: 18),
           label: Text(l10n.unplannedOrder),
           style: FilledButton.styleFrom(
@@ -3224,6 +3238,7 @@ class _TradingPointGridTile extends StatelessWidget {
                         BalanceStatusIndicator(
                           inn: tp.tradingPoint.inn,
                           customerName: tp.tradingPoint.name,
+                          code1c: tp.tradingPoint.code1c,
                         ),
                       ],
                     ),
@@ -4199,6 +4214,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
               BalanceStatusIndicator(
                 inn: widget.tradingPoint.inn,
                 customerName: widget.tradingPoint.name,
+                code1c: widget.tradingPoint.code1c,
                 size: 12,
               ),
             ],

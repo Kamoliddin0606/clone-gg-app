@@ -13,9 +13,21 @@ class TradingPointWithPermissions {
 
   /// Factory constructor to create from database row
   factory TradingPointWithPermissions.fromMap(Map<String, dynamic> map) {
-    // Create TradingPoint from the map
+    // Create TradingPoint from the map.
+    //
+    // `code`, `code_1c`, `code_backend`, `uuid_1c` are explicit on the
+    // returned TradingPoint so downstream balance / order / search flows
+    // can address the row by its 1C reference (`code1c`) and its backend
+    // identifiers without ambiguity. Without these the constructor
+    // defaults would silently leave `code1c = ''`, which surfaces as
+    // "Mijoz 1C kodi mavjud emas" in [ClientBalanceCubit].
+    final localCode = map['code'] as String;
     final tradingPoint = TradingPoint(
-      id: map['code'] as String,
+      id: localCode,
+      code: localCode,
+      code1c: map['code_1c'] as String? ?? '',
+      codeBackend: map['code_backend'] as String? ?? '',
+      customerUuid: map['uuid_1c'] as String? ?? '',
       name: map['name'] as String,
       address: map['address'] as String,
       phone: map['phone'] as String? ?? '',

@@ -1,4 +1,4 @@
-# Customer Balance Passport — umumiy standart (v1)
+# Customer Balance Passport — umumiy standart (v2)
 
 > Yagona haqiqat manbai. Backend va Mobile har qanday implementation savolida shu hujjatga murojaat qiladi. Bu yerda yo'q narsa — bog'lovchi emas. Bu yerdagi shartlarga zid implementation noto'g'ri.
 
@@ -17,9 +17,34 @@ Hozir mobile to'g'ridan-to'g'ri 1C buxgalteriya SOAP serveriga (`http://kit.glor
 | `debt_limit`, `debt_limit_currency` | **Project** modeli | Har loyiha o'z chegarasini belgilaydi. NULL = limit yo'q. |
 | Cached balans + breakdown | **`CustomerBalanceCache`** model — `(customer, project)` unique | Har bir `(mijoz, loyiha)` juftligi uchun yagona keng yozuv. |
 
+## 1.5 Authentication & headers (barcha endpoint'lar uchun umumiy)
+
+Quyidagi qoidalar §2, §3 va §3.5'da yozilgan **uchchala** balance endpoint'iga taalluqli.
+
+### Headerlar
+
+| Header | Qachon | Sabab |
+|---|---|---|
+| `Authorization: Bearer <token>` | Har doim majburiy | Mobile [`ApiService`](../lib/src/core/network/api_service.dart) interceptori avtomatik attach qiladi (V2 token) |
+| `X-Project-Id: <uuid \| 1c-ref \| code>` | **Project-scope tenant'larda majburiy** | Mobile [`CustomerEndpointHeaders`](../lib/src/core/network/customer_endpoint_headers.dart) attach qiladi |
+| `Content-Type: application/json` | POST'larda | Standart |
+| `Accept: application/json` | Standart | — |
+
+### `X-Project-Id` qoida
+
+- **Org-scope tenant** (`Organization.customer_scope == "organization"`): backend header'ni e'tiborsiz qoldiradi. Customer global org ostida resolve qilinadi.
+- **Project-scope tenant** (`Organization.customer_scope == "project"`):
+  - Header **majburiy**. Yo'q bo'lsa: HTTP 400 + `{"error":{"code":"customer_project_required",...}}`.
+  - Backend qabul qilishi kerak bo'lgan format: `Project.id` (UUID), `Project.id_1c` (`00-XXXXXX`), yoki `Project.code` (SOAP-style). Uchchalasini ham resolve qiladi (priority: UUID → 1C → code).
+  - Backend `Customer.objects.filter(project=<resolved>, code_1c=<request.code_1c>)` aniq filter — boshqa loyiha customer'ini qaytarmasligi kerak (cross-project leak yo'q).
+
+### Permission
+
+Hamma uchun: `customers.view_customer` codename. Foydalanuvchining `BackendPermissionStore` ga sync qilinadigan codename'lari ichida.
+
 ## 2. Endpoint — `POST /api/mobile/v2/customers/balance/`
 
-**Auth:** Bearer token (mavjud mobile auth). Permission: `customers.view_customer` codename.
+**Auth:** §1.5'ga binoan Bearer + (project-scope'da) X-Project-Id. Permission: `customers.view_customer`.
 
 **Request body:**
 
@@ -169,7 +194,7 @@ JSON kalitlari mobile [`lib/src/features/agent/data/models/client_balance.dart`]
 
 ## 3. Endpoint — `GET /api/mobile/v2/projects/config/`
 
-**Auth:** Bearer token.
+**Auth:** §1.5'ga binoan Bearer + (project-scope'da) X-Project-Id.
 
 **Response 200:**
 
@@ -181,6 +206,82 @@ JSON kalitlari mobile [`lib/src/features/agent/data/models/client_balance.dart`]
 ```
 
 Foydalanuvchiga ko'rinadigan loyihalar bilan cheklanadi. Mobile bu endpointni `syncUserProjects` oxirida chaqirib lokal `user_projects` jadvalini yangilaydi.
+
+`debt_limit_currency` har doim string (default `"UZS"`). `debt_limit` `null` bo'lsa — limit yo'q (mobile uni `noDebt` sifatida ko'radi).
+
+## 3.5 Endpoint — `POST /api/mobile/v2/analytics/balance-gate/`
+
+Mobile [`BalanceGateEventLogger`](../lib/src/features/agent/services/balance_gate_event_logger.dart) `DebtBlockedDialog` ko'rsatilgan har gal shu endpoint'ga **best-effort** event yuboradi (Passport §7 talabini qondirish uchun).
+
+**Auth:** §1.5'ga binoan Bearer + (project-scope'da) X-Project-Id.
+
+**Request body:**
+
+```json
+{
+  "event": "customer.balance.blocked",
+  "code_1c": "00-00053242",
+  "project_code": "EVYAP",
+  "balance": -2250.0,
+  "limit": 5000000.0,
+  "currency": "UZS",
+  "source": "fresh",
+  "reason": "debt_limit_exceeded",
+  "is_offline": false,
+  "is_stale": false,
+  "trigger": "visit_step_entry",
+  "timestamp": "2026-05-14T12:00:00Z"
+}
+```
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `event` | string | yes | Hozircha faqat `"customer.balance.blocked"`. Kelajakda boshqa event'lar (`"customer.balance.fetched"`, etc.) qo'shilishi mumkin. |
+| `code_1c` | string | yes | Empty bo'lishi mumkin (legacy caller'lar). |
+| `project_code` | string | yes | Empty bo'lishi mumkin. |
+| `balance` | number (double) | yes | Spec note: bu yerda **double**, chunki mobile-dan keladi. §2.2 string-Decimal qoidasi faqat backend → mobile yo'nalishida. |
+| `limit` | number (double) \| null | yes | `null` = limit yo'q. |
+| `currency` | string | yes | ISO 4217. |
+| `source` | string | yes | `"fresh" \| "cache" \| "stale" \| "local"`. `"local"` = offline branch. |
+| `reason` | string \| null | yes | `"debt_limit_exceeded" \| "no_cached_balance" \| "fetch_failed" \| "no_active_project" \| null`. |
+| `is_offline` | bool | yes | Mobile `ConnectivityMonitorService.isConnected == false` bo'lganmi. |
+| `is_stale` | bool | yes | Cached balans 24+ soat eskirganmi. |
+| `trigger` | string | yes | Kim emit qildi: `"visit_step_entry" \| "visit_step_tile" \| "pre_submit" \| "detail_sheet" \| "unknown"`. |
+| `timestamp` | ISO-8601 (UTC) | yes | Mobile tomonida yaratilgan vaqt. |
+
+**Response 204** — body yo'q. Mobile body o'qimaydi.
+
+**Behavior:**
+
+- Idempotent emas — har dialog show alohida event sifatida saqlanadi.
+- Failure'ni mobile silently swallow qiladi (analytics hech qachon UI'ni bloklamaydi). Endpoint deploy bo'lmaganda mobile 404 oladi va e'tiborsiz qoldiradi.
+
+**Storage (backend tavsiya etiladigan):** `apps.analytics.BalanceGateEvent` Django model:
+
+```python
+class BalanceGateEvent(models.Model):
+    organization = models.ForeignKey('tenants.Organization', on_delete=models.CASCADE)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE)
+    project = models.ForeignKey('projects.Project', on_delete=models.SET_NULL, null=True)
+    customer_code_1c = models.CharField(max_length=64)
+    event_name = models.CharField(max_length=64)  # "customer.balance.blocked"
+    balance = models.DecimalField(max_digits=20, decimal_places=2)
+    debt_limit = models.DecimalField(max_digits=20, decimal_places=2, null=True)
+    currency = models.CharField(max_length=8, default='UZS')
+    source = models.CharField(max_length=16)
+    reason = models.CharField(max_length=64, null=True)
+    is_offline = models.BooleanField(default=False)
+    is_stale = models.BooleanField(default=False)
+    trigger = models.CharField(max_length=32, default='unknown')
+    client_timestamp = models.DateTimeField()
+    server_timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['organization', 'project', 'server_timestamp']),
+            models.Index(fields=['customer_code_1c', 'server_timestamp']),
+        ]
+```
 
 ## 4. Cache va TTL invariantlari
 
@@ -217,9 +318,52 @@ Real 1C namunasidan tasdiqlangan:
 
 ## 7. Logging va audit
 
-- Har bir SOAP chaqiruv `apps.sync.IntegrationLog`'ga yoziladi: `endpoint=organization.external_balance_url`, `project`, `organization`, `request_payload`, `response_payload`, `status` (`OK`/`HTTP_ERROR`/`TIMEOUT`/`TRANSPORT_ERROR`), `duration_ms`.
-- Har bir SOAP failure `CustomerBalanceCache.last_error`'ga ham qisqacha tavsif sifatida yoziladi (mobile uchun `last_error` field'i orqali ko'rinadi).
-- Mobile tomondan har bir `blocked=true` natija analytics event'iga yoziladi (mavjud bo'lsa).
+### 7.1 SOAP chaqiruvlari (har bir `customers/balance/` POST'da)
+
+`apps.sync.IntegrationLog` model'iga yoziladi (har bir SOAP chaqiruv = bitta qator):
+
+```python
+IntegrationLog.objects.create(
+    endpoint=organization.external_balance_url,
+    project=project,                            # FK
+    organization=organization,                  # FK
+    request_payload=soap_envelope_xml,          # full XML
+    response_payload=soap_response_xml[:5000],  # truncated
+    status='OK' | 'HTTP_ERROR' | 'TIMEOUT' | 'TRANSPORT_ERROR',
+    duration_ms=elapsed_ms,
+    created_at=timezone.now(),
+)
+```
+
+SOAP failure bo'lsa `CustomerBalanceCache.last_error`'ga ham qisqacha tavsif yoziladi (mobile uchun `last_error` field'i orqali ko'rinadi).
+
+### 7.2 Block decision (har bir `blocked=true` qarorda)
+
+`/customers/balance/` ichida `blocked = true` qaror chiqarilganda alohida log:
+
+```python
+IntegrationLog.objects.create(
+    endpoint='customers/balance/blocked',
+    project=project,
+    organization=organization,
+    customer=customer,                          # FK (yangi field, optional)
+    request_payload={
+        'code_1c': customer.code_1c,
+        'project_code': project.code,
+        'balance': str(balance),
+        'debt_limit': str(project.debt_limit),
+    },
+    response_payload={'reason': 'debt_limit_exceeded'},
+    status='OK',
+    duration_ms=0,
+)
+```
+
+### 7.3 Mobile-side analytics
+
+Mobile [`BalanceGateEventLogger`](../lib/src/features/agent/services/balance_gate_event_logger.dart) Passport §3.5 endpoint'iga POST yuboradi (`POST /api/mobile/v2/analytics/balance-gate/`). Backend bu event'larni `BalanceGateEvent` model'ida saqlaydi (Passport §3.5 storage misoliga qarang).
+
+**Diff vs §7.2:** §7.2 backend o'z block qarorini log qiladi, §7.3 mobile-side observability — masalan, offline holda mobile o'zicha block qarorini chiqargan bo'lsa, bu §7.2'ga tushmaydi (backend chaqiruv bo'lmaydi), faqat §7.3'da ko'rinadi. Shuning uchun ikkala log to'liq picture beradi.
 
 ## 8. Versioning
 
@@ -302,3 +446,4 @@ Headers: `Content-Type: application/soap+xml; charset=utf-8`, `SOAPAction: ""`.
 | Versiya | Sana | O'zgarish |
 |---|---|---|
 | v1 | 2026-05-14 | Birinchi versiya. |
+| v2 | 2026-05-15 | §1.5 (Authentication + X-Project-Id qoidasi) qo'shildi. §3.5 (`POST /api/mobile/v2/analytics/balance-gate/`) qo'shildi. §7 IntegrationLog format aniq belgilandi. Mobile P0 ishlari hisobga olindi. |

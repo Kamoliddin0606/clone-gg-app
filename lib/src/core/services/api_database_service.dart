@@ -36,6 +36,19 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
 
+/// Identifies which column in `user_projects` matched a backend project key
+/// when applying a debt-limit update via
+/// [ApiDatabaseService.updateUserProjectDebtLimitByAnyKey]. Surfaced for
+/// diagnostic logging so a silent miss between SOAP-issued codes and
+/// backend-issued slugs can be spotted in the field.
+enum ProjectDebtLimitMatchKey {
+  code,
+  id1c,
+  idUuid,
+  nameInsensitive,
+  none,
+}
+
 class ApiDatabaseService {
   static final ApiDatabaseService _instance = ApiDatabaseService._internal();
   static Database? _database;
@@ -57,7 +70,7 @@ class ApiDatabaseService {
 
     return await openDatabase(
       path,
-      version: 42, // v42: customer balance debt-limit fields (debt_limit, currency, blocked, source...) on client_balances + user_projects
+      version: 44, // v44: backfill clients.code_1c for legacy SOAP rows where the v43 migration didn't carry the copy step
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -1855,6 +1868,88 @@ class ApiDatabaseService {
             'ApiDatabaseService: customer balance debt-limit columns added (version 42)');
       }
     }
+
+    // =========================================================================
+    // Version 43: split customer identifiers
+    // - clients.code_backend  — backend-allocated stable code (C-XXXXXXXX)
+    // - clients.uuid_1c       — backend customer UUID (anchors the row to its
+    //   1C entity; populated from `GET /api/mobile/v2/customers/` rows)
+    // SOAP-sourced rows leave both blank; backend sync merges by code_1c and
+    // fills the new columns without touching SOAP-owned metadata.
+    // =========================================================================
+    if (oldVersion < 43) {
+      const clientColumns = <String, String>{
+        'code_backend': "TEXT NOT NULL DEFAULT ''",
+        'uuid_1c': "TEXT NOT NULL DEFAULT ''",
+      };
+      for (final entry in clientColumns.entries) {
+        try {
+          await db.execute(
+            'ALTER TABLE clients ADD COLUMN ${entry.key} ${entry.value}',
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            print(
+                'ApiDatabaseService: skip ADD ${entry.key} on clients (likely already present): $e');
+          }
+        }
+      }
+
+      // Backfill `code_1c` for legacy SOAP-sourced rows. Until v43 the SOAP
+      // parser only wrote `<m:Code>` into `code` and left `code_1c` blank,
+      // so existing installs carry rows with `code_1c = ''` even though
+      // `code` already holds the 1C reference. The balance cubit + order
+      // gate key off `code_1c`, so without this backfill every legacy row
+      // shows "Mijoz 1C kodi mavjud emas" until the next SOAP sync rewrites
+      // the column. Backend-allocated codes start with `C-` and are NOT a
+      // valid 1C reference — those rows are skipped.
+      try {
+        final updated = await db.rawUpdate(
+          "UPDATE clients SET code_1c = code "
+          "WHERE (code_1c IS NULL OR code_1c = '') "
+          "AND code IS NOT NULL AND code != '' AND code NOT LIKE 'C-%'",
+        );
+        if (kDebugMode) {
+          print(
+              'ApiDatabaseService: backfilled code_1c on $updated legacy clients rows (version 43)');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('ApiDatabaseService: code_1c backfill failed: $e');
+        }
+      }
+
+      if (kDebugMode) {
+        print(
+            'ApiDatabaseService: clients.code_backend + clients.uuid_1c columns added (version 43)');
+      }
+    }
+
+    // =========================================================================
+    // Version 44: re-run the legacy SOAP code_1c backfill.
+    // Devices that upgraded to v43 in an earlier build of this branch added
+    // the `code_backend` / `uuid_1c` columns BEFORE the backfill statement
+    // existed, so their `clients.code_1c` is still empty for SOAP-sourced
+    // rows. Re-running the same idempotent UPDATE here catches those rows
+    // without disturbing already-populated values.
+    // =========================================================================
+    if (oldVersion < 44) {
+      try {
+        final updated = await db.rawUpdate(
+          "UPDATE clients SET code_1c = code "
+          "WHERE (code_1c IS NULL OR code_1c = '') "
+          "AND code IS NOT NULL AND code != '' AND code NOT LIKE 'C-%'",
+        );
+        if (kDebugMode) {
+          print(
+              'ApiDatabaseService: backfilled code_1c on $updated legacy clients rows (version 44)');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('ApiDatabaseService: code_1c backfill failed (v44): $e');
+        }
+      }
+    }
   }
 
   Future<void> _createTables(Database db) async {
@@ -1954,6 +2049,8 @@ class ApiDatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         code TEXT UNIQUE NOT NULL,
         code_1c TEXT NOT NULL DEFAULT '',
+        code_backend TEXT NOT NULL DEFAULT '',
+        uuid_1c TEXT NOT NULL DEFAULT '',
         name TEXT NOT NULL,
         address TEXT NOT NULL,
         phone TEXT,
@@ -3059,6 +3156,8 @@ class ApiDatabaseService {
       batch.insert('clients', {
         'code': client.id,
         'code_1c': client.code1c,
+        'code_backend': client.codeBackend,
+        'uuid_1c': client.customerUuid,
         'name': client.name,
         'address': client.address,
         'phone': client.phone,
@@ -3173,6 +3272,8 @@ class ApiDatabaseService {
       {
         'code': localCode,
         'code_1c': client.code1c,
+        'code_backend': client.codeBackend,
+        'uuid_1c': client.customerUuid,
         'name': client.name,
         'address': client.address,
         'phone': client.phone,
@@ -3280,9 +3381,152 @@ class ApiDatabaseService {
             codeRegion: row['code_region'] as String? ?? '',
             code: row['code'] as String,
             code1c: row['code_1c'] as String? ?? '',
+            codeBackend: row['code_backend'] as String? ?? '',
+            customerUuid: row['uuid_1c'] as String? ?? '',
           ),
         )
         .toList();
+  }
+
+  /// Merge a page of backend-sourced customer rows into the `clients` cache.
+  ///
+  /// The contract is intentionally narrow — only the columns the backend
+  /// owns end-to-end are written here:
+  ///   • `code_1c`      — populated by the backend's 1C handoff
+  ///   • `code_backend` — backend-allocated `C-XXXXXXXX`
+  ///   • `uuid_1c`      — backend customer UUID
+  ///   • `status`       — backend `is_active` projection
+  /// SOAP-owned metadata (`name`, `address`, `phone`, geo, region, contract
+  /// flags …) is left untouched on matched rows so a SOAP sync that ran
+  /// earlier stays authoritative. For rows the SOAP pipeline never produced
+  /// (the brief `pending_1c` window before 1C catches up) we INSERT a thin
+  /// row carrying just the identifiers + name/address so the trading-points
+  /// list still has something to show.
+  ///
+  /// Match priority:
+  ///   1. `code_1c` (when the backend row has it) — links to a SOAP-sourced
+  ///      row using the same 1C reference.
+  ///   2. `code_backend` (pending_1c window) — links to a previously inserted
+  ///      backend-only row.
+  ///   3. No match → INSERT new row with `code = code_1c || code_backend`.
+  Future<Map<String, int>> mergeBackendCustomers(
+    List<TradingPoint> customers,
+  ) async {
+    final stopwatch = Stopwatch()..start();
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    // O(n) index of existing rows by both keys we may need.
+    final existingRows = await db.rawQuery(
+      'SELECT code, code_1c, code_backend FROM clients',
+    );
+    final byCode1c = <String, String>{}; // code_1c → code (local PK)
+    final byCodeBackend = <String, String>{}; // code_backend → code
+    for (final row in existingRows) {
+      final code = row['code'] as String;
+      final c1c = (row['code_1c'] as String?) ?? '';
+      final cb = (row['code_backend'] as String?) ?? '';
+      if (c1c.isNotEmpty) byCode1c[c1c] = code;
+      if (cb.isNotEmpty) byCodeBackend[cb] = code;
+    }
+
+    int matchedCount = 0;
+    int insertedCount = 0;
+    int skippedCount = 0;
+
+    final batch = db.batch();
+    for (final customer in customers) {
+      final c1c = customer.code1c;
+      final cb = customer.codeBackend;
+
+      // Resolve match key → existing local `code`.
+      String? existingCode;
+      if (c1c.isNotEmpty && byCode1c.containsKey(c1c)) {
+        existingCode = byCode1c[c1c];
+      } else if (cb.isNotEmpty && byCodeBackend.containsKey(cb)) {
+        existingCode = byCodeBackend[cb];
+      }
+
+      if (existingCode != null) {
+        batch.update(
+          'clients',
+          {
+            'code_1c': c1c,
+            'code_backend': cb,
+            'uuid_1c': customer.customerUuid,
+            'status': customer.status,
+            'updated_at': now,
+          },
+          where: 'code = ?',
+          whereArgs: [existingCode],
+        );
+        matchedCount++;
+      } else {
+        // Neither key matched — insert a thin pending row. Use `code_1c`
+        // when present, else `code_backend`, else skip (no usable key).
+        final localCode = c1c.isNotEmpty
+            ? c1c
+            : (cb.isNotEmpty ? cb : '');
+        if (localCode.isEmpty) {
+          skippedCount++;
+          continue;
+        }
+        batch.insert(
+          'clients',
+          {
+            'code': localCode,
+            'code_1c': c1c,
+            'code_backend': cb,
+            'uuid_1c': customer.customerUuid,
+            'name': customer.name,
+            'address': customer.address,
+            'phone': customer.phone,
+            'inn': customer.inn,
+            'contact_person': customer.contactPerson,
+            'latitude': customer.latitude,
+            'longitude': customer.longitude,
+            'region': customer.region,
+            'district': customer.district,
+            'status': customer.status,
+            'last_visit_date': customer.lastVisitDate,
+            'has_orders': customer.hasOrders ? 1 : 0,
+            'has_contracts': customer.hasContracts ? 1 : 0,
+            'is_visited': customer.isVisited ? 1 : 0,
+            'has_contract': customer.hasContract ? 1 : 0,
+            'owner_name': customer.ownerName,
+            'signboard': customer.signboard,
+            'reference_point': customer.referencePoint,
+            'responsible_person': customer.responsiblePerson,
+            'responsible_person_phone': customer.responsiblePersonPhone,
+            'trade_point_type': customer.tradePointType,
+            'credit_limit': customer.creditLimit,
+            'accumulated_credit': customer.accumulatedCredit,
+            'code_region': customer.codeRegion,
+            'created_at': now,
+            'updated_at': now,
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+        insertedCount++;
+      }
+    }
+
+    await batch.commit(noResult: true);
+    stopwatch.stop();
+
+    if (kDebugMode) {
+      print(
+        '[BackendCustomerMerge] +$insertedCount, ~$matchedCount, skip $skippedCount '
+        '(${stopwatch.elapsedMilliseconds}ms)',
+      );
+    }
+
+    return {
+      'matched': matchedCount,
+      'inserted': insertedCount,
+      'skipped': skippedCount,
+      'duration_ms': stopwatch.elapsedMilliseconds,
+    };
   }
 
   /// Get unique trade point types from existing clients
@@ -9304,12 +9548,23 @@ class ApiDatabaseService {
   ///
   /// Safe to call on org-scope tenants too (no-op effect: list re-fetch
   /// brings the same rows back).
+  ///
+  /// Includes the customer-balance triple
+  /// (`client_balances`, `client_balance_contracts`, `client_balance_orders`)
+  /// — without these wipes, project A's balances would be served under
+  /// project B because `client_balances.inn` is UNIQUE and the row simply
+  /// stays put on switch (M12 P0.2 fix). [CustomerBalanceStatusCache]
+  /// listens to `ProjectContext.activeProjectStream` and re-bootstraps
+  /// itself, so the cleared DB state is reflected on the next read.
   Future<void> clearCustomerCacheForProjectSwitch() async {
     try {
       final db = await database;
       await db.delete('clients');
       await db.delete('client_images');
       await db.delete('client_contracts');
+      await db.delete('client_balances');
+      await db.delete('client_balance_contracts');
+      await db.delete('client_balance_orders');
       if (kDebugMode) {
         print(
             'ApiDatabaseService: cleared customer caches for project switch');
@@ -9498,6 +9753,60 @@ class ApiDatabaseService {
       where: 'code = ?',
       whereArgs: [code],
     );
+  }
+
+  /// Resolve the `/api/mobile/v2/projects/config/` `code` against the local
+  /// `user_projects` table by trying each candidate column in turn:
+  /// `code` → `id_1c` → `id_uuid` → case-insensitive `name` prefix.
+  ///
+  /// The fallback chain exists because SOAP `GetUserProjects` returns a
+  /// numeric/slug code that does not always match the backend slug
+  /// (`"EVYAP"`, `"LOREAL_UT"`, …). Without the fallback the limit silently
+  /// stays null on the device.
+  ///
+  /// Returns the [ProjectDebtLimitMatchKey] describing which column matched
+  /// (or [ProjectDebtLimitMatchKey.none] if nothing matched). Callers use
+  /// the result for diagnostic logging.
+  Future<ProjectDebtLimitMatchKey> updateUserProjectDebtLimitByAnyKey({
+    required String backendCode,
+    required double? debtLimit,
+    required String? debtLimitCurrency,
+  }) async {
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    final values = <String, Object?>{
+      'debt_limit': debtLimit,
+      'debt_limit_currency': debtLimitCurrency,
+      'updated_at': now,
+    };
+
+    Future<int> tryUpdate(String where, List<Object?> args) {
+      return db.update('user_projects', values, where: where, whereArgs: args);
+    }
+
+    var affected = await tryUpdate('code = ?', [backendCode]);
+    if (affected > 0) return ProjectDebtLimitMatchKey.code;
+
+    affected = await tryUpdate('id_1c = ?', [backendCode]);
+    if (affected > 0) return ProjectDebtLimitMatchKey.id1c;
+
+    affected = await tryUpdate('id_uuid = ?', [backendCode]);
+    if (affected > 0) return ProjectDebtLimitMatchKey.idUuid;
+
+    // Case-insensitive name match — last-resort. Backend returns slugs like
+    // `"EVYAP"`; the local `name` column often carries vendor-formatted
+    // strings such as `"Evyap_-"`. We accept any local name that starts
+    // with the backend slug (uppercased) so the trailing `_-`/spaces don't
+    // defeat the match.
+    affected = await tryUpdate(
+      'UPPER(name) LIKE ?',
+      ['${backendCode.toUpperCase()}%'],
+    );
+    if (affected > 0) return ProjectDebtLimitMatchKey.nameInsensitive;
+
+    return ProjectDebtLimitMatchKey.none;
   }
 
   /// Удалить проект по коду / Kod bo'yicha loyihani o'chirish

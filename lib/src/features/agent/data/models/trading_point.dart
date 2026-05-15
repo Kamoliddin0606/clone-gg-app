@@ -43,8 +43,12 @@ class TradingPoint {
   // identifier — it is a downstream value that may be empty during the
   // brief `pending_1c` window. `customerUuid` carries the backend UUID
   // needed by the photo flows (`/api/mobile/v2/customers/{uuid}/photos/`).
+  // `codeBackend` holds the backend-allocated `C-XXXXXXXX` separately from
+  // `code` so SOAP-sourced rows (where `code` == 1C kod) and backend-sourced
+  // rows can coexist without overwriting one another.
   final String code;
   final String code1c;
+  final String codeBackend;
   final String customerUuid;
   final String customerStatus;
   final String addressDelivery;
@@ -87,6 +91,7 @@ class TradingPoint {
     this.clientClass,
     this.code = '',
     this.code1c = '',
+    this.codeBackend = '',
     this.customerUuid = '',
     this.customerStatus = '',
     this.addressDelivery = '',
@@ -151,6 +156,7 @@ class TradingPoint {
       clientClass: json['clientClass']?.toString(),
       code: json['code']?.toString() ?? '',
       code1c: json['code1c']?.toString() ?? '',
+      codeBackend: json['codeBackend']?.toString() ?? '',
       customerUuid: json['customerUuid']?.toString() ?? '',
       customerStatus: json['customerStatus']?.toString() ?? '',
       addressDelivery: json['addressDelivery']?.toString() ?? '',
@@ -184,15 +190,18 @@ class TradingPoint {
       return value is String ? value : (value?.toString() ?? '');
     }
 
-    final code = readString('code');
+    final backendCode = readString('code');
     final code1c = readString('code_1c');
     final uuid = readString('id');
-    final localId = code.isNotEmpty
-        ? code
-        : (code1c.isNotEmpty ? code1c : uuid);
+    // Local `code` mirrors the 1C reference when present so SOAP-keyed
+    // lookups (balance, orders) keep working; falls back to the backend
+    // code during the brief `pending_1c` window, then to the UUID.
+    final localCode = code1c.isNotEmpty
+        ? code1c
+        : (backendCode.isNotEmpty ? backendCode : uuid);
 
     return TradingPoint(
-      id: localId,
+      id: localCode,
       name: readString('name'),
       address: readString('address'),
       phone: readString('phone'),
@@ -217,8 +226,9 @@ class TradingPoint {
       creditLimit: 0.0,
       accumulatedCredit: 0.0,
       codeRegion: readString('code_region'),
-      code: code,
+      code: localCode,
       code1c: code1c,
+      codeBackend: backendCode,
       customerUuid: uuid,
       customerStatus: readString('status'),
       addressDelivery: readString('address_delivery'),
@@ -267,6 +277,7 @@ class TradingPoint {
       'clientClass': clientClass,
       'code': code,
       'code1c': code1c,
+      'codeBackend': codeBackend,
       'customerUuid': customerUuid,
       'customerStatus': customerStatus,
       'addressDelivery': addressDelivery,
@@ -311,6 +322,7 @@ class TradingPoint {
     String? clientClass,
     String? code,
     String? code1c,
+    String? codeBackend,
     String? customerUuid,
     String? customerStatus,
     String? addressDelivery,
@@ -353,6 +365,7 @@ class TradingPoint {
       clientClass: clientClass ?? this.clientClass,
       code: code ?? this.code,
       code1c: code1c ?? this.code1c,
+      codeBackend: codeBackend ?? this.codeBackend,
       customerUuid: customerUuid ?? this.customerUuid,
       customerStatus: customerStatus ?? this.customerStatus,
       addressDelivery: addressDelivery ?? this.addressDelivery,

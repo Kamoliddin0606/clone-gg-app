@@ -237,55 +237,60 @@ class SoapApiService {
       final document = XmlDocument.parse(response.data);
       final rowsElements = document.findAllElements('m:Rows');
 
-      return rowsElements
-          .map(
-            (row) => TradingPoint(
-              id: _getElementText(row, 'm:Code') ?? '',
-              name: _getElementText(row, 'm:Name') ?? '',
-              address: _getElementText(row, 'm:AdressDelivery') ?? '',
-              phone: _getElementText(row, 'm:ContactPersonPhone') ?? '',
-              ownerName: _getElementText(row, 'm:ContactPerson') ?? '',
-              contactPerson: _getElementText(row, 'm:ContactPerson') ?? '',
-              inn: _getElementText(row, 'm:INN') ?? '',
-              status: 'active',
-              lastVisitDate: '',
-              hasOrders:
-                  int.tryParse(
-                    _getElementText(row, 'm:TheNumberOfOrders') ?? '0',
-                  ) !=
-                  0,
-              hasContracts: false,
-              isVisited: false,
-              hasContract: false,
-              latitude:
-                  double.tryParse(_getElementText(row, 'm:Latitude') ?? '0') ??
-                  0.0,
-              longitude:
-                  double.tryParse(_getElementText(row, 'm:Longitude') ?? '0') ??
-                  0.0,
-              region: '',
-              district: '',
-              signboard: _getElementText(row, 'm:Signboard') ?? '',
-              referencePoint: _getElementText(row, 'm:ReferencePoint') ?? '',
-              responsiblePerson:
-                  _getElementText(row, 'm:ResponsiblePerson') ?? '',
-              responsiblePersonPhone:
-                  _getElementText(row, 'm:ResponsiblePersonPhone') ?? '',
-              tradePointType: _getElementText(row, 'm:TradePointType') ?? '',
-              creditLimit:
-                  double.tryParse(
-                    _getElementText(row, 'm:CreditLimit') ?? '0',
-                  ) ??
-                  0.0,
-              accumulatedCredit:
-                  double.tryParse(
-                    _getElementText(row, 'm:AccumulatedCredit') ?? '0',
-                  ) ??
-                  0.0,
-              codeRegion: _getElementText(row, 'm:CodeRegion') ?? '',
-            ),
-          )
-          .toList();
+      return rowsElements.map((row) {
+        final soapCode = _getElementText(row, 'm:Code') ?? '';
+        return TradingPoint(
+          id: soapCode,
+          // SOAP only exposes the 1C code; mirror it onto both `code` and
+          // `code1c` so the local row carries the same value in either column
+          // for SOAP-sourced rows. Backend sync later enriches `codeBackend`
+          // and `customerUuid` via merge-by-code_1c.
+          code: soapCode,
+          code1c: soapCode,
+          name: _getElementText(row, 'm:Name') ?? '',
+          address: _getElementText(row, 'm:AdressDelivery') ?? '',
+          phone: _getElementText(row, 'm:ContactPersonPhone') ?? '',
+          ownerName: _getElementText(row, 'm:ContactPerson') ?? '',
+          contactPerson: _getElementText(row, 'm:ContactPerson') ?? '',
+          inn: _getElementText(row, 'm:INN') ?? '',
+          status: 'active',
+          lastVisitDate: '',
+          hasOrders:
+              int.tryParse(
+                _getElementText(row, 'm:TheNumberOfOrders') ?? '0',
+              ) !=
+              0,
+          hasContracts: false,
+          isVisited: false,
+          hasContract: false,
+          latitude:
+              double.tryParse(_getElementText(row, 'm:Latitude') ?? '0') ??
+              0.0,
+          longitude:
+              double.tryParse(_getElementText(row, 'm:Longitude') ?? '0') ??
+              0.0,
+          region: '',
+          district: '',
+          signboard: _getElementText(row, 'm:Signboard') ?? '',
+          referencePoint: _getElementText(row, 'm:ReferencePoint') ?? '',
+          responsiblePerson:
+              _getElementText(row, 'm:ResponsiblePerson') ?? '',
+          responsiblePersonPhone:
+              _getElementText(row, 'm:ResponsiblePersonPhone') ?? '',
+          tradePointType: _getElementText(row, 'm:TradePointType') ?? '',
+          creditLimit:
+              double.tryParse(
+                _getElementText(row, 'm:CreditLimit') ?? '0',
+              ) ??
+              0.0,
+          accumulatedCredit:
+              double.tryParse(
+                _getElementText(row, 'm:AccumulatedCredit') ?? '0',
+              ) ??
+              0.0,
+          codeRegion: _getElementText(row, 'm:CodeRegion') ?? '',
+        );
+      }).toList();
     } catch (e) {
       throw Exception('Mijozlar ro\'yxatini olishda xatolik: $e');
     }

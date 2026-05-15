@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status_cache.dart';
@@ -25,6 +26,11 @@ class BalanceStatusIndicator extends StatefulWidget {
   /// Customer name surfaced in the details sheet header.
   final String customerName;
 
+  /// `TradingPoint.code1c` — passed through to the details sheet so it can
+  /// fire a force-refresh via the REST balance proxy. Optional: when empty
+  /// the sheet hides its Refresh action.
+  final String code1c;
+
   /// Visual size of the dot in logical pixels. Defaults to 10 — the size we
   /// settled on for the inline-with-name placement.
   final double size;
@@ -33,6 +39,7 @@ class BalanceStatusIndicator extends StatefulWidget {
     super.key,
     required this.inn,
     required this.customerName,
+    this.code1c = '',
     this.size = 10,
   });
 
@@ -49,10 +56,14 @@ class _BalanceStatusIndicatorState extends State<BalanceStatusIndicator>
   @override
   void initState() {
     super.initState();
+    // Controller is created idle; build() starts it only when there's a
+    // visible dot to render. Keeps long lists from burning frames on
+    // hundreds of `noDebt`/`unknown` widgets that produce SizedBox.shrink.
+    // M12 P1.1.
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),
-    )..repeat(reverse: true);
+    );
     _pulse = Tween<double>(begin: 0.45, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
@@ -86,12 +97,19 @@ class _BalanceStatusIndicatorState extends State<BalanceStatusIndicator>
           Theme.of(context).colorScheme,
         );
         if (color == null) {
+          // Pause the ticker — no dot, no animation needed (M12 P1.1).
+          if (_controller.isAnimating) _controller.stop();
           return const SizedBox.shrink();
+        }
+        // Visible — make sure the pulse is running.
+        if (!_controller.isAnimating) {
+          _controller.repeat(reverse: true);
         }
 
         return Semantics(
           button: true,
-          label: 'Balance status indicator',
+          label: AppLocalizations.of(context)?.balanceStatusIndicatorSemantic ??
+              'Customer balance status',
           child: GestureDetector(
             onTap: () => _openDetails(context, entry),
             behavior: HitTestBehavior.opaque,
@@ -133,6 +151,8 @@ class _BalanceStatusIndicatorState extends State<BalanceStatusIndicator>
       builder: (_) => BalanceStatusDetailsSheet(
         customerName: widget.customerName,
         entry: entry,
+        inn: widget.inn,
+        code1c: widget.code1c,
       ),
     );
   }

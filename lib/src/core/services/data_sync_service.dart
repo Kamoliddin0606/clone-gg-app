@@ -4,9 +4,11 @@ import 'package:workmanager/workmanager.dart';
 import 'package:dio/dio.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
-import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/network/customer_endpoint_headers.dart';
+import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
@@ -34,6 +36,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/order.da
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/order_detail.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_read_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_write_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_balance_gate.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/create_order.dart';
@@ -694,11 +697,12 @@ class DataSyncService {
   }
 
   Future<List<TradingPoint>> _syncClients(String userCode, String password) async {
-    // Customer reads go through SOAP `getClients` because 1C performs
-    // server-side business-region scoping by userCode. The V2 endpoint
-    // (`CustomerReadRepository`) returns org-wide rows without region
-    // filtering and is preserved as dormant code for future migration
-    // once backend supports per-user business-region scoping.
+    // SOAP path remains the truth source for per-user business-region
+    // scoping. After it lands, [_syncCustomersFromBackend] enriches the
+    // same rows with backend-owned identifiers (`code_backend`, `uuid_1c`)
+    // and absorbs any `pending_1c` rows the backend has that SOAP doesn't
+    // yet expose. Backend failures must NOT break the SOAP sync — they
+    // are caught and logged so the user still sees the customer list.
     final clients = await _apiService.getClients(
       userCode: userCode,
       password: password,
@@ -713,7 +717,62 @@ class DataSyncService {
       print('[DeltaSync] Clients: +${stats['inserted']}, ~${stats['updated']}, -${stats['deleted']} (${stats['duration_ms']}ms)');
     }
 
+    try {
+      await _syncCustomersFromBackend();
+    } catch (e, st) {
+      if (kDebugMode) {
+        print('[BackendCustomerSync] failed — SOAP-only result kept: $e');
+        print(st);
+      }
+    }
+
     return clients;
+  }
+
+  /// Pulls the backend's authoritative customer list and merges it into
+  /// the local `clients` cache, populating `code_backend` + `uuid_1c`
+  /// alongside the SOAP-sourced `code` / `code_1c`.
+  ///
+  /// • Scope: `CustomerReadRepository` reads `X-Project-Id` from
+  ///   [ProjectContext] for `customer_scope=project` tenants; org-wide
+  ///   tenants get the org's customers without a project filter.
+  /// • Incremental: passes `?updated_since=<last_backend_sync_at>` so
+  ///   each pass only downloads rows that changed since the last
+  ///   successful merge. The watermark is bumped only after the merge
+  ///   commits.
+  /// • Merge: see [ApiDatabaseService.mergeBackendCustomers] — matches
+  ///   by `code_1c` first, then `code_backend`; inserts thin rows for
+  ///   `pending_1c` customers SOAP doesn't see; never deletes SOAP rows
+  ///   that fall outside the backend's project scope.
+  Future<Map<String, int>> _syncCustomersFromBackend() async {
+    if (!sl.isRegistered<CustomerReadRepository>()) {
+      if (kDebugMode) {
+        print(
+          '[BackendCustomerSync] CustomerReadRepository not registered — skipping',
+        );
+      }
+      return const {'matched': 0, 'inserted': 0, 'skipped': 0};
+    }
+    final repo = sl<CustomerReadRepository>();
+    final lastSyncAt = _prefs.getLastBackendCustomersSyncAt();
+    final startedAt = DateTime.now().toUtc();
+
+    final customers = await repo.listAll(updatedSince: lastSyncAt);
+    final stats = await _dbService.mergeBackendCustomers(customers);
+
+    // Bump the watermark only on success — partial failures keep the
+    // previous value so the next run re-fetches the same window.
+    await _prefs.setLastBackendCustomersSyncAt(startedAt);
+
+    if (kDebugMode) {
+      print(
+        '[BackendCustomerSync] fetched=${customers.length} '
+        'matched=${stats['matched']} inserted=${stats['inserted']} '
+        'skipped=${stats['skipped']} '
+        'since=${lastSyncAt?.toIso8601String() ?? 'null'}',
+      );
+    }
+    return stats;
   }
 
   /// Sync products data
@@ -2355,10 +2414,24 @@ class DataSyncService {
   /// Loyihalarni sinxronlashning ichki metodi
   /// Internal method to sync user projects from server to DB
   Future<List<UserProject>> _syncUserProjects(String userCode) async {
+    // Promoted to release-build logs so the refresh flow is observable
+    // from `flutter logs` / device terminal without rebuilding in debug.
+    // Tag prefix `[PROJECTS_SYNC]` lets callers `grep` for the whole
+    // refresh transaction (SOAP + REST).
+    // ignore: avoid_print
+    print(
+        '[PROJECTS_SYNC] step=1/2 SOAP GetUserProjects userCode=$userCode');
     final projects = await _apiService.getProjectsUser(userCode: userCode);
-    if (kDebugMode) {
-      print('Foydalanuvchi loyihalari yuklandi: ${projects.length} ta loyiha');
-    }
+    // ignore: avoid_print
+    print(
+        '[PROJECTS_SYNC] step=1/2 SOAP response projects=${projects.length} '
+        'codes=${projects.map((p) => p.code).toList()}');
+    // saveUserProjects writes every row with `debt_limit: null` (SOAP
+    // doesn't carry the limit). _syncProjectsConfig below repopulates the
+    // limit column via UPDATE, so the local row ends up correct — but the
+    // in-memory `projects` list still mirrors the SOAP payload. We read
+    // the row set back from the DB before returning, otherwise callers
+    // (the settings refresh tile) would render the stale SOAP view.
     await _dbService.saveUserProjects(userCode, projects);
 
     // Customer-balance debt-limit gate (Passport §3): pull per-project debt
@@ -2368,32 +2441,180 @@ class DataSyncService {
     // null, which is the same semantic as Passport.
     try {
       await _syncProjectsConfig();
-    } catch (e) {
+      await _clearProjectsConfigSyncError();
+    } catch (e, st) {
+      // ignore: avoid_print
+      print('[PROJECTS_SYNC] step=2/2 projects/config FAILED: $e');
       if (kDebugMode) {
-        print('DataSyncService: projects/config sync failed: $e');
+        // ignore: avoid_print
+        print('[PROJECTS_SYNC] stack: $st');
       }
+      await _recordProjectsConfigSyncError(e.toString());
     }
-    return projects;
+
+    final hydrated = await _dbService.getUserProjects(userCode);
+    // ignore: avoid_print
+    print(
+        '[PROJECTS_SYNC] hydrated from DB projects=${hydrated.length} '
+        'limits=${hydrated.map((p) => "${p.code}:${p.debtLimit ?? "null"}").toList()}');
+
+    // Rehydrate the in-memory ProjectContext so its `_activeProject`
+    // reflects the freshly-written debt limit. Without this, downstream
+    // consumers (OrderBalanceGate, DebtBlockedDialog) keep reading the
+    // pre-sync UserProject object whose `debtLimit` is still null —
+    // resulting in "Limit: —" being shown in the block dialog even
+    // though the row in DB has the correct value. The refresh is a
+    // no-op when ProjectContext hasn't been bootstrapped yet (no `_user`)
+    // or for org-scope tenants (no active project to refresh).
+    try {
+      if (sl.isRegistered<ProjectContext>()) {
+        await sl<ProjectContext>().refreshFromGates();
+        // ignore: avoid_print
+        print(
+            '[PROJECTS_SYNC] ProjectContext refreshed — activeProject='
+            '${sl<ProjectContext>().activeProject?.code} '
+            'limit=${sl<ProjectContext>().activeProject?.debtLimit}');
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('[PROJECTS_SYNC] ProjectContext refresh FAILED (non-fatal): $e');
+    }
+
+    return hydrated;
+  }
+
+  /// SharedPreferences key under which the last `_syncProjectsConfig`
+  /// failure message is persisted so [ProjectDebtLimitsSection] can surface
+  /// it after a cold start. Cleared on every successful sync.
+  static const String _projectsConfigSyncErrorKey =
+      'projects_config_last_sync_error';
+
+  Future<void> _recordProjectsConfigSyncError(String message) async {
+    try {
+      final prefs = sl<SharedPreferencesService>();
+      await prefs.preferences
+          .setString(_projectsConfigSyncErrorKey, message);
+    } catch (_) {
+      // Persistence failure is non-fatal — the gate still works with the
+      // last cached limits.
+    }
+  }
+
+  Future<void> _clearProjectsConfigSyncError() async {
+    try {
+      final prefs = sl<SharedPreferencesService>();
+      await prefs.preferences.remove(_projectsConfigSyncErrorKey);
+    } catch (_) {
+      // Same rationale as above.
+    }
   }
 
   /// Fetch per-project debt-limit configuration from the backend and update
   /// the local `user_projects` rows. Endpoint contract:
   /// see [docs/customer-balance-passport.md] §3.
+  ///
+  /// The backend key (`code`) does not always match the SOAP-issued
+  /// `user_projects.code` (SOAP returns a numeric ref or vendor slug;
+  /// backend returns a human-readable slug like `"EVYAP"`). To make the
+  /// match resilient we try the row's other identifiers in turn —
+  /// [ApiDatabaseService.updateUserProjectDebtLimitByAnyKey] handles the
+  /// fallback chain and reports which column matched for diagnostics.
+  ///
+  /// IMPORTANT: this endpoint lives on the Django V2 backend
+  /// ([TokenService.v2BaseUrl]) — **not** on the 1C SOAP server. Using
+  /// `sl<ApiService>()` (whose baseUrl is the SOAP URL) would route the
+  /// request to the 1C box, which responds with an HTML "Имя сервиса не
+  /// задано" stub. We dedicate a small Dio here, matching the pattern
+  /// `CustomerReadRepository` uses.
   Future<void> _syncProjectsConfig() async {
-    final restApi = sl<ApiService>();
-    final response = await restApi.get('/api/mobile/v2/projects/config/');
+    // X-Project-Id required for project-scope tenants (M12 P0.1).
+    // Org-scope: header omitted automatically by the helper.
+    final projectHeaderOptions = CustomerEndpointHeaders.optionsForRequest(
+      requestPath: '/api/mobile/v2/projects/config/',
+    );
+    final projectHeaders = Map<String, dynamic>.from(
+        projectHeaderOptions.headers ?? const <String, dynamic>{});
+
+    final token = await sl<TokenService>().ensureValidV2Token();
+    final headers = <String, String>{
+      'Accept': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      for (final entry in projectHeaders.entries)
+        entry.key: entry.value.toString(),
+    };
+
+    final dio = Dio(BaseOptions(
+      baseUrl: TokenService.v2BaseUrl,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+      responseType: ResponseType.json,
+    ));
+
+    final requestUrl =
+        '${TokenService.v2BaseUrl}/api/mobile/v2/projects/config/';
+    // Authorization token is redacted — only the presence flag is logged.
+    final loggableHeaders = <String, dynamic>{
+      for (final entry in headers.entries)
+        entry.key:
+            entry.key.toLowerCase() == 'authorization' ? '<redacted>' : entry.value,
+    };
+    // ignore: avoid_print
+    print('[PROJECTS_SYNC] step=2/2 REST GET $requestUrl '
+        'headers=$loggableHeaders tokenPresent=${token != null && token.isNotEmpty}');
+
+    final stopwatch = Stopwatch()..start();
+    final response = await dio.get<dynamic>(
+      '/api/mobile/v2/projects/config/',
+      options: Options(headers: headers),
+    );
+    stopwatch.stop();
+
+    // ignore: avoid_print
+    print(
+        '[PROJECTS_SYNC] step=2/2 REST response status=${response.statusCode} '
+        'elapsedMs=${stopwatch.elapsedMilliseconds} '
+        'bodyType=${response.data.runtimeType}');
+    // Full body is small (one row per project) so it's safe to print
+    // verbatim; truncate to 2000 chars defensively against very large
+    // tenants.
+    final bodyStr = response.data.toString();
+    final truncated = bodyStr.length > 2000
+        ? '${bodyStr.substring(0, 2000)}…(truncated, ${bodyStr.length - 2000} more)'
+        : bodyStr;
+    // ignore: avoid_print
+    print('[PROJECTS_SYNC] step=2/2 REST body=$truncated');
+
     final entries = response.data;
     if (entries is! List) {
-      if (kDebugMode) {
-        print('DataSyncService: projects/config returned non-list payload: ${entries.runtimeType}');
-      }
+      // ignore: avoid_print
+      print(
+          '[PROJECTS_SYNC] step=2/2 ABORTED: non-list payload type=${entries.runtimeType}');
       return;
     }
 
-    for (final entry in entries) {
-      if (entry is! Map) continue;
-      final code = entry['code']?.toString();
-      if (code == null || code.isEmpty) continue;
+    final unmatched = <String>[];
+    final unidentifiable = <int>[];
+    final matchSummary = <ProjectDebtLimitMatchKey, int>{};
+    for (var i = 0; i < entries.length; i++) {
+      final entry = entries[i];
+      if (entry is! Map) {
+        // ignore: avoid_print
+        print(
+            '[PROJECTS_SYNC] step=2/2 SKIP entry[$i]: not a Map (type=${entry.runtimeType})');
+        continue;
+      }
+      final entryKeys = entry.keys.toList();
+
+      // Contract (post backend update):
+      //   - `code_1c` carries the 1C reference — this is the value SOAP
+      //     wrote into `user_projects.code`, so it is the primary join
+      //     key for the debt-limit match.
+      //   - `code` carries the backend V2 internal slug (e.g. "MAIN").
+      //     For some projects it is still empty (entry[1] in the
+      //     reference payload), so the mobile must not depend on it.
+      final code1c = entry['code_1c']?.toString();
+      final codeSlug = entry['code']?.toString();
 
       final rawLimit = entry['debt_limit'];
       final double? debtLimit = rawLimit == null
@@ -2403,15 +2624,91 @@ class DataSyncService {
               : double.tryParse(rawLimit.toString()));
       final debtLimitCurrency = entry['debt_limit_currency']?.toString();
 
-      await _dbService.updateUserProjectDebtLimit(
-        code: code,
-        debtLimit: debtLimit,
-        debtLimitCurrency: debtLimitCurrency,
-      );
+      // Both identifiers empty — nothing we can do until backend
+      // populates at least one of them.
+      if ((code1c == null || code1c.isEmpty) &&
+          (codeSlug == null || codeSlug.isEmpty)) {
+        unidentifiable.add(i);
+        // ignore: avoid_print
+        print(
+            '[PROJECTS_SYNC] step=2/2 SKIP entry[$i]: both `code_1c` and `code` '
+            'are empty. keys=$entryKeys debt_limit=$debtLimit '
+            'currency=$debtLimitCurrency — backend must populate at least '
+            'one identifier so the mobile can locate the local project row.');
+        continue;
+      }
+
+      // ignore: avoid_print
+      print(
+          "[PROJECTS_SYNC] step=2/2 entry[$i] code_1c='$code1c' code='$codeSlug' "
+          "debt_limit=$debtLimit currency=$debtLimitCurrency keys=$entryKeys");
+
+      // Match attempt 1 — `code_1c` (mobile's primary join key, populated
+      // from the SOAP `<m:Code>` element on every refresh).
+      var matched = ProjectDebtLimitMatchKey.none;
+      String? usedSource;
+      if (code1c != null && code1c.isNotEmpty) {
+        matched = await _dbService.updateUserProjectDebtLimitByAnyKey(
+          backendCode: code1c,
+          debtLimit: debtLimit,
+          debtLimitCurrency: debtLimitCurrency,
+        );
+        if (matched != ProjectDebtLimitMatchKey.none) {
+          usedSource = 'code_1c';
+        }
+      }
+
+      // Match attempt 2 — backend V2 slug, when `code_1c` either was
+      // missing or did not match. Future-proofs the mobile for tenants
+      // that migrate `user_projects.code` to slugs.
+      if (matched == ProjectDebtLimitMatchKey.none &&
+          codeSlug != null &&
+          codeSlug.isNotEmpty) {
+        matched = await _dbService.updateUserProjectDebtLimitByAnyKey(
+          backendCode: codeSlug,
+          debtLimit: debtLimit,
+          debtLimitCurrency: debtLimitCurrency,
+        );
+        if (matched != ProjectDebtLimitMatchKey.none) {
+          usedSource = 'code';
+        }
+      }
+
+      matchSummary[matched] = (matchSummary[matched] ?? 0) + 1;
+
+      if (matched == ProjectDebtLimitMatchKey.none) {
+        final tried = <String>[
+          if (code1c != null && code1c.isNotEmpty) "code_1c='$code1c'",
+          if (codeSlug != null && codeSlug.isNotEmpty) "code='$codeSlug'",
+        ];
+        unmatched.add(code1c?.isNotEmpty == true ? code1c! : (codeSlug ?? ''));
+        // ignore: avoid_print
+        print(
+            '[PROJECTS_SYNC] WARNING: entry[$i] could not be matched against '
+            'any local project. tried=$tried — debt-limit gate will treat '
+            "this project as 'no limit'.");
+      } else {
+        // ignore: avoid_print
+        print(
+            "[PROJECTS_SYNC] step=2/2 entry[$i] MATCHED via backend field "
+            "'$usedSource' → local column '${matched.name}'");
+      }
     }
 
-    if (kDebugMode) {
-      print('DataSyncService: projects/config synced (${entries.length} entries)');
+    // ignore: avoid_print
+    print(
+        '[PROJECTS_SYNC] step=2/2 DONE entries=${entries.length} '
+        'matchSummary=$matchSummary unmatched=$unmatched '
+        'unidentifiable=$unidentifiable');
+
+    if (unidentifiable.isNotEmpty) {
+      // ignore: avoid_print
+      print(
+          '[PROJECTS_SYNC] BACKEND ISSUE: ${unidentifiable.length} '
+          "of ${entries.length} entries arrived with both `code` and "
+          "`code_1c` empty. Backend must populate at least `code_1c` so "
+          'the mobile can match the row against its local '
+          '`user_projects.code` column.');
     }
   }
 
@@ -2534,15 +2831,16 @@ class DataSyncService {
           if (tp != null) {
             final gate = await sl<OrderBalanceGate>().check(tp, forceFresh: true);
             if (gate.blocked) {
+              final reason = gate.reason ?? 'debt_limit_exceeded';
               await _dbService.updateCreateOrderSyncStatus(
                 order.id!,
                 false,
-                syncError: 'debt_limit_exceeded',
+                syncError: reason,
               );
               syncResults.add({
                 'orderId': order.id,
                 'success': false,
-                'error': 'debt_limit_exceeded',
+                'error': reason,
                 'balance': gate.balance,
                 'limit': gate.limit,
               });
@@ -2693,6 +2991,8 @@ class DataSyncService {
         codeRegion: '',
         code: row['code'] as String,
         code1c: row['code_1c'] as String? ?? '',
+        codeBackend: row['code_backend'] as String? ?? '',
+        customerUuid: row['uuid_1c'] as String? ?? '',
       );
     } catch (e) {
       if (kDebugMode) {

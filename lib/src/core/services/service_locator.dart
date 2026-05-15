@@ -28,6 +28,7 @@ import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/rest_log
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_balance_gate.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status_cache.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/balance_gate_event_logger.dart';
 import 'package:gloria_marketing_flutter/src/core/services/local_uuid_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/login_device_payload_builder.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
@@ -36,6 +37,7 @@ import 'package:gloria_marketing_flutter/src/core/services/images/agent_organiza
 import 'package:gloria_marketing_flutter/src/core/services/images/new_backend_image_repository.dart';
 import 'package:gloria_marketing_flutter/src/core/services/gemini_document_scanner_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/network_mode_gate.dart';
 import 'package:gloria_marketing_flutter/src/core/services/app_start_guard.dart';
 import 'package:gloria_marketing_flutter/src/core/services/health_check_service.dart';
 
@@ -341,6 +343,15 @@ Future<void> setupServiceLocator() async {
     );
   }
 
+  // BalanceGateEventLogger — emits `customer.balance.blocked` analytics
+  // events whenever DebtBlockedDialog is surfaced (Passport §7, M12 P0.4).
+  // Best-effort POST; failure is silent and never blocks the UI.
+  if (!sl.isRegistered<BalanceGateEventLogger>()) {
+    sl.registerLazySingleton<BalanceGateEventLogger>(
+      () => BalanceGateEventLogger(),
+    );
+  }
+
   // Faktura.uz Services - Tashkilot ma'lumotlarini olish uchun
   // https://api.faktura.uz API'dan kompaniya ma'lumotlarini INN orqali oladi
   if (!sl.isRegistered<FakturaAuthService>()) {
@@ -494,7 +505,12 @@ Future<void> setupServiceLocator() async {
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),
     ));
-    attachRestLogger(customerReadDio, 'CUSTOMER');
+    // Intentionally no attachRestLogger here: listAll() paginates through
+    // the full customer list (~150 KB per page) and LogInterceptor would
+    // dump every page's body via debugPrint, throttling the log queue and
+    // jamming the UI thread on the customers screen. The repository's own
+    // `[CUSTOMER-READ] listAll → N rows` summary is enough for debugging.
+    // Per-customer traces still come from customerWriteDio (create/patch).
 
     sl.registerLazySingleton<CustomerReadRepository>(
       () => CustomerReadRepository(
@@ -535,6 +551,17 @@ Future<void> setupServiceLocator() async {
   // Connectivity monitoring used by AppStartGuard (and downstream UI).
   if (!sl.isRegistered<ConnectivityMonitorService>()) {
     sl.registerLazySingleton<ConnectivityMonitorService>(() => ConnectivityMonitorService());
+  }
+
+  // Mode gate — arbitrates between the persisted offline flag and live
+  // connectivity. UI handlers (pull-to-refresh, offline badge tap, etc.)
+  // call this instead of flipping `prefs.setOfflineMode` directly.
+  if (!sl.isRegistered<NetworkModeGate>()) {
+    sl.registerLazySingleton<NetworkModeGate>(() => NetworkModeGate(
+      prefs: sl<SharedPreferencesService>(),
+      connectivity: sl<ConnectivityMonitorService>(),
+      serverService: sl<ServerService>(),
+    ));
   }
 
   // Gemini AI Services - Unified API key management

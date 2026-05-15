@@ -22,6 +22,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_re
 import 'package:gloria_marketing_flutter/src/core/widgets/client_image_widget.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/client_balance_widget_v2.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/pending_blocked_orders_section.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Main client detail sheet widget
@@ -123,6 +124,15 @@ class _ClientDetailSheetState extends State<ClientDetailSheet> {
                             // Balance widget
                             _buildBalanceSection(context),
                             const SizedBox(height: 24),
+
+                            // Locally-blocked orders for this customer
+                            // (M11 pre-submit recheck rejected them due to
+                            // debt limit). Renders nothing on the happy
+                            // path. M12 P0.3.
+                            PendingBlockedOrdersSection(
+                              clientCode: widget.tradingPoint.id,
+                            ),
+                            const SizedBox(height: 16),
 
                             // Essential information (always visible)
                             _buildEssentialInfo(context),

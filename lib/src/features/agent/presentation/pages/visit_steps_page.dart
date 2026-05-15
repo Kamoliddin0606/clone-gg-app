@@ -13,6 +13,7 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/models/visit_da
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/visit_data_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/visit_finish_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/post_order_sync_manager.dart';
+import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_balance_gate.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status_cache.dart';
@@ -3350,6 +3351,8 @@ class _VisitStepCardState extends State<_VisitStepCard> {
                                 inn: tpInn,
                                 customerName:
                                     widget.tradingPoint.tradingPoint.name,
+                                code1c:
+                                    widget.tradingPoint.tradingPoint.code1c,
                               ),
                           ],
                         ),
@@ -3604,6 +3607,11 @@ class _VisitStepCardState extends State<_VisitStepCard> {
           reason: 'debt_limit_exceeded',
         ),
         customerName: widget.tradingPoint.tradingPoint.name,
+        code1c: widget.tradingPoint.tradingPoint.code1c,
+        projectCode: sl.isRegistered<ProjectContext>()
+            ? (sl<ProjectContext>().activeProject?.code ?? '')
+            : '',
+        trigger: 'visit_step_tile',
       ),
     );
   }
@@ -3751,11 +3759,17 @@ class _VisitStepCardState extends State<_VisitStepCard> {
           final gate = await sl<OrderBalanceGate>().check(tp);
           if (!mounted) return;
           if (gate.blocked) {
+            final activeProjectCode = sl.isRegistered<ProjectContext>()
+                ? (sl<ProjectContext>().activeProject?.code ?? '')
+                : '';
             await showDialog<void>(
               context: context,
               builder: (_) => DebtBlockedDialog(
                 gateResult: gate,
                 customerName: tp.name,
+                code1c: tp.code1c,
+                projectCode: activeProjectCode,
+                trigger: 'visit_step_entry',
               ),
             );
             return;

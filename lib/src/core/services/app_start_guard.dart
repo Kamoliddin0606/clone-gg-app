@@ -123,6 +123,10 @@ class AppStartGuard {
         switch (refreshed) {
           case _RefreshOk(:final envelope):
             await _prefs.setCachedGates(envelope);
+            // Backend round-trip succeeded → connectivity is proven.
+            // Clear any stale offline flag left over from a previous
+            // offline-login session so the UI starts in online mode.
+            await _prefs.setOfflineMode(false);
             return const StartDecisionResult(decision: StartDecision.showHome);
           case _RefreshDenied(:final failure):
             await _clearAuthCaches();

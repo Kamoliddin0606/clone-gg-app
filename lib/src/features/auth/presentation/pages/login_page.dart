@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status_cache.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
@@ -412,6 +413,20 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         await sl<ProjectContext>().bootstrap(state.user);
       } catch (e) {
         if (kDebugMode) print('ProjectContext bootstrap failed: $e');
+      }
+
+      // Warm the customer-balance status cache so the trading-points
+      // list/grid render with the right tint + indicator on first frame
+      // instead of flickering through the unknown state. Best-effort —
+      // failure leaves the cache lazy and the first card mount triggers
+      // bootstrap on its own. M12 P1.3.
+      try {
+        if (sl.isRegistered<CustomerBalanceStatusCache>()) {
+          // ignore: discarded_futures
+          sl<CustomerBalanceStatusCache>().bootstrap();
+        }
+      } catch (e) {
+        if (kDebugMode) print('CustomerBalanceStatusCache bootstrap failed: $e');
       }
 
       // Show success message and navigate

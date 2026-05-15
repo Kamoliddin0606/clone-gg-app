@@ -15,17 +15,22 @@ class BalanceStatusTheme {
   /// Soft background tint composited over the card's surface. Returns
   /// `null` for [CustomerBalanceStatus.noDebt] / [CustomerBalanceStatus.unknown]
   /// — callers keep the original surface in those cases.
+  ///
+  /// Opacity bumps slightly in dark mode so the tint stays visible against
+  /// the darker `surface` colour (M12 P2.2). Light-mode opacities were
+  /// chosen to preserve text contrast and feel professional.
   static Color? cardTintFor(
     CustomerBalanceStatus status,
     ColorScheme cs,
   ) {
+    final isDark = cs.brightness == Brightness.dark;
     switch (status) {
       case CustomerBalanceStatus.debtOverLimit:
-        return cs.errorContainer.withValues(alpha: 0.18);
+        return cs.errorContainer.withValues(alpha: isDark ? 0.28 : 0.18);
       case CustomerBalanceStatus.debtUnderLimit:
         // Theme-neutral amber works in both light and dark mode; the
         // colorScheme exposes no warning slot so we hard-code a soft amber.
-        return Colors.amber.withValues(alpha: 0.12);
+        return Colors.amber.withValues(alpha: isDark ? 0.20 : 0.12);
       case CustomerBalanceStatus.noDebt:
       case CustomerBalanceStatus.unknown:
         return null;

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/network/url_failover_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import '../services/service_locator.dart';
 
 /// Exception thrown when network connectivity issues occur
@@ -38,14 +39,30 @@ class AllServersUnavailableException implements Exception {
 /// API Service with automatic URL failover support.
 /// Tries primary domain URL first, then falls back to IP-based URLs
 /// if connection issues occur.
+///
+/// Two transports live on this class:
+///   * [_dio] / [post] / [get] — historical SOAP transport. `baseUrl` is
+///     [ServerService.baseUrl] which points at the 1C `*.1cws` endpoint
+///     (e.g. `http://kit.gloriya.uz:5443/EVYAP_UT/EVYAP_UT.1cws`). DO NOT
+///     use this for REST endpoints — they get appended onto the SOAP path
+///     and the 1C box tries to parse the JSON body as a SOAP envelope.
+///   * [_restDio] / [restPost] / [restGet] — Django V2 transport. `baseUrl`
+///     is [TokenService.v2BaseUrl]. Used for every `/api/mobile/v2/...`
+///     REST endpoint. Bearer token is attached automatically.
 class ApiService {
   final Dio _dio = Dio();
+
+  /// Dedicated REST transport for the Django V2 backend. Constructed lazily
+  /// so unit tests that swap [TokenService] before the service is touched
+  /// still see the override.
+  Dio? _restDioInstance;
+
   final ServerService _server;
   final UrlFailoverService _failoverService;
-  
+
   /// Notifies listeners when URL changes due to failover
   final ValueNotifier<String> currentUrlNotifier = ValueNotifier('');
-  
+
   /// Notifies listeners when using fallback URL
   final ValueNotifier<bool> isUsingFallbackNotifier = ValueNotifier(false);
 
@@ -64,9 +81,50 @@ class ApiService {
       connectTimeout: const Duration(milliseconds: 8000),
       receiveTimeout: const Duration(milliseconds: 15000),
     );
-    
+
     currentUrlNotifier.value = _server.baseUrl;
     isUsingFallbackNotifier.value = _server.isUsingFallback.value;
+  }
+
+  /// Build the REST Dio on first access.
+  ///
+  /// Lives separately from [_dio] so the SOAP base URL never bleeds into
+  /// REST calls. Attaches the V2 access token via a request interceptor
+  /// that re-resolves the token on every call — covers silent refresh
+  /// and post-login session pickup without touching the cached Dio.
+  Dio get _restDio {
+    final existing = _restDioInstance;
+    if (existing != null) return existing;
+    final dio = Dio(BaseOptions(
+      baseUrl: TokenService.v2BaseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        try {
+          final token = await sl<TokenService>().ensureValidV2Token();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('ApiService.rest: token refresh failed: $e');
+          }
+        }
+        return handler.next(options);
+      },
+      onError: (err, handler) {
+        if (kDebugMode) {
+          print(
+              'ApiService.rest: ${err.requestOptions.method} ${err.requestOptions.path} → ${err.response?.statusCode} ${err.message}');
+        }
+        return handler.next(err);
+      },
+    ));
+    _restDioInstance = dio;
+    return dio;
   }
 
   void _setupListeners() {
@@ -92,12 +150,46 @@ class ApiService {
   }
 
   /// Standard GET request (without failover - use for non-critical requests)
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) =>
-      _dio.get(path, queryParameters: queryParameters);
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) =>
+      _dio.get(path, queryParameters: queryParameters, options: options);
 
   /// Standard POST request (without failover - use for non-critical requests)
-  Future<Response> post(String path, {dynamic data}) =>
-      _dio.post(path, data: data);
+  Future<Response> post(String path, {dynamic data, Options? options}) =>
+      _dio.post(path, data: data, options: options);
+
+  /// REST POST to the Django V2 backend.
+  ///
+  /// Use this for every `/api/...` endpoint. Unlike [post], this routes
+  /// to [TokenService.v2BaseUrl] (not the 1C SOAP box) and attaches the
+  /// V2 Bearer token automatically.
+  Future<Response> restPost(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) =>
+      _restDio.post(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+
+  /// REST GET counterpart to [restPost]. Same rules apply.
+  Future<Response> restGet(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) =>
+      _restDio.get(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+      );
 
   /// Perform SOAP request with automatic URL failover.
   /// Tries primary URL first, then fallback URLs if connection fails.

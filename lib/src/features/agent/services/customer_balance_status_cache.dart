@@ -177,6 +177,25 @@ class CustomerBalanceStatusCache extends ChangeNotifier {
     await bootstrap();
   }
 
+  /// Drop a single entry and notify listeners. Called by
+  /// `ClientBalanceService.deleteClientBalance` so the indicator on the
+  /// affected card immediately disappears (M12 P1.2).
+  void invalidate(String inn) {
+    if (inn.isEmpty) return;
+    if (_entries.remove(inn) != null) {
+      notifyListeners();
+    }
+  }
+
+  /// Drop everything. Called by `ClientBalanceService.clearAllBalances`
+  /// — the bootstrap flag is reset so the next read re-loads from the DB
+  /// (which is also empty after the clear, so this is a true reset).
+  void clear() {
+    _entries.clear();
+    _bootstrapped = false;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _projectSub?.cancel();

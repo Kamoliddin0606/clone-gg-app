@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/util/format_time_ago.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/services/balance_gate_event_logger.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_balance_gate.dart';
 
 /// Dialog shown when [OrderBalanceGate.check] returns `blocked = true`.
@@ -14,43 +17,79 @@ import 'package:gloria_marketing_flutter/src/features/agent/services/order_balan
 /// The dialog is informational only — there is no override action. If the
 /// agent disagrees they must speak to ops; the only way out is to settle the
 /// debt or re-fetch online once the customer has paid.
-class DebtBlockedDialog extends StatelessWidget {
+///
+/// Fires a `customer.balance.blocked` analytics event in `initState` (once
+/// per show) via [BalanceGateEventLogger]. Caller passes [code1c] and
+/// [projectCode] so the event payload is fully populated; both default to
+/// empty strings when the surface doesn't have them (e.g. legacy callers
+/// that haven't been updated yet) — the event still fires, just with
+/// reduced fidelity.
+class DebtBlockedDialog extends StatefulWidget {
   final BalanceGateResult gateResult;
   final String customerName;
+  final String code1c;
+  final String projectCode;
+  final String trigger;
 
   const DebtBlockedDialog({
     super.key,
     required this.gateResult,
     required this.customerName,
+    this.code1c = '',
+    this.projectCode = '',
+    this.trigger = 'unknown',
   });
+
+  @override
+  State<DebtBlockedDialog> createState() => _DebtBlockedDialogState();
+}
+
+class _DebtBlockedDialogState extends State<DebtBlockedDialog> {
+  @override
+  void initState() {
+    super.initState();
+    // Fire-and-forget analytics; never blocks the UI. Wrapped in
+    // try/catch by the logger itself.
+    if (sl.isRegistered<BalanceGateEventLogger>()) {
+      // ignore: discarded_futures
+      sl<BalanceGateEventLogger>().logBlocked(
+        result: widget.gateResult,
+        code1c: widget.code1c,
+        projectCode: widget.projectCode,
+        trigger: widget.trigger,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    final balanceText = _formatNumber(gateResult.balance);
-    final limitText = gateResult.limit != null
-        ? _formatNumber(gateResult.limit!)
+    final balanceText = _formatNumber(widget.gateResult.balance);
+    final limitText = widget.gateResult.limit != null
+        ? _formatNumber(widget.gateResult.limit!)
         : '—';
-    final currency = gateResult.currency;
+    final currency = widget.gateResult.currency;
 
     final body = <Widget>[
       Text(
-        customerName,
+        widget.customerName,
         style: theme.textTheme.titleMedium,
       ),
       const SizedBox(height: 12),
     ];
 
-    if (gateResult.reason == 'no_cached_balance') {
+    if (widget.gateResult.reason == 'no_cached_balance') {
       body.add(Text(l10n.debtBlockedNoCachedBalance));
-    } else if (gateResult.isOffline) {
+    } else if (widget.gateResult.isOffline) {
       body.add(Text(
         l10n.debtBlockedBodyOffline(
           '$balanceText $currency',
           '$limitText $currency',
-          _formatAge(gateResult.fetchedAt),
+          widget.gateResult.fetchedAt == null
+              ? '—'
+              : formatTimeAgo(widget.gateResult.fetchedAt!, l10n),
         ),
       ));
     } else {
@@ -59,7 +98,7 @@ class DebtBlockedDialog extends StatelessWidget {
       ));
     }
 
-    if (gateResult.isStale) {
+    if (widget.gateResult.isStale) {
       body.add(const SizedBox(height: 8));
       body.add(Text(
         l10n.debtBlockedStaleWarning,
@@ -92,13 +131,5 @@ class DebtBlockedDialog extends StatelessWidget {
   static String _formatNumber(double value) {
     final formatter = NumberFormat.decimalPattern();
     return formatter.format(value);
-  }
-
-  static String _formatAge(DateTime? fetchedAt) {
-    if (fetchedAt == null) return '—';
-    final delta = DateTime.now().difference(fetchedAt);
-    if (delta.inMinutes < 60) return '${delta.inMinutes}m';
-    if (delta.inHours < 24) return '${delta.inHours}h';
-    return '${delta.inDays}d';
   }
 }

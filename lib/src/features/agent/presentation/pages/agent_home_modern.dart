@@ -1,7 +1,6 @@
 
 import 'dart:math';
 import 'dart:ui';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +10,7 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/network_mode_gate.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_exceptions.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/data_sync_progress_widget.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/widgets/notification_bell.dart';
@@ -18,7 +18,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:equatable/equatable.dart';
 
-import '../../../../core/network/server_service.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../theme/theme_controller.dart';
 import '../../../../theme/theme_toggle.dart';
@@ -790,74 +789,64 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
   }
 
   void _onOfflineIndicatorTap() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.onlineModeReturn),
-        content: Text(AppLocalizations.of(context)!.onlineModeReturnConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(AppLocalizations.of(context)!.no),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(AppLocalizations.of(context)!.yes),
-          ),
-        ],
-      ),
-    );
+    final l10n = AppLocalizations.of(context)!;
+    final gate = sl<NetworkModeGate>();
+    final prefs = sl<SharedPreferencesService>();
 
-    if (result == true) {
-      try {
-        // Check internet connection
-        final dio = Dio();
-        await dio.get('https://www.google.com');
-
-        // Check server connection
-        final prefs = sl<SharedPreferencesService>();
-
-        final serverService = sl<ServerService>();
-        final serverUrl = serverService.baseUrl;
-
-        // final serverName = prefs.getServerName();
-        // final serverUrl = switch (serverName) {
-        //   'Evyap' => 'http://kit.gloriya.uz:5443/EVYAP_UT/EVYAP_UT.1cws',
-        //   'Garnier' => 'http://kit.gloriya.uz:5443/loreal_ut/loreal_ut.1cws',
-        //   'PPD' => 'http://kit.gloriya.uz:5443/UT_Professionnel/UT_Professionnel.1cws',
-        //   'Avon' => 'http://kit.gloriya.uz:5443/AVON_UT/AVON_UT.1cws',
-        //   'AvonTest' => 'http://kit.gloriya.uz:5443/TEST_UT/TEST_UT.1cws',
-        //   _ => 'http://kit.gloriya.uz:5443/EVYAP_UT/EVYAP_UT.1cws',
-        // };
-        // print('Server URL: $serverUrl');
-        //log serverUrl
-        if (serverUrl == null || serverUrl.isEmpty) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(AppLocalizations.of(context)!.serverUrlNotFound)),
-            );
-          }
-          return;
-        }
-        await dio.get(serverUrl);
-
-        if (mounted) {
+    // The badge appears when EITHER the persisted flag is offline OR live
+    // connectivity is missing. Tap is the user saying "fix this for me" —
+    // so we always probe, regardless of which signal triggered the badge.
+    if (prefs.isOfflineMode()) {
+      // Flag-driven offline: probe + prompt user to switch online.
+      final outcome = await gate.tryGoOnline(context);
+      if (!mounted) return;
+      switch (outcome) {
+        case NetworkModeOutcome.switched:
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${AppLocalizations.of(context)!.serverUrl}: $serverUrl')),
+            SnackBar(content: Text(l10n.switchedToOnline)),
           );
-        }
-
-        // Success: set offline to false and reload
-        await prefs.setOfflineMode(false);
-        if (mounted) {
           Navigator.pushReplacementNamed(context, AppRouter.agentHomeRoute);
-        }
-      } catch (e) {
-        if (mounted) {
+          break;
+        case NetworkModeOutcome.noInternet:
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${AppLocalizations.of(context)!.connectionError}: ${e.toString()}')),
+            SnackBar(content: Text(l10n.noInternetConnection)),
           );
-        }
+          break;
+        case NetworkModeOutcome.serverUnreachable:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.serverUnreachable)),
+          );
+          break;
+        case NetworkModeOutcome.declined:
+        case NetworkModeOutcome.alreadyInTargetMode:
+          break;
+      }
+    } else {
+      // Flag is online but badge is showing → real connectivity is missing.
+      // Re-probe; if back, give success feedback (the stream will hide the
+      // badge on its own). Otherwise offer to switch into offline mode.
+      final probe = await gate.probeOnline();
+      if (!mounted) return;
+      if (probe == NetworkModeOutcome.switched) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.switchedToOnline)),
+        );
+        return;
+      }
+      final outcome = await gate.tryGoOffline(context);
+      if (!mounted) return;
+      if (outcome == NetworkModeOutcome.switched) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.switchedToOffline)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(probe == NetworkModeOutcome.noInternet
+                ? l10n.noInternetConnection
+                : l10n.serverUnreachable),
+          ),
+        );
       }
     }
   }
@@ -963,57 +952,61 @@ class _AgentHomeModernState extends State<AgentHomeModern> with TickerProviderSt
               //     onChanged: ThemeController.I.set,
               //   ),
               // ),
-                  // Offline indicator - uses StreamBuilder to react to connectivity changes
+                  // Offline indicator — rebuilds on EITHER signal:
+                  //   • live connectivity changes (connectivityStream)
+                  //   • persisted offline-flag flips (offlineModeListenable)
+                  // The flag listener is essential so that programmatic
+                  // mode switches (NetworkModeGate, AppStartGuard, login)
+                  // hide/show the badge immediately.
                   StreamBuilder<bool>(
                     stream: sl<ConnectivityMonitorService>().connectivityStream,
                     initialData: sl<ConnectivityMonitorService>().isConnected,
                     builder: (context, snapshot) {
                       final isConnected = snapshot.data ?? true;
-                      // Also check SharedPreferences for initial offline login state
-                      final prefs = sl<SharedPreferencesService>();
-                      final isOfflineMode = prefs.isOfflineMode();
-                      
-                      // Show offline indicator if not connected OR if logged in offline
-                      final showOffline = !isConnected || isOfflineMode;
-                      
-                      if (!showOffline) return const SizedBox.shrink();
-                      
-                      return GestureDetector(
-                        onTap: _onOfflineIndicatorTap,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.9),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
+                      return ValueListenableBuilder<bool>(
+                        valueListenable:
+                            sl<SharedPreferencesService>().offlineModeListenable,
+                        builder: (context, isOfflineMode, _) {
+                          final showOffline = !isConnected || isOfflineMode;
+                          if (!showOffline) return const SizedBox.shrink();
+                          return GestureDetector(
+                            onTap: _onOfflineIndicatorTap,
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.wifi_off,
-                                color: Colors.white,
-                                size: 16,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.wifi_off,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    AppLocalizations.of(context)!.offline,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                AppLocalizations.of(context)!.offline,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        },
                       );
                     },
                   ),

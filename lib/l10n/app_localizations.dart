@@ -1903,6 +1903,36 @@ abstract class AppLocalizations {
   /// **'Do you want to check internet and server connection and return to online mode?'**
   String get onlineModeReturnConfirm;
 
+  /// No description provided for @switchToOfflineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to offline mode?'**
+  String get switchToOfflineTitle;
+
+  /// No description provided for @switchToOfflineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection or the server is not responding. Continue with locally cached data?'**
+  String get switchToOfflineBody;
+
+  /// No description provided for @switchedToOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Switched to online mode'**
+  String get switchedToOnline;
+
+  /// No description provided for @switchedToOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Switched to offline mode'**
+  String get switchedToOffline;
+
+  /// No description provided for @serverUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot reach the server'**
+  String get serverUnreachable;
+
   /// No description provided for @serverUrlNotFound.
   ///
   /// In en, this message translates to:
@@ -10741,66 +10771,293 @@ abstract class AppLocalizations {
   /// **'Sound'**
   String get notif_sound_sound;
 
-  // ---------------------------------------------------------------------------
-  // Customer balance / debt-limit gate
-  // See docs/customer-balance-mobile.md M13.
-  // ---------------------------------------------------------------------------
+  /// No description provided for @projectDebtLimits_sectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects and debt limits'**
+  String get projectDebtLimits_sectionTitle;
 
-  /// Title of the dialog shown when an order cannot be created because the
-  /// customer is over the project debt limit.
-  String get debtBlockedTitle;
+  /// No description provided for @projectDebtLimits_sectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects assigned to you and their configured debt limits'**
+  String get projectDebtLimits_sectionSubtitle;
 
-  /// Body of the dialog when the gate fired with a fresh online check.
-  /// Placeholders: customer balance, debt limit, ISO currency code.
-  String debtBlockedBodyOnline(String balance, String limit, String currency);
+  /// No description provided for @projectDebtLimits_offlineNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Device is offline — values shown are from the local cache'**
+  String get projectDebtLimits_offlineNotice;
 
-  /// Body of the dialog when the gate fired with cached / offline data.
-  /// Placeholders: balance, limit, age (e.g. "3h ago").
-  String debtBlockedBodyOffline(String balance, String limit, String age);
+  /// No description provided for @projectDebtLimits_errorNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not refresh limits from the server'**
+  String get projectDebtLimits_errorNotice;
 
-  /// Shown when no cached balance is available offline.
-  String get debtBlockedNoCachedBalance;
+  /// No description provided for @projectDebtLimits_emptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects assigned to you yet'**
+  String get projectDebtLimits_emptyState;
 
-  /// Extra warning shown when the cached balance is older than 24h.
-  String get debtBlockedStaleWarning;
+  /// No description provided for @projectDebtLimits_lastUpdatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated'**
+  String get projectDebtLimits_lastUpdatedLabel;
 
-  /// Badge text on the orders list for an order that the backend rejected
-  /// because of an exceeded debt limit during the pre-submit recheck.
-  String get orderBlockedByDebtBadge;
+  /// No description provided for @projectDebtLimits_neverUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Never updated'**
+  String get projectDebtLimits_neverUpdated;
 
-  /// Action label on a blocked order to retry sending it after the customer
-  /// has paid down the debt.
-  String get retrySyncButton;
+  /// No description provided for @projectDebtLimits_refreshTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh limits'**
+  String get projectDebtLimits_refreshTooltip;
 
-  // ---------------------------------------------------------------------------
-  // Customer balance status indicator + details sheet (M12 rebuilt).
-  // ---------------------------------------------------------------------------
+  /// No description provided for @projectDebtLimits_noLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'No limit configured'**
+  String get projectDebtLimits_noLimit;
 
-  /// Bottom-sheet headline when the customer's balance is over the project
-  /// debt limit (red status).
-  String get balanceStatusHeadlineOverLimit;
+  /// No description provided for @projectDebtLimits_limitUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit unavailable'**
+  String get projectDebtLimits_limitUnavailable;
 
-  /// Headline when the customer has debt but is still within the limit
-  /// (amber status).
-  String get balanceStatusHeadlineUnderLimit;
+  /// No description provided for @projectDebtLimits_loadingError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {message}'**
+  String projectDebtLimits_loadingError(String message);
 
-  /// Headline when the customer has no debt (or has overpaid).
-  String get balanceStatusHeadlineOk;
+  /// No description provided for @projectDebtLimits_refreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing…'**
+  String get projectDebtLimits_refreshing;
 
-  /// Headline when no balance has been cached yet for the customer.
-  String get balanceStatusHeadlineUnknown;
+  /// No description provided for @projectDebtLimits_refreshSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Limits refreshed'**
+  String get projectDebtLimits_refreshSuccess;
 
-  /// Label for the "balance" key in the details sheet.
+  /// No description provided for @projectDebtLimits_countBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} projects'**
+  String projectDebtLimits_countBadge(int count);
+
+  /// No description provided for @projectDebtLimits_userCodeMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'User code not found'**
+  String get projectDebtLimits_userCodeMissing;
+
+  /// No description provided for @projectDebtLimits_limitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt limit'**
+  String get projectDebtLimits_limitLabel;
+
+  /// No description provided for @projectsTab_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects'**
+  String get projectsTab_title;
+
+  /// No description provided for @projectsTab_sectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Active project and switching'**
+  String get projectsTab_sectionTitle;
+
+  /// No description provided for @projectsTab_pickerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick another project from the list below to switch'**
+  String get projectsTab_pickerSubtitle;
+
+  /// No description provided for @projectsTab_activeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Active project'**
+  String get projectsTab_activeLabel;
+
+  /// No description provided for @projectsTab_scopeOrganization.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization scope'**
+  String get projectsTab_scopeOrganization;
+
+  /// No description provided for @projectsTab_scopeProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project scope'**
+  String get projectsTab_scopeProject;
+
+  /// No description provided for @projectsTab_switchedSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Active project: {name}'**
+  String projectsTab_switchedSnackbar(String name);
+
+  /// No description provided for @projectsTab_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects assigned to you'**
+  String get projectsTab_empty;
+
+  /// No description provided for @projectsTab_loadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load projects: {message}'**
+  String projectsTab_loadError(String message);
+
+  /// No description provided for @timeAgoJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get timeAgoJustNow;
+
+  /// No description provided for @timeAgoMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min ago'**
+  String timeAgoMinutes(int minutes);
+
+  /// No description provided for @timeAgoHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h ago'**
+  String timeAgoHours(int hours);
+
+  /// No description provided for @timeAgoDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} d ago'**
+  String timeAgoDays(int days);
+
+  /// No description provided for @balanceStatusBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
   String get balanceStatusBalanceLabel;
 
-  /// Label for the "limit" key in the details sheet.
+  /// No description provided for @balanceStatusLimitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit'**
   String get balanceStatusLimitLabel;
 
-  /// Value shown when the active project has no debt limit configured.
+  /// No description provided for @balanceStatusLimitNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No limit'**
   String get balanceStatusLimitNone;
 
-  /// Label for the "last updated" timestamp key.
+  /// No description provided for @balanceStatusLastUpdatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated'**
   String get balanceStatusLastUpdatedLabel;
+
+  /// No description provided for @balanceStatusRefreshButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get balanceStatusRefreshButton;
+
+  /// No description provided for @balanceStatusHeadlineOverLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt above the limit'**
+  String get balanceStatusHeadlineOverLimit;
+
+  /// No description provided for @balanceStatusHeadlineUnderLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt within the limit'**
+  String get balanceStatusHeadlineUnderLimit;
+
+  /// No description provided for @balanceStatusHeadlineOk.
+  ///
+  /// In en, this message translates to:
+  /// **'No debt'**
+  String get balanceStatusHeadlineOk;
+
+  /// No description provided for @balanceStatusHeadlineUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Status unknown'**
+  String get balanceStatusHeadlineUnknown;
+
+  /// No description provided for @balanceStatusIndicatorSemantic.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer balance status'**
+  String get balanceStatusIndicatorSemantic;
+
+  /// No description provided for @debtBlockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order blocked'**
+  String get debtBlockedTitle;
+
+  /// No description provided for @debtBlockedNoCachedBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer balance is not available offline. Connect to the network and refresh.'**
+  String get debtBlockedNoCachedBalance;
+
+  /// No description provided for @debtBlockedBodyOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer debt is {balance} {currency}, which exceeds the limit of {limit} {currency}.'**
+  String debtBlockedBodyOnline(String balance, String limit, String currency);
+
+  /// No description provided for @debtBlockedBodyOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Last known debt is {balance} (limit {limit}), updated {age}.'**
+  String debtBlockedBodyOffline(String balance, String limit, String age);
+
+  /// No description provided for @debtBlockedStaleWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance data may be out of date.'**
+  String get debtBlockedStaleWarning;
+
+  /// No description provided for @pendingBlockedOrdersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders blocked by debt'**
+  String get pendingBlockedOrdersTitle;
+
+  /// No description provided for @orderBlockedByDebtBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked by debt limit'**
+  String get orderBlockedByDebtBadge;
+
+  /// No description provided for @pendingBlockedOrdersCreatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {date}'**
+  String pendingBlockedOrdersCreatedAt(String date);
+
+  /// No description provided for @retrySyncButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retrySyncButton;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

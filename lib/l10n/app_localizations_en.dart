@@ -916,6 +916,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onlineModeReturnConfirm => 'Do you want to check internet and server connection and return to online mode?';
 
   @override
+  String get switchToOfflineTitle => 'Switch to offline mode?';
+
+  @override
+  String get switchToOfflineBody => 'No internet connection or the server is not responding. Continue with locally cached data?';
+
+  @override
+  String get switchedToOnline => 'Switched to online mode';
+
+  @override
+  String get switchedToOffline => 'Switched to offline mode';
+
+  @override
+  String get serverUnreachable => 'Cannot reach the server';
+
+  @override
   String get serverUrlNotFound => 'Server URL not found';
 
   @override
@@ -5669,51 +5684,166 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notif_sound_sound => 'Sound';
 
   @override
-  String get debtBlockedTitle => 'Order cannot be created';
+  String get projectDebtLimits_sectionTitle => 'Projects and debt limits';
 
   @override
-  String debtBlockedBodyOnline(String balance, String limit, String currency) =>
-      'Customer balance $balance $currency exceeds the project debt limit ($limit $currency).';
+  String get projectDebtLimits_sectionSubtitle => 'Projects assigned to you and their configured debt limits';
 
   @override
-  String debtBlockedBodyOffline(String balance, String limit, String age) =>
-      'Checked offline (last balance $age ago): $balance / limit $limit.';
+  String get projectDebtLimits_offlineNotice => 'Device is offline — values shown are from the local cache';
 
   @override
-  String get debtBlockedNoCachedBalance =>
-      'Balance has not been loaded yet. Connect to the internet and try again.';
+  String get projectDebtLimits_errorNotice => 'Could not refresh limits from the server';
 
   @override
-  String get debtBlockedStaleWarning =>
-      'The cached balance is more than 24 hours old.';
+  String get projectDebtLimits_emptyState => 'No projects assigned to you yet';
 
   @override
-  String get orderBlockedByDebtBadge => 'Debt limit exceeded';
+  String get projectDebtLimits_lastUpdatedLabel => 'Last updated';
 
   @override
-  String get retrySyncButton => 'Retry';
+  String get projectDebtLimits_neverUpdated => 'Never updated';
 
   @override
-  String get balanceStatusHeadlineOverLimit => 'Debt limit exceeded';
+  String get projectDebtLimits_refreshTooltip => 'Refresh limits';
 
   @override
-  String get balanceStatusHeadlineUnderLimit => 'Customer has debt';
+  String get projectDebtLimits_noLimit => 'No limit configured';
 
   @override
-  String get balanceStatusHeadlineOk => 'No outstanding debt';
+  String get projectDebtLimits_limitUnavailable => 'Limit unavailable';
 
   @override
-  String get balanceStatusHeadlineUnknown => 'Balance not loaded yet';
+  String projectDebtLimits_loadingError(String message) {
+    return 'Failed to load: $message';
+  }
+
+  @override
+  String get projectDebtLimits_refreshing => 'Refreshing…';
+
+  @override
+  String get projectDebtLimits_refreshSuccess => 'Limits refreshed';
+
+  @override
+  String projectDebtLimits_countBadge(int count) {
+    return '$count projects';
+  }
+
+  @override
+  String get projectDebtLimits_userCodeMissing => 'User code not found';
+
+  @override
+  String get projectDebtLimits_limitLabel => 'Debt limit';
+
+  @override
+  String get projectsTab_title => 'Projects';
+
+  @override
+  String get projectsTab_sectionTitle => 'Active project and switching';
+
+  @override
+  String get projectsTab_pickerSubtitle => 'Pick another project from the list below to switch';
+
+  @override
+  String get projectsTab_activeLabel => 'Active project';
+
+  @override
+  String get projectsTab_scopeOrganization => 'Organization scope';
+
+  @override
+  String get projectsTab_scopeProject => 'Project scope';
+
+  @override
+  String projectsTab_switchedSnackbar(String name) {
+    return 'Active project: $name';
+  }
+
+  @override
+  String get projectsTab_empty => 'No projects assigned to you';
+
+  @override
+  String projectsTab_loadError(String message) {
+    return 'Failed to load projects: $message';
+  }
+
+  @override
+  String get timeAgoJustNow => 'just now';
+
+  @override
+  String timeAgoMinutes(int minutes) {
+    return '$minutes min ago';
+  }
+
+  @override
+  String timeAgoHours(int hours) {
+    return '$hours h ago';
+  }
+
+  @override
+  String timeAgoDays(int days) {
+    return '$days d ago';
+  }
 
   @override
   String get balanceStatusBalanceLabel => 'Balance';
 
   @override
-  String get balanceStatusLimitLabel => 'Project limit';
+  String get balanceStatusLimitLabel => 'Limit';
 
   @override
-  String get balanceStatusLimitNone => 'No limit set';
+  String get balanceStatusLimitNone => 'No limit';
 
   @override
   String get balanceStatusLastUpdatedLabel => 'Last updated';
+
+  @override
+  String get balanceStatusRefreshButton => 'Refresh';
+
+  @override
+  String get balanceStatusHeadlineOverLimit => 'Debt above the limit';
+
+  @override
+  String get balanceStatusHeadlineUnderLimit => 'Debt within the limit';
+
+  @override
+  String get balanceStatusHeadlineOk => 'No debt';
+
+  @override
+  String get balanceStatusHeadlineUnknown => 'Status unknown';
+
+  @override
+  String get balanceStatusIndicatorSemantic => 'Customer balance status';
+
+  @override
+  String get debtBlockedTitle => 'Order blocked';
+
+  @override
+  String get debtBlockedNoCachedBalance => 'Customer balance is not available offline. Connect to the network and refresh.';
+
+  @override
+  String debtBlockedBodyOnline(String balance, String limit, String currency) {
+    return 'Customer debt is $balance $currency, which exceeds the limit of $limit $currency.';
+  }
+
+  @override
+  String debtBlockedBodyOffline(String balance, String limit, String age) {
+    return 'Last known debt is $balance (limit $limit), updated $age.';
+  }
+
+  @override
+  String get debtBlockedStaleWarning => 'Balance data may be out of date.';
+
+  @override
+  String get pendingBlockedOrdersTitle => 'Orders blocked by debt';
+
+  @override
+  String get orderBlockedByDebtBadge => 'Blocked by debt limit';
+
+  @override
+  String pendingBlockedOrdersCreatedAt(String date) {
+    return 'Created $date';
+  }
+
+  @override
+  String get retrySyncButton => 'Retry';
 }

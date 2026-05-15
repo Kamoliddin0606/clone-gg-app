@@ -33,11 +33,23 @@ class SharedPreferencesService {
   static SharedPreferencesService? _instance;
   bool _isInitialized = false;
 
+  /// Reactive view of the persisted offline-mode flag.
+  ///
+  /// Widgets that need to react to mode switches (the AppBar offline
+  /// badge, banners, etc.) should listen to this instead of calling
+  /// [isOfflineMode] inside a one-shot builder. The value is updated
+  /// synchronously inside [setOfflineMode] / [clearOfflineMode], so any
+  /// caller — login flow, AppStartGuard, NetworkModeGate — propagates
+  /// to listeners for free.
+  final ValueNotifier<bool> offlineModeListenable = ValueNotifier<bool>(false);
+
   SharedPreferencesService._();
 
   Future<void> init() async {
     if (!_isInitialized) {
       _preferences = await SharedPreferences.getInstance();
+      offlineModeListenable.value =
+          _preferences.getBool(_isOfflineModeKey) ?? false;
       _isInitialized = true;
     }
   }
@@ -191,6 +203,7 @@ class SharedPreferencesService {
   // Offline mode management
   Future<void> setOfflineMode(bool isOffline) async {
     await _preferences.setBool(_isOfflineModeKey, isOffline);
+    offlineModeListenable.value = isOffline;
   }
 
   bool isOfflineMode() {
@@ -199,6 +212,7 @@ class SharedPreferencesService {
 
   Future<void> clearOfflineMode() async {
     await _preferences.remove(_isOfflineModeKey);
+    offlineModeListenable.value = false;
   }
 
   // ============================================================================
@@ -593,6 +607,31 @@ class SharedPreferencesService {
   Future<void> clearActiveProjectMeta() async {
     await _preferences.remove(_activeProjectIdKey);
     await _preferences.remove(_activeProjectSourceKey);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Backend customer sync watermark. Stored as ISO-8601 UTC so the next
+  // `_syncCustomersFromBackend` run can pass `?updated_since=…` and only
+  // pull rows that changed since the previous successful merge.
+  // ─────────────────────────────────────────────────────────────────────
+  static const String _lastBackendCustomersSyncAtKey =
+      'last_backend_customers_sync_at';
+
+  Future<void> setLastBackendCustomersSyncAt(DateTime value) async {
+    await _preferences.setString(
+      _lastBackendCustomersSyncAtKey,
+      value.toUtc().toIso8601String(),
+    );
+  }
+
+  DateTime? getLastBackendCustomersSyncAt() {
+    final raw = _preferences.getString(_lastBackendCustomersSyncAtKey);
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  Future<void> clearLastBackendCustomersSyncAt() async {
+    await _preferences.remove(_lastBackendCustomersSyncAtKey);
   }
 
   /// Clear the cached gates — used on logout, refresh-revocation, or

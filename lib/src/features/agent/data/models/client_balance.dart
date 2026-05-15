@@ -13,6 +13,35 @@
 
 import 'package:flutter/foundation.dart';
 
+/// Parse a money/number value that may arrive as `num` (DB / local cache)
+/// or as a Decimal string from the backend REST endpoint (DRF serialises
+/// `DecimalField` as a String by default). Used by every `fromJson`
+/// factory so a wire-format change doesn't surface as a runtime
+/// `String is not a subtype of num?` cast error.
+double? _parseDoubleField(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    if (value.isEmpty) return null;
+    return double.tryParse(value);
+  }
+  return null;
+}
+
+/// Same shape as [_parseDoubleField] for integer-typed fields (e.g.
+/// `overdue_days`). Backend currently emits ints, but xsi:nil collapses
+/// to `null` and we accept stringified ints defensively.
+int? _parseIntField(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) {
+    if (value.isEmpty) return null;
+    return int.tryParse(value);
+  }
+  return null;
+}
+
 /// ============================================================================
 /// ClientBalanceByContract - Balance data by contract
 /// ============================================================================
@@ -69,7 +98,9 @@ class ClientBalanceByContract {
     );
   }
 
-  /// Factory constructor from JSON (for reading from database)
+  /// Factory constructor from JSON (database OR backend REST response).
+  /// Backend serialises Decimal columns as strings; SQLite returns them
+  /// as `num`. [_parseDoubleField] covers both.
   factory ClientBalanceByContract.fromJson(Map<String, dynamic> json) {
     return ClientBalanceByContract(
       projectName: json['project_name']?.toString() ?? '',
@@ -77,8 +108,8 @@ class ClientBalanceByContract {
       taxId: json['tax_id']?.toString() ?? '',
       customerName: json['customer_name']?.toString() ?? '',
       contractCode: json['contract_code']?.toString() ?? '',
-      paymentAmount: (json['payment_amount'] as num?)?.toDouble() ?? 0.0,
-      debtAmount: (json['debt_amount'] as num?)?.toDouble() ?? 0.0,
+      paymentAmount: _parseDoubleField(json['payment_amount']) ?? 0.0,
+      debtAmount: _parseDoubleField(json['debt_amount']) ?? 0.0,
       contractId: json['contract_id']?.toString() ?? '',
     );
   }
@@ -235,11 +266,11 @@ class ClientBalanceByOrder {
       salesChannel: json['sales_channel']?.toString() ?? '',
       orderNumber: json['order_number']?.toString() ?? '',
       orderDate: parseDate(json['order_date']),
-      orderAmount: (json['order_amount'] as num?)?.toDouble() ?? 0.0,
-      paymentAmount: (json['payment_amount'] as num?)?.toDouble() ?? 0.0,
-      debtAmount: (json['debt_amount'] as num?)?.toDouble() ?? 0.0,
+      orderAmount: _parseDoubleField(json['order_amount']) ?? 0.0,
+      paymentAmount: _parseDoubleField(json['payment_amount']) ?? 0.0,
+      debtAmount: _parseDoubleField(json['debt_amount']) ?? 0.0,
       status: json['status']?.toString() ?? '',
-      overdueDays: (json['overdue_days'] as num?)?.toInt() ?? 0,
+      overdueDays: _parseIntField(json['overdue_days']) ?? 0,
       contractId: json['contract_id']?.toString() ?? '',
     );
   }
@@ -400,7 +431,7 @@ class ClientBalance {
     return ClientBalance(
       inn: json['inn']?.toString() ?? '',
       clientCode: json['client_code']?.toString(),
-      balance: _parseDouble(json['balance']) ?? 0.0,
+      balance: _parseDoubleField(json['balance']) ?? 0.0,
       contractBalances: (json['contract_balances'] as List<dynamic>?)
               ?.map((e) => ClientBalanceByContract.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -414,7 +445,7 @@ class ClientBalance {
           : DateTime.now(),
       serverDataUpdatedAt: parseServerDataUpdatedAt(),
       projectName: json['project_name']?.toString() ?? '',
-      debtLimit: _parseDouble(json['debt_limit']),
+      debtLimit: _parseDoubleField(json['debt_limit']),
       debtLimitCurrency: json['debt_limit_currency']?.toString(),
       currency: json['currency']?.toString(),
       blocked: json['blocked'] is bool ? json['blocked'] as bool : null,
@@ -422,14 +453,6 @@ class ClientBalance {
       source: json['source']?.toString(),
       lastError: json['last_error']?.toString(),
     );
-  }
-
-  /// Parse a value that may arrive as `num` (DB) or Decimal-string (REST).
-  static double? _parseDouble(dynamic value) {
-    if (value == null) return null;
-    if (value is num) return value.toDouble();
-    if (value is String) return double.tryParse(value);
-    return null;
   }
 
   /// Convert to JSON (for writing to database)

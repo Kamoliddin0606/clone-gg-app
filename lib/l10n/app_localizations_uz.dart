@@ -916,6 +916,21 @@ class AppLocalizationsUz extends AppLocalizations {
   String get onlineModeReturnConfirm => 'Internet bilan va server bilan aloqa borligini tekshirib, online rejimga qaytishni xohlaysizmi?';
 
   @override
+  String get switchToOfflineTitle => 'Offline rejimga o\'tasizmi?';
+
+  @override
+  String get switchToOfflineBody => 'Internet aloqasi yo\'q yoki server javob bermayapti. Lokal kesh ma\'lumotlar bilan ishlashda davom etasizmi?';
+
+  @override
+  String get switchedToOnline => 'Online rejimga o\'tildi';
+
+  @override
+  String get switchedToOffline => 'Offline rejimga o\'tildi';
+
+  @override
+  String get serverUnreachable => 'Server bilan aloqa o\'rnatib bo\'lmadi';
+
+  @override
   String get serverUrlNotFound => 'Server manzili topilmadi';
 
   @override
@@ -5669,51 +5684,166 @@ class AppLocalizationsUz extends AppLocalizations {
   String get notif_sound_sound => 'Tovush';
 
   @override
-  String get debtBlockedTitle => 'Buyurtma berib bo\'lmaydi';
+  String get projectDebtLimits_sectionTitle => 'Loyihalar va debit limitlar';
 
   @override
-  String debtBlockedBodyOnline(String balance, String limit, String currency) =>
-      'Mijoz balansi $balance $currency loyiha qarz limitidan ($limit $currency) oshib ketgan.';
+  String get projectDebtLimits_sectionSubtitle => 'Sizga biriktirilgan loyihalar va ularga qo\'yilgan qarz limitlari ro\'yxati';
 
   @override
-  String debtBlockedBodyOffline(String balance, String limit, String age) =>
-      'Internetsiz tekshirildi (oxirgi balans $age oldin): $balance / limit $limit.';
+  String get projectDebtLimits_offlineNotice => 'Qurilma oflayn — ko\'rsatilayotgan ma\'lumotlar lokal nusxadan olingan';
 
   @override
-  String get debtBlockedNoCachedBalance =>
-      'Balans hech qachon yuklanmagan, internetga ulanib qayta urinib ko\'ring.';
+  String get projectDebtLimits_errorNotice => 'Limitlarni serverdan yangilab bo\'lmadi';
 
   @override
-  String get debtBlockedStaleWarning =>
-      'Saqlangan balans 24 soatdan eskirgan.';
+  String get projectDebtLimits_emptyState => 'Sizga hali loyihalar biriktirilmagan';
 
   @override
-  String get orderBlockedByDebtBadge => 'Qarz limiti oshib ketgan';
+  String get projectDebtLimits_lastUpdatedLabel => 'Oxirgi yangilanish';
 
   @override
-  String get retrySyncButton => 'Qayta yuborish';
+  String get projectDebtLimits_neverUpdated => 'Hali yangilanmagan';
 
   @override
-  String get balanceStatusHeadlineOverLimit => 'Qarz limiti oshib ketgan';
+  String get projectDebtLimits_refreshTooltip => 'Limitlarni yangilash';
 
   @override
-  String get balanceStatusHeadlineUnderLimit => 'Mijozda qarz bor';
+  String get projectDebtLimits_noLimit => 'Limit belgilanmagan';
+
+  @override
+  String get projectDebtLimits_limitUnavailable => 'Limit olinmadi';
+
+  @override
+  String projectDebtLimits_loadingError(String message) {
+    return 'Yuklashda xatolik: $message';
+  }
+
+  @override
+  String get projectDebtLimits_refreshing => 'Yangilanmoqda…';
+
+  @override
+  String get projectDebtLimits_refreshSuccess => 'Limitlar yangilandi';
+
+  @override
+  String projectDebtLimits_countBadge(int count) {
+    return '$count ta loyiha';
+  }
+
+  @override
+  String get projectDebtLimits_userCodeMissing => 'Foydalanuvchi kodi topilmadi';
+
+  @override
+  String get projectDebtLimits_limitLabel => 'Qarz limiti';
+
+  @override
+  String get projectsTab_title => 'Loyihalar';
+
+  @override
+  String get projectsTab_sectionTitle => 'Faol loyiha va boshqalar';
+
+  @override
+  String get projectsTab_pickerSubtitle => 'Pastdagi ro\'yxatdan boshqa loyihaga o\'tishingiz mumkin';
+
+  @override
+  String get projectsTab_activeLabel => 'Faol loyiha';
+
+  @override
+  String get projectsTab_scopeOrganization => 'Tashkilot ko\'lami';
+
+  @override
+  String get projectsTab_scopeProject => 'Loyiha ko\'lami';
+
+  @override
+  String projectsTab_switchedSnackbar(String name) {
+    return 'Faol loyiha: $name';
+  }
+
+  @override
+  String get projectsTab_empty => 'Sizga loyihalar biriktirilmagan';
+
+  @override
+  String projectsTab_loadError(String message) {
+    return 'Loyihalarni yuklashda xatolik: $message';
+  }
+
+  @override
+  String get timeAgoJustNow => 'hozir';
+
+  @override
+  String timeAgoMinutes(int minutes) {
+    return '$minutes daqiqa oldin';
+  }
+
+  @override
+  String timeAgoHours(int hours) {
+    return '$hours soat oldin';
+  }
+
+  @override
+  String timeAgoDays(int days) {
+    return '$days kun oldin';
+  }
+
+  @override
+  String get balanceStatusBalanceLabel => 'Qarz';
+
+  @override
+  String get balanceStatusLimitLabel => 'Cheklov';
+
+  @override
+  String get balanceStatusLimitNone => 'Cheklov yo\'q';
+
+  @override
+  String get balanceStatusLastUpdatedLabel => 'So\'nggi yangilanish';
+
+  @override
+  String get balanceStatusRefreshButton => 'Yangilash';
+
+  @override
+  String get balanceStatusHeadlineOverLimit => 'Qarz cheklovdan oshgan';
+
+  @override
+  String get balanceStatusHeadlineUnderLimit => 'Qarz cheklov ichida';
 
   @override
   String get balanceStatusHeadlineOk => 'Qarz yo\'q';
 
   @override
-  String get balanceStatusHeadlineUnknown => 'Balans hali yuklanmagan';
+  String get balanceStatusHeadlineUnknown => 'Holat noma\'lum';
 
   @override
-  String get balanceStatusBalanceLabel => 'Balans';
+  String get balanceStatusIndicatorSemantic => 'Mijoz qarz holati';
 
   @override
-  String get balanceStatusLimitLabel => 'Loyiha limiti';
+  String get debtBlockedTitle => 'Buyurtma to\'sildi';
 
   @override
-  String get balanceStatusLimitNone => 'Limit belgilanmagan';
+  String get debtBlockedNoCachedBalance => 'Mijoz balansi oflayn rejimda mavjud emas. Tarmoqqa ulanib yangilang.';
 
   @override
-  String get balanceStatusLastUpdatedLabel => 'Yangilangan';
+  String debtBlockedBodyOnline(String balance, String limit, String currency) {
+    return 'Mijoz qarzi $balance $currency, bu $limit $currency cheklovidan oshgan.';
+  }
+
+  @override
+  String debtBlockedBodyOffline(String balance, String limit, String age) {
+    return 'So\'nggi ma\'lum qarz $balance (cheklov $limit), $age yangilangan.';
+  }
+
+  @override
+  String get debtBlockedStaleWarning => 'Balans ma\'lumotlari eski bo\'lishi mumkin.';
+
+  @override
+  String get pendingBlockedOrdersTitle => 'Qarz tufayli to\'silgan buyurtmalar';
+
+  @override
+  String get orderBlockedByDebtBadge => 'Qarz cheklovi bilan to\'silgan';
+
+  @override
+  String pendingBlockedOrdersCreatedAt(String date) {
+    return 'Yaratilgan: $date';
+  }
+
+  @override
+  String get retrySyncButton => 'Qayta urinish';
 }

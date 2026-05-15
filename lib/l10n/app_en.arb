@@ -301,6 +301,11 @@
   "kpiDataUpdateError": "KPI data update error",
   "onlineModeReturn": "Return to online mode",
   "onlineModeReturnConfirm": "Do you want to check internet and server connection and return to online mode?",
+  "switchToOfflineTitle": "Switch to offline mode?",
+  "switchToOfflineBody": "No internet connection or the server is not responding. Continue with locally cached data?",
+  "switchedToOnline": "Switched to online mode",
+  "switchedToOffline": "Switched to offline mode",
+  "serverUnreachable": "Cannot reach the server",
   "serverUrlNotFound": "Server URL not found",
   "serverUrl": "Server URL",
   "connectionError": "Connection error",
@@ -2991,5 +2996,97 @@
   "notif_dnd_endLabel": "End",
   "notif_sound_silent": "Silent",
   "notif_sound_vibrate": "Vibrate",
-  "notif_sound_sound": "Sound"
+  "notif_sound_sound": "Sound",
+
+  "projectDebtLimits_sectionTitle": "Projects and debt limits",
+  "projectDebtLimits_sectionSubtitle": "Projects assigned to you and their configured debt limits",
+  "projectDebtLimits_offlineNotice": "Device is offline — values shown are from the local cache",
+  "projectDebtLimits_errorNotice": "Could not refresh limits from the server",
+  "projectDebtLimits_emptyState": "No projects assigned to you yet",
+  "projectDebtLimits_lastUpdatedLabel": "Last updated",
+  "projectDebtLimits_neverUpdated": "Never updated",
+  "projectDebtLimits_refreshTooltip": "Refresh limits",
+  "projectDebtLimits_noLimit": "No limit configured",
+  "projectDebtLimits_limitUnavailable": "Limit unavailable",
+  "projectDebtLimits_loadingError": "Failed to load: {message}",
+  "@projectDebtLimits_loadingError": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+  "projectDebtLimits_refreshing": "Refreshing…",
+  "projectDebtLimits_refreshSuccess": "Limits refreshed",
+  "projectDebtLimits_countBadge": "{count} projects",
+  "@projectDebtLimits_countBadge": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "projectDebtLimits_userCodeMissing": "User code not found",
+  "projectDebtLimits_limitLabel": "Debt limit",
+
+  "projectsTab_title": "Projects",
+  "projectsTab_sectionTitle": "Active project and switching",
+  "projectsTab_pickerSubtitle": "Pick another project from the list below to switch",
+  "projectsTab_activeLabel": "Active project",
+  "projectsTab_scopeOrganization": "Organization scope",
+  "projectsTab_scopeProject": "Project scope",
+  "projectsTab_switchedSnackbar": "Active project: {name}",
+  "@projectsTab_switchedSnackbar": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "projectsTab_empty": "No projects assigned to you",
+  "projectsTab_loadError": "Failed to load projects: {message}",
+  "@projectsTab_loadError": {
+    "placeholders": { "message": { "type": "String" } }
+  },
+
+  "timeAgoJustNow": "just now",
+  "timeAgoMinutes": "{minutes} min ago",
+  "@timeAgoMinutes": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "timeAgoHours": "{hours} h ago",
+  "@timeAgoHours": {
+    "placeholders": { "hours": { "type": "int" } }
+  },
+  "timeAgoDays": "{days} d ago",
+  "@timeAgoDays": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+
+  "balanceStatusBalanceLabel": "Balance",
+  "balanceStatusLimitLabel": "Limit",
+  "balanceStatusLimitNone": "No limit",
+  "balanceStatusLastUpdatedLabel": "Last updated",
+  "balanceStatusRefreshButton": "Refresh",
+  "balanceStatusHeadlineOverLimit": "Debt above the limit",
+  "balanceStatusHeadlineUnderLimit": "Debt within the limit",
+  "balanceStatusHeadlineOk": "No debt",
+  "balanceStatusHeadlineUnknown": "Status unknown",
+  "balanceStatusIndicatorSemantic": "Customer balance status",
+
+  "debtBlockedTitle": "Order blocked",
+  "debtBlockedNoCachedBalance": "Customer balance is not available offline. Connect to the network and refresh.",
+  "debtBlockedBodyOnline": "Customer debt is {balance} {currency}, which exceeds the limit of {limit} {currency}.",
+  "@debtBlockedBodyOnline": {
+    "placeholders": {
+      "balance": { "type": "String" },
+      "limit": { "type": "String" },
+      "currency": { "type": "String" }
+    }
+  },
+  "debtBlockedBodyOffline": "Last known debt is {balance} (limit {limit}), updated {age}.",
+  "@debtBlockedBodyOffline": {
+    "placeholders": {
+      "balance": { "type": "String" },
+      "limit": { "type": "String" },
+      "age": { "type": "String" }
+    }
+  },
+  "debtBlockedStaleWarning": "Balance data may be out of date.",
+
+  "pendingBlockedOrdersTitle": "Orders blocked by debt",
+  "orderBlockedByDebtBadge": "Blocked by debt limit",
+  "pendingBlockedOrdersCreatedAt": "Created {date}",
+  "@pendingBlockedOrdersCreatedAt": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "retrySyncButton": "Retry"
 }

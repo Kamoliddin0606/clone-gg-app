@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/network_mode_gate.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/database/database_helper.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/agent_repository.dart';
@@ -342,18 +343,81 @@ class _AgentHomePageState extends State<AgentHomePage>
 
   Future<void> _refreshKpi() async {
     final prefs = sl<SharedPreferencesService>();
+    final gate = sl<NetworkModeGate>();
+    final l10n = AppLocalizations.of(context);
+
+    // Bidirectional mode reconciliation before the actual refresh:
+    //   - offline flag set + connection regained → offer Online switch
+    //   - online flag set  + connection lost     → offer Offline switch
+    // The gate never flips the flag without user confirmation.
     if (prefs.isOfflineMode()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)?.offlineMode ??
-                'Siz offline rejimdasiz. Malumotlarni yangilash imkoni mavjud emas',
-          ),
-        ),
-      );
-      return;
-      return;
+      final outcome = await gate.tryGoOnline(context);
+      if (!mounted) return;
+      switch (outcome) {
+        case NetworkModeOutcome.switched:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n?.switchedToOnline ?? 'Switched to online mode'),
+              backgroundColor: successColor,
+            ),
+          );
+          // Fall through to perform the refresh now that we are online.
+          break;
+        case NetworkModeOutcome.noInternet:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n?.noInternetConnection ?? 'No internet connection'),
+            ),
+          );
+          return;
+        case NetworkModeOutcome.serverUnreachable:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n?.serverUnreachable ?? 'Cannot reach the server'),
+            ),
+          );
+          return;
+        case NetworkModeOutcome.declined:
+        case NetworkModeOutcome.alreadyInTargetMode:
+          // User chose to stay offline → nothing to refresh from server.
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n?.offlineCannotRefresh ??
+                  'Cannot refresh data in offline mode'),
+            ),
+          );
+          return;
+      }
+    } else {
+      // Online flag set — verify the device actually has connectivity. If
+      // not, offer to transition into offline mode instead of letting the
+      // server call time out.
+      final probe = await gate.probeOnline();
+      if (probe != NetworkModeOutcome.switched) {
+        if (!mounted) return;
+        final outcome = await gate.tryGoOffline(context);
+        if (!mounted) return;
+        if (outcome == NetworkModeOutcome.switched) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n?.switchedToOffline ?? 'Switched to offline mode'),
+            ),
+          );
+        } else {
+          // User declined → surface the underlying failure.
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(probe == NetworkModeOutcome.noInternet
+                  ? (l10n?.noInternetConnection ?? 'No internet connection')
+                  : (l10n?.serverUnreachable ?? 'Cannot reach the server')),
+            ),
+          );
+        }
+        return;
+      }
     }
+
+    if (!mounted) return;
     if (userCode.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

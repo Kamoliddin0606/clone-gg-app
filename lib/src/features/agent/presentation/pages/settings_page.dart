@@ -8,18 +8,17 @@ import 'package:gloria_marketing_flutter/src/core/auth/permission_codenames.dart
 import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
-import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
-import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
-import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_controller.dart';
 import 'package:gloria_marketing_flutter/src/theme/theme_toggle.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings/data_sync_tab.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings/projects_tab.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/backend_permissions_section.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/project_debt_limits_section.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -54,10 +53,10 @@ class _SettingsPageState extends State<SettingsPage>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 4,
+      length: 5,
       vsync: this,
       initialIndex: _initialTabIndex,
-    ); // Changed from 3 to 4
+    ); // 5 tabs: Permissions, Maps, DataSync, Interface, Projects
     _orchestrator = sl<DataSyncOrchestrator>();
     _orchestrator!.addListener(_onSyncEvent);
   }
@@ -111,9 +110,6 @@ class _SettingsPageState extends State<SettingsPage>
           // User Profile Section
           const UserProfileSection(),
 
-          // Active project banner — only visible for customer_scope=project tenants.
-          const _ActiveProjectBanner(),
-
           // Tab Bar
           Container(
             color: colorScheme.surface,
@@ -129,6 +125,7 @@ class _SettingsPageState extends State<SettingsPage>
                 Tab(text: l10n.maps),
                 Tab(text: l10n.dataSync),
                 Tab(text: l10n.interfaceSettings),
+                Tab(text: l10n.projectsTab_title),
               ],
             ),
           ),
@@ -149,6 +146,7 @@ class _SettingsPageState extends State<SettingsPage>
                 InterfaceSettingsTab(
                   key: ValueKey('iface-$_reloadCounter'),
                 ),
+                ProjectsTab(key: ValueKey('projects-$_reloadCounter')),
               ],
             ),
           ),
@@ -819,6 +817,11 @@ class _PermissionsTabState extends State<PermissionsTab> {
           // legacy SOAP-derived permissions cards continue below.
           const BackendPermissionsSection(),
           const SizedBox(height: 24),
+
+          // Per-project debt limits section. Lists the user's assigned
+          // projects with their backend-issued limits, surfaces offline
+          // state, the freshness timestamp, and any sync error.
+          const ProjectDebtLimitsSection(),
 
           // Permissions Overview
           Card(
@@ -1906,90 +1909,6 @@ class _LanguageOption extends StatelessWidget {
             if (isSelected)
               Icon(Icons.check_circle, color: colorScheme.primary),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Settings banner exposing the active project for `customer_scope=project`
-/// tenants. Hidden when scope is `organization` so legacy users see no
-/// new UI.
-class _ActiveProjectBanner extends StatefulWidget {
-  const _ActiveProjectBanner();
-
-  @override
-  State<_ActiveProjectBanner> createState() => _ActiveProjectBannerState();
-}
-
-class _ActiveProjectBannerState extends State<_ActiveProjectBanner> {
-  late final ProjectContext _projectContext;
-
-  @override
-  void initState() {
-    super.initState();
-    _projectContext = sl<ProjectContext>();
-    _projectContext.addListener(_onProjectChanged);
-  }
-
-  void _onProjectChanged() {
-    if (mounted) setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _projectContext.removeListener(_onProjectChanged);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_projectContext.requiresProjectHeader) {
-      return const SizedBox.shrink();
-    }
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final UserProject? project = _projectContext.activeProject;
-    final projectName = project?.name ?? '—';
-    return Material(
-      color: colorScheme.surfaceContainerHighest,
-      child: InkWell(
-        onTap: () {
-          Navigator.of(context).pushNamed(AppRouter.projectPickerRoute);
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Icon(Icons.folder_outlined, color: colorScheme.primary),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      l10n.activeProjectLabel,
-                      style: theme.textTheme.labelMedium,
-                    ),
-                    Text(
-                      projectName,
-                      style: theme.textTheme.bodyLarge,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context)
-                      .pushNamed(AppRouter.projectPickerRoute);
-                },
-                child: Text(l10n.changeProjectAction),
-              ),
-            ],
-          ),
         ),
       ),
     );

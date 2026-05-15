@@ -26,6 +26,7 @@ import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_balance.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status_cache.dart';
 import 'package:gloria_marketing_flutter/src/core/network/api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/network/customer_endpoint_headers.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
@@ -131,13 +132,26 @@ class ClientBalanceService {
     }
 
     try {
-      final response = await _apiService.post(
+      // Project-scope tenants must attach `X-Project-Id` per the
+      // customer_scope rollout (see CustomerEndpointHeaders). Missing
+      // active project on a project-scope tenant throws a
+      // `customer_project_required` DioException that the catch below
+      // routes to the cache-fallback path.
+      final options = CustomerEndpointHeaders.optionsForRequest(
+        requestPath: '/api/mobile/v2/customers/balance/',
+      );
+      // restPost — Django V2 transport. The plain `post` would route via
+      // ServerService.baseUrl (the 1C SOAP `.1cws` endpoint), which sends
+      // a JSON body into 1C's XML parser and trips the
+      // `Document is empty [1,1]` fault we saw before M12.
+      final response = await _apiService.restPost(
         '/api/mobile/v2/customers/balance/',
         data: {
           'code_1c': code1c,
           'project_code': projectCode,
           'force_refresh': forceRefresh,
         },
+        options: options,
       );
 
       final data = response.data;
@@ -156,28 +170,42 @@ class ClientBalanceService {
         return balance;
       }
 
+      // Reached only when the server returns 200 but the body isn't a JSON
+      // object (gateway HTML, plain string, etc.). Treat it as an upstream
+      // contract break so the cubit can classify it as `invalidData` and
+      // show the user something better than silent stale data.
       if (kDebugMode) {
         print(
             'ClientBalanceService: REST non-200 status=${response.statusCode} payload=${data.runtimeType}');
       }
-      return _fallbackFromCache(inn);
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
+        error: 'Unexpected response shape: ${data.runtimeType}',
+      );
     } on DioException catch (e) {
+      // Surface the error to the cubit so the user sees a typed message
+      // (`ClientBalanceCubit._classifyError` maps status code + Passport
+      // §2.5 error envelope to a user-facing string). The cubit's catch
+      // already keeps any cached data on screen and overlays an error
+      // banner — we used to swallow the exception here, which left the
+      // UI showing stale data with no explanation at all.
       if (kDebugMode) {
         print(
             'ClientBalanceService: REST DioException type=${e.type} status=${e.response?.statusCode} body=${e.response?.data}');
       }
-      return _fallbackFromCache(inn);
+      rethrow;
     } catch (e) {
+      // Parsing/cast errors (e.g. backend changes a wire type) land here.
+      // Same rationale as the DioException branch: cubit surfaces the
+      // typed error via `_classifyError`; silent swallowing was hiding
+      // real bugs from the user.
       if (kDebugMode) {
         print('ClientBalanceService: REST unexpected error: $e');
       }
-      return _fallbackFromCache(inn);
+      rethrow;
     }
-  }
-
-  Future<ClientBalance?> _fallbackFromCache(String? inn) async {
-    if (inn == null || inn.isEmpty) return null;
-    return _cache[inn] ?? await getClientBalanceFromDb(inn);
   }
 
   // ---------------------------------------------------------------------------
@@ -385,6 +413,11 @@ class ClientBalanceService {
           where: 'inn = ?', whereArgs: [inn]);
       _cache.remove(inn);
       _lastRefreshTimes.remove(inn);
+      // Broadcast invalidation so the visual cache drops this INN's
+      // tint + indicator on the affected cards. M12 P1.2.
+      if (sl.isRegistered<CustomerBalanceStatusCache>()) {
+        sl<CustomerBalanceStatusCache>().invalidate(inn);
+      }
     } catch (e) {
       if (kDebugMode) {
         print('ClientBalanceService: delete error: $e');
@@ -401,6 +434,10 @@ class ClientBalanceService {
       _cache.clear();
       _lastRefreshTimes.clear();
       _code1cToInn.clear();
+      // Drop every entry from the visual cache too. M12 P1.2.
+      if (sl.isRegistered<CustomerBalanceStatusCache>()) {
+        sl<CustomerBalanceStatusCache>().clear();
+      }
     } catch (e) {
       if (kDebugMode) {
         print('ClientBalanceService: clear error: $e');

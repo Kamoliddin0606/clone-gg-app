@@ -187,12 +187,23 @@ enum ClientBalanceErrorType {
   
   /// Ma'lumot topilmadi - INN noto'g'ri yoki balans yo'q
   notFound,
-  
+
   /// Noto'g'ri ma'lumot - parse xatoligi
   invalidData,
-  
+
   /// Noma'lum xatolik
   unknown,
+
+  /// Backend balance proxy not configured for this organization
+  /// (Passport §2.5: 503 `not_configured`).
+  notConfigured,
+
+  /// Upstream SOAP server is down AND no cached value exists
+  /// (Passport §2.5: 502 `upstream_unavailable`).
+  upstreamUnavailable,
+
+  /// User has no permission for this customer/project (Passport §2.5: 403).
+  forbidden,
 }
 
 /// ============================================================================
@@ -214,6 +225,12 @@ extension ClientBalanceErrorTypeExtension on ClientBalanceErrorType {
         return 'Ma\'lumotlarni o\'qishda xatolik.';
       case ClientBalanceErrorType.unknown:
         return 'Noma\'lum xatolik yuz berdi.';
+      case ClientBalanceErrorType.notConfigured:
+        return 'Balans tekshiruvi sizning tashkilot uchun sozlanmagan.';
+      case ClientBalanceErrorType.upstreamUnavailable:
+        return 'Buxgalteriya serveri vaqtincha ishlamayapti. Keyinroq urinib ko\'ring.';
+      case ClientBalanceErrorType.forbidden:
+        return 'Sizda bu mijoz balansini ko\'rish ruxsati yo\'q.';
     }
   }
 
@@ -223,10 +240,13 @@ extension ClientBalanceErrorTypeExtension on ClientBalanceErrorType {
       case ClientBalanceErrorType.network:
       case ClientBalanceErrorType.server:
       case ClientBalanceErrorType.timeout:
+      case ClientBalanceErrorType.upstreamUnavailable:
         return true;
       case ClientBalanceErrorType.notFound:
       case ClientBalanceErrorType.invalidData:
       case ClientBalanceErrorType.unknown:
+      case ClientBalanceErrorType.notConfigured:
+      case ClientBalanceErrorType.forbidden:
         return false;
     }
   }

@@ -16,6 +16,10 @@ import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_
 import 'package:gloria_marketing_flutter/src/core/services/app_start_guard.dart';
 import 'package:gloria_marketing_flutter/src/core/services/health_check_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/version_app_info.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/version_gate_response.dart';
+import 'package:gloria_marketing_flutter/src/core/version/domain/version_gate_service.dart';
+import 'package:gloria_marketing_flutter/src/core/version/presentation/update_available_dialog.dart';
 import 'package:gloria_marketing_flutter/src/core/widgets/permission_gate.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
@@ -96,24 +100,80 @@ void main() async {
     }
   }
 
+  // Load PackageInfo + DeviceInfo BEFORE the first V2 call so the
+  // `X-App-*` headers carry real values. The locator already exposes a
+  // [VersionAppInfo.empty] sentinel; we swap it for the real snapshot
+  // here. See docs/integration-prompts/mobile-app-version-passport.md §2.
+  try {
+    final info = await VersionAppInfo.load();
+    if (sl.isRegistered<VersionAppInfo>()) {
+      sl.unregister<VersionAppInfo>();
+    }
+    sl.registerSingleton<VersionAppInfo>(info);
+    if (kDebugMode) {
+      debugPrint(
+        '[Main] VersionAppInfo ready: ${info.packageName} '
+        '${info.platform} ${info.appVersion}+${info.buildNumber}',
+      );
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] VersionAppInfo load failed: $e');
+    }
+  }
+
+  // Run the splash version-check BEFORE AppStartGuard so a blocked or
+  // maintenance state short-circuits the whole login/refresh dance.
+  // Failure here is fail-open: if the endpoint is unreachable AND no
+  // cached gate exists, the app proceeds with the normal start flow.
+  VersionGateResponse? pendingSoftUpdate;
+  VersionGateResponse? blockingGate;
+  try {
+    final locale = sl<SharedPreferencesService>().getUserSelectedLanguageCode() ?? 'uz';
+    final gate = await sl<VersionGateService>().checkOnStartup(locale: locale);
+    if (gate != null) {
+      if (gate.status.blocksApp) {
+        blockingGate = gate;
+      } else if (gate.status.wireValue == 'soft_update') {
+        final dismissed = await sl<VersionGateService>().isSoftUpdateDismissed();
+        if (!dismissed) pendingSoftUpdate = gate;
+      }
+      if (kDebugMode) {
+        debugPrint('[Main] VersionGate → ${gate.status.wireValue}');
+      }
+    } else if (kDebugMode) {
+      debugPrint('[Main] VersionGate → null (offline + no cache)');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] VersionGate error (fail-open): $e');
+    }
+  }
+
   // Determine the initial route via the new AppStartGuard. The legacy
   // AppAccessControl/TimeVerification flow has been replaced — see
   // `app_start_guard.dart` for the decision tree.
   String initialRouteName = AppRouter.loginRoute;
-  try {
-    final guard = sl<AppStartGuard>();
-    final result = await guard.decide();
-    if (result.decision == StartDecision.showHome) {
-      initialRouteName = AppRouter.mainAgentScreenRoute;
-    } else {
-      initialRouteName = AppRouter.loginRoute;
-    }
-    if (kDebugMode) {
-      debugPrint('[Main] AppStartGuard → ${result.decision} (reason=${result.reason?.runtimeType})');
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] AppStartGuard error (defaulting to login): $e');
+  Object? initialRouteArguments;
+  if (blockingGate != null) {
+    initialRouteName = AppRouter.versionGateRoute;
+    initialRouteArguments = blockingGate;
+  } else {
+    try {
+      final guard = sl<AppStartGuard>();
+      final result = await guard.decide();
+      if (result.decision == StartDecision.showHome) {
+        initialRouteName = AppRouter.mainAgentScreenRoute;
+      } else {
+        initialRouteName = AppRouter.loginRoute;
+      }
+      if (kDebugMode) {
+        debugPrint('[Main] AppStartGuard → ${result.decision} (reason=${result.reason?.runtimeType})');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Main] AppStartGuard error (defaulting to login): $e');
+      }
     }
   }
 
@@ -121,7 +181,11 @@ void main() async {
   // initial route (notification cache, FCM wiring, MapKit, background
   // location, WorkManager re-register, debug health-check) is deferred
   // to a fire-and-forget bootstrap that runs after runApp().
-  runApp(App(initialRoute: initialRouteName));
+  runApp(App(
+    initialRoute: initialRouteName,
+    initialRouteArguments: initialRouteArguments,
+    pendingSoftUpdate: pendingSoftUpdate,
+  ));
 
   unawaited(_runDeferredBootstrap());
 }
@@ -352,7 +416,21 @@ class App extends StatefulWidget {
   /// Initial route resolved by [AppStartGuard] in `main()` before `runApp`.
   final String initialRoute;
 
-  const App({super.key, this.initialRoute = AppRouter.loginRoute});
+  /// Optional argument forwarded to [AppRouter.generateRoute] for the
+  /// initial route — currently used to hand the [VersionGateResponse]
+  /// payload to [AppRouter.versionGateRoute].
+  final Object? initialRouteArguments;
+
+  /// Soft-update payload resolved at cold start. If non-null, the soft-update
+  /// dialog is surfaced once the navigator is mounted.
+  final VersionGateResponse? pendingSoftUpdate;
+
+  const App({
+    super.key,
+    this.initialRoute = AppRouter.loginRoute,
+    this.initialRouteArguments,
+    this.pendingSoftUpdate,
+  });
 
   @override
   State<App> createState() => _AppState();
@@ -367,6 +445,31 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     _initializeLocale();
     // App lifecycle events'ni kuzatish uchun observer qo'shish
     WidgetsBinding.instance.addObserver(this);
+    _scheduleSoftUpdateDialog();
+  }
+
+  /// If main() resolved a soft-update payload, show the dismissable dialog
+  /// once the navigator finishes its first build. Best-effort: a missing
+  /// VersionGateService or missing context simply skips the dialog.
+  void _scheduleSoftUpdateDialog() {
+    final pending = widget.pendingSoftUpdate;
+    if (pending == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final ctx = AppRouter.navigatorKey.currentContext;
+      if (ctx == null) return;
+      if (!sl.isRegistered<VersionGateService>()) return;
+      try {
+        await showUpdateAvailableDialog(
+          ctx,
+          payload: pending,
+          service: sl<VersionGateService>(),
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[Main] soft-update dialog skipped: $e');
+        }
+      }
+    });
   }
 
   @override
@@ -499,9 +602,13 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 // loginRoute = '/' bo'lgani uchun '/main-agent' bilan ishga
                 // tushganda stack [LoginPage, MainAgentScreen] bo'lib qoladi va
                 // back tugmasi LoginPage'ga olib chiqadi. Faqat bitta initial
-                // route push qilamiz.
+                // route push qilamiz. The optional `initialRouteArguments`
+                // hands the VersionGate payload through for the blocked path.
                 onGenerateInitialRoutes: (initialRoute) => [
-                  AppRouter.generateRoute(RouteSettings(name: initialRoute)),
+                  AppRouter.generateRoute(RouteSettings(
+                    name: initialRoute,
+                    arguments: widget.initialRouteArguments,
+                  )),
                 ],
                 localizationsDelegates: AppLocalizations.localizationsDelegates,
                 supportedLocales: AppLocalizations.supportedLocales,

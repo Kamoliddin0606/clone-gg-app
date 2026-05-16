@@ -3,6 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:gloria_marketing_flutter/src/core/network/server_service.dart';
 import 'package:gloria_marketing_flutter/src/core/network/url_failover_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
+import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/app_version_interceptor.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/version_app_info.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/version_check_cache.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/version_gate_response_interceptor.dart';
 import '../services/service_locator.dart';
 
 /// Exception thrown when network connectivity issues occur
@@ -101,6 +106,18 @@ class ApiService {
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),
     ));
+    // App-version headers (X-App-Identifier / X-App-Platform / X-App-Version /
+    // X-App-Build / X-OS-Version / X-Device-Model). Stamped on every outbound
+    // V2 request so the backend middleware can evaluate the version gate.
+    // See docs/integration-prompts/mobile-app-version-passport.md §4.
+    dio.interceptors.add(AppVersionInterceptor(() {
+      try {
+        if (sl.isRegistered<VersionAppInfo>()) {
+          return sl<VersionAppInfo>();
+        }
+      } catch (_) {}
+      return VersionAppInfo.empty;
+    }));
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         try {
@@ -122,6 +139,17 @@ class ApiService {
         }
         return handler.next(err);
       },
+    ));
+    // 426 Upgrade Required → routes to the full-screen block surface.
+    // Must come AFTER the token interceptor so the auth-failure log line
+    // above still runs on regular 4xx. Cache is best-effort; the service
+    // locator entry is registered up-front but might not be ready in
+    // tests that instantiate ApiService directly.
+    dio.interceptors.add(VersionGateResponseInterceptor(
+      navigatorKey: AppRouter.navigatorKey,
+      cache: sl.isRegistered<VersionCheckCache>()
+          ? sl<VersionCheckCache>()
+          : VersionCheckCache(),
     ));
     _restDioInstance = dio;
     return dio;

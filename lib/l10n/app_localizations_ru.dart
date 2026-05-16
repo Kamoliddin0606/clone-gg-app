@@ -5906,4 +5906,40 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get projectGate_blockedSnackbar => 'Сначала выберите активный проект. Это можно сделать на вкладке «Проекты».';
+
+  @override
+  String get versionGate_updateButton => 'Обновить';
+
+  @override
+  String get versionGate_laterButton => 'Позже';
+
+  @override
+  String get versionGate_retryButton => 'Повторить';
+
+  @override
+  String get versionGate_exitButton => 'Выйти из приложения';
+
+  @override
+  String get versionGate_blocked_title => 'Эта версия заблокирована';
+
+  @override
+  String get versionGate_blocked_message => 'Пожалуйста, установите новую версию приложения.';
+
+  @override
+  String get versionGate_forceUpdate_title => 'Требуется обновление';
+
+  @override
+  String get versionGate_forceUpdate_message => 'Обновите приложение, чтобы продолжить работу.';
+
+  @override
+  String get versionGate_softUpdate_title => 'Доступно обновление';
+
+  @override
+  String get versionGate_softUpdate_message => 'Вышла новая версия приложения.';
+
+  @override
+  String get versionGate_maintenance_title => 'Технические работы';
+
+  @override
+  String get versionGate_maintenance_message => 'Сервер временно недоступен. Попробуйте чуть позже.';
 }

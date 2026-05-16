@@ -29,6 +29,8 @@ import 'package:gloria_marketing_flutter/src/features/knowledge/presentation/pag
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/pages/notification_list_page.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/pages/notification_detail_page.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/presentation/pages/notification_preferences_page.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/version_gate_response.dart';
+import 'package:gloria_marketing_flutter/src/core/version/presentation/version_gate_screen.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -67,6 +69,9 @@ class AppRouter {
   // Active project picker for `customer_scope=project` tenants.
   // See ProjectContext + mobile-customer-scope.md backend handoff.
   static const String projectPickerRoute = '/project-picker';
+  // App version gate (force_update / blocked / maintenance) — full-screen,
+  // back disabled. See docs/integration-prompts/mobile-app-version-*.md.
+  static const String versionGateRoute = '/version-gate';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -231,6 +236,19 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => ProjectPickerPage(mandatory: mandatory),
           fullscreenDialog: mandatory,
+        );
+      case versionGateRoute:
+        final payload = settings.arguments;
+        if (payload is VersionGateResponse) {
+          return MaterialPageRoute(
+            builder: (_) => VersionGateScreen(payload: payload),
+            settings: settings,
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(
+            body: Center(child: Text('VersionGateResponse argument required')),
+          ),
         );
       default:
         return MaterialPageRoute(

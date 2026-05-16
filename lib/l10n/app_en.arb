@@ -3117,5 +3117,21 @@
   "projectGate_bannerMessage": "Pick an active project before refreshing or syncing any data.",
   "projectGate_bannerCta": "Pick a project",
   "projectGate_blockedSnackbar": "Select an active project first. You can pick one from the Projects tab.",
-  "@projectGate_blockedSnackbar": {"description": "Snackbar shown when the user taps a sync button without an active project."}
+  "@projectGate_blockedSnackbar": {"description": "Snackbar shown when the user taps a sync button without an active project."},
+  "versionGate_updateButton": "Update",
+  "@versionGate_updateButton": {"description": "Primary CTA in update dialogs and block screens — opens the store."},
+  "versionGate_laterButton": "Later",
+  "@versionGate_laterButton": {"description": "Soft-update dismiss button — suppresses the dialog for 24h."},
+  "versionGate_retryButton": "Retry",
+  "@versionGate_retryButton": {"description": "Maintenance screen button — re-runs the version-check call."},
+  "versionGate_exitButton": "Exit app",
+  "@versionGate_exitButton": {"description": "Secondary action on force-update / blocked screens."},
+  "versionGate_blocked_title": "This version is blocked",
+  "versionGate_blocked_message": "Please install the latest version of the app.",
+  "versionGate_forceUpdate_title": "Update required",
+  "versionGate_forceUpdate_message": "Please update to keep using the app.",
+  "versionGate_softUpdate_title": "Update available",
+  "versionGate_softUpdate_message": "A new version of the app is available.",
+  "versionGate_maintenance_title": "Maintenance",
+  "versionGate_maintenance_message": "The server is temporarily unavailable. Please try again shortly."
 }

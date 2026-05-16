@@ -3004,5 +3004,17 @@
   "projectGate_bannerTitle": "Активный проект не выбран",
   "projectGate_bannerMessage": "Перед обновлением или синхронизацией данных выберите активный проект.",
   "projectGate_bannerCta": "Выбрать проект",
-  "projectGate_blockedSnackbar": "Сначала выберите активный проект. Это можно сделать на вкладке «Проекты»."
+  "projectGate_blockedSnackbar": "Сначала выберите активный проект. Это можно сделать на вкладке «Проекты».",
+  "versionGate_updateButton": "Обновить",
+  "versionGate_laterButton": "Позже",
+  "versionGate_retryButton": "Повторить",
+  "versionGate_exitButton": "Выйти из приложения",
+  "versionGate_blocked_title": "Эта версия заблокирована",
+  "versionGate_blocked_message": "Пожалуйста, установите новую версию приложения.",
+  "versionGate_forceUpdate_title": "Требуется обновление",
+  "versionGate_forceUpdate_message": "Обновите приложение, чтобы продолжить работу.",
+  "versionGate_softUpdate_title": "Доступно обновление",
+  "versionGate_softUpdate_message": "Вышла новая версия приложения.",
+  "versionGate_maintenance_title": "Технические работы",
+  "versionGate_maintenance_message": "Сервер временно недоступен. Попробуйте чуть позже."
 }

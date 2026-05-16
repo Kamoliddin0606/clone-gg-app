@@ -3008,5 +3008,17 @@
   "projectGate_bannerTitle": "Faol loyiha tanlanmagan",
   "projectGate_bannerMessage": "Ma'lumotlarni yangilash va sinxronizatsiya uchun avval faol loyihani tanlang.",
   "projectGate_bannerCta": "Loyiha tanlash",
-  "projectGate_blockedSnackbar": "Avval faol loyihani tanlang. Loyihalar tabidan tanlashingiz mumkin."
+  "projectGate_blockedSnackbar": "Avval faol loyihani tanlang. Loyihalar tabidan tanlashingiz mumkin.",
+  "versionGate_updateButton": "Yangilash",
+  "versionGate_laterButton": "Keyinroq",
+  "versionGate_retryButton": "Qaytadan urinish",
+  "versionGate_exitButton": "Ilovadan chiqish",
+  "versionGate_blocked_title": "Ushbu versiya bloklangan",
+  "versionGate_blocked_message": "Ilovaning yangi versiyasini yuklab oling.",
+  "versionGate_forceUpdate_title": "Yangilanish majburiy",
+  "versionGate_forceUpdate_message": "Ishlashda davom etish uchun yangilang.",
+  "versionGate_softUpdate_title": "Yangilanish mavjud",
+  "versionGate_softUpdate_message": "Ilovaning yangi versiyasi chiqdi.",
+  "versionGate_maintenance_title": "Texnik ishlar",
+  "versionGate_maintenance_message": "Server vaqtinchalik ishlamayapti. Iltimos, biroz keyin urinib ko'ring."
 }

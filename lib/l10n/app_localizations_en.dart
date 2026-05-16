@@ -5906,4 +5906,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get projectGate_blockedSnackbar => 'Select an active project first. You can pick one from the Projects tab.';
+
+  @override
+  String get versionGate_updateButton => 'Update';
+
+  @override
+  String get versionGate_laterButton => 'Later';
+
+  @override
+  String get versionGate_retryButton => 'Retry';
+
+  @override
+  String get versionGate_exitButton => 'Exit app';
+
+  @override
+  String get versionGate_blocked_title => 'This version is blocked';
+
+  @override
+  String get versionGate_blocked_message => 'Please install the latest version of the app.';
+
+  @override
+  String get versionGate_forceUpdate_title => 'Update required';
+
+  @override
+  String get versionGate_forceUpdate_message => 'Please update to keep using the app.';
+
+  @override
+  String get versionGate_softUpdate_title => 'Update available';
+
+  @override
+  String get versionGate_softUpdate_message => 'A new version of the app is available.';
+
+  @override
+  String get versionGate_maintenance_title => 'Maintenance';
+
+  @override
+  String get versionGate_maintenance_message => 'The server is temporarily unavailable. Please try again shortly.';
 }

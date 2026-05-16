@@ -5906,4 +5906,40 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get projectGate_blockedSnackbar => 'Avval faol loyihani tanlang. Loyihalar tabidan tanlashingiz mumkin.';
+
+  @override
+  String get versionGate_updateButton => 'Yangilash';
+
+  @override
+  String get versionGate_laterButton => 'Keyinroq';
+
+  @override
+  String get versionGate_retryButton => 'Qaytadan urinish';
+
+  @override
+  String get versionGate_exitButton => 'Ilovadan chiqish';
+
+  @override
+  String get versionGate_blocked_title => 'Ushbu versiya bloklangan';
+
+  @override
+  String get versionGate_blocked_message => 'Ilovaning yangi versiyasini yuklab oling.';
+
+  @override
+  String get versionGate_forceUpdate_title => 'Yangilanish majburiy';
+
+  @override
+  String get versionGate_forceUpdate_message => 'Ishlashda davom etish uchun yangilang.';
+
+  @override
+  String get versionGate_softUpdate_title => 'Yangilanish mavjud';
+
+  @override
+  String get versionGate_softUpdate_message => 'Ilovaning yangi versiyasi chiqdi.';
+
+  @override
+  String get versionGate_maintenance_title => 'Texnik ishlar';
+
+  @override
+  String get versionGate_maintenance_message => 'Server vaqtinchalik ishlamayapti. Iltimos, biroz keyin urinib ko\'ring.';
 }

@@ -40,6 +40,13 @@ import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_
 import 'package:gloria_marketing_flutter/src/core/services/network_mode_gate.dart';
 import 'package:gloria_marketing_flutter/src/core/services/app_start_guard.dart';
 import 'package:gloria_marketing_flutter/src/core/services/health_check_service.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/app_version_interceptor.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/version_app_info.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/version_check_cache.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/version_gate_api.dart';
+import 'package:gloria_marketing_flutter/src/core/version/data/version_gate_response_interceptor.dart';
+import 'package:gloria_marketing_flutter/src/core/version/domain/version_gate_service.dart';
+import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 
 import 'package:gloria_marketing_flutter/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/domain/repositories/auth_repository.dart';
@@ -74,6 +81,41 @@ import 'package:gloria_marketing_flutter/src/features/notifications/data/service
 import '../network/server_service.dart';
 
 final sl = GetIt.instance;
+
+/// Attach the [AppVersionInterceptor] AND [VersionGateResponseInterceptor]
+/// to a Dio used for the V2 backend. Two-in-one because every V2 Dio needs
+/// both: outbound headers identify the app to the backend middleware, and
+/// inbound 426s must route to the full-screen block surface.
+///
+/// Pulls [VersionAppInfo] lazily from the service locator so the cached
+/// snapshot reflects the latest [main()] load. Skips quietly if either the
+/// locator entry is missing (early bootstrap) or the same interceptor is
+/// already attached (idempotency for tests that re-run setup).
+void _attachAppVersionHeaders(Dio dio) {
+  final alreadyRequestAttached =
+      dio.interceptors.any((i) => i is AppVersionInterceptor);
+  if (!alreadyRequestAttached) {
+    dio.interceptors.add(AppVersionInterceptor(() {
+      try {
+        if (sl.isRegistered<VersionAppInfo>()) {
+          return sl<VersionAppInfo>();
+        }
+      } catch (_) {}
+      return VersionAppInfo.empty;
+    }));
+  }
+
+  final alreadyResponseAttached =
+      dio.interceptors.any((i) => i is VersionGateResponseInterceptor);
+  if (!alreadyResponseAttached) {
+    dio.interceptors.add(VersionGateResponseInterceptor(
+      navigatorKey: AppRouter.navigatorKey,
+      cache: sl.isRegistered<VersionCheckCache>()
+          ? sl<VersionCheckCache>()
+          : VersionCheckCache(),
+    ));
+  }
+}
 
 Future<void> setupServiceLocator() async {
   // 0) Critical Services
@@ -203,6 +245,7 @@ Future<void> setupServiceLocator() async {
       sendTimeout: const Duration(seconds: 30),
     ));
     attachRestLogger(tokenDio, 'AUTH');
+    _attachAppVersionHeaders(tokenDio);
 
     sl.registerLazySingleton<TokenService>(() => TokenService(
       tokenDio,
@@ -414,6 +457,7 @@ Future<void> setupServiceLocator() async {
       sendTimeout: const Duration(seconds: 30),
     ));
     attachRestLogger(imageDio, 'IMG');
+    _attachAppVersionHeaders(imageDio);
 
     sl.registerLazySingleton<NewBackendImageRepository>(
       () => NewBackendImageRepository(
@@ -435,6 +479,7 @@ Future<void> setupServiceLocator() async {
       sendTimeout: const Duration(seconds: 30),
     ));
     attachRestLogger(customerPhotoDio, 'PHOTO');
+    _attachAppVersionHeaders(customerPhotoDio);
 
     sl.registerLazySingleton<CustomerPhotoRepository>(
       () => CustomerPhotoRepository(
@@ -485,6 +530,7 @@ Future<void> setupServiceLocator() async {
       sendTimeout: const Duration(seconds: 30),
     ));
     attachRestLogger(customerWriteDio, 'CUSTOMER');
+    _attachAppVersionHeaders(customerWriteDio);
 
     sl.registerLazySingleton<CustomerWriteRepository>(
       () => CustomerWriteRepository(
@@ -505,6 +551,7 @@ Future<void> setupServiceLocator() async {
       receiveTimeout: const Duration(seconds: 30),
       sendTimeout: const Duration(seconds: 30),
     ));
+    _attachAppVersionHeaders(customerReadDio);
     // Intentionally no attachRestLogger here: listAll() paginates through
     // the full customer list (~150 KB per page) and LogInterceptor would
     // dump every page's body via debugPrint, throttling the log queue and
@@ -595,6 +642,44 @@ Future<void> setupServiceLocator() async {
     ));
   }
 
+  // ===========================================================================
+  // App-version gating layer (docs/integration-prompts/mobile-app-version-*.md)
+  // ===========================================================================
+  //
+  // Three runtime singletons + two Dio interceptor factories. The runtime
+  // singletons are eager because every V2 Dio in the locator must be able to
+  // attach the request interceptor on first construction.
+  //
+  //   - VersionAppInfo  : cached package + device telemetry. Loaded ASYNC in
+  //                       main() before runApp(). Until the async load lands
+  //                       the locator returns [VersionAppInfo.empty] (the
+  //                       request interceptor drops empty headers, so this
+  //                       stays correct — version-check just runs without
+  //                       identifiers and the backend treats it as unknown).
+  //   - VersionCheckCache: SharedPreferences-backed.
+  //   - VersionGateApi   : dedicated Dio, NO global interceptors (must not
+  //                        loop through itself on 426).
+  //   - VersionGateService: the orchestrator the splash uses.
+  if (!sl.isRegistered<VersionAppInfo>()) {
+    // Registered up-front with the empty sentinel; main() overwrites once
+    // PackageInfo + DeviceInfo finish loading.
+    sl.registerSingleton<VersionAppInfo>(VersionAppInfo.empty);
+  }
+  if (!sl.isRegistered<VersionCheckCache>()) {
+    sl.registerLazySingleton<VersionCheckCache>(() => VersionCheckCache());
+  }
+  if (!sl.isRegistered<VersionGateApi>()) {
+    sl.registerLazySingleton<VersionGateApi>(() => VersionGateApi(
+          appInfoProvider: () => sl<VersionAppInfo>(),
+        ));
+  }
+  if (!sl.isRegistered<VersionGateService>()) {
+    sl.registerLazySingleton<VersionGateService>(() => VersionGateService(
+          api: sl<VersionGateApi>(),
+          cache: sl<VersionCheckCache>(),
+        ));
+  }
+
   // Knowledge Base feature — offline-first reglament/training docs.
   // KnowledgeApiService re-resolves the V2 token + X-Organization-Id
   // per request via TokenService + AgentOrganizationContext, so it
@@ -647,6 +732,7 @@ Future<void> setupServiceLocator() async {
       sendTimeout: const Duration(seconds: 30),
     ));
     attachRestLogger(notifDio, 'NOTIF');
+    _attachAppVersionHeaders(notifDio);
     sl.registerLazySingleton<NotificationApiService>(
       () => NotificationApiService(
         dio: notifDio,

@@ -11178,6 +11178,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select an active project first. You can pick one from the Projects tab.'**
   String get projectGate_blockedSnackbar;
+
+  /// Primary CTA in update dialogs and block screens — opens the store.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get versionGate_updateButton;
+
+  /// Soft-update dismiss button — suppresses the dialog for 24h.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get versionGate_laterButton;
+
+  /// Maintenance screen button — re-runs the version-check call.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get versionGate_retryButton;
+
+  /// Secondary action on force-update / blocked screens.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit app'**
+  String get versionGate_exitButton;
+
+  /// No description provided for @versionGate_blocked_title.
+  ///
+  /// In en, this message translates to:
+  /// **'This version is blocked'**
+  String get versionGate_blocked_title;
+
+  /// No description provided for @versionGate_blocked_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Please install the latest version of the app.'**
+  String get versionGate_blocked_message;
+
+  /// No description provided for @versionGate_forceUpdate_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get versionGate_forceUpdate_title;
+
+  /// No description provided for @versionGate_forceUpdate_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Please update to keep using the app.'**
+  String get versionGate_forceUpdate_message;
+
+  /// No description provided for @versionGate_softUpdate_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Update available'**
+  String get versionGate_softUpdate_title;
+
+  /// No description provided for @versionGate_softUpdate_message.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of the app is available.'**
+  String get versionGate_softUpdate_message;
+
+  /// No description provided for @versionGate_maintenance_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get versionGate_maintenance_title;
+
+  /// No description provided for @versionGate_maintenance_message.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is temporarily unavailable. Please try again shortly.'**
+  String get versionGate_maintenance_message;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

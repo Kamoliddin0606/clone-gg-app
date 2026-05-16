@@ -4360,37 +4360,64 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     if (!store.hasAny(PermissionCodenames.customerPhotoAny)) {
       return const SizedBox.shrink();
     }
+    final cardRadius = BorderRadius.circular(12);
     return Card(
       elevation: 0,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: cardRadius,
         side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.photo_library_outlined, size: 22, color: cs.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    l10n.manageClientImages,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: () => _openPhotosManagementPage(),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 12, 12),
+              child: Row(
+                children: [
+                  Icon(Icons.photo_library_outlined, size: 22, color: cs.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.manageClientImages,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  Icon(
+                    Icons.chevron_right,
+                    size: 24,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            CustomerPhotoPreview(
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: CustomerPhotoPreview(
               customerId: widget.tradingPoint.id,
               customerName: widget.tradingPoint.name,
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Opens the V2 customer photo management page. Reached either by
+  /// tapping the section header (this method) or via the inline edit
+  /// overlay on the carousel itself.
+  void _openPhotosManagementPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CustomerPhotosPage(
+          customerId: widget.tradingPoint.id,
+          customerName: widget.tradingPoint.name,
         ),
       ),
     );
@@ -5161,9 +5188,11 @@ class _ActionsMapPageState extends State<_ActionsMapPage> {
   }
 }
 
-/// Header image — single client image fetched on demand via the new
-/// `/api/mobile/v1/images/` backend. The legacy multi-image auto-scrolling
-/// carousel was retired together with the legacy image API on 2026-05-08.
+/// Header image — V2 customer-photo carousel rendered at the top of the
+/// actions tab. Mirrors the carousel used in the client-details tab so
+/// agents get the same auto-rotating gallery, permission-gated edit
+/// shortcut (top-right), and double-tap → fullscreen (swipe + pinch
+/// zoom) flow on either side of the swipe.
 class _HeaderImage extends StatelessWidget {
   final bool visited;
   final TradingPoint tradingPoint;
@@ -5176,34 +5205,33 @@ class _HeaderImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    const radius = BorderRadius.vertical(top: Radius.circular(20));
     return SizedBox(
       height: 250,
       child: Container(
         decoration: BoxDecoration(
           color: cs.primaryContainer,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: radius,
         ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              CustomerPrimaryThumbnail(
-                customerId: tradingPoint.id,
-                size: UnifiedImageSize.large,
-                fit: BoxFit.cover,
-                errorBuilder: (ctx) => Container(
-                  color: Theme.of(ctx).colorScheme.primaryContainer,
-                  child: Icon(
-                    Icons.storefront,
-                    size: 48,
-                    color: Theme.of(ctx).colorScheme.onPrimaryContainer,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            CustomerPhotoPreview(
+              customerId: tradingPoint.id,
+              customerName: tradingPoint.name,
+              height: 250,
+              borderRadius: radius,
+            ),
+            if (visited)
+              IgnorePointer(
+                child: ClipRRect(
+                  borderRadius: radius,
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.22),
                   ),
                 ),
               ),
-              if (visited) Container(color: Colors.black.withOpacity(0.22)),
-            ],
-          ),
+          ],
         ),
       ),
     );

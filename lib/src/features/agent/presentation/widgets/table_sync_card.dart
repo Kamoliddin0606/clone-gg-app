@@ -5,6 +5,7 @@ import 'package:gloria_marketing_flutter/src/core/models/sync_table_metadata.dar
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/utils/sync_helpers.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/active_project_guard.dart';
 
 /// Card widget displaying sync status and controls for a single table.
 ///
@@ -133,7 +134,14 @@ class _TableSyncCardState extends State<TableSyncCard> {
   /// 5. Notifies parent via callback if provided
   Future<void> _performSync(SyncMode mode) async {
     if (_isSyncing) return; // Prevent double sync
-    
+
+    // Guard rail: per-table sync still goes through the orchestrator
+    // and dependencies, all of which need an active project in
+    // project-scope tenants. Block at the entry point and let the
+    // shared helper surface the "pick a project" snackbar.
+    if (!await ensureActiveProject(context)) return;
+    if (!mounted) return;
+
     setState(() {
       _isSyncing = true;
     });
@@ -141,6 +149,7 @@ class _TableSyncCardState extends State<TableSyncCard> {
     try {
       // Force resync is enabled by default in syncTableFromAnywhere
       // This ensures tables are re-synced even if previously successful
+      if (!mounted) return;
       await syncTableFromAnywhere(
         context,
         widget.table.id,

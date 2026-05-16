@@ -11058,6 +11058,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get retrySyncButton;
+
+  /// Title of the blocking permission screen shown at app start.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions required'**
+  String get permissionGate_title;
+
+  /// Subtitle explaining that all listed permissions are mandatory.
+  ///
+  /// In en, this message translates to:
+  /// **'The app requires the following to work. If any of them is denied, the app cannot continue.'**
+  String get permissionGate_subtitle;
+
+  /// No description provided for @permissionGate_locationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission'**
+  String get permissionGate_locationTitle;
+
+  /// No description provided for @permissionGate_locationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'To track customer visits and routes'**
+  String get permissionGate_locationSubtitle;
+
+  /// No description provided for @permissionGate_gpsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS must be enabled'**
+  String get permissionGate_gpsTitle;
+
+  /// No description provided for @permissionGate_gpsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'To determine precise location'**
+  String get permissionGate_gpsSubtitle;
+
+  /// No description provided for @permissionGate_notificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get permissionGate_notificationTitle;
+
+  /// No description provided for @permissionGate_notificationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'To receive alerts about new orders and tasks'**
+  String get permissionGate_notificationSubtitle;
+
+  /// Primary button label when in-app OS dialogs can still help.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant permission'**
+  String get permissionGate_grantCta;
+
+  /// Button label that opens the system app-settings page.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get permissionGate_openSettingsCta;
+
+  /// No description provided for @permissionGate_busy.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait...'**
+  String get permissionGate_busy;
+
+  /// No description provided for @permissionGate_statusGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Granted'**
+  String get permissionGate_statusGranted;
+
+  /// No description provided for @permissionGate_statusRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get permissionGate_statusRequired;
+
+  /// Status pill shown when only system settings can grant a permission.
+  ///
+  /// In en, this message translates to:
+  /// **'From settings'**
+  String get permissionGate_statusFromSettings;
+
+  /// Explainer line under the SOAP permissions section title.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy permissions. Some rules below are now controlled by the backend gates above.'**
+  String get permissionsTab_soapSectionSubtitle;
+
+  /// Inline chip on a SOAP row that is superseded by a backend codename.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend rule'**
+  String get permissionsTab_overrideBadge;
+
+  /// Banner title shown on the Data Sync tab when project-scope user has no active project.
+  ///
+  /// In en, this message translates to:
+  /// **'No active project'**
+  String get projectGate_bannerTitle;
+
+  /// No description provided for @projectGate_bannerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an active project before refreshing or syncing any data.'**
+  String get projectGate_bannerMessage;
+
+  /// No description provided for @projectGate_bannerCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a project'**
+  String get projectGate_bannerCta;
+
+  /// Snackbar shown when the user taps a sync button without an active project.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an active project first. You can pick one from the Projects tab.'**
+  String get projectGate_blockedSnackbar;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

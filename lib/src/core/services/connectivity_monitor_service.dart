@@ -83,15 +83,7 @@ class ConnectivityMonitorService {
         print('[ConnectivityMonitor] Has connection: $hasConnection');
       }
 
-      // Only emit if status actually changed
-      if (hasConnection != _lastKnownStatus) {
-        _lastKnownStatus = hasConnection;
-        _connectivityController.add(hasConnection);
-
-        if (kDebugMode) {
-          print('[ConnectivityMonitor] Status changed to: ${hasConnection ? "CONNECTED" : "DISCONNECTED"}');
-        }
-      }
+      _setStatus(hasConnection);
     } catch (e) {
       if (kDebugMode) {
         print('[ConnectivityMonitor] Error handling connectivity change: $e');
@@ -100,12 +92,16 @@ class ConnectivityMonitorService {
   }
 
   /// Check current connectivity status
-  /// 
-  /// Returns true if device has active network connection
+  ///
+  /// Returns true if device has active network connection.
+  /// Also synchronises `_lastKnownStatus` with the freshly probed value so
+  /// any UI listeners (StreamBuilder on [connectivityStream]) see the
+  /// up-to-date state — without this, `hasConnection()` callers would
+  /// silently diverge from the cached value the stream emits.
   Future<bool> hasConnection() async {
     try {
       final results = await _connectivity.checkConnectivity();
-      
+
       final hasConnection = results.any((result) =>
           result == ConnectivityResult.mobile ||
           result == ConnectivityResult.wifi ||
@@ -117,13 +113,38 @@ class ConnectivityMonitorService {
         print('[ConnectivityMonitor] Has connection: $hasConnection');
       }
 
+      _setStatus(hasConnection);
       return hasConnection;
     } catch (e) {
       if (kDebugMode) {
         print('[ConnectivityMonitor] Error checking connectivity: $e');
       }
       // On error, assume no connection
+      _setStatus(false);
       return false;
+    }
+  }
+
+  /// Force the cached status to "connected" and emit on the stream when
+  /// the value actually changes. Used after a successful server probe
+  /// (see [NetworkModeGate.probeOnline]) so the UI can hide the offline
+  /// badge immediately instead of waiting for the next platform
+  /// connectivity event.
+  void markConnected() => _setStatus(true);
+
+  /// Symmetric counterpart to [markConnected]. Currently unused by UI
+  /// code, but exposed so callers that detect a transport failure can
+  /// invalidate the cached status proactively.
+  void markDisconnected() => _setStatus(false);
+
+  void _setStatus(bool value) {
+    if (value == _lastKnownStatus) return;
+    _lastKnownStatus = value;
+    if (!_connectivityController.isClosed) {
+      _connectivityController.add(value);
+    }
+    if (kDebugMode) {
+      print('[ConnectivityMonitor] Status set to: ${value ? "CONNECTED" : "DISCONNECTED"}');
     }
   }
 

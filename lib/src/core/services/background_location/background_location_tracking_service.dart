@@ -106,6 +106,12 @@ class BackgroundLocationTrackingService {
   /// Parallel uploadlarni oldini olish uchun mutex bayrog'i.
   bool _isSending = false;
 
+  /// "Permission yo'q" log'i bir martagina chiqsin — `startTracking()`
+  /// app lifecycle'dan har resume'da chaqiriladi, va permission
+  /// hali ham yo'q bo'lsa har safar bir xil satrni bosish faqat
+  /// logni shovqinga to'ldiradi.
+  bool _loggedPermissionMissing = false;
+
   // ===========================================================================
   // CONSTRUCTOR
   // ===========================================================================
@@ -212,11 +218,17 @@ class BackgroundLocationTrackingService {
 
       final hasPermission = await _checkLocationPermission();
       if (!hasPermission) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: permission not granted');
+        if (kDebugMode && !_loggedPermissionMissing) {
+          _loggedPermissionMissing = true;
+          print('BackgroundLocationTrackingService: permission not granted '
+              '(silenced for subsequent resumes — grant location permission '
+              'via Settings to retry)');
         }
         return false;
       }
+      // Permission granted now — reset the gate so a later loss is
+      // logged again.
+      _loggedPermissionMissing = false;
 
       // Policy va device registration'ni parallel chaqirish.
       // Failure-tolerant — yangi server hali tayyor bo'lmasligi mumkin.
@@ -291,15 +303,23 @@ class BackgroundLocationTrackingService {
   // PERMISSION
   // ===========================================================================
 
+  /// Read-only permission check used by [startTracking].
+  ///
+  /// IMPORTANT: this method must NEVER call `Geolocator.requestPermission()`.
+  /// `startTracking()` is invoked automatically from the app lifecycle
+  /// observer on every `AppLifecycleState.resumed` — popping an OS
+  /// permission dialog there sends the app back to `inactive` while
+  /// the dialog is visible, which fires `resumed` again as soon as
+  /// it is dismissed, and we're in a hard loop.
+  ///
+  /// Permission *requests* happen in explicit, user-driven flows
+  /// (PermissionCheckPage / PermissionManager / LocationManager).
+  /// Here we only observe whether tracking is allowed right now.
   Future<bool> _checkLocationPermission() async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) return false;
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.deniedForever) return false;
+      final permission = await Geolocator.checkPermission();
       return permission == LocationPermission.always ||
           permission == LocationPermission.whileInUse;
     } catch (_) {

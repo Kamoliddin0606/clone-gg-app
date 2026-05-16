@@ -18,6 +18,7 @@ import 'package:gloria_marketing_flutter/src/theme/theme_toggle.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings/data_sync_tab.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings/projects_tab.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/backend_permissions_section.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/permission_group_card.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/project_debt_limits_section.dart';
 import 'package:provider/provider.dart';
 
@@ -137,17 +138,26 @@ class _SettingsPageState extends State<SettingsPage>
           // TabController stay alive (live above this widget), so the
           // user keeps their tab selection across the reload.
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                PermissionsTab(key: ValueKey('perm-$_reloadCounter')),
-                MapsTab(key: ValueKey('maps-$_reloadCounter')),
-                DataSyncTab(key: ValueKey('sync-$_reloadCounter')),
-                InterfaceSettingsTab(
-                  key: ValueKey('iface-$_reloadCounter'),
-                ),
-                ProjectsTab(key: ValueKey('projects-$_reloadCounter')),
-              ],
+            // Inheritable bridge so deeply-nested settings widgets
+            // (e.g. the "Pick a project" CTA on DataSyncTab's
+            // no-active-project banner) can switch tabs without
+            // knowing about the TabController. Indices match the
+            // children list below.
+            child: SettingsTabSwitcher(
+              animateTo: _tabController.animateTo,
+              projectsIndex: 4,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  PermissionsTab(key: ValueKey('perm-$_reloadCounter')),
+                  MapsTab(key: ValueKey('maps-$_reloadCounter')),
+                  DataSyncTab(key: ValueKey('sync-$_reloadCounter')),
+                  InterfaceSettingsTab(
+                    key: ValueKey('iface-$_reloadCounter'),
+                  ),
+                  ProjectsTab(key: ValueKey('projects-$_reloadCounter')),
+                ],
+              ),
             ),
           ),
         ],
@@ -545,24 +555,6 @@ class _PermissionsTabState extends State<PermissionsTab> {
     }
   }
 
-  String _getPermissionCategory(String key, AppLocalizations l10n) {
-    switch (key) {
-      case 'skipTINduplicateCheck':
-      case 'allowCreationWithoutTIN':
-      case 'allowCreatingPointOfSale':
-        return AppLocalizations.of(context)!.dataValidation;
-      case 'visit':
-      case 'strictSequence':
-      case 'unplannedOrder':
-      case 'plannedRoute':
-        return AppLocalizations.of(context)!.visitManagement;
-      case 'editClientCoordinates':
-        return l10n.editInformation;
-      default:
-        return AppLocalizations.of(context)!.general;
-    }
-  }
-
   IconData _getPermissionIcon(String key) {
     switch (key) {
       case 'skipTINduplicateCheck':
@@ -584,49 +576,6 @@ class _PermissionsTabState extends State<PermissionsTab> {
       default:
         return Icons.settings;
     }
-  }
-
-  Color _getCategoryColor(
-    String category,
-    AppLocalizations l10n,
-    ColorScheme colorScheme,
-  ) {
-    switch (category) {
-      case 'dataValidation':
-        return colorScheme.primary;
-      case 'visitManagement':
-        return colorScheme.secondary;
-      case 'Malumotlarni tahrirlash':
-        return colorScheme.tertiary;
-      default:
-        return colorScheme.tertiary;
-    }
-  }
-
-  Map<String, List<String>> get _groupedPermissions {
-    if (_permissions == null) return {};
-
-    final l10n = AppLocalizations.of(context)!;
-    final grouped = <String, List<String>>{};
-
-    // Add main permissions
-    final mainPermissions = [
-      'skipTINduplicateCheck',
-      'allowCreationWithoutTIN',
-      'allowCreatingPointOfSale',
-      'visit',
-      'strictSequence',
-      'unplannedOrder',
-      'plannedRoute',
-      'editClientCoordinates',
-    ];
-
-    for (final key in mainPermissions) {
-      final category = _getPermissionCategory(key, l10n);
-      grouped.putIfAbsent(category, () => []).add(key);
-    }
-
-    return grouped;
   }
 
   bool _getPermissionValue(String key) {
@@ -659,101 +608,157 @@ class _PermissionsTabState extends State<PermissionsTab> {
     }
   }
 
-  // Visit Steps section
-  Widget _buildVisitStepsSection(
-    AppLocalizations l10n,
-    ColorScheme colorScheme,
-  ) {
-    if (_permissions == null || _permissions!.visitSteps.isEmpty) {
-      return const SizedBox.shrink();
+  /// Return the override label for a SOAP key whose authority has
+  /// migrated to a V2 backend codename. `null` for keys that are
+  /// still SOAP-only.
+  ///
+  /// Listed pairs:
+  ///   * `allowCreatingPointOfSale`  ↔ `customers.add_customer`
+  ///     (already routed through [BackendPermissionStore] in
+  ///     [_getPermissionValue], hence the visible state mirrors the
+  ///     backend value — the badge just makes the relationship
+  ///     explicit).
+  ///   * `editClientCoordinates`     ↔ `customers.change_coordinates`
+  ///     (the FAB / edit affordance is gated by the backend; the
+  ///     SOAP value is now informational only, so we strike it out).
+  String? _soapOverrideLabel(String key, AppLocalizations l10n) {
+    switch (key) {
+      case 'allowCreatingPointOfSale':
+      case 'editClientCoordinates':
+        return l10n.permissionsTab_overrideBadge;
+      default:
+        return null;
     }
+  }
 
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+  /// Stable, color-coded category descriptor used by both the hero
+  /// header (for the global granted/total chip) and the collapsible
+  /// SOAP permission cards. Keeping this in one place avoids
+  /// drifting between the count chip and the cards.
+  List<_SoapCategoryData> _buildSoapCategories(
+    AppLocalizations l10n,
+    ColorScheme cs,
+  ) {
+    final categories = <_SoapCategoryData>[
+      _SoapCategoryData(
+        id: 'dataValidation',
+        title: l10n.dataValidation,
+        icon: Icons.verified_user_outlined,
+        color: cs.primary,
+        keys: const [
+          'skipTINduplicateCheck',
+          'allowCreationWithoutTIN',
+          'allowCreatingPointOfSale',
+        ],
+      ),
+      _SoapCategoryData(
+        id: 'visitManagement',
+        title: l10n.visitManagement,
+        icon: Icons.route_outlined,
+        color: cs.secondary,
+        keys: const ['visit', 'strictSequence', 'unplannedOrder', 'plannedRoute'],
+      ),
+      _SoapCategoryData(
+        id: 'editInformation',
+        title: l10n.editInformation,
+        icon: Icons.edit_note_outlined,
+        color: cs.tertiary,
+        keys: const ['editClientCoordinates'],
+      ),
+    ];
+    return categories;
+  }
+
+  /// Build a collapsible card showing this user's visit-step plan.
+  /// Steps aren't permissions per se, but they share the same
+  /// collapsible language as everything else in the tab, so the user
+  /// has a single mental model.
+  Widget? _buildVisitStepsCard(AppLocalizations l10n, ColorScheme cs) {
+    if (_permissions == null || _permissions!.visitSteps.isEmpty) {
+      return null;
+    }
+    final steps = _permissions!.visitSteps;
+    final required = steps.where((s) => s.stepRequired).length;
+    final color = cs.primary;
+
+    return PermissionGroupCard(
+      title: l10n.visitSteps,
+      icon: Icons.list_alt_rounded,
+      color: color,
+      granted: required,
+      total: steps.length,
+      initiallyExpanded: false,
+      children: [
+        for (final step in steps)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
               children: [
-                Icon(Icons.list_alt, color: colorScheme.primary, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  AppLocalizations.of(context)!.visitSteps,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${step.stepCode}',
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        step.stepName,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        step.stepRequired
+                            ? l10n.mandatoryExecution
+                            : l10n.optional,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: step.stepRequired
+                                  ? cs.error
+                                  : cs.onSurfaceVariant,
+                              fontWeight: step.stepRequired
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: (step.stepRequired ? cs.error : cs.outline)
+                        .withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Icon(
+                    step.stepRequired
+                        ? Icons.priority_high_rounded
+                        : Icons.circle_outlined,
+                    size: 16,
+                    color: step.stepRequired ? cs.error : cs.outline,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            ..._permissions!.visitSteps.map(
-              (step) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${step.stepCode}',
-                          style: TextStyle(
-                            color: colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            step.stepName,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(fontWeight: FontWeight.w500),
-                          ),
-                          Text(
-                            step.stepRequired
-                                ? AppLocalizations.of(
-                                    context,
-                                  )!.mandatoryExecution
-                                : AppLocalizations.of(context)!.optional,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: step.stepRequired
-                                      ? colorScheme.error
-                                      : colorScheme.secondary,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      step.stepRequired
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked,
-                      color: step.stepRequired
-                          ? colorScheme.error
-                          : colorScheme.secondary,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 
@@ -806,172 +811,341 @@ class _PermissionsTabState extends State<PermissionsTab> {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+    final soapCategories = _buildSoapCategories(l10n, colorScheme);
+
+    // Pre-compute granted counts once per build so the hero header and
+    // the cards never disagree on the same render.
+    final soapGranted = soapCategories.fold<int>(
+      0,
+      (sum, c) => sum + c.keys.where(_getPermissionValue).length,
+    );
+    final soapTotal = soapCategories.fold<int>(
+      0,
+      (sum, c) => sum + c.keys.length,
+    );
+    final visitStepsCard = _buildVisitStepsCard(l10n, colorScheme);
+
+    return RefreshIndicator(
+      onRefresh: _loadPermissions,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Hero header — gradient summary card matching the Data
+          // Sync tab's "Sync All" header so the two tabs feel like
+          // siblings.
+          SliverToBoxAdapter(
+            child: _PermissionsHero(
+              title: l10n.agentPermissions,
+              subtitle: l10n.userPermissionsAndVisitSteps,
+              granted: soapGranted,
+              total: soapTotal,
+            ),
+          ),
+
+          // V2 Backend permissions — section header + collapsible
+          // category cards.
+          const SliverToBoxAdapter(child: BackendPermissionsSection()),
+
+          // Per-project debt limits — independent widget, kept as-is.
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: ProjectDebtLimitsSection(),
+            ),
+          ),
+
+          // SOAP permissions — section header + collapsible cards.
+          // Subtitle calls out the relationship with the backend
+          // gates above; rows that are wholly superseded by a V2
+          // codename are rendered with a strikethrough + "Backend
+          // rule" badge so the user sees the SOAP value at a glance
+          // but understands it's no longer authoritative.
+          SliverToBoxAdapter(
+            child: _InlineSectionHeader(
+              icon: Icons.security_outlined,
+              title: l10n.permissions,
+              color: colorScheme.primary,
+              trailingCount: '$soapGranted/$soapTotal',
+              subtitle: l10n.permissionsTab_soapSectionSubtitle,
+            ),
+          ),
+          for (int i = 0; i < soapCategories.length; i++)
+            SliverToBoxAdapter(
+              child: PermissionGroupCard(
+                title: soapCategories[i].title,
+                icon: soapCategories[i].icon,
+                color: soapCategories[i].color,
+                granted: soapCategories[i]
+                    .keys
+                    .where(_getPermissionValue)
+                    .length,
+                total: soapCategories[i].keys.length,
+                initiallyExpanded: i == 0,
+                children: [
+                  for (final key in soapCategories[i].keys)
+                    PermissionRow(
+                      icon: _getPermissionIcon(key),
+                      title: _getPermissionLabel(key, l10n),
+                      granted: _getPermissionValue(key),
+                      accent: soapCategories[i].color,
+                      overriddenBy: _soapOverrideLabel(key, l10n),
+                    ),
+                ],
+              ),
+            ),
+
+          // Visit steps — collapsible, hidden when no steps exist.
+          if (visitStepsCard != null) ...[
+            SliverToBoxAdapter(
+              child: _InlineSectionHeader(
+                icon: Icons.list_alt_rounded,
+                title: l10n.visitSteps,
+                color: colorScheme.primary,
+              ),
+            ),
+            SliverToBoxAdapter(child: visitStepsCard),
+          ],
+
+          const SliverToBoxAdapter(child: SizedBox(height: 32)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Inherited bridge that lets descendants of [SettingsPage] switch tabs
+/// without holding a reference to the [TabController]. Mounted by
+/// [_SettingsPageState.build] around the [TabBarView]; consumed e.g.
+/// by the "Pick a project" CTA on the no-active-project banner inside
+/// [DataSyncTab].
+class SettingsTabSwitcher extends InheritedWidget {
+  /// Forwards to `TabController.animateTo`.
+  final void Function(int index) animateTo;
+
+  /// Index of the Projects tab in the [TabBarView]. Surfaced as a
+  /// named field so callers don't hard-code the magic number.
+  final int projectsIndex;
+
+  const SettingsTabSwitcher({
+    super.key,
+    required this.animateTo,
+    required this.projectsIndex,
+    required super.child,
+  });
+
+  static SettingsTabSwitcher? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<SettingsTabSwitcher>();
+
+  /// Convenience helper — `null`-safe call to switch to the Projects tab.
+  static void goToProjects(BuildContext context) {
+    final switcher = maybeOf(context);
+    switcher?.animateTo(switcher.projectsIndex);
+  }
+
+  @override
+  bool updateShouldNotify(SettingsTabSwitcher old) =>
+      animateTo != old.animateTo || projectsIndex != old.projectsIndex;
+}
+
+/// Internal descriptor of one SOAP-permission category. Holds the
+/// localised title, a Material icon, the accent color, and the list
+/// of permission keys that belong to it.
+class _SoapCategoryData {
+  final String id;
+  final String title;
+  final IconData icon;
+  final Color color;
+  final List<String> keys;
+
+  const _SoapCategoryData({
+    required this.id,
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.keys,
+  });
+}
+
+/// Gradient hero card pinned at the top of the Permissions tab. Same
+/// visual treatment as the Data Sync tab's "Sync All" card so the
+/// settings tabs feel like a coherent family.
+class _PermissionsHero extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final int granted;
+  final int total;
+
+  const _PermissionsHero({
+    required this.title,
+    required this.subtitle,
+    required this.granted,
+    required this.total,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final pct = total == 0 ? 0.0 : (granted / total).clamp(0.0, 1.0);
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            cs.primaryContainer,
+            cs.primaryContainer.withOpacity(0.5),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: cs.shadow.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // V2 Backend permissions section — rendered at the top so
-          // the user sees the codename-based gate state (FAB / edit
-          // icon / coordinates icon / photo icons) immediately. The
-          // legacy SOAP-derived permissions cards continue below.
-          const BackendPermissionsSection(),
-          const SizedBox(height: 24),
-
-          // Per-project debt limits section. Lists the user's assigned
-          // projects with their backend-issued limits, surfaces offline
-          // state, the freshness timestamp, and any sync error.
-          const ProjectDebtLimitsSection(),
-
-          // Permissions Overview
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.security,
-                        color: colorScheme.primary,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        l10n.agentPermissions,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.userPermissionsAndVisitSteps,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: cs.primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.shield_outlined,
+                    color: cs.primary, size: 24),
               ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Permissions by Category
-          Text(
-            AppLocalizations.of(context)!.permissions,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: cs.onPrimaryContainer,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$granted / $total',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: cs.onPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          ..._groupedPermissions.entries.map((entry) {
-            final category = entry.key;
-            final permissions = entry.value;
-            final categoryColor = _getCategoryColor(
-              category,
-              l10n,
-              colorScheme,
-            );
-
-            return Card(
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          Text(
+            subtitle,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: cs.onPrimaryContainer.withOpacity(0.85),
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Progress bar — a quick visual on how many permissions the
+          // user actually has. Skipped when total is zero.
+          if (total > 0)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: pct,
+                minHeight: 8,
+                backgroundColor: cs.onPrimaryContainer.withOpacity(0.12),
+                valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: categoryColor.withOpacity(0.1),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.category, color: categoryColor, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          category,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: categoryColor,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: categoryColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${permissions.where((p) => _getPermissionValue(p)).length}/${permissions.length}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Flat, in-list section header. Used between collapsible groups so
+/// the user has a visual divider without another card competing with
+/// the hero.
+class _InlineSectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color color;
+  final String? trailingCount;
+  final String? subtitle;
+
+  const _InlineSectionHeader({
+    required this.icon,
+    required this.title,
+    required this.color,
+    this.trailingCount,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+              if (trailingCount != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: color.withOpacity(0.25)),
+                  ),
+                  child: Text(
+                    trailingCount!,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  ...permissions.map((permissionKey) {
-                    final isEnabled = _getPermissionValue(permissionKey);
-                    return ListTile(
-                      title: Text(
-                        _getPermissionLabel(permissionKey, l10n),
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: isEnabled
-                              ? colorScheme.onSurface
-                              : colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      subtitle: isEnabled
-                          ? null
-                          : Text(
-                              AppLocalizations.of(context)!.permissionDenied,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.error,
-                              ),
-                            ),
-                      leading: Icon(
-                        _getPermissionIcon(permissionKey),
-                        color: isEnabled
-                            ? categoryColor
-                            : colorScheme.onSurfaceVariant,
-                      ),
-                      trailing: Icon(
-                        isEnabled ? Icons.check_circle : Icons.cancel,
-                        color: isEnabled
-                            ? colorScheme.primary
-                            : colorScheme.error,
-                      ),
-                    );
-                  }),
-                ],
+                ),
+            ],
+          ),
+          if (subtitle != null && subtitle!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 28, top: 4),
+              child: Text(
+                subtitle!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
               ),
-            );
-          }),
-
-          // Visit Steps Section
-          _buildVisitStepsSection(l10n, colorScheme),
+            ),
         ],
       ),
     );

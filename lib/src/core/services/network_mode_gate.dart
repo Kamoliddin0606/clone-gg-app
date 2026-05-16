@@ -83,6 +83,11 @@ class NetworkModeGate {
           validateStatus: (_) => true,
         ),
       );
+      // Server replied (any status) → device truly is online. Push the
+      // result into the monitor so UI listeners hide the offline badge
+      // immediately, even if the platform connectivity event hasn't
+      // fired yet (e.g. cold-start race or stale cached status).
+      _connectivity.markConnected();
       return NetworkModeOutcome.switched;
     } on DioException {
       return NetworkModeOutcome.serverUnreachable;

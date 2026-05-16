@@ -5846,4 +5846,64 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get retrySyncButton => 'Qayta urinish';
+
+  @override
+  String get permissionGate_title => 'Ruxsatlar talab qilinadi';
+
+  @override
+  String get permissionGate_subtitle => 'Ilova ishlashi uchun quyidagilar majburiy. Hech biri rad etilsa, ilova davom etmaydi.';
+
+  @override
+  String get permissionGate_locationTitle => 'Joylashuv ruxsati';
+
+  @override
+  String get permissionGate_locationSubtitle => 'Mijozlar ziyoratlarini va marshrutni kuzatish uchun';
+
+  @override
+  String get permissionGate_gpsTitle => 'GPS yoqilgan bo\'lishi';
+
+  @override
+  String get permissionGate_gpsSubtitle => 'Aniq joylashuvni aniqlash uchun';
+
+  @override
+  String get permissionGate_notificationTitle => 'Bildirishnomalar';
+
+  @override
+  String get permissionGate_notificationSubtitle => 'Yangi buyurtmalar va vazifalar haqida xabar olish';
+
+  @override
+  String get permissionGate_grantCta => 'Ruxsat berish';
+
+  @override
+  String get permissionGate_openSettingsCta => 'Sozlamalarni ochish';
+
+  @override
+  String get permissionGate_busy => 'Kutib turing...';
+
+  @override
+  String get permissionGate_statusGranted => 'Berildi';
+
+  @override
+  String get permissionGate_statusRequired => 'Kerak';
+
+  @override
+  String get permissionGate_statusFromSettings => 'Sozlamadan';
+
+  @override
+  String get permissionsTab_soapSectionSubtitle => 'Eski tizim ruxsatlari. Quyidagi ba\'zi qoidalar yangi backend tomonidan boshqariladi.';
+
+  @override
+  String get permissionsTab_overrideBadge => 'Backend orqali';
+
+  @override
+  String get projectGate_bannerTitle => 'Faol loyiha tanlanmagan';
+
+  @override
+  String get projectGate_bannerMessage => 'Ma\'lumotlarni yangilash va sinxronizatsiya uchun avval faol loyihani tanlang.';
+
+  @override
+  String get projectGate_bannerCta => 'Loyiha tanlash';
+
+  @override
+  String get projectGate_blockedSnackbar => 'Avval faol loyihani tanlang. Loyihalar tabidan tanlashingiz mumkin.';
 }

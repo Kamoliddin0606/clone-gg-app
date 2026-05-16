@@ -16,7 +16,7 @@ import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_
 import 'package:gloria_marketing_flutter/src/core/services/app_start_guard.dart';
 import 'package:gloria_marketing_flutter/src/core/services/health_check_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
-import 'package:gloria_marketing_flutter/src/core/widgets/permission_dialog.dart';
+import 'package:gloria_marketing_flutter/src/core/widgets/permission_gate.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/fcm_token_service.dart';
@@ -83,11 +83,22 @@ void main() async {
   // and by the very first route, so this stays eager.
   await sl<DatabaseHelper>().database;
 
+  // Initialize connectivity monitor BEFORE runApp so the very first
+  // frame of the home page reads an accurate `isConnected` value via
+  // the StreamBuilder's `initialData`. If we deferred this (as the
+  // legacy bootstrap did), the AppBar would always render with the
+  // offline badge on cold-start regardless of real network state.
+  try {
+    await sl<ConnectivityMonitorService>().initialize();
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Error initializing connectivity monitor: $e');
+    }
+  }
+
   // Determine the initial route via the new AppStartGuard. The legacy
   // AppAccessControl/TimeVerification flow has been replaced — see
   // `app_start_guard.dart` for the decision tree.
-  // Note: AppStartGuard._isOnline() calls Connectivity().checkConnectivity()
-  // directly, so it does not depend on ConnectivityMonitorService.initialize().
   String initialRouteName = AppRouter.loginRoute;
   try {
     final guard = sl<AppStartGuard>();
@@ -179,16 +190,9 @@ Future<void> _runDeferredBootstrap() async {
     }
   }
 
-  // Initialize connectivity monitor for UI listeners (AppStartGuard
-  // already used hasConnection() directly; this powers the live stream).
-  try {
-    final connectivityMonitor = sl<ConnectivityMonitorService>();
-    await connectivityMonitor.initialize();
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Error initializing connectivity monitor: $e');
-    }
-  }
+  // Note: ConnectivityMonitorService is now initialised before runApp()
+  // so the home page's offline-badge StreamBuilder reads an accurate
+  // initial value. See the corresponding block above in `main()`.
 
   // Debug-only: log resolved V2 URL and fire a single liveness probe.
   if (kDebugMode) {
@@ -408,19 +412,26 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     }
   }
 
-  /// Background location tracking ishlayotganligini tekshirish va zarur bo'lsa boshlash
+  /// Background location tracking ishlayotganligini tekshirish va zarur bo'lsa boshlash.
+  ///
+  /// `startTracking()` permission so'ramaydi (auto-resume loop'ini
+  /// oldini olish uchun) — shuning uchun bu yerda faqat
+  /// `true` qaytarsa "restarted" log'ini bosamiz. False qaytsa
+  /// (permission yo'q, login yo'q, init muvaffaqiyatsiz) jim
+  /// turamiz — aks holda har resume'da bir xil "permission not
+  /// granted" log'i takrorlanadi.
   Future<void> _ensureBackgroundLocationTracking() async {
     try {
       final backgroundLocationService = sl<BackgroundLocationTrackingService>();
       final prefs = sl<SharedPreferencesService>();
       final userCode = prefs.getUserCode();
-      
-      // Agar user login qilgan bo'lsa va tracking ishlamayotgan bo'lsa
-      if (userCode != null && userCode.isNotEmpty && !backgroundLocationService.isTrackingActive) {
-        await backgroundLocationService.startTracking();
-        if (kDebugMode) {
-          debugPrint('BackgroundLocationTracking: Restarted after app resume');
-        }
+
+      if (userCode == null || userCode.isEmpty) return;
+      if (backgroundLocationService.isTrackingActive) return;
+
+      final started = await backgroundLocationService.startTracking();
+      if (started && kDebugMode) {
+        debugPrint('BackgroundLocationTracking: Restarted after app resume');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -471,7 +482,17 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 // router; the banner sets `onForegroundBanner` once the
                 // overlay is available.
                 builder: (context, child) {
-                  return _BannerHostBridge(child: child ?? const SizedBox());
+                  // PermissionGate is mounted above the banner host so
+                  // every route — login, home, settings — is shielded
+                  // until location permission, GPS, and notification
+                  // permission are all granted. State is preserved
+                  // across route changes; lifecycle re-checks happen
+                  // on every resume.
+                  return PermissionGate(
+                    child: _BannerHostBridge(
+                      child: child ?? const SizedBox(),
+                    ),
+                  );
                 },
                 // Default Navigator.defaultGenerateInitialRoutes initialRoute'ni
                 // '/' bo'yicha bo'laklab har bir prefix uchun route push qiladi.

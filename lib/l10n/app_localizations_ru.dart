@@ -5846,4 +5846,64 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get retrySyncButton => 'Повторить';
+
+  @override
+  String get permissionGate_title => 'Требуются разрешения';
+
+  @override
+  String get permissionGate_subtitle => 'Для работы приложения необходимы следующие разрешения. Без них приложение не запустится.';
+
+  @override
+  String get permissionGate_locationTitle => 'Разрешение на геолокацию';
+
+  @override
+  String get permissionGate_locationSubtitle => 'Для отслеживания визитов и маршрутов';
+
+  @override
+  String get permissionGate_gpsTitle => 'GPS должен быть включён';
+
+  @override
+  String get permissionGate_gpsSubtitle => 'Для точного определения местоположения';
+
+  @override
+  String get permissionGate_notificationTitle => 'Уведомления';
+
+  @override
+  String get permissionGate_notificationSubtitle => 'Для получения сообщений о новых заказах и задачах';
+
+  @override
+  String get permissionGate_grantCta => 'Предоставить разрешение';
+
+  @override
+  String get permissionGate_openSettingsCta => 'Открыть настройки';
+
+  @override
+  String get permissionGate_busy => 'Подождите...';
+
+  @override
+  String get permissionGate_statusGranted => 'Предоставлено';
+
+  @override
+  String get permissionGate_statusRequired => 'Требуется';
+
+  @override
+  String get permissionGate_statusFromSettings => 'В настройках';
+
+  @override
+  String get permissionsTab_soapSectionSubtitle => 'Старые разрешения. Некоторые правила ниже теперь контролируются бэкендом выше.';
+
+  @override
+  String get permissionsTab_overrideBadge => 'Правило бэкенда';
+
+  @override
+  String get projectGate_bannerTitle => 'Активный проект не выбран';
+
+  @override
+  String get projectGate_bannerMessage => 'Перед обновлением или синхронизацией данных выберите активный проект.';
+
+  @override
+  String get projectGate_bannerCta => 'Выбрать проект';
+
+  @override
+  String get projectGate_blockedSnackbar => 'Сначала выберите активный проект. Это можно сделать на вкладке «Проекты».';
 }

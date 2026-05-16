@@ -7,6 +7,8 @@ import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_se
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/client_balance_service.dart';
 import 'package:gloria_marketing_flutter/src/core/utils/sync_helpers.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings_page.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/active_project_guard.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/backend_permissions_sync_card.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/group_sync_card.dart';
 
@@ -232,6 +234,12 @@ class _DataSyncTabState extends State<DataSyncTab>
 
   /// Toggle background sync
   Future<void> _onToggleBgSync(bool value) async {
+    // Enabling background sync without a project would let the
+    // scheduler churn against an undefined scope every interval and
+    // log a stream of `customer_project_required` errors. Gate the
+    // "on" transition; turning it off is always allowed.
+    if (value && !await ensureActiveProject(context)) return;
+
     final prefs = sl<SharedPreferencesService>();
     await prefs.setBgSyncEnabled(value);
 
@@ -345,11 +353,19 @@ class _DataSyncTabState extends State<DataSyncTab>
 
   /// Sync all data
   Future<void> _syncAll() async {
+    // Guard rail: project-scope tenants cannot meaningfully sync
+    // without an active project. The helper shows a snackbar pointing
+    // the user at the Projects tab; we early-return so the spinner
+    // never starts.
+    if (!await ensureActiveProject(context)) return;
+    if (!mounted) return;
+
     setState(() {
       _isSyncingAll = true;
     });
 
     try {
+      if (!mounted) return;
       await syncAllDataFromAnywhere(context);
       if (mounted) {
         setState(() {});
@@ -422,6 +438,19 @@ class _DataSyncTabState extends State<DataSyncTab>
           child: CustomScrollView(
             controller: _scrollController,
             slivers: [
+              // No-active-project gate. Visible only for project-scope
+              // tenants that haven't picked one yet — collapses to a
+              // zero-cost `SizedBox.shrink()` otherwise via its
+              // internal `ListenableBuilder`. The "Pick a project"
+              // CTA jumps to the Projects tab via the inherited
+              // [SettingsTabSwitcher].
+              SliverToBoxAdapter(
+                child: ActiveProjectRequiredBanner(
+                  onPickProject: () =>
+                      SettingsTabSwitcher.goToProjects(context),
+                ),
+              ),
+
               // Header with Sync All button
               SliverToBoxAdapter(
                 child: Container(

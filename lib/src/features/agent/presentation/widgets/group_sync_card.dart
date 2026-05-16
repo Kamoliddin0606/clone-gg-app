@@ -5,6 +5,7 @@ import 'package:gloria_marketing_flutter/src/core/services/data_sync_config.dart
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/utils/sync_helpers.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/shared/active_project_guard.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/table_sync_card.dart';
 
 /// Card widget displaying a group of related tables with collective sync controls.
@@ -111,6 +112,12 @@ class _GroupSyncCardState extends State<GroupSyncCard> {
   /// 4. Updates UI state regardless of success or failure
   /// 5. Notifies parent via callback if provided
   Future<void> _syncGroup() async {
+    // Guard rail: project-scope sync without an active project would
+    // fail with `customer_project_required`. Block here and let the
+    // user pick a project from the Projects tab.
+    if (!await ensureActiveProject(context)) return;
+    if (!mounted) return;
+
     setState(() {
       _isSyncing = true;
     });
@@ -118,6 +125,7 @@ class _GroupSyncCardState extends State<GroupSyncCard> {
     try {
       // Force resync is enabled by default in syncGroupFromAnywhere
       // This ensures all tables are re-synced even if previously successful
+      if (!mounted) return;
       await syncGroupFromAnywhere(context, widget.group.id);
     } finally {
       // Always refresh metadata and UI state after sync attempt

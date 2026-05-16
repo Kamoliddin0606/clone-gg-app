@@ -5846,4 +5846,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get retrySyncButton => 'Retry';
+
+  @override
+  String get permissionGate_title => 'Permissions required';
+
+  @override
+  String get permissionGate_subtitle => 'The app requires the following to work. If any of them is denied, the app cannot continue.';
+
+  @override
+  String get permissionGate_locationTitle => 'Location permission';
+
+  @override
+  String get permissionGate_locationSubtitle => 'To track customer visits and routes';
+
+  @override
+  String get permissionGate_gpsTitle => 'GPS must be enabled';
+
+  @override
+  String get permissionGate_gpsSubtitle => 'To determine precise location';
+
+  @override
+  String get permissionGate_notificationTitle => 'Notifications';
+
+  @override
+  String get permissionGate_notificationSubtitle => 'To receive alerts about new orders and tasks';
+
+  @override
+  String get permissionGate_grantCta => 'Grant permission';
+
+  @override
+  String get permissionGate_openSettingsCta => 'Open settings';
+
+  @override
+  String get permissionGate_busy => 'Please wait...';
+
+  @override
+  String get permissionGate_statusGranted => 'Granted';
+
+  @override
+  String get permissionGate_statusRequired => 'Required';
+
+  @override
+  String get permissionGate_statusFromSettings => 'From settings';
+
+  @override
+  String get permissionsTab_soapSectionSubtitle => 'Legacy permissions. Some rules below are now controlled by the backend gates above.';
+
+  @override
+  String get permissionsTab_overrideBadge => 'Backend rule';
+
+  @override
+  String get projectGate_bannerTitle => 'No active project';
+
+  @override
+  String get projectGate_bannerMessage => 'Pick an active project before refreshing or syncing any data.';
+
+  @override
+  String get projectGate_bannerCta => 'Pick a project';
+
+  @override
+  String get projectGate_blockedSnackbar => 'Select an active project first. You can pick one from the Projects tab.';
 }

@@ -137,15 +137,18 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
   }
 
   Future<void> _loadImage() async {
+    // Sync field writes only — callers are initState/didUpdateWidget, both of
+    // which already trigger a rebuild. Calling setState here would mark the
+    // element dirty during the parent's build phase and corrupt the render
+    // tree on ListView slot recycling (manifests as
+    // `_debugRelayoutBoundaryAlreadyMarkedNeedsLayout` assertion failures).
     if (widget.productCode.isEmpty) {
       if (kDebugMode) {
         debugPrint('[IMG-DIAG] ProductImageWidget: empty productCode → fail-closed');
       }
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-      });
+      _isLoading = false;
+      _hasError = true;
+      _shimmerController.stop();
       return;
     }
 
@@ -160,10 +163,11 @@ class _ProductImageWidgetState extends State<ProductImageWidget>
       );
     }
 
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
+    _isLoading = true;
+    _hasError = false;
+    if (widget.showShimmer && !_shimmerController.isAnimating) {
+      _shimmerController.repeat();
+    }
 
     _cancelToken?.cancel('ProductImageWidget reloading');
     _cancelToken = CancelToken();

@@ -1270,22 +1270,17 @@ class _ProductSelectionPageState extends State<ProductSelectionPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product name and article — Flexible so long names
-                  // shrink (with ellipsis) within the row's available height
-                  // instead of overflowing. Long-press shows the full name.
-                  Flexible(
-                    child: Tooltip(
-                      message: product.productName,
-                      waitDuration: const Duration(milliseconds: 500),
-                      triggerMode: TooltipTriggerMode.longPress,
-                      child: Text(
-                        product.productName,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
+                  Tooltip(
+                    message: product.productName,
+                    waitDuration: const Duration(milliseconds: 500),
+                    triggerMode: TooltipTriggerMode.longPress,
+                    child: Text(
+                      product.productName,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(height: 4),

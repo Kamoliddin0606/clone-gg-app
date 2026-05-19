@@ -58,6 +58,13 @@ import 'dart:async';
 import 'dart:io';
 
 import '../../../../core/services/location_service.dart';
+import '../../../../core/services/service_locator.dart' show sl;
+import '../../../visits/domain/entities/permissions.dart' as visits_perms;
+import '../../../visits/domain/entities/visit_mode.dart';
+import '../../../visits/domain/repositories/permissions_repository.dart';
+import '../../../visits/infra/feature_flags.dart';
+import '../../../visits/presentation/pages/visit_session_page.dart';
+import '../../../visits/visits_module.dart';
 
 /// Trading Points Page with client image support
 ///
@@ -1233,12 +1240,60 @@ class _TradingPointsPageState extends State<TradingPointsPage>
   ) async {
     final tradingPoint = tradingPointWithPermissions.tradingPoint;
 
+    // Best-effort permissions refresh before deciding the visit pipeline.
+    // Backend changelog § 1 (2026-05-17) ships `visits_rest_v2_enabled =
+    // false` by default and asks mobile to honour every `/permissions/`
+    // refresh — running this here means an admin flag flip propagates on
+    // the next visit start (≤ 1 round-trip) instead of waiting for the
+    // 1-hour cache TTL. Failures fall back to the cached snapshot so an
+    // offline agent isn't blocked.
+    visits_perms.VisitsPermissions? perms;
+    if (sl.isRegistered<PermissionsRepository>()) {
+      try {
+        perms = await sl<PermissionsRepository>().getCurrent();
+      } catch (_) {
+        // Stay on the cached `visit_submission_path` — the FeatureFlags
+        // default (`soap`) keeps the legacy path safe.
+      }
+    }
+
+    // Scope-cascade rollout (2026-05-17): if the resolved permissions put
+    // the user in `blocked` mode (no tasks at any cascade level AND no
+    // `visits.add_unplanned_visit` codename) we MUST NOT start a planned
+    // visit — backend would 403 on finish. Surface the configuration-
+    // missing dialog instead and stop here. The same dialog also serves
+    // `unplannedOnly` mode where a planned start is invalid — those
+    // users have a separate "Buyurtmasiz yakunlash" entry point.
+    if (perms != null) {
+      final mode = VisitMode.fromPermissions(perms);
+      if (!mounted) return;
+      if (mode == VisitMode.blocked) {
+        await _showVisitBlockedDialog();
+        return;
+      }
+      if (mode == VisitMode.unplannedOnly) {
+        await _showPlannedNotAvailableDialog();
+        return;
+      }
+    }
+
+    // Pick the visit pipeline based on the server-controlled feature flag.
+    // The default (SOAP) keeps the legacy VisitStepsPage; the rollout flips
+    // `visit_submission_path` to `rest_v2` per-org and individual users go
+    // through the new VisitSessionBloc-backed page instead.
+    final useRestV2 = sl.isRegistered<FeatureFlags>() && sl<FeatureFlags>().useRestV2;
+    // The permissions refresh above ran across an async gap; bail out if
+    // the page was disposed in the meantime so we don't poke a stale
+    // BuildContext.
+    if (!mounted) return;
+
     // Navigate to visit steps page instead of showing simple dialog
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            VisitStepsPage(tradingPoint: tradingPointWithPermissions),
+        builder: (_) => useRestV2
+            ? const VisitsBlocProviders(child: VisitSessionPage())
+            : VisitStepsPage(tradingPoint: tradingPointWithPermissions),
       ),
     ).then((result) {
       if (result == true && mounted) {
@@ -1272,19 +1327,52 @@ class _TradingPointsPageState extends State<TradingPointsPage>
   /// Handles unplanned order creation by navigating to visit steps page
   /// For unplanned orders, all visit steps become optional and users can proceed freely
   /// This allows agents to create orders without completing all required visit steps
-  void _createOrder(TradingPointWithPermissions tradingPointWithPermissions) {
+  Future<void> _createOrder(
+      TradingPointWithPermissions tradingPointWithPermissions) async {
     final tradingPoint = tradingPointWithPermissions.tradingPoint;
+
+    // Scope-cascade rollout (2026-05-17): backend rejects unplanned
+    // envelopes with 403 `permission_denied` when the user lacks
+    // `visits.add_unplanned_visit`. Check the cached permissions before
+    // navigating so we never put the agent in the middle of a flow that
+    // will dead-letter on finish. Falls through silently when permissions
+    // are unavailable (offline boot, REST v2 not yet rolled out) — the
+    // legacy SOAP path doesn't enforce this and stays open.
+    if (sl.isRegistered<PermissionsRepository>()) {
+      try {
+        final perms = await sl<PermissionsRepository>().getCurrent();
+        if (!perms.flags.allowUnplannedVisit) {
+          if (!mounted) return;
+          await _showUnplannedNotAllowedDialog();
+          return;
+        }
+      } catch (_) {
+        // Offline / missing cache — fall through to legacy behaviour so
+        // we don't block agents on a transient lookup failure. Backend
+        // will still gate the actual finish call.
+      }
+    }
+    if (!mounted) return;
+
     _saveState(); // Save current page state before navigation
+
+    // Unplanned-order flow follows the same feature-flag fork as the
+    // planned visit. The new VisitSessionBloc honours `unplanned_order`
+    // through its catalog/permissions snapshot, so there's no per-page
+    // toggle needed once we're on the REST v2 path.
+    final useRestV2 = sl.isRegistered<FeatureFlags>() && sl<FeatureFlags>().useRestV2;
 
     // Navigate to visit steps page with unplanned order flag
     // This enables flexible workflow where steps are optional
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VisitStepsPage(
-          tradingPoint: tradingPointWithPermissions,
-          isUnplannedOrder: true, // Flag indicating this is an unplanned order
-        ),
+        builder: (_) => useRestV2
+            ? const VisitsBlocProviders(child: VisitSessionPage())
+            : VisitStepsPage(
+                tradingPoint: tradingPointWithPermissions,
+                isUnplannedOrder: true,
+              ),
       ),
     ).then((result) {
       // Restore page state when returning from visit steps
@@ -1308,6 +1396,76 @@ class _TradingPointsPageState extends State<TradingPointsPage>
         });
       }
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Scope-cascade guard dialogs (2026-05-17)
+  //
+  // Three small dialogs that explain to the agent why a visit cannot
+  // start in the current cascade state. They are intentionally bare —
+  // no retry button, no "open settings" jump — because the resolution
+  // sits entirely on the admin side (assign tasks at some scope level,
+  // or grant `visits.add_unplanned_visit`). The user just needs to know
+  // *why* the button they pressed didn't open the visit page.
+  // ---------------------------------------------------------------------------
+
+  Future<void> _showVisitBlockedDialog() {
+    final l10n = AppLocalizations.of(context);
+    return _showScopeGuardDialog(
+      title: l10n?.visitsScopeBlockedTitle
+          ?? "Visit konfiguratsiya qilinmagan",
+      body: l10n?.visitsScopeBlockedBody
+          ?? "Sizning tashkilotingizda visit konfiguratsiya qilinmagan. "
+              "Admin'ga murojaat qiling.",
+    );
+  }
+
+  Future<void> _showPlannedNotAvailableDialog() {
+    final l10n = AppLocalizations.of(context);
+    return _showScopeGuardDialog(
+      title: l10n?.visitsPlannedUnavailableTitle
+          ?? "Rejaviy tashrif mavjud emas",
+      body: l10n?.visitsPlannedUnavailableBody
+          ?? "Joriy konfiguratsiya bilan faqat reja tashqari buyurtma "
+              "yaratish mumkin. 'Buyurtmasiz yakunlash' tugmasidan "
+              "foydalaning.",
+    );
+  }
+
+  Future<void> _showUnplannedNotAllowedDialog() {
+    final l10n = AppLocalizations.of(context);
+    return _showScopeGuardDialog(
+      title: l10n?.visitsUnplannedNotAllowedTitle
+          ?? "Reja tashqari buyurtma ruxsat etilmagan",
+      body: l10n?.visitsUnplannedNotAllowedBody
+          ?? "Sizda 'visits.add_unplanned_visit' ruxsati yo'q. "
+              "Admin'ga murojaat qiling.",
+    );
+  }
+
+  /// Shared shell for the three scope-cascade guard dialogs. Pulls
+  /// translations from [AppLocalizations] with hardcoded Uzbek fallbacks
+  /// so a missing l10n delegate (very early app boot, locale switch
+  /// in-flight) never blocks the guard.
+  Future<void> _showScopeGuardDialog({
+    required String title,
+    required String body,
+  }) async {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n?.commonOk ?? "OK"),
+          ),
+        ],
+      ),
+    );
   }
 
   void _viewClinetOrders(

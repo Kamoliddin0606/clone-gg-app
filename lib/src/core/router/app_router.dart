@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart' show sl;
+import 'package:gloria_marketing_flutter/src/features/visits/domain/repositories/outbox_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/infra/visit_finish_orchestrator.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/presentation/bloc/outbox_status/outbox_status_cubit.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/presentation/pages/dead_letter_page.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/presentation/pages/visit_detail_page.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/presentation/pages/visit_list_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/agent_home_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/settings_page.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/pages/trading_points_page.dart';
@@ -66,6 +74,18 @@ class AppRouter {
   static const String notificationListRoute = '/notifications';
   static const String notificationDetailRoute = '/notifications/detail';
   static const String notificationPreferencesRoute = '/notifications/preferences';
+
+  /// Visits v2 dead-letter / sync screen. Surfaces envelopes the outbox
+  /// dispatcher couldn't deliver and lets the agent retry or discard them.
+  static const String visitsSyncRoute = '/visits/sync';
+
+  /// Visits v2 history list (`GET /visits/`). Cursor-paginated. Filtered
+  /// by customer when arguments include a `customer_id` string.
+  static const String visitsHistoryRoute = '/visits/history';
+
+  /// Visits v2 detail view (`GET /visits/{id}/`). Arguments must include
+  /// a `visit_id` string.
+  static const String visitsDetailRoute = '/visits/detail';
   // Active project picker for `customer_scope=project` tenants.
   // See ProjectContext + mobile-customer-scope.md backend handoff.
   static const String projectPickerRoute = '/project-picker';
@@ -166,6 +186,55 @@ class AppRouter {
       case settingsRoute:
         return MaterialPageRoute(
           builder: (_) => const SettingsPage(),
+          settings: settings,
+        );
+      case visitsSyncRoute:
+        return MaterialPageRoute(
+          builder: (_) {
+            // RepositoryProvider ships with flutter_bloc so we don't have
+            // to take a direct dependency on `package:provider`. The
+            // DeadLetterPage uses `context.read<OutboxRepository>()` and
+            // `context.read<VisitFinishOrchestrator>()`, which
+            // RepositoryProvider satisfies the same way Provider would.
+            return MultiRepositoryProvider(
+              providers: [
+                RepositoryProvider<OutboxRepository>.value(
+                  value: sl<OutboxRepository>(),
+                ),
+                RepositoryProvider<VisitFinishOrchestrator>.value(
+                  value: sl<VisitFinishOrchestrator>(),
+                ),
+              ],
+              child: BlocProvider<OutboxStatusCubit>.value(
+                value: sl<OutboxStatusCubit>()..refresh(),
+                child: const DeadLetterPage(),
+              ),
+            );
+          },
+          settings: settings,
+        );
+      case visitsHistoryRoute:
+        // Argument support: pass a `customer_id` string to pre-filter
+        // the list to a single trading point. No arguments = full
+        // history across the caller's customers.
+        final args = settings.arguments;
+        final customerId = args is Map ? args['customer_id'] as String? : null;
+        return MaterialPageRoute(
+          builder: (_) => VisitListPage(customerId: customerId),
+          settings: settings,
+        );
+      case visitsDetailRoute:
+        final args = settings.arguments;
+        final visitId = args is Map ? args['visit_id'] as String? : null;
+        if (visitId == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(child: Text('visit_id argumenti yetishmadi')),
+            ),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => VisitDetailPage(visitId: visitId),
           settings: settings,
         );
       case ordersRoute:

@@ -61,6 +61,16 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   uuid: ^4.5.1
 
+  # Visits v2: SHA-256 over photo bytes (PhotoRepositoryImpl). Promoted from
+  # transitive to direct so the dependency stays explicit if upstream packages
+  # ever drop it.
+  crypto: ^3.0.3
+
+  # Visits v2: jailbreak / root detection used at visit start. Geofence rule
+  # treats a compromised handset like a mock-location fix in release builds;
+  # debug builds only warn.
+  flutter_jailbreak_detection: ^1.10.0
+
   # URL Launcher
   url_launcher: ^6.2.4
 

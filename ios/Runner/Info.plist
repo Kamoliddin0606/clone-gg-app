@@ -70,6 +70,15 @@
 		<string>location</string>
 		<string>fetch</string>
 		<string>remote-notification</string>
+		<string>processing</string>
+	</array>
+	<!-- Visits v2 — Workmanager registers this BGProcessingTask identifier
+	     from AppDelegate.swift; iOS refuses to schedule any identifier the
+	     Info.plist hasn't whitelisted up-front. Mirrors the constant
+	     `visitsOutboxTaskName` in visits_background_sync.dart. -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>visits_v2.outbox_sync</string>
 	</array>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<true/>

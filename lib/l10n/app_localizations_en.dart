@@ -5942,4 +5942,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get versionGate_maintenance_message => 'The server is temporarily unavailable. Please try again shortly.';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get visitsScopeBlockedTitle => 'Visits not configured';
+
+  @override
+  String get visitsScopeBlockedBody => 'Visits are not configured for your organization. Please contact your administrator.';
+
+  @override
+  String get visitsPlannedUnavailableTitle => 'Planned visit unavailable';
+
+  @override
+  String get visitsPlannedUnavailableBody => 'Only unplanned orders are allowed in the current configuration. Use the \'Finish without order\' option instead.';
+
+  @override
+  String get visitsUnplannedNotAllowedTitle => 'Unplanned orders not permitted';
+
+  @override
+  String get visitsUnplannedNotAllowedBody => 'You do not have the \'visits.add_unplanned_visit\' permission. Please contact your administrator.';
 }

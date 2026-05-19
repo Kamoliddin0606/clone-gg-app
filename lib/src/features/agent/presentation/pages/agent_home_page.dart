@@ -13,6 +13,7 @@ import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_
 import 'package:gloria_marketing_flutter/src/Utility/formatter.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import '../../../navbars/agent_bottom_nav_bar.dart';
+import '../../../visits/presentation/visit_recovery.dart';
 import 'agent_home_modern.dart';
 
 class AgentHomePage extends StatefulWidget {
@@ -68,6 +69,16 @@ class _AgentHomePageState extends State<AgentHomePage>
       curve: Curves.easeInOut,
     );
     _loadUserData();
+
+    // Visits v2 recovery — once per cold start, check if an
+    // in_progress / finished_local visit is sitting on disk and offer
+    // the agent a resume dialog. Deferred to a post-frame callback so
+    // the home screen renders first.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Fire-and-forget — failures fall back to the dead-letter screen.
+      VisitRecoveryGate.probe(context);
+    });
   }
 
   @override

@@ -9,6 +9,10 @@ import 'package:gloria_marketing_flutter/src/core/providers/locale_provider.dart
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_orchestrator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
+import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/presentation/bloc/outbox_status/outbox_status_cubit.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/presentation/widgets/outbox_status_badge.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_key_service.dart';
 import 'package:gloria_marketing_flutter/src/core/maps/models/map_settings.dart';
@@ -105,6 +109,31 @@ class _SettingsPageState extends State<SettingsPage>
         elevation: 0,
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
+        actions: [
+          // Visits v2 history list. Read-only review of finished visits;
+          // tap a row to drill into VisitDetailPage with photo strip.
+          IconButton(
+            tooltip: 'Tashriflar tarixi',
+            icon: const Icon(Icons.history),
+            onPressed: () =>
+                Navigator.of(context).pushNamed(AppRouter.visitsHistoryRoute),
+          ),
+          // Visits v2 sync indicator. Tap → /visits/sync (dead-letter UI).
+          // Badge hides when the queue is empty so the AppBar stays calm
+          // for the common case.
+          if (sl.isRegistered<OutboxStatusCubit>())
+            BlocProvider<OutboxStatusCubit>.value(
+              value: sl<OutboxStatusCubit>()..refresh(),
+              child: OutboxStatusBadge(
+                child: IconButton(
+                  tooltip: 'Sinxronlash',
+                  icon: const Icon(Icons.sync),
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(AppRouter.visitsSyncRoute),
+                ),
+              ),
+            ),
+        ],
       ),
       body: Column(
         children: [

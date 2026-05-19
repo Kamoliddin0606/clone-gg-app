@@ -16,6 +16,8 @@ import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_fail
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_device_payload.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/fcm_token_service.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/domain/repositories/catalog_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/domain/repositories/permissions_repository.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -104,8 +106,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
-      // Validate user data with database after successful login
-      await _validateAndSyncUserData(user);
+      // Validate user data with database after successful login.
+      // Password is forwarded because the SOAP initial-sync calls (KPI,
+      // clients, etc.) authenticate per-request — it isn't persisted.
+      await _validateAndSyncUserData(user, event.password);
 
       // =========================================================================
       // Background Location Tracking - login muvaffaqiyatli bo'lgandan keyin
@@ -119,6 +123,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // never block login. See docs/notifications/passport-mobile.md §2.
       // =========================================================================
       await _initNotificationCenter();
+
+      // =========================================================================
+      // Visits v2 — warm permissions + catalog now that the JWT is fresh
+      // so the home page reads `visit_submission_path` without an extra
+      // round-trip. Best-effort: failures fall back to SOAP (the safe
+      // default in FeatureFlags).
+      // =========================================================================
+      await _warmVisitsV2Caches();
 
       emit(AuthSuccess(user: user));
     } catch (e) {
@@ -144,61 +156,68 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Validate user data with database and sync if necessary
-  Future<void> _validateAndSyncUserData(UserEntity user) async {
+  /// Persist the freshly-authenticated user, decide whether the local DB
+  /// cache is still for the same person, and always pull the initial SOAP
+  /// payload (KPI / clients / catalogs) with the password we just used.
+  ///
+  /// `establish1cSession` returns the user entity but doesn't persist it.
+  /// We save it here first so:
+  ///   - `validateUserWithDatabase` can compare prefs vs DB meaningfully
+  ///     (previously prefs were empty on a fresh install → validation
+  ///     wrongly returned `true` → initial sync was skipped forever).
+  ///   - downstream services (`getUserCode`, background sync, etc.) can
+  ///     read the user from prefs immediately.
+  ///
+  /// Initial SOAP sync runs on every successful login — same-user re-login
+  /// still refreshes catalogs. Failures are logged but never block login.
+  Future<void> _validateAndSyncUserData(UserEntity user, String password) async {
     try {
       if (kDebugMode) {
-        print('Validating user data with database after login...');
-        print('Validating user data: saved username: ${_prefs.getSavedUsername()}, current user: ${user.username}');
+        print('Persisting user to prefs + validating DB after login...');
       }
 
-      // Check if preferences user data matches database user table first row
-      final isValid = await dataSyncService.validateUserWithDatabase();
+      await _prefs.saveUserData(
+        userCode: user.code,
+        userName: user.name,
+        warehouseCode: user.warehouseCode,
+        codeProject: user.codeProject,
+        telegramID: user.telegramID,
+        chatID: user.chatID,
+        topicID: user.topicID,
+      );
 
+      final isValid = await dataSyncService.validateUserWithDatabase();
       if (!isValid) {
         if (kDebugMode) {
-          print('User data validation failed. Clearing database and syncing user data...');
+          print('User differs from DB cache — clearing and re-seeding.');
         }
-
-        // Clear all user-related data from database
         await dataSyncService.clearAllCachedData();
-
-        // Sync user data with database
         await dataSyncService.syncUserDataWithDatabase();
+      }
 
-        // Send syncAllUserData command to server
-        try {
-          await dataSyncService.syncAllUserData(
-            userCode: user.code,
-            password: '', // Password not stored for security
-            codeProject: user.codeProject,
-            codeSklad: user.warehouseCode,
-          );
-
-          if (kDebugMode) {
-            print('syncAllUserData command sent to server successfully');
-          }
-        } catch (syncError) {
-          // Log the error but don't fail the login process
-          if (kDebugMode) {
-            print('Error during syncAllUserData: $syncError');
-          }
-          // Continue with login success
-        }
+      // Initial SOAP pull — KPI, clients, catalogs. Per-request auth needs
+      // the password, which we only hold in memory for the duration of
+      // this event. Errors are swallowed so a SOAP hiccup doesn't fail
+      // an otherwise-successful login, but they ARE logged.
+      try {
+        await dataSyncService.syncAllUserData(
+          userCode: user.code,
+          password: password,
+          codeProject: user.codeProject,
+          codeSklad: user.warehouseCode,
+        );
         if (kDebugMode) {
-          print('User data synced successfully after login validation');
+          print('Initial SOAP sync completed.');
         }
-      } else {
+      } catch (syncError) {
         if (kDebugMode) {
-          print('User data validation passed. No sync needed.');
+          print('Initial SOAP sync failed (non-fatal): $syncError');
         }
       }
     } catch (e) {
-      // Log the error but don't fail the login process
       if (kDebugMode) {
         print('Error during user data validation and sync: $e');
       }
-      // Continue with login success - validation is not critical for login
     }
   }
 
@@ -341,6 +360,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       if (kDebugMode) {
         print('AuthBloc: Notification sync skipped: $e');
+      }
+    }
+  }
+
+  /// Refresh the Visits v2 permissions + catalog so the next visit screen
+  /// reads the latest `visit_submission_path` flag without a round-trip.
+  /// Both fetches are independent — a 4xx on one shouldn't keep the other
+  /// from warming.
+  Future<void> _warmVisitsV2Caches() async {
+    if (!sl.isRegistered<PermissionsRepository>()) return;
+    try {
+      await sl<PermissionsRepository>().getCurrent(forceRefresh: true);
+    } catch (e) {
+      if (kDebugMode) {
+        print('AuthBloc: Visits v2 permissions warm-up skipped: $e');
+      }
+    }
+    if (!sl.isRegistered<CatalogRepository>()) return;
+    try {
+      await sl<CatalogRepository>().getCurrent(forceRefresh: true);
+    } catch (e) {
+      if (kDebugMode) {
+        print('AuthBloc: Visits v2 catalog warm-up skipped: $e');
       }
     }
   }

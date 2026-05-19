@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
@@ -77,6 +79,8 @@ import 'package:gloria_marketing_flutter/src/features/notifications/data/service
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_api_service.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/notification_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/services/push_handler_service.dart';
+
+import 'package:gloria_marketing_flutter/src/features/visits/visits_module.dart';
 
 import '../network/server_service.dart';
 
@@ -294,7 +298,26 @@ Future<void> setupServiceLocator() async {
       await sl.isReady<SharedPreferencesService>();
       final prefs = sl<SharedPreferencesService>();
       final locationService = LocationService(prefs.preferences);
-      await locationService.initialize();
+      // Fire-and-forget initialise so the singleton's future resolves
+      // immediately and `sl.allReady()` does not block `runApp()` for
+      // the duration of the GPS warm-up.
+      //
+      // `LocationService.initialize()` calls into
+      // `Geolocator.getCurrentPosition(timeLimit: 10s)` via
+      // `_updateLocation`, which waits up to ten seconds for the first
+      // fix on a cold-started device. Awaiting it here (the old code)
+      // put that wait squarely on the cold-start critical path — the
+      // app sat on a blank Android launch background for the entire
+      // window. Tracking still wires up correctly: the listening
+      // `Timer.periodic` and the position stream are attached the
+      // moment initialize() returns, which is the same callback chain
+      // either way.
+      //
+      // Callers that need a position right now (`_locationService`
+      // null check in `trading_points_page`, etc.) already cope with
+      // the not-yet-warm case by showing the "Location data not
+      // available" SnackBar.
+      unawaited(locationService.initialize());
       return locationService;
     });
   }
@@ -787,6 +810,30 @@ Future<void> setupServiceLocator() async {
       prefs: sl(),
     ));
   }
+
+  // Visits v2 — REST pipeline. Wires its own data sources, repositories,
+  // BLoCs and the task renderer registry. Idempotency-guarded: skips when
+  // the module's marker singleton is already registered (hot-restart safe).
+  if (!sl.isRegistered<VisitsModule>()) {
+    await VisitsModule.register(
+      sl,
+      restV2BaseUrl: _buildRestV2BaseUrl(sl),
+    );
+    sl.registerSingleton<VisitsModule>(const VisitsModule.marker());
+  }
+}
+
+/// Derives the `/api/mobile/v2/` base URL from the currently selected
+/// server. Falls back to a sentinel that fails fast in dev so a missing
+/// server config doesn't silently 404 the visit pipeline.
+String _buildRestV2BaseUrl(GetIt sl) {
+  if (!sl.isRegistered<ServerService>()) {
+    return 'http://localhost:8000/api/mobile/v2';
+  }
+  final root = sl<ServerService>().baseUrl;
+  if (root.isEmpty) return 'http://localhost:8000/api/mobile/v2';
+  final trimmed = root.endsWith('/') ? root.substring(0, root.length - 1) : root;
+  return '$trimmed/api/mobile/v2';
 }
 // import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 // import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';

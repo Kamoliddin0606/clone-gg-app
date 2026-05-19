@@ -5942,4 +5942,25 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get versionGate_maintenance_message => 'Server vaqtinchalik ishlamayapti. Iltimos, biroz keyin urinib ko\'ring.';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get visitsScopeBlockedTitle => 'Visit konfiguratsiya qilinmagan';
+
+  @override
+  String get visitsScopeBlockedBody => 'Sizning tashkilotingizda visit konfiguratsiya qilinmagan. Admin\'ga murojaat qiling.';
+
+  @override
+  String get visitsPlannedUnavailableTitle => 'Rejaviy tashrif mavjud emas';
+
+  @override
+  String get visitsPlannedUnavailableBody => 'Joriy konfiguratsiya bilan faqat reja tashqari buyurtma yaratish mumkin. \'Buyurtmasiz yakunlash\' tugmasidan foydalaning.';
+
+  @override
+  String get visitsUnplannedNotAllowedTitle => 'Reja tashqari buyurtma ruxsat etilmagan';
+
+  @override
+  String get visitsUnplannedNotAllowedBody => 'Sizda \'visits.add_unplanned_visit\' ruxsati yo\'q. Admin\'ga murojaat qiling.';
 }

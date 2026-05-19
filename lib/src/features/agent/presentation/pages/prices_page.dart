@@ -413,9 +413,13 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 50),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.55,
+                    ),
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 50),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -900,6 +904,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                         ],
                       ),
                     ),
+                  ),
                   ),
                 ),
               ),

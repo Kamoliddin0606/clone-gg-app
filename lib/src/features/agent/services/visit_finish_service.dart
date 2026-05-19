@@ -11,6 +11,9 @@ import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/vi
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_creation_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/order_draft_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/infra/feature_flags.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/domain/entities/permissions.dart'
+    as visits_v2;
 
 /// Service for handling visit completion process
 /// Manages step-by-step server synchronization with progress tracking and error handling
@@ -41,6 +44,20 @@ class VisitFinishService {
   }) async {
     try {
       debugPrint('VisitFinishService: Starting visit completion for visitId: $visitId');
+
+      // Visits v2 feature flag short-circuit. When the server flips the
+      // `visit_submission_path` flag to `rest_v2`, the trading-points page
+      // routes the user to VisitSessionPage / VisitSessionBloc instead of
+      // VisitStepsPage, so this service should never run on that path. If a
+      // stale caller still reaches us, refuse early instead of double-sending
+      // the visit through SOAP — the v2 envelope is already enqueued in the
+      // outbox.
+      if (_isRestV2Active()) {
+        debugPrint('VisitFinishService: REST v2 path active — skipping SOAP finish');
+        onProgress(0, 1, 'REST v2 oqimi orqali yuborilmoqda');
+        return false;
+      }
+
       debugPrint('VisitFinishService: Sequence: Visit Data → Order → Other Steps');
 
       final visitSteps = permissions.visitSteps;
@@ -686,5 +703,15 @@ class VisitFinishService {
       // Don't throw - cleanup failure shouldn't prevent completion success
       return false;
     }
+  }
+
+  /// Asks the service locator whether the Visits v2 REST path is the active
+  /// transport. Falls back to `false` (SOAP-only) when the visits module
+  /// hasn't been registered yet — e.g. during early-boot tests — so a
+  /// missing flag never silently disables the legacy path.
+  bool _isRestV2Active() {
+    if (!sl.isRegistered<FeatureFlags>()) return false;
+    return sl<FeatureFlags>().visitSubmissionPath ==
+        visits_v2.VisitSubmissionPath.restV2;
   }
 }

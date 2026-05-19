@@ -34,6 +34,11 @@ import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart'; // if needed
 import 'package:gloria_marketing_flutter/src/core/services/background_location/background_location_tracking_service.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/data/rest/visit_api.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/infra/sync/visits_background_sync.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/infra/sync/visits_sync_coordinator.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/domain/repositories/permissions_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/domain/repositories/catalog_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:async';
@@ -339,6 +344,72 @@ Future<void> _runDeferredBootstrap() async {
   } catch (e) {
     if (kDebugMode) {
       debugPrint('BackgroundDataSync: Error re-registering: $e');
+    }
+  }
+
+  // Visits v2 — hit the auth-free `/server-time/` endpoint first so the
+  // ServerTimeService captures the clock-drift baseline before any
+  // envelope is timestamped. The endpoint replies with an empty body and
+  // an `X-Server-Time` header; the response interceptor records it via
+  // `ServerTimeService.recordServerTime`. Failure here is fine —
+  // ClockDriftValidator falls back to drift=0 and only blocks visits
+  // when the user's clock is *clearly* skewed.
+  try {
+    await sl<VisitApi>().syncServerTime();
+    if (kDebugMode) {
+      debugPrint('[Visits v2] Server time captured');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Visits v2] Server time sync skipped: $e');
+    }
+  }
+
+  // Visits v2 — warm permissions/catalog cache so the feature flag and
+  // task list are available the moment the user opens a trading point.
+  // Best-effort: offline cache or empty state falls back to SOAP path.
+  try {
+    final tokenService = sl<TokenService>();
+    if (tokenService.hasValidV2Token()) {
+      await sl<PermissionsRepository>().getCurrent(forceRefresh: true);
+      await sl<CatalogRepository>().getCurrent(forceRefresh: true);
+      if (kDebugMode) {
+        debugPrint('[Visits v2] Permissions + catalog warmed');
+      }
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Visits v2] Permissions/catalog warm-up skipped: $e');
+    }
+  }
+
+  // Visits v2 — foreground sync coordinator (lifecycle + connectivity +
+  // 60s timer) and Workmanager background sync (15-min, network-required).
+  // Both are idempotent: re-running on hot restart no-ops.
+  try {
+    final coordinator = VisitsSyncCoordinator(
+      dispatcher: sl(),
+      photoUploader: sl(),
+      connectivity: sl(),
+    );
+    await coordinator.start();
+    if (!sl.isRegistered<VisitsSyncCoordinator>()) {
+      sl.registerSingleton<VisitsSyncCoordinator>(coordinator);
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Visits v2] Sync coordinator start failed: $e');
+    }
+  }
+
+  try {
+    await VisitsBackgroundSync.schedule();
+    if (kDebugMode) {
+      debugPrint('[Visits v2] Workmanager scheduled (15min, network-required)');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Visits v2] Workmanager schedule skipped: $e');
     }
   }
 }

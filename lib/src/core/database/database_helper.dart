@@ -6,6 +6,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:gloria_marketing_flutter/src/features/notifications/data/db/notification_db_dao.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/data/local/migrations/v6_to_v7.dart';
 
 // Top-level function for unzipping in background isolate
 List<int> unzipDatabase(List<int> bytes) {
@@ -21,8 +22,10 @@ List<int> unzipDatabase(List<int> bytes) {
 class DatabaseHelper {
   static const _dbName = "GloriyaMarketing.db";
   static const _zipAssetName = "GloriyaMarketing.zip";
-  // v6: notifications.snooze_until column for Phase 2b snooze feature.
-  static const _dbVersion = 6;
+  // v7: Visits v2 REST pipeline tables (outbox, photo_uploads, visits_v2,
+  //     visit_tasks_v2, permissions_cache, catalog_cache).
+  //     See lib/src/features/visits/data/local/migrations/v6_to_v7.dart.
+  static const _dbVersion = 7;
 
   Database? _database;
 
@@ -140,6 +143,10 @@ class DatabaseHelper {
     // Notification center tables — owned by the notifications feature.
     await NotificationDbDao.createTables(db);
 
+    // Visits v2 — REST pipeline tables. Mirrors the v6→v7 upgrade so fresh
+    // installs land on the same schema as upgraded devices.
+    await V6ToV7Migration.apply(db);
+
     if (kDebugMode) {
       print("Empty database created with basic schema.");
     }
@@ -181,6 +188,9 @@ class DatabaseHelper {
       // Phase 2b: snooze support. Column is nullable so existing rows
       // come through as "never snoozed".
       await NotificationDbDao.addSnoozeColumn(db);
+    }
+    if (oldVersion < 7) {
+      await V6ToV7Migration.apply(db);
     }
   }
 

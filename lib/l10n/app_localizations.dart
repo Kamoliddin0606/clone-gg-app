@@ -11250,6 +11250,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The server is temporarily unavailable. Please try again shortly.'**
   String get versionGate_maintenance_message;
+
+  /// No description provided for @commonOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get commonOk;
+
+  /// No description provided for @visitsScopeBlockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits not configured'**
+  String get visitsScopeBlockedTitle;
+
+  /// No description provided for @visitsScopeBlockedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits are not configured for your organization. Please contact your administrator.'**
+  String get visitsScopeBlockedBody;
+
+  /// No description provided for @visitsPlannedUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned visit unavailable'**
+  String get visitsPlannedUnavailableTitle;
+
+  /// No description provided for @visitsPlannedUnavailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Only unplanned orders are allowed in the current configuration. Use the \'Finish without order\' option instead.'**
+  String get visitsPlannedUnavailableBody;
+
+  /// No description provided for @visitsUnplannedNotAllowedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unplanned orders not permitted'**
+  String get visitsUnplannedNotAllowedTitle;
+
+  /// No description provided for @visitsUnplannedNotAllowedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have the \'visits.add_unplanned_visit\' permission. Please contact your administrator.'**
+  String get visitsUnplannedNotAllowedBody;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

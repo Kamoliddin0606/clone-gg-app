@@ -3133,5 +3133,12 @@
   "versionGate_softUpdate_title": "Update available",
   "versionGate_softUpdate_message": "A new version of the app is available.",
   "versionGate_maintenance_title": "Maintenance",
-  "versionGate_maintenance_message": "The server is temporarily unavailable. Please try again shortly."
+  "versionGate_maintenance_message": "The server is temporarily unavailable. Please try again shortly.",
+  "commonOk": "OK",
+  "visitsScopeBlockedTitle": "Visits not configured",
+  "visitsScopeBlockedBody": "Visits are not configured for your organization. Please contact your administrator.",
+  "visitsPlannedUnavailableTitle": "Planned visit unavailable",
+  "visitsPlannedUnavailableBody": "Only unplanned orders are allowed in the current configuration. Use the 'Finish without order' option instead.",
+  "visitsUnplannedNotAllowedTitle": "Unplanned orders not permitted",
+  "visitsUnplannedNotAllowedBody": "You do not have the 'visits.add_unplanned_visit' permission. Please contact your administrator."
 }

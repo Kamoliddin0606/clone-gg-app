@@ -50,7 +50,7 @@ class TokenService {
   /// via `--dart-define` for on-device runs.
   static const String v2BaseUrl = String.fromEnvironment(
     'V2_BASE_URL',
-    defaultValue: 'http://192.168.0.194:8080',
+    defaultValue: 'http://192.168.0.123:8080',
   );
 
   /// JWT access + refresh juftligini olish endpointi.

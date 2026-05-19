@@ -3016,5 +3016,12 @@
   "versionGate_softUpdate_title": "Доступно обновление",
   "versionGate_softUpdate_message": "Вышла новая версия приложения.",
   "versionGate_maintenance_title": "Технические работы",
-  "versionGate_maintenance_message": "Сервер временно недоступен. Попробуйте чуть позже."
+  "versionGate_maintenance_message": "Сервер временно недоступен. Попробуйте чуть позже.",
+  "commonOk": "OK",
+  "visitsScopeBlockedTitle": "Визиты не настроены",
+  "visitsScopeBlockedBody": "В вашей организации визиты не настроены. Обратитесь к администратору.",
+  "visitsPlannedUnavailableTitle": "Плановый визит недоступен",
+  "visitsPlannedUnavailableBody": "В текущей конфигурации можно создавать только внеплановые заказы. Используйте кнопку «Завершить без заказа».",
+  "visitsUnplannedNotAllowedTitle": "Внеплановые заказы запрещены",
+  "visitsUnplannedNotAllowedBody": "У вас нет разрешения «visits.add_unplanned_visit». Обратитесь к администратору."
 }

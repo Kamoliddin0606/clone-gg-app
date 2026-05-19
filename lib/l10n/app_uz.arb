@@ -3020,5 +3020,19 @@
   "versionGate_softUpdate_title": "Yangilanish mavjud",
   "versionGate_softUpdate_message": "Ilovaning yangi versiyasi chiqdi.",
   "versionGate_maintenance_title": "Texnik ishlar",
-  "versionGate_maintenance_message": "Server vaqtinchalik ishlamayapti. Iltimos, biroz keyin urinib ko'ring."
+  "versionGate_maintenance_message": "Server vaqtinchalik ishlamayapti. Iltimos, biroz keyin urinib ko'ring.",
+  "commonOk": "OK",
+  "@commonOk": {"description": "Generic confirm-and-dismiss button used by the scope-cascade guard dialogs."},
+  "visitsScopeBlockedTitle": "Visit konfiguratsiya qilinmagan",
+  "@visitsScopeBlockedTitle": {"description": "Title for the dialog shown when VisitMode.blocked — no tasks at any scope level and no visits.add_unplanned_visit codename."},
+  "visitsScopeBlockedBody": "Sizning tashkilotingizda visit konfiguratsiya qilinmagan. Admin'ga murojaat qiling.",
+  "@visitsScopeBlockedBody": {"description": "Body for the configuration-missing dialog."},
+  "visitsPlannedUnavailableTitle": "Rejaviy tashrif mavjud emas",
+  "@visitsPlannedUnavailableTitle": {"description": "Title shown when the user is in VisitMode.unplannedOnly and tries to start a planned visit."},
+  "visitsPlannedUnavailableBody": "Joriy konfiguratsiya bilan faqat reja tashqari buyurtma yaratish mumkin. 'Buyurtmasiz yakunlash' tugmasidan foydalaning.",
+  "@visitsPlannedUnavailableBody": {"description": "Body shown when planned visits are unavailable in the current cascade state."},
+  "visitsUnplannedNotAllowedTitle": "Reja tashqari buyurtma ruxsat etilmagan",
+  "@visitsUnplannedNotAllowedTitle": {"description": "Title shown when the user tries to start an unplanned visit but lacks visits.add_unplanned_visit codename."},
+  "visitsUnplannedNotAllowedBody": "Sizda 'visits.add_unplanned_visit' ruxsati yo'q. Admin'ga murojaat qiling.",
+  "@visitsUnplannedNotAllowedBody": {"description": "Body for the unplanned-not-allowed guard dialog."}
 }

@@ -5942,4 +5942,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get versionGate_maintenance_message => 'Сервер временно недоступен. Попробуйте чуть позже.';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get visitsScopeBlockedTitle => 'Визиты не настроены';
+
+  @override
+  String get visitsScopeBlockedBody => 'В вашей организации визиты не настроены. Обратитесь к администратору.';
+
+  @override
+  String get visitsPlannedUnavailableTitle => 'Плановый визит недоступен';
+
+  @override
+  String get visitsPlannedUnavailableBody => 'В текущей конфигурации можно создавать только внеплановые заказы. Используйте кнопку «Завершить без заказа».';
+
+  @override
+  String get visitsUnplannedNotAllowedTitle => 'Внеплановые заказы запрещены';
+
+  @override
+  String get visitsUnplannedNotAllowedBody => 'У вас нет разрешения «visits.add_unplanned_visit». Обратитесь к администратору.';
 }

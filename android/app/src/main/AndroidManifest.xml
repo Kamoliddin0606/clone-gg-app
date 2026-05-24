@@ -63,6 +63,14 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- FCM default notification channel for background messages.
+             When the app is not in the foreground, Firebase uses this
+             channel to display notification-type push messages. Must
+             match the channel id created in PushHandlerService. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="selup_default" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

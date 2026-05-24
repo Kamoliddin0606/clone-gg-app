@@ -717,62 +717,7 @@ class DataSyncService {
       print('[DeltaSync] Clients: +${stats['inserted']}, ~${stats['updated']}, -${stats['deleted']} (${stats['duration_ms']}ms)');
     }
 
-    try {
-      await _syncCustomersFromBackend();
-    } catch (e, st) {
-      if (kDebugMode) {
-        print('[BackendCustomerSync] failed — SOAP-only result kept: $e');
-        print(st);
-      }
-    }
-
     return clients;
-  }
-
-  /// Pulls the backend's authoritative customer list and merges it into
-  /// the local `clients` cache, populating `code_backend` + `uuid_1c`
-  /// alongside the SOAP-sourced `code` / `code_1c`.
-  ///
-  /// • Scope: `CustomerReadRepository` reads `X-Project-Id` from
-  ///   [ProjectContext] for `customer_scope=project` tenants; org-wide
-  ///   tenants get the org's customers without a project filter.
-  /// • Incremental: passes `?updated_since=<last_backend_sync_at>` so
-  ///   each pass only downloads rows that changed since the last
-  ///   successful merge. The watermark is bumped only after the merge
-  ///   commits.
-  /// • Merge: see [ApiDatabaseService.mergeBackendCustomers] — matches
-  ///   by `code_1c` first, then `code_backend`; inserts thin rows for
-  ///   `pending_1c` customers SOAP doesn't see; never deletes SOAP rows
-  ///   that fall outside the backend's project scope.
-  Future<Map<String, int>> _syncCustomersFromBackend() async {
-    if (!sl.isRegistered<CustomerReadRepository>()) {
-      if (kDebugMode) {
-        print(
-          '[BackendCustomerSync] CustomerReadRepository not registered — skipping',
-        );
-      }
-      return const {'matched': 0, 'inserted': 0, 'skipped': 0};
-    }
-    final repo = sl<CustomerReadRepository>();
-    final lastSyncAt = _prefs.getLastBackendCustomersSyncAt();
-    final startedAt = DateTime.now().toUtc();
-
-    final customers = await repo.listAll(updatedSince: lastSyncAt);
-    final stats = await _dbService.mergeBackendCustomers(customers);
-
-    // Bump the watermark only on success — partial failures keep the
-    // previous value so the next run re-fetches the same window.
-    await _prefs.setLastBackendCustomersSyncAt(startedAt);
-
-    if (kDebugMode) {
-      print(
-        '[BackendCustomerSync] fetched=${customers.length} '
-        'matched=${stats['matched']} inserted=${stats['inserted']} '
-        'skipped=${stats['skipped']} '
-        'since=${lastSyncAt?.toIso8601String() ?? 'null'}',
-      );
-    }
-    return stats;
   }
 
   /// Sync products data

@@ -90,6 +90,33 @@ class CustomerReadRepository {
     return result;
   }
 
+  /// Fetches a single customer by UUID from `/api/mobile/v2/customers/{uuid}/`.
+  /// Returns null if the customer is not found or the response is malformed.
+  Future<TradingPoint?> getOne(String uuid) async {
+    if (uuid.isEmpty) return null;
+    final url = '${TokenService.v2BaseUrl}$_basePath/$uuid/';
+    try {
+      final response = await _dio.get<dynamic>(
+        url,
+        options: Options(
+          headers: await _authHeaders(),
+          validateStatus: (s) => s != null && s < 500,
+        ),
+      );
+      if (response.statusCode == 404) return null;
+      final data = response.data;
+      if (data is! Map<String, dynamic>) return null;
+      final tp = TradingPoint.fromBackendJson(data);
+      if (kDebugMode) {
+        debugPrint('[CUSTOMER-READ] getOne($uuid) → ${tp.id}');
+      }
+      return tp.id.isNotEmpty ? tp : null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[CUSTOMER-READ] getOne($uuid) failed: $e');
+      return null;
+    }
+  }
+
   String _buildInitialUrl({
     required int pageSize,
     DateTime? updatedSince,

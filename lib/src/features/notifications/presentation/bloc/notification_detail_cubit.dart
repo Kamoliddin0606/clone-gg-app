@@ -47,7 +47,12 @@ class NotificationDetailCubit extends Cubit<NotificationDetailState> {
     if (cached != null) {
       emit(state.copyWith(loading: false, notification: cached));
     }
-    final fresh = await _repo.fetchAndCache(id);
+    // removeOnNotFound=false: if the backend returns 404 we keep the
+    // cached stub visible rather than deleting it and emptying the list.
+    // A push stub that the server hasn't yet fanned-out to this user's
+    // recipient table is the main case; genuine hard-deletes are
+    // handled by list-sync eviction instead.
+    final fresh = await _repo.fetchAndCache(id, removeOnNotFound: false);
     if (fresh != null) {
       emit(state.copyWith(loading: false, notification: fresh));
     } else if (cached == null) {

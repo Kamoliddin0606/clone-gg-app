@@ -42,6 +42,7 @@ import 'package:gloria_marketing_flutter/src/core/services/connectivity_monitor_
 import 'package:gloria_marketing_flutter/src/core/services/network_mode_gate.dart';
 import 'package:gloria_marketing_flutter/src/core/services/app_start_guard.dart';
 import 'package:gloria_marketing_flutter/src/core/services/health_check_service.dart';
+import 'package:gloria_marketing_flutter/src/core/network/organization_api_service.dart';
 import 'package:gloria_marketing_flutter/src/core/version/data/app_version_interceptor.dart';
 import 'package:gloria_marketing_flutter/src/core/version/data/version_app_info.dart';
 import 'package:gloria_marketing_flutter/src/core/version/data/version_check_cache.dart';
@@ -651,6 +652,13 @@ Future<void> setupServiceLocator() async {
   // LoginPage "Test connection" button. Self-contained Dio instance.
   if (!sl.isRegistered<HealthCheckService>()) {
     sl.registerLazySingleton<HealthCheckService>(() => HealthCheckService());
+  }
+
+  // Public organization/project list for the login page.
+  // Self-contained Dio instance — no auth headers.
+  if (!sl.isRegistered<OrganizationApiService>()) {
+    sl.registerLazySingleton<OrganizationApiService>(
+        () => OrganizationApiService());
   }
 
   // Boot-time access guard. Replaces the legacy AppAccessControlService /

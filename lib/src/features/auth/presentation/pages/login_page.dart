@@ -12,6 +12,9 @@ import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/health_check_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
 import 'package:gloria_marketing_flutter/src/features/auth/data/models/auth_failure.dart';
+import 'package:gloria_marketing_flutter/src/core/network/organization_api_service.dart';
+import 'package:gloria_marketing_flutter/src/core/network/models/api_organization.dart';
+import 'package:gloria_marketing_flutter/src/core/network/models/api_project.dart';
 
 import '../../../../core/network/server_service.dart';
 
@@ -26,8 +29,18 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
-  bool _isServerExplicitlySelected = false;
   late AnimationController _animationController;
+
+  // ── Organization / Project selection (dynamic) ──
+  List<ApiOrganization>? _organizations;
+  ApiOrganization? _selectedOrganization;
+  ApiProject? _selectedProject;
+  bool _isLoadingOrganizations = true;
+  String? _orgLoadError;
+
+  /// `true` when the API failed and we fell back to the legacy [ServerEnv]
+  /// enum picker. The user can still log in but with the hardcoded list.
+  bool _useLegacyPicker = false;
 
   /// Localization key supplied via `Navigator.pushNamed(... arguments: ...)`
   /// when a session-end handler routes the user back to login. Shown once
@@ -42,6 +55,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   static const Color successColor = Color(0xFF3EBD84);
   static const Color accentColor = Color(0xFFFFE8A3);
 
+  // ── Legacy server picker (fallback) ──
   Future<void> _pickServer(BuildContext context) async {
     final service = sl<ServerService>();
     final selected = await showModalBottomSheet<ServerEnv>(
@@ -63,25 +77,89 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         );
       },
     );
-    if (kDebugMode) {
-      print('Selected server data: ${selected.toString()}');
-      print('Selected server URL: ${selected?.url}');
-      print('Selected server name: ${selected?.name}');
-    }
     if (selected != null) {
-      // Save the selection — ApiService baseUrl is automatically updated
       await service.set(selected);
-      _isServerExplicitlySelected = true;
-
-      // (ixtiyoriy) eski login/credentiallarni tozalash:
-      // await sl<SharedPreferencesService>().clearCredentials();
-
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${selected.label} ${AppLocalizations.of(context)?.serverSelected ?? "server selected"}')),
       );
     }
   }
+
+  // ── Organization picker ──
+  Future<void> _pickOrganization(BuildContext context) async {
+    final orgs = _organizations;
+    if (orgs == null || orgs.isEmpty) return;
+
+    final selected = await showModalBottomSheet<ApiOrganization>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return ListView(
+          children: orgs.map((org) {
+            final isSel = org.id == _selectedOrganization?.id;
+            return ListTile(
+              leading: Icon(Icons.business_outlined,
+                  color: isSel ? theme.colorScheme.primary : null),
+              title: Text(org.name),
+              subtitle: Text(
+                '${org.projects.length} ${org.projects.length == 1 ? "loyiha" : "loyiha"}',
+                style: theme.textTheme.bodySmall,
+              ),
+              trailing: isSel ? const Icon(Icons.check) : null,
+              onTap: () => Navigator.pop(ctx, org),
+            );
+          }).toList(),
+        );
+      },
+    );
+
+    if (selected != null && mounted) {
+      setState(() {
+        _selectedOrganization = selected;
+        // Auto-select the first (or only) project
+        if (selected.projects.length == 1) {
+          _selectedProject = selected.projects.first;
+        } else {
+          _selectedProject = null;
+        }
+      });
+    }
+  }
+
+  // ── Project picker ──
+  Future<void> _pickProject(BuildContext context) async {
+    final org = _selectedOrganization;
+    if (org == null || org.projects.isEmpty) return;
+
+    final selected = await showModalBottomSheet<ApiProject>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return ListView(
+          children: org.projects.map((proj) {
+            final isSel = proj.id == _selectedProject?.id;
+            return ListTile(
+              leading: Icon(Icons.folder_outlined,
+                  color: isSel ? theme.colorScheme.primary : null),
+              title: Text(proj.name),
+              trailing: isSel ? const Icon(Icons.check) : null,
+              onTap: () => Navigator.pop(ctx, proj),
+            );
+          }).toList(),
+        );
+      },
+    );
+
+    if (selected != null && mounted) {
+      setState(() {
+        _selectedProject = selected;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -90,6 +168,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       duration: const Duration(milliseconds: 800),
     )..forward();
     _loadSavedCredentials();
+    _fetchOrganizations();
   }
 
   @override
@@ -125,6 +204,92 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     _passwordController.dispose();
     _animationController.dispose();
     super.dispose();
+  }
+
+  // ── Fetch organizations from backend ──
+  Future<void> _fetchOrganizations() async {
+    setState(() {
+      _isLoadingOrganizations = true;
+      _orgLoadError = null;
+    });
+
+    try {
+      final service = sl<OrganizationApiService>();
+      final orgs = await service.fetchOrganizations();
+
+      if (!mounted) return;
+
+      if (orgs.isEmpty) {
+        // No orgs from API — try cache, then fall back to legacy
+        final cached = service.loadCachedOrganizations();
+        if (cached.isNotEmpty) {
+          _applyOrganizations(cached);
+        } else {
+          setState(() {
+            _useLegacyPicker = true;
+            _isLoadingOrganizations = false;
+          });
+        }
+        return;
+      }
+
+      _applyOrganizations(orgs);
+    } catch (e) {
+      if (!mounted) return;
+      if (kDebugMode) print('[LoginPage] Org fetch failed: $e');
+
+      // Try cached data
+      try {
+        final cached = sl<OrganizationApiService>().loadCachedOrganizations();
+        if (cached.isNotEmpty) {
+          _applyOrganizations(cached);
+          return;
+        }
+      } catch (_) {}
+
+      // Fall back to legacy picker
+      setState(() {
+        _orgLoadError = e.toString();
+        _useLegacyPicker = true;
+        _isLoadingOrganizations = false;
+      });
+    }
+  }
+
+  /// Applies the loaded organizations and tries to restore the previously
+  /// selected org/project from SharedPreferences.
+  void _applyOrganizations(List<ApiOrganization> orgs) {
+    final prefs = sl<SharedPreferencesService>();
+    final savedOrgId = prefs.getDynamicOrgId();
+    final savedProjectId = prefs.getDynamicProjectId();
+
+    ApiOrganization? restoredOrg;
+    ApiProject? restoredProject;
+
+    if (savedOrgId != null) {
+      for (final org in orgs) {
+        if (org.id == savedOrgId) {
+          restoredOrg = org;
+          if (savedProjectId != null) {
+            for (final proj in org.projects) {
+              if (proj.id == savedProjectId) {
+                restoredProject = proj;
+                break;
+              }
+            }
+          }
+          break;
+        }
+      }
+    }
+
+    setState(() {
+      _organizations = orgs;
+      _selectedOrganization = restoredOrg;
+      _selectedProject = restoredProject;
+      _useLegacyPicker = false;
+      _isLoadingOrganizations = false;
+    });
   }
 
   Future<void> _loadSavedCredentials() async {
@@ -167,25 +332,38 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     try {
       await sl.isReady<SharedPreferencesService>();
       final prefs = sl<SharedPreferencesService>();
-      if (_rememberMe) {
-        await prefs.saveCredentials(_usernameController.text, _passwordController.text, _rememberMe);
-      } else {
-        await prefs.saveCredentials(_usernameController.text, _passwordController.text, _rememberMe);
-      }
+      await prefs.saveCredentials(
+        _usernameController.text,
+        _passwordController.text,
+        _rememberMe,
+      );
     } catch (_) {}
 
-    // Ensure server is saved if not explicitly selected
-    if (!_isServerExplicitlySelected) {
+    // Persist the dynamic org/project selection to ServerService
+    if (!_useLegacyPicker && _selectedProject != null && _selectedOrganization != null) {
+      try {
+        await sl<ServerService>().setDynamic(
+          servicePath: _selectedProject!.servicePath,
+          organizationId: _selectedOrganization!.id,
+          organizationName: _selectedOrganization!.name,
+          projectId: _selectedProject!.id,
+          projectName: _selectedProject!.name,
+        );
+      } catch (e) {
+        if (kDebugMode) print('Error saving dynamic server: $e');
+      }
+    } else if (_useLegacyPicker) {
+      // Ensure legacy server is saved
       try {
         final serverService = sl<ServerService>();
         await serverService.set(serverService.current.value);
       } catch (e) {
-        // Log error but don't block login
         if (kDebugMode) print('Error saving default server: $e');
       }
     }
 
     // First try online authentication
+    if (!mounted) return;
     context.read<AuthBloc>().add(LoginButtonPressed(
       username: _usernameController.text,
       password: _passwordController.text,
@@ -229,7 +407,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
       // Get user from database by code
       final userData = await dbHelper.getUserByCode(prefsUserCode);
-      if(userData?['base_url'] != sl<ServerService>().current.value.url) {
+      if(userData?['base_url'] != sl<ServerService>().baseUrl) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -499,23 +677,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     return GestureDetector(
       onTap: _dismissKeyboard,
       child: Scaffold(
-        // // CHANGED: AppBar + ThemeToggle (light/dark)
-        // appBar: AppBar(
-        //   automaticallyImplyLeading: false,
-        //   title: Text('Kirish', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-        //   centerTitle: false,
-        //   actions: [
-        //     Padding(
-        //       padding: const EdgeInsets.symmetric(horizontal: 8),
-        //       child: ThemeToggle(
-        //         mode: ThemeController.I.mode.value,
-        //         onChanged: ThemeController.I.set,
-        //       ),
-        //     ),
-        //   ],
-        // ),
-
-        // CHANGED: AgentHome’dagi kabi gradient fon va markaziy Card
+        // CHANGED: AgentHome'dagi kabi gradient fon va markaziy Card
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -533,17 +695,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 if (kDebugMode) print('Auth failure: ${state.message}, type: ${state.errorType}');
                 final failure = state.failure;
                 if (failure is NetworkFailure) {
-                  // Hard-block on transport error: no SOAP fallback,
-                  // no auto-retry. The user must press Retry deliberately,
-                  // which clears the credential fields.
                   if (mounted) _showNetworkFailureBanner(context);
                 } else if (state.errorType == AuthErrorType.connectivity) {
-                  // Legacy path: pre-V2 connectivity exceptions (e.g. SOAP
-                  // 1C session warm-up failed offline). Keep the offline
-                  // login path so the user can still work with cached data.
                   _tryOfflineLogin(_usernameController.text, _passwordController.text);
                 } else {
-                  // For authentication or server errors, just show the error message
                   if (mounted) {
                     final localized = failure == null
                         ? state.message
@@ -558,7 +713,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 }
               }
               if (state is AuthSuccess) {
-                // Online login successful
                 _handleOnlineLoginSuccess(state);
               }
             },
@@ -591,8 +745,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   }
 
   /// Map a typed [AuthFailure] to its localized message via [AppLocalizations].
-  /// Returns `null` when the localization key is missing — caller falls
-  /// back to the legacy `state.message` so the user always sees something.
   String? _localizeAuthFailure(BuildContext context, AuthFailure failure) {
     final l10n = AppLocalizations.of(context);
     if (l10n == null) return null;
@@ -615,10 +767,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       case NetworkFailure():
         return l10n.networkError;
       case UnknownAuthFailure():
-        // Server responded with an unrecognised `error.code` — surface
-        // a "server error" message rather than the misleading "network
-        // error". The raw code goes to logs (see TokenService) for
-        // ops to investigate.
         return l10n.serverError;
       case MobileDeviceBoundToOtherUserFailure():
         return l10n.mobileDeviceBoundToOtherUser;
@@ -633,10 +781,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
   }
 
-  /// Shows a persistent [MaterialBanner] explaining the V2 backend is
-  /// unreachable. The Retry button clears the credential fields and
-  /// returns focus to the username input — auto-retry is forbidden
-  /// (login storm risk + bypass risk).
   void _showNetworkFailureBanner(BuildContext context) {
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context);
@@ -666,9 +810,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     );
   }
 
-  /// Look up a localized string by its `messageKey` (e.g. when navigated
-  /// to with an [AuthFailure.messageKey] route argument from a session-end
-  /// handler). Returns `null` for unknown keys.
   String? _localizeMessageKey(BuildContext context, String key) {
     final l10n = AppLocalizations.of(context);
     if (l10n == null) return null;
@@ -698,11 +839,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
   }
 
-  /// Debug-only footer shown at the bottom of the login form. Surfaces
-  /// the resolved V2 backend URL (so engineers spot misconfigured
-  /// `--dart-define` values without diving into logs) and a one-shot
-  /// liveness probe button. Gated by [kDebugMode] — release builds
-  /// strip it entirely.
   Widget _debugBackendFooter(BuildContext context) {
     if (!kDebugMode) return const SizedBox.shrink();
     final theme = Theme.of(context);
@@ -747,18 +883,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     );
   }
 
+  // ── Legacy server chip (fallback) ──
   Widget _serverChip() {
     final server = sl<ServerService>();
     return ValueListenableBuilder<ServerEnv>(
       valueListenable: server.current,
       builder: (context, env, _) {
         final color = switch (env) {
-          ServerEnv.Evyap    => Color.fromRGBO(0, 54, 152, 1.0),
-          ServerEnv.Garnier => Color.fromRGBO(34, 50, 46, 1.0),
-          ServerEnv.PPD    => Color.fromRGBO(0, 0, 0, 1.0),
-          ServerEnv.Avon     => Color.fromRGBO(218, 0, 73, 1.0),
-          ServerEnv.AvonTest     => Color.fromRGBO(80, 209, 248, 1.0),
-          ServerEnv.ProWash  => Color.fromRGBO(0, 150, 136, 1.0),
+          ServerEnv.Evyap    => const Color.fromRGBO(0, 54, 152, 1.0),
+          ServerEnv.Garnier  => const Color.fromRGBO(34, 50, 46, 1.0),
+          ServerEnv.PPD      => const Color.fromRGBO(0, 0, 0, 1.0),
+          ServerEnv.Avon     => const Color.fromRGBO(218, 0, 73, 1.0),
+          ServerEnv.AvonTest => const Color.fromRGBO(80, 209, 248, 1.0),
+          ServerEnv.ProWash  => const Color.fromRGBO(0, 150, 136, 1.0),
         };
         return ActionChip(
           label: Text(env.label),
@@ -768,15 +905,119 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       },
     );
   }
+
+  // ── Dynamic organization chip ──
+  Widget _organizationChip(BuildContext context) {
+    final theme = Theme.of(context);
+    final label = _selectedOrganization?.name ?? 'Tashkilotni tanlang';
+    return ActionChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: _selectedOrganization != null
+              ? theme.colorScheme.onSurface
+              : theme.colorScheme.onSurface.withOpacity(0.5),
+        ),
+      ),
+      avatar: Icon(
+        Icons.business_outlined,
+        size: 18,
+        color: _selectedOrganization != null
+            ? theme.colorScheme.primary
+            : theme.colorScheme.outline,
+      ),
+      onPressed: () => _pickOrganization(context),
+    );
+  }
+
+  // ── Dynamic project chip ──
+  Widget _projectChip(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasOrg = _selectedOrganization != null;
+    final label = _selectedProject?.name ?? 'Loyihani tanlang';
+    return ActionChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: hasOrg && _selectedProject != null
+              ? theme.colorScheme.onSurface
+              : theme.colorScheme.onSurface.withOpacity(0.5),
+        ),
+      ),
+      avatar: Icon(
+        Icons.folder_outlined,
+        size: 18,
+        color: hasOrg && _selectedProject != null
+            ? theme.colorScheme.primary
+            : theme.colorScheme.outline,
+      ),
+      onPressed: hasOrg ? () => _pickProject(context) : null,
+    );
+  }
+
+  // ── Server / org+project selection area ──
+  Widget _buildSelectionArea(BuildContext context) {
+    if (_isLoadingOrganizations) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Center(child: SizedBox(
+          height: 24, width: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        )),
+      );
+    }
+
+    if (_useLegacyPicker) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _serverChip(),
+          if (_orgLoadError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: InkWell(
+                onTap: _fetchOrganizations,
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh, size: 14, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Qayta yuklash',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    // Dynamic org + project pickers
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        _organizationChip(context),
+        _projectChip(context),
+      ],
+    );
+  }
+
   Widget _buildForm(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 
+    // Login button disabled when no project selected (dynamic mode)
+    final bool canLogin = _useLegacyPicker || _selectedProject != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // CHANGED: logo + subtile
-        _serverChip(),
+        _buildSelectionArea(context),
+        const SizedBox(height: 8),
         Row(
           children: [
             CircleAvatar(
@@ -800,7 +1041,6 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
         ),
         const SizedBox(height: 20),
 
-        // CHANGED: Inputlar — Material 3 uslubida, surface rang, outlineVariant border
         _M3Input(
           controller: _usernameController,
           label: l10n.username,
@@ -832,21 +1072,20 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             Text(l10n.rememberMe, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
             const Spacer(),
             TextButton(
-              onPressed: () {}, // kerak bo‘lsa: parolni unutdingizmi
+              onPressed: () {}, // kerak bo'lsa: parolni unutdingizmi
               child: Text(l10n.forgotPassword),
             ),
           ],
         ),
         const SizedBox(height: 16),
 
-        // Tugma — logika o‘zgarishsiz (BlocBuilder yuqorida)
         BlocBuilder<AuthBloc, AuthState>(
           builder: (context, state) {
             final loading = state is AuthLoading;
             return SizedBox(
               height: 48,
               child: FilledButton(
-                onPressed: loading ? null : _onLoginButtonPressed,
+                onPressed: (loading || !canLogin) ? null : _onLoginButtonPressed,
                 child: loading
                     ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 3))
                     : Text(l10n.login),

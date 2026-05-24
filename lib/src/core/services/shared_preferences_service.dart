@@ -705,4 +705,52 @@ class SharedPreferencesService {
       print('[GATES-FLOW] 🗑️  clearCachedDeviceBinding → key removed');
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Dynamic organization / project selection (pre-login).
+  // Replaces the hardcoded ServerEnv enum when the V2 backend is
+  // reachable.
+  // ─────────────────────────────────────────────────────────────────────
+  static const String _dynamicServicePathKey = 'dynamic_service_path';
+  static const String _dynamicOrgIdKey = 'dynamic_org_id';
+  static const String _dynamicOrgNameKey = 'dynamic_org_name';
+  static const String _dynamicProjectIdKey = 'dynamic_project_id';
+  static const String _dynamicProjectNameKey = 'dynamic_project_name';
+  static const String _cachedOrganizationsJsonKey = 'cached_organizations_json';
+
+  Future<void> setDynamicServicePath(String value) async =>
+      _preferences.setString(_dynamicServicePathKey, value);
+  String? getDynamicServicePath() =>
+      _preferences.getString(_dynamicServicePathKey);
+
+  Future<void> setDynamicOrgId(String value) async =>
+      _preferences.setString(_dynamicOrgIdKey, value);
+  String? getDynamicOrgId() => _preferences.getString(_dynamicOrgIdKey);
+
+  Future<void> setDynamicOrgName(String value) async =>
+      _preferences.setString(_dynamicOrgNameKey, value);
+  String? getDynamicOrgName() => _preferences.getString(_dynamicOrgNameKey);
+
+  Future<void> setDynamicProjectId(String value) async =>
+      _preferences.setString(_dynamicProjectIdKey, value);
+  String? getDynamicProjectId() =>
+      _preferences.getString(_dynamicProjectIdKey);
+
+  Future<void> setDynamicProjectName(String value) async =>
+      _preferences.setString(_dynamicProjectNameKey, value);
+  String? getDynamicProjectName() =>
+      _preferences.getString(_dynamicProjectNameKey);
+
+  Future<void> setCachedOrganizationsJson(String value) async =>
+      _preferences.setString(_cachedOrganizationsJsonKey, value);
+  String? getCachedOrganizationsJson() =>
+      _preferences.getString(_cachedOrganizationsJsonKey);
+
+  Future<void> clearDynamicSelection() async {
+    await _preferences.remove(_dynamicServicePathKey);
+    await _preferences.remove(_dynamicOrgIdKey);
+    await _preferences.remove(_dynamicOrgNameKey);
+    await _preferences.remove(_dynamicProjectIdKey);
+    await _preferences.remove(_dynamicProjectNameKey);
+  }
 }

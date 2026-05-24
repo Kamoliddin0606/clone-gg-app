@@ -58,6 +58,7 @@ import 'dart:async';
 import 'dart:io';
 
 import '../../../../core/services/location_service.dart';
+import '../../../agent/data/repositories/customer_read_repository.dart';
 import '../../../../core/services/service_locator.dart' show sl;
 import '../../../visits/domain/entities/permissions.dart' as visits_perms;
 import '../../../visits/domain/entities/visit_mode.dart';
@@ -3660,6 +3661,25 @@ class _TradingPointDetailsSheetState extends State<_TradingPointDetailsSheet> {
         _currentPage = _pageController.page?.round() ?? 0;
       });
     });
+    _enrichCustomerFromBackend();
+  }
+
+  /// Detail sahifa ochilganda faqat shu mijozning ma'lumotini backenddan
+  /// yuklaydi va local DB ga saqlaydi. Keyingi marta mijoz ochilganda
+  /// yangilangan ma'lumot ko'rinadi.
+  Future<void> _enrichCustomerFromBackend() async {
+    final uuid = widget.tradingPoint.customerUuid;
+    if (uuid.isEmpty) return;
+    if (!sl.isRegistered<CustomerReadRepository>()) return;
+    try {
+      final repo = sl<CustomerReadRepository>();
+      final updated = await repo.getOne(uuid);
+      if (updated != null) {
+        await sl<ApiDatabaseService>().mergeBackendCustomers([updated]);
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[CustomerEnrich] failed for $uuid: $e');
+    }
   }
 
   @override

@@ -4,8 +4,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:path/path.dart' show join;
+import 'package:sqflite/sqflite.dart';
 
-import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/db/notification_db_dao.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/models/notification_preferences.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/repositories/notification_repository.dart';
@@ -133,12 +134,9 @@ class PushHandlerService {
     if (kDebugMode) {
       debugPrint('[PUSH] foreground id=$id type=$type data=${message.data}');
     }
-    // 1) Always persist a stub FIRST so the badge + list update
-    //    immediately, even if the network leg below fails. Without
-    //    this, a backend that returns 404/timeout on the detail
-    //    endpoint would leave the push effectively invisible — the
-    //    OS notification might draw, but our in-app state stays
-    //    empty.
+
+    // 1) Persist a stub immediately so the badge + list update even
+    //    before the API round-trip completes.
     if (id != null) {
       try {
         await _repo.recordBackgroundPush(message);
@@ -146,30 +144,29 @@ class PushHandlerService {
         if (kDebugMode) debugPrint('[PUSH] foreground stub failed: $e');
       }
     }
-    // 2) Then refresh from the backend so the list, banner, and
-    //    detail screens all see the canonical content.
-    if (id != null) {
-      try {
-        await _repo.fetchAndCache(id);
-      } catch (e) {
-        if (kDebugMode) debugPrint('[PUSH] foreground fetchAndCache: $e');
-      }
-    }
 
+    // 2) Show the banner NOW — before the API fetch — so a slow or
+    //    failing backend never silently drops the foreground notification.
     if (!shouldShowForeground(type: type)) {
       if (kDebugMode) {
         debugPrint(
             '[PUSH] foreground suppressed (type=$type, dnd=${_preferences.value.isInDnd()})');
       }
-      return;
-    }
-
-    if (onForegroundBanner != null) {
+    } else if (onForegroundBanner != null) {
       onForegroundBanner!(message);
     } else {
       // No banner handler attached yet (e.g. on the login screen) —
       // fall back to the OS tray so the user still sees it.
       await _showSystemTray(message);
+    }
+
+    // 3) Fetch the full row from the backend in the background.
+    //    removeOnNotFound=false: the stub must survive a transient 404
+    //    (recipient row may not be visible yet). List-sync will
+    //    authorise or evict the row on the next [syncIncremental].
+    if (id != null) {
+      // ignore: discarded_futures
+      _repo.fetchAndCache(id, removeOnNotFound: false);
     }
   }
 
@@ -178,22 +175,39 @@ class PushHandlerService {
     if (kDebugMode) {
       debugPrint('[PUSH] opened-app id=$id data=${message.data}');
     }
+
+    // Guarantee a stub row exists BEFORE navigating.
+    //
+    // Android does NOT invoke firebaseBackgroundMessageHandler when the
+    // FCM payload contains a `notification` field (combined message) and
+    // the app is backgrounded — the OS renders the notification itself,
+    // bypassing our background isolate. As a result `getById(id)` in the
+    // detail cubit returns null, and the page shows a frozen spinner while
+    // fetchAndCache awaits a network response.
+    //
+    // Writing the stub here (local DB only, < 5 ms) before calling onTap
+    // ensures the cubit always finds a row immediately on open.
     if (id != null) {
       try {
-        await _repo.fetchAndCache(id);
+        await _repo.recordBackgroundPush(message);
       } catch (e) {
-        if (kDebugMode) debugPrint('[PUSH] opened-app fetchAndCache: $e');
-      }
-      // Tapping the OS notification (terminated / background tap) is
-      // the same intent as tapping the row in-app — mark it read so
-      // the badge drops and the backend learns. Idempotent.
-      try {
-        await _repo.markRead(id);
-      } catch (e) {
-        if (kDebugMode) debugPrint('[PUSH] opened-app markRead: $e');
+        if (kDebugMode) debugPrint('[PUSH] opened-app stub write failed: $e');
       }
     }
+
+    // Navigate now — stub is in DB so the detail cubit's getById hit
+    // succeeds and the page renders content without waiting for the API.
     onTap?.call(message);
+
+    // Fetch the full row and mark read in the background. The detail
+    // cubit does its own fetchAndCache, so this is a best-effort
+    // pre-warm that races it — both writes are idempotent.
+    if (id != null) {
+      // ignore: discarded_futures
+      _repo.fetchAndCache(id, removeOnNotFound: false);
+      // ignore: discarded_futures
+      _repo.markRead(id);
+    }
   }
 
   /// Public for unit tests + the marketing tab's manual preview. Pure
@@ -642,22 +656,74 @@ Future<void> notificationBackgroundActionEntryPoint(
 /// foreground but the process is still alive. Must be a top-level or
 /// static function (not a closure).
 ///
-/// We keep it intentionally small: persist a stub row keyed by
-/// `notification_id` so the list screen shows it on the next open. The
-/// full content is fetched the next time the app comes online.
+/// The service locator is NOT available in the background isolate, so
+/// we write the stub row directly via sqflite without touching the DI
+/// graph. The full notification content is fetched on the next
+/// foreground sync via [NotificationRepository.syncIncremental].
 @pragma('vm:entry-point')
 Future<void> firebaseBackgroundMessageHandler(RemoteMessage message) async {
   try {
     final id = message.data['notification_id'];
     if (id is! String || id.isEmpty) return;
-    // The isolate may not have the service locator initialised — guard
-    // it. If unavailable, do nothing; the next foreground sync covers
-    // this row.
-    if (!sl.isRegistered<NotificationRepository>()) return;
-    await sl<NotificationRepository>().recordBackgroundPush(message);
+    await _writePushStubToDb(message, id);
   } catch (e) {
     if (kDebugMode) {
       debugPrint('[PUSH] background handler error: $e');
     }
+  }
+}
+
+/// Persists a minimal stub row to sqflite so the badge + list reflect
+/// the push when the app next comes to the foreground.
+///
+/// Must NOT use the service locator — this runs in a background isolate
+/// where the DI graph is not initialised.
+Future<void> _writePushStubToDb(RemoteMessage message, String id) async {
+  final dbPath = await getDatabasesPath();
+  final path = join(dbPath, 'GloriyaMarketing.db');
+  // DB must already exist (created on first normal launch). If it
+  // doesn't exist yet the user has never opened the app — skip.
+  if (!await databaseExists(path)) return;
+
+  // ⚠️ Do NOT call db.close() after the writes below.
+  // sqflite routes all isolate calls through the same native connection
+  // (keyed by file path). Closing from the background isolate decrements
+  // the shared ref-count and invalidates the main isolate's open Database
+  // handle, causing DatabaseException(database_closed 1) on every
+  // subsequent DB call in the main app.
+  // The background isolate is short-lived; the native connection remains
+  // open as long as the main isolate holds its DatabaseHelper reference.
+  final db = await openDatabase(path);
+
+  final existing = await db.query(
+    NotificationDbDao.notificationsTable,
+    columns: ['id'],
+    where: 'id = ?',
+    whereArgs: [id],
+    limit: 1,
+  );
+  if (existing.isNotEmpty) return; // richer row already present
+
+  final notification = message.notification;
+  final now = DateTime.now().toUtc().toIso8601String();
+  await db.insert(
+    NotificationDbDao.notificationsTable,
+    {
+      'id': id,
+      'type': (message.data['type'] as String?) ?? 'system_announcement',
+      'priority': (message.data['priority'] as String?) ?? 'normal',
+      'title':
+          notification?.title ?? (message.data['title'] as String? ?? ''),
+      'body':
+          notification?.body ?? (message.data['body'] as String? ?? ''),
+      'deep_link': message.data['deep_link'] as String?,
+      'payload': '{}',
+      'created_at': now,
+      'last_synced_at': now,
+    },
+    conflictAlgorithm: ConflictAlgorithm.ignore,
+  );
+  if (kDebugMode) {
+    debugPrint('[PUSH] background stub persisted id=$id');
   }
 }

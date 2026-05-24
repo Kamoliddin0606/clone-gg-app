@@ -30,6 +30,12 @@ class DatabaseHelper {
   Database? _database;
 
   Future<Database> get database async {
+    // Re-open if the background FCM isolate closed the shared native
+    // connection (sqflite uses one native connection per file path across
+    // all isolates; closing from any isolate invalidates all handles).
+    if (_database != null && !_database!.isOpen) {
+      _database = null;
+    }
     if (_database != null) return _database!;
     _database = await _initDatabase();
     return _database!;

@@ -65,6 +65,16 @@ class NotificationRepository {
     await _list.close();
   }
 
+  /// Re-read the list and unread count from the local cache and push them
+  /// onto the streams. Call this whenever a background isolate may have
+  /// written new rows to sqflite — e.g. after the app returns to the
+  /// foreground following a background push.
+  Future<void> refreshFromCache() async {
+    final rows = await _dao.getAll();
+    _list.add(rows);
+    _unreadCount.add(await _dao.unreadCount());
+  }
+
   // ---------------------------------------------------------------------------
   // Sync
   // ---------------------------------------------------------------------------
@@ -119,14 +129,22 @@ class NotificationRepository {
 
   /// Fetch + cache a single row. Used by the detail screen and by the
   /// push handlers (always-fetch rule, passport §3.4).
-  Future<AppNotification?> fetchAndCache(String id) async {
+  ///
+  /// [removeOnNotFound] — when `true` (the default) a 404/expired response
+  /// deletes the local row so stale entries don't linger. Set to `false`
+  /// when called from push handlers: a stub written by a background push
+  /// must not be deleted just because the backend transiently returns 404
+  /// (e.g. the notification was not yet fanned-out to the recipient table).
+  /// List-sync via [syncIncremental] will refresh the authoritative state.
+  Future<AppNotification?> fetchAndCache(String id,
+      {bool removeOnNotFound = true}) async {
     try {
       final fresh = await _api.detail(id);
       await _dao.upsert(fresh);
       await _publish();
       return fresh;
     } on NotificationApiException catch (e) {
-      if (e.isNotFound || e.isExpired) {
+      if (removeOnNotFound && (e.isNotFound || e.isExpired)) {
         await _dao.deleteById(id);
         await _publish();
       }
@@ -297,6 +315,9 @@ class NotificationRepository {
       lastSyncedAt: null,
     );
     await _dao.upsert(stub);
+    // Update the streams immediately so the badge reflects the new row
+    // without waiting for the next full sync.
+    await _publish();
   }
 
   // ---------------------------------------------------------------------------

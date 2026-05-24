@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
@@ -69,6 +71,10 @@ class TokenService {
 
   /// V2 access token muddati (yangi server: 60 minut).
   static const Duration _v2AccessTokenTtl = Duration(minutes: 60);
+
+  /// Parallel [ensureValidV2Token] chaqiruvlarini seriallashtirish uchun
+  /// mutex. Birinchi chaqiruv token oladi; qolganlari shu natijani kutadi.
+  Future<String?>? _v2TokenInFlight;
 
   TokenService(this._dio, this._prefsService) {
     _configureDio();
@@ -1304,7 +1310,19 @@ class TokenService {
   ///   1) Cached access mavjud va eskirmagan → qaytariladi
   ///   2) Refresh urinish — yangi access + yangi refresh
   ///   3) SharedPreferences'dagi saqlangan login/password bilan qayta login
+  ///
+  /// Parallel chaqiruvlar seriallashtiriladi: birinchisi haqiqiy ish bajaradi,
+  /// qolganlari uning natijasini kutadi (3x login muammosi bartaraf etildi).
   Future<String?> ensureValidV2Token({
+    String? login,
+    String? password,
+  }) {
+    _v2TokenInFlight ??= _ensureValidV2TokenImpl(login: login, password: password)
+        .whenComplete(() => _v2TokenInFlight = null);
+    return _v2TokenInFlight!;
+  }
+
+  Future<String?> _ensureValidV2TokenImpl({
     String? login,
     String? password,
   }) async {

@@ -137,8 +137,17 @@ class ClientBalanceService {
       // active project on a project-scope tenant throws a
       // `customer_project_required` DioException that the catch below
       // routes to the cache-fallback path.
-      final options = CustomerEndpointHeaders.optionsForRequest(
+      //
+      // receiveTimeout is raised to 90 s because this endpoint is a
+      // backend proxy to the 1C SOAP server. The full round-trip
+      // (mobile → backend → 1C SOAP → backend → mobile) regularly
+      // exceeds the default 30 s Dio global timeout.
+      final headers = CustomerEndpointHeaders.headersForRequest(
         requestPath: '/api/mobile/v2/customers/balance/',
+      );
+      final options = Options(
+        headers: headers,
+        receiveTimeout: const Duration(seconds: 90),
       );
       // restPost — Django V2 transport. The plain `post` would route via
       // ServerService.baseUrl (the 1C SOAP `.1cws` endpoint), which sends

@@ -76,6 +76,27 @@ class FcmTokenService {
     }
   }
 
+  /// Force Firebase to issue a brand-new FCM token and register it with
+  /// the backend. Call this when the backend returns `fcm.unregistered`
+  /// (the old token has been revoked by Firebase). Clears the locally
+  /// cached token so [registerOnLogin] treats it as a fresh registration.
+  Future<String?> forceTokenRefresh() async {
+    try {
+      await _messaging.deleteToken();
+      await _prefs.preferences.remove(_lastFcmTokenKey);
+      await _prefs.preferences.remove(_deviceTokenIdKey);
+      if (kDebugMode) {
+        debugPrint('[FCM] forceTokenRefresh: old token deleted, re-registering');
+      }
+      return await registerOnLogin();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[FCM] forceTokenRefresh failed: $e');
+      }
+      return null;
+    }
+  }
+
   /// Register the current FCM token with the backend. Idempotent: safe
   /// to call on every login / app boot once authenticated.
   ///
@@ -126,7 +147,27 @@ class FcmTokenService {
         return storedRowId;
       }
 
+      // Token changed (rotation or re-install). Revoke the old backend
+      // row AFTER the new one is created so the device is never left
+      // without an active row. Skipping revoke leaves both rows
+      // is_active=True, causing every push to be sent twice.
+      final oldRowId = storedRowId;
+
       final row = await _submit(fcmToken);
+
+      if (oldRowId != null && oldRowId.isNotEmpty && oldRowId != row.id) {
+        try {
+          await _api.revokeDevice(oldRowId);
+          if (kDebugMode) {
+            debugPrint('[FCM] revoked stale row=$oldRowId on token change');
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('[FCM] revoke stale row failed (non-critical): $e');
+          }
+        }
+      }
+
       await _prefs.preferences.setString(_deviceTokenIdKey, row.id);
       await _prefs.preferences.setString(_lastFcmTokenKey, fcmToken);
 
@@ -185,7 +226,32 @@ class FcmTokenService {
       try {
         if (newToken.isEmpty) return;
         if (newToken == lastFcmTokenSent) return;
+
+        // Snapshot the old row id BEFORE registering the new token.
+        // We revoke it after the new registration succeeds so the device
+        // is never left with zero active rows. Skipping this step leaves
+        // both the old and new rows is_active=True on the backend, causing
+        // the same notification to be dispatched twice (once per token).
+        final oldRowId = currentDeviceTokenId;
+
         final row = await _submit(newToken);
+
+        // Revoke the previous row. Non-critical: if it fails, the backend
+        // will retire it automatically when FCM returns fcm.unregistered
+        // for the stale token on the next dispatch attempt.
+        if (oldRowId != null && oldRowId.isNotEmpty && oldRowId != row.id) {
+          try {
+            await _api.revokeDevice(oldRowId);
+            if (kDebugMode) {
+              debugPrint('[FCM] revoked old row=$oldRowId after rotation');
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              debugPrint('[FCM] revoke old token failed (non-critical): $e');
+            }
+          }
+        }
+
         await _prefs.preferences.setString(_deviceTokenIdKey, row.id);
         await _prefs.preferences.setString(_lastFcmTokenKey, newToken);
         if (kDebugMode) {

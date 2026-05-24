@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
+import 'package:gloria_marketing_flutter/src/core/router/app_router.dart';
 
 /// Renders a transient "Notification arrived" banner at the top of the
 /// current scaffold when a push lands in the foreground.
@@ -45,7 +47,18 @@ class InAppBannerHostState extends State<InAppBannerHost> {
     final deepLink = message.data['deep_link'] as String?;
     final notificationId = message.data['notification_id'] as String?;
 
-    final overlay = Overlay.of(context, rootOverlay: true);
+    // InAppBannerHost is placed inside MaterialApp.builder, which runs
+    // ABOVE the Navigator in the widget tree. Overlay.of(context) would
+    // find no ancestor Overlay from this position. Use the Navigator's
+    // own overlay via the global key instead — it is always available
+    // once the first route has been rendered.
+    final overlay = AppRouter.navigatorKey.currentState?.overlay;
+    if (overlay == null) {
+      if (kDebugMode) {
+        debugPrint('[BANNER] navigator overlay not ready, skipping banner');
+      }
+      return;
+    }
     _entry = OverlayEntry(
       builder: (ctx) => _BannerCard(
         title: title,

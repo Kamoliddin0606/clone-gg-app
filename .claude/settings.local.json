@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(taskkill /F /IM dart.exe)",
+      "Bash(taskkill /F /IM flutter.exe)",
+      "Bash(grep -l \"ProductImageWidget\" /d/programming/github/clone-gg-app/lib/src/features/agent/presentation/pages/step_pages/*.dart)",
+      "Bash(dart analyze:*)"
+    ]
+  }
+}

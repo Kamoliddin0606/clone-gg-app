@@ -53,6 +53,10 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
   bool _isCategoryFilterExpanded = false;
   _ViewMode _viewMode = _ViewMode.list;
 
+  Duration _panelsAnimDuration = const Duration(milliseconds: 300);
+  static const Duration _panelsManualDuration = Duration(milliseconds: 300);
+  static const Duration _panelsScrollCloseDuration = Duration(milliseconds: 700);
+
   @override
   void initState() {
     super.initState();
@@ -203,12 +207,27 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
 
   void _toggleFilterPanel() {
     setState(() {
+      _panelsAnimDuration = _panelsManualDuration;
       _isFilterPanelVisible = !_isFilterPanelVisible;
+      _filterAnimationController.duration = _panelsManualDuration;
       if (_isFilterPanelVisible) {
         _filterAnimationController.forward();
       } else {
         _filterAnimationController.reverse();
       }
+    });
+  }
+
+  void _onScrollCloseAll() {
+    if (!_isFilterPanelVisible && !_showViewBar) return;
+    setState(() {
+      _panelsAnimDuration = _panelsScrollCloseDuration;
+      if (_isFilterPanelVisible) {
+        _isFilterPanelVisible = false;
+        _filterAnimationController.duration = _panelsScrollCloseDuration;
+        _filterAnimationController.reverse();
+      }
+      _showViewBar = false;
     });
   }
 
@@ -913,24 +932,32 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
+                duration: _panelsAnimDuration,
                 child: _showViewBar
                     ? _ViewToolbar(
+                        key: const ValueKey('toolbar'),
                         count: _getFilteredProducts().length,
                         mode: _viewMode,
                         onModeChanged: (m) => setState(() => _viewMode = m),
-                        onCollapse: () => setState(() => _showViewBar = false),
+                        onCollapse: () => setState(() {
+                          _panelsAnimDuration = _panelsManualDuration;
+                          _showViewBar = false;
+                        }),
                       )
                     : Align(
+                        key: const ValueKey('tune'),
                         alignment: Alignment.centerRight,
                         child: IconButton(
                           tooltip:
                               AppLocalizations.of(context)?.viewPanel ??
                               'Ko\'rinish paneli',
-                          onPressed: () => setState(() => _showViewBar = true),
+                          onPressed: () => setState(() {
+                            _panelsAnimDuration = _panelsManualDuration;
+                            _showViewBar = true;
+                          }),
                           icon: const Icon(
                             Icons.tune,
-                          ), // biriktirilgan namunadagi kabi "tune" tugma
+                          ),
                         ),
                       ),
               ),
@@ -989,7 +1016,12 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                         ],
                       ),
                     )
-                  : RefreshIndicator(
+                  : NotificationListener<ScrollStartNotification>(
+                      onNotification: (notification) {
+                        _onScrollCloseAll();
+                        return false;
+                      },
+                      child: RefreshIndicator(
                       onRefresh: _loadData,
                       child: _viewMode == _ViewMode.list
                           ? ListView.separated(
@@ -1021,6 +1053,7 @@ class _PricesPageState extends State<PricesPage> with TickerProviderStateMixin {
                                 return ProductGridTile(product: product);
                               },
                             ),
+                      ),
                     ),
             ),
           ],
@@ -1076,6 +1109,7 @@ class _ViewToolbar extends StatelessWidget {
   final ValueChanged<_ViewMode> onModeChanged;
   final VoidCallback onCollapse;
   const _ViewToolbar({
+    super.key,
     required this.count,
     required this.mode,
     required this.onModeChanged,

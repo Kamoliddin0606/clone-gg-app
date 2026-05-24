@@ -182,10 +182,27 @@ void main() async {
     }
   }
 
-  // Render the first frame ASAP. Everything that does not influence the
-  // initial route (notification cache, FCM wiring, MapKit, background
-  // location, WorkManager re-register, debug health-check) is deferred
-  // to a fire-and-forget bootstrap that runs after runApp().
+  // Wire FCM foreground/tap listeners BEFORE runApp so any push that
+  // arrives while the first frame is rendering is captured. The
+  // background handler is a top-level function (registered above, before
+  // runApp) and runs in its own isolate — it does not need wiring here.
+  try {
+    await sl<NotificationPreferencesService>().bootstrap();
+    final pushHandler = sl<PushHandlerService>();
+    pushHandler.onTap = NotificationTapRouter.handleRemoteMessage;
+    await pushHandler.init();
+    final tokenService = sl<TokenService>();
+    if (tokenService.hasValidV2Token()) {
+      unawaited(sl<FcmTokenService>().registerOnLogin());
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('[Main] Push handler early init skipped: $e');
+    }
+  }
+
+  // Render the first frame ASAP. Notification cache hydration (badge
+  // count from sqflite) is deferred — FCM wiring is now done above.
   runApp(App(
     initialRoute: initialRouteName,
     initialRouteArguments: initialRouteArguments,
@@ -197,9 +214,11 @@ void main() async {
 
 /// Non-critical startup work moved off the cold-start critical path.
 /// Each block keeps its own try/catch so a failure in one stage does
-/// not block the others. Order is preserved from the original `main()`
-/// so any implicit dependencies (e.g. PushHandler reading notification
-/// preferences) still see the same sequencing.
+/// not block the others.
+///
+/// NOTE: FCM listener wiring and notification preferences bootstrap are
+/// intentionally omitted here — they now run eagerly in `main()` before
+/// `runApp()` so no foreground push is lost during first-frame rendering.
 Future<void> _runDeferredBootstrap() async {
   // Hydrate the notification cache from sqflite so the bell badge
   // shows the correct count. Best-effort.
@@ -208,32 +227,6 @@ Future<void> _runDeferredBootstrap() async {
   } catch (e) {
     if (kDebugMode) {
       debugPrint('[Main] Notification cache bootstrap skipped: $e');
-    }
-  }
-
-  // Load notification preferences BEFORE the push handler initialises
-  // Android channels — the channel shape is derived from the preference
-  // snapshot.
-  try {
-    await sl<NotificationPreferencesService>().bootstrap();
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Notification preferences bootstrap skipped: $e');
-    }
-  }
-
-  // Wire FCM listeners (foreground / background / terminated tap).
-  try {
-    final pushHandler = sl<PushHandlerService>();
-    pushHandler.onTap = NotificationTapRouter.handleRemoteMessage;
-    await pushHandler.init();
-    final tokenService = sl<TokenService>();
-    if (tokenService.hasValidV2Token()) {
-      unawaited(sl<FcmTokenService>().registerOnLogin());
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Push handler setup skipped: $e');
     }
   }
 
@@ -566,6 +559,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         // Ilova qayta aktiv bo'lganda
         // Agar tracking to'xtatilgan bo'lsa, qayta boshlash
         _ensureBackgroundLocationTracking();
+        // Background isolat DB ga yozgan push stublarini stream ga chiqarish
+        // va API dan yangi notificationlarni yuklash.
+        _syncNotificationsOnResume();
         break;
       case AppLifecycleState.paused:
         // Ilova fonga o'tganda
@@ -610,6 +606,20 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     } catch (e) {
       if (kDebugMode) {
         debugPrint('BackgroundLocationTracking: Error ensuring tracking: $e');
+      }
+    }
+  }
+
+  void _syncNotificationsOnResume() {
+    try {
+      final repo = sl<NotificationRepository>();
+      // 1) Immediately reflect any rows the background isolate wrote to DB.
+      unawaited(repo.refreshFromCache());
+      // 2) Pull fresh data from the backend (best-effort, non-blocking).
+      unawaited(repo.syncIncremental());
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Main] _syncNotificationsOnResume error: $e');
       }
     }
   }

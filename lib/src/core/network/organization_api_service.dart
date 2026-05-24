@@ -41,8 +41,12 @@ class OrganizationApiService {
         final List<dynamic> results =
             data is Map<String, dynamic> ? (data['results'] as List<dynamic>) : (data as List<dynamic>);
 
-        final organizations =
+        final allOrganizations =
             results.map((e) => ApiOrganization.fromJson(e as Map<String, dynamic>)).toList();
+
+        // Filter out projects with empty service_path (not usable for SOAP)
+        // and organizations with no usable projects.
+        final organizations = _filterUsable(allOrganizations);
 
         // Cache the raw JSON for offline fallback
         try {
@@ -51,7 +55,8 @@ class OrganizationApiService {
         } catch (_) {}
 
         if (kDebugMode) {
-          print('[$_tag] Fetched ${organizations.length} organizations');
+          print('[$_tag] Fetched ${allOrganizations.length} orgs, '
+              '${organizations.length} usable after filtering');
         }
         return organizations;
       }
@@ -81,14 +86,35 @@ class OrganizationApiService {
       final List<dynamic> results =
           data is Map<String, dynamic> ? (data['results'] as List<dynamic>) : (data as List<dynamic>);
 
-      return results
+      final allOrgs = results
           .map((e) => ApiOrganization.fromJson(e as Map<String, dynamic>))
           .toList();
+      return _filterUsable(allOrgs);
     } catch (e) {
       if (kDebugMode) {
         print('[$_tag] Cache load failed: $e');
       }
       return [];
     }
+  }
+
+  /// Removes projects whose [ApiProject.servicePath] is empty (they cannot
+  /// be used to construct a SOAP URL) and then removes organizations that
+  /// have no usable projects left.
+  static List<ApiOrganization> _filterUsable(List<ApiOrganization> orgs) {
+    final filtered = <ApiOrganization>[];
+    for (final org in orgs) {
+      final usableProjects =
+          org.projects.where((p) => p.servicePath.isNotEmpty).toList();
+      if (usableProjects.isNotEmpty) {
+        filtered.add(ApiOrganization(
+          id: org.id,
+          code1c: org.code1c,
+          name: org.name,
+          projects: usableProjects,
+        ));
+      }
+    }
+    return filtered;
   }
 }

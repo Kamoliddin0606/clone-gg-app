@@ -227,8 +227,9 @@ class ServerService {
 
     if (kDebugMode) {
       print('[ServerService] Set dynamic: org=$organizationName, '
-          'project=$projectName, path=$servicePath, '
-          'url=${config.primaryUrl}');
+          'project=$projectName, servicePath=$servicePath, '
+          'primaryUrl=${config.primaryUrl}, '
+          'baseUrl=${activeUrl.value}');
     }
   }
 
@@ -336,9 +337,34 @@ class ServerService {
   /// This is a shared endpoint across all projects.
   ServerUrlConfig get accountingApiConfig => _ServerHosts.accountingApiConfig;
 
-  /// Builds a [ServerUrlConfig] from an arbitrary service path using the
-  /// shared [_ServerHosts] infrastructure.
+  /// Builds a [ServerUrlConfig] from a service path or full URL.
+  ///
+  /// When [servicePath] is a full URL (e.g.
+  /// `http://kit.gloriya.uz:5443/AVON_UT/AVON_UT.1cws`) the host and port
+  /// are taken from the URL itself — this allows the backend to point
+  /// different projects at different servers. Fallback URLs are built by
+  /// replacing the domain host with the known IP addresses while keeping
+  /// the same port and path.
+  ///
+  /// When [servicePath] is a bare path (e.g. `/AVON_UT/AVON_UT.1cws`) the
+  /// default [_ServerHosts] infrastructure is used.
   static ServerUrlConfig _buildDynamicUrlConfig(String servicePath) {
+    if (servicePath.startsWith('http://') || servicePath.startsWith('https://')) {
+      final uri = Uri.parse(servicePath);
+      final path = uri.path;
+      final port = uri.hasPort ? uri.port : _ServerHosts.port;
+      final scheme = uri.scheme;
+
+      return ServerUrlConfig(
+        primaryUrl: servicePath,
+        fallbackUrls: [
+          '$scheme://${_ServerHosts.ipHost1}:$port$path',
+          '$scheme://${_ServerHosts.ipHost2}:$port$path',
+        ],
+        servicePath: path,
+      );
+    }
+
     return ServerUrlConfig(
       primaryUrl: _ServerHosts.buildUrl(_ServerHosts.domainHost, servicePath),
       fallbackUrls: [

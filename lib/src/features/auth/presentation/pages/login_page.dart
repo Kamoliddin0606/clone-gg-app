@@ -24,12 +24,16 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
   late AnimationController _animationController;
+
+  /// Controls the slide/fade reveal of the org+project selection area.
+  late AnimationController _selectionAreaController;
+  late Animation<double> _selectionAreaAnimation;
 
   // ── Organization / Project selection (dynamic) ──
   List<ApiOrganization>? _organizations;
@@ -167,6 +171,16 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       vsync: this,
       duration: const Duration(milliseconds: 800),
     )..forward();
+
+    _selectionAreaController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    );
+    _selectionAreaAnimation = CurvedAnimation(
+      parent: _selectionAreaController,
+      curve: Curves.easeInOutCubic,
+    );
+
     _loadSavedCredentials();
     _fetchOrganizations();
   }
@@ -203,6 +217,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     _usernameController.dispose();
     _passwordController.dispose();
     _animationController.dispose();
+    _selectionAreaController.dispose();
     super.dispose();
   }
 
@@ -234,6 +249,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       }
 
       _applyOrganizations(orgs);
+      // Reveal the selection area after a successful refresh pull-down
+      _selectionAreaController.forward();
     } catch (e) {
       if (!mounted) return;
       if (kDebugMode) print('[LoginPage] Org fetch failed: $e');
@@ -718,19 +735,40 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             },
             child: SafeArea(
               child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                  child: FadeTransition(
-                    opacity: CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 420),
-                      child: Card(
-                        elevation: 0,
-                        color: theme.colorScheme.surface,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                          child: _buildForm(context),
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    // Hide the selection area when scrolling up
+                    if (notification is ScrollUpdateNotification &&
+                        notification.scrollDelta != null &&
+                        notification.scrollDelta! < -2.0 &&
+                        _selectionAreaController.value > 0) {
+                      _selectionAreaController.reverse();
+                    }
+                    return false;
+                  },
+                  child: RefreshIndicator(
+                    onRefresh: _fetchOrganizations,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                      child: FadeTransition(
+                        opacity: CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: 420,
+                            minHeight: MediaQuery.of(context).size.height - 120,
+                          ),
+                          child: Center(
+                            child: Card(
+                              elevation: 0,
+                              color: theme.colorScheme.surface,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                                child: _buildForm(context),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -906,60 +944,84 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     );
   }
 
-  // ── Dynamic organization chip ──
-  Widget _organizationChip(BuildContext context) {
+  // ── Selection tile: tappable row with icon, label and value ──
+  Widget _selectionTile({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String? value,
+    required VoidCallback? onTap,
+  }) {
     final theme = Theme.of(context);
-    final label = _selectedOrganization?.name ?? 'Tashkilotni tanlang';
-    return ActionChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          color: _selectedOrganization != null
-              ? theme.colorScheme.onSurface
-              : theme.colorScheme.onSurface.withOpacity(0.5),
+    final isSelected = value != null;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? theme.colorScheme.primary.withValues(alpha: 0.4)
+                : theme.colorScheme.outlineVariant,
+          ),
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(alpha: 0.05)
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outline,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    value ?? 'Tanlang',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: isSelected
+                          ? theme.colorScheme.onSurface
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              color: theme.colorScheme.outline,
+            ),
+          ],
         ),
       ),
-      avatar: Icon(
-        Icons.business_outlined,
-        size: 18,
-        color: _selectedOrganization != null
-            ? theme.colorScheme.primary
-            : theme.colorScheme.outline,
-      ),
-      onPressed: () => _pickOrganization(context),
-    );
-  }
-
-  // ── Dynamic project chip ──
-  Widget _projectChip(BuildContext context) {
-    final theme = Theme.of(context);
-    final hasOrg = _selectedOrganization != null;
-    final label = _selectedProject?.name ?? 'Loyihani tanlang';
-    return ActionChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          color: hasOrg && _selectedProject != null
-              ? theme.colorScheme.onSurface
-              : theme.colorScheme.onSurface.withOpacity(0.5),
-        ),
-      ),
-      avatar: Icon(
-        Icons.folder_outlined,
-        size: 18,
-        color: hasOrg && _selectedProject != null
-            ? theme.colorScheme.primary
-            : theme.colorScheme.outline,
-      ),
-      onPressed: hasOrg ? () => _pickProject(context) : null,
     );
   }
 
   // ── Server / org+project selection area ──
   Widget _buildSelectionArea(BuildContext context) {
+    final theme = Theme.of(context);
+
     if (_isLoadingOrganizations) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
+        padding: EdgeInsets.symmetric(vertical: 12),
         child: Center(child: SizedBox(
           height: 24, width: 24,
           child: CircularProgressIndicator(strokeWidth: 2),
@@ -968,27 +1030,19 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
 
     if (_useLegacyPicker) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      return Row(
         children: [
-          _serverChip(),
+          Expanded(child: _serverChip()),
           if (_orgLoadError != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: InkWell(
-                onTap: _fetchOrganizations,
-                child: Row(
-                  children: [
-                    Icon(Icons.refresh, size: 14, color: Theme.of(context).colorScheme.primary),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Qayta yuklash',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: IconButton(
+                onPressed: _isLoadingOrganizations ? null : _fetchOrganizations,
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                tooltip: 'Qayta yuklash',
+                icon: Icon(Icons.refresh, color: theme.colorScheme.primary),
               ),
             ),
         ],
@@ -996,12 +1050,53 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     }
 
     // Dynamic org + project pickers
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _organizationChip(context),
-        _projectChip(context),
+        // Header row with refresh button in top-right
+        Row(
+          children: [
+            const Spacer(),
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: IconButton(
+                onPressed: _isLoadingOrganizations ? null : _fetchOrganizations,
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                tooltip: 'Yangilash',
+                style: IconButton.styleFrom(
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: Icon(
+                  Icons.refresh_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        _selectionTile(
+          context: context,
+          icon: Icons.business_rounded,
+          label: 'Tashkilot',
+          value: _selectedOrganization?.name,
+          onTap: () => _pickOrganization(context),
+        ),
+        const SizedBox(height: 8),
+        _selectionTile(
+          context: context,
+          icon: Icons.folder_rounded,
+          label: 'Loyiha',
+          value: _selectedProject?.name,
+          onTap: _selectedOrganization != null
+              ? () => _pickProject(context)
+              : null,
+        ),
       ],
     );
   }
@@ -1016,23 +1111,44 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildSelectionArea(context),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Icon(Icons.lock_outline, color: theme.colorScheme.onPrimaryContainer),
+        SizeTransition(
+          sizeFactor: _selectionAreaAnimation,
+          axisAlignment: -1.0,
+          child: FadeTransition(
+            opacity: _selectionAreaAnimation,
+            child: Column(
+              children: [
+                _buildSelectionArea(context),
+                const SizedBox(height: 16),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                l10n.welcome,
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+        ),
+        GestureDetector(
+          onDoubleTap: () {
+            if (_selectionAreaController.isDismissed ||
+                _selectionAreaController.status == AnimationStatus.reverse) {
+              _selectionAreaController.forward();
+            } else {
+              _selectionAreaController.reverse();
+            }
+          },
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: theme.colorScheme.primaryContainer,
+                child: Icon(Icons.lock_outline, color: theme.colorScheme.onPrimaryContainer),
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.welcome,
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         Text(

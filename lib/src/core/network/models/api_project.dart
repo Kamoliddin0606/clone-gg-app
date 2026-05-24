@@ -24,6 +24,19 @@ class ApiProject {
     );
   }
 
+  /// Whether [servicePath] is a full URL (e.g. `http://host:port/path`)
+  /// rather than a bare path (`/path`).
+  bool get isFullUrl =>
+      servicePath.startsWith('http://') || servicePath.startsWith('https://');
+
+  /// Extracts just the path portion from [servicePath].
+  /// Returns as-is when it is already a bare path.
+  String get pathOnly {
+    if (!isFullUrl) return servicePath;
+    final uri = Uri.tryParse(servicePath);
+    return uri?.path ?? servicePath;
+  }
+
   @override
   String toString() => 'ApiProject(id=$id, name=$name, servicePath=$servicePath)';
 }

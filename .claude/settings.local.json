@@ -5,7 +5,10 @@
       "Bash(taskkill /F /IM dart.exe)",
       "Bash(taskkill /F /IM flutter.exe)",
       "Bash(grep -l \"ProductImageWidget\" /d/programming/github/clone-gg-app/lib/src/features/agent/presentation/pages/step_pages/*.dart)",
-      "Bash(dart analyze:*)"
+      "Bash(dart analyze:*)",
+      "WebFetch(domain:selup.gloriya.uz)",
+      "Bash(curl -s http://selup.gloriya.uz:8080/api/public/v1/organizations/)",
+      "Bash(python -m json.tool)"
     ]
   }
 }

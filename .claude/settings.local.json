@@ -8,7 +8,11 @@
       "Bash(dart analyze:*)",
       "WebFetch(domain:selup.gloriya.uz)",
       "Bash(curl -s http://selup.gloriya.uz:8080/api/public/v1/organizations/)",
-      "Bash(python -m json.tool)"
+      "Bash(python -m json.tool)",
+      "Bash(grep -E \"\\\\.\\(dart|json\\)$\")",
+      "Bash(xargs grep:*)",
+      "Bash(xargs ls:*)",
+      "Bash(grep -v -E \"^[a-f0-9]+ \\(updated|commit\\)$\")"
     ]
   }
 }

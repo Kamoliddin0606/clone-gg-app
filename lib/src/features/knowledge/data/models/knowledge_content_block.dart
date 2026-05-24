@@ -241,7 +241,7 @@ sealed class KnowledgeContentBlock {
   /// blocks. Returns null when the requested language has no
   /// translation; callers should fall back to another available locale.
   String? markdownFor(String lang) {
-    final m = data['markdown_i18n'];
+    final m = data['markdown_i18n'] ?? data['text_i18n'];
     if (m is Map) {
       final v = m[lang];
       if (v is String && v.isNotEmpty) return v;

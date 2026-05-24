@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,6 +36,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   /// Controls the slide/fade reveal of the org+project selection area.
   late AnimationController _selectionAreaController;
   late Animation<double> _selectionAreaAnimation;
+
+  /// Auto-close timer: hides the selection area 20s after it opens.
+  Timer? _selectionAutoCloseTimer;
 
   // ── Organization / Project selection (dynamic) ──
   List<ApiOrganization>? _organizations;
@@ -174,12 +179,21 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     _selectionAreaController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 5),
+      duration: const Duration(seconds: 3),
     );
     _selectionAreaAnimation = CurvedAnimation(
       parent: _selectionAreaController,
       curve: Curves.easeInOutCubic,
     );
+
+    _selectionAreaController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _startAutoCloseTimer();
+      } else if (status == AnimationStatus.reverse ||
+                 status == AnimationStatus.dismissed) {
+        _cancelAutoCloseTimer();
+      }
+    });
 
     _loadSavedCredentials();
     _fetchOrganizations();
@@ -214,11 +228,34 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _cancelAutoCloseTimer();
     _usernameController.dispose();
     _passwordController.dispose();
     _animationController.dispose();
     _selectionAreaController.dispose();
     super.dispose();
+  }
+
+  void _showSelectionArea() {
+    _selectionAreaController.forward();
+  }
+
+  void _hideSelectionArea() {
+    _selectionAreaController.reverse();
+  }
+
+  void _startAutoCloseTimer() {
+    _cancelAutoCloseTimer();
+    _selectionAutoCloseTimer = Timer(const Duration(seconds: 20), () {
+      if (mounted && _selectionAreaController.isCompleted) {
+        _hideSelectionArea();
+      }
+    });
+  }
+
+  void _cancelAutoCloseTimer() {
+    _selectionAutoCloseTimer?.cancel();
+    _selectionAutoCloseTimer = null;
   }
 
   // ── Fetch organizations from backend ──
@@ -249,8 +286,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       }
 
       _applyOrganizations(orgs);
-      // Reveal the selection area after a successful refresh pull-down
-      _selectionAreaController.forward();
+      _showSelectionArea();
     } catch (e) {
       if (!mounted) return;
       if (kDebugMode) print('[LoginPage] Org fetch failed: $e');
@@ -711,9 +747,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               if (state is AuthFailureState) {
                 if (kDebugMode) print('Auth failure: ${state.message}, type: ${state.errorType}');
                 final failure = state.failure;
-                if (failure is NetworkFailure) {
-                  if (mounted) _showNetworkFailureBanner(context);
-                } else if (state.errorType == AuthErrorType.connectivity) {
+                if (failure is NetworkFailure || state.errorType == AuthErrorType.connectivity) {
                   _tryOfflineLogin(_usernameController.text, _passwordController.text);
                 } else {
                   if (mounted) {
@@ -735,38 +769,26 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             },
             child: SafeArea(
               child: Center(
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (notification) {
-                    // Hide the selection area when scrolling up
-                    if (notification is ScrollUpdateNotification &&
-                        notification.scrollDelta != null &&
-                        notification.scrollDelta! < -2.0 &&
-                        _selectionAreaController.value > 0) {
-                      _selectionAreaController.reverse();
-                    }
-                    return false;
-                  },
-                  child: RefreshIndicator(
-                    onRefresh: _fetchOrganizations,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                      child: FadeTransition(
-                        opacity: CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: 420,
-                            minHeight: MediaQuery.of(context).size.height - 120,
-                          ),
-                          child: Center(
-                            child: Card(
-                              elevation: 0,
-                              color: theme.colorScheme.surface,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                                child: _buildForm(context),
-                              ),
+                child: RefreshIndicator(
+                  onRefresh: _fetchOrganizations,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                    child: FadeTransition(
+                      opacity: CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: 420,
+                          minHeight: MediaQuery.of(context).size.height - 120,
+                        ),
+                        child: Center(
+                          child: Card(
+                            elevation: 0,
+                            color: theme.colorScheme.surface,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                              child: _buildForm(context),
                             ),
                           ),
                         ),
@@ -781,6 +803,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       ),
     );
   }
+
 
   /// Map a typed [AuthFailure] to its localized message via [AppLocalizations].
   String? _localizeAuthFailure(BuildContext context, AuthFailure failure) {
@@ -817,35 +840,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       case OneCUserNotFoundFailure():
         return l10n.oneCUserNotFound;
     }
-  }
-
-  void _showNetworkFailureBanner(BuildContext context) {
-    final messenger = ScaffoldMessenger.of(context);
-    final l10n = AppLocalizations.of(context);
-    final title = l10n?.networkError ?? 'Network error';
-    final retryLabel = l10n?.retry ?? 'Retry';
-    messenger.clearMaterialBanners();
-    messenger.showMaterialBanner(
-      MaterialBanner(
-        content: Text(title),
-        leading: const Icon(Icons.cloud_off_outlined),
-        backgroundColor: Theme.of(context).colorScheme.errorContainer,
-        actions: [
-          TextButton(
-            onPressed: () {
-              messenger.hideCurrentMaterialBanner();
-              if (!mounted) return;
-              setState(() {
-                _usernameController.clear();
-                _passwordController.clear();
-              });
-              FocusScope.of(context).requestFocus(FocusNode());
-            },
-            child: Text(retryLabel),
-          ),
-        ],
-      ),
-    );
   }
 
   String? _localizeMessageKey(BuildContext context, String key) {
@@ -1116,11 +1110,17 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           axisAlignment: -1.0,
           child: FadeTransition(
             opacity: _selectionAreaAnimation,
-            child: Column(
-              children: [
-                _buildSelectionArea(context),
-                const SizedBox(height: 16),
-              ],
+            child: GestureDetector(
+              onVerticalDragEnd: (details) {
+                final velocity = details.primaryVelocity ?? 0;
+                if (velocity < -100) _hideSelectionArea();
+              },
+              child: Column(
+                children: [
+                  _buildSelectionArea(context),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ),
@@ -1128,9 +1128,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           onDoubleTap: () {
             if (_selectionAreaController.isDismissed ||
                 _selectionAreaController.status == AnimationStatus.reverse) {
-              _selectionAreaController.forward();
+              _showSelectionArea();
             } else {
-              _selectionAreaController.reverse();
+              _hideSelectionArea();
             }
           },
           child: Row(

@@ -54,19 +54,18 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ─── MINIMAL PRE-RUNAPP WORK ──────────────────────────────────────
-  // Service locator + allReady are guarded by a try/catch + timeout so
-  // that a corrupted cache or a hung platform channel NEVER prevents
-  // runApp() from being called. Without this, the app stays on a blank
-  // white Android surface forever (no Flutter frame is rendered).
+  // The ENTIRE pre-runApp block is wrapped in a single timeout so that
+  // NO hang — whether inside setupServiceLocator(), sl.allReady(),
+  // SharedPreferences.getInstance(), or ServerService.restore() — can
+  // prevent runApp() from being called. Without this the app stays on
+  // a blank white Android surface forever (no Flutter frame rendered).
   try {
-    await initializeDateFormatting('uz', null);
-    await ThemeController.I.restore();
-    await setupServiceLocator();
-    // allReady() waits for every registerSingletonAsync to complete.
-    // LocationService's GPS warm-up and ApiKeyService's init can each
-    // take several seconds on a cold device, and corrupt SharedPrefs
-    // can make them hang indefinitely → timeout as a safety net.
-    await sl.allReady().timeout(const Duration(seconds: 8));
+    await Future(() async {
+      await initializeDateFormatting('uz', null);
+      await ThemeController.I.restore();
+      await setupServiceLocator();
+      await sl.allReady();
+    }).timeout(const Duration(seconds: 8));
   } catch (e) {
     if (kDebugMode) {
       debugPrint('[Main] Pre-runApp init error (proceeding anyway): $e');

@@ -276,6 +276,18 @@ class BackgroundLocationTrackingService {
       // ignore: unawaited_futures
       _foregroundKeeper.start();
 
+      // Drain any pings that were queued by a previous session and
+      // never made it out. `connectivity_plus` only fires for state
+      // *changes*, so if the app restarts with network already up
+      // the listener would never wake — the queue would sit there
+      // until the next wifi/4G toggle. Kicking the flush here on
+      // every startup closes that gap. Fire-and-forget: the shared
+      // `_isSending` mutex serialises it against the timer ticks.
+      if (_offlineQueue.isNotEmpty) {
+        // ignore: unawaited_futures
+        _sendOfflineQueue();
+      }
+
       await _prefs.preferences.setBool(_trackingEnabledKey, true);
       _isTrackingActive = true;
 

@@ -24,9 +24,9 @@ class ApiOrganization {
             .toList() ??
         [];
     return ApiOrganization(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       code1c: json['code_1c'] as String? ?? '',
-      name: json['name'] as String,
+      name: json['name'] as String? ?? '',
       projects: projectsList,
     );
   }

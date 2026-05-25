@@ -17,10 +17,10 @@ class ApiProject {
 
   factory ApiProject.fromJson(Map<String, dynamic> json) {
     return ApiProject(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       code1c: json['code_1c'] as String? ?? '',
-      name: json['name'] as String,
-      servicePath: json['service_path'] as String,
+      name: json['name'] as String? ?? '',
+      servicePath: (json['service_url'] ?? json['service_path']) as String? ?? '',
     );
   }
 

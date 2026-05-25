@@ -113,6 +113,10 @@ class ClientBalanceCubit extends Cubit<ClientBalanceState> {
     }
 
     try {
+      if (kDebugMode) {
+        print(
+            '[BALANCE-DEBUG] ClientBalanceCubit.fetchBalance: inn=$inn, code1c=$code1c, clientCode=$clientCode, forceRefresh=$forceRefresh');
+      }
       final projectCode = _resolveProjectCode();
       if (projectCode == null) {
         emit(state.toError(
@@ -220,8 +224,20 @@ class ClientBalanceCubit extends Cubit<ClientBalanceState> {
   /// (Passport §2) requires `project_code` = `UserProject.code` — without an
   /// active project we cannot fetch.
   String? _resolveProjectCode() {
-    if (!sl.isRegistered<ProjectContext>()) return null;
-    return sl<ProjectContext>().activeProject?.code;
+    if (!sl.isRegistered<ProjectContext>()) {
+      if (kDebugMode) {
+        print(
+            '[BALANCE-DEBUG] ClientBalanceCubit._resolveProjectCode: ProjectContext is NOT registered in sl');
+      }
+      return null;
+    }
+    final ctx = sl<ProjectContext>();
+    final active = ctx.activeProject;
+    if (kDebugMode) {
+      print(
+          '[BALANCE-DEBUG] ClientBalanceCubit._resolveProjectCode: activeProject={name=${active?.name}, code=${active?.code}, idUuid=${active?.idUuid}, id1c=${active?.id1c}, headerValue=${active?.headerValue}}, currentScope=${ctx.currentScope}, requiresProjectHeader=${ctx.requiresProjectHeader}');
+    }
+    return active?.code;
   }
 
   /// ============================================================================

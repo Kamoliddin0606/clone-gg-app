@@ -120,15 +120,17 @@ class ClientBalanceService {
   }) async {
     if (!forceRefresh && inn != null && inn.isNotEmpty && !canRefresh(inn)) {
       if (kDebugMode) {
+        final cachedHit = _cache[inn];
         print(
-            'ClientBalanceService: cooldown active for INN $inn, ${getSecondsUntilRefresh(inn)}s remaining');
+            'ClientBalanceService: cooldown active for INN $inn, ${getSecondsUntilRefresh(inn)}s remaining → '
+            'returning ${cachedHit != null ? "in-memory cache (projectName=${cachedHit.projectName}, balance=${cachedHit.balance})" : "DB lookup"}');
       }
       return _cache[inn] ?? await getClientBalanceFromDb(inn);
     }
 
     if (kDebugMode) {
       print(
-          'ClientBalanceService: REST fetch code_1c=$code1c project_code=$projectCode forceRefresh=$forceRefresh');
+          '[BALANCE-DEBUG] ClientBalanceService.fetchClientBalance START code_1c=$code1c project_code=$projectCode inn=$inn forceRefresh=$forceRefresh');
     }
 
     try {
@@ -149,21 +151,30 @@ class ClientBalanceService {
         headers: headers,
         receiveTimeout: const Duration(seconds: 90),
       );
+      final requestBody = {
+        'code_1c': code1c,
+        'project_code': projectCode,
+        'force_refresh': forceRefresh,
+      };
+      if (kDebugMode) {
+        print(
+            '[BALANCE-DEBUG] → POST /api/mobile/v2/customers/balance/ headers=$headers body=$requestBody');
+      }
       // restPost — Django V2 transport. The plain `post` would route via
       // ServerService.baseUrl (the 1C SOAP `.1cws` endpoint), which sends
       // a JSON body into 1C's XML parser and trips the
       // `Document is empty [1,1]` fault we saw before M12.
       final response = await _apiService.restPost(
         '/api/mobile/v2/customers/balance/',
-        data: {
-          'code_1c': code1c,
-          'project_code': projectCode,
-          'force_refresh': forceRefresh,
-        },
+        data: requestBody,
         options: options,
       );
 
       final data = response.data;
+      if (kDebugMode) {
+        print(
+            '[BALANCE-DEBUG] ← status=${response.statusCode} body=$data');
+      }
       if (response.statusCode == 200 && data is Map<String, dynamic>) {
         final balance = ClientBalance.fromJson(data);
         if (balance.inn.isNotEmpty) {
@@ -174,7 +185,11 @@ class ClientBalanceService {
         }
         if (kDebugMode) {
           print(
-              'ClientBalanceService: REST ok inn=${balance.inn} balance=${balance.balance} blocked=${balance.blocked} source=${balance.source}');
+              '[BALANCE-DEBUG] parsed ClientBalance: inn=${balance.inn} projectName=${balance.projectName} '
+              'balance=${balance.balance} debtLimit=${balance.debtLimit} blocked=${balance.blocked} '
+              'source=${balance.source} contracts=${balance.contractBalances.length} '
+              'orders=${balance.orderBalances.length} unpaid=${balance.unpaidOrdersCount} '
+              'overdue=${balance.overdueOrdersCount}');
         }
         return balance;
       }
@@ -390,7 +405,10 @@ class ClientBalanceService {
 
       if (kDebugMode) {
         print(
-            'ClientBalanceService: persisted INN ${balance.inn} (blocked=${balance.blocked}, source=${balance.source})');
+            '[BALANCE-DEBUG] saveClientBalance persisted: inn=${balance.inn} projectName=${balance.projectName} '
+            'balance=${balance.balance} debtLimit=${balance.debtLimit} blocked=${balance.blocked} '
+            'source=${balance.source} contracts=${balance.contractBalances.length} '
+            'orders=${balance.orderBalances.length}');
       }
 
       // Push the freshly-persisted row into the visual status cache so the

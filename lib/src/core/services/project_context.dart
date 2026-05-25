@@ -7,6 +7,8 @@ import 'package:gloria_marketing_flutter/src/features/auth/data/models/login_gat
 import 'package:gloria_marketing_flutter/src/features/auth/domain/entities/user_entity.dart';
 
 import 'api_database_service.dart';
+import 'client_balance_service.dart';
+import 'service_locator.dart';
 import 'shared_preferences_service.dart';
 
 /// Origin of the currently-active project selection.
@@ -189,6 +191,12 @@ class ProjectContext extends ChangeNotifier {
     if (previous?.headerValue != headerValue) {
       // Wipe local SQLite caches scoped to the old project.
       await _db.clearCustomerCacheForProjectSwitch();
+      // SQLite tozalansa ham `ClientBalanceService` ning in-memory
+      // mapllari (INN bo'yicha kalitlangan) eski loyihaning balansini
+      // saqlab qoladi va 10s cooldown qayta-yuklashni bloklaydi.
+      if (sl.isRegistered<ClientBalanceService>()) {
+        sl<ClientBalanceService>().clearInMemoryCaches();
+      }
     }
     _streamController.add(project);
     notifyListeners();

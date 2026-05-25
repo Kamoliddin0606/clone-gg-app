@@ -434,6 +434,18 @@ class ClientBalanceService {
     }
   }
 
+  /// Drops the in-memory caches without touching SQLite. Called by
+  /// [ProjectContext.setActiveProject] after a project switch — the DB
+  /// rows are already wiped by `clearCustomerCacheForProjectSwitch()`, but
+  /// `_cache`/`_lastRefreshTimes`/`_code1cToInn` are INN-keyed and would
+  /// otherwise serve the previous project's balance under the same INN
+  /// (and the cooldown would block the refetch).
+  void clearInMemoryCaches() {
+    _cache.clear();
+    _lastRefreshTimes.clear();
+    _code1cToInn.clear();
+  }
+
   Future<void> clearAllBalances() async {
     try {
       final db = await _dbService.database;

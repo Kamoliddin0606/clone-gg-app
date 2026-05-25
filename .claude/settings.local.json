@@ -12,7 +12,10 @@
       "Bash(grep -E \"\\\\.\\(dart|json\\)$\")",
       "Bash(xargs grep:*)",
       "Bash(xargs ls:*)",
-      "Bash(grep -v -E \"^[a-f0-9]+ \\(updated|commit\\)$\")"
+      "Bash(grep -v -E \"^[a-f0-9]+ \\(updated|commit\\)$\")",
+      "Bash(flutter build:*)",
+      "Bash(flutter clean:*)",
+      "Bash(flutter pub:*)"
     ]
   }
 }

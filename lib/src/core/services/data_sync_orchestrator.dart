@@ -58,6 +58,12 @@ class DataSyncOrchestrator with ChangeNotifier {
   /// Currently syncing tables (to prevent concurrent syncs of same table)
   final Set<String> _syncingTables = {};
 
+  /// True while a bulk operation ([syncAllOptimized] or [syncGroup]) is
+  /// running.  Listeners can check this to defer expensive rebuilds until
+  /// the batch finishes instead of reacting to every per-table notification.
+  bool _batchInProgress = false;
+  bool get batchInProgress => _batchInProgress;
+
   /// Stream controllers for active sync operations
   final Map<String, StreamController<SyncProgress>> _activeControllers = {};
 
@@ -356,37 +362,44 @@ class DataSyncOrchestrator with ChangeNotifier {
       return;
     }
 
+    _batchInProgress = true;
+
     // Track overall progress for the group
     final totalTables = tables.length;
     var completedTables = 0;
 
-    for (final table in tables) {
-      await for (final progress in syncTableWithCascade(
-        table.id,
-        cascadeToChildren: false, // Don't cascade outside group
-        forceSyncDependencies: forceResync, // Respect force resync flag
-      )) {
-        // Emit progress with group context
-        yield progress.copyWith(
-          totalTablesInCascade: totalTables,
-          completedTablesInCascade: completedTables,
-        );
+    try {
+      for (final table in tables) {
+        await for (final progress in syncTableWithCascade(
+          table.id,
+          cascadeToChildren: false, // Don't cascade outside group
+          forceSyncDependencies: forceResync, // Respect force resync flag
+        )) {
+          // Emit progress with group context
+          yield progress.copyWith(
+            totalTablesInCascade: totalTables,
+            completedTablesInCascade: completedTables,
+          );
 
-        if (progress.hasError) {
-          // Log but continue with next table in group
-          if (kDebugMode) {
-            print('Error syncing table ${table.id} in group $groupId: ${progress.errorMessage}');
+          if (progress.hasError) {
+            // Log but continue with next table in group
+            if (kDebugMode) {
+              print('Error syncing table ${table.id} in group $groupId: ${progress.errorMessage}');
+            }
           }
         }
+        completedTables++;
       }
-      completedTables++;
-    }
 
-    // Emit final group completion
-    yield SyncProgress.completed(groupId, group.nameEn).copyWith(
-      totalTablesInCascade: totalTables,
-      completedTablesInCascade: totalTables,
-    );
+      // Emit final group completion
+      yield SyncProgress.completed(groupId, group.nameEn).copyWith(
+        totalTablesInCascade: totalTables,
+        completedTablesInCascade: totalTables,
+      );
+    } finally {
+      _batchInProgress = false;
+      notifyListeners();
+    }
   }
 
   /// Sync all tables in all groups
@@ -465,7 +478,8 @@ class DataSyncOrchestrator with ChangeNotifier {
   Stream<SyncProgress> syncAllOptimized() async* {
     final stopwatch = Stopwatch()..start();
     final cache = SyncFunctionCache.instance;
-    
+    _batchInProgress = true;
+
     try {
       // Clear cache from any previous sync session
       cache.clear();
@@ -538,6 +552,10 @@ class DataSyncOrchestrator with ChangeNotifier {
     } finally {
       // Always clear cache after sync session
       cache.clear();
+      _batchInProgress = false;
+      // Final notification so listeners know the batch is done and can
+      // perform a single rebuild.
+      notifyListeners();
       stopwatch.stop();
     }
   }

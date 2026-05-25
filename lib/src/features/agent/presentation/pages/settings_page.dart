@@ -68,6 +68,14 @@ class _SettingsPageState extends State<SettingsPage>
 
   void _onSyncEvent() {
     if (!mounted) return;
+    // While a bulk sync (syncAll / syncGroup) is running, suppress
+    // intermediate reloads. The orchestrator fires one final
+    // notifyListeners() when the batch ends (_batchInProgress == false),
+    // which triggers a single rebuild here.
+    if (_orchestrator!.batchInProgress) {
+      _reloadDebounce?.cancel();
+      return;
+    }
     _reloadDebounce?.cancel();
     _reloadDebounce = Timer(_reloadDebounceDuration, () {
       if (!mounted) return;

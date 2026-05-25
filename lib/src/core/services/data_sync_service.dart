@@ -69,14 +69,19 @@ class DataSyncService {
   }) : _prefs = prefs,
         _apiService = apiService,
         _dbService = dbService,
-        _dbHelper = dbHelper {
-    _initializeWorkManager();
-  }
+        _dbHelper = dbHelper;
+    // WorkManager is now initialized lazily via _ensureWorkManager()
+    // to avoid blocking the constructor with a heavy native platform
+    // call that can hang if WorkManager state is corrupted.
 
   static const String _backgroundSyncTask = 'backgroundDataSync';
   static const String _retrySyncTask = 'retryDataSync';
 
-  void _initializeWorkManager() {
+  bool _workManagerInitialized = false;
+
+  void _ensureWorkManager() {
+    if (_workManagerInitialized) return;
+    _workManagerInitialized = true;
     Workmanager().initialize(
       callbackDispatcher,
       isInDebugMode: kDebugMode,
@@ -87,6 +92,7 @@ class DataSyncService {
   Future<void> registerBackgroundSync({
     Duration frequency = const Duration(hours: 6),
   }) async {
+    _ensureWorkManager();
     // Get credentials from prefs since background task needs them
     final userCode = _prefs.getUserCode();
     final password = _prefs.getPassword();
@@ -146,6 +152,7 @@ class DataSyncService {
 
   /// Cancel background sync
   Future<void> cancelBackgroundSync() async {
+    _ensureWorkManager();
     await Workmanager().cancelByUniqueName(_backgroundSyncTask);
   }
 
@@ -154,6 +161,7 @@ class DataSyncService {
     required Map<String, dynamic> failedOperation,
     Duration delay = const Duration(minutes: 15),
   }) async {
+    _ensureWorkManager();
     await Workmanager().registerOneOffTask(
       '${_retrySyncTask}_${DateTime.now().millisecondsSinceEpoch}',
       _retrySyncTask,

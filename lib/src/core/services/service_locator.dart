@@ -294,44 +294,32 @@ Future<void> setupServiceLocator() async {
   if (!sl.isRegistered<TelegramBotService>()) {
     sl.registerLazySingleton<TelegramBotService>(() => TelegramBotService());
   }
+  // LocationService — lazy singleton (NOT async). The old
+  // `registerSingletonAsync` blocked `sl.allReady()` even though
+  // `initialize()` was fire-and-forget, because the factory itself
+  // was still an async registration that the locator waited for.
+  // Worse, `initialize()` calls `Geolocator.requestPermission()` which
+  // can show a native dialog and hang indefinitely on a cold start.
+  // Making it lazy means `sl.allReady()` never waits for it at all.
+  // Callers that need a position already cope with the not-yet-warm
+  // case by showing a "Location data not available" SnackBar.
   if (!sl.isRegistered<LocationService>()) {
-    sl.registerSingletonAsync<LocationService>(() async {
-      await sl.isReady<SharedPreferencesService>();
+    sl.registerLazySingleton<LocationService>(() {
       final prefs = sl<SharedPreferencesService>();
-      final locationService = LocationService(prefs.preferences);
-      // Fire-and-forget initialise so the singleton's future resolves
-      // immediately and `sl.allReady()` does not block `runApp()` for
-      // the duration of the GPS warm-up.
-      //
-      // `LocationService.initialize()` calls into
-      // `Geolocator.getCurrentPosition(timeLimit: 10s)` via
-      // `_updateLocation`, which waits up to ten seconds for the first
-      // fix on a cold-started device. Awaiting it here (the old code)
-      // put that wait squarely on the cold-start critical path — the
-      // app sat on a blank Android launch background for the entire
-      // window. Tracking still wires up correctly: the listening
-      // `Timer.periodic` and the position stream are attached the
-      // moment initialize() returns, which is the same callback chain
-      // either way.
-      //
-      // Callers that need a position right now (`_locationService`
-      // null check in `trading_points_page`, etc.) already cope with
-      // the not-yet-warm case by showing the "Location data not
-      // available" SnackBar.
-      unawaited(locationService.initialize());
-      return locationService;
+      return LocationService(prefs.preferences);
     });
   }
   if (!sl.isRegistered<PermissionManager>()) {
     sl.registerLazySingleton<PermissionManager>(() => PermissionManager());
   }
 
-  // API Key Service - depends on SharedPreferences
+  // API Key Service — lazy singleton (NOT async). The `initialize()`
+  // method just stores a reference to SharedPreferencesService, so
+  // there is no reason to block `sl.allReady()`.
   if (!sl.isRegistered<ApiKeyService>()) {
-    sl.registerSingletonAsync<ApiKeyService>(() async {
-      await sl.isReady<SharedPreferencesService>();
+    sl.registerLazySingleton<ApiKeyService>(() {
       final apiKeyService = ApiKeyService.instance;
-      await apiKeyService.initialize(sl<SharedPreferencesService>());
+      apiKeyService.initialize(sl<SharedPreferencesService>());
       return apiKeyService;
     });
   }

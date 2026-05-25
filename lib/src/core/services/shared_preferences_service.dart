@@ -47,7 +47,12 @@ class SharedPreferencesService {
 
   Future<void> init() async {
     if (!_isInitialized) {
-      _preferences = await SharedPreferences.getInstance();
+      // Timeout guards against a corrupted SharedPreferences XML file
+      // that causes the platform channel to hang on Android. If that
+      // happens, the app would stay on a white screen forever because
+      // setupServiceLocator() awaits this before runApp().
+      _preferences = await SharedPreferences.getInstance()
+          .timeout(const Duration(seconds: 5));
       offlineModeListenable.value =
           _preferences.getBool(_isOfflineModeKey) ?? false;
       _isInitialized = true;

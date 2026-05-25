@@ -91,10 +91,9 @@ class AppStartGuard {
       // Always strip legacy SharedPreferences keys before reading new ones.
       await _prefs.migrateLegacyKeys();
 
-      // Diagnostic dump — printed in BOTH debug and release so support can
-      // confirm what is persisted on a real device. Sensitive values
-      // (tokens, passwords) are masked to the first 12 chars.
-      _dumpPrefsForDiagnostics();
+      // Diagnostic dump — deferred to a microtask so it does not block
+      // the decide() critical path. Runs only in debug mode.
+      Future<void>.microtask(() => _dumpPrefsForDiagnostics());
 
       // Step 1: no cache → login.
       final LoginGatesEnvelope? cached = _prefs.getCachedGates();

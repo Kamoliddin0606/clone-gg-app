@@ -45,221 +45,148 @@ import 'dart:async';
 
 import 'package:yandex_maps_mapkit/init.dart' as ymk_init;
 
+/// Completes when Firebase, DB, connectivity, and VersionAppInfo are ready.
+/// `_AppState._runStartupChecks()` awaits this before issuing network calls.
+late final Future<void> postRunAppInitFuture;
+
 void main() async {
   // Ensure that Flutter bindings are initialized.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize date formatting for intl package
-  await initializeDateFormatting('uz', null);
-
-  await ThemeController.I.restore();
-  // Set up service locator
-  await setupServiceLocator();
-
-  // Wait for async services to be ready
-  await sl.allReady();
-
-  // Firebase init — best-effort. If google-services.json /
-  // GoogleService-Info.plist are missing the call throws; we log and
-  // continue so the rest of the app still boots. Notification flow
-  // simply stays inert until the config lands. The check for
-  // `Firebase.apps.isNotEmpty` protects against duplicate init via
-  // workmanager isolates.
+  // ─── MINIMAL PRE-RUNAPP WORK ──────────────────────────────────────
+  // Service locator + allReady are guarded by a try/catch + timeout so
+  // that a corrupted cache or a hung platform channel NEVER prevents
+  // runApp() from being called. Without this, the app stays on a blank
+  // white Android surface forever (no Flutter frame is rendered).
   try {
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    }
-    // Background handler must be registered before runApp so the
-    // isolate spawned by FCM finds it. Top-level function lives in
-    // push_handler_service.dart.
-    FirebaseMessaging.onBackgroundMessage(firebaseBackgroundMessageHandler);
-    if (kDebugMode) {
-      debugPrint('[Main] Firebase initialised');
-    }
+    await initializeDateFormatting('uz', null);
+    await ThemeController.I.restore();
+    await setupServiceLocator();
+    // allReady() waits for every registerSingletonAsync to complete.
+    // LocationService's GPS warm-up and ApiKeyService's init can each
+    // take several seconds on a cold device, and corrupt SharedPrefs
+    // can make them hang indefinitely → timeout as a safety net.
+    await sl.allReady().timeout(const Duration(seconds: 8));
   } catch (e) {
     if (kDebugMode) {
-      debugPrint(
-        '[Main] Firebase initialise SKIPPED ($e). '
-        'Notifications will stay offline until '
-        'google-services.json / GoogleService-Info.plist is provisioned.',
-      );
+      debugPrint('[Main] Pre-runApp init error (proceeding anyway): $e');
     }
   }
 
-  // Initialize Database — required by AppStartGuard's downstream callers
-  // and by the very first route, so this stays eager.
-  await sl<DatabaseHelper>().database;
+  // ─── RENDER FIRST FRAME IMMEDIATELY ───────────────────────────────
+  runApp(const App());
 
-  // Initialize connectivity monitor BEFORE runApp so the very first
-  // frame of the home page reads an accurate `isConnected` value via
-  // the StreamBuilder's `initialData`. If we deferred this (as the
-  // legacy bootstrap did), the AppBar would always render with the
-  // offline badge on cold-start regardless of real network state.
-  try {
-    await sl<ConnectivityMonitorService>().initialize();
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Error initializing connectivity monitor: $e');
-    }
-  }
-
-  // Load PackageInfo + DeviceInfo BEFORE the first V2 call so the
-  // `X-App-*` headers carry real values. The locator already exposes a
-  // [VersionAppInfo.empty] sentinel; we swap it for the real snapshot
-  // here. See docs/integration-prompts/mobile-app-version-passport.md §2.
-  try {
-    final info = await VersionAppInfo.load();
-    if (sl.isRegistered<VersionAppInfo>()) {
-      sl.unregister<VersionAppInfo>();
-    }
-    sl.registerSingleton<VersionAppInfo>(info);
-    if (kDebugMode) {
-      debugPrint(
-        '[Main] VersionAppInfo ready: ${info.packageName} '
-        '${info.platform} ${info.appVersion}+${info.buildNumber}',
-      );
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] VersionAppInfo load failed: $e');
-    }
-  }
-
-  // Run the splash version-check BEFORE AppStartGuard so a blocked or
-  // maintenance state short-circuits the whole login/refresh dance.
-  // Failure here is fail-open: if the endpoint is unreachable AND no
-  // cached gate exists, the app proceeds with the normal start flow.
-  VersionGateResponse? pendingSoftUpdate;
-  VersionGateResponse? blockingGate;
-  try {
-    final locale = sl<SharedPreferencesService>().getUserSelectedLanguageCode() ?? 'uz';
-    final gate = await sl<VersionGateService>().checkOnStartup(locale: locale);
-    if (gate != null) {
-      if (gate.status.blocksApp) {
-        blockingGate = gate;
-      } else if (gate.status.wireValue == 'soft_update') {
-        final dismissed = await sl<VersionGateService>().isSoftUpdateDismissed();
-        if (!dismissed) pendingSoftUpdate = gate;
-      }
-      if (kDebugMode) {
-        debugPrint('[Main] VersionGate → ${gate.status.wireValue}');
-      }
-    } else if (kDebugMode) {
-      debugPrint('[Main] VersionGate → null (offline + no cache)');
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] VersionGate error (fail-open): $e');
-    }
-  }
-
-  // Determine the initial route via the new AppStartGuard. The legacy
-  // AppAccessControl/TimeVerification flow has been replaced — see
-  // `app_start_guard.dart` for the decision tree.
-  String initialRouteName = AppRouter.loginRoute;
-  Object? initialRouteArguments;
-  if (blockingGate != null) {
-    initialRouteName = AppRouter.versionGateRoute;
-    initialRouteArguments = blockingGate;
-  } else {
-    try {
-      final guard = sl<AppStartGuard>();
-      final result = await guard.decide();
-      if (result.decision == StartDecision.showHome) {
-        initialRouteName = AppRouter.mainAgentScreenRoute;
-      } else {
-        initialRouteName = AppRouter.loginRoute;
-      }
-      if (kDebugMode) {
-        debugPrint('[Main] AppStartGuard → ${result.decision} (reason=${result.reason?.runtimeType})');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[Main] AppStartGuard error (defaulting to login): $e');
-      }
-    }
-  }
-
-  // Wire FCM foreground/tap listeners BEFORE runApp so any push that
-  // arrives while the first frame is rendering is captured. The
-  // background handler is a top-level function (registered above, before
-  // runApp) and runs in its own isolate — it does not need wiring here.
-  try {
-    await sl<NotificationPreferencesService>().bootstrap();
-    final pushHandler = sl<PushHandlerService>();
-    pushHandler.onTap = NotificationTapRouter.handleRemoteMessage;
-    await pushHandler.init();
-    final tokenService = sl<TokenService>();
-    if (tokenService.hasValidV2Token()) {
-      unawaited(sl<FcmTokenService>().registerOnLogin());
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Push handler early init skipped: $e');
-    }
-  }
-
-  // Render the first frame ASAP. Notification cache hydration (badge
-  // count from sqflite) is deferred — FCM wiring is now done above.
-  runApp(App(
-    initialRoute: initialRouteName,
-    initialRouteArguments: initialRouteArguments,
-    pendingSoftUpdate: pendingSoftUpdate,
-  ));
-
+  // ─── POST-RUNAPP INIT ─────────────────────────────────────────────
+  // Heavy I/O (Firebase, DB, connectivity, PackageInfo) runs after the
+  // first frame is on screen. _AppState._runStartupChecks() awaits
+  // this future before issuing network calls that depend on DB /
+  // connectivity / VersionAppInfo.
+  postRunAppInitFuture = _runPostRunAppInit();
   unawaited(_runDeferredBootstrap());
+}
+
+/// Initialisation that previously blocked `runApp()`. Now runs after the
+/// first frame so the splash screen is visible immediately. Each block
+/// is independent and runs in parallel via `Future.wait`.
+Future<void> _runPostRunAppInit() async {
+  await Future.wait<void>([
+    // Firebase init — best-effort.
+    _safe(() async {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      }
+      FirebaseMessaging.onBackgroundMessage(firebaseBackgroundMessageHandler);
+      if (kDebugMode) debugPrint('[Main] Firebase initialised');
+    }, tag: 'Firebase init'),
+
+    // Database — needed by AppStartGuard and first route.
+    _safe(() async {
+      await sl<DatabaseHelper>().database;
+    }, tag: 'Database init'),
+
+    // Connectivity monitor.
+    _safe(() async {
+      await sl<ConnectivityMonitorService>().initialize();
+    }, tag: 'Connectivity monitor'),
+
+    // PackageInfo + DeviceInfo for X-App-* headers.
+    _safe(() async {
+      final info = await VersionAppInfo.load();
+      if (sl.isRegistered<VersionAppInfo>()) {
+        sl.unregister<VersionAppInfo>();
+      }
+      sl.registerSingleton<VersionAppInfo>(info);
+      if (kDebugMode) {
+        debugPrint(
+          '[Main] VersionAppInfo ready: ${info.packageName} '
+          '${info.platform} ${info.appVersion}+${info.buildNumber}',
+        );
+      }
+    }, tag: 'VersionAppInfo'),
+  ]);
 }
 
 /// Non-critical startup work moved off the cold-start critical path.
 /// Each block keeps its own try/catch so a failure in one stage does
 /// not block the others.
 ///
+/// Parallelised into independent groups to reduce total wall-time and
+/// frame drops (previously ~10 sequential awaits caused 147+ skipped
+/// frames).
+///
 /// NOTE: FCM listener wiring and notification preferences bootstrap are
-/// intentionally omitted here — they now run eagerly in `main()` before
-/// `runApp()` so no foreground push is lost during first-frame rendering.
+/// now handled inside `_AppState._runStartupChecks()`.
 Future<void> _runDeferredBootstrap() async {
-  // Hydrate the notification cache from sqflite so the bell badge
-  // shows the correct count. Best-effort.
+  // Wait for DB, connectivity, etc. to be ready before using services
+  // that depend on them. Timeout so a hung init doesn't block forever.
   try {
-    await sl<NotificationRepository>().bootstrap();
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Notification cache bootstrap skipped: $e');
-    }
-  }
+    await postRunAppInitFuture.timeout(const Duration(seconds: 15));
+  } catch (_) {}
 
-  // Initialize Gemini API key (default for development).
-  try {
-    final apiKeyService = sl<ApiKeyService>();
-    final hasGeminiKey = await apiKeyService.hasApiKey(ApiKeyService.geminiApiKey);
-    if (!hasGeminiKey) {
-      // TODO: Replace with server-provided key in production
-      const defaultGeminiKey = 'AIzaSyDeIApWRmFwNOr5pQVvs_xwba0woIS3xYE';
-      await apiKeyService.storeApiKey(ApiKeyService.geminiApiKey, defaultGeminiKey);
-      if (kDebugMode) {
-        debugPrint('[Main] Gemini API key initialized with default');
-      }
-    } else {
-      if (kDebugMode) {
+  // ── WAVE 1: Independent local work — run in parallel ────────────
+  await Future.wait<void>([
+    // Hydrate the notification cache from sqflite so the bell badge
+    // shows the correct count. Best-effort.
+    _safe(() => sl<NotificationRepository>().bootstrap(),
+        tag: 'Notification cache bootstrap'),
+
+    // Initialize Gemini API key (default for development).
+    _safe(() async {
+      final apiKeyService = sl<ApiKeyService>();
+      final hasGeminiKey =
+          await apiKeyService.hasApiKey(ApiKeyService.geminiApiKey);
+      if (!hasGeminiKey) {
+        // TODO: Replace with server-provided key in production
+        const defaultGeminiKey = 'AIzaSyDeIApWRmFwNOr5pQVvs_xwba0woIS3xYE';
+        await apiKeyService.storeApiKey(
+            ApiKeyService.geminiApiKey, defaultGeminiKey);
+        if (kDebugMode) {
+          debugPrint('[Main] Gemini API key initialized with default');
+        }
+      } else if (kDebugMode) {
         debugPrint('[Main] Gemini API key already configured');
       }
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] Error initializing Gemini API key: $e');
-    }
-  }
+    }, tag: 'Gemini API key'),
 
-  // Note: ConnectivityMonitorService is now initialised before runApp()
-  // so the home page's offline-badge StreamBuilder reads an accurate
-  // initial value. See the corresponding block above in `main()`.
+    // Check (don't request) location permission status on app start.
+    _safe(() async {
+      final permissionManager = sl<PermissionManager>();
+      await permissionManager.checkLocationPermission();
+      final serviceEnabled =
+          await permissionManager.isLocationServiceEnabled();
+      if (!serviceEnabled && kDebugMode) {
+        debugPrint('Location services are disabled on app start');
+      }
+    }, tag: 'Location permission check'),
+  ]);
 
   // Debug-only: log resolved V2 URL and fire a single liveness probe.
+  // Fire-and-forget — does NOT block the boot chain.
   if (kDebugMode) {
     debugPrint('[CONFIG] V2_BASE_URL=${TokenService.v2BaseUrl}');
-    sl<HealthCheckService>().pingV2().then((result) {
+    unawaited(sl<HealthCheckService>().pingV2().then((result) {
       if (result.ok) {
         debugPrint(
           '[HEALTH] V2 backend reachable in ${result.latency?.inMilliseconds}ms',
@@ -267,143 +194,103 @@ Future<void> _runDeferredBootstrap() async {
       } else {
         debugPrint('[HEALTH] V2 backend UNREACHABLE: ${result.errorMessage}');
       }
-    });
+    }));
   }
 
-  // Check (don't request) location permission status on app start.
-  try {
-    final permissionManager = sl<PermissionManager>();
-    await permissionManager.checkLocationPermission();
-    final serviceEnabled = await permissionManager.isLocationServiceEnabled();
-    if (!serviceEnabled && kDebugMode) {
-      debugPrint('Location services are disabled on app start');
-    }
-  } catch (_) {
-    // App will handle permissions on demand.
-  }
+  // ── WAVE 2: Heavier I/O + network — run in parallel ────────────
+  await Future.wait<void>([
+    // Resolve Yandex MapKit API key and initialize MapKit.
+    _safe(() async {
+      final apiKey = await _ApiKeyProvider().resolveApiKey();
+      if (kDebugMode) debugPrint('Your API key: $apiKey');
+      await ymk_init.initMapkit(apiKey: apiKey);
+    }, tag: 'MapKit init'),
 
-  // Resolve Yandex MapKit API key and initialize MapKit. The login and
-  // main-agent landing screens do not embed maps, so this can run after
-  // the first frame without affecting initial UI.
-  try {
-    final apiKey = await _ApiKeyProvider().resolveApiKey();
-    if (kDebugMode) {
-      debugPrint('Your API key: $apiKey');
-    }
-    await ymk_init.initMapkit(apiKey: apiKey);
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Main] MapKit init error: $e');
-    }
-  }
-
-  // Background location tracking — startTracking() is idempotent
-  // (returns early if _isTrackingActive), so the AppLifecycleState
-  // resume callback in _AppState cannot create a duplicate timer.
-  try {
-    final backgroundLocationService = sl<BackgroundLocationTrackingService>();
-    await backgroundLocationService.initialize();
-    final prefs = sl<SharedPreferencesService>();
-    final userCode = prefs.getUserCode();
-    if (userCode != null && userCode.isNotEmpty) {
-      await backgroundLocationService.startTracking();
-      if (kDebugMode) {
-        debugPrint('BackgroundLocationTracking: Started for user $userCode');
-        debugPrint('BackgroundLocationTracking: Interval: ${backgroundLocationService.currentIntervalSeconds}s');
+    // Background location tracking.
+    _safe(() async {
+      final backgroundLocationService =
+          sl<BackgroundLocationTrackingService>();
+      await backgroundLocationService.initialize();
+      final prefs = sl<SharedPreferencesService>();
+      final userCode = prefs.getUserCode();
+      if (userCode != null && userCode.isNotEmpty) {
+        await backgroundLocationService.startTracking();
+        if (kDebugMode) {
+          debugPrint(
+              'BackgroundLocationTracking: Started for user $userCode');
+          debugPrint(
+              'BackgroundLocationTracking: Interval: ${backgroundLocationService.currentIntervalSeconds}s');
+        }
+      } else if (kDebugMode) {
+        debugPrint(
+            'BackgroundLocationTracking: User not logged in, tracking not started');
       }
-    } else if (kDebugMode) {
-      debugPrint('BackgroundLocationTracking: User not logged in, tracking not started');
-    }
-  } catch (e, stackTrace) {
-    if (kDebugMode) {
-      debugPrint('BackgroundLocationTracking: Initialization error: $e');
-      debugPrint('BackgroundLocationTracking: Stack trace: $stackTrace');
-    }
-  }
+    }, tag: 'Background location tracking'),
 
-  // Background data sync — re-register WorkManager task if the user
-  // previously enabled it.
-  try {
-    final prefs = sl<SharedPreferencesService>();
-    if (prefs.isBgSyncEnabled()) {
-      final dataSyncService = sl<DataSyncService>();
-      await dataSyncService.toggleBackgroundSync(true);
-      if (kDebugMode) {
-        final intervalMinutes = prefs.getBgSyncCustomMinutes() ?? (prefs.getBgSyncInterval() * 60);
-        debugPrint('BackgroundDataSync: Re-registered on app startup');
-        debugPrint('BackgroundDataSync: Interval: $intervalMinutes minutes');
+    // Background data sync — re-register WorkManager task.
+    _safe(() async {
+      final prefs = sl<SharedPreferencesService>();
+      if (prefs.isBgSyncEnabled()) {
+        final dataSyncService = sl<DataSyncService>();
+        await dataSyncService.toggleBackgroundSync(true);
+        if (kDebugMode) {
+          final intervalMinutes = prefs.getBgSyncCustomMinutes() ??
+              (prefs.getBgSyncInterval() * 60);
+          debugPrint('BackgroundDataSync: Re-registered on app startup');
+          debugPrint('BackgroundDataSync: Interval: $intervalMinutes minutes');
+        }
       }
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('BackgroundDataSync: Error re-registering: $e');
-    }
-  }
+    }, tag: 'Background data sync'),
 
-  // Visits v2 — hit the auth-free `/server-time/` endpoint first so the
-  // ServerTimeService captures the clock-drift baseline before any
-  // envelope is timestamped. The endpoint replies with an empty body and
-  // an `X-Server-Time` header; the response interceptor records it via
-  // `ServerTimeService.recordServerTime`. Failure here is fine —
-  // ClockDriftValidator falls back to drift=0 and only blocks visits
-  // when the user's clock is *clearly* skewed.
-  try {
-    await sl<VisitApi>().syncServerTime();
-    if (kDebugMode) {
-      debugPrint('[Visits v2] Server time captured');
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Visits v2] Server time sync skipped: $e');
-    }
-  }
+    // Visits v2 — server time capture.
+    _safe(() async {
+      await sl<VisitApi>().syncServerTime();
+      if (kDebugMode) debugPrint('[Visits v2] Server time captured');
+    }, tag: 'Visits server time'),
 
-  // Visits v2 — warm permissions/catalog cache so the feature flag and
-  // task list are available the moment the user opens a trading point.
-  // Best-effort: offline cache or empty state falls back to SOAP path.
-  try {
-    final tokenService = sl<TokenService>();
-    if (tokenService.hasValidV2Token()) {
-      await sl<PermissionsRepository>().getCurrent(forceRefresh: true);
-      await sl<CatalogRepository>().getCurrent(forceRefresh: true);
-      if (kDebugMode) {
-        debugPrint('[Visits v2] Permissions + catalog warmed');
+    // Visits v2 — warm permissions/catalog cache.
+    _safe(() async {
+      final tokenService = sl<TokenService>();
+      if (tokenService.hasValidV2Token()) {
+        await sl<PermissionsRepository>().getCurrent(forceRefresh: true);
+        await sl<CatalogRepository>().getCurrent(forceRefresh: true);
+        if (kDebugMode) {
+          debugPrint('[Visits v2] Permissions + catalog warmed');
+        }
       }
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Visits v2] Permissions/catalog warm-up skipped: $e');
-    }
-  }
+    }, tag: 'Visits permissions/catalog warm-up'),
+  ]);
 
-  // Visits v2 — foreground sync coordinator (lifecycle + connectivity +
-  // 60s timer) and Workmanager background sync (15-min, network-required).
-  // Both are idempotent: re-running on hot restart no-ops.
-  try {
-    final coordinator = VisitsSyncCoordinator(
-      dispatcher: sl(),
-      photoUploader: sl(),
-      connectivity: sl(),
-    );
-    await coordinator.start();
-    if (!sl.isRegistered<VisitsSyncCoordinator>()) {
-      sl.registerSingleton<VisitsSyncCoordinator>(coordinator);
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Visits v2] Sync coordinator start failed: $e');
-    }
-  }
+  // ── WAVE 3: Depends on location tracking being initialised ──────
+  await Future.wait<void>([
+    _safe(() async {
+      final coordinator = VisitsSyncCoordinator(
+        dispatcher: sl(),
+        photoUploader: sl(),
+        connectivity: sl(),
+      );
+      await coordinator.start();
+      if (!sl.isRegistered<VisitsSyncCoordinator>()) {
+        sl.registerSingleton<VisitsSyncCoordinator>(coordinator);
+      }
+    }, tag: 'Visits sync coordinator'),
 
+    _safe(() async {
+      await VisitsBackgroundSync.schedule();
+      if (kDebugMode) {
+        debugPrint(
+            '[Visits v2] Workmanager scheduled (15min, network-required)');
+      }
+    }, tag: 'Visits background sync schedule'),
+  ]);
+}
+
+/// Fire-and-forget wrapper: runs [fn], catches any error, logs in debug.
+Future<void> _safe(Future<void> Function() fn, {required String tag}) async {
   try {
-    await VisitsBackgroundSync.schedule();
-    if (kDebugMode) {
-      debugPrint('[Visits v2] Workmanager scheduled (15min, network-required)');
-    }
+    await fn();
   } catch (e) {
-    if (kDebugMode) {
-      debugPrint('[Visits v2] Workmanager schedule skipped: $e');
-    }
+    if (kDebugMode) debugPrint('[Main] $tag skipped: $e');
   }
 }
 
@@ -461,9 +348,7 @@ class _ApiKeyProvider {
   /// "Server request" — placeholder for now (will be replaced with HTTP in the future).
   /// If null is returned for now, fallback is used.
   Future<String?> _getFromServerPlaceholder() async {
-    await Future<void>.delayed(const Duration(milliseconds: 200));
     // TODO: Real backend request will be placed here (HTTP, auth, etc.).
-    // For now null -> fallback works.
     final dataSyncService = sl<DataSyncService>();
     final result = await dataSyncService.syncMapTokens();
     var token = result['yandexToken'];
@@ -477,24 +362,7 @@ class _ApiKeyProvider {
 
 
 class App extends StatefulWidget {
-  /// Initial route resolved by [AppStartGuard] in `main()` before `runApp`.
-  final String initialRoute;
-
-  /// Optional argument forwarded to [AppRouter.generateRoute] for the
-  /// initial route — currently used to hand the [VersionGateResponse]
-  /// payload to [AppRouter.versionGateRoute].
-  final Object? initialRouteArguments;
-
-  /// Soft-update payload resolved at cold start. If non-null, the soft-update
-  /// dialog is surfaced once the navigator is mounted.
-  final VersionGateResponse? pendingSoftUpdate;
-
-  const App({
-    super.key,
-    this.initialRoute = AppRouter.loginRoute,
-    this.initialRouteArguments,
-    this.pendingSoftUpdate,
-  });
+  const App({super.key});
 
   @override
   State<App> createState() => _AppState();
@@ -503,20 +371,136 @@ class App extends StatefulWidget {
 class _AppState extends State<App> with WidgetsBindingObserver {
   final LocaleProvider _localeProvider = LocaleProvider();
 
+  /// True once the deferred startup checks (VersionGate, AppStartGuard,
+  /// FCM wiring) have completed and the resolved route is known.
+  bool _startupDone = false;
+  String _resolvedRoute = AppRouter.loginRoute;
+  Object? _resolvedRouteArguments;
+  VersionGateResponse? _pendingSoftUpdate;
+
   @override
   void initState() {
     super.initState();
     _initializeLocale();
     // App lifecycle events'ni kuzatish uchun observer qo'shish
     WidgetsBinding.instance.addObserver(this);
+    // Run network-dependent startup checks in the background so the
+    // first frame renders immediately (branded splash instead of white).
+    _runStartupChecks();
+  }
+
+  /// Network-dependent startup checks that were previously blocking
+  /// `main()` before `runApp()`. Now they run after the first frame
+  /// so the user sees a loading screen instead of a white screen.
+  ///
+  /// CRITICAL: The entire body is wrapped in try/catch so that ANY
+  /// failure still sets `_startupDone = true` and navigates to login.
+  /// Without this, an unhandled error leaves the splash screen forever.
+  Future<void> _runStartupChecks() async {
+    String initialRouteName = AppRouter.loginRoute;
+    Object? initialRouteArguments;
+    VersionGateResponse? pendingSoftUpdate;
+
+    try {
+      // Wait for Firebase, DB, connectivity, and VersionAppInfo to be
+      // ready. Timeout guards against a hung platform channel or locked
+      // DB file leaving the splash screen visible forever.
+      await postRunAppInitFuture.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          if (kDebugMode) {
+            debugPrint('[Main] postRunAppInit timed out after 10s, proceeding anyway');
+          }
+        },
+      );
+
+      // 1. Version gate check (network call, 10s connect timeout).
+      VersionGateResponse? blockingGate;
+      try {
+        final locale = sl<SharedPreferencesService>().getUserSelectedLanguageCode() ?? 'uz';
+        final gate = await sl<VersionGateService>().checkOnStartup(locale: locale);
+        if (gate != null) {
+          if (gate.status.blocksApp) {
+            blockingGate = gate;
+          } else if (gate.status.wireValue == 'soft_update') {
+            final dismissed = await sl<VersionGateService>().isSoftUpdateDismissed();
+            if (!dismissed) pendingSoftUpdate = gate;
+          }
+          if (kDebugMode) {
+            debugPrint('[Main] VersionGate → ${gate.status.wireValue}');
+          }
+        } else if (kDebugMode) {
+          debugPrint('[Main] VersionGate → null (offline + no cache)');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[Main] VersionGate error (fail-open): $e');
+        }
+      }
+
+      // 2. Determine the initial route via AppStartGuard.
+      if (blockingGate != null) {
+        initialRouteName = AppRouter.versionGateRoute;
+        initialRouteArguments = blockingGate;
+      } else {
+        try {
+          final guard = sl<AppStartGuard>();
+          final result = await guard.decide();
+          if (result.decision == StartDecision.showHome) {
+            initialRouteName = AppRouter.mainAgentScreenRoute;
+          } else {
+            initialRouteName = AppRouter.loginRoute;
+          }
+          if (kDebugMode) {
+            debugPrint('[Main] AppStartGuard → ${result.decision} (reason=${result.reason?.runtimeType})');
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('[Main] AppStartGuard error (defaulting to login): $e');
+          }
+        }
+      }
+
+      // 3. Wire FCM foreground/tap listeners.
+      try {
+        await sl<NotificationPreferencesService>().bootstrap();
+        final pushHandler = sl<PushHandlerService>();
+        pushHandler.onTap = NotificationTapRouter.handleRemoteMessage;
+        await pushHandler.init();
+        final tokenService = sl<TokenService>();
+        if (tokenService.hasValidV2Token()) {
+          unawaited(sl<FcmTokenService>().registerOnLogin());
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[Main] Push handler early init skipped: $e');
+        }
+      }
+    } catch (e) {
+      // Catch-all: any unhandled error still lets the app proceed to
+      // login rather than being stuck on the splash screen forever.
+      if (kDebugMode) {
+        debugPrint('[Main] _runStartupChecks fatal error (falling back to login): $e');
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _resolvedRoute = initialRouteName;
+      _resolvedRouteArguments = initialRouteArguments;
+      _pendingSoftUpdate = pendingSoftUpdate;
+      _startupDone = true;
+    });
+
     _scheduleSoftUpdateDialog();
   }
 
-  /// If main() resolved a soft-update payload, show the dismissable dialog
+  /// If startup resolved a soft-update payload, show the dismissable dialog
   /// once the navigator finishes its first build. Best-effort: a missing
   /// VersionGateService or missing context simply skips the dialog.
   void _scheduleSoftUpdateDialog() {
-    final pending = widget.pendingSoftUpdate;
+    final pending = _pendingSoftUpdate;
     if (pending == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final ctx = AppRouter.navigatorKey.currentContext;
@@ -649,6 +633,22 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         builder: (context, themeMode, _) {
           return Consumer<LocaleProvider>(
             builder: (context, localeProvider, _) {
+              // While startup checks are still running, show a branded
+              // splash screen so the user never sees a blank white page.
+              if (!_startupDone) {
+                return MaterialApp(
+                  title: 'SelUp',
+                  debugShowCheckedModeBanner: false,
+                  theme: appLight,
+                  darkTheme: appDark,
+                  themeMode: themeMode,
+                  locale: localeProvider.locale,
+                  localizationsDelegates: AppLocalizations.localizationsDelegates,
+                  supportedLocales: AppLocalizations.supportedLocales,
+                  home: const _SplashLoadingScreen(),
+                );
+              }
+
               return MaterialApp(
                 navigatorKey: AppRouter.navigatorKey,
                 scaffoldMessengerKey: AppRouter.scaffoldMessengerKey,
@@ -659,7 +659,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 themeMode: themeMode,
                 locale: localeProvider.locale,
                 onGenerateRoute: AppRouter.generateRoute,
-                initialRoute: widget.initialRoute,
+                initialRoute: _resolvedRoute,
                 // Wrap every page in the in-app banner host so foreground
                 // pushes (FCM onMessage) can draw a transient banner via
                 // the global overlay. Tap routes through the deep-link
@@ -688,7 +688,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                 onGenerateInitialRoutes: (initialRoute) => [
                   AppRouter.generateRoute(RouteSettings(
                     name: initialRoute,
-                    arguments: widget.initialRouteArguments,
+                    arguments: _resolvedRouteArguments,
                   )),
                 ],
                 localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -697,6 +697,42 @@ class _AppState extends State<App> with WidgetsBindingObserver {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+/// Branded splash screen shown while deferred startup checks
+/// (VersionGate, AppStartGuard, FCM wiring) are running in the
+/// background. Replaces the white screen the user previously saw.
+class _SplashLoadingScreen extends StatelessWidget {
+  const _SplashLoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Scaffold(
+      backgroundColor: cs.surface,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/icon/selup_icon.png',
+              width: 96,
+              height: 96,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: cs.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

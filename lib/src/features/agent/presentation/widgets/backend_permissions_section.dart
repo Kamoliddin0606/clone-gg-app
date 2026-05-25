@@ -145,6 +145,7 @@ class _SectionHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(icon, size: 20, color: color),
               const SizedBox(width: 8),
@@ -156,9 +157,14 @@ class _SectionHeader extends StatelessWidget {
                     color: color,
                     letterSpacing: 0.2,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (trailingChip != null) trailingChip!,
+              if (trailingChip != null) ...[
+                const SizedBox(width: 8),
+                Flexible(child: trailingChip!),
+              ],
             ],
           ),
           if (subtitle != null && subtitle!.isNotEmpty) ...[
@@ -201,11 +207,15 @@ class _OptimisticBadge extends StatelessWidget {
         children: [
           Icon(Icons.hourglass_top_rounded, size: 14, color: cs.tertiary),
           const SizedBox(width: 4),
-          Text(
-            l10n.backendPermissions_optimisticBadge,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: cs.tertiary,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              l10n.backendPermissions_optimisticBadge,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: cs.tertiary,
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

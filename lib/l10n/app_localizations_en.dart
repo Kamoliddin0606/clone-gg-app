@@ -5860,6 +5860,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionGate_locationSubtitle => 'To track customer visits and routes';
 
   @override
+  String get permissionGate_backgroundLocationTitle => 'Background location (\"Allow all the time\")';
+
+  @override
+  String get permissionGate_backgroundLocationSubtitle => 'Required so the app keeps reporting your location while in the background';
+
+  @override
   String get permissionGate_gpsTitle => 'GPS must be enabled';
 
   @override

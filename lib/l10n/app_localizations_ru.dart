@@ -5860,6 +5860,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get permissionGate_locationSubtitle => 'Для отслеживания визитов и маршрутов';
 
   @override
+  String get permissionGate_backgroundLocationTitle => 'Геолокация в фоне (\"Разрешить всегда\")';
+
+  @override
+  String get permissionGate_backgroundLocationSubtitle => 'Чтобы приложение продолжало отправлять геолокацию, пока работает в фоне';
+
+  @override
   String get permissionGate_gpsTitle => 'GPS должен быть включён';
 
   @override

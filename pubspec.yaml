@@ -81,6 +81,15 @@ dependencies:
   # Background tasks
   workmanager: ^0.9.0
 
+  # Foreground service: keeps the Android app process alive while the
+  # user is away from the app so the periodic location ping timer
+  # in BackgroundLocationTrackingService keeps firing. Without this,
+  # Android 8+ aggressively kills idle background processes — which
+  # is the most common cause of "location stopped reporting when the
+  # phone was locked". See:
+  #   lib/src/core/services/background_location/foreground_service_keeper.dart
+  flutter_foreground_task: ^8.17.0
+
   # UI enhancements
   shimmer: ^3.0.0
   cached_network_image: ^3.4.1

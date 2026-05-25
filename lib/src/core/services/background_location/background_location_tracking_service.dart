@@ -23,8 +23,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/foreground_service_keeper.dart';
 import 'package:gloria_marketing_flutter/src/core/services/background_location/helpers/device_data_collector.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/device_registration_service.dart';
@@ -35,6 +37,21 @@ import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/models/t
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/models/tracking_policy_envelope.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/tracking_policy_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
+
+/// Why background tracking is not running. Persisted to SharedPrefs
+/// (`_lastFailureKey`) so debug/diagnostic UI can surface a concrete
+/// reason to the user instead of "silently broken".
+enum BackgroundLocationFailureReason {
+  none,
+  locationServiceDisabled,
+  foregroundPermissionMissing,
+  backgroundPermissionMissing,
+  notLoggedIn,
+  noToken,
+  noNetwork,
+  policyDisabled,
+  unknown,
+}
 
 class BackgroundLocationTrackingService {
   // ===========================================================================
@@ -65,6 +82,12 @@ class BackgroundLocationTrackingService {
   static const String _lastLocationUpdateKey = 'background_location_v2_last_update';
   static const String _trackingEnabledKey = 'background_location_tracking_enabled';
 
+  /// Last user-facing failure reason. UI (debug screens / diagnostics)
+  /// can read this to explain *why* tracking is silent. Cleared on
+  /// each successful ping.
+  static const String _lastFailureKey = 'background_location_last_failure';
+  static const String _lastFailureAtKey = 'background_location_last_failure_at';
+
   // ===========================================================================
   // DEPENDENCIES
   // ===========================================================================
@@ -80,6 +103,7 @@ class BackgroundLocationTrackingService {
   final DeviceDataCollector _deviceDataCollector = DeviceDataCollector();
   final Connectivity _connectivity = Connectivity();
   final Dio _dio;
+  final ForegroundServiceKeeper _foregroundKeeper = ForegroundServiceKeeper();
 
   // ===========================================================================
   // STATE
@@ -216,19 +240,21 @@ class BackgroundLocationTrackingService {
       }
       if (_isTrackingActive) return true;
 
-      final hasPermission = await _checkLocationPermission();
-      if (!hasPermission) {
+      final permissionReason = await _checkLocationPermission();
+      if (permissionReason != BackgroundLocationFailureReason.none) {
+        await _recordFailure(permissionReason);
         if (kDebugMode && !_loggedPermissionMissing) {
           _loggedPermissionMissing = true;
-          print('BackgroundLocationTrackingService: permission not granted '
-              '(silenced for subsequent resumes — grant location permission '
-              'via Settings to retry)');
+          print('BackgroundLocationTrackingService: tracking blocked → '
+              '${permissionReason.name} (silenced for subsequent resumes — '
+              'grant the missing permission via Settings to retry)');
         }
         return false;
       }
       // Permission granted now — reset the gate so a later loss is
-      // logged again.
+      // logged again, and clear any prior failure marker.
       _loggedPermissionMissing = false;
+      await _clearFailure();
 
       // Policy va device registration'ni parallel chaqirish.
       // Failure-tolerant — yangi server hali tayyor bo'lmasligi mumkin.
@@ -243,6 +269,12 @@ class BackgroundLocationTrackingService {
       _startLocationTimer();
       _startPositionStream();
       _startPolicyTimer();
+
+      // Kick the Android foreground service so the OS keeps our
+      // process alive while the app is in the background. iOS is
+      // a no-op (background mode is declared in Info.plist).
+      // ignore: unawaited_futures
+      _foregroundKeeper.start();
 
       await _prefs.preferences.setBool(_trackingEnabledKey, true);
       _isTrackingActive = true;
@@ -267,6 +299,7 @@ class BackgroundLocationTrackingService {
       _policyTimer = null;
       await _positionStream?.cancel();
       _positionStream = null;
+      await _foregroundKeeper.stop();
       await _prefs.preferences.setBool(_trackingEnabledKey, false);
       _isTrackingActive = false;
 
@@ -286,6 +319,7 @@ class BackgroundLocationTrackingService {
       _policyTimer?.cancel();
       await _positionStream?.cancel();
       await _connectivitySubscription?.cancel();
+      await _foregroundKeeper.stop();
       _locationTimer = null;
       _policyTimer = null;
       _positionStream = null;
@@ -305,26 +339,92 @@ class BackgroundLocationTrackingService {
 
   /// Read-only permission check used by [startTracking].
   ///
-  /// IMPORTANT: this method must NEVER call `Geolocator.requestPermission()`.
-  /// `startTracking()` is invoked automatically from the app lifecycle
-  /// observer on every `AppLifecycleState.resumed` — popping an OS
-  /// permission dialog there sends the app back to `inactive` while
-  /// the dialog is visible, which fires `resumed` again as soon as
-  /// it is dismissed, and we're in a hard loop.
+  /// Returns the *specific* failure reason instead of a bare bool so
+  /// callers (and diagnostic UI via [getDebugInfo] / SharedPrefs)
+  /// can explain to the user why background tracking is silent.
+  ///
+  /// IMPORTANT: this method must NEVER call `Geolocator.requestPermission()`
+  /// or `Permission.locationAlways.request()`. `startTracking()` is
+  /// invoked automatically from the app lifecycle observer on every
+  /// `AppLifecycleState.resumed` — popping an OS permission dialog
+  /// there sends the app back to `inactive` while the dialog is
+  /// visible, which fires `resumed` again as soon as it is dismissed,
+  /// and we're in a hard loop.
   ///
   /// Permission *requests* happen in explicit, user-driven flows
-  /// (PermissionCheckPage / PermissionManager / LocationManager).
-  /// Here we only observe whether tracking is allowed right now.
-  Future<bool> _checkLocationPermission() async {
+  /// (PermissionGate / PermissionManager / LocationManager). Here we
+  /// only observe whether tracking is allowed right now.
+  Future<BackgroundLocationFailureReason> _checkLocationPermission() async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return false;
+      if (!serviceEnabled) {
+        return BackgroundLocationFailureReason.locationServiceDisabled;
+      }
       final permission = await Geolocator.checkPermission();
-      return permission == LocationPermission.always ||
+      final hasForeground = permission == LocationPermission.always ||
           permission == LocationPermission.whileInUse;
+      if (!hasForeground) {
+        return BackgroundLocationFailureReason.foregroundPermissionMissing;
+      }
+      // Even with `whileInUse` granted, Android 10+ requires
+      // `ACCESS_BACKGROUND_LOCATION` ("Allow all the time") for the
+      // location updates to keep flowing once the app leaves the
+      // foreground. permission_handler exposes this as
+      // `Permission.locationAlways`. We only treat it as a *warning*
+      // (return missing reason) on Android — on iOS, `whileInUse`
+      // is functionally equivalent to `Always` for our use case
+      // because the iOS foreground service / background mode handles
+      // it differently and `Geolocator.checkPermission()` already
+      // reflected the right tier above.
+      if (permission != LocationPermission.always) {
+        try {
+          final bg = await Permission.locationAlways.status;
+          if (!bg.isGranted) {
+            return BackgroundLocationFailureReason
+                .backgroundPermissionMissing;
+          }
+        } catch (_) {
+          // permission_handler may not be available on every
+          // platform (web/desktop) — fall through and accept the
+          // whileInUse-only state.
+        }
+      }
+      return BackgroundLocationFailureReason.none;
     } catch (_) {
-      return false;
+      return BackgroundLocationFailureReason.unknown;
     }
+  }
+
+  // ===========================================================================
+  // FAILURE DIAGNOSTICS
+  // ===========================================================================
+
+  /// Last known reason tracking failed to start / send. Read by
+  /// diagnostic UI. Empty if tracking is running normally.
+  String? get lastFailureReason =>
+      _prefs.preferences.getString(_lastFailureKey);
+  String? get lastFailureAt =>
+      _prefs.preferences.getString(_lastFailureAtKey);
+
+  Future<void> _recordFailure(BackgroundLocationFailureReason reason) async {
+    try {
+      await _prefs.preferences.setString(_lastFailureKey, reason.name);
+      await _prefs.preferences.setString(
+        _lastFailureAtKey,
+        DateTime.now().toIso8601String(),
+      );
+    } catch (_) {
+      // Best-effort: never let diagnostics break the tracking path.
+    }
+  }
+
+  Future<void> _clearFailure() async {
+    try {
+      final existing = _prefs.preferences.getString(_lastFailureKey);
+      if (existing == null) return;
+      await _prefs.preferences.remove(_lastFailureKey);
+      await _prefs.preferences.remove(_lastFailureAtKey);
+    } catch (_) {}
   }
 
   // ===========================================================================
@@ -402,9 +502,19 @@ class BackgroundLocationTrackingService {
     _isSending = true;
     try {
       // Step 0: read policy from RAM cache (no network).
-      final envelope = _policyService.cached ?? TrackingPolicyEnvelope.defaultOff();
+      //
+      // When no cached policy exists at all — e.g. first launch with
+      // the server unreachable — we fall back to a SAFE_DEFAULT
+      // policy (gps enabled, 60s interval) instead of DEFAULT_OFF.
+      // Otherwise a flaky policy endpoint silently disables tracking
+      // forever on devices that never managed a successful fetch.
+      // The first successful policy refresh replaces this fallback.
+      final envelope =
+          _policyService.cached ?? TrackingPolicyEnvelope.safeDefault();
       final policy = envelope.policy;
-      final cacheStatus = _policyService.cached == null ? 'DEFAULT_OFF (no cache)' : 'CACHED';
+      final cacheStatus = _policyService.cached == null
+          ? 'SAFE_DEFAULT (no cache — will retry policy fetch)'
+          : 'CACHED';
       restLog('GPS', '┌─ tick @ ${DateTime.now().toIso8601String()}');
       restLog('GPS', '│ policy source=$cacheStatus → ${envelope.source.toServerValue()} rev=${envelope.revision}');
       restLog('GPS', '│ rules: is_active=${policy.isActive} gps_enabled=${policy.gpsEnabled} '
@@ -419,6 +529,7 @@ class BackgroundLocationTrackingService {
       restLog('GPS', '│ filter[1/5] shouldCollectGps → ${shouldCollect ? "PASS" : "FAIL"}');
       if (!shouldCollect) {
         restLog('GPS', '└─ SKIP: policy disabled (is_active=${policy.isActive}, gps_enabled=${policy.gpsEnabled})');
+        await _recordFailure(BackgroundLocationFailureReason.policyDisabled);
         return;
       }
 
@@ -763,14 +874,22 @@ class BackgroundLocationTrackingService {
     try {
       final token = await _tokenService.ensureValidV2Token();
       if (token == null || token.isEmpty) {
-        if (kDebugMode) {
-          print('BackgroundLocationTrackingService: no V2 token, queueing');
-        }
+        await _recordFailure(BackgroundLocationFailureReason.noToken);
+        // Surface in release builds too — token loss is the single
+        // most common cause of "background tracking is silent",
+        // and `kDebugMode`-gated prints leave production blind.
+        debugPrint(
+          'BackgroundLocationTrackingService: no V2 token — queueing ping. '
+          'User may need to re-login.',
+        );
         return false;
       }
 
       final isConnected = await _deviceDataCollector.isConnectedToInternet();
-      if (!isConnected) return false;
+      if (!isConnected) {
+        await _recordFailure(BackgroundLocationFailureReason.noNetwork);
+        return false;
+      }
 
       final url = '${TokenService.v2BaseUrl}$_telemetryEndpoint';
       final body = asBatch
@@ -803,6 +922,7 @@ class BackgroundLocationTrackingService {
             }
           }
         }
+        await _clearFailure();
         return true;
       }
 
@@ -931,6 +1051,8 @@ class BackgroundLocationTrackingService {
           : null,
       'lastUpdate': _prefs.preferences.getString(_lastLocationUpdateKey),
       'cachedPolicySource': _policyService.cached?.source.toServerValue(),
+      'lastFailureReason': lastFailureReason,
+      'lastFailureAt': lastFailureAt,
     };
   }
 }

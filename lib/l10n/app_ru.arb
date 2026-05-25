@@ -2989,6 +2989,8 @@
   "permissionGate_subtitle": "Для работы приложения необходимы следующие разрешения. Без них приложение не запустится.",
   "permissionGate_locationTitle": "Разрешение на геолокацию",
   "permissionGate_locationSubtitle": "Для отслеживания визитов и маршрутов",
+  "permissionGate_backgroundLocationTitle": "Геолокация в фоне (\"Разрешить всегда\")",
+  "permissionGate_backgroundLocationSubtitle": "Чтобы приложение продолжало отправлять геолокацию, пока работает в фоне",
   "permissionGate_gpsTitle": "GPS должен быть включён",
   "permissionGate_gpsSubtitle": "Для точного определения местоположения",
   "permissionGate_notificationTitle": "Уведомления",

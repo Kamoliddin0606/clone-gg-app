@@ -5860,6 +5860,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get permissionGate_locationSubtitle => 'Mijozlar ziyoratlarini va marshrutni kuzatish uchun';
 
   @override
+  String get permissionGate_backgroundLocationTitle => 'Fon rejimida joylashuv (\"Doim ruxsat berilsin\")';
+
+  @override
+  String get permissionGate_backgroundLocationSubtitle => 'Ilova fonda ham joylashuvni yuborishi uchun majburiy';
+
+  @override
   String get permissionGate_gpsTitle => 'GPS yoqilgan bo\'lishi';
 
   @override

@@ -60,6 +60,35 @@ class TrackingPolicy {
     );
   }
 
+  /// Conservative-but-enabled fallback used when the user is logged
+  /// in but the server has never delivered a policy (first run with
+  /// no network, server outage, etc.). Lets the device queue pings
+  /// locally and flush them later, instead of silently producing
+  /// zero telemetry until a policy finally arrives.
+  ///
+  /// Tuned for a sales / merchandising workflow: a ping every minute,
+  /// at least 50 metres of movement, with a 100 m accuracy cap. No
+  /// optional sensor/battery payloads — the server can opt into them
+  /// later via a real policy.
+  factory TrackingPolicy.safeDefault() {
+    return const TrackingPolicy(
+      id: '00000000-0000-0000-0000-000000000001',
+      isActive: true,
+      isRequired: false,
+      gpsEnabled: true,
+      gpsIntervalSeconds: 60,
+      gpsMinDistanceMeters: 50,
+      gpsMinAccuracyMeters: 100,
+      collectDeviceInfo: true,
+      collectBattery: false,
+      collectNetwork: false,
+      collectSensors: false,
+      activeHoursStart: null,
+      activeHoursEnd: null,
+      activeDays: <String>[],
+    );
+  }
+
   factory TrackingPolicy.fromJson(Map<String, dynamic> json) {
     final daysRaw = json['active_days'];
     final List<String> days;

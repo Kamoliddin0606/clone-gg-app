@@ -11083,6 +11083,18 @@ abstract class AppLocalizations {
   /// **'To track customer visits and routes'**
   String get permissionGate_locationSubtitle;
 
+  /// No description provided for @permissionGate_backgroundLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Background location (\"Allow all the time\")'**
+  String get permissionGate_backgroundLocationTitle;
+
+  /// No description provided for @permissionGate_backgroundLocationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Required so the app keeps reporting your location while in the background'**
+  String get permissionGate_backgroundLocationSubtitle;
+
   /// No description provided for @permissionGate_gpsTitle.
   ///
   /// In en, this message translates to:

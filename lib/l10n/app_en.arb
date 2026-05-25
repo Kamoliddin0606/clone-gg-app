@@ -3095,6 +3095,8 @@
   "@permissionGate_subtitle": {"description": "Subtitle explaining that all listed permissions are mandatory."},
   "permissionGate_locationTitle": "Location permission",
   "permissionGate_locationSubtitle": "To track customer visits and routes",
+  "permissionGate_backgroundLocationTitle": "Background location (\"Allow all the time\")",
+  "permissionGate_backgroundLocationSubtitle": "Required so the app keeps reporting your location while in the background",
   "permissionGate_gpsTitle": "GPS must be enabled",
   "permissionGate_gpsSubtitle": "To determine precise location",
   "permissionGate_notificationTitle": "Notifications",

@@ -36,6 +36,23 @@ class TrackingPolicyEnvelope {
     );
   }
 
+  /// Conservative fallback used when the user is authenticated but
+  /// no cached policy is available yet (cold start with offline
+  /// server, first install before the policy has been fetched). The
+  /// device tracks at a safe interval and queues pings locally; the
+  /// first successful policy fetch promotes the envelope to a real
+  /// server-defined policy.
+  factory TrackingPolicyEnvelope.safeDefault() {
+    return TrackingPolicyEnvelope(
+      revision: 0,
+      etag: '',
+      source: PolicySource.defaultOff,
+      serverTime: DateTime.now().toUtc(),
+      policy: TrackingPolicy.safeDefault(),
+      extras: const <String, dynamic>{'fallback': 'safe_default'},
+    );
+  }
+
   factory TrackingPolicyEnvelope.fromJson(Map<String, dynamic> json) {
     final policyRaw = json['policy'];
     final TrackingPolicy policy;

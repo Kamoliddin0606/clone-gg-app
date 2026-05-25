@@ -2993,6 +2993,8 @@
   "permissionGate_subtitle": "Ilova ishlashi uchun quyidagilar majburiy. Hech biri rad etilsa, ilova davom etmaydi.",
   "permissionGate_locationTitle": "Joylashuv ruxsati",
   "permissionGate_locationSubtitle": "Mijozlar ziyoratlarini va marshrutni kuzatish uchun",
+  "permissionGate_backgroundLocationTitle": "Fon rejimida joylashuv (\"Doim ruxsat berilsin\")",
+  "permissionGate_backgroundLocationSubtitle": "Ilova fonda ham joylashuvni yuborishi uchun majburiy",
   "permissionGate_gpsTitle": "GPS yoqilgan bo'lishi",
   "permissionGate_gpsSubtitle": "Aniq joylashuvni aniqlash uchun",
   "permissionGate_notificationTitle": "Bildirishnomalar",

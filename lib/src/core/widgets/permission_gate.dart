@@ -4,12 +4,19 @@
 //
 // Blocking gate that wraps the entire app. Until the device has:
 //   1) Location permission (whileInUse or always)
-//   2) GPS / location services enabled
-//   3) Notification permission
+//   2) Background location permission (locationAlways) — Android 10+
+//   3) GPS / location services enabled
+//   4) Notification permission
 // granted, the user sees a full-screen "permissions required" page and the
 // real app is not rendered. Re-checks on every `AppLifecycleState.resumed`
 // so revoking a permission via system settings re-blocks the app the moment
 // the user comes back.
+//
+// Android 10+ contract: foreground (whileInUse) and background (always)
+// location permissions MUST be requested separately, with whileInUse
+// granted FIRST. The OS rejects an `Always` request unless `WhenInUse` is
+// already granted — and on Android 11+ the user can only grant `Always`
+// from the system settings page, not from an in-app dialog.
 //
 // Performance contract:
 //   * The three checks run in parallel via `Future.wait` — each is a single
@@ -39,7 +46,7 @@ class PermissionGate extends StatefulWidget {
 
 /// Logical identity of each gate requirement. Used to drive the
 /// list-tile rows in the blocking UI without string comparisons.
-enum _ReqId { location, gps, notification }
+enum _ReqId { location, backgroundLocation, gps, notification }
 
 /// Snapshot of one requirement at a point in time.
 class _ReqStatus {
@@ -69,6 +76,8 @@ class _PermissionGateState extends State<PermissionGate>
   bool _autoTriggered = false;
 
   _ReqStatus _location = const _ReqStatus(_ReqId.location);
+  _ReqStatus _backgroundLocation =
+      const _ReqStatus(_ReqId.backgroundLocation);
   _ReqStatus _gps = const _ReqStatus(_ReqId.gps);
   _ReqStatus _notification = const _ReqStatus(_ReqId.notification);
 
@@ -131,20 +140,25 @@ class _PermissionGateState extends State<PermissionGate>
       // screen.
       final results = await Future.wait<_ReqStatus>([
         _checkLocation(),
+        _checkBackgroundLocation(),
         _checkGps(),
         _checkNotification(),
       ]).timeout(
         const Duration(milliseconds: 1500),
-        onTimeout: () => [_location, _gps, _notification],
+        onTimeout: () =>
+            [_location, _backgroundLocation, _gps, _notification],
       );
 
       if (!mounted) return;
 
       final nextLocation = results[0];
-      final nextGps = results[1];
-      final nextNotification = results[2];
-      final nextAllGranted =
-          nextLocation.granted && nextGps.granted && nextNotification.granted;
+      final nextBackgroundLocation = results[1];
+      final nextGps = results[2];
+      final nextNotification = results[3];
+      final nextAllGranted = nextLocation.granted &&
+          nextBackgroundLocation.granted &&
+          nextGps.granted &&
+          nextNotification.granted;
 
       // Diff-based setState: if absolutely nothing changed since the
       // last check, skip the rebuild. Resume → recheck → same state
@@ -155,6 +169,9 @@ class _PermissionGateState extends State<PermissionGate>
           nextAllGranted == _allGranted &&
           nextLocation.granted == _location.granted &&
           nextLocation.permanentlyDenied == _location.permanentlyDenied &&
+          nextBackgroundLocation.granted == _backgroundLocation.granted &&
+          nextBackgroundLocation.permanentlyDenied ==
+              _backgroundLocation.permanentlyDenied &&
           nextGps.granted == _gps.granted &&
           nextNotification.granted == _notification.granted &&
           nextNotification.permanentlyDenied == _notification.permanentlyDenied;
@@ -162,6 +179,7 @@ class _PermissionGateState extends State<PermissionGate>
 
       setState(() {
         _location = nextLocation;
+        _backgroundLocation = nextBackgroundLocation;
         _gps = nextGps;
         _notification = nextNotification;
         _allGranted = nextAllGranted;
@@ -183,6 +201,30 @@ class _PermissionGateState extends State<PermissionGate>
       );
     } catch (_) {
       return const _ReqStatus(_ReqId.location);
+    }
+  }
+
+  /// Background ("Always") location permission check.
+  ///
+  /// On Android 10+ this is a separate runtime permission
+  /// (`ACCESS_BACKGROUND_LOCATION`). Without it, location updates
+  /// stop when the app is no longer in the foreground — even if
+  /// `whileInUse` is granted. On iOS this maps to the "Always" tier
+  /// of the location prompt.
+  ///
+  /// We intentionally do NOT block on this for Android < 10 where
+  /// `whileInUse` already covers background access; in that case
+  /// the permission API returns granted automatically.
+  Future<_ReqStatus> _checkBackgroundLocation() async {
+    try {
+      final status = await Permission.locationAlways.status;
+      return _ReqStatus(
+        _ReqId.backgroundLocation,
+        granted: status.isGranted,
+        permanentlyDenied: status.isPermanentlyDenied,
+      );
+    } catch (_) {
+      return const _ReqStatus(_ReqId.backgroundLocation);
     }
   }
 
@@ -212,19 +254,25 @@ class _PermissionGateState extends State<PermissionGate>
   // REQUEST PIPELINE
   // ---------------------------------------------------------------------------
 
-  /// Two-pass grant strategy:
+  /// Three-pass grant strategy:
   ///
   ///   Pass 1 — try the in-app OS dialogs for any permission that is
   ///   in `denied` state (never been asked, or denied without
-  ///   "permanent"). This is the fast path and never leaves the app.
+  ///   "permanent"). Foreground location is requested before
+  ///   background, because Android refuses an `Always` request unless
+  ///   `WhenInUse` has already been granted in this app session.
   ///
-  ///   Pass 2 — anything that is *still* not granted after pass 1
-  ///   (permanently denied, restricted, or — on iOS — silently
-  ///   re-denied without a dialog) is escalated to the system
-  ///   settings page. We open one settings page and bail out: the
-  ///   app is now in background, the lifecycle observer will pick
-  ///   the new state up on resume. Opening multiple settings pages
-  ///   in sequence is unsupported on every platform.
+  ///   Pass 2 — background ("Always") location escalation.
+  ///   On Android 11+ this can only be granted from the system
+  ///   settings page ("Allow all the time"). We open the app
+  ///   settings page so the user can switch the toggle, then return —
+  ///   the lifecycle observer re-checks on resume.
+  ///
+  ///   Pass 3 — anything else still missing (permanently denied,
+  ///   restricted, or — on iOS — silently re-denied without a dialog)
+  ///   is escalated to the system settings page. We open one settings
+  ///   page and bail out; opening multiple settings pages in sequence
+  ///   is unsupported on every platform.
   ///
   /// This guarantees a single button tap always produces a visible
   /// action — either an OS dialog or a settings page.
@@ -240,6 +288,18 @@ class _PermissionGateState extends State<PermissionGate>
         await _recheck();
       }
 
+      // Background location MUST come after whileInUse — the OS
+      // silently denies an `Always` request otherwise. On Android 10
+      // a dialog still appears; on Android 11+ this call returns
+      // `denied` and the user must visit settings (handled in pass 2).
+      if (mounted &&
+          _location.granted &&
+          !_backgroundLocation.granted &&
+          !_backgroundLocation.permanentlyDenied) {
+        await Permission.locationAlways.request();
+        await _recheck();
+      }
+
       if (mounted &&
           !_notification.granted &&
           !_notification.permanentlyDenied) {
@@ -250,15 +310,22 @@ class _PermissionGateState extends State<PermissionGate>
       if (!mounted) return;
       if (_allGranted) return;
 
-      // ---------- PASS 2: escalate to system settings ----------
+      // ---------- PASS 2/3: escalate to system settings ----------
       //
-      // Order matters: location permission, then GPS, then
-      // notification. Each redirect leaves the app, so we open
-      // exactly one and return — the resume observer will re-run
-      // _recheck and the user can tap the button again to chain to
-      // the next missing item.
+      // Order matters: foreground location, then background location,
+      // then GPS, then notification. Each redirect leaves the app, so
+      // we open exactly one and return — the resume observer will
+      // re-run _recheck and the user can tap the button again to
+      // chain to the next missing item.
 
       if (!_location.granted) {
+        await openAppSettings();
+        return;
+      }
+      if (!_backgroundLocation.granted) {
+        // Android 11+: only the settings page exposes the
+        // "Allow all the time" radio. permission_handler routes us
+        // straight to the app permissions screen.
         await openAppSettings();
         return;
       }
@@ -301,6 +368,8 @@ class _PermissionGateState extends State<PermissionGate>
     // about to happen.
     final needsOnlySettings =
         (_location.permanentlyDenied || _location.granted) &&
+            (_backgroundLocation.permanentlyDenied ||
+                _backgroundLocation.granted) &&
             (_notification.permanentlyDenied || _notification.granted) &&
             !_allGranted;
 
@@ -308,6 +377,7 @@ class _PermissionGateState extends State<PermissionGate>
       canPop: false,
       child: _BlockingScreen(
         location: _location,
+        backgroundLocation: _backgroundLocation,
         gps: _gps,
         notification: _notification,
         requesting: _requesting,
@@ -332,6 +402,7 @@ class _PermissionGateState extends State<PermissionGate>
 
 class _BlockingScreen extends StatelessWidget {
   final _ReqStatus location;
+  final _ReqStatus backgroundLocation;
   final _ReqStatus gps;
   final _ReqStatus notification;
   final bool requesting;
@@ -341,6 +412,7 @@ class _BlockingScreen extends StatelessWidget {
 
   const _BlockingScreen({
     required this.location,
+    required this.backgroundLocation,
     required this.gps,
     required this.notification,
     required this.requesting,
@@ -404,6 +476,15 @@ class _BlockingScreen extends StatelessWidget {
                       subtitle: l10n?.permissionGate_locationSubtitle ??
                           'To track customer visits and routes',
                       status: location,
+                    ),
+                    const SizedBox(height: 10),
+                    _RequirementTile(
+                      icon: Icons.my_location_outlined,
+                      title: l10n?.permissionGate_backgroundLocationTitle ??
+                          'Background location ("Allow all the time")',
+                      subtitle: l10n?.permissionGate_backgroundLocationSubtitle ??
+                          'Required so the app keeps reporting your location while in the background',
+                      status: backgroundLocation,
                     ),
                     const SizedBox(height: 10),
                     _RequirementTile(

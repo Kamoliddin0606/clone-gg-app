@@ -15,7 +15,8 @@
       "Bash(grep -v -E \"^[a-f0-9]+ \\(updated|commit\\)$\")",
       "Bash(flutter build:*)",
       "Bash(flutter clean:*)",
-      "Bash(flutter pub:*)"
+      "Bash(flutter pub:*)",
+      "Bash(flutter gen-l10n *)"
     ]
   }
 }

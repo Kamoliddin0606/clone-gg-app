@@ -19,7 +19,7 @@
 import 'package:flutter/material.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_req_permissions.dart';
-import 'package:gloria_marketing_flutter/src/core/widgets/client_image_widget.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/customer_photo_preview.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/client_balance_widget_v2.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/pending_blocked_orders_section.dart';
@@ -159,16 +159,18 @@ class _ClientDetailSheetState extends State<ClientDetailSheet> {
     );
   }
 
-  /// Build the primary client image (single image, fetched on demand from
-  /// `/api/mobile/v1/images/` via [ClientImageWidget]).
+  /// Build the client photo carousel. Uses the V2 customer-photo path
+  /// (`/api/mobile/v2/customers/{id}/photos/`) via [CustomerPhotoPreview]
+  /// — the SAME endpoint the gallery writes to, so newly added / replaced
+  /// photos surface here immediately. (The legacy v1 `ClientImageWidget`
+  /// read a separate `/images/` table that v2 uploads do not populate.)
   Widget _buildImageGallery(BuildContext context) {
     return SizedBox(
-      height: 280,
       width: double.infinity,
-      child: ClientImageWidget(
-        clientCode: widget.tradingPoint.id,
-        size: ClientImageSize.large,
-        fit: BoxFit.cover,
+      child: CustomerPhotoPreview(
+        customerId: widget.tradingPoint.id,
+        customerName: widget.tradingPoint.name,
+        height: 280,
       ),
     );
   }

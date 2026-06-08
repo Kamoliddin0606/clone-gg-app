@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../service_locator.dart';
 import '../token_service.dart';
 import 'image_target_type.dart';
+import 'media_url_normalizer.dart';
 import 'unified_image.dart';
 import 'unified_image_page.dart';
 
@@ -273,7 +274,8 @@ class NewBackendImageRepository {
 
       String? readUrl(String key) {
         final value = json[key];
-        return value is String && value.isNotEmpty ? value : null;
+        if (value is! String || value.isEmpty) return null;
+        return normalizeMediaUrl(value);
       }
 
       int? readInt(String key) {

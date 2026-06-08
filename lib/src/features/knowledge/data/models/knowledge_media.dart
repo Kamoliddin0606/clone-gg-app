@@ -1,3 +1,5 @@
+import '../../../../core/services/images/media_url_normalizer.dart';
+
 /// Media reference embedded in IMAGE / FILE / EMBED blocks. URLs are
 /// fully qualified — render directly via `cached_network_image`.
 class KnowledgeMedia {
@@ -95,7 +97,7 @@ class KnowledgeMedia {
       _ => [medium, large, small],
     };
     for (final url in ladder) {
-      if (url != null && url.isNotEmpty) return url;
+      if (url != null && url.isNotEmpty) return normalizeMediaUrl(url);
     }
     return null;
   }

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/services/images/media_url_normalizer.dart';
 import '../../../../core/services/images/unified_image.dart';
 import '../../../../core/services/project_context.dart';
 import '../../../../core/services/service_locator.dart';
@@ -570,7 +571,8 @@ class CustomerPhotoRepository {
 
     String? readUrl(String key) {
       final value = raw[key];
-      return value is String && value.isNotEmpty ? value : null;
+      if (value is! String || value.isEmpty) return null;
+      return normalizeMediaUrl(value);
     }
 
     int? readInt(String key) {
@@ -603,13 +605,20 @@ class CustomerPhotoRepository {
 
   // --- Idempotency persistence ---------------------------------------------
 
+  /// Canonical SharedPreferences key for an idempotency entry. Builders
+  /// for both [_resolveIdempotencyKey] and [_clearIdempotencyKey] MUST go
+  /// through here — a divergence (e.g. one side dropping the project
+  /// partition) leaves stale keys behind so a later "new upload" reuses
+  /// the consumed `idempotency_key` and the backend silently de-dupes it.
+  String _idemStorageKey(String customerId, String action) =>
+      '$_idemPrefix${_idemPartition()}_${customerId}_$action';
+
   Future<String> _resolveIdempotencyKey({
     required String customerId,
     required String action,
   }) async {
     final prefs = _prefs.preferences;
-    final storageKey =
-        '$_idemPrefix${_idemPartition()}_${customerId}_$action';
+    final storageKey = _idemStorageKey(customerId, action);
     final raw = prefs.getString(storageKey);
     if (raw != null) {
       try {
@@ -649,7 +658,7 @@ class CustomerPhotoRepository {
   }
 
   Future<void> _clearIdempotencyKey(String customerId, String action) async {
-    final storageKey = '$_idemPrefix${customerId}_$action';
+    final storageKey = _idemStorageKey(customerId, action);
     await _prefs.preferences.remove(storageKey);
   }
 

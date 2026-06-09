@@ -5,6 +5,28 @@ allprojects {
     }
 }
 
+// flutter_jailbreak_detection 1.10.0 (root/jailbreak check at visit start)
+// pulls com.github.scottyab:rootbeer:0.1.0 from JitPack (declared `strictly`
+// inside the plugin's own Gradle module). That AAR bundles a native
+// libtoolChecker.so aligned to 4 KB, which trips Android 15's 16 KB page-size
+// compatibility check ("ELF alignment check failed").
+//
+// The official Maven Central artifact com.scottyab:rootbeer-lib:0.1.2 is built
+// from the same source (identical com.scottyab.rootbeer.* API) but ships a
+// 16 KB-aligned native lib. The plugin is unmaintained (last release 1.10.0),
+// so substitute the JitPack module for the aligned Maven Central one across
+// every subproject. dependencySubstitution overrides even the `strictly`
+// constraint, which a plain resolutionStrategy.force would not.
+subprojects {
+    configurations.all {
+        resolutionStrategy.dependencySubstitution {
+            substitute(module("com.github.scottyab:rootbeer"))
+                .using(module("com.scottyab:rootbeer-lib:0.1.2"))
+                .because("rootbeer 0.1.0 ships a 4 KB-aligned libtoolChecker.so; rootbeer-lib 0.1.2 is 16 KB aligned (Android 15)")
+        }
+    }
+}
+
 val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 

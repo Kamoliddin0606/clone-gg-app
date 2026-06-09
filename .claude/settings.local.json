@@ -16,7 +16,12 @@
       "Bash(flutter build:*)",
       "Bash(flutter clean:*)",
       "Bash(flutter pub:*)",
-      "Bash(flutter gen-l10n *)"
+      "Bash(flutter gen-l10n *)",
+      "Bash(curl -sS -m 15 -o /dev/null -w \"http  :8080 -> HTTP %{http_code}\\\\n\" http://selup.gloriya.uz:8080/api/mobile/v1/images/)",
+      "Bash(curl -sS -m 15 -o /dev/null -w \"http  media -> HTTP %{http_code}  size=%{size_download}\\\\n\" http://selup.gloriya.uz:8080/media/img/s/2026/05/small.webp)",
+      "Bash(curl -sS -m 15 -o /dev/null -w \"https media -> HTTP %{http_code}  size=%{size_download}\\\\n\" https://selup.gloriya.uz:8080/media/img/s/2026/05/small.webp)",
+      "Bash(curl -sS -m 15 -o /dev/null -w \"https :443  -> HTTP %{http_code}  size=%{size_download}\\\\n\" https://selup.gloriya.uz/media/img/s/2026/05/small.webp)",
+      "Bash(flutter test *)"
     ]
   }
 }

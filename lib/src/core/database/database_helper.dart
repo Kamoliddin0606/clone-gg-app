@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'package:gloria_marketing_flutter/src/core/database/migrations/v7_to_v8.dart';
 import 'package:gloria_marketing_flutter/src/features/notifications/data/db/notification_db_dao.dart';
 import 'package:gloria_marketing_flutter/src/features/visits/data/local/migrations/v6_to_v7.dart';
 
@@ -25,7 +26,9 @@ class DatabaseHelper {
   // v7: Visits v2 REST pipeline tables (outbox, photo_uploads, visits_v2,
   //     visit_tasks_v2, permissions_cache, catalog_cache).
   //     See lib/src/features/visits/data/local/migrations/v6_to_v7.dart.
-  static const _dbVersion = 7;
+  // v8: Background telemetry/location durable outbox (telemetry_outbox).
+  //     See lib/src/core/database/migrations/v7_to_v8.dart.
+  static const _dbVersion = 8;
 
   Database? _database;
 
@@ -153,6 +156,10 @@ class DatabaseHelper {
     // installs land on the same schema as upgraded devices.
     await V6ToV7Migration.apply(db);
 
+    // v8 — telemetry/location durable outbox. Same rationale: fresh installs
+    // must land on the latest schema.
+    await V7ToV8Migration.apply(db);
+
     if (kDebugMode) {
       print("Empty database created with basic schema.");
     }
@@ -197,6 +204,9 @@ class DatabaseHelper {
     }
     if (oldVersion < 7) {
       await V6ToV7Migration.apply(db);
+    }
+    if (oldVersion < 8) {
+      await V7ToV8Migration.apply(db);
     }
   }
 

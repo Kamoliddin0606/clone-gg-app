@@ -1,12 +1,18 @@
 /// `POST /api/mobile/v1/telemetry/pings/` payload (flat).
 ///
-/// Server bitta payload'ni Device + LocationPing ga ajratadi. Faqat `latitude`
-/// va `longitude` majburiy; qolgan field'lar policy `collect_*` bayroqlariga
-/// va mavjud ma'lumotlarga bog'liq holda yuboriladi.
+/// Server bitta payload'ni Device + LocationPing ga ajratadi. `latitude`/
+/// `longitude` odatda yuboriladi, lekin GPS/joylashuv xizmati o'chiq bo'lganda
+/// **heartbeat** ping null koordinata bilan yuboriladi (`location_provider`
+/// = 'none' va `metadata.location_source` belgilanadi). Qolgan field'lar policy
+/// `collect_*` bayroqlariga va mavjud ma'lumotlarga bog'liq holda yuboriladi.
+///
+/// MUHIM (backend kontrakti): heartbeat null lat/lng yuborilganda server uni
+/// qabul qilishi kerak. Aks holda bunday yozuvlar `rejected[]` ga tushadi va
+/// dispatcher ularni `dead_letter` qiladi (jim yo'qolmaydi, diagnostikada ko'rinadi).
 class TelemetryPingRequest {
-  // Required
-  final String latitude;
-  final String longitude;
+  // Joylashuv (heartbeat'da null bo'lishi mumkin)
+  final String? latitude;
+  final String? longitude;
 
   // Agent identifikatsiyasi (server JWT'dan ham oladi, lekin metadata uchun)
   final String? agentCode;
@@ -102,8 +108,8 @@ class TelemetryPingRequest {
   final DateTime? loggedAt;
 
   const TelemetryPingRequest({
-    required this.latitude,
-    required this.longitude,
+    this.latitude,
+    this.longitude,
     this.agentCode,
     this.agentName,
     this.agentPhone,
@@ -178,16 +184,16 @@ class TelemetryPingRequest {
   });
 
   Map<String, dynamic> toJson() {
-    final map = <String, dynamic>{
-      'latitude': latitude,
-      'longitude': longitude,
-    };
+    final map = <String, dynamic>{};
     void put(String key, Object? value) {
       if (value == null) return;
       if (value is String && value.isEmpty) return;
       map[key] = value;
     }
 
+    // Heartbeat (GPS o'chiq) holatida lat/lng null bo'lib, omitted bo'ladi.
+    put('latitude', latitude);
+    put('longitude', longitude);
     put('agent_code', agentCode);
     put('agent_name', agentName);
     put('agent_phone', agentPhone);
@@ -291,8 +297,8 @@ class TelemetryPingRequest {
     }
 
     return TelemetryPingRequest(
-      latitude: (json['latitude'] ?? '').toString(),
-      longitude: (json['longitude'] ?? '').toString(),
+      latitude: json['latitude']?.toString(),
+      longitude: json['longitude']?.toString(),
       agentCode: json['agent_code'] as String?,
       agentName: json['agent_name'] as String?,
       agentPhone: json['agent_phone'] as String?,

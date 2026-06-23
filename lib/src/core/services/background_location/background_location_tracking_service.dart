@@ -2,45 +2,59 @@
 // Background Location Tracking Service (V2 — yangi server)
 // =============================================================================
 //
-// Bu service fonda joylashuv ma'lumotlarini yig'ib, yangi serverga
-// (telemetry endpointlariga) yuboradi.
+// Bu service fonda joylashuv/telemetry ma'lumotlarini yig'ib, durable
+// `telemetry_outbox` (sqflite) ga yozadi va internet bor bo'lganda
+// `TelemetryDispatcher` orqali batch ko'rinishida serverga yuboradi.
 //
-// Asosiy xususiyatlar:
-// - Tracking policy server tomondan boshqariladi (TrackingPolicyService)
-// - Mobile lokal pre-filtering qiladi (active hours/days, distance, accuracy)
-// - Offline rejimda yozuvlar SharedPreferences'ga saqlanadi va internet
-//   qaytarilganda batch sifatida yuboriladi
-// - V2 JWT tokenlar ishlatiladi (TokenService.ensureValidV2Token)
+// PROFESSIONAL ARXITEKTURA (audit asosida qayta qurilgan):
+// - COLLECT-FIRST / SEND-IF-ONLINE: har yozuv avval outbox'ga yoziladi
+//   (GPS yoki internet holatidan qat'i nazar), so'ng yuborishga urinadi.
+//   Yuborish endi yig'ishni hech qachon bloklamaydi.
+// - GPS-DAN MUSTAQIL: yig'ish konveyeri location-service/permission darvozasi
+//   ortida EMAS. GPS o'chiq bo'lsa "lokatsiyasiz heartbeat" (null koordinata +
+//   oxirgi ma'lum joylashuv + batareya/tarmoq/qurilma) yoziladi.
+// - BATAREYA-TEJAMKOR: asosiy pozitsiya manbai distanceFilter'li position
+//   stream (OS tomonidan batch qilinadi) — har tick'da yuqori-aniqlikdagi
+//   `getCurrentPosition` polling QILINMAYDI.
+// - GPS AUTO-REARM: `getServiceStatusStream()` orqali GPS yoqilganda stream
+//   avtomatik tiklanadi.
+// - DURABLE: SharedPreferences JSON navbat o'rniga sqflite outbox (idempotency,
+//   backoff, 4xx/5xx/401 klassifikatsiya — `TelemetryDispatcher`).
 //
-// Endpoint: POST {V2}/api/mobile/v1/telemetry/pings/
+// Endpoint: POST {V2}/api/mobile/v1/telemetry/pings/  (dispatcher orqali)
 // =============================================================================
 
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
+// `ServiceStatus` is exported by both geolocator and permission_handler — we
+// want geolocator's (location-service on/off), so hide the permission_handler one.
+import 'package:permission_handler/permission_handler.dart' hide ServiceStatus;
+import 'package:uuid/uuid.dart';
 
-import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/background_location/foreground_service_keeper.dart';
 import 'package:gloria_marketing_flutter/src/core/services/background_location/helpers/device_data_collector.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/outbox/telemetry_dispatcher.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/outbox/telemetry_outbox_entry.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/outbox/telemetry_outbox_repository.dart';
+import 'package:gloria_marketing_flutter/src/core/services/local_uuid_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/device_registration_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/rest_logging.dart';
-import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/models/telemetry_accepted_response.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/models/telemetry_ping_request.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/models/tracking_policy.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/models/tracking_policy_envelope.dart';
 import 'package:gloria_marketing_flutter/src/core/services/telemetry_v2/tracking_policy_service.dart';
-import 'package:gloria_marketing_flutter/src/core/services/token_service.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/infra/sync/connectivity_listener.dart';
 
-/// Why background tracking is not running. Persisted to SharedPrefs
-/// (`_lastFailureKey`) so debug/diagnostic UI can surface a concrete
-/// reason to the user instead of "silently broken".
+/// Why background tracking is degraded / not collecting fixes. Persisted to
+/// SharedPrefs (`_lastFailureKey`) so diagnostic UI can surface a concrete
+/// reason. NOTE: with the new collect-first design these are no longer
+/// "fatal" — collection (heartbeat) continues even when a fresh GPS fix is
+/// unavailable; the reason only explains why coordinates may be missing.
 enum BackgroundLocationFailureReason {
   none,
   locationServiceDisabled,
@@ -58,82 +72,66 @@ class BackgroundLocationTrackingService {
   // CONSTANTS
   // ===========================================================================
 
-  /// Telemetry pings endpoint (yangi server).
-  static const String _telemetryEndpoint = '/api/mobile/v1/telemetry/pings/';
-
-  /// Default interval — server policy yo'q bo'lganda yoki keluvchi qiymat 0 bo'lsa.
   static const int _defaultIntervalSeconds = 60;
-
-  /// Minimum interval — juda tez-tez so'rov yuborilmasligi uchun.
   static const int _minIntervalSeconds = 10;
-
-  /// Policyni qayta yuklash chastotasi (foreground yoki resume da).
   static const Duration _policyRefreshInterval = Duration(minutes: 15);
 
-  /// V2 offline queue keyi (yangi format — TelemetryPingRequest JSON).
-  static const String _offlineQueueKey = 'background_location_v2_offline_queue';
-
-  /// Maksimal queue hajmi — undan oshsa eng eski yozuvlar tushib qoladi.
-  static const int _offlineQueueMaxSize = 1000;
-
-  /// Bir batch'da yuboriladigan maksimum yozuv.
-  static const int _batchUploadMaxSize = 100;
-
-  static const String _lastLocationUpdateKey = 'background_location_v2_last_update';
-  static const String _trackingEnabledKey = 'background_location_tracking_enabled';
-
-  /// Last user-facing failure reason. UI (debug screens / diagnostics)
-  /// can read this to explain *why* tracking is silent. Cleared on
-  /// each successful ping.
+  static const String _lastLocationUpdateKey =
+      'background_location_v2_last_update';
+  static const String _trackingEnabledKey =
+      'background_location_tracking_enabled';
   static const String _lastFailureKey = 'background_location_last_failure';
   static const String _lastFailureAtKey = 'background_location_last_failure_at';
+
+  /// Legacy SharedPreferences queue key — drained into the sqflite outbox once
+  /// on first run after the upgrade, then removed (no data left behind).
+  static const String _legacyOfflineQueueKey =
+      'background_location_v2_offline_queue';
+
+  /// How long a cached position is still acceptable as the "current" fix before
+  /// we treat it as stale (a heartbeat with `location_source=last_known`).
+  static const Duration _positionFreshness = Duration(minutes: 2);
 
   // ===========================================================================
   // DEPENDENCIES
   // ===========================================================================
 
   final SharedPreferencesService _prefs;
-  final TokenService _tokenService;
-  // dbService eski sales_req_permissions fallback uchun saqlanadi.
-  // Yangi serverdan policy kelmasa, eski jadvaldan interval o'qiladi.
-  // ignore: unused_field
-  final ApiDatabaseService _dbService;
   final TrackingPolicyService _policyService;
   final DeviceRegistrationService _deviceRegistrationService;
+  final TelemetryOutboxRepository _outbox;
+  final TelemetryDispatcher _dispatcher;
+  final LocalUuidService _uuidService;
+  final ConnectivityListener _connectivity;
   final DeviceDataCollector _deviceDataCollector = DeviceDataCollector();
-  final Connectivity _connectivity = Connectivity();
-  final Dio _dio;
   final ForegroundServiceKeeper _foregroundKeeper = ForegroundServiceKeeper();
+  final Uuid _uuid = const Uuid();
 
   // ===========================================================================
   // STATE
   // ===========================================================================
 
-  Timer? _locationTimer;
+  Timer? _collectTimer;
   Timer? _policyTimer;
   StreamSubscription<Position>? _positionStream;
-  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  StreamSubscription<bool>? _connectivitySub;
+  StreamSubscription<ServiceStatus>? _serviceStatusSub;
 
   bool _isInitialized = false;
   bool _isTrackingActive = false;
 
   int _currentIntervalSeconds = _defaultIntervalSeconds;
   Position? _lastPosition;
-  Position? _lastSentPosition;
+  DateTime? _lastPositionAt;
 
-  /// Cached app info — payload yasashda ishlatiladi.
   PackageInfo? _packageInfo;
 
-  /// Offline queue (RAM) — SharedPreferences bilan sinxronlanadi.
-  List<TelemetryPingRequest> _offlineQueue = [];
+  /// Guards against overlapping collect ticks.
+  bool _isCollecting = false;
 
-  /// Parallel uploadlarni oldini olish uchun mutex bayrog'i.
-  bool _isSending = false;
+  /// Cached pending count for the (sync) diagnostics getter.
+  int _lastKnownQueueSize = 0;
 
-  /// "Permission yo'q" log'i bir martagina chiqsin — `startTracking()`
-  /// app lifecycle'dan har resume'da chaqiriladi, va permission
-  /// hali ham yo'q bo'lsa har safar bir xil satrni bosish faqat
-  /// logni shovqinga to'ldiradi.
   bool _loggedPermissionMissing = false;
 
   // ===========================================================================
@@ -142,22 +140,19 @@ class BackgroundLocationTrackingService {
 
   BackgroundLocationTrackingService({
     required SharedPreferencesService prefs,
-    required TokenService tokenService,
-    required ApiDatabaseService dbService,
     required TrackingPolicyService policyService,
     required DeviceRegistrationService deviceRegistrationService,
-    Dio? dio,
+    required TelemetryOutboxRepository outbox,
+    required TelemetryDispatcher dispatcher,
+    required LocalUuidService uuidService,
+    required ConnectivityListener connectivity,
   })  : _prefs = prefs,
-        _tokenService = tokenService,
-        _dbService = dbService,
         _policyService = policyService,
         _deviceRegistrationService = deviceRegistrationService,
-        _dio = dio ?? Dio() {
-    _dio.options.connectTimeout = const Duration(seconds: 30);
-    _dio.options.sendTimeout = const Duration(seconds: 30);
-    _dio.options.receiveTimeout = const Duration(seconds: 30);
-    attachRestLogger(_dio, 'TELEMETRY');
-  }
+        _outbox = outbox,
+        _dispatcher = dispatcher,
+        _uuidService = uuidService,
+        _connectivity = connectivity;
 
   // ===========================================================================
   // PUBLIC GETTERS (backward-compatible)
@@ -165,7 +160,14 @@ class BackgroundLocationTrackingService {
 
   bool get isTrackingActive => _isTrackingActive;
   int get currentIntervalSeconds => _currentIntervalSeconds;
-  int get offlineQueueSize => _offlineQueue.length;
+
+  /// Cached pending-row count. Kept for diagnostic UI backward compat; the
+  /// authoritative source is now [TelemetryOutboxRepository.countByStatus].
+  int get offlineQueueSize => _lastKnownQueueSize;
+
+  String? get lastFailureReason =>
+      _prefs.preferences.getString(_lastFailureKey);
+  String? get lastFailureAt => _prefs.preferences.getString(_lastFailureAtKey);
 
   // ===========================================================================
   // INITIALIZATION
@@ -176,16 +178,10 @@ class BackgroundLocationTrackingService {
       if (_isInitialized) return true;
 
       if (kDebugMode) {
-        print('═══════════════════════════════════════════════════════════════');
-        print('BackgroundLocationTrackingService: Initializing (V2)...');
-        print('═══════════════════════════════════════════════════════════════');
+        print('BackgroundLocationTrackingService: Initializing (V2, outbox)...');
       }
 
-      await _loadOfflineQueue();
-      _setupConnectivityListener();
-
-      // Cached policyni yuklash (offline-first). Tarmoq bor bo'lsa
-      // startTracking() ichida yangi policy fetch qilinadi.
+      // Cached policy (offline-first).
       final cachedEnvelope = await _policyService.loadFromCache();
       if (cachedEnvelope != null) {
         _applyPolicyInterval(cachedEnvelope.policy);
@@ -197,10 +193,32 @@ class BackgroundLocationTrackingService {
         _packageInfo = null;
       }
 
-      _isInitialized = true;
+      // One-time migration of the legacy SharedPreferences queue → outbox so no
+      // previously-collected ping is lost across the upgrade.
+      await _migrateLegacyQueue();
 
+      // Reactive flush on connectivity regained (uses distinct() so we only
+      // fire on real transitions). Independent of GPS state.
+      _connectivitySub?.cancel();
+      _connectivitySub = _connectivity.watch().listen((online) {
+        if (online) {
+          // ignore: unawaited_futures
+          _drain();
+        }
+      });
+
+      // Initial-state flush: connectivity_plus' stream only emits on CHANGE, so
+      // a relaunch that is already online would never wake the listener. Kick a
+      // drain here, independent of the GPS gate.
+      if (await _connectivity.isOnline) {
+        // ignore: unawaited_futures
+        _drain();
+      }
+
+      _isInitialized = true;
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: Initialized. interval=$_currentIntervalSeconds s, queue=${_offlineQueue.length}');
+        print('BackgroundLocationTrackingService: Initialized. '
+            'interval=$_currentIntervalSeconds s');
       }
       return true;
     } catch (e, st) {
@@ -211,20 +229,51 @@ class BackgroundLocationTrackingService {
     }
   }
 
-  void _setupConnectivityListener() {
-    _connectivitySubscription?.cancel();
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
-      _onConnectivityChanged,
-    );
-  }
-
-  void _onConnectivityChanged(List<ConnectivityResult> results) {
-    final isConnected = results.any((r) => r != ConnectivityResult.none);
-    if (kDebugMode) {
-      print('BackgroundLocationTrackingService: Connectivity changed connected=$isConnected');
-    }
-    if (isConnected && _offlineQueue.isNotEmpty) {
-      _sendOfflineQueue();
+  Future<void> _migrateLegacyQueue() async {
+    try {
+      final raw = _prefs.preferences.getString(_legacyOfflineQueueKey);
+      if (raw == null || raw.isEmpty) return;
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        final now = DateTime.now();
+        for (final item in decoded.whereType<Map>()) {
+          final payload = Map<String, dynamic>.from(item);
+          final pingId = _uuid.v4();
+          payload['metadata'] = <String, dynamic>{
+            ...?(payload['metadata'] as Map?)?.cast<String, dynamic>(),
+            'idempotency_key': pingId,
+            'migrated_from': 'sharedprefs_v2',
+          };
+          DateTime loggedAt = now;
+          final la = payload['logged_at'];
+          if (la is String) {
+            try {
+              loggedAt = DateTime.parse(la);
+            } catch (_) {}
+          }
+          await _outbox.enqueue(TelemetryOutboxEntry(
+            pingId: pingId,
+            payloadJson: jsonEncode(payload),
+            clientUuid: await _safeClientUuid(),
+            idempotencyKey: pingId,
+            status: TelemetryOutboxEntry.statusPending,
+            attempts: 0,
+            maxAttempts: 12,
+            nextAttemptAt: now,
+            loggedAt: loggedAt,
+            createdAt: now,
+            updatedAt: now,
+          ));
+        }
+      }
+      await _prefs.preferences.remove(_legacyOfflineQueueKey);
+      if (kDebugMode) {
+        print('BackgroundLocationTrackingService: migrated legacy queue → outbox');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('BackgroundLocationTrackingService: legacy migration error: $e');
+      }
     }
   }
 
@@ -238,61 +287,69 @@ class BackgroundLocationTrackingService {
         final ok = await initialize();
         if (!ok) return false;
       }
-      if (_isTrackingActive) return true;
+      if (_isTrackingActive) {
+        // Already running — still kick a drain in case a backlog accumulated.
+        // ignore: unawaited_futures
+        _drain();
+        return true;
+      }
 
-      final permissionReason = await _checkLocationPermission();
-      if (permissionReason != BackgroundLocationFailureReason.none) {
-        await _recordFailure(permissionReason);
+      // Diagnostics only — NEVER gates collection (collect-first design).
+      final reason = await _checkLocationPermission();
+      if (reason != BackgroundLocationFailureReason.none) {
+        await _recordFailure(reason);
         if (kDebugMode && !_loggedPermissionMissing) {
           _loggedPermissionMissing = true;
-          print('BackgroundLocationTrackingService: tracking blocked → '
-              '${permissionReason.name} (silenced for subsequent resumes — '
-              'grant the missing permission via Settings to retry)');
+          print('BackgroundLocationTrackingService: degraded → ${reason.name} '
+              '(collection continues in heartbeat mode; fixes resume when '
+              'GPS/permission is available)');
         }
-        return false;
+      } else {
+        _loggedPermissionMissing = false;
+        await _clearFailure();
       }
-      // Permission granted now — reset the gate so a later loss is
-      // logged again, and clear any prior failure marker.
-      _loggedPermissionMissing = false;
-      await _clearFailure();
 
-      // Policy va device registration'ni parallel chaqirish.
-      // Failure-tolerant — yangi server hali tayyor bo'lmasligi mumkin.
+      // Policy + device registration (failure-tolerant).
       // ignore: unawaited_futures
       _refreshPolicy();
       // ignore: unawaited_futures
       _deviceRegistrationService.register();
 
-      // Birinchi ping (policy va token mavjud bo'lsa darhol yuboradi).
-      await _updateAndSendLocation();
-
-      _startLocationTimer();
-      _startPositionStream();
-      _startPolicyTimer();
-
-      // Kick the Android foreground service so the OS keeps our
-      // process alive while the app is in the background. iOS is
-      // a no-op (background mode is declared in Info.plist).
-      // ignore: unawaited_futures
-      _foregroundKeeper.start();
-
-      // Drain any pings that were queued by a previous session and
-      // never made it out. `connectivity_plus` only fires for state
-      // *changes*, so if the app restarts with network already up
-      // the listener would never wake — the queue would sit there
-      // until the next wifi/4G toggle. Kicking the flush here on
-      // every startup closes that gap. Fire-and-forget: the shared
-      // `_isSending` mutex serialises it against the timer ticks.
-      if (_offlineQueue.isNotEmpty) {
-        // ignore: unawaited_futures
-        _sendOfflineQueue();
+      // Position stream — only when the OS can actually deliver fixes. Heartbeat
+      // collection runs regardless.
+      final canFix = reason == BackgroundLocationFailureReason.none;
+      if (canFix) {
+        _startPositionStream();
       }
 
-      await _prefs.preferences.setBool(_trackingEnabledKey, true);
+      // Auto-rearm: react to the OS location toggle so we don't depend on an
+      // app resume to recover fixes (audit O1/O7).
+      _startServiceStatusListener();
+
+      // Foreground service keeps the process (and our timer) alive in the
+      // background — as long as we at least have foreground location permission.
+      if (reason == BackgroundLocationFailureReason.none ||
+          reason == BackgroundLocationFailureReason.locationServiceDisabled ||
+          reason == BackgroundLocationFailureReason.backgroundPermissionMissing) {
+        // ignore: unawaited_futures
+        _foregroundKeeper.start();
+      }
+
+      _startCollectTimer();
+      _startPolicyTimer();
+
       _isTrackingActive = true;
+      await _prefs.preferences.setBool(_trackingEnabledKey, true);
+
+      // Immediate first tick + drain any backlog.
+      // ignore: unawaited_futures
+      _collectTick();
+      // ignore: unawaited_futures
+      _drain();
 
       if (kDebugMode) {
-        print('BackgroundLocationTrackingService: tracking started');
+        print('BackgroundLocationTrackingService: tracking started '
+            '(canFix=$canFix)');
       }
       return true;
     } catch (e, st) {
@@ -305,16 +362,17 @@ class BackgroundLocationTrackingService {
 
   Future<void> stopTracking() async {
     try {
-      _locationTimer?.cancel();
-      _locationTimer = null;
+      _collectTimer?.cancel();
+      _collectTimer = null;
       _policyTimer?.cancel();
       _policyTimer = null;
       await _positionStream?.cancel();
       _positionStream = null;
+      await _serviceStatusSub?.cancel();
+      _serviceStatusSub = null;
       await _foregroundKeeper.stop();
       await _prefs.preferences.setBool(_trackingEnabledKey, false);
       _isTrackingActive = false;
-
       if (kDebugMode) {
         print('BackgroundLocationTrackingService: tracking stopped');
       }
@@ -327,15 +385,17 @@ class BackgroundLocationTrackingService {
 
   Future<void> dispose() async {
     try {
-      _locationTimer?.cancel();
+      _collectTimer?.cancel();
       _policyTimer?.cancel();
       await _positionStream?.cancel();
-      await _connectivitySubscription?.cancel();
+      await _connectivitySub?.cancel();
+      await _serviceStatusSub?.cancel();
       await _foregroundKeeper.stop();
-      _locationTimer = null;
+      _collectTimer = null;
       _policyTimer = null;
       _positionStream = null;
-      _connectivitySubscription = null;
+      _connectivitySub = null;
+      _serviceStatusSub = null;
       _isInitialized = false;
       _isTrackingActive = false;
     } catch (e) {
@@ -346,26 +406,9 @@ class BackgroundLocationTrackingService {
   }
 
   // ===========================================================================
-  // PERMISSION
+  // PERMISSION (diagnostics only — does NOT gate collection)
   // ===========================================================================
 
-  /// Read-only permission check used by [startTracking].
-  ///
-  /// Returns the *specific* failure reason instead of a bare bool so
-  /// callers (and diagnostic UI via [getDebugInfo] / SharedPrefs)
-  /// can explain to the user why background tracking is silent.
-  ///
-  /// IMPORTANT: this method must NEVER call `Geolocator.requestPermission()`
-  /// or `Permission.locationAlways.request()`. `startTracking()` is
-  /// invoked automatically from the app lifecycle observer on every
-  /// `AppLifecycleState.resumed` — popping an OS permission dialog
-  /// there sends the app back to `inactive` while the dialog is
-  /// visible, which fires `resumed` again as soon as it is dismissed,
-  /// and we're in a hard loop.
-  ///
-  /// Permission *requests* happen in explicit, user-driven flows
-  /// (PermissionGate / PermissionManager / LocationManager). Here we
-  /// only observe whether tracking is allowed right now.
   Future<BackgroundLocationFailureReason> _checkLocationPermission() async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -378,27 +421,14 @@ class BackgroundLocationTrackingService {
       if (!hasForeground) {
         return BackgroundLocationFailureReason.foregroundPermissionMissing;
       }
-      // Even with `whileInUse` granted, Android 10+ requires
-      // `ACCESS_BACKGROUND_LOCATION` ("Allow all the time") for the
-      // location updates to keep flowing once the app leaves the
-      // foreground. permission_handler exposes this as
-      // `Permission.locationAlways`. We only treat it as a *warning*
-      // (return missing reason) on Android — on iOS, `whileInUse`
-      // is functionally equivalent to `Always` for our use case
-      // because the iOS foreground service / background mode handles
-      // it differently and `Geolocator.checkPermission()` already
-      // reflected the right tier above.
       if (permission != LocationPermission.always) {
         try {
           final bg = await Permission.locationAlways.status;
           if (!bg.isGranted) {
-            return BackgroundLocationFailureReason
-                .backgroundPermissionMissing;
+            return BackgroundLocationFailureReason.backgroundPermissionMissing;
           }
         } catch (_) {
-          // permission_handler may not be available on every
-          // platform (web/desktop) — fall through and accept the
-          // whileInUse-only state.
+          // permission_handler unavailable on this platform — accept whileInUse.
         }
       }
       return BackgroundLocationFailureReason.none;
@@ -411,64 +441,49 @@ class BackgroundLocationTrackingService {
   // FAILURE DIAGNOSTICS
   // ===========================================================================
 
-  /// Last known reason tracking failed to start / send. Read by
-  /// diagnostic UI. Empty if tracking is running normally.
-  String? get lastFailureReason =>
-      _prefs.preferences.getString(_lastFailureKey);
-  String? get lastFailureAt =>
-      _prefs.preferences.getString(_lastFailureAtKey);
-
   Future<void> _recordFailure(BackgroundLocationFailureReason reason) async {
     try {
       await _prefs.preferences.setString(_lastFailureKey, reason.name);
-      await _prefs.preferences.setString(
-        _lastFailureAtKey,
-        DateTime.now().toIso8601String(),
-      );
-    } catch (_) {
-      // Best-effort: never let diagnostics break the tracking path.
-    }
+      await _prefs.preferences
+          .setString(_lastFailureAtKey, DateTime.now().toIso8601String());
+    } catch (_) {}
   }
 
   Future<void> _clearFailure() async {
     try {
-      final existing = _prefs.preferences.getString(_lastFailureKey);
-      if (existing == null) return;
+      if (_prefs.preferences.getString(_lastFailureKey) == null) return;
       await _prefs.preferences.remove(_lastFailureKey);
       await _prefs.preferences.remove(_lastFailureAtKey);
     } catch (_) {}
   }
 
   // ===========================================================================
-  // TIMERS
+  // TIMERS & STREAMS
   // ===========================================================================
 
-  void _startLocationTimer() {
-    _locationTimer?.cancel();
-    _locationTimer = Timer.periodic(
+  void _startCollectTimer() {
+    _collectTimer?.cancel();
+    _collectTimer = Timer.periodic(
       Duration(seconds: _currentIntervalSeconds),
-      (_) => _updateAndSendLocation(),
+      (_) => _collectTick(),
     );
-    if (kDebugMode) {
-      print('BackgroundLocationTrackingService: location timer started ${_currentIntervalSeconds}s');
-    }
   }
 
   void _startPolicyTimer() {
     _policyTimer?.cancel();
-    _policyTimer = Timer.periodic(_policyRefreshInterval, (_) => _refreshPolicy());
+    _policyTimer =
+        Timer.periodic(_policyRefreshInterval, (_) => _refreshPolicy());
   }
 
   void _startPositionStream() {
     _positionStream?.cancel();
+    final policy = _policyService.cached?.policy;
     _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 50,
-      ),
+      locationSettings: _streamSettings(policy),
     ).listen(
-      (Position position) {
+      (position) {
         _lastPosition = position;
+        _lastPositionAt = DateTime.now();
       },
       onError: (e) {
         if (kDebugMode) {
@@ -476,6 +491,52 @@ class BackgroundLocationTrackingService {
         }
       },
     );
+  }
+
+  void _startServiceStatusListener() {
+    _serviceStatusSub?.cancel();
+    try {
+      _serviceStatusSub = Geolocator.getServiceStatusStream().listen((status) {
+        if (status == ServiceStatus.enabled) {
+          if (kDebugMode) {
+            print('BackgroundLocationTrackingService: GPS enabled → rearming '
+                'position stream');
+          }
+          _clearFailure();
+          _startPositionStream();
+          // ignore: unawaited_futures
+          _drain();
+        } else {
+          // GPS turned off — stop the stream to save battery. Heartbeat
+          // collection continues via the timer.
+          // ignore: unawaited_futures
+          _positionStream?.cancel();
+          _positionStream = null;
+          _recordFailure(BackgroundLocationFailureReason.locationServiceDisabled);
+        }
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('BackgroundLocationTrackingService: serviceStatusStream '
+            'unavailable: $e');
+      }
+    }
+  }
+
+  /// Battery-friendly stream settings derived from the server policy. The OS
+  /// batches updates and only wakes us when the device moves >= distanceFilter,
+  /// which is far cheaper than per-tick high-accuracy polling.
+  LocationSettings _streamSettings(TrackingPolicy? policy) {
+    final minAcc = policy?.gpsMinAccuracyMeters ?? 0;
+    final LocationAccuracy accuracy;
+    if (minAcc > 0 && minAcc <= 20) {
+      accuracy = LocationAccuracy.high;
+    } else {
+      accuracy = LocationAccuracy.medium; // default: battery-friendly
+    }
+    final minDist = policy?.gpsMinDistanceMeters ?? 0;
+    final distanceFilter = minDist > 0 ? minDist.round() : 0;
+    return LocationSettings(accuracy: accuracy, distanceFilter: distanceFilter);
   }
 
   Future<void> _refreshPolicy() async {
@@ -493,176 +554,157 @@ class BackgroundLocationTrackingService {
 
   void _applyPolicyInterval(TrackingPolicy policy) {
     final raw = policy.gpsIntervalSeconds;
-    if (raw <= 0) return; // policy kelgan, lekin interval belgilanmagan
+    if (raw <= 0) return;
     final clamped = raw < _minIntervalSeconds ? _minIntervalSeconds : raw;
     if (clamped == _currentIntervalSeconds) return;
     _currentIntervalSeconds = clamped;
     if (_isTrackingActive) {
-      _startLocationTimer();
-    }
-    if (kDebugMode) {
-      print('BackgroundLocationTrackingService: applied interval $_currentIntervalSeconds s');
+      _startCollectTimer();
+      // Re-tune the stream's distanceFilter/accuracy too.
+      if (_positionStream != null) _startPositionStream();
     }
   }
 
   // ===========================================================================
-  // LOCATION UPDATE & SEND
+  // COLLECTION (collect-first → enqueue → drain)
   // ===========================================================================
 
-  Future<void> _updateAndSendLocation() async {
-    if (_isSending) return;
-    _isSending = true;
+  Future<void> _collectTick() async {
+    if (_isCollecting) return;
+    _isCollecting = true;
     try {
-      // Step 0: read policy from RAM cache (no network).
-      //
-      // When no cached policy exists at all — e.g. first launch with
-      // the server unreachable — we fall back to a SAFE_DEFAULT
-      // policy (gps enabled, 60s interval) instead of DEFAULT_OFF.
-      // Otherwise a flaky policy endpoint silently disables tracking
-      // forever on devices that never managed a successful fetch.
-      // The first successful policy refresh replaces this fallback.
       final envelope =
           _policyService.cached ?? TrackingPolicyEnvelope.safeDefault();
       final policy = envelope.policy;
-      final cacheStatus = _policyService.cached == null
-          ? 'SAFE_DEFAULT (no cache — will retry policy fetch)'
-          : 'CACHED';
-      restLog('GPS', '┌─ tick @ ${DateTime.now().toIso8601String()}');
-      restLog('GPS', '│ policy source=$cacheStatus → ${envelope.source.toServerValue()} rev=${envelope.revision}');
-      restLog('GPS', '│ rules: is_active=${policy.isActive} gps_enabled=${policy.gpsEnabled} '
-          'interval=${policy.gpsIntervalSeconds}s '
-          'min_distance=${policy.gpsMinDistanceMeters}m '
-          'min_accuracy=${policy.gpsMinAccuracyMeters}m');
-      restLog('GPS', '│ window: hours=${policy.activeHoursStart ?? "*"}..${policy.activeHoursEnd ?? "*"} '
-          'days=${policy.activeDays.isEmpty ? "[every]" : policy.activeDays}');
 
-      // FILTER 1: gps_enabled + is_active
-      final shouldCollect = _policyService.shouldCollectGps(policy);
-      restLog('GPS', '│ filter[1/5] shouldCollectGps → ${shouldCollect ? "PASS" : "FAIL"}');
-      if (!shouldCollect) {
-        restLog('GPS', '└─ SKIP: policy disabled (is_active=${policy.isActive}, gps_enabled=${policy.gpsEnabled})');
+      // Server-controlled gates (intentional config — honored).
+      if (!_policyService.shouldCollectGps(policy)) {
         await _recordFailure(BackgroundLocationFailureReason.policyDisabled);
         return;
       }
-
-      // FILTER 2: active_hours
       final now = DateTime.now();
-      final hoursOk = _policyService.isWithinActiveHours(policy, now);
-      final nowHm = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-      restLog('GPS', '│ filter[2/5] isWithinActiveHours (now=$nowHm) → ${hoursOk ? "PASS" : "FAIL"}');
-      if (!hoursOk) {
-        restLog('GPS', '└─ SKIP: outside active hours ${policy.activeHoursStart}..${policy.activeHoursEnd}');
-        return;
-      }
+      if (!_policyService.isWithinActiveHours(policy, now)) return;
+      if (!_policyService.isWithinActiveDays(policy, now)) return;
 
-      // FILTER 3: active_days
-      final daysOk = _policyService.isWithinActiveDays(policy, now);
-      const dayCodes = ['mon','tue','wed','thu','fri','sat','sun'];
-      final todayCode = dayCodes[(now.weekday - 1).clamp(0, 6)];
-      restLog('GPS', '│ filter[3/5] isWithinActiveDays (today=$todayCode) → ${daysOk ? "PASS" : "FAIL"}');
-      if (!daysOk) {
-        restLog('GPS', '└─ SKIP: today=$todayCode not in ${policy.activeDays}');
-        return;
-      }
-
-      // GPS request
-      restLog('GPS', '│ requesting fresh position (high-accuracy, 15s timeout)');
-      final position = await _getCurrentPosition();
+      // Resolve the best available position WITHOUT a blocking high-accuracy
+      // request: prefer the fresh streamed fix, fall back to the OS last-known
+      // cache. If neither exists we still emit a heartbeat (collect-always).
+      Position? position = _freshStreamPosition();
+      String locationSource = 'gps';
       if (position == null) {
-        restLog('GPS', '└─ no position obtained (Geolocator returned null and no cached fallback)');
-        return;
-      }
-      restLog('GPS', '│ got position lat=${position.latitude.toStringAsFixed(6)} '
-          'lng=${position.longitude.toStringAsFixed(6)} '
-          'acc=${position.accuracy.toStringAsFixed(1)}m '
-          'alt=${position.altitude.toStringAsFixed(1)}m '
-          'speed=${position.speed.toStringAsFixed(2)}m/s '
-          'heading=${position.heading.toStringAsFixed(1)}°');
-      _lastPosition = position;
-
-      // FILTER 4: gps_min_accuracy_meters
-      final accOk = _policyService.isAccuracyAcceptable(policy, position.accuracy);
-      restLog('GPS', '│ filter[4/5] isAccuracyAcceptable '
-          '(${position.accuracy.toStringAsFixed(1)}m vs limit ${policy.gpsMinAccuracyMeters}m) → ${accOk ? "PASS" : "FAIL"}');
-      if (!accOk) {
-        restLog('GPS', '└─ DROP: accuracy ${position.accuracy.toStringAsFixed(1)}m > ${policy.gpsMinAccuracyMeters}m');
-        return;
-      }
-
-      // FILTER 5: gps_min_distance_meters
-      final distOk = _policyService.isDistanceAcceptable(policy, _lastSentPosition, position);
-      final delta = _lastSentPosition == null
-          ? 'n/a (first fix)'
-          : '${Geolocator.distanceBetween(_lastSentPosition!.latitude, _lastSentPosition!.longitude, position.latitude, position.longitude).toStringAsFixed(1)}m';
-      restLog('GPS', '│ filter[5/5] isDistanceAcceptable '
-          '(moved=$delta vs min ${policy.gpsMinDistanceMeters}m) → ${distOk ? "PASS" : "FAIL"}');
-      if (!distOk) {
-        restLog('GPS', '└─ DROP: moved $delta < ${policy.gpsMinDistanceMeters}m');
-        return;
-      }
-      restLog('GPS', '│ ALL FILTERS PASSED → building telemetry payload');
-
-      // Build payload
-      restLog('GPS', '│ collect flags: device=${policy.collectDeviceInfo} '
-          'battery=${policy.collectBattery} network=${policy.collectNetwork} sensors=${policy.collectSensors}');
-      final ping = await _buildTelemetryPing(position, policy);
-      restLog('GPS', '│ payload fields=${ping.toJson().length} → POST telemetry');
-
-      final ok = await _sendSinglePing(ping);
-      if (ok) {
-        _lastSentPosition = position;
-        restLog('GPS', '└─ SENT ✅ server accepted ping');
+        try {
+          position = await Geolocator.getLastKnownPosition();
+        } catch (_) {
+          position = null;
+        }
+        locationSource = position != null ? 'last_known' : 'none';
       } else {
-        await _addToOfflineQueue(ping);
-        restLog('GPS', '└─ FAIL ⚠️ queued offline (size=${_offlineQueue.length})');
+        _lastPosition = position;
       }
 
-      await _prefs.preferences.setString(
-        _lastLocationUpdateKey,
-        DateTime.now().toIso8601String(),
+      final ping = await _buildPing(
+        position: position,
+        policy: policy,
+        locationSource: locationSource,
       );
+
+      await _enqueue(ping, loggedAt: ping.loggedAt ?? now);
+      await _prefs.preferences
+          .setString(_lastLocationUpdateKey, now.toIso8601String());
+
+      // Send-if-online (non-blocking for collection).
+      // ignore: unawaited_futures
+      _drain();
     } catch (e, st) {
-      restLog('GPS', 'ERROR _updateAndSendLocation: $e\n$st');
+      restLog('GPS', 'ERROR _collectTick: $e\n$st');
     } finally {
-      _isSending = false;
+      _isCollecting = false;
     }
   }
 
-  Future<Position?> _getCurrentPosition() async {
+  Position? _freshStreamPosition() {
+    final p = _lastPosition;
+    final at = _lastPositionAt;
+    if (p == null || at == null) return null;
+    if (DateTime.now().difference(at) > _positionFreshness) return null;
+    return p;
+  }
+
+  Future<void> _enqueue(TelemetryPingRequest ping, {required DateTime loggedAt}) async {
+    final pingId = _uuid.v4();
+    final clientUuid = await _safeClientUuid();
+    final payload = ping.toJson();
+    // Embed idempotency + client uuid so the server can dedup replays.
+    final meta = <String, dynamic>{
+      ...?ping.metadata,
+      'idempotency_key': pingId,
+      'client_uuid': clientUuid,
+    };
+    payload['metadata'] = meta;
+
+    final now = DateTime.now();
+    await _outbox.enqueue(TelemetryOutboxEntry(
+      pingId: pingId,
+      payloadJson: jsonEncode(payload),
+      clientUuid: clientUuid,
+      idempotencyKey: pingId,
+      status: TelemetryOutboxEntry.statusPending,
+      attempts: 0,
+      maxAttempts: 12,
+      nextAttemptAt: now,
+      loggedAt: loggedAt,
+      createdAt: now,
+      updatedAt: now,
+    ));
+    _lastKnownQueueSize++;
+  }
+
+  Future<void> _drain() async {
     try {
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 15),
-        ),
-      );
-    } catch (e) {
-      restLog('GPS', 'getCurrentPosition error: $e (falling back to last cached)');
-      return _lastPosition;
+      await _dispatcher.cycle();
+    } catch (_) {
+    } finally {
+      // Refresh cached count for diagnostics (best-effort).
+      try {
+        final counts = await _outbox.countByStatus();
+        _lastKnownQueueSize = (counts[TelemetryOutboxEntry.statusPending] ?? 0) +
+            (counts[TelemetryOutboxEntry.statusRetrying] ?? 0) +
+            (counts[TelemetryOutboxEntry.statusInFlight] ?? 0);
+      } catch (_) {}
     }
   }
 
-  Future<TelemetryPingRequest> _buildTelemetryPing(
-    Position position,
-    TrackingPolicy policy,
-  ) async {
+  Future<String> _safeClientUuid() async {
+    try {
+      return await _uuidService.getOrCreateLocalUuid();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  // ===========================================================================
+  // PAYLOAD
+  // ===========================================================================
+
+  Future<TelemetryPingRequest> _buildPing({
+    required Position? position,
+    required TrackingPolicy policy,
+    required String locationSource,
+  }) async {
     final agentCode = _prefs.getUserCode() ?? '';
     final agentName = _prefs.getUserName();
-    final agentPhone = _prefs.getTelegramID();    // best-effort: stored phone-like ID
-    final region = _prefs.getServerName();         // server/region name (best-effort)
+    final agentPhone = _prefs.getTelegramID();
+    final region = _prefs.getServerName();
     final deviceData = await _deviceDataCollector.collectAllData();
     final pkg = _packageInfo ?? await _safePackageInfo();
 
-    final lat = position.latitude.toStringAsFixed(6);
-    final lng = position.longitude.toStringAsFixed(6);
-
     String? toFixedString(double? v, int n) => v?.toStringAsFixed(n);
 
-    String? batteryLevel;
+    String? batteryLevel,
+        batteryHealth,
+        batteryTemperature,
+        batteryVoltage;
     bool? isCharging;
-    String? batteryHealth;
-    String? batteryTemperature;
-    String? batteryVoltage;
     if (policy.collectBattery) {
       batteryLevel = deviceData['battery_level']?.toString();
       isCharging = deviceData['is_charging'] as bool?;
@@ -671,14 +713,14 @@ class BackgroundLocationTrackingService {
       batteryVoltage = deviceData['battery_voltage']?.toString();
     }
 
-    String? networkType;
-    String? wifiSsid;
-    String? wifiBssid;
-    String? cellularOperator;
-    String? cellularNetworkType;
-    String? ipAddress;
-    String? connectionType;
-    String? signalStrength;
+    String? networkType,
+        wifiSsid,
+        wifiBssid,
+        cellularOperator,
+        cellularNetworkType,
+        ipAddress,
+        connectionType,
+        signalStrength;
     if (policy.collectNetwork) {
       networkType = deviceData['network_type'] as String?;
       wifiSsid = deviceData['wifi_ssid'] as String?;
@@ -690,22 +732,20 @@ class BackgroundLocationTrackingService {
       signalStrength = deviceData['signal_strength']?.toString();
     }
 
-    String? deviceId;
-    String? deviceName;
-    String? deviceManufacturer;
-    String? deviceModel;
-    String? deviceFingerprint;
-    String? platform;
-    String? osVersion;
-    int? screenWidth;
-    int? screenHeight;
-    String? screenDensity;
-    String? appVersion;
-    String? appBuildNumber;
-    bool? isRooted;
-    bool? isJailbroken;
-    bool? encryptionEnabled;
-    String? screenLockType;
+    String? deviceId,
+        deviceName,
+        deviceManufacturer,
+        deviceModel,
+        deviceFingerprint,
+        platform,
+        osVersion,
+        screenDensity,
+        appVersion,
+        appBuildNumber,
+        screenLockType;
+    int? screenWidth, screenHeight, ramTotal, ramAvailable, storageTotal, storageAvailable;
+    bool? cameraFront, cameraBack, isRooted, isJailbroken, encryptionEnabled;
+    String? cameraResolution;
     if (policy.collectDeviceInfo) {
       deviceId = deviceData['device_id'] as String?;
       deviceName = deviceData['device_name'] as String?;
@@ -723,19 +763,33 @@ class BackgroundLocationTrackingService {
       isJailbroken = deviceData['is_jailbroken'] as bool?;
       encryptionEnabled = deviceData['encryption_enabled'] as bool?;
       screenLockType = deviceData['screen_lock_type'] as String?;
+      ramTotal = deviceData['ram_total'] as int?;
+      ramAvailable = deviceData['ram_available'] as int?;
+      storageTotal = deviceData['storage_total'] as int?;
+      storageAvailable = deviceData['storage_available'] as int?;
+      cameraFront = deviceData['camera_front'] as bool?;
+      cameraBack = deviceData['camera_back'] as bool?;
+      cameraResolution = deviceData['camera_resolution'] as String?;
     } else {
-      // Hatto collect_device_info=false bo'lsa ham device_id va platform ni
-      // jo'natamiz — server LocationPing'ni Device bilan bog'laydi.
+      // Always send device_id + platform so the server links the ping to a Device.
       deviceId = deviceData['device_id'] as String?;
       platform = _normalizePlatform(deviceData['platform'] as String?);
     }
 
-    String? accelerometerX;
-    String? accelerometerY;
-    String? accelerometerZ;
-    String? gyroscopeX;
-    String? gyroscopeY;
-    String? gyroscopeZ;
+    String? accelerometerX,
+        accelerometerY,
+        accelerometerZ,
+        gyroscopeX,
+        gyroscopeY,
+        gyroscopeZ,
+        magnetometerX,
+        magnetometerY,
+        magnetometerZ,
+        proximitySensor,
+        lightSensor,
+        temperature,
+        humidity,
+        pressure;
     if (policy.collectSensors) {
       accelerometerX = deviceData['accelerometer_x']?.toString();
       accelerometerY = deviceData['accelerometer_y']?.toString();
@@ -743,17 +797,6 @@ class BackgroundLocationTrackingService {
       gyroscopeX = deviceData['gyroscope_x']?.toString();
       gyroscopeY = deviceData['gyroscope_y']?.toString();
       gyroscopeZ = deviceData['gyroscope_z']?.toString();
-    }
-
-    String? magnetometerX;
-    String? magnetometerY;
-    String? magnetometerZ;
-    String? proximitySensor;
-    String? lightSensor;
-    String? temperature;
-    String? humidity;
-    String? pressure;
-    if (policy.collectSensors) {
       magnetometerX = deviceData['magnetometer_x']?.toString();
       magnetometerY = deviceData['magnetometer_y']?.toString();
       magnetometerZ = deviceData['magnetometer_z']?.toString();
@@ -764,37 +807,23 @@ class BackgroundLocationTrackingService {
       pressure = deviceData['pressure']?.toString();
     }
 
-    int? ramTotal;
-    int? ramAvailable;
-    int? storageTotal;
-    int? storageAvailable;
-    bool? cameraFront;
-    bool? cameraBack;
-    String? cameraResolution;
-    if (policy.collectDeviceInfo) {
-      ramTotal = deviceData['ram_total'] as int?;
-      ramAvailable = deviceData['ram_available'] as int?;
-      storageTotal = deviceData['storage_total'] as int?;
-      storageAvailable = deviceData['storage_available'] as int?;
-      cameraFront = deviceData['camera_front'] as bool?;
-      cameraBack = deviceData['camera_back'] as bool?;
-      cameraResolution = deviceData['camera_resolution'] as String?;
-    }
-
+    final hasFix = position != null;
     return TelemetryPingRequest(
-      latitude: lat,
-      longitude: lng,
+      latitude: hasFix ? position.latitude.toStringAsFixed(6) : null,
+      longitude: hasFix ? position.longitude.toStringAsFixed(6) : null,
       agentCode: agentCode.isEmpty ? null : agentCode,
       agentName: agentName,
       agentPhone: agentPhone,
       region: region,
       isActive: true,
       isDeleted: false,
-      accuracy: toFixedString(position.accuracy, 2),
-      altitude: toFixedString(position.altitude, 2),
-      speed: toFixedString(position.speed, 2),
-      heading: toFixedString(position.heading, 2),
-      locationProvider: 'geolocator',
+      accuracy: hasFix ? toFixedString(position.accuracy, 2) : null,
+      altitude: hasFix ? toFixedString(position.altitude, 2) : null,
+      speed: hasFix ? toFixedString(position.speed, 2) : null,
+      heading: hasFix ? toFixedString(position.heading, 2) : null,
+      locationProvider: hasFix
+          ? (locationSource == 'last_known' ? 'last_known' : 'geolocator')
+          : 'none',
       timezone: deviceData['timezone'] as String?,
       deviceId: deviceId,
       deviceName: deviceName,
@@ -846,6 +875,11 @@ class BackgroundLocationTrackingService {
       isJailbroken: isJailbroken,
       encryptionEnabled: encryptionEnabled,
       screenLockType: screenLockType,
+      // Heartbeat / staleness flags for the server timeline.
+      metadata: <String, dynamic>{
+        'location_source': locationSource,
+        if (locationSource != 'gps') 'stale_location': true,
+      },
       loggedAt: DateTime.now().toUtc(),
     );
   }
@@ -869,187 +903,28 @@ class BackgroundLocationTrackingService {
   }
 
   // ===========================================================================
-  // API COMMUNICATION
+  // PUBLIC API (backward-compatible)
   // ===========================================================================
 
-  /// Bitta pingni yuborish (single payload).
-  Future<bool> _sendSinglePing(TelemetryPingRequest ping) async {
-    return _postPings([ping], asBatch: false);
-  }
-
-  /// Bir nechta pingni batch sifatida yuborish (`{"pings": [...]}`).
-  Future<bool> _postPings(
-    List<TelemetryPingRequest> pings, {
-    required bool asBatch,
-  }) async {
-    if (pings.isEmpty) return true;
-    try {
-      final token = await _tokenService.ensureValidV2Token();
-      if (token == null || token.isEmpty) {
-        await _recordFailure(BackgroundLocationFailureReason.noToken);
-        // Surface in release builds too — token loss is the single
-        // most common cause of "background tracking is silent",
-        // and `kDebugMode`-gated prints leave production blind.
-        debugPrint(
-          'BackgroundLocationTrackingService: no V2 token — queueing ping. '
-          'User may need to re-login.',
-        );
-        return false;
-      }
-
-      final isConnected = await _deviceDataCollector.isConnectedToInternet();
-      if (!isConnected) {
-        await _recordFailure(BackgroundLocationFailureReason.noNetwork);
-        return false;
-      }
-
-      final url = '${TokenService.v2BaseUrl}$_telemetryEndpoint';
-      final body = asBatch
-          ? <String, dynamic>{'pings': pings.map((p) => p.toJson()).toList()}
-          : pings.first.toJson();
-
-      final response = await _dio.post(
-        url,
-        data: body,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        ),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (response.data is Map) {
-          final parsed = TelemetryAcceptedResponse.fromJson(
-            Map<String, dynamic>.from(response.data as Map),
-          );
-          if (kDebugMode) {
-            print('BackgroundLocationTrackingService: accepted=${parsed.acceptedCount} rejected=${parsed.rejectedCount}');
-            if (parsed.rejected.isNotEmpty) {
-              for (final r in parsed.rejected) {
-                print('  rejected[${r.index}] ${r.reason}');
-              }
-            }
-          }
-        }
-        await _clearFailure();
-        return true;
-      }
-
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: postPings status=${response.statusCode} data=${response.data}');
-      }
-      return false;
-    } on DioException catch (e) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: postPings DioException ${e.type} status=${e.response?.statusCode}');
-      }
-      return false;
-    } catch (e, st) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: postPings error: $e\n$st');
-      }
-      return false;
-    }
-  }
-
-  // ===========================================================================
-  // OFFLINE QUEUE
-  // ===========================================================================
-
-  Future<void> _addToOfflineQueue(TelemetryPingRequest ping) async {
-    try {
-      _offlineQueue.add(ping);
-      if (_offlineQueue.length > _offlineQueueMaxSize) {
-        _offlineQueue.removeRange(0, _offlineQueue.length - _offlineQueueMaxSize);
-      }
-      await _saveOfflineQueue();
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: queued ping. size=${_offlineQueue.length}');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: addToOfflineQueue error: $e');
-      }
-    }
-  }
-
-  Future<void> _saveOfflineQueue() async {
-    try {
-      final list = _offlineQueue.map((p) => p.toJson()).toList();
-      await _prefs.preferences.setString(_offlineQueueKey, jsonEncode(list));
-    } catch (e) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: saveOfflineQueue error: $e');
-      }
-    }
-  }
-
-  Future<void> _loadOfflineQueue() async {
-    try {
-      final raw = _prefs.preferences.getString(_offlineQueueKey);
-      if (raw == null || raw.isEmpty) return;
-      final decoded = jsonDecode(raw);
-      if (decoded is List) {
-        _offlineQueue = decoded
-            .whereType<Map>()
-            .map((e) => TelemetryPingRequest.fromJson(Map<String, dynamic>.from(e)))
-            .toList();
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: loadOfflineQueue error: $e');
-      }
-      _offlineQueue = [];
-    }
-  }
-
-  Future<void> _sendOfflineQueue() async {
-    if (_offlineQueue.isEmpty || _isSending) return;
-    _isSending = true;
-    try {
-      while (_offlineQueue.isNotEmpty) {
-        final batch = _offlineQueue.take(_batchUploadMaxSize).toList();
-        final ok = await _postPings(batch, asBatch: true);
-        if (!ok) break;
-        _offlineQueue.removeRange(0, batch.length);
-      }
-      await _saveOfflineQueue();
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: offline queue flushed. remaining=${_offlineQueue.length}');
-      }
-    } catch (e, st) {
-      if (kDebugMode) {
-        print('BackgroundLocationTrackingService: sendOfflineQueue error: $e\n$st');
-      }
-    } finally {
-      _isSending = false;
-    }
-  }
-
-  Future<void> clearOfflineQueue() async {
-    _offlineQueue.clear();
-    await _prefs.preferences.remove(_offlineQueueKey);
-  }
-
-  // ===========================================================================
-  // PUBLIC API (backward-compatible signatures)
-  // ===========================================================================
-
-  /// Tashqi kod (masalan, server policy update kelgan SOAP push) chaqiradigan
-  /// metod — interval yangilanadi va timer qayta tushiriladi. Endi asosiy
-  /// manba TrackingPolicyService bo'lsa-da, bu metod saqlanadi (backward compat).
+  /// Backward-compatible interval override (e.g. legacy SOAP policy push).
   Future<void> updateInterval(int intervalSeconds) async {
     if (intervalSeconds <= 0) return;
-    final clamped =
-        intervalSeconds < _minIntervalSeconds ? _minIntervalSeconds : intervalSeconds;
+    final clamped = intervalSeconds < _minIntervalSeconds
+        ? _minIntervalSeconds
+        : intervalSeconds;
     if (clamped == _currentIntervalSeconds) return;
     _currentIntervalSeconds = clamped;
-    if (_isTrackingActive) {
-      _startLocationTimer();
-    }
+    if (_isTrackingActive) _startCollectTimer();
+  }
+
+  /// Drain trigger usable by the Workmanager isolate / external callers.
+  Future<void> flushOutbox() => _drain();
+
+  /// Logout hygiene — wipe the backlog so it can't be re-uploaded under a
+  /// different user's token (audit H5).
+  Future<void> clearOfflineQueue() async {
+    await _outbox.purgeAll();
+    _lastKnownQueueSize = 0;
   }
 
   Map<String, dynamic> getDebugInfo() {
@@ -1057,7 +932,7 @@ class BackgroundLocationTrackingService {
       'isInitialized': _isInitialized,
       'isTrackingActive': _isTrackingActive,
       'currentIntervalSeconds': _currentIntervalSeconds,
-      'offlineQueueSize': _offlineQueue.length,
+      'pendingQueueSize': _lastKnownQueueSize,
       'lastPosition': _lastPosition != null
           ? '${_lastPosition!.latitude}, ${_lastPosition!.longitude}'
           : null,
@@ -1067,4 +942,8 @@ class BackgroundLocationTrackingService {
       'lastFailureAt': lastFailureAt,
     };
   }
+
+  /// Live outbox status counts (pending/in_flight/retrying/dead_letter) for the
+  /// diagnostics surface.
+  Future<Map<String, int>> outboxStatusCounts() => _outbox.countByStatus();
 }

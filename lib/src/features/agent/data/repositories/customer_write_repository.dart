@@ -101,6 +101,7 @@ class CustomerWriteRepository {
     String bankAccount = '',
     String salesChannel = '',
     String clientClass = '',
+    String? projectId,
   }) async {
     final url = '${TokenService.v2BaseUrl}$_basePath/';
     final clientUuid = await _resolveCachedUuid(action: 'create_client_uuid');
@@ -141,7 +142,7 @@ class CustomerWriteRepository {
         data: body,
         options: Options(
           headers: <String, String>{
-            ...await _authHeaders(),
+            ...await _authHeaders(projectOverride: projectId),
             'Content-Type': 'application/json',
           },
           validateStatus: (s) => s != null && s < 400,
@@ -427,15 +428,34 @@ class CustomerWriteRepository {
   // Internals
   // ---------------------------------------------------------------------------
 
-  Future<Map<String, String>> _authHeaders() async {
+  Future<Map<String, String>> _authHeaders({String? projectOverride}) async {
     final token = await _tokenService.ensureValidV2Token();
     final headers = <String, String>{
       if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
       'Accept': 'application/json',
     };
-    // customer_scope=project tenants MUST send the active project id.
-    // The header is omitted for organization-scope tenants; sending it
-    // there returns 400 `customer_project_not_allowed`.
+    // An explicit [projectOverride] is a definitive instruction from the
+    // caller that this write targets a specific project — e.g. the
+    // create-client form's inline picker, which the user only sees AFTER
+    // the backend answered `customer_project_required`. Honour it even when
+    // the cached gates still say organization-scope: the backend is the
+    // source of truth on scope, so if it demanded a project the local
+    // `requiresProjectHeader` is simply stale (the org was flipped to
+    // project-scope after this session's gates were cached). Without this,
+    // the user picks a project, re-submits, and the header is silently
+    // dropped — looping forever on "loyihani tanlang".
+    //
+    // A genuine organization-scope tenant never reaches this branch: the
+    // form only supplies an override once a project has been required, and
+    // an org-scope backend never returns `customer_project_required`.
+    if (projectOverride != null && projectOverride.isNotEmpty) {
+      headers['X-Project-Id'] = projectOverride;
+      return headers;
+    }
+    // No explicit override → fall back to the global active project, gated
+    // on the cached scope. project-scope tenants MUST send the active
+    // project id; org-scope tenants omit it (sending it there returns
+    // 400 `customer_project_not_allowed`).
     if (_projectContext.requiresProjectHeader) {
       final projectHeader = _projectContext.activeProjectHeaderValue;
       if (projectHeader == null || projectHeader.isEmpty) {
@@ -562,6 +582,19 @@ class CustomerWriteRepository {
           // gates so the next call doesn't repeat the mistake; the
           // ProjectContext will then return `requiresProjectHeader=false`.
           if (status == 400 && code == 'customer_project_not_allowed') {
+            // ignore: discarded_futures
+            _refreshV2GatesQuietly();
+          }
+          // `customer_project_required` (400) — the inverse mismatch: the
+          // backend treats this tenant as project-scoped but mobile's
+          // cached `customer_scope` is stale at `organization`, so
+          // `requiresProjectHeader` is false and no header was sent.
+          // Refresh V2 gates so the corrected scope propagates and every
+          // customer endpoint (read / balance / photos) starts attaching
+          // `X-Project-Id`. The create form already recovers this attempt
+          // via its inline picker + explicit override; this just stops the
+          // mismatch from recurring on the next screen.
+          if (status == 400 && code == 'customer_project_required') {
             // ignore: discarded_futures
             _refreshV2GatesQuietly();
           }

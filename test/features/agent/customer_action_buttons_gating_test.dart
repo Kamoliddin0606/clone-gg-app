@@ -69,23 +69,28 @@ void main() {
     });
 
     test(
-        'photos entry: gated on any of the four photo codenames '
-        '(hasAny)', () async {
+        'photos entry: gated on the read codename '
+        'customers.change_customer_photo (NOT any-of-four)', () async {
       final store = BackendPermissionStore(prefs: prefs);
+      // Backend binds photo list/retrieve to change_customer_photo, so
+      // holding only add_customer_photo must NOT reveal the gallery —
+      // it would 403 the instant it lists. (There is no
+      // view_customer_photo codename.)
       await store.replaceFromLogin(<String>[
         PermissionCodenames.customerAddPhoto,
       ]);
       expect(
-        store.hasAny(PermissionCodenames.customerPhotoAny),
-        isTrue,
+        store.has(PermissionCodenames.customerViewPhotoGate),
+        isFalse,
       );
 
+      // The read gate itself grants gallery visibility.
       await store.replaceFromLogin(<String>[
-        PermissionCodenames.customerChange,
+        PermissionCodenames.customerChangePhoto,
       ]);
       expect(
-        store.hasAny(PermissionCodenames.customerPhotoAny),
-        isFalse,
+        store.has(PermissionCodenames.customerViewPhotoGate),
+        isTrue,
       );
     });
 

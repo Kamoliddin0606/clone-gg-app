@@ -2596,6 +2596,53 @@ class DataSyncService {
           "[PROJECTS_SYNC] step=2/2 entry[$i] code_1c='$code1c' code='$codeSlug' "
           "debt_limit=$debtLimit currency=$debtLimitCurrency keys=$entryKeys");
 
+      // Forward-compatible identifier capture. The V2 customer resolver
+      // needs a Project UUID (or `00-XXXXXX` 1C ref) — NOT the bare SOAP
+      // `code` ("7") that `UserProject.headerValue` otherwise sends, which
+      // 400s with `customer_project_required`. If/when this payload carries
+      // the backend identifiers, persist them so `X-Project-Id` upgrades to
+      // a resolvable value automatically. Field naming is tolerant because
+      // the backend contract is still settling; only a UUID-shaped value is
+      // accepted for `id_uuid` (an integer PK like the SOAP code would not
+      // resolve and must not be stored as the UUID). Note `code_1c` is the
+      // raw SOAP code, so it is deliberately NOT used as the `id_1c` ref.
+      String? firstNonEmpty(List<String> keys) {
+        for (final k in keys) {
+          final v = entry[k]?.toString();
+          if (v != null && v.isNotEmpty) return v;
+        }
+        return null;
+      }
+
+      final rawUuid = firstNonEmpty(
+          const ['id_uuid', 'uuid', 'project_uuid', 'project_id', 'id']);
+      final backendIdUuid = (rawUuid != null &&
+              RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-'
+                      r'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+                  .hasMatch(rawUuid))
+          ? rawUuid
+          : null;
+      final backendId1c = firstNonEmpty(const ['id_1c', 'id1c', 'ref_1c']);
+
+      if (backendIdUuid != null || backendId1c != null) {
+        final joinKey = (code1c != null && code1c.isNotEmpty)
+            ? code1c
+            : (codeSlug ?? '');
+        if (joinKey.isNotEmpty) {
+          final idMatch =
+              await _dbService.backfillUserProjectIdentifiersByAnyKey(
+            backendCode: joinKey,
+            idUuid: backendIdUuid,
+            id1c: backendId1c,
+          );
+          // ignore: avoid_print
+          print(
+              "[PROJECTS_SYNC] step=2/2 entry[$i] identifiers "
+              "id_uuid=${backendIdUuid ?? '-'} id_1c=${backendId1c ?? '-'} "
+              "→ backfill match=$idMatch");
+        }
+      }
+
       // Match attempt 1 — `code_1c` (mobile's primary join key, populated
       // from the SOAP `<m:Code>` element on every refresh).
       var matched = ProjectDebtLimitMatchKey.none;

@@ -71,7 +71,17 @@ class _CustomerPhotosView extends StatelessWidget {
       listener: (context, state) async {
         final code = state.errorCode ?? '';
         if (CustomerScopeErrorHandler.handles(code)) {
-          await CustomerScopeErrorHandler.handle(context, code);
+          final shouldRetry =
+              await CustomerScopeErrorHandler.handle(context, code);
+          // Picking a project resolves `customer_project_required` — reload
+          // the gallery so the now-valid `X-Project-Id` header is applied.
+          // Scoped to this one code so codes the client can't self-fix
+          // never trigger a reload loop.
+          if (shouldRetry &&
+              code == 'customer_project_required' &&
+              context.mounted) {
+            context.read<CustomerPhotoCubit>().load();
+          }
         } else {
           final messenger = ScaffoldMessenger.of(context);
           messenger

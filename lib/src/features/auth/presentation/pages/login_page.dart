@@ -1185,8 +1185,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               activeColor: theme.colorScheme.primary,
               onChanged: (v) => setState(() => _rememberMe = v ?? false),
             ),
-            Text(l10n.rememberMe, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-            const Spacer(),
+            Expanded(
+              child: Text(
+                l10n.rememberMe,
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             TextButton(
               onPressed: () {}, // kerak bo'lsa: parolni unutdingizmi
               child: Text(l10n.forgotPassword),

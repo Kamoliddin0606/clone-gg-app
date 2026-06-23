@@ -50,6 +50,7 @@ class _FakeRepo implements CustomerPhotoRepository {
     String alt = '',
     int order = 0,
     bool isPrimary = false,
+    String? projectOverride,
   }) async {
     if (failNextWith != null) {
       final e = failNextWith!;

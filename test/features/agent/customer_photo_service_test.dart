@@ -52,6 +52,7 @@ class _CapFailingRepo implements CustomerPhotoRepository {
     String alt = '',
     int order = 0,
     bool isPrimary = false,
+    String? projectOverride,
   }) async {
     throw const CustomerPhotoException(
       code: 'customer_photo_limit_exceeded',

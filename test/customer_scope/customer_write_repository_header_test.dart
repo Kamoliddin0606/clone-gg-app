@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
@@ -94,6 +95,54 @@ void main() {
       },
     );
   }
+
+  group('create explicit project override', () {
+    // Regression: the create form's inline picker passes the chosen
+    // project as `projectId`. Previously `_authHeaders` only attached
+    // `X-Project-Id` when the cached gates said `customer_scope=project`,
+    // so when the backend was project-scoped but the device's gates were
+    // still stale at `organization`, the header was silently dropped and
+    // the user looped forever on `customer_project_required`. An explicit
+    // override must now win regardless of the cached scope.
+    test(
+      'attaches X-Project-Id from override even when cached scope=organization',
+      () async {
+        TestWidgetsFlutterBinding.ensureInitialized();
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        final realPrefs = await SharedPreferences.getInstance();
+
+        when(prefs.getCachedGates())
+            .thenReturn(gates(scope: CustomerScope.organization));
+        // The idempotency persistence path reads/writes the real prefs.
+        when(prefs.preferences).thenReturn(realPrefs);
+        when(dio.post<dynamic>(
+          any,
+          data: anyNamed('data'),
+          options: anyNamed('options'),
+        )).thenAnswer((_) async => await successfulResponse());
+
+        await repo.create(
+          name: 'Test',
+          tradePointType: 'shop',
+          contactPersonPhone: '+998900000000',
+          address: 'Tashkent',
+          latitude: 41.0,
+          longitude: 69.0,
+          codeUser: 'U-001',
+          codeRegion: 'R-01',
+          projectId: 'PRJ-CODE',
+        );
+
+        final captured = verify(dio.post<dynamic>(
+          any,
+          data: anyNamed('data'),
+          options: captureAnyNamed('options'),
+        )).captured.single as Options;
+
+        expect(captured.headers!['X-Project-Id'], 'PRJ-CODE');
+      },
+    );
+  });
 
   group('updateCoordinates header injection', () {
     test('omits X-Project-Id under customer_scope=organization', () async {

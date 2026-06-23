@@ -25,13 +25,27 @@ class PermissionCodenames {
       'customers.replace_customer_photo';
 
   /// All four customer-photo codenames — used to decide whether to
-  /// show the gallery entry-point at all (any-of-four gate).
+  /// show any photo-related affordance at all (any-of-four gate).
   static const List<String> customerPhotoAny = <String>[
     customerAddPhoto,
     customerChangePhoto,
     customerDeletePhoto,
     customerReplacePhoto,
   ];
+
+  /// Backend gate for **reading** a customer's photos — the
+  /// `GET …/photos/` (list) and `GET …/photos/{id}/` (retrieve)
+  /// endpoints. The V2 photo viewset binds reads to
+  /// `HasRolePermission('customers.change_customer_photo')`; there is
+  /// **no** separate `view_customer_photo` codename (the backend's
+  /// Customer model Meta only defines add / change / delete / replace).
+  ///
+  /// The gallery page and the inline carousel both `list()` the moment
+  /// they open, so their entry-points must gate on THIS — not on
+  /// "any of the four". Gating on any-of-four lets a user who holds
+  /// only add / delete / replace open a gallery that 403s the instant
+  /// it loads (and whose post-mutation reload would 403 too).
+  static const String customerViewPhotoGate = customerChangePhoto;
 
   /// Codenames owned by [BackendPermissionStore]. The SOAP settings
   /// pipeline must never write any of these strings into its local

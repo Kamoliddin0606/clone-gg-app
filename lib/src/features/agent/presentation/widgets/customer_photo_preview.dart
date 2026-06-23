@@ -187,8 +187,11 @@ class _CustomerPhotoPreviewState extends State<CustomerPhotoPreview> {
     });
   }
 
+  // Reading photos (list/retrieve) is gated on `change_customer_photo`
+  // on the backend — there is no `view_customer_photo` codename. The
+  // carousel lists on open, so it must follow that read gate.
   bool get _canViewGallery =>
-      _permStore.hasAny(PermissionCodenames.customerPhotoAny);
+      _permStore.has(PermissionCodenames.customerViewPhotoGate);
 
   bool get _canAddPhoto =>
       _permStore.has(PermissionCodenames.customerAddPhoto);

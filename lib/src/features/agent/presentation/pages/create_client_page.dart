@@ -1,15 +1,25 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:gloria_marketing_flutter/l10n/app_localizations.dart';
 import 'package:gloria_marketing_flutter/src/core/services/service_locator.dart';
 import 'package:gloria_marketing_flutter/src/core/services/shared_preferences_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/api_database_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/data_sync_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/project_context.dart';
+import 'package:gloria_marketing_flutter/src/core/services/soap_api_service.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/business_region.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/models/user_project.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/backend_permission_store.dart';
+import 'package:gloria_marketing_flutter/src/core/auth/permission_codenames.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_photo_repository.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/repositories/customer_write_repository.dart';
+import 'package:gloria_marketing_flutter/src/features/agent/presentation/widgets/customer_photo_preview.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/sales_channel.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/client_class.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/data/models/trading_point_type.dart';
@@ -91,8 +101,29 @@ class _CreateClientPageState extends State<CreateClientPage>
   ClientClass? _selectedClientClass;
   bool _isLoadingClassifiers = true;
 
+  // Project selection — only relevant for `customer_scope=project` tenants.
+  // For org-scope the field is hidden and no `X-Project-Id` is sent.
+  // Pre-filled from the active project (Settings → Loyihalar / login
+  // bootstrap); the user can override it for this one client without
+  // changing the app-wide active project.
+  bool _requiresProject = false;
+  List<UserProject> _projects = [];
+  UserProject? _selectedProject;
+  bool _isLoadingProjects = false;
+
   // Submission state
   bool _isSubmitting = false;
+
+  // Staged customer photos (create mode). The customer has no backend
+  // id until `create()` returns, so photos are held locally and
+  // uploaded right after the row is created. Capped at 20 to match the
+  // backend bulk limit.
+  static const int _maxStagedPhotos = 20;
+  final List<File> _stagedPhotos = <File>[];
+  final ImagePicker _imagePicker = ImagePicker();
+  bool _isUploadingPhotos = false;
+  int _photoUploadTotal = 0;
+  int _photoUploadCompleted = 0;
 
   // Track if addresses were auto-filled
   bool _addressAutoFilled = false;
@@ -118,6 +149,13 @@ class _CreateClientPageState extends State<CreateClientPage>
     _loadRegions();
     _loadTradePointTypes();
     _loadSalesClassifiers();
+
+    // Project picker is only shown when the tenant is project-scoped and
+    // we're creating (not editing — edit keeps the customer's own project).
+    _requiresProject = sl<ProjectContext>().requiresProjectHeader;
+    if (_requiresProject && !widget.isEditMode) {
+      _loadProjects();
+    }
 
     // Edit mode prefills from the passed [TradingPoint] and skips the
     // GPS auto-fill (the customer already has known coordinates).
@@ -184,6 +222,87 @@ class _CreateClientPageState extends State<CreateClientPage>
         );
       }
     }
+  }
+
+  /// Load the user's projects for the inline picker (project-scope only).
+  ///
+  /// Mirrors [ProjectPickerPage]: read the local `user_projects` cache and
+  /// fall back to a one-shot SOAP `GetUserProjects` when it's empty. The
+  /// dropdown is pre-selected with the current active project (the one
+  /// chosen in Settings → Loyihalar / resolved at login) when it appears
+  /// in the list; otherwise it starts empty and the user must pick.
+  Future<void> _loadProjects() async {
+    setState(() => _isLoadingProjects = true);
+    final prefs = sl<SharedPreferencesService>();
+    final db = sl<ApiDatabaseService>();
+    final userCode = prefs.getUserCode() ?? '';
+
+    var rows = <UserProject>[];
+    if (userCode.isNotEmpty) {
+      rows = await db.getUserProjects(userCode);
+      if (rows.isEmpty) {
+        try {
+          rows = await sl<SoapApiService>().getProjectsUser(userCode: userCode);
+          if (rows.isNotEmpty) {
+            await db.saveUserProjects(userCode, rows);
+          }
+        } catch (_) {
+          // Network/SOAP error — leave empty so the field shows a retry.
+        }
+      }
+    }
+    if (!mounted) return;
+
+    // Pre-select the active project by matching its header value to the
+    // freshly-loaded list instance (DropdownButtonFormField needs `value`
+    // to be one of the `items`).
+    final activeHeader = sl<ProjectContext>().activeProjectHeaderValue;
+    UserProject? preselect;
+    if (activeHeader != null && activeHeader.isNotEmpty) {
+      for (final p in rows) {
+        if (p.headerValue == activeHeader) {
+          preselect = p;
+          break;
+        }
+      }
+    }
+
+    setState(() {
+      _projects = rows;
+      _selectedProject = preselect;
+      _isLoadingProjects = false;
+    });
+  }
+
+  /// Reveal and populate the inline project dropdown so the user can pick
+  /// a project directly in the form — invoked when the backend reports
+  /// `customer_project_required`. Keeps project selection in the form
+  /// (the user's requirement) instead of opening the global picker page.
+  ///
+  /// Handles two cases:
+  ///   * The selector was hidden because the form opened thinking the
+  ///     tenant was org-scope (stale/late gates) — flip it on and load.
+  ///   * The selector was shown but the chosen project was rejected —
+  ///     prompt the user to pick another, right here.
+  Future<void> _ensureInlineProjectSelector() async {
+    if (!_requiresProject) {
+      setState(() => _requiresProject = true);
+    }
+    if (_projects.isEmpty && !_isLoadingProjects) {
+      await _loadProjects();
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.pleaseSelectProject ??
+                'Iltimos, loyihani tanlang',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
   }
 
   void _clearFormForScan() {
@@ -366,7 +485,7 @@ class _CreateClientPageState extends State<CreateClientPage>
     }
   }
 
-  Future<void> _submitForm() async {
+  Future<void> _submitForm({bool isRetry = false}) async {
     if (!_formKey.currentState!.validate()) return;
 
     // Edit mode: V2 PATCH only mutates name / inn / phone / address.
@@ -376,6 +495,20 @@ class _CreateClientPageState extends State<CreateClientPage>
     // not edited from mobile.
     if (widget.isEditMode) {
       await _submitEditForm();
+      return;
+    }
+
+    // Project is mandatory for project-scope tenants and cannot be empty.
+    if (_requiresProject && _selectedProject == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.pleaseSelectProject ??
+                'Iltimos, loyihani tanlang',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
 
@@ -501,6 +634,10 @@ class _CreateClientPageState extends State<CreateClientPage>
         bankAccount: _bankAccountController.text.trim(),
         salesChannel: _selectedChannel?.name ?? '',
         clientClass: _selectedClientClass?.classCode ?? '',
+        // Per-client project scope: send the form's choice as X-Project-Id
+        // without mutating the global active project. Null for org-scope.
+        projectId:
+            _requiresProject ? _selectedProject?.headerValue : null,
       );
 
       // Write the newly created row into the local `clients` cache
@@ -515,13 +652,23 @@ class _CreateClientPageState extends State<CreateClientPage>
         }
       }
 
+      // Upload any staged photos to the freshly created customer. This
+      // is best-effort: the row already exists, so a photo failure must
+      // never roll the creation back — failures are surfaced as a note
+      // in the success dialog and the user can retry from the gallery.
+      final failedPhotos = await _uploadStagedPhotos(tp.id);
+
       if (mounted) {
         // Success dialog shows the 1C code (downstream value) when
         // available; the backend `code` is the new local identifier
         // and is propagated via the returned [TradingPoint].
+        final l10n = AppLocalizations.of(context);
         _showSuccessDialog(
           tp.code1c.isEmpty ? null : tp.code1c,
-          null,
+          failedPhotos > 0
+              ? (l10n?.createClientPhotosPartialFail(failedPhotos) ??
+                  '$failedPhotos photo(s) could not be uploaded.')
+              : null,
         );
       }
     } on CustomerWriteException catch (e) {
@@ -529,9 +676,23 @@ class _CreateClientPageState extends State<CreateClientPage>
         setState(() {
           _isSubmitting = false;
         });
-        if (CustomerScopeErrorHandler.handles(e.code)) {
-          await CustomerScopeErrorHandler.handle(context, e.code,
+        if (e.code == 'customer_project_required') {
+          // Project selection for the create form is done INLINE via the
+          // dropdown above — we must NOT bounce the user to the separate
+          // project-picker page (a confusing second selection on top of
+          // the form's own, whose result the retry would ignore anyway).
+          // Reveal/populate the inline selector and ask them to choose
+          // right here, then they re-submit.
+          await _ensureInlineProjectSelector();
+        } else if (CustomerScopeErrorHandler.handles(e.code)) {
+          // Other scope codes are toast / silent self-heal flows (no
+          // picker) — delegate and re-submit once if the blocker cleared.
+          final shouldRetry = await CustomerScopeErrorHandler.handle(
+              context, e.code,
               details: e.details);
+          if (shouldRetry && !isRetry && mounted) {
+            await _submitForm(isRetry: true);
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -604,7 +765,7 @@ class _CreateClientPageState extends State<CreateClientPage>
   /// On success returns the updated `TradingPoint` row to the caller
   /// so the parent (trading-points list or detail sheet) can refresh
   /// without a full data sync.
-  Future<void> _submitEditForm() async {
+  Future<void> _submitEditForm({bool isRetry = false}) async {
     final editing = widget.editingTradingPoint!;
     final connectivity = await Connectivity().checkConnectivity();
     if (connectivity == ConnectivityResult.none) {
@@ -669,8 +830,14 @@ class _CreateClientPageState extends State<CreateClientPage>
         setState(() => _isSubmitting = false);
         if (e is CustomerWriteException &&
             CustomerScopeErrorHandler.handles(e.code)) {
-          await CustomerScopeErrorHandler.handle(context, e.code,
+          // Same retry contract as the create path: re-run the edit once
+          // after `handle()` clears the blocker (e.g. a project was picked).
+          final shouldRetry = await CustomerScopeErrorHandler.handle(
+              context, e.code,
               details: e.details);
+          if (shouldRetry && !isRetry && mounted) {
+            await _submitEditForm(isRetry: true);
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1240,6 +1407,8 @@ class _CreateClientPageState extends State<CreateClientPage>
                 // gallery, classifier / bank / signboard → 1C only).
                 if (widget.isEditMode) ...[
                   _buildEditModeBanner(theme, colorScheme, l10n),
+                  const SizedBox(height: 16),
+                  _buildEditPhotosPreview(theme, colorScheme, l10n),
                   const SizedBox(height: 20),
                 ],
 
@@ -1271,6 +1440,10 @@ class _CreateClientPageState extends State<CreateClientPage>
                 const SizedBox(height: 12),
                 _buildInnFieldWithFetchButton(colorScheme, l10n),
                 if (!widget.isEditMode) ...[
+                  if (_requiresProject) ...[
+                    const SizedBox(height: 12),
+                    _buildProjectSelector(theme, colorScheme),
+                  ],
                   const SizedBox(height: 12),
                   _buildSalesChannelSelector(theme, colorScheme),
                   const SizedBox(height: 12),
@@ -1397,6 +1570,15 @@ class _CreateClientPageState extends State<CreateClientPage>
                   ),
                 ],
 
+                // Customer photos — staged locally while the form is
+                // open (no backend id yet) and uploaded right after the
+                // customer is created. Create-mode only; edit mode uses
+                // the live carousel above.
+                if (!widget.isEditMode) ...[
+                  const SizedBox(height: 24),
+                  _buildPhotosSection(theme, colorScheme, l10n),
+                ],
+
                 const SizedBox(height: 32),
 
                 // Submit button
@@ -1456,6 +1638,389 @@ class _CreateClientPageState extends State<CreateClientPage>
         ],
       ),
     );
+  }
+
+  // ===========================================================================
+  // Customer photos
+  //   - create mode: staged local files, uploaded after create()
+  //   - edit mode:   the live V2 carousel (customer already exists)
+  // ===========================================================================
+
+  /// Inline photo carousel for edit mode — the customer already exists,
+  /// so we surface the live V2 gallery (view + add) right in the form
+  /// instead of sending the user to a separate page. Hidden when the
+  /// user lacks the photo read gate (`customers.change_customer_photo`).
+  Widget _buildEditPhotosPreview(
+    ThemeData theme,
+    ColorScheme cs,
+    AppLocalizations l10n,
+  ) {
+    final editing = widget.editingTradingPoint;
+    if (editing == null) return const SizedBox.shrink();
+    final canView = sl<BackendPermissionStore>()
+        .has(PermissionCodenames.customerViewPhotoGate);
+    if (!canView) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(
+          theme,
+          l10n.createClientPhotosTitle,
+          Icons.photo_library_outlined,
+        ),
+        const SizedBox(height: 12),
+        CustomerPhotoPreview(
+          customerId: editing.id,
+          customerName: editing.name,
+          height: 180,
+        ),
+      ],
+    );
+  }
+
+  /// Create-mode photo section: a horizontal strip with a leading
+  /// "add" tile followed by staged thumbnails. Visible only when the
+  /// user can add customer photos (the server enforces this on upload
+  /// too). Photos are uploaded after the customer is created.
+  Widget _buildPhotosSection(
+    ThemeData theme,
+    ColorScheme cs,
+    AppLocalizations l10n,
+  ) {
+    final canAdd = sl<BackendPermissionStore>()
+        .has(PermissionCodenames.customerAddPhoto);
+    if (!canAdd) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.photo_camera_outlined, size: 20, color: cs.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l10n.createClientPhotosTitle,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: cs.primary,
+                ),
+              ),
+            ),
+            if (_stagedPhotos.isNotEmpty)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_stagedPhotos.length}',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: cs.onPrimaryContainer,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.createClientPhotosSubtitle,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: cs.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 92,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _stagedPhotos.length + 1,
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _buildAddPhotoTile(theme, cs, l10n);
+              }
+              return _buildStagedThumb(theme, cs, l10n, index - 1);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddPhotoTile(
+    ThemeData theme,
+    ColorScheme cs,
+    AppLocalizations l10n,
+  ) {
+    final disabled =
+        _isSubmitting || _stagedPhotos.length >= _maxStagedPhotos;
+    return Semantics(
+      button: true,
+      label: l10n.createClientAddPhoto,
+      child: InkWell(
+        onTap: disabled ? null : _onAddPhotoTapped,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 92,
+          height: 92,
+          decoration: BoxDecoration(
+            color: cs.primaryContainer.withOpacity(disabled ? 0.15 : 0.35),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: cs.primary.withOpacity(disabled ? 0.2 : 0.5),
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add_a_photo_outlined,
+                color: cs.primary.withOpacity(disabled ? 0.4 : 1),
+                size: 26,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                l10n.createClientAddPhoto,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: cs.primary.withOpacity(disabled ? 0.4 : 1),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStagedThumb(
+    ThemeData theme,
+    ColorScheme cs,
+    AppLocalizations l10n,
+    int index,
+  ) {
+    final file = _stagedPhotos[index];
+    return GestureDetector(
+      onTap: () => _openStagedFullscreen(index),
+      child: SizedBox(
+        width: 92,
+        height: 92,
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(
+                file,
+                width: 92,
+                height: 92,
+                fit: BoxFit.cover,
+                cacheWidth: 184,
+              ),
+            ),
+            // Primary badge on the first photo — it is uploaded with
+            // is_primary=true and becomes the customer's main image.
+            if (index == 0)
+              Positioned(
+                left: 4,
+                bottom: 4,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star, color: Colors.white, size: 11),
+                      const SizedBox(width: 2),
+                      Text(
+                        l10n.customerPhotos_primaryBadge,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            // Remove button.
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _isSubmitting ? null : () => _removeStaged(index),
+                  customBorder: const CircleBorder(),
+                  child: Container(
+                    margin: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Bottom-sheet picker — camera first (the common on-site flow for a
+  /// field rep), gallery second (multi-select).
+  Future<void> _onAddPhotoTapped() async {
+    final l10n = AppLocalizations.of(context)!;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (sheetCtx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: Text(l10n.customerPhotos_pickCamera),
+              onTap: () => Navigator.pop(sheetCtx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: Text(l10n.customerPhotos_pickGallery),
+              onTap: () => Navigator.pop(sheetCtx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
+    try {
+      if (source == ImageSource.camera) {
+        final shot = await _imagePicker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 88,
+        );
+        if (shot != null) _addStaged(<File>[File(shot.path)]);
+      } else {
+        final picks = await _imagePicker.pickMultiImage(imageQuality: 88);
+        if (picks.isNotEmpty) {
+          _addStaged(picks.map((p) => File(p.path)).toList());
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l10n.error}: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _addStaged(List<File> files) {
+    if (files.isEmpty) return;
+    final room = _maxStagedPhotos - _stagedPhotos.length;
+    if (room <= 0) return;
+    setState(() {
+      _stagedPhotos.addAll(files.take(room));
+    });
+  }
+
+  void _removeStaged(int index) {
+    if (index < 0 || index >= _stagedPhotos.length) return;
+    setState(() {
+      _stagedPhotos.removeAt(index);
+    });
+  }
+
+  void _openStagedFullscreen(int index) {
+    if (index < 0 || index >= _stagedPhotos.length) return;
+    final file = _stagedPhotos[index];
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black,
+      builder: (dlgCtx) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: InteractiveViewer(
+                child: Center(child: Image.file(file)),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: SafeArea(
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(dlgCtx),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Upload the staged photos one-by-one to the freshly created
+  /// customer. Per-photo (not bulk) so one bad file does not sink the
+  /// rest and the user sees granular progress; the first photo is sent
+  /// as primary. Returns the count of failures (0 == all uploaded).
+  Future<int> _uploadStagedPhotos(String customerId) async {
+    if (_stagedPhotos.isEmpty) return 0;
+    final repo = sl<CustomerPhotoRepository>();
+    final projectOverride =
+        _requiresProject ? _selectedProject?.headerValue : null;
+
+    if (mounted) {
+      setState(() {
+        _isUploadingPhotos = true;
+        _photoUploadTotal = _stagedPhotos.length;
+        _photoUploadCompleted = 0;
+      });
+    }
+
+    var failed = 0;
+    for (var i = 0; i < _stagedPhotos.length; i++) {
+      try {
+        await repo.uploadOne(
+          customerId: customerId,
+          image: _stagedPhotos[i],
+          isPrimary: i == 0,
+          order: i,
+          projectOverride: projectOverride,
+        );
+      } catch (e) {
+        failed++;
+        if (kDebugMode) {
+          print('CreateClientPage: staged photo upload failed [$i]: $e');
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _photoUploadCompleted = i + 1);
+        }
+      }
+    }
+
+    if (mounted) {
+      setState(() => _isUploadingPhotos = false);
+    }
+    return failed;
   }
 
   Widget _buildAutoFillHelperText(AppLocalizations l10n) {
@@ -2164,6 +2729,109 @@ class _CreateClientPageState extends State<CreateClientPage>
     );
   }
 
+  /// Inline project picker for `customer_scope=project` tenants. Same
+  /// visual language as the other selectors. The chosen project scopes
+  /// only this customer (sent as `X-Project-Id` on create); it does not
+  /// change the app-wide active project.
+  Widget _buildProjectSelector(ThemeData theme, ColorScheme colorScheme) {
+    if (_isLoadingProjects) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.folder_outlined, color: colorScheme.primary),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)?.projectsLoading ??
+                    'Loyihalar yuklanmoqda...',
+              ),
+            ),
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Empty list (cache empty + SOAP failed): block submit and offer retry.
+    if (_projects.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.folder_off_outlined, color: colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)?.projectListEmpty ??
+                    'Loyihalar topilmadi',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            TextButton(
+              onPressed: _loadProjects,
+              child: Text(AppLocalizations.of(context)?.retry ?? 'Qayta'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+      ),
+      child: DropdownButtonFormField<UserProject>(
+        value: _selectedProject,
+        decoration: InputDecoration(
+          labelText: AppLocalizations.of(context)?.projectRequired ??
+              'Loyiha *',
+          prefixIcon: Icon(Icons.folder_outlined, color: colorScheme.primary),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
+        items: _projects.map((project) {
+          return DropdownMenuItem(
+            value: project,
+            child: Text(project.name, overflow: TextOverflow.ellipsis),
+          );
+        }).toList(),
+        onChanged: (value) => setState(() => _selectedProject = value),
+        validator: (value) {
+          if (value == null) {
+            return AppLocalizations.of(context)?.pleaseSelectProject ??
+                'Iltimos, loyihani tanlang';
+          }
+          return null;
+        },
+        isExpanded: true,
+        icon: Icon(
+          Icons.keyboard_arrow_down,
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSubmitButton(ThemeData theme, ColorScheme colorScheme) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -2192,7 +2860,15 @@ class _CreateClientPageState extends State<CreateClientPage>
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text(AppLocalizations.of(context)!.creating),
+                  Text(
+                    _isUploadingPhotos
+                        ? AppLocalizations.of(context)!
+                            .createClientUploadingPhotos(
+                            _photoUploadCompleted,
+                            _photoUploadTotal,
+                          )
+                        : AppLocalizations.of(context)!.creating,
+                  ),
                 ],
               )
             : Row(

@@ -65,6 +65,7 @@ class _FakeRepo implements CustomerWriteRepository {
     String bankAccount = '',
     String salesChannel = '',
     String clientClass = '',
+    String? projectId,
   }) async {
     lastAction = 'create';
     lastArgs = <String, dynamic>{
@@ -276,6 +277,7 @@ class _SlowRepo implements CustomerWriteRepository {
     String bankAccount = '',
     String salesChannel = '',
     String clientClass = '',
+    String? projectId,
   }) =>
       _result;
 

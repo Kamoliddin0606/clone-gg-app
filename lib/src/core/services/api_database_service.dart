@@ -9809,6 +9809,64 @@ class ApiDatabaseService {
     return ProjectDebtLimitMatchKey.none;
   }
 
+  /// Backfill the backend-issued project identifiers (`id_uuid` / `id_1c`)
+  /// onto the local `user_projects` row matched by [backendCode].
+  ///
+  /// SOAP `GetUserProjects` only returns `<m:Code>` + `<m:Name>`, so every
+  /// row lands with `id_uuid`/`id_1c` NULL and [UserProject.headerValue]
+  /// falls through to the bare SOAP `code` (e.g. `"7"`) — which the V2
+  /// `/api/mobile/v2/customers/` resolver cannot map to a `Project`, so the
+  /// write 400s with `customer_project_required`. Once the backend exposes
+  /// a resolvable identifier (a UUID and/or the `00-XXXXXX` 1C ref) on the
+  /// `/api/mobile/v2/projects/config/` rows, this method writes it onto the
+  /// matched row so `headerValue` upgrades from the unresolvable code to the
+  /// UUID/1C ref the backend accepts.
+  ///
+  /// Only non-empty values are written (so a partial payload never wipes an
+  /// already-populated column). Reuses the same match chain as
+  /// [updateUserProjectDebtLimitByAnyKey]. Returns the matched column, or
+  /// [ProjectDebtLimitMatchKey.none] when nothing matched.
+  Future<ProjectDebtLimitMatchKey> backfillUserProjectIdentifiersByAnyKey({
+    required String backendCode,
+    String? idUuid,
+    String? id1c,
+  }) async {
+    final hasUuid = idUuid != null && idUuid.isNotEmpty;
+    final hasId1c = id1c != null && id1c.isNotEmpty;
+    if (!hasUuid && !hasId1c) return ProjectDebtLimitMatchKey.none;
+
+    await ensureUserProjectsTableExists();
+
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    final values = <String, Object?>{
+      if (hasUuid) 'id_uuid': idUuid,
+      if (hasId1c) 'id_1c': id1c,
+      'updated_at': now,
+    };
+
+    Future<int> tryUpdate(String where, List<Object?> args) {
+      return db.update('user_projects', values, where: where, whereArgs: args);
+    }
+
+    var affected = await tryUpdate('code = ?', [backendCode]);
+    if (affected > 0) return ProjectDebtLimitMatchKey.code;
+
+    affected = await tryUpdate('id_1c = ?', [backendCode]);
+    if (affected > 0) return ProjectDebtLimitMatchKey.id1c;
+
+    affected = await tryUpdate('id_uuid = ?', [backendCode]);
+    if (affected > 0) return ProjectDebtLimitMatchKey.idUuid;
+
+    affected = await tryUpdate(
+      'UPPER(name) LIKE ?',
+      ['${backendCode.toUpperCase()}%'],
+    );
+    if (affected > 0) return ProjectDebtLimitMatchKey.nameInsensitive;
+
+    return ProjectDebtLimitMatchKey.none;
+  }
+
   /// Удалить проект по коду / Kod bo'yicha loyihani o'chirish
   /// Delete user project by code
   Future<void> deleteUserProject(String code) async {

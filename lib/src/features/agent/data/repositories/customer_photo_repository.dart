@@ -227,6 +227,7 @@ class CustomerPhotoRepository {
     String alt = '',
     int order = 0,
     bool isPrimary = false,
+    String? projectOverride,
   }) async {
     final url = '${TokenService.v2BaseUrl}$_basePath/$customerId/photos/';
     final clientUuid = _uuid.v4();
@@ -249,7 +250,7 @@ class CustomerPhotoRepository {
         url,
         data: form,
         options: Options(
-          headers: await _authHeaders(),
+          headers: await _authHeaders(projectOverride: projectOverride),
           validateStatus: (s) => s != null && s < 400,
         ),
       );
@@ -472,14 +473,23 @@ class CustomerPhotoRepository {
   // Internals
   // ---------------------------------------------------------------------------
 
-  Future<Map<String, String>> _authHeaders() async {
+  /// [projectOverride] lets a caller target a specific project for a
+  /// single request (e.g. uploading photos to a customer that was just
+  /// created under the create-client form's inline project picker)
+  /// without mutating the global active project. Falls back to the
+  /// active project when not supplied. Ignored for organization-scope
+  /// tenants, which never send the header.
+  Future<Map<String, String>> _authHeaders({String? projectOverride}) async {
     final token = await _tokenService.ensureValidV2Token();
     final headers = <String, String>{
       if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
       'Accept': 'application/json',
     };
     if (_projectContext.requiresProjectHeader) {
-      final projectHeader = _projectContext.activeProjectHeaderValue;
+      final projectHeader =
+          (projectOverride != null && projectOverride.isNotEmpty)
+              ? projectOverride
+              : _projectContext.activeProjectHeaderValue;
       if (projectHeader == null || projectHeader.isEmpty) {
         throw const CustomerPhotoException(
           code: 'customer_project_required',

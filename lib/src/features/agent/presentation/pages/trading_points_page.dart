@@ -2658,10 +2658,12 @@ class TradingPointCard extends StatelessWidget {
             ),
           ),
         ),
-      // Customer photo gallery — visible only when the user has at
-      // least one of the four customer-photo codenames. Read-only
-      // agents see the gallery with no action buttons.
-      if (_hasAnyCustomerPhotoPermission())
+      // Customer photo gallery — the page lists photos on open, and the
+      // backend gates list/retrieve on `customers.change_customer_photo`,
+      // so visibility follows that read gate (NOT any-of-four). A
+      // read-only agent who can view photos has change_customer_photo and
+      // sees the gallery with no action buttons.
+      if (_canViewCustomerPhotos())
         OutlinedButton.icon(
           onPressed: () {
             Navigator.push(
@@ -2686,9 +2688,9 @@ class TradingPointCard extends StatelessWidget {
     ];
   }
 
-  bool _hasAnyCustomerPhotoPermission() {
+  bool _canViewCustomerPhotos() {
     final store = sl<BackendPermissionStore>();
-    return store.hasAny(PermissionCodenames.customerPhotoAny);
+    return store.has(PermissionCodenames.customerViewPhotoGate);
   }
 
   bool _canChangeCustomer() =>
@@ -3255,7 +3257,7 @@ class _TradingPointGridTile extends StatelessWidget {
       .has(PermissionCodenames.customerChangeCoordinates);
 
   bool _canViewPhotos() => sl<BackendPermissionStore>()
-      .hasAny(PermissionCodenames.customerPhotoAny);
+      .has(PermissionCodenames.customerViewPhotoGate);
 
   /// Grid-tile edit entry — delegates to [CreateClientPage] in edit
   /// mode so list and grid stay visually consistent.
@@ -3785,7 +3787,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
       PermissionCodenames.customerChangeCoordinates,
     );
     final canPhotos =
-        store.hasAny(PermissionCodenames.customerPhotoAny);
+        store.has(PermissionCodenames.customerViewPhotoGate);
     debugPrint(
       '[CUSTOMER-DETAIL] 🔍 open detail\n'
       '  tradingPoint.id (sent as code_1c) = "${widget.tradingPoint.id}"\n'
@@ -3794,7 +3796,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
       '  lat/lng                           = ${widget.tradingPoint.latitude}, ${widget.tradingPoint.longitude}\n'
       '  gates: change_customer            = $canChange\n'
       '  gates: change_customer_coords     = $canCoord\n'
-      '  gates: customerPhotoAny           = $canPhotos\n'
+      '  gates: change_customer_photo (read) = $canPhotos\n'
       '  store granted set                 = ${store.all}',
     );
   }
@@ -3812,7 +3814,7 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
     final canCoord =
         store.has(PermissionCodenames.customerChangeCoordinates);
     final canPhoto =
-        store.hasAny(PermissionCodenames.customerPhotoAny);
+        store.has(PermissionCodenames.customerViewPhotoGate);
     if (!canEdit && !canCoord && !canPhoto) {
       return const SizedBox.shrink();
     }
@@ -4529,13 +4531,13 @@ class _ClientDetailsPageState extends State<_ClientDetailsPage> {
   /// gallery + edit overlay to V2 in lockstep with the new codename
   /// gates.
   ///
-  /// Visibility is gated by the four photo codenames the
-  /// `BackendPermissionStore` owns. A user holding none sees no
-  /// section at all (read-only agent with no photos for the customer
-  /// would otherwise stare at an empty placeholder).
+  /// Visibility follows the photo READ gate (`change_customer_photo`),
+  /// since this section lists the customer's photos on build. A user
+  /// without it sees no section at all (rendering it would only yield a
+  /// 403 + empty placeholder).
   Widget _buildClientImagesSection(ThemeData theme, ColorScheme cs, AppLocalizations l10n) {
     final store = sl<BackendPermissionStore>();
-    if (!store.hasAny(PermissionCodenames.customerPhotoAny)) {
+    if (!store.has(PermissionCodenames.customerViewPhotoGate)) {
       return const SizedBox.shrink();
     }
     final cardRadius = BorderRadius.circular(12);

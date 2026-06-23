@@ -1147,15 +1147,37 @@ class TokenService {
     final permissionsType = permissionsRaw == null
         ? 'MISSING'
         : '${permissionsRaw.runtimeType}';
+    // customer_scope / primary_project_id drive the whole `X-Project-Id`
+    // contract but were previously invisible here — so a project-scope
+    // tenant that the backend forgot to flag (no `customer_scope` key)
+    // looked identical to a genuine org-scope tenant. Surface the RAW
+    // gate keys + the two scope fields so we can tell at a glance whether
+    // the backend is sending them at all. If `customer_scope` is absent
+    // the mobile defaults to organization-scope and `customer` writes
+    // 400 with `customer_project_required`.
+    final gateKeys = gatesRaw is Map<String, dynamic>
+        ? (gatesRaw.keys.toList()..sort())
+        : const <String>['<gates missing>'];
+    final rawScope =
+        gatesRaw is Map<String, dynamic> ? gatesRaw['customer_scope'] : null;
+    final rawPrimaryProject = gatesRaw is Map<String, dynamic>
+        ? gatesRaw['primary_project_id']
+        : null;
     debugPrint(
       '═══════════════════════════════════════════════════════════════\n'
       '[GATES-FLOW] 🔑 V2 PERMISSIONS RESPONSE\n'
       '  source                : $source\n'
+      '  raw gate keys         : $gateKeys\n'
       '  raw gates.permissions : $permissionsRaw\n'
       '  raw type              : $permissionsType\n'
       '  parsed permissions    : ${envelope.permissions}\n'
       '  permissions count     : ${envelope.permissions.length}\n'
       '  permissionsProvided   : ${envelope.permissionsProvided}\n'
+      '  raw customer_scope    : ${rawScope ?? "MISSING"}\n'
+      '  parsed customerScope  : ${envelope.customerScope} '
+      '(provided=${envelope.customerScopeProvided})\n'
+      '  raw primary_project_id: ${rawPrimaryProject ?? "MISSING"}\n'
+      '  parsed primaryProject : ${envelope.primaryProjectId ?? "null"}\n'
       '  organization_id       : ${envelope.organizationId}\n'
       '  bypass (superuser)    : ${envelope.bypass}\n'
       '  user_active_end       : ${envelope.userActiveEnd}\n'

@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:get_it/get_it.dart';
 import 'package:workmanager/workmanager.dart';
 
+import 'package:gloria_marketing_flutter/src/core/services/background_location/outbox/telemetry_dispatcher.dart';
 import '../photo/photo_upload_service.dart';
 import 'outbox_dispatcher.dart';
 
@@ -100,6 +101,12 @@ void visitsCallbackDispatcher() {
     try {
       await sl<PhotoUploadService>().cycle();
       await sl<OutboxDispatcher>().cycle();
+      // Drain the background telemetry/location outbox on the same periodic
+      // wake-up — this is the force-kill upload backstop for location pings.
+      // Guarded: if telemetry DI isn't ready in this isolate we simply skip.
+      if (sl.isRegistered<TelemetryDispatcher>()) {
+        await sl<TelemetryDispatcher>().cycle();
+      }
     } catch (e, st) {
       developer.log('Visits background sync failed',
           name: 'visits.bg', error: e, stackTrace: st);

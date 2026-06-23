@@ -580,7 +580,12 @@ class _AppState extends State<App> with WidgetsBindingObserver {
       final userCode = prefs.getUserCode();
 
       if (userCode == null || userCode.isEmpty) return;
-      if (backgroundLocationService.isTrackingActive) return;
+      if (backgroundLocationService.isTrackingActive) {
+        // Already tracking — still drain any backlog accumulated while the app
+        // was backgrounded (the connectivity listener only fires on CHANGE).
+        await backgroundLocationService.flushOutbox();
+        return;
+      }
 
       final started = await backgroundLocationService.startTracking();
       if (started && kDebugMode) {

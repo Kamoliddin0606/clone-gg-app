@@ -532,13 +532,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
 
       final backgroundLocationService = sl<BackgroundLocationTrackingService>();
-      
+
       // Tracking'ni to'xtatish
       await backgroundLocationService.stopTracking();
-      
+
+      // Telemetry outbox'ni tozalash — bir foydalanuvchining yuborilmagan
+      // backlog'i boshqa foydalanuvchi tokeni bilan yuborilmasligi uchun
+      // (audit H5: cross-user oqishi). Logout odatda onlayn bo'ladi, shuning
+      // uchun yuborilmagan yozuvlar bu paytgacha allaqachon ketgan bo'ladi.
+      await backgroundLocationService.clearOfflineQueue();
+
       // Service'ni tozalash
       await backgroundLocationService.dispose();
-      
+
       if (kDebugMode) {
         print('AuthBloc: Background location tracking stopped successfully');
       }

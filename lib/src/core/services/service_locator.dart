@@ -32,6 +32,11 @@ import 'package:gloria_marketing_flutter/src/features/agent/services/order_balan
 import 'package:gloria_marketing_flutter/src/features/agent/services/customer_balance_status_cache.dart';
 import 'package:gloria_marketing_flutter/src/features/agent/services/balance_gate_event_logger.dart';
 import 'package:gloria_marketing_flutter/src/core/services/local_uuid_service.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/outbox/telemetry_outbox_data_source.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/outbox/telemetry_outbox_repository.dart';
+import 'package:gloria_marketing_flutter/src/core/services/background_location/outbox/telemetry_dispatcher.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/infra/sync/connectivity_listener.dart';
+import 'package:gloria_marketing_flutter/src/features/visits/infra/sync/backoff_scheduler.dart';
 import 'package:gloria_marketing_flutter/src/core/services/login_device_payload_builder.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_auth_service.dart';
 import 'package:gloria_marketing_flutter/src/core/services/faktura_company_service.dart';
@@ -341,13 +346,34 @@ Future<void> setupServiceLocator() async {
       prefs: sl<SharedPreferencesService>(),
     ));
   }
+  // Durable telemetry outbox (sqflite) + dispatcher. Reuses the visits
+  // ConnectivityListener/BackoffScheduler (registered by VisitsModule) and the
+  // shared DatabaseHelper. Resolved lazily, so VisitsModule registration order
+  // does not matter — nothing is instantiated until first access in main().
+  if (!sl.isRegistered<TelemetryOutboxRepository>()) {
+    sl.registerLazySingleton<TelemetryOutboxRepository>(
+      () => TelemetryOutboxRepositoryImpl(
+        TelemetryOutboxDataSource(() => sl<DatabaseHelper>().database),
+      ),
+    );
+  }
+  if (!sl.isRegistered<TelemetryDispatcher>()) {
+    sl.registerLazySingleton<TelemetryDispatcher>(() => TelemetryDispatcher(
+          outbox: sl<TelemetryOutboxRepository>(),
+          tokenService: sl<TokenService>(),
+          connectivity: sl<ConnectivityListener>(),
+          backoff: sl<BackoffScheduler>(),
+        ));
+  }
   if (!sl.isRegistered<BackgroundLocationTrackingService>()) {
     sl.registerLazySingleton<BackgroundLocationTrackingService>(() => BackgroundLocationTrackingService(
       prefs: sl<SharedPreferencesService>(),
-      tokenService: sl<TokenService>(),
-      dbService: sl<ApiDatabaseService>(),
       policyService: sl<TrackingPolicyService>(),
       deviceRegistrationService: sl<DeviceRegistrationService>(),
+      outbox: sl<TelemetryOutboxRepository>(),
+      dispatcher: sl<TelemetryDispatcher>(),
+      uuidService: sl<LocalUuidService>(),
+      connectivity: sl<ConnectivityListener>(),
     ));
   }
 

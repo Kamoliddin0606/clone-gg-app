@@ -3048,7 +3048,12 @@ Future<bool> _performBackgroundLocationUpdate(Map<String, dynamic> inputData) as
     
     // Initialize and update location
     await backgroundLocationService.initialize();
-    
+
+    // Drain the durable telemetry outbox (this isolate bootstrapped DI via
+    // setupServiceLocator, so the dispatcher is fully wired here). This is the
+    // reliable force-kill upload backstop for location pings.
+    await backgroundLocationService.flushOutbox();
+
     // Trigger a single location update
     // Note: The service will handle sending to server
     if (backgroundLocationService.isTrackingActive) {

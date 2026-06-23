@@ -1994,6 +1994,28 @@ class AppLocalizationsUz extends AppLocalizations {
   String get createClientBankInfo => 'Bank ma\'lumotlari (ixtiyoriy)';
 
   @override
+  String get createClientPhotosTitle => 'Mijoz rasmlari';
+
+  @override
+  String get createClientPhotosSubtitle => 'Do\'kon rasmini suratga oling yoki galereyadan tanlang (ixtiyoriy)';
+
+  @override
+  String get createClientAddPhoto => 'Qo\'shish';
+
+  @override
+  String get createClientRemovePhoto => 'O\'chirish';
+
+  @override
+  String createClientUploadingPhotos(int completed, int total) {
+    return 'Rasmlar yuklanmoqda ($completed/$total)';
+  }
+
+  @override
+  String createClientPhotosPartialFail(int count) {
+    return 'Mijoz yaratildi, lekin $count ta rasm yuklanmadi. Ularni keyinroq galereyadan qo\'shishingiz mumkin.';
+  }
+
+  @override
   String get createClientClientName => 'Mijoz nomi';
 
   @override
@@ -3765,7 +3787,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get selectProject => 'Loyihani tanlang';
 
   @override
-  String get projectRequired => 'Loyiha tanlash majburiy';
+  String get projectRequired => 'Loyiha *';
 
   @override
   String get projectInfoTooltip => 'Shartnoma raqami tanlangan loyihaning raqamlash tizimi asosida generatsiya qilinadi';
@@ -5046,6 +5068,12 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get regionRequired => 'Hudud *';
+
+  @override
+  String get projectsLoading => 'Loyihalar yuklanmoqda...';
+
+  @override
+  String get pleaseSelectProject => 'Iltimos, loyihani tanlang';
 
   @override
   String get pleaseSelectSalesChannel => 'Iltimos, mijoz kanalini tanlang';

@@ -760,6 +760,23 @@
   "createClientContactInfo": "Contact Information",
   "createClientAddressInfo": "Address",
   "createClientBankInfo": "Bank Details (optional)",
+  "createClientPhotosTitle": "Customer Photos",
+  "createClientPhotosSubtitle": "Snap a storefront photo or pick from gallery (optional)",
+  "createClientAddPhoto": "Add",
+  "createClientRemovePhoto": "Remove",
+  "createClientUploadingPhotos": "Uploading photos ({completed}/{total})",
+  "@createClientUploadingPhotos": {
+    "placeholders": {
+      "completed": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "createClientPhotosPartialFail": "Client created, but {count} photo(s) could not be uploaded. You can add them later from the gallery.",
+  "@createClientPhotosPartialFail": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "createClientClientName": "Client Name",
   "createClientClientNameHint": "Store or company name",
   "createClientSignboard": "Signboard",
@@ -2700,6 +2717,9 @@
   "clientClassRequired": "Client Class *",
   "tradingPointTypeRequired": "Trading Point Type *",
   "regionRequired": "Region *",
+  "projectRequired": "Project *",
+  "projectsLoading": "Loading projects...",
+  "pleaseSelectProject": "Please select a project",
   "pleaseSelectSalesChannel": "Please select sales channel",
   "pleaseSelectClientClass": "Please select client class",
   "salesChannelsLoading": "Loading channels...",

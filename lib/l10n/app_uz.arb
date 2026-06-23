@@ -767,6 +767,23 @@
   "createClientContactInfo": "Aloqa ma'lumotlari",
   "createClientAddressInfo": "Manzil",
   "createClientBankInfo": "Bank ma'lumotlari (ixtiyoriy)",
+  "createClientPhotosTitle": "Mijoz rasmlari",
+  "createClientPhotosSubtitle": "Do'kon rasmini suratga oling yoki galereyadan tanlang (ixtiyoriy)",
+  "createClientAddPhoto": "Qo'shish",
+  "createClientRemovePhoto": "O'chirish",
+  "createClientUploadingPhotos": "Rasmlar yuklanmoqda ({completed}/{total})",
+  "@createClientUploadingPhotos": {
+    "placeholders": {
+      "completed": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "createClientPhotosPartialFail": "Mijoz yaratildi, lekin {count} ta rasm yuklanmadi. Ularni keyinroq galereyadan qo'shishingiz mumkin.",
+  "@createClientPhotosPartialFail": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "createClientClientName": "Mijoz nomi",
   "createClientClientNameHint": "Do'kon yoki korxona nomi",
   "createClientSignboard": "Viveska (belgi)",
@@ -2626,6 +2643,9 @@
   "clientClassRequired": "Mijoz klassi *",
   "tradingPointTypeRequired": "Savdo nuqtasi turi *",
   "regionRequired": "Hudud *",
+  "projectRequired": "Loyiha *",
+  "projectsLoading": "Loyihalar yuklanmoqda...",
+  "pleaseSelectProject": "Iltimos, loyihani tanlang",
   "pleaseSelectSalesChannel": "Iltimos, mijoz kanalini tanlang",
   "pleaseSelectClientClass": "Iltimos, mijoz klassini tanlang",
   "salesChannelsLoading": "Kanallar yuklanmoqda...",

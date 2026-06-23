@@ -1994,6 +1994,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createClientBankInfo => 'Bank Details (optional)';
 
   @override
+  String get createClientPhotosTitle => 'Customer Photos';
+
+  @override
+  String get createClientPhotosSubtitle => 'Snap a storefront photo or pick from gallery (optional)';
+
+  @override
+  String get createClientAddPhoto => 'Add';
+
+  @override
+  String get createClientRemovePhoto => 'Remove';
+
+  @override
+  String createClientUploadingPhotos(int completed, int total) {
+    return 'Uploading photos ($completed/$total)';
+  }
+
+  @override
+  String createClientPhotosPartialFail(int count) {
+    return 'Client created, but $count photo(s) could not be uploaded. You can add them later from the gallery.';
+  }
+
+  @override
   String get createClientClientName => 'Client Name';
 
   @override
@@ -3765,7 +3787,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectProject => 'Select project';
 
   @override
-  String get projectRequired => 'Project selection is required';
+  String get projectRequired => 'Project *';
 
   @override
   String get projectInfoTooltip => 'Contract number will be generated based on the selected project\'s numbering system';
@@ -5046,6 +5068,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get regionRequired => 'Region *';
+
+  @override
+  String get projectsLoading => 'Loading projects...';
+
+  @override
+  String get pleaseSelectProject => 'Please select a project';
 
   @override
   String get pleaseSelectSalesChannel => 'Please select sales channel';

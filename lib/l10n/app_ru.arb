@@ -764,6 +764,23 @@
   "createClientContactInfo": "Контактная информация",
   "createClientAddressInfo": "Адрес",
   "createClientBankInfo": "Банковские реквизиты (необязательно)",
+  "createClientPhotosTitle": "Фотографии клиента",
+  "createClientPhotosSubtitle": "Сделайте фото витрины или выберите из галереи (необязательно)",
+  "createClientAddPhoto": "Добавить",
+  "createClientRemovePhoto": "Удалить",
+  "createClientUploadingPhotos": "Загрузка фотографий ({completed}/{total})",
+  "@createClientUploadingPhotos": {
+    "placeholders": {
+      "completed": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "createClientPhotosPartialFail": "Клиент создан, но {count} фото не удалось загрузить. Вы можете добавить их позже из галереи.",
+  "@createClientPhotosPartialFail": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "createClientClientName": "Название клиента",
   "createClientClientNameHint": "Название магазина или компании",
   "createClientSignboard": "Вывеска",
@@ -2622,6 +2639,9 @@
   "clientClassRequired": "Класс клиента *",
   "tradingPointTypeRequired": "Тип торговой точки *",
   "regionRequired": "Регион *",
+  "projectRequired": "Проект *",
+  "projectsLoading": "Загрузка проектов...",
+  "pleaseSelectProject": "Пожалуйста, выберите проект",
   "pleaseSelectSalesChannel": "Пожалуйста, выберите канал продаж",
   "pleaseSelectClientClass": "Пожалуйста, выберите класс клиента",
   "salesChannelsLoading": "Загрузка каналов...",

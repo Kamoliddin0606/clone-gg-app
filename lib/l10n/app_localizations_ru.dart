@@ -1994,6 +1994,28 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createClientBankInfo => 'Банковские реквизиты (необязательно)';
 
   @override
+  String get createClientPhotosTitle => 'Фотографии клиента';
+
+  @override
+  String get createClientPhotosSubtitle => 'Сделайте фото витрины или выберите из галереи (необязательно)';
+
+  @override
+  String get createClientAddPhoto => 'Добавить';
+
+  @override
+  String get createClientRemovePhoto => 'Удалить';
+
+  @override
+  String createClientUploadingPhotos(int completed, int total) {
+    return 'Загрузка фотографий ($completed/$total)';
+  }
+
+  @override
+  String createClientPhotosPartialFail(int count) {
+    return 'Клиент создан, но $count фото не удалось загрузить. Вы можете добавить их позже из галереи.';
+  }
+
+  @override
   String get createClientClientName => 'Название клиента';
 
   @override
@@ -3765,7 +3787,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get selectProject => 'Выберите проект';
 
   @override
-  String get projectRequired => 'Выбор проекта обязателен';
+  String get projectRequired => 'Проект *';
 
   @override
   String get projectInfoTooltip => 'Номер договора будет сгенерирован на основе системы нумерации выбранного проекта';
@@ -5046,6 +5068,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get regionRequired => 'Регион *';
+
+  @override
+  String get projectsLoading => 'Загрузка проектов...';
+
+  @override
+  String get pleaseSelectProject => 'Пожалуйста, выберите проект';
 
   @override
   String get pleaseSelectSalesChannel => 'Пожалуйста, выберите канал продаж';

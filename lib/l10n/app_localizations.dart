@@ -3967,6 +3967,42 @@ abstract class AppLocalizations {
   /// **'Bank Details (optional)'**
   String get createClientBankInfo;
 
+  /// No description provided for @createClientPhotosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Photos'**
+  String get createClientPhotosTitle;
+
+  /// No description provided for @createClientPhotosSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Snap a storefront photo or pick from gallery (optional)'**
+  String get createClientPhotosSubtitle;
+
+  /// No description provided for @createClientAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get createClientAddPhoto;
+
+  /// No description provided for @createClientRemovePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get createClientRemovePhoto;
+
+  /// No description provided for @createClientUploadingPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading photos ({completed}/{total})'**
+  String createClientUploadingPhotos(int completed, int total);
+
+  /// No description provided for @createClientPhotosPartialFail.
+  ///
+  /// In en, this message translates to:
+  /// **'Client created, but {count} photo(s) could not be uploaded. You can add them later from the gallery.'**
+  String createClientPhotosPartialFail(int count);
+
   /// No description provided for @createClientClientName.
   ///
   /// In en, this message translates to:
@@ -7168,7 +7204,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectRequired.
   ///
   /// In en, this message translates to:
-  /// **'Project selection is required'**
+  /// **'Project *'**
   String get projectRequired;
 
   /// No description provided for @projectInfoTooltip.
@@ -9558,6 +9594,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Region *'**
   String get regionRequired;
+
+  /// No description provided for @projectsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading projects...'**
+  String get projectsLoading;
+
+  /// No description provided for @pleaseSelectProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a project'**
+  String get pleaseSelectProject;
 
   /// No description provided for @pleaseSelectSalesChannel.
   ///
